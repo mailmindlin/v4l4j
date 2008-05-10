@@ -1,0 +1,78 @@
+<project name="v4l4j" default="usage">
+	
+	<property file="build.properties"/>
+
+	<!-- reference ant_contrib for if then else task -->
+	<!--<taskdef resource="net/sf/antcontrib/antcontrib.properties">
+		<classpath>
+			<pathelement location="${project.lib}/ant-contrib-0.3.jar"/>
+		</classpath>
+	</taskdef>-->
+	<!-- default target that displays usage -->
+	<target name="usage">
+		<echo message=""/>
+		<echo message="v4l4j"/>
+		<echo message=""/>
+		<echo message="Available targets :"/>
+		<echo message=""/>
+		<echo message=" all : Builds the JAR file and JNI library"/>
+		<echo message=" jar : Builds a JAR file with the v4l4j classes"/>
+		<echo message=" jnilib : Builds the JNI libv4l4j.so library"/>
+		<echo message=" clean: removes all build generated files"/>
+		<echo message=""/>
+	</target>
+	
+	<target name="init">
+		<mkdir dir="${project.classes}"/>
+	</target>
+	
+	<target name="all" depends="jnilib,jar"/>
+	
+	<target name="jnilib" depends="">
+		<exec executable="make">
+			<arg line="-C ${libv4l2.dir}" />
+		</exec>
+		<exec executable="make">
+			<arg line="-C ${project.src}" />
+		</exec>
+		<move file="${project.src}/libv4l4j.so" tofile="${project.dir}/libv4l4j.so" />
+	</target>
+	
+	<target name="install-jnilib" depends="jnilib">
+		<copy file="${project.dir}/libv4l4j.so" tofile="${java.home}/lib/i386/libv4l4j.so" />
+	</target>
+	<target name="uninstall-jnilib" depends="">
+		<delete file="${java.home}/lib/i386/libv4l4j.so" />
+	</target>
+	
+	<target name="compile" depends="init">
+		<javac srcdir="${project.src}" destdir="${project.classes}" deprecation="on" source="${source}" debug="off">
+			<include name="**/*.java"/>
+		</javac>
+	</target>
+	<target name="jar" depends="compile">
+		<jar jarfile="${project.dir}/${project.name}.jar">
+			<manifest>
+				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.FrameGrabber"/>
+			</manifest>
+			<fileset dir="${project.classes}">
+				<include name="**"/>
+			</fileset>
+		</jar>
+	</target>
+	
+	
+	<target name="clean">
+		<exec executable="make">
+		<arg line="-C ${libv4l2.dir} clean" />
+		</exec>
+		<exec executable="make">
+			<arg line="-C ${project.src} clean" />
+		</exec>
+		<delete file="${project.dir}/${project.name}.jar" />
+		<delete file="${project.dir}/libv4l4j.so" />
+		<delete dir="${project.classes}"/>
+		<delete dir="${project.build}"/>
+		<delete file="${project.dir}/v4l4j.jar" />
+	</target>
+     </project>

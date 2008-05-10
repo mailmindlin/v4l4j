@@ -1,0 +1,66 @@
+Video4Linux4Java (v4l4j) is a set of GPL'd-java classes that allow access to
+Video4Linux2 (not V4L1 !!) devices. It consists of:
+- a v4l2 library (libv4l2), which is a C wrapper library around the V4L2 API,
+- a set of java classes that provide access to the libv4l2 API, and
+- a JNI stub, which fills in the gap between JAVA and libv4l2.
+
+FEATURES:
+- Captured frames handed out as JPEG images
+- Single frame or stream capture
+- Access to all V4L2 controls
+- v4l4j provides access to all V4L2 video source controls, even those accessible
+  only through private ioctls. The following drivers are detected and their
+  private ioctls are exported as (pseudo-) controls.
+
+PWC (tested with version 10.0.13):
+- support for Pan / Tilt features
+
+REQUIREMENTS:
+v4l4j requires the following:
+- Sun JAVA JDK 1.6 (it wont compile with earlier versions)
+- the development files of libjpeg, as well as libjpeg itself
+- Apache Ant
+
+COMPILING:
+To compile the JNI library and java classes, run "ant all" in the top-level
+directory. This will first compile libv4l2 and the JNI code, and then link both
+of these to produce the JNI library libv4l4j. It will then compile the java 
+classes and pack them in a JAR file. Both the JNI library libv4l4j.so and the
+JAR file v4l4j.jar are copied in the top-level directory.
+
+INSTALLING:
+You must do two things:
+First, make sure JNI library libv4l4j.so can be loaded by the JVM. This id done
+by either:
+- installing libv4l4j in the JRE lib directory. This is done by running
+  "ant install-jnilib" as root in the top-level directory. It can be
+  uninstalled with "ant uninstall-jnilib" as root later on.
+- setting the shell variable LD_LIBRARY_PATH to point to the directory where
+  libv4l4j.so resides before running your program. By default, libv4l4j.so
+  is created in the top-level directory. For example:
+  LD_LIBRARY_PATH=path/to/libv4l4j_dir java my.package.MyApp
+  The same can be achieved by setting the java.library.path property using:
+  "-Djava.library.path=path/to/libv4l4j_dir" when invoking the JVM.
+
+Second, make sure v4l4j.jar is in your application's classpath.
+
+TESTING:
+The au.edu.jcu.v4l4j.FrameGrabber class contains a main method. It required 6
+arguments in this order: the device file to test, the requested width, the
+requested height, the capture standard (0 for webcam, see FrameGrabber javadoc
+for the rest), the capture channel (0 for webcam), and the JPEG compression
+factor (0-100). When ran, FrameGrabber.main will open the specified device
+file, print all the available controls, try capture frames for 5 seconds (by
+default). At the end, it will print the number of frames per second.
+You can run these by invoking "java -jar v4l4j.jar" (with the correct 6
+arguments), assuming you have installed the JNI library with "ant installjnilib"
+Otherwise, you can use "java -Djava.library.path=. -jar v4l4j.jar"  (with the
+correct 6 arguments).
+
+DEBUGGING:
+You can compile both the wrapper library libv4l2 with extra debug output:
+uncomment the #DEBUG line in libv4l2/Makefile and recompile. 
+
+CONTACT:
+Queries and issues should be emailed to gilles.gigan@gmail.com
+
