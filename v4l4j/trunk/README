@@ -30,7 +30,7 @@ JAR file v4l4j.jar are copied in the top-level directory.
 
 INSTALLING:
 You must do two things:
-First, make sure JNI library libv4l4j.so can be loaded by the JVM. This id done
+First, make sure JNI library libv4l4j.so can be loaded by the JVM. This is done
 by either:
 - installing libv4l4j in the JRE lib directory. This is done by running
   "ant install-jnilib" as root in the top-level directory. It can be
@@ -45,13 +45,16 @@ by either:
 Second, make sure v4l4j.jar is in your application's classpath.
 
 TESTING:
-The au.edu.jcu.v4l4j.FrameGrabber class contains a main method. It required 6
-arguments in this order: the device file to test, the requested width, the
-requested height, the capture standard (0 for webcam, see FrameGrabber javadoc
-for the rest), the capture channel (0 for webcam), and the JPEG compression
-factor (0-100). When ran, FrameGrabber.main will open the specified device
-file, print all the available controls, try capture frames for 5 seconds (by
-default). At the end, it will print the number of frames per second.
+you can either run the series of Junit tests or run the main method in the 
+FrameGrabber class:
+- to run the Junit tests, run "ant test-single"
+- to run the au.edu.jcu.v4l4j.FrameGrabber class's main method, provide the
+required 6 arguments in this order: the device file to test, the requested width,
+the requested height, the capture standard (0 for webcam, see FrameGrabber
+javadoc for the rest), the capture channel (0 for webcam), and the JPEG
+compression factor (0-100). When ran, FrameGrabber.main will open the specified
+device file, print all the available controls, try capture frames for 5 seconds
+(by default). At the end, it will print the number of frames per second.
 You can run these by invoking "java -jar v4l4j.jar" (with the correct 6
 arguments), assuming you have installed the JNI library with "ant installjnilib"
 Otherwise, you can use "java -Djava.library.path=. -jar v4l4j.jar"  (with the
@@ -63,4 +66,13 @@ uncomment the #DEBUG line in libv4l2/Makefile and recompile.
 
 CONTACT:
 Queries and issues should be emailed to gilles.gigan@gmail.com
+
+The latest stable version of v4l4j can be downloaded from the Subversion
+repository at:
+https://www.hpc.jcu.edu.au/projects/SAL/svn/v4l4j/tags/v4l4j
+
+The latest snapshot of v4l4j can be downloaded from the Subversion
+repository at:
+https://www.hpc.jcu.edu.au/projects/SAL/svn/v4l4j/trunk
+
 

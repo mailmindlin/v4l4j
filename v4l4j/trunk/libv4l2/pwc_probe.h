@@ -25,10 +25,12 @@
 #ifndef H_PWC_PROBE
 #define H_PWC_PROBE
 
+#include "v4l2-input.h"
+
 #define PWC_PROBE_INDEX	0
-int pwc_probe(int);
-int pwc_list_ctrl(int, struct v4l2_queryctrl *);
-int pwc_get_ctrl(int, struct v4l2_queryctrl *);
-int pwc_set_ctrl(int, struct v4l2_queryctrl *, int);
+int pwc_driver_probe(struct capture_device *, struct control_list*);
+int pwc_list_ctrl(struct capture_device *, struct control_list *, struct v4l2_queryctrl *);
+int pwc_get_ctrl(struct capture_device *,  struct v4l2_queryctrl *);
+int pwc_set_ctrl(struct capture_device *, struct v4l2_queryctrl *, int);
 
 #endif /*H_PWC_PROBE*/

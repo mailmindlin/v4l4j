@@ -2,12 +2,23 @@
 	
 	<property file="build.properties"/>
 
-	<!-- reference ant_contrib for if then else task -->
-	<!--<taskdef resource="net/sf/antcontrib/antcontrib.properties">
-		<classpath>
-			<pathelement location="${project.lib}/ant-contrib-0.3.jar"/>
-		</classpath>
-	</taskdef>-->
+	<!-- define the classpath for Standalone deployment -->
+	<path id="build.classpath">
+		<pathelement location="${project.src}"/>
+		<fileset dir="${project.lib}">
+			<include name="*.jar"/>
+		</fileset>
+	</path>
+	
+	<!-- define the classpath for Standalone deployment -->
+	<path id="test.classpath">
+		<pathelement location="${project.classes}" />
+		<fileset dir="${project.lib}">
+			<include name="*.jar"/>
+		</fileset>
+	</path>
+
+	
 	<!-- default target that displays usage -->
 	<target name="usage">
 		<echo message=""/>
@@ -17,7 +28,11 @@
 		<echo message=""/>
 		<echo message=" all : Builds the JAR file and JNI library"/>
 		<echo message=" jar : Builds a JAR file with the v4l4j classes"/>
+		<echo message=" jar-src : Builds a JAR file with the v4l4j classes and sources"/>
 		<echo message=" jnilib : Builds the JNI libv4l4j.so library"/>
+		<echo message=" test-single : Run JUNIT tests with a single webcam"/>
+		<echo message=" test-multiple : Run JUNIT tests with two webcams"/>
+		<echo message=" test-all : Run JUNIT tests for both single and multiple webcams"/>
 		<echo message=" clean: removes all build generated files"/>
 		<echo message=""/>
 	</target>
@@ -47,6 +62,7 @@
 	
 	<target name="compile" depends="init">
 		<javac srcdir="${project.src}" destdir="${project.classes}" deprecation="on" source="${source}" debug="off">
+			<classpath refid="build.classpath"/>
 			<include name="**/*.java"/>
 		</javac>
 	</target>
@@ -57,10 +73,60 @@
 			</manifest>
 			<fileset dir="${project.classes}">
 				<include name="**"/>
+				<exclude name="au/edu/jcu/v4l4j/test/"/>
 			</fileset>
 		</jar>
 	</target>
 	
+	<target name="jar-src" depends="compile">
+		<jar jarfile="${project.dir}/${project.name}.jar">
+			<manifest>
+				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.FrameGrabber"/>
+			</manifest>
+			<fileset dir="${project.classes}">
+				<include name="**"/>
+				<exclude name="au/edu/jcu/v4l4j/test/"/>
+			</fileset>
+			<fileset dir="${project.src}">
+				<include name="**"/>
+				<exclude name="au/edu/jcu/v4l4j/test/"/>
+			</fileset>
+		</jar>
+	</target>
+	
+	<target name="jar-test" depends="compile">
+		<jar jarfile="${project.dir}/${project.name}.jar">
+			<manifest>
+				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.FrameGrabber"/>
+			</manifest>
+			<fileset dir="${project.classes}">
+				<include name="**"/>
+			</fileset>
+			<fileset dir="${project.src}">
+				<include name="**"/>
+			</fileset>
+		</jar>
+	</target>
+
+	<target name="test-single" depends="jar-test,jnilib">
+		<junit fork="yes" haltonfailure="yes">
+			<jvmarg value="-Djava.library.path=."/>
+			<test name="${test.class.name.single}" />
+			<formatter type="plain" usefile="false" />
+			<classpath refid="test.classpath" />
+		</junit>
+	</target>
+	
+	<target name="test-multiple" depends="jar-test,jnilib">
+		<junit fork="yes" haltonfailure="yes">
+			<jvmarg value="-Djava.library.path=."/>
+			<test name="${test.class.name.multiple}" />
+			<formatter type="plain" usefile="false" />
+			<classpath refid="test.classpath" />
+		</junit>
+	</target>
+	
+	<target name="test-all" depends="test-single, test-multiple"/>
 	
 	<target name="clean">
 		<exec executable="make">

@@ -1,0 +1,41 @@
+libv4l2 is a C wrapper library around the Video4Linux2 (V4L2) API. It supports
+only V4L2, not V4L1, although most video device drivers have now moved and 
+implement the V4L2 API. libv4l2 provides access to all V4L2 controls reported
+by the underlying driver. This includes the usual brightness & contrast
+controls, as well as private V4L2 controls, such as 'Save' & 'Restore' settings.
+A neat feature of libv4l2 is that it  tries to detect the underlying driver, and
+create pseudo V4L2 controls for driver-specific, private ioctls. This provides a
+uniform way to access and control video devices. That way, control of the video
+capture device is done seamlessly through V4L2 controls. A concrete example:
+The PWC driver supports webcams with pan/tilt capabilities. Control of the pan
+and tilt however, requires first checking with the driver if the attached device
+supports these (done through driver-specific ioctls). If supported, pan/tilt
+control is then done via driver-specific ioctls. libv4l2 will probe the driver.
+If it is PWC, it will probe the device and if the device supports Pan/Tilt
+features, libv4l2 will create V4L2 controls to provide access to Pan & tilt.
+
+FEATURES:
+liv4l2 allows:
+- frame capture from V4L2 devices
+- access to V4L2 controls
+- access to driver-private ioctl through "fake" V4L2 controls created by libv4l2
+
+REQUIREMENTS:
+- a V4l2 compatible video source (capture card, webcam)
+
+COMPILING:
+- run "make" in the directory.
+
+USAGE:
+libv4l2 is a library and is meant to be linked to an application. However, a
+test program is shipped, which captures from /dev/video0 for 5 seconds, and 
+prints the frame rate. To compile the test program, run "make test". The test
+program is named "test_libv4l2"
+
+DEBUGGING:
+Edit the Makefile, uncomment the line #DEBUG line and recompile libv4l2. Extra
+output will be produced to allows troubleshooting.
+
+ISSUES:
+Issues and queries can be emailed to gilles.gigan@gmail.com
+
