@@ -69,16 +69,16 @@ struct control_list *list_control(struct capture_device *c){
 	
 	//priv ctrls
 	for (qctrl.id = V4L2_CID_PRIVATE_BASE;; qctrl.id++) {
-        if (0 == ioctl (c->fd, VIDIOC_QUERYCTRL, &qctrl)) {
-                if (qctrl.flags & V4L2_CTRL_FLAG_DISABLED)
-                        continue;
-            	count++;
-        } else {
-                if (errno == EINVAL)
-                        break;
-                        
-                dprint(LIBV4L2_LOG_SOURCE_CONTROL, LIBV4L2_LOG_LEVEL_ERR, "V4L2: we shouldnt be here...\n");
-        }
+		if (0 == ioctl (c->fd, VIDIOC_QUERYCTRL, &qctrl)) {
+			if (qctrl.flags & V4L2_CTRL_FLAG_DISABLED)
+				continue;
+			count++;
+		} else {
+			if (errno == EINVAL)
+				break;
+	
+			dprint(LIBV4L2_LOG_SOURCE_CONTROL, LIBV4L2_LOG_LEVEL_ERR, "V4L2: we shouldnt be here...\n");
+		}
 	}
 	
 	/*
@@ -91,7 +91,7 @@ struct control_list *list_control(struct capture_device *c){
 	 */
 	 int priv_ctrl[PROBE_NB];
 	 for(i=0; i<PROBE_NB; i++) {
-	 	priv_ctrl[i] = probe_drivers[i].probe(c->fd);
+	 	priv_ctrl[i] = probe_drivers[i].probe(c, l);
 	 	count += priv_ctrl[i]; 
 	 }
 	
@@ -102,6 +102,8 @@ struct control_list *list_control(struct capture_device *c){
 		dprint(LIBV4L2_LOG_SOURCE_CONTROL, LIBV4L2_LOG_LEVEL_DEBUG, "V4L2: listing controls (found %d)...\n", count);
 		//fill in controls
 		count = 0;
+		
+		//list standard V4L controls
 		for( i = V4L2_CID_BASE; i< V4L2_CID_LASTP1 && count < l->count; i++) {
 			l->ctrl[count].id = i;
 			if((ioctl(c->fd, VIDIOC_QUERYCTRL, &l->ctrl[count]) == 0) && ( ! (l->ctrl[count].flags & V4L2_CTRL_FLAG_DISABLED))) {
@@ -110,22 +112,25 @@ struct control_list *list_control(struct capture_device *c){
 				count++;
 			}
 		}
+
+		//list device-specific V4L controls
 		for (i = V4L2_CID_PRIVATE_BASE;count < l->count; i++) {
 			l->ctrl[count].id = i;
 			if ((0 == ioctl (c->fd, VIDIOC_QUERYCTRL, &l->ctrl[count])) && ( ! (l->ctrl[count].flags & V4L2_CTRL_FLAG_DISABLED))) {
-					dprint(LIBV4L2_LOG_SOURCE_CONTROL, LIBV4L2_LOG_LEVEL_DEBUG, "V4L2: found control(id: %d - name: %s - min: %d -max: %d - val: %d)\n", \
-					l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum, get_control_value(c, &l->ctrl[count]));
-	            	count++;
-	        } else {
-	                if (errno == EINVAL)
-	                        break;
-	               
+				dprint(LIBV4L2_LOG_SOURCE_CONTROL, LIBV4L2_LOG_LEVEL_DEBUG, "V4L2: found control(id: %d - name: %s - min: %d -max: %d - val: %d)\n", l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum, get_control_value(c, &l->ctrl[count]));
+	            		count++;
+	        	} else {
+	                	if (errno == EINVAL)
+	                        	break;
+
 	                dprint(LIBV4L2_LOG_SOURCE_CONTROL, LIBV4L2_LOG_LEVEL_ERR, "V4L2: we shouldnt be here...\n");
-	        }
+	        	}
 		}
 		
-		for(i=0; i<PROBE_NB; i++)
-		 		probe_drivers[i].list_ctrl(c->fd, &l->ctrl[count]);
+		//probe the driver for private ioctl and turn them into fake V4L2 controls
+		for(i=0; i<PROBE_NB; i++) {
+		 		probe_drivers[i].list_ctrl(c, l, &l->ctrl[count]);
+		}
 	} else {
 		dprint(LIBV4L2_LOG_SOURCE_CONTROL, LIBV4L2_LOG_LEVEL_DEBUG, "V4L2: No controls found...\n");
 	}
@@ -143,7 +148,7 @@ int get_control_value(struct capture_device *cdec, struct v4l2_queryctrl *c){
 		else
 			return 0;
 	} else {
-		return probe_drivers[c->reserved[1]].get_ctrl(cdec->fd, c);
+		return probe_drivers[c->reserved[1]].get_ctrl(cdec, c);
 	}
 }
 
@@ -165,7 +170,7 @@ void set_control_value(struct capture_device *cdev, struct v4l2_queryctrl *c, in
 		if ((u = get_control_value(cdev, c)) != i)
 			dprint(LIBV4L2_LOG_SOURCE_CONTROL, LIBV4L2_LOG_LEVEL_ERR,"Error setting control '%s' to value '%d' (current value '%d')\n", c->name, i, u);
 	} else {
-		probe_drivers[c->reserved[1]].set_ctrl(cdev->fd, c, i);
+		probe_drivers[c->reserved[1]].set_ctrl(cdev, c, i);
 	}
 }
 
@@ -173,6 +178,9 @@ void free_control_list(struct control_list *l){
 	dprint(LIBV4L2_LOG_SOURCE_CONTROL, LIBV4L2_LOG_LEVEL_DEBUG, "V4L2: Freeing controls \n");
 	if (l->ctrl)
 		XFREE(l->ctrl);
+
+	if(l->probe_priv)
+		XFREE(l->probe_priv);
 
 	if (l)
 		XFREE(l);

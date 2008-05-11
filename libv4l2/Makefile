@@ -5,11 +5,11 @@
 # edit anything below at your own risk
 #
 VERSION_MAJOR=0
-VERSION_MINOR=2
+VERSION_MINOR=3
 
 LIB=libv4l2.a
 BIN=test_libv4l2
-OBJ=frame.o v4l2-input.o v4l2-probepwc.o v4l2-control.o
+OBJ=v4l2-input.o v4l2-probepwc.o v4l2-control.o
 
 CC=gcc
 OPTIMISATION=-O3
@@ -21,9 +21,6 @@ all: $(LIB)
 
 $(LIB): $(OBJ)
 	ar rc $(LIB) $(OBJ); ranlib $(LIB)
-
-frame.o: frame.c frame.h
-	$(CC) $(CFLAGS) frame.c
 
 v4l2-input.o: v4l2-input.c v4l2-input.h
 	$(CC) $(CFLAGS) v4l2-input.c

@@ -30,17 +30,17 @@
 #include "pwc_probe.h"
 
 struct probe_v4l2_driver {
-	int (*probe) (int);
-	int (*list_ctrl)(int, struct v4l2_queryctrl *);
-	int (*get_ctrl)(int, struct v4l2_queryctrl *);
-	int (*set_ctrl)(int, struct v4l2_queryctrl *, int);
+	int (*probe) (struct capture_device *, struct control_list *);
+	int (*list_ctrl)(struct capture_device *, struct control_list *, struct v4l2_queryctrl *);
+	int (*get_ctrl)(struct capture_device *, struct v4l2_queryctrl *);
+	int (*set_ctrl)(struct capture_device *,  struct v4l2_queryctrl *, int);
 };
 
 #define PROBE_NB 1
 
 static struct probe_v4l2_driver probe_drivers[] = {
 	{
-		.probe 		= pwc_probe,
+		.probe 		= pwc_driver_probe,
 		.list_ctrl 	= pwc_list_ctrl,
 		.get_ctrl	= pwc_get_ctrl,
 		.set_ctrl	= pwc_set_ctrl,
