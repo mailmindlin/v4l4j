@@ -35,9 +35,6 @@
 #include "videodev2.h"
 #include <string.h>
 
-#include "libv4l2_log.h"
-#include "frame.h"
-
 #define CLEAR(x) memset(&x, 0x0, sizeof(x));
 		
 enum STANDARDS {WEBCAM, PAL, SECAM, NTSC};
@@ -57,6 +54,7 @@ struct mmap {
 struct control_list {
 	int count;
 	struct v4l2_queryctrl *ctrl;
+	void *probe_priv;	//pointer to driver probe code's private data
 };
 
 struct capture_device {
@@ -75,23 +73,21 @@ struct capture_device {
 
 void get_libv4l2_version(char *);
 
-//Capture methods
+//Init methods
 struct capture_device *init_libv4l2(const char *, int, int, int, int, int);
 int open_device(struct capture_device *);
 int check_capture_capabilities(struct capture_device *);
 int set_cap_param(struct capture_device *);
 int init_capture(struct capture_device *);
 int start_capture(struct capture_device *);
-int wait_for_frame(struct capture_device *);
 
-//EITHER
-struct frame *get_frame(struct capture_device *);
-//OR
+//capture methods
+int wait_for_frame(struct capture_device *);
 struct v4l2_buffer *dequeue_buffer(struct capture_device *);
 void *get_frame_buffer(struct capture_device *, struct v4l2_buffer *, int *);
 void enqueue_buffer(struct capture_device *, struct v4l2_buffer *);
  
-//
+//Freeing resources
 int stop_capture(struct capture_device *);
 void free_capture(struct capture_device *);
 void close_device(struct capture_device *);
@@ -104,10 +100,12 @@ void set_control_value(struct capture_device *, struct v4l2_queryctrl *,  int);
 void free_control_list(struct control_list *);
 
 //Query and list methods (printf to stdout)
-void query_frame_sizes(struct capture_device *);
-void list_cap(struct capture_device *);
-void query_capture_intf(struct capture_device *);
-void query_current_image_fmt(struct capture_device *);
+void list_cap(struct capture_device *);			//prints results from query methods listed below
+void enum_image_fmt(struct capture_device *);		//lists all supported image formats
+void query_control(struct capture_device *);		//lists all supported controls
+void query_frame_sizes(struct capture_device *);	// not implemented
+void query_capture_intf(struct capture_device *);	//prints capabilities
+void query_current_image_fmt(struct capture_device *);	//useless...
 
 
 #endif

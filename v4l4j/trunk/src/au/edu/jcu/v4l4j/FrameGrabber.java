@@ -34,25 +34,25 @@
 package au.edu.jcu.v4l4j;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+
 /**
- * This is the main class. Create an instance of it attached to a V4L2 device to grab JPEG-encoded frames from it.<br>
- * A typical use:
+ * This is the V4l4j main class. Create an instance of it attached to a V4L2 device to grab JPEG-encoded frames from it.<br>
+ * A typical use case:
  * <ul>
  * <li>Create an instance of FrameGrabber: <code>FrameGrabber f = new FrameGrabber("/dev/video0", 320, 240, 0, 0, 80);</code></li>
  * <li>Initialise the framegrabber: <code>f.init();</code></li>
  * <li>Start the frame capture: <code>f.startCapture();</code></li>
  * <li><code>while (!stop) </code></li> 
  *  <ul><li>Retrieve a frame: <code>f.getFrame();</code></li>
- *  <li>do somthing useful with it</li></ul>
+ *  <li>do something useful with it</li></ul>
  * <li>Stop the capture: <code>f.stopCapture();</code></li>
  * <li>Free resources: <code>f.remove();</code></li>
  * </ul>
  * Once the frame grabber is intialised, the video source controls are made available (<code>f.getControls</code>) and can be changed at any time.
- * Once the frame grabber is removed, it can be re-initialised again (without the nedd to create a new instance). 
+ * Once the frame grabber is removed, it can be re-initialised again (without the need to create a new instance). 
  * 
  * @author gilles
  *
@@ -86,19 +86,26 @@ public class FrameGrabber {
 	private State state;
 	private V4L2Control[] ctrls;
 	
+	/*
+	 * JNI returns an long (which is really a pointer) when a device is allocated for use
+	 * This field is read-only (!!!) 
+	 */
+	private long object;
+	
 	static {
 		System.loadLibrary("v4l4j");
 	}
 	
-	private native ByteBuffer[] init_v4l(String f, int w, int h, int ch, int std, int nbBuf, int q);
-	private native void start() throws V4L4JException;
-	private native void setQuality(int i) throws V4L4JException;
-	private native int getBuffer() throws V4L4JException;
-	private native int getBufferLength() throws V4L4JException;
-	private native void stop() throws V4L4JException;
-	private native void delete() throws V4L4JException;
-	private native int getCtrlValue(int i) throws V4L4JException;
-	private native int setCtrlValue(int i, int v) throws V4L4JException;
+	private native long allocateObject() throws V4L4JException;
+	private native ByteBuffer[] init_v4l(long o, String f, int w, int h, int ch, int std, int nbBuf, int q);
+	private native void start(long o) throws V4L4JException;
+	private native void setQuality(long o, int i) throws V4L4JException;
+	private native int getBuffer(long o) throws V4L4JException;
+	private native int getBufferLength(long o) throws V4L4JException;
+	private native void stop(long o) throws V4L4JException;
+	private native void delete(long o) throws V4L4JException;
+	private native int getCtrlValue(long o, int i) throws V4L4JException;
+	private native int setCtrlValue(long o, int i, int v) throws V4L4JException;
 	
 	/**
 	 * Construct a FrameGrabber object used to capture JPEG frames from a video source
@@ -119,7 +126,6 @@ public class FrameGrabber {
 		
 		state= new State();
 		
-		System.out.println("Initialising w:"+w+" h:"+h+" ch:"+ch+" std:"+std+" q:"+q);
 		dev = device;
 		width = w;
 		height = h;
@@ -138,7 +144,8 @@ public class FrameGrabber {
 		if(!state.init())
 			throw new V4L4JException("Invalid method call");
 		
-		bufs = init_v4l(dev, width, height, channel, standard, nbV4LBuffers, quality);
+		object = allocateObject();		
+		bufs = init_v4l(object, dev, width, height, channel, standard, nbV4LBuffers, quality);
 		state.commit();
 	}
 	
@@ -150,7 +157,7 @@ public class FrameGrabber {
 		if(!state.start())
 			throw new V4L4JException("Invalid method call");
 		
-		start();
+		start(object);
 		state.commit();
 	}
 	
@@ -162,8 +169,8 @@ public class FrameGrabber {
 	public ByteBuffer getFrame() throws V4L4JException {
 		if(!state.isStarted())
 			throw new V4L4JException("Invalid method call");
-		ByteBuffer b = bufs[getBuffer()];
-		b.limit(getBufferLength());
+		ByteBuffer b = bufs[getBuffer(object)];
+		b.limit(getBufferLength(object)).position(0);
 		return b;
 	}
 	
@@ -175,7 +182,7 @@ public class FrameGrabber {
 		if(!state.stop())
 			throw new V4L4JException("Invalid method call");
 		
-		stop();
+		stop(object);
 		state.commit();
 	}
 	
@@ -184,10 +191,13 @@ public class FrameGrabber {
 	 * @throws V4L4JException if there is a problem freeing resources
 	 */
 	public void remove() throws V4L4JException {
+		if(state.isStarted())
+			stopCapture();
+		
 		if(!state.remove())
 			throw new V4L4JException("Invalid method call");
 		
-		delete();
+		delete(object);
 		state.commit();
 	}
 	
@@ -224,7 +234,7 @@ public class FrameGrabber {
 		if(q<0 || q>100)
 			throw new V4L4JException("The JPEG quality must be 0<q<100");
 		quality = q;
-		setQuality(q);
+		setQuality(object, q);
 	}
 	
 	/**
@@ -237,7 +247,7 @@ public class FrameGrabber {
 		if(!state.isInit())
 			throw new V4L4JException("Invalid method call");
 		
-		setCtrlValue(id, value);
+		setCtrlValue(object, id, value);
 	}
 
 	/**
@@ -250,7 +260,7 @@ public class FrameGrabber {
 		if(!state.isInit())
 			throw new V4L4JException("Invalid method call");
 		
-		return getCtrlValue(id);
+		return getCtrlValue(object, id);
 	}
 	
 	/**
@@ -259,6 +269,66 @@ public class FrameGrabber {
 	 */
 	public V4L2Control[] getControls() {
 		return ctrls;
+	}
+	
+	private class State {
+
+		private int state;
+		private int temp;
+		
+		private int UNINIT=0;
+		private int INIT=1;
+		private int STARTED=2;
+		private int STOPPED=3;
+		private int REMOVED=4;
+
+		public State() {
+			state=UNINIT;
+		}
+		
+		public boolean init(){
+			if(state==UNINIT || state==REMOVED) {
+				temp=INIT;
+				return true;
+			}
+			return false;
+		}
+		
+		public boolean start(){
+			if(state==INIT || state==STOPPED) {
+				temp=STARTED;
+				return true;
+			}
+			return false;
+		}
+		
+		public boolean isStarted(){
+			return state==STARTED;
+		}
+		
+		public boolean isInit(){
+			return state==INIT || state==STOPPED;
+		}
+		
+		public boolean stop(){
+			if(state==STARTED) {
+				temp=STOPPED;
+				return true;
+			}
+			return false;
+		}
+		
+		public boolean remove(){
+			if(isInit()) {
+				temp=REMOVED;
+				return true;
+			}
+			return false;
+		}
+		
+		public void commit(){
+			state=temp;
+		}
 	}
 	
 	public static void main(String[] args) throws V4L4JException, IOException {
@@ -299,9 +369,8 @@ public class FrameGrabber {
 		ctrls = f.getControls();
 		System.out.println("Found "+ctrls.length+" controls");
 		try {
-			for (int i = 0; i < ctrls.length; i++) {
+			for (int i = 0; i < ctrls.length; i++)
 				System.out.println("control "+i+" - name: "+ctrls[i].getName()+" - min: "+ctrls[i].getMin()+" - max: "+ctrls[i].getMax()+" - step: "+ctrls[i].getStep()+" - value: "+ctrls[i].getValue());
-			}
 		} catch (V4L4JException e) {
 			e.printStackTrace();
 			System.out.println("Failed to list associated controls");
@@ -315,17 +384,17 @@ public class FrameGrabber {
 			System.out.println("Failed to start capture");
 			throw e;
 		}
-		
+
 		try {
 			System.out.println("Starting test capture at "+f.getWidth()+"x"+f.getHeight()+" for "+CAPTURE_LENGTH+" seconds");
 			now=start=System.currentTimeMillis();
 			while(now<start+(CAPTURE_LENGTH*1000)){
 				b = f.getFrame();
+				//Uncomment the following to dump the captured frame to a jpeg file
 				//System.out.println("size:"+b.limit());
 				//new FileOutputStream("file"+n+".jpg").getChannel().write(b);
-				b.position(0);
-				
 				n++;
+				b.position(0);
 				now=System.currentTimeMillis();
 			}
 		} catch (V4L4JException e) {
@@ -345,66 +414,6 @@ public class FrameGrabber {
 			e.printStackTrace();
 			System.out.println("Failed to stop capture");
 			throw e;
-		}
-	}
-	
-	private class State {
-
-		private int state;
-		private int temp;
-		
-		private int UNINIT=0;
-		private int INIT=1;
-		private int STARTED=2;
-		private int STOPPED=3;
-		private int REMOVED=4;
-
-		public State() {
-			state=UNINIT;
-		}
-		
-		public boolean init(){
-			if(state==UNINIT || state==REMOVED) {
-				temp=INIT;
-				return true;
-			}
-			return false;
-		}
-		
-		public boolean start(){
-			if(state==INIT || state==STOPPED) {
-				temp=STARTED;
-				return true;
-			}
-			return false;
-		}
-		
-		public boolean isStarted(){
-			return state==STARTED;
-		}
-		
-		public boolean isInit(){
-			return state==STARTED || state==INIT || state==STOPPED;
-		}
-		
-		public boolean stop(){
-			if(state==STARTED) {
-				temp=STOPPED;
-				return true;
-			}
-			return false;
-		}
-		
-		public boolean remove(){
-			if(isInit()) {
-				temp=REMOVED;
-				return true;
-			}
-			return false;
-		}
-		
-		public void commit(){
-			state=temp;
 		}
 	}
 }

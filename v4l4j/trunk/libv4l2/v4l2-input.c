@@ -35,6 +35,7 @@
 //#include <linux/videodev2.h>  
 #include "videodev2.h"
 #include "v4l2-input.h"
+#include "libv4l2_log.h"
 
 
 #define XMALLOC(var, type, size)	\
@@ -128,36 +129,6 @@ void enqueue_buffer(struct capture_device *cdev, struct v4l2_buffer *b) {
 	if (-1 == ioctl(cdev->fd, VIDIOC_QBUF, b))
 			dprint(LIBV4L2_LOG_SOURCE_V4L2, LIBV4L2_LOG_LEVEL_ERR, "V4L2: error queuing buffer\n");
 
-}
-
-//POTENTIAL SEGFAULT !!!!
-//get_frame WILL PUT A NULL POINTER IN FRAME->PRIV !!!
-//SET AN APPROPRIATE VALUE !!! 
-struct frame *get_frame(struct capture_device *c) {
-	struct v4l2_buffer *b;
-	struct frame *ret = NULL;
-	
-	dprint(LIBV4L2_LOG_SOURCE_V4L2, LIBV4L2_LOG_LEVEL_DEBUG2, "V4L2: getting whole frame\n");
-
-	if((b = dequeue_buffer(c)) != NULL){
-		assert(b->bytesused == c->imagesize);
-		dprint(LIBV4L2_LOG_SOURCE_V4L2, LIBV4L2_LOG_LEVEL_DEBUG1, \
-			"V4L2: Buffer index: %d - Bytes used: %d\nTime code: %d - Ts: %d s - %d us - Seq: %d\n"\
-			,b->index, b->bytesused, (b->flags & V4L2_BUF_FLAG_TIMECODE), (int) b->timestamp.tv_sec, (int) b->timestamp.tv_usec,b->sequence);
-	
-		//create a new struct frame
-		//FIXME: hardcoded image format value YUV420P. Add a format field in struct cdev and pass it here
-		if ((ret = create_empty_frame(c->width,c->height, YUV420P, 1, NULL)) == NULL)
-			dprint(LIBV4L2_LOG_SOURCE_V4L2, LIBV4L2_LOG_LEVEL_ERR, "V4L2: cant allocate a new frame... dropping frame !\n"); 
-		else {
-			//copy data to frame
-			assert(b->bytesused <= ret->buf_size);		
-			copy_to_frame(ret, c->mmap->buffers[b->index].start, (int) b->bytesused);
-		}
-		enqueue_buffer(c, b);
-	}
-	
-	return ret;
 }
 
 
@@ -506,7 +477,7 @@ void query_frame_sizes(struct capture_device *cdev){
 	fmtd.index = 0;
 	
 	printf("============================================\nQuerying supported frame sizes\n\n");
-/*	No DRIVERS (as of 04/05/07) implement the VIDIOC_ENUM_FRAMESIZES ioctl...
+/*	No V4L2 DRIVERS (as of 04/05/07) implement the VIDIOC_ENUM_FRAMESIZES ioctl...
 	Although, i ve seen patches on the v4l ML for pwc.... but nothing released yet.
 	while(ioctl(fd, VIDIOC_ENUM_FMT, &fmtd) >= 0) {
 		printf("Image format: %s\n",fmtd.description);
