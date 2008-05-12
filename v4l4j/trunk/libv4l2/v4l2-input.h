@@ -45,16 +45,16 @@ struct mmap_buffer {
 };
 
 struct mmap {
-	int req_buffer_nr;				//requested number of buffers
-	int buffer_nr;					//actual number of mmap buffers
+	int req_buffer_nr;		//requested number of buffers
+	int buffer_nr;			//actual number of mmap buffers
 	struct mmap_buffer *buffers;	//array of buffers
-	struct v4l2_buffer tmp_b;		//temp buffer pointing to the latest dequeued buffer
+	struct v4l2_buffer tmp_b;	//temp buffer pointing to the latest dequeued buffer
 };
 
 struct control_list {
-	int count;
-	struct v4l2_queryctrl *ctrl;
-	void *probe_priv;	//pointer to driver probe code's private data
+	int count;			//how many controls are available
+	struct v4l2_queryctrl *ctrl;	//array of 'count' v4l2_queryctrl' controls (see videodev.h)
+	void *probe_priv;		//pointer to driver probe code's private data, do not touch
 };
 
 struct capture_device {
@@ -63,43 +63,87 @@ struct capture_device {
 	int height;
 	int fps;			//not implemented yet
 	int std;			//v4l2 standard
-	int channel;		//channel number (for video capture cards, not webcams)
-	char file[100];		//device file name
-	int bytesperline;	//number of bytes per line in the captured image
-	int imagesize;		//in bytes
-	struct mmap *mmap;
-	struct control_list *ctrls;
+	int channel;			//channel number (for video capture cards, not webcams)
+	char file[100];			//device file name
+	int bytesperline;		//number of bytes per line in the captured image
+	int imagesize;			//in bytes
+	struct mmap *mmap;		//do not touch
+	struct control_list *ctrls;	//controls
 };
 
 void get_libv4l2_version(char *);
 
-//Init methods
+/*
+ * Init methods
+ * each of the init methods has a counterpart method that free resources created
+ * by the corresponding init method. counterpart methods must be called if call
+ * the init one was successful
+ */
+
+//init_libv4l2 initialises required struct, opens the device file, and check if
+//device supports v4l2, capture and streaming. Then creates the V4L control list
 struct capture_device *init_libv4l2(const char *, int, int, int, int, int);
-int open_device(struct capture_device *);
-int check_capture_capabilities(struct capture_device *);
+
+// set the capture parameters (hardcoded to require YUV420 for now
 int set_cap_param(struct capture_device *);
+
+//initialise streaming, request V4L2 buffers and create mmap'ed buffers
 int init_capture(struct capture_device *);
+
+//tell V4L2 to start the capture
 int start_capture(struct capture_device *);
 
-//capture methods
+/*
+ * capture methods
+ * these methods can be called if calls to all the init methods were successful
+ */
+
+//blocks until a frame is available (optional)
 int wait_for_frame(struct capture_device *);
+
+//dequeue the next buffer with available frame
 struct v4l2_buffer *dequeue_buffer(struct capture_device *);
+
+//get the address of the buffer where frame is
 void *get_frame_buffer(struct capture_device *, struct v4l2_buffer *, int *);
+
+//enqueue the buffer when done using the frame
 void enqueue_buffer(struct capture_device *, struct v4l2_buffer *);
  
-//Freeing resources
+
+/*
+ * Freeing resources
+ * these methods free resources created by matching init methods. Note that
+ * set_cap_param doesnt have a counterpart since it only sets values and doesnt
+ * create additional resources.
+ */
+
+//counterpart of start_capture, must be called it start_capture was successful
 int stop_capture(struct capture_device *);
+
+//counterpart of init_capture, must be called it init_capture was successful
 void free_capture(struct capture_device *);
-void close_device(struct capture_device *);
+
+//counterpart of init_libv4l2, must be called it init_libv4l2 was successful
 void del_libv4l2(struct capture_device *);
 
-//Control methods
-struct control_list *list_control(struct capture_device *);
+
+/*
+ * Control methods
+ * the available controls are listed in the 'ctrls' member of the struct 
+ * capture_device returned by init_libv4l2.
+ * to use the following methods, find the desired v4l2_queryctrl to be
+ * accessed and call either get or set _control_value. These methods can
+ * be used if call to init_libv4l2 was succesful, and until del_libv4l2 
+ * is called
+ */
 int get_control_value(struct capture_device *, struct v4l2_queryctrl *);
 void set_control_value(struct capture_device *, struct v4l2_queryctrl *,  int);
-void free_control_list(struct control_list *);
 
-//Query and list methods (printf to stdout)
+/*
+ * Query and list methods (printf to stdout, use to debug)
+ * these methods can be called after init_libv4l2 and before del_libv4l2
+ */
 void list_cap(struct capture_device *);			//prints results from query methods listed below
 void enum_image_fmt(struct capture_device *);		//lists all supported image formats
 void query_control(struct capture_device *);		//lists all supported controls
@@ -108,4 +152,7 @@ void query_capture_intf(struct capture_device *);	//prints capabilities
 void query_current_image_fmt(struct capture_device *);	//useless...
 
 
+//these methods should not be called directly
+struct control_list *list_control(struct capture_device *);
+void free_control_list(struct control_list *);
 #endif

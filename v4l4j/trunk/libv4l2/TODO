@@ -1,4 +1,7 @@
 TODO List:
+- Add support for V4L1 devices.
+
+- Reorganised/clean up header files.
 
 - libv4l2 is NOT reentrant and does NOT implement a proper locking scheme yet.
 Therefore, it is the caller's responsibility to ensure accesses to libv4l2 are

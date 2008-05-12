@@ -28,14 +28,15 @@ COMPILING:
 
 USAGE:
 libv4l2 is a library and is meant to be linked to an application. However, a
-test program is shipped, which captures from /dev/video0 for 5 seconds, and 
-prints the frame rate. To compile the test program, run "make test". The test
-program is named "test_libv4l2"
+test program is shipped, which runs a 5 second capture from the video device
+given as its sole argument. It then prints the frame rate. To compile the test
+program, run "make test". The test program is named "test_libv4l2".
 
 DEBUGGING:
 Edit the Makefile, uncomment the line #DEBUG line and recompile libv4l2. Extra
 output will be produced to allows troubleshooting.
 
 ISSUES:
-Issues and queries can be emailed to gilles.gigan@gmail.com
+Issues and queries can be emailed to gilles.gigan@gmail.com along with a
+description of what went wrong and what hardware you run libv4l2 on.
 
