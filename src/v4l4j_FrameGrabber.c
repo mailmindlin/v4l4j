@@ -130,23 +130,16 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_init_1v4l(JNIE
 	d->c = init_libv4l2(device_file, w,h,ch,std,n);
 	(*e)->ReleaseStringUTFChars(e, f,device_file);
 
-	dprint(LOG_LIBV4L2, "[LIBV4L2] Calling 'open_device(dev: %s)'\n",d->c->file);
-	if(open_device(d->c)<0) {
-		throwV4L4JException(e, "Cant open device");
+	if(d->c==NULL) {
+		dprint(LOG_V4L4J, "[V4L4J] init_libv4l2 failed\n");
+		throwV4L4JException(e, "Cant initialise device (maybe not a v4l2 device or device file unreadable)");
 		return 0;
 	}
 
-	dprint(LOG_LIBV4L2, "[LIBV4L2] Calling 'check_capture_capabilities(dev: %s)'\n",d->c->file);
-	if(check_capture_capabilities(d->c)<0){
-		close_device(d->c);
-		throwV4L4JException(e, "Device doesnt have capture/streaming capabilities");
-		return 0;
-	}
-
-	
 	dprint(LOG_LIBV4L2, "[LIBV4L2] Calling 'set_cap_param(dev: %s)'\n",d->c->file);
 	if(set_cap_param(d->c)){
-		close_device(d->c);
+		dprint(LOG_V4L4J, "[V4L4J] set_cap_param failed\n");
+		del_libv4l2(d->c);
 		throwV4L4JException(e, "Cant set capture parameters");
 		return 0;
 	}
@@ -154,7 +147,8 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_init_1v4l(JNIE
 
 	dprint(LOG_LIBV4L2, "[LIBV4L2] Calling 'init_capture(dev: %s)'\n",d->c->file);
 	if(init_capture(d->c)<0){
-		close_device(d->c);
+		dprint(LOG_V4L4J, "[V4L4J] init_capture failed\n");
+		del_libv4l2(d->c);
 		throwV4L4JException(e, "Cant initialise capture ");
 		return 0;
 	}
@@ -192,7 +186,9 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_init_1v4l(JNIE
 	v4l2ControlClass = (*e)->FindClass(e,"au/edu/jcu/v4l4j/V4L2Control");
 	ctor = (*e)->GetMethodID(e, v4l2ControlClass, "<init>", "(ILjava/lang/String;IIILau/edu/jcu/v4l4j/FrameGrabber;)V");
 	if(ctor == NULL){
-		close_device(d->c);
+		dprint(LOG_V4L4J, "[V4L4J] Error looking up the V4L2Control class\n");
+		free_capture(d->c);
+		del_libv4l2(d->c);
 		throwV4L4JException(e, "Cant create V4L2control java objects");
 		return 0;
 	}
@@ -249,13 +245,13 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_start(JNIEnv *e, jobje
 	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object; 
 	dprint(LOG_LIBV4L2, "[LIBV4L2] Calling start_capture(dev: %s)\n", d->c->file);
 	if(start_capture(d->c)<0){
-		close_device(d->c);
+		dprint(LOG_V4L4J, "[V4L4J] start_capture failed\n");
 		throwV4L4JException(e, "Cant start capture");
 	}
 }
 
 /*
- * tell the JPEG compressor the compression factor
+ * tell the JPEG compressor the new compression factor
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_setQuality(JNIEnv *e, jobject t, jlong object, jint q){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
@@ -304,8 +300,8 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getBuffer(JNIEnv *e, j
 		enqueue_buffer(d->c, b);
 		return i;
 	}
-
-	throwV4L4JException(e, "Cant get buffer ");
+	dprint(LOG_V4L4J, "Error dequeuing buffer for capture\n");
+	throwV4L4JException(e, "Cant get buffer");
 	return -1;
 }
 
@@ -326,14 +322,19 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_stop(JNIEnv *e, jobjec
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object;
 	dprint(LOG_LIBV4L2, "[LIBV4L2] Calling stop_capture(dev: %s)\n", d->c->file);
-	if(stop_capture(d->c)<0)
-		fprintf(stderr, "Error stopping capture\n");
+	if(stop_capture(d->c)<0) {
+		dprint(LOG_V4L4J, "Error stopping capture\n");
+		//not sure whether we should throw an exception here...
+		//if we do, FrameGrabber wont let us call delete (free_capture,del_libv4l2)
+		//because its state will be stuck in capture...
+		//throwV4L4JException(e, "Cant stop capture");
+	}
 }
 
 /*
- * free v4l4j device
  * free JPEG compressor
- * free libv4l2 (free_capture, close, del_libv4l2)
+ * free libv4l2 (free_capture, del_libv4l2)
+ * free v4l4j device
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_delete(JNIEnv *e, jobject t, jlong object){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
@@ -344,10 +345,8 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_delete(JNIEnv *e, jobj
 	jpeg_destroy_compress(&(d->j.cinfo));
 	dprint(LOG_LIBV4L2, "[LIBV4L2] Calling free_capture(dev: %s)\n", d->c->file);
 	free_capture(d->c);
-	dprint(LOG_LIBV4L2, "[LIBV4L2] Calling close_device(dev: %s)\n", d->c->file);
-	close_device(d->c);
 
-	dprint(LOG_V4L4J, "[V4L4J] Freeing %d ByteBuffers areas\n",d->c->mmap->buffer_nr);
+	dprint(LOG_V4L4J, "[V4L4J] Freeing %d ByteBuffers areas and array\n",d->c->mmap->buffer_nr);
 	for(i=0; i<d->c->mmap->buffer_nr;i++)
 		XFREE(d->bufs[i]);
 	XFREE(d->bufs);	

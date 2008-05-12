@@ -39,40 +39,41 @@ int main(int argc, char** argv) {
 	struct timeval start, now;
 	int size, count=0;
 	
-	printf("This program will try capturing frames from /dev/video0 for"\
-		" %d seconds and will print the FPS\n", CAPTURE_LENGTH);
+	if(argc!=2) {
+		printf("This program requires the path to the video device file to be tested.\n");
+		printf("Usage: %s /dev/video0\n", argv[0]);
+		return -1;
+	}
+	
+	printf("This program will try capturing frames from %s for"\
+		" %d seconds and will print the FPS\n", argv[1], CAPTURE_LENGTH);
 	printf("Make sure your webcam is connected, make sure it is the"\
 		" only one, and press <Enter>, or Ctrl-C to abort now.");
 	getchar();
 
-	c = init_libv4l2("/dev/video0", 640,480 ,0,0,2);
-	printf("Capturing from /dev/video0 at %dx%d...\n", c->width,c->height);
+	c = init_libv4l2(argv[1], 640,480 ,0,0,2);
 
-	if(open_device(c)<0) {
-		printf("Cant open device");
+	if(c==NULL) {
+		printf("Error initialising device.");
 		return -1;
 	}
-	
-	if(check_capture_capabilities(c)<0){
-		close_device(c);
-		printf("Device doesnt have capture/streaming capabilities");
-		return -1;
-	}
+	printf("Capturing from /dev/video0 at %dx%d...\n", c->width,c->height);
 	
 	if(set_cap_param(c)){
-		close_device(c);
+		del_libv4l2(c);
 		printf("Cant set capture parameters");
 		return -1;
 	}
 
 	if(init_capture(c)<0){
-		close_device(c);
+		del_libv4l2(c);
 		printf("Cant initialise capture ");
 		return -1;
 	}
 	
 	if(start_capture(c)<0){
-		close_device(c);
+		free_capture(c);
+		del_libv4l2(c);
 		printf("Cant start capture");
 	}
 	
@@ -103,7 +104,6 @@ int main(int argc, char** argv) {
 		fprintf(stderr, "Error stopping capture\n");
 
 	free_capture(c);
-	close_device(c);
 	del_libv4l2(c);
 	return 0;
 }
