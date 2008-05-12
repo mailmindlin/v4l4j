@@ -1,3 +1,8 @@
-v0.3:
+v0.3.1:
+- Groupped open_device() and check_cap_param() under init_libv4l2() to fix an
+  issue with controls being listed before checking if the video device is V4L2
+- as a consequence, close_device() is now called by del_libv4l2()
+
+v0.3.0:
 - Fixed buffer overrun issues with probe-pwc
 - dropped frame.c and frame.h

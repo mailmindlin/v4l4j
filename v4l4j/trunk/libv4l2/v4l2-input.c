@@ -55,8 +55,63 @@
 
 
 void get_libv4l2_version(char * c) {
-	sprintf(c, "%d.%d", VER_MAJ, VER_MIN);
+	sprintf(c, "%d.%d-%d", VER_MAJ, VER_MIN, VER_REL);
 }
+
+static void close_device(struct capture_device *c) {
+	//Close device file
+	dprint(LIBV4L2_LOG_SOURCE_V4L2, LIBV4L2_LOG_LEVEL_DEBUG2, "V4L2: closing device file %s.\n", c->file);
+	close(c->fd);
+}
+
+
+void del_libv4l2(struct capture_device *c) {
+	free_control_list(c->ctrls);
+	close_device(c);
+	XFREE(c->mmap);
+	XFREE(c);
+}
+
+static int open_device(struct capture_device *c) {
+	int retval = 0;
+	dprint(LIBV4L2_LOG_SOURCE_V4L2, LIBV4L2_LOG_LEVEL_DEBUG2, "V4L2: Opening device file %s.\n", c->file);
+	if ((strlen(c->file) == 0) || ((c->fd = open(c->file,O_RDWR )) < 0)) {
+		dprint(LIBV4L2_LOG_SOURCE_V4L2, LIBV4L2_LOG_LEVEL_ERR, "V4L2: unable to open device file %s.\n", c->file);
+		retval = -1;
+	}
+	
+	return retval;
+}
+
+
+static int get_capabilities(int fd, struct v4l2_capability *cap) {
+	if (-1 == ioctl(fd, VIDIOC_QUERYCAP, cap)) {
+		dprint(LIBV4L2_LOG_SOURCE_V4L2, LIBV4L2_LOG_LEVEL_ERR, "V4L2: Not a V4L2 device.\n");
+		return -1;
+	}
+	return 0;
+}
+
+static int check_capture_capabilities(struct capture_device *c) {
+	struct v4l2_capability cap;
+
+	CLEAR(cap);
+	
+	if (get_capabilities(c->fd, &cap)!=0) return -1;
+
+	if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
+		dprint(LIBV4L2_LOG_SOURCE_V4L2, LIBV4L2_LOG_LEVEL_ERR, "V4L2: no capture capability.\n");
+		return -1;
+	}
+
+	if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
+		dprint(LIBV4L2_LOG_SOURCE_V4L2, LIBV4L2_LOG_LEVEL_ERR, "V4L2: no streaming capability.\n");
+		return -1;
+	}
+
+	return 0;
+}
+
 
 struct capture_device *init_libv4l2(const char *dev, int w, int h, int ch, int s, int buf_nb) {
 	//create capture device
@@ -72,33 +127,25 @@ struct capture_device *init_libv4l2(const char *dev, int w, int h, int ch, int s
 	c->height = h;
 	c->channel = ch;
 	c->std = s;
-	
+
+	dprint(LIBV4L2_LOG_SOURCE_V4L2, LIBV4L2_LOG_LEVEL_DEBUG2, "V4L2: Opening device %s\n", c->file);
+	if(open_device(c)!=0) {
+		XFREE(c->mmap);
+		XFREE(c);
+		return NULL;
+	}
+
+	dprint(LIBV4L2_LOG_SOURCE_V4L2, LIBV4L2_LOG_LEVEL_DEBUG2, "V4L2: Checking capabilities on device %s\n", c->file);
+	if(check_capture_capabilities(c)!=0){
+		close_device(c);
+		XFREE(c->mmap);
+		XFREE(c);
+		return NULL;
+	}
+
+	c->ctrls = list_control(c);
+
 	return c;
-}
-
-void del_libv4l2(struct capture_device *c) {
-	//free cdev
-	XFREE(c->mmap);
-	XFREE(c);
-}
-
-void close_device(struct capture_device *c) {
-	//Close device file
-	dprint(LIBV4L2_LOG_SOURCE_V4L2, LIBV4L2_LOG_LEVEL_DEBUG2, "V4L2: closing device file %s.\n", c->file);
-	free_control_list(c->ctrls);
-	close(c->fd);
-}
-
-int open_device(struct capture_device *c) {
-	int retval = 0;
-	dprint(LIBV4L2_LOG_SOURCE_V4L2, LIBV4L2_LOG_LEVEL_DEBUG2, "V4L2: Opening device file %s.\n", c->file);
-	if ((strlen(c->file) == 0) || ((c->fd = open(c->file,O_RDWR )) < 0)) {
-		dprint(LIBV4L2_LOG_SOURCE_V4L2, LIBV4L2_LOG_LEVEL_ERR, "V4L2: unable to open device file %s.\n", c->file);
-		retval = -1;
-	} else
-		c->ctrls = list_control(c);
-	
-	return retval;
 }
 
 struct v4l2_buffer *dequeue_buffer(struct capture_device *c) {
@@ -354,34 +401,6 @@ int stop_capture(struct capture_device *c) {
 		return -1;
 	}
 	
-	return 0;
-}
-
-int get_capabilities(int fd, struct v4l2_capability *cap) {
-	if (-1 == ioctl(fd, VIDIOC_QUERYCAP, cap)) {
-		dprint(LIBV4L2_LOG_SOURCE_V4L2, LIBV4L2_LOG_LEVEL_ERR, "V4L2: Not a V4L2 device.\n");
-		return -1;
-	}
-	return 0;
-}
-
-int check_capture_capabilities(struct capture_device *c) {
-	struct v4l2_capability cap;
-
-	CLEAR(cap);
-	
-	if (get_capabilities(c->fd, &cap)!=0) return -1;
-
-	if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
-		dprint(LIBV4L2_LOG_SOURCE_V4L2, LIBV4L2_LOG_LEVEL_ERR, "V4L2: no capture capability.\n");
-		return -1;
-	}
-
-	if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
-		dprint(LIBV4L2_LOG_SOURCE_V4L2, LIBV4L2_LOG_LEVEL_ERR, "V4L2: no streaming capability.\n");
-		return -1;
-	}
-
 	return 0;
 }
 
