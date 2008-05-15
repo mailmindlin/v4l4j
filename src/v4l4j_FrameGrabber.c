@@ -26,27 +26,14 @@
 #include <stdio.h>
 #include <jpeglib.h>
 
-#include "v4l2-input.h"
+#include "libv4l.h"
+#include "common.h"
+#include "jpeg.h"
 #include "debug.h"
 
-struct jpeg {
-	struct jpeg_compress_struct cinfo;
-	struct jpeg_error_mgr jerr;
-	struct jpeg_destination_mgr destmgr;
-};
-
-struct v4l4j_device {
-	struct capture_device *c;	//the V4L2 struct
-	unsigned char **bufs;		//the buffers holding the RGB data
-	struct jpeg j;				//the jpeg compressor
-	int jpeg_quality;			//the jpeg quality
-	int len;					//the size of the last compressed frame
-}; 
-
-/* Dummy JPEG methods */
-void init_destination( j_compress_ptr cinfo ){}
-boolean empty_output_buffer( j_compress_ptr cinfo ){return TRUE;}
-void term_destination( j_compress_ptr cinfo ){}
+#define SUPPORTED_FORMATS		{YUV420, RGB24}
+#define NB_SUPPORTED_FORMATS	2
+#define INCR_BUF_ID(i, max)			do { (i) = ((i) >= (max)) ? 0 : ((i) + 1); } while(0)
 
 /* Exception throwing helper */
 void throwV4L4JException(JNIEnv *e, const char *message) {
@@ -55,47 +42,6 @@ void throwV4L4JException(JNIEnv *e, const char *message) {
     return;
   }
   (*e)->ThrowNew(e, JV4L4JException, message);
-}
-
-/* Encodes a YUV planar frame of width "width and height "height" at "src" straight 
- * into a JPEG frame at "dst" (must be allocated y caller). "len" is set to the
- * length of the compressed JPEG frame. "j" contains the JPEG compressor and 
- * must be initialised correctly by the caller
- */
-void jpeg_encode(struct v4l4j_device *d, void *src, int width, int height, int *len, void *dst) {
-	//Code for this function is taken from Motion
-	//Credit to them !!!
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	
-	JSAMPROW y[16],cb[16],cr[16]; 
-	JSAMPARRAY data[3]; 
-	int i, line, rgb_size;
-	
-	data[0] = y;
-	data[1] = cb;
-	data[2] = cr;
-	
-	//init JPEG dest mgr
-	rgb_size = width * height * 3;
-	d->j.destmgr.next_output_byte = dst;
-	d->j.destmgr.free_in_buffer = rgb_size;
-	jpeg_set_quality(&(d->j.cinfo),d->jpeg_quality,TRUE);
-	
-	dprint(LOG_JPEG, "[JPEG] Starting compression (%d bytes)\n", rgb_size);	
-	jpeg_start_compress( &(d->j.cinfo), TRUE );
-	for (line=0; line<height; line+=16) {
-		for (i=0; i<16; i++) {
-			y[i] = (unsigned char *)src + width*(i+line);
-			if (i%2 == 0) {
-				cb[i/2] = (unsigned char *)src + width*height + width/2*((i+line)/2);
-				cr[i/2] = (unsigned char *)src + width*height + width*height/4 + width/2*((i+line)/2);
-			}
-		}
-		jpeg_write_raw_data(&(d->j.cinfo), data, 16);
-	}
-	jpeg_finish_compress(&(d->j.cinfo));
-	d->len = rgb_size - d->j.cinfo.dest->free_in_buffer;
-	dprint(LOG_JPEG, "[JPEG] Finished compression (%d bytes)\n", d->len);
 }
 
 /*
@@ -109,7 +55,7 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_allocateObject(JNIEnv
 }
 
 /*
- * initialise libv4l2 (open, set_cap_param, init_capture)
+ * initialise LIBV4L (open, set_cap_param, init_capture)
  * creates the Java ByteBuffers
  * creates the V4L2Controls
  * initialise the JPEG compressor 
@@ -125,30 +71,31 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_init_1v4l(JNIE
 	const char * device_file = (*e)->GetStringUTFChars(e, f, 0);
 	struct control_list *l;
 	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object; 
+	int fmts[NB_SUPPORTED_FORMATS] = SUPPORTED_FORMATS; 
 	
-	dprint(LOG_LIBV4L2, "[LIBV4L2] Calling 'init_libv4l2(dev:%s, w:%d,h:%d, ch:%d, std:%d, nb_buf:%d)'\n",device_file,w,h,ch,std,n);
-	d->c = init_libv4l2(device_file, w,h,ch,std,n);
+	dprint(LOG_LIBV4L, "[LIBV4L] Calling 'init_libv4l(dev:%s, w:%d,h:%d, ch:%d, std:%d, nb_buf:%d)'\n",device_file,w,h,ch,std,n);
+	d->c = init_libv4l(device_file, w,h,ch,std,n);
 	(*e)->ReleaseStringUTFChars(e, f,device_file);
 
 	if(d->c==NULL) {
-		dprint(LOG_V4L4J, "[V4L4J] init_libv4l2 failed\n");
-		throwV4L4JException(e, "Cant initialise device (maybe not a v4l2 device or device file unreadable)");
+		dprint(LOG_V4L4J, "[V4L4J] init_libv4l failed\n");
+		throwV4L4JException(e, "Cant initialise device (check capture resolution / device file permission)");
 		return 0;
 	}
 
-	dprint(LOG_LIBV4L2, "[LIBV4L2] Calling 'set_cap_param(dev: %s)'\n",d->c->file);
-	if(set_cap_param(d->c)){
+	dprint(LOG_LIBV4L, "[LIBV4L] Calling 'set_cap_param(dev: %s)'\n",d->c->file);
+	if(set_cap_param(d->c, fmts, NB_SUPPORTED_FORMATS)){
 		dprint(LOG_V4L4J, "[V4L4J] set_cap_param failed\n");
-		del_libv4l2(d->c);
+		del_libv4l(d->c);
 		throwV4L4JException(e, "Cant set capture parameters");
 		return 0;
 	}
 
 
-	dprint(LOG_LIBV4L2, "[LIBV4L2] Calling 'init_capture(dev: %s)'\n",d->c->file);
+	dprint(LOG_LIBV4L, "[LIBV4L] Calling 'init_capture(dev: %s)'\n",d->c->file);
 	if(init_capture(d->c)<0){
 		dprint(LOG_V4L4J, "[V4L4J] init_capture failed\n");
-		del_libv4l2(d->c);
+		del_libv4l(d->c);
 		throwV4L4JException(e, "Cant initialise capture ");
 		return 0;
 	}
@@ -188,7 +135,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_init_1v4l(JNIE
 	if(ctor == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the V4L2Control class\n");
 		free_capture(d->c);
-		del_libv4l2(d->c);
+		del_libv4l(d->c);
 		throwV4L4JException(e, "Cant create V4L2control java objects");
 		return 0;
 	}
@@ -206,44 +153,23 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_init_1v4l(JNIE
 	(*e)->SetObjectField(e, t, field, ctrls);
 	
 	//setup jpeg param
-	dprint(LOG_V4L4J, "[V4L4J] Setting up the JPEG compressor\n");
-	d->j.cinfo.err = jpeg_std_error(&(d->j.jerr));
-	jpeg_create_compress(&(d->j.cinfo));
-	d->j.cinfo.image_width = w;
-	d->j.cinfo.image_height = h;
-	d->j.cinfo.input_components = 3;
-	jpeg_set_defaults(&(d->j.cinfo)) ;
-	jpeg_set_colorspace(&(d->j.cinfo), JCS_YCbCr);
-	
-	d->j.cinfo.raw_data_in = TRUE; // supply downsampled data
-	d->j.cinfo.comp_info[0].h_samp_factor = 2;
-	d->j.cinfo.comp_info[0].v_samp_factor = 2;
-	d->j.cinfo.comp_info[1].h_samp_factor = 1;
-	d->j.cinfo.comp_info[1].v_samp_factor = 1;
-	d->j.cinfo.comp_info[2].h_samp_factor = 1;
-	d->j.cinfo.comp_info[2].v_samp_factor = 1;
-	
-	jpeg_set_quality(&(d->j.cinfo), q, TRUE);
-	d->j.cinfo.dct_method = JDCT_FASTEST;
-	
-	d->j.destmgr.init_destination = init_destination;
-	d->j.destmgr.empty_output_buffer = empty_output_buffer;
-	d->j.destmgr.term_destination = term_destination;
-		
-	d->j.cinfo.dest = &(d->j.destmgr);
-	
-	d->jpeg_quality=q;
-	
+	if(init_jpeg_compressor(d, q)!=0) {
+		dprint(LOG_V4L4J, "[V4L4J] Error initialising the JPEG compressor\n");
+		free_capture(d->c);
+		del_libv4l(d->c);
+		throwV4L4JException(e, "Cant initialise the JPEG compressor");
+	}	
+	d->buf_id = -1;
 	return arr;
 }
 
 /*
- * tell libv4l2 to start the capture
+ * tell LIBV4L to start the capture
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_start(JNIEnv *e, jobject t, jlong object){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object; 
-	dprint(LOG_LIBV4L2, "[LIBV4L2] Calling start_capture(dev: %s)\n", d->c->file);
+	dprint(LOG_LIBV4L, "[LIBV4L] Calling start_capture(dev: %s)\n", d->c->file);
 	if(start_capture(d->c)<0){
 		dprint(LOG_V4L4J, "[V4L4J] start_capture failed\n");
 		throwV4L4JException(e, "Cant start capture");
@@ -266,7 +192,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_setQuality(JNIEnv *e, 
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_setCtrlValue(JNIEnv *e, jobject t, jlong object, jint id, jint value){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object;
-	dprint(LOG_LIBV4L2, "[LIBV4L2] Calling set_control_value(dev: %s, ctrl name:%s, val: %d)\n", d->c->file,d->c->ctrls->ctrl[id].name,value);
+	dprint(LOG_LIBV4L, "[LIBV4L] Calling set_control_value(dev: %s, ctrl name:%s, val: %d)\n", d->c->file,d->c->ctrls->ctrl[id].name,value);
 	set_control_value(d->c, &(d->c->ctrls->ctrl[id]), value);
 }
 
@@ -277,7 +203,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getCtrlValue(JNIEnv *e
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object;
 	int val = get_control_value(d->c,&(d->c->ctrls->ctrl[id])); 
-	dprint(LOG_LIBV4L2, "[LIBV4L2] Calling get_control_value(dev: %s, ctrl name:%s, val: %d)\n", d->c->file,d->c->ctrls->ctrl[id].name,val);
+	dprint(LOG_LIBV4L, "[LIBV4L] Calling get_control_value(dev: %s, ctrl name:%s, val: %d)\n", d->c->file,d->c->ctrls->ctrl[id].name,val);
 	return val;
 }
 
@@ -287,16 +213,17 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getCtrlValue(JNIEnv *e
  */
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getBuffer(JNIEnv *e, jobject t, jlong object) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	int i;
+	int i, len;
 	struct v4l2_buffer *b;
 	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object;
 	
 	//get frame from v4l2 
-	dprint(LOG_LIBV4L2, "[LIBV4L2] Calling dequeue_buffer(dev: %s)\n", d->c->file);
+	dprint(LOG_LIBV4L, "[LIBV4L] Calling dequeue_buffer(dev: %s)\n", d->c->file);
 	if((b = dequeue_buffer(d->c)) != NULL) {
-		i=b->index;
-		jpeg_encode(d, d->c->mmap->buffers[i].start, d->c->width, d->c->height, &(d->len), d->bufs[i]);
-		dprint(LOG_LIBV4L2, "[LIBV4L2] Calling enqueue_buffer(dev: %s)\n", d->c->file);
+		i = d->buf_id = (d->buf_id == (d->c->mmap->buffer_nr-1)) ? 0 : d->buf_id+1;
+		dprint(LOG_LIBV4L, "[LIBV4L] i=%d\n", i); 
+		(*d->j.jpeg_encode)(d, get_frame_buffer(d->c, b, &len), d->bufs[i]);
+		dprint(LOG_LIBV4L, "[LIBV4L] Calling enqueue_buffer(dev: %s)\n", d->c->file);
 		enqueue_buffer(d->c, b);
 		return i;
 	}
@@ -316,12 +243,12 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getBufferLength(JNIEnv
 }
 
 /*
- * tell libv4l2 to stop the capture
+ * tell LIBV4L to stop the capture
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_stop(JNIEnv *e, jobject t, jlong object){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object;
-	dprint(LOG_LIBV4L2, "[LIBV4L2] Calling stop_capture(dev: %s)\n", d->c->file);
+	dprint(LOG_LIBV4L, "[LIBV4L] Calling stop_capture(dev: %s)\n", d->c->file);
 	if(stop_capture(d->c)<0) {
 		dprint(LOG_V4L4J, "Error stopping capture\n");
 		//not sure whether we should throw an exception here...
@@ -333,7 +260,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_stop(JNIEnv *e, jobjec
 
 /*
  * free JPEG compressor
- * free libv4l2 (free_capture, del_libv4l2)
+ * free LIBV4L (free_capture, del_libv4l2)
  * free v4l4j device
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_delete(JNIEnv *e, jobject t, jlong object){
@@ -341,9 +268,9 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_delete(JNIEnv *e, jobj
 	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object;
 	int i;
 	
-	dprint(LOG_JPEG, "[JPEG] Destroying JPEG compressor\n");
-	jpeg_destroy_compress(&(d->j.cinfo));
-	dprint(LOG_LIBV4L2, "[LIBV4L2] Calling free_capture(dev: %s)\n", d->c->file);
+	destroy_jpeg_compressor(d);
+	
+	dprint(LOG_LIBV4L, "[LIBV4L] Calling free_capture(dev: %s)\n", d->c->file);
 	free_capture(d->c);
 
 	dprint(LOG_V4L4J, "[V4L4J] Freeing %d ByteBuffers areas and array\n",d->c->mmap->buffer_nr);
@@ -351,8 +278,8 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_delete(JNIEnv *e, jobj
 		XFREE(d->bufs[i]);
 	XFREE(d->bufs);	
 
-	dprint(LOG_LIBV4L2, "[LIBV4L2] Calling del_libv4l2(dev: %s)\n", d->c->file);
-	del_libv4l2(d->c);
+	dprint(LOG_LIBV4L, "[LIBV4L] Calling del_libv4l2(dev: %s)\n", d->c->file);
+	del_libv4l(d->c);
 	
 	dprint(LOG_V4L4J, "[V4L4J] Freeing v4l4j device\n");
 	XFREE(d);
