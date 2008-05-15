@@ -45,7 +45,7 @@
 	
 	<target name="jnilib" depends="">
 		<exec executable="make">
-			<arg line="-C ${libv4l2.dir}" />
+			<arg line="-C ${libv4l.dir}" />
 		</exec>
 		<exec executable="make">
 			<arg line="-C ${project.src}" />
@@ -130,7 +130,7 @@
 	
 	<target name="clean">
 		<exec executable="make">
-		<arg line="-C ${libv4l2.dir} clean" />
+		<arg line="-C ${libv4l.dir} clean" />
 		</exec>
 		<exec executable="make">
 			<arg line="-C ${project.src} clean" />

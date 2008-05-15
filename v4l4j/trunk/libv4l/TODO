@@ -1,0 +1,9 @@
+TODO List:
+- Implement setting of frequency for TV tuners.
+- Add support for setting the fps, instead of having it done by the application.
+- Add probe for more drivers (need some help from people having hardware for that).
+- Reorganised/clean up header files.
+- libv4l is NOT reentrant and does NOT implement a proper locking scheme yet.
+  Therefore, it is the caller's responsibility to ensure accesses to libv4l2
+  are synchronised.
+

@@ -28,16 +28,19 @@
 #define CLEAR(x) memset(&x, 0x0, sizeof(x));
 
 #define LOG_CALLS			1
-#define LOG_LIBV4L2			2
-#define LOG_MEMALLOC			4
+#define LOG_LIBV4L			2
+#define LOG_MEMALLOC		4
 #define LOG_JPEG			8
 #define LOG_V4L4J			16
 
-#define LOG_ALL 			( LOG_CALLS | LOG_LIBV4L2 | LOG_MEMALLOC | LOG_JPEG | LOG_V4L4J)
+#define LOG_ALL 			( LOG_CALLS | LOG_LIBV4L | LOG_MEMALLOC | LOG_JPEG | LOG_V4L4J)
 
 #ifndef LOG_SOURCE
 #define LOG_SOURCE			LOG_ALL
 #endif 
+
+#include <string.h>
+#include <stdlib.h>
 
 
 #ifdef DEBUG 

@@ -9,13 +9,14 @@ JDK_HOME=/usr/lib/jvm/java-6-sun
 #
 # edit anything below at your own risk
 #
-LIBV4L2_PATH=../libv4l2
+LIBV4L_PATH=../libv4l
+LIBV4L_NAME=libv4l.a
 
 LIB=libv4l4j.so
-OBJ=v4l4j_FrameGrabber.o $(LIBV4L2_PATH)/libv4l2.a
+OBJ=v4l4j_FrameGrabber.o jpeg.o $(LIBV4L_PATH)/$(LIBV4L_NAME)
 
 CC=gcc
-INCLUDES=-I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ -I$(LIBV4L2_PATH)
+INCLUDES=-I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ -I$(LIBV4L_PATH) -I.
 OPTIMISATION=-O3
 CFLAGS=$(INCLUDES) $(DEBUG) $(OPTIMISATION)
 
@@ -25,10 +26,7 @@ LDFLAGS=-shared -ljpeg
 all: $(LIB)
 
 $(LIB): $(OBJ)
-	$(LD) $(LDFLAGS) v4l4j_FrameGrabber.o $(LIBV4L2_PATH)/libv4l2.a -o $(LIB)
-
-v4l4j_FrameGrabber.o: v4l4j_FrameGrabber.c
-	$(CC) $(CFLAGS) -c v4l4j_FrameGrabber.c
+	$(LD) $(LDFLAGS) $(OBJ) -o $(LIB)
 
 clean:
 	rm -f $(OBJ) $(LIB) ./*~

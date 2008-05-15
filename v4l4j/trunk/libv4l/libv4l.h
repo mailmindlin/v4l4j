@@ -22,56 +22,14 @@
 *
 */
 
-#ifndef H_V4L2_INPUT
-#define H_V4L2_INPUT
+#ifndef H_LIBV4L
+#define H_LIBV4L
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <signal.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <sys/mman.h>
-#include <asm/types.h>		//for videodev2
-#include "videodev2.h"
-#include <string.h>
+#include "common.h"
 
-#define CLEAR(x) memset(&x, 0x0, sizeof(x));
-		
-enum STANDARDS {WEBCAM, PAL, SECAM, NTSC};
-
-struct mmap_buffer {
-	int length;
-	void *start;
-};
-
-struct mmap {
-	int req_buffer_nr;		//requested number of buffers
-	int buffer_nr;			//actual number of mmap buffers
-	struct mmap_buffer *buffers;	//array of buffers
-	struct v4l2_buffer tmp_b;	//temp buffer pointing to the latest dequeued buffer
-};
-
-struct control_list {
-	int count;			//how many controls are available
-	struct v4l2_queryctrl *ctrl;	//array of 'count' v4l2_queryctrl' controls (see videodev.h)
-	void *probe_priv;		//pointer to driver probe code's private data, do not touch
-};
-
-struct capture_device {
-	int fd;
-	int width;
-	int height;
-	int fps;			//not implemented yet
-	int std;			//v4l2 standard
-	int channel;			//channel number (for video capture cards, not webcams)
-	char file[100];			//device file name
-	int bytesperline;		//number of bytes per line in the captured image
-	int imagesize;			//in bytes
-	struct mmap *mmap;		//do not touch
-	struct control_list *ctrls;	//controls
-};
-
-void get_libv4l2_version(char *);
+//Put the version in string & return it. allocation and freeing must be done by caller
+//passing a char[10] is enough.
+char *get_libv4l_version(char *);
 
 /*
  * Init methods
@@ -80,26 +38,29 @@ void get_libv4l2_version(char *);
  * the init one was successful
  */
 
-//init_libv4l2 initialises required struct, opens the device file, and check if
-//device supports v4l2, capture and streaming. Then creates the V4L control list
-struct capture_device *init_libv4l2(const char *, int, int, int, int, int);
+//init_libv4l initialises required struct, opens the device file, and check what
+//version of v4l the device supports, and whether capture and streaming are supported.
+//Then creates the V4L control list.
+//Arguments: device file, width, height, channel, std, nb_buf
+struct capture_device *init_libv4l(const char *, int, int, int, int, int);
 
-// set the capture parameters (hardcoded to require YUV420 for now
-int set_cap_param(struct capture_device *);
 
-//initialise streaming, request V4L2 buffers and create mmap'ed buffers
+//set the capture parameters
+//int * point to an array of image formats to try (see libv4l.h for a list of supported formats)
+//the last argument (int) tells how many formats there are in the previous argument
+//arg2 can be set to NULL and arg3 to 0 to try the default order (again, see libv4l.h) 
+int set_cap_param(struct capture_device *, int *, int);
+
+//initialise streaming, request create mmap'ed buffers
 int init_capture(struct capture_device *);
 
-//tell V4L2 to start the capture
+//tell V4L to start the capture
 int start_capture(struct capture_device *);
 
 /*
  * capture methods
- * these methods can be called if calls to all the init methods were successful
+ * these methods can be called if calls to ALL the init methods (above) were successful
  */
-
-//blocks until a frame is available (optional)
-int wait_for_frame(struct capture_device *);
 
 //dequeue the next buffer with available frame
 struct v4l2_buffer *dequeue_buffer(struct capture_device *);
@@ -125,7 +86,7 @@ int stop_capture(struct capture_device *);
 void free_capture(struct capture_device *);
 
 //counterpart of init_libv4l2, must be called it init_libv4l2 was successful
-void del_libv4l2(struct capture_device *);
+void del_libv4l(struct capture_device *);
 
 
 /*
@@ -144,15 +105,11 @@ void set_control_value(struct capture_device *, struct v4l2_queryctrl *,  int);
  * Query and list methods (printf to stdout, use to debug)
  * these methods can be called after init_libv4l2 and before del_libv4l2
  */
-void list_cap(struct capture_device *);			//prints results from query methods listed below
+void list_cap(struct capture_device *);				//prints results from query methods listed below
 void enum_image_fmt(struct capture_device *);		//lists all supported image formats
 void query_control(struct capture_device *);		//lists all supported controls
 void query_frame_sizes(struct capture_device *);	// not implemented
 void query_capture_intf(struct capture_device *);	//prints capabilities
-void query_current_image_fmt(struct capture_device *);	//useless...
+void query_current_image_fmt(struct capture_device *);	//print max width max height for v4l1 and current settings for v4l2
 
-
-//these methods should not be called directly
-struct control_list *list_control(struct capture_device *);
-void free_control_list(struct control_list *);
 #endif
