@@ -1,0 +1,19 @@
+libv4l has been compiled and tested succesfully on the following platforms:
+- Ubuntu 7.10 - i386
+- Ubuntu 8.04 - i386
+- Debian Etch - i385
+
+Tested video devices:
+- 046d:08b2 Logitech, Inc. QuickCam Pro 4000 (pwc driver)
+- 046d:0840 Logitech, Inc. QuickCam Express (qc-usb driver)
+- 046d:08b5 Logitech, Inc. QuickCam Sphere (pwc driver)
+- 041e:401c Creative Technology, Ltd WebCam NX [PD1110] (gspca driver)
+- BT848 PCI capture card (bttv driver)
+
+Currently, libv4l will probe and detect the following drivers:
+- PWC 		v10.0.13
+- gspca 	v01.00.20
+- Quickam	v0.6.6
+- bttv		(kernel 2.6.18 & 2.6.24)
+
+
