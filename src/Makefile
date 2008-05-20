@@ -13,7 +13,7 @@ LIBV4L_PATH=../libv4l
 LIBV4L_NAME=libv4l.a
 
 LIB=libv4l4j.so
-OBJ=v4l4j_FrameGrabber.o jpeg.o $(LIBV4L_PATH)/$(LIBV4L_NAME)
+OBJ=v4l4j_FrameGrabber.o jpeg.o 
 
 CC=gcc
 INCLUDES=-I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ -I$(LIBV4L_PATH) -I.
@@ -21,12 +21,12 @@ OPTIMISATION=-O3
 CFLAGS=$(INCLUDES) $(DEBUG) $(OPTIMISATION)
 
 LD=gcc
-LDFLAGS=-shared -ljpeg
+LDFLAGS=-shared  -ljpeg
 
 all: $(LIB)
 
 $(LIB): $(OBJ)
-	$(LD) $(LDFLAGS) $(OBJ) -o $(LIB)
+	$(LD) $(LDFLAGS) $(OBJ) $(LIBV4L_PATH)/$(LIBV4L_NAME) -o $(LIB)
 
 clean:
 	rm -f $(OBJ) $(LIB) ./*~

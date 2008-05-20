@@ -28,7 +28,7 @@
 
 
 #include "log.h"
-#include "libv4l-err.h"
+#include "libv4l.h"
 #include "v4l2-input.h"
 #include "v4l1-input.h"
 #include "v4l-control.h"
@@ -54,6 +54,39 @@ static void close_device(struct capture_device *c) {
 	//Close device file
 	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: closing device file %s.\n", c->file);
 	close(c->fd);
+}
+
+static void setup_libv4l_actions(struct capture_device *c) {
+	if(c->v4l_version == V4L1_VERSION) {
+		c->capture.set_cap_param = set_cap_param_v4l1;
+		c->capture.init_capture = init_capture_v4l1;
+		c->capture.start_capture = start_capture_v4l1;
+		c->capture.dequeue_buffer = dequeue_buffer_v4l1;
+		c->capture.enqueue_buffer = enqueue_buffer_v4l1;
+		c->capture.stop_capture = stop_capture_v4l1;
+		c->capture.free_capture = free_capture_v4l1;
+		c->capture.list_cap = list_cap_v4l1;
+		c->capture.enum_image_fmt = enum_image_fmt_v4l1;
+		c->capture.query_control = query_control;
+		c->capture.query_frame_sizes = query_frame_sizes_v4l1;
+		c->capture.query_capture_intf = query_capture_intf_v4l1;
+		c->capture.query_current_image_fmt = query_current_image_fmt_v4l1;		
+	} else {
+		c->capture.set_cap_param = set_cap_param_v4l2;
+		c->capture.init_capture = init_capture_v4l2;
+		c->capture.start_capture = start_capture_v4l2;
+		c->capture.dequeue_buffer = dequeue_buffer_v4l2;
+		c->capture.enqueue_buffer = enqueue_buffer_v4l2;
+		c->capture.stop_capture = stop_capture_v4l2;
+		c->capture.free_capture = free_capture_v4l2;
+		c->capture.list_cap = list_cap_v4l2;
+		c->capture.enum_image_fmt = enum_image_fmt_v4l2;
+		c->capture.query_control = query_control;
+		c->capture.query_frame_sizes = query_frame_sizes_v4l2;
+		c->capture.query_capture_intf = query_capture_intf_v4l2;
+		c->capture.query_current_image_fmt = query_current_image_fmt_v4l2;
+		
+	}
 }
 
 
@@ -98,103 +131,12 @@ struct capture_device *init_libv4l(const char *dev, int w, int h, int ch, int s,
 		XFREE(c);
 		return NULL;
 	}
+	
+	setup_libv4l_actions(c);
 
 	c->ctrls = list_control(c);
 
 	return c;
-}
-
-// set the capture parameters, trying all 'nb' palettes in 'palettes' in order. 
-int set_cap_param(struct capture_device *c, int *palettes, int nb) {
-	int def[NB_SUPPORTED_PALETTE] = DEFAULT_PALETTE_ORDER;
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Setting capture parameters on device %s.\n", c->file);
-	if(nb<0 || nb>=NB_SUPPORTED_PALETTE) {
-		dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Incorrect number of palettes (%d)\n", nb);
-		return LIBV4L_ERR_FORMAT;
-	}
-	if(nb==0 || palettes==NULL) {
-		dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: No palettes supplied, trying default order.\n");
-		palettes = def;
-		nb = NB_SUPPORTED_PALETTE;
-	}
-	if(c->v4l_version==V4L1_VERSION)
-		return set_cap_param_v4l1(c, palettes, nb); 
-	else
-		return set_cap_param_v4l2(c, palettes, nb);
-}
-
-
-//initialise streaming, request V4L2 buffers and create mmap'ed buffers
-int init_capture(struct capture_device *c) {
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Initialising capture on device %s.\n", c->file);
-	if(c->v4l_version==V4L1_VERSION)
-		return init_capture_v4l1(c);
-	else
-		return init_capture_v4l2(c);
-}
-
-//tell V4L2 to start the capture
-int start_capture(struct capture_device *c){
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Starting capture on device %s.\n", c->file);
-	if(c->v4l_version==V4L1_VERSION)
-		return start_capture_v4l1(c);
-	else
-		return start_capture_v4l2(c);
-}
-
-//dequeue the next buffer with available frame
-void *dequeue_buffer(struct capture_device *c) {
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Dequeuing buffer on device %s.\n", c->file);
-	if(c->v4l_version==V4L1_VERSION)
-		return dequeue_buffer_v4l1(c);
-	else
-		return (void *) dequeue_buffer_v4l2(c);
-}
-
-
-//get the address of the buffer where frame is
-void *get_frame_buffer(struct capture_device *c, void *b, int *i){
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Getting buffer address on device %s.\n", c->file);
-	if(c->v4l_version==V4L1_VERSION)
-		return get_frame_buffer_v4l1(c, NULL, i);
-	else
-		return get_frame_buffer_v4l2(c, (struct v4l2_buffer *) b, i);
-}
-
-//enqueue the buffer when done using the frame
-void enqueue_buffer(struct capture_device *c, void *b){
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Queuing buffer on device %s.\n", c->file);
-	if(c->v4l_version==V4L1_VERSION)
-		return enqueue_buffer_v4l1(c, NULL);
-	else
-		return enqueue_buffer_v4l2(c, (struct v4l2_buffer *) b);
-}
- 
-
-/*
- * Freeing resources
- * these methods free resources created by matching init methods. Note that
- * set_cap_param doesnt have a counterpart since it only sets values and doesnt
- * create additional resources.
- */
-
-//counterpart of start_capture, must be called it start_capture was successful
-int stop_capture(struct capture_device *c){
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Stopping capture on device %s.\n", c->file);
-	if(c->v4l_version==V4L1_VERSION)
-		return stop_capture_v4l1(c);
-	else
-		return stop_capture_v4l2(c);
-}
-
-//counterpart of init_capture, must be called it init_capture was successful
-void free_capture(struct capture_device *c){
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Freeing capture on device %s.\n", c->file);
-	if(c->v4l_version==V4L1_VERSION) {
-		return free_capture_v4l1(c);
-	} else {
-		return free_capture_v4l2(c);
-	}
 }
 
 //counterpart of init_libv4l, must be called it init_libv4l was successful
@@ -204,57 +146,4 @@ void del_libv4l(struct capture_device *c){
 	close_device(c);
 	XFREE(c->mmap);
 	XFREE(c);
-}
-
-/*
- * Query and list methods (printf to stdout, use to debug)
- * these methods can be called after init_libv4l and before del_libv4l
- */
-//prints results from query methods listed below
-void list_cap(struct capture_device *c){
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Listing capabilities on device %s.\n", c->file);
-	if(c->v4l_version==V4L1_VERSION) {
-		return list_cap_v4l1(c);
-	} else {
-		return list_cap_v4l2(c);
-	}
-}
-
-//lists all supported image formats
-void enum_image_fmt(struct capture_device *c){
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Enumerating image formats on device %s.\n", c->file);
-	if(c->v4l_version==V4L1_VERSION) {
-		enum_image_fmt_v4l1(c);
-	} else {
-		enum_image_fmt_v4l2(c);
-	}
-}
-
-//lists supported frame sizes
-void query_frame_sizes(struct capture_device *c){
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Listing frame sizes on device %s.\n", c->file);
-	if(c->v4l_version==V4L1_VERSION) {
-		query_frame_sizes_v4l1(c);
-	} else {
-		query_frame_sizes_v4l2(c);
-	}
-}
-
-//prints capabilities
-void query_capture_intf(struct capture_device *c){
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Querying capture channels on device %s.\n", c->file);
-	if(c->v4l_version==V4L1_VERSION) {
-		query_capture_intf_v4l1(c);
-	} else {
-		query_capture_intf_v4l2(c);
-	}
-}
-
-void query_current_image_fmt(struct capture_device *c){
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Listing current settings on device %s.\n", c->file);
-	if(c->v4l_version==V4L1_VERSION) {
-		query_current_image_fmt_v4l1(c);
-	} else {
-		query_current_image_fmt_v4l2(c);
-	}
 }

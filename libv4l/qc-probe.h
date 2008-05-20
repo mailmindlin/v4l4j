@@ -25,7 +25,7 @@
 #ifndef H_QC_PROBE
 #define H_QC_PROBE
 
-#include "common.h"
+#include "libv4l.h"
 
 // index of the qc probe in the struct probe_v4l_driver probe_drivers[] in v4l-probe.h
 #define QC_PROBE_INDEX	2

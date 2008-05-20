@@ -25,12 +25,12 @@
 #ifndef H_V4LCONTROL
 #define H_V4LCONTROL
 
-#include "common.h"
+#include "libv4l.h"
 
 struct control_list *list_control(struct capture_device *);
 int get_control_value(struct capture_device *, struct v4l2_queryctrl *);
 void set_control_value(struct capture_device *, struct v4l2_queryctrl *,  int);
 void free_control_list(struct control_list *);
-void query_control_v4l2(struct capture_device *);
+void query_control(struct capture_device *);
 
 #endif

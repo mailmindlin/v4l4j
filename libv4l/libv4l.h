@@ -22,21 +22,38 @@
 *
 */
 
-#ifndef H_LIBV4L
-#define H_LIBV4L
+#ifndef H_COMMON
+#define H_COMMON
 
-#include "common.h"
+#include <asm/types.h>		//for videodev2
+#include "videodev2.h"
+#include "videodev.h"
+
+#define CLEAR(x) memset(&x, 0x0, sizeof(x));
+		
+struct mmap_buffer {
+	void *start;					//start of the mmaped buffer
+	int length;						//length of the mmaped buffer - does NOT indicate the length of the frame,
+									//use struct capture_device->imagesize instead
+};
+
+struct mmap {
+	int req_buffer_nr;				//requested number of buffers
+	int buffer_nr;					//actual number of mmap buffers
+	struct mmap_buffer *buffers;	//array of buffers
+	void * tmp;						//temp buffer pointing to the latest dequeued buffer (V4L2) - last requested frame (V4L1)
+	int v4l1_mmap_size;				//used by v4l1 only, to store the overall size of the mmaped area
+};
+
+struct control_list {
+	int count;						//how many controls are available
+	struct v4l2_queryctrl *ctrl;	//array of 'count' v4l2_queryctrl' controls (see videodev.h)
+	void *probe_priv;				//pointer to driver probe code's private data, do not touch
+};
 
 //Put the version in string & return it. allocation and freeing must be done by caller
 //passing a char[10] is enough.
 char *get_libv4l_version(char *);
-
-/*
- * Init methods
- * each of the init methods has a counterpart method that free resources created
- * by the corresponding init method. counterpart methods must be called if call
- * the init one was successful
- */
 
 //init_libv4l initialises required struct, opens the device file, and check what
 //version of v4l the device supports, and whether capture and streaming are supported.
@@ -44,18 +61,19 @@ char *get_libv4l_version(char *);
 //Arguments: device file, width, height, channel, std, nb_buf
 struct capture_device *init_libv4l(const char *, int, int, int, int, int);
 
-
+struct capture_device;
+struct capture_actions {
 //set the capture parameters
 //int * point to an array of image formats to try (see libv4l.h for a list of supported formats)
 //the last argument (int) tells how many formats there are in the previous argument
 //arg2 can be set to NULL and arg3 to 0 to try the default order (again, see libv4l.h) 
-int set_cap_param(struct capture_device *, int *, int);
+	int (*set_cap_param)(struct capture_device *, int *, int);
 
 //initialise streaming, request create mmap'ed buffers
-int init_capture(struct capture_device *);
+	int (*init_capture)(struct capture_device *);
 
 //tell V4L to start the capture
-int start_capture(struct capture_device *);
+	int (*start_capture)(struct capture_device *);
 
 /*
  * capture methods
@@ -63,13 +81,10 @@ int start_capture(struct capture_device *);
  */
 
 //dequeue the next buffer with available frame
-struct v4l2_buffer *dequeue_buffer(struct capture_device *);
-
-//get the address of the buffer where frame is
-void *get_frame_buffer(struct capture_device *, struct v4l2_buffer *, int *);
+	void * (*dequeue_buffer)(struct capture_device *);
 
 //enqueue the buffer when done using the frame
-void enqueue_buffer(struct capture_device *, struct v4l2_buffer *);
+	void (*enqueue_buffer)(struct capture_device *);
  
 
 /*
@@ -80,36 +95,151 @@ void enqueue_buffer(struct capture_device *, struct v4l2_buffer *);
  */
 
 //counterpart of start_capture, must be called it start_capture was successful
-int stop_capture(struct capture_device *);
+	int (*stop_capture)(struct capture_device *);
 
 //counterpart of init_capture, must be called it init_capture was successful
-void free_capture(struct capture_device *);
+	void (*free_capture)(struct capture_device *);
+
+
+/*
+ * Query and list methods (printf to stdout, use to debug)
+ * these methods can be called after init_libv4l and before del_libv4l
+ */
+	void (*list_cap)(struct capture_device *);				//prints results from query methods listed below
+	void (*enum_image_fmt)(struct capture_device *);		//lists all supported image formats
+	void (*query_control)(struct capture_device *);		//lists all supported controls
+	void (*query_frame_sizes)(struct capture_device *);	// not implemented
+	void (*query_capture_intf)(struct capture_device *);	//prints capabilities
+	void (*query_current_image_fmt)(struct capture_device *);	//print max width max height for v4l1 and current settings for v4l2
+	
+};
 
 //counterpart of init_libv4l2, must be called it init_libv4l2 was successful
 void del_libv4l(struct capture_device *);
 
 
-/*
- * Control methods
- * the available controls are listed in the 'ctrls' member of the struct 
- * capture_device returned by init_libv4l2.
- * to use the following methods, find the desired v4l2_queryctrl to be
- * accessed and call either get or set _control_value. These methods can
- * be used if call to init_libv4l2 was succesful, and until del_libv4l2 
- * is called
- */
-int get_control_value(struct capture_device *, struct v4l2_queryctrl *);
-void set_control_value(struct capture_device *, struct v4l2_queryctrl *,  int);
 
-/*
- * Query and list methods (printf to stdout, use to debug)
- * these methods can be called after init_libv4l2 and before del_libv4l2
- */
-void list_cap(struct capture_device *);				//prints results from query methods listed below
-void enum_image_fmt(struct capture_device *);		//lists all supported image formats
-void query_control(struct capture_device *);		//lists all supported controls
-void query_frame_sizes(struct capture_device *);	// not implemented
-void query_capture_intf(struct capture_device *);	//prints capabilities
-void query_current_image_fmt(struct capture_device *);	//print max width max height for v4l1 and current settings for v4l2
+
+//Supported standards
+#define		WEBCAM					0
+#define		PAL						1
+#define		SECAM					2
+#define		NTSC					3
+
+#define NB_SUPPORTED_PALETTE		7
+//palette formats
+//YUV420 is the same as YUV420P - YUYV is the same as YUV422
+#define 	YUV420					0
+#define  	YUYV					1
+#define 	RGB24					2
+#define 	RGB32					3
+#define	 	RGB555					4
+#define 	RGB565					5
+#define 	GREY					6
+//Dont use the following two, use YUV420 and YUYV instead !!
+#define 	YUV420P					7
+#define 	YUV422					8
+#define	DEFAULT_PALETTE_ORDER		{YUV420, RGB24, RGB32, YUYV, RGB555, RGB565, GREY}
+
+
+
+//all the fields in the following structure are read only
+struct capture_device {
+	struct mmap *mmap;				//do not touch
+	struct control_list *ctrls;		//video controls
+	
+#define V4L1_VERSION		1
+#define V4L2_VERSION		2
+	int v4l_version;				//
+	int palette;					//which palette is used. see #define enum above
+	int fd;							//do not touch
+	int width;						//captured frame width
+	int height;						//captured frame width
+	int std;						//v4l standard - see #define enum above
+	int channel;					//channel number (for video capture cards, not webcams)
+	char file[100];					//device file name
+	int bytesperline;				//number of bytes per line in the captured image
+	int imagesize;					//in bytes
+	struct capture_actions capture;	//see below
+	int real_v4l1_palette;			//v4l1 weirdness: v4l1 defines 2 distinct palettes YUV420 and YUV420P 
+									//but they are the same (same goes for YUYV and YUV422). In this field
+									//we store the real palette used by v4l1. In the palette field above,
+									//we store what the application should know (YUYV instead of YUV422)
+};
+
+struct libv4l_palette{
+	int libv4l_palette;
+	int v4l1_palette;
+	int v4l2_palette;
+	int depth;
+	char name[10];
+};
+
+static struct libv4l_palette libv4l_palettes[] = {
+	{   
+		YUV420,
+		VIDEO_PALETTE_YUV420,
+		V4L2_PIX_FMT_YUV420,
+		12,		
+		"YUV420"
+	},
+	{   
+		YUYV,
+		VIDEO_PALETTE_YUYV,
+		V4L2_PIX_FMT_YUYV,
+		8,
+		"YUYV"
+	},
+		{   
+		RGB24,
+		VIDEO_PALETTE_RGB24,
+		V4L2_PIX_FMT_RGB24,
+		24,
+		"RGB24"
+	},
+		{   
+		RGB32,
+		VIDEO_PALETTE_RGB32,
+		V4L2_PIX_FMT_RGB32,
+		32,
+		"RGB32"
+	},
+		{   
+		RGB555,
+		VIDEO_PALETTE_RGB555,
+		V4L2_PIX_FMT_RGB555,
+		16,
+		"RGB555"
+	},
+		{   
+		RGB565,
+		VIDEO_PALETTE_RGB565,
+		V4L2_PIX_FMT_RGB565,
+		16,
+		"RGB565"
+	},
+		{   
+		GREY,
+		VIDEO_PALETTE_GREY,
+		V4L2_PIX_FMT_GREY,
+		8,
+		"GREY"
+	},
+//Dont use the following two, use YUV420 and YUYV instead !!
+	{   
+		YUV420P,
+		VIDEO_PALETTE_YUV420P,
+		0,
+		12,
+		"YUV420"
+	},
+		{   
+		YUV422,
+		VIDEO_PALETTE_YUV422,
+		0,
+		8,
+		"YUYV"
+	}
+};
 
 #endif

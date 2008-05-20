@@ -25,7 +25,7 @@
 #ifndef H_PWC_PROBE
 #define H_PWC_PROBE
 
-#include "common.h"
+#include "libv4l.h"
 
 //index of the pwc probe in the struct probe_v4l_driver probe_drivers[] in v4l-probe.h
 #define PWC_PROBE_INDEX	0

@@ -1,19 +1,43 @@
 libv4l has been compiled and tested succesfully on the following platforms:
 - Ubuntu 7.10 - i386
 - Ubuntu 8.04 - i386
-- Debian Etch - i385
+- Debian Etch - i386
 
 Tested video devices:
 - 046d:08b2 Logitech, Inc. QuickCam Pro 4000 (pwc driver)
 - 046d:0840 Logitech, Inc. QuickCam Express (qc-usb driver)
 - 046d:08b5 Logitech, Inc. QuickCam Sphere (pwc driver)
 - 041e:401c Creative Technology, Ltd WebCam NX [PD1110] (gspca driver)
-- BT848 PCI capture card (bttv driver)
+- BT848 4-channel PCI capture card (bttv driver)
 
 Currently, libv4l will probe and detect the following drivers:
 - PWC 		v10.0.13
+  PWC is already a V4L2 driver. Most of its private ioctls are already
+  exported as V4L2 controls, except for the following three 
+  (as of v10.0.13):
+  Exported private ioctls:
+    VIDIOCPWCMPTRESET (Pan/Tilt reset))
+    VIDIOCPWCMPTGANGLE (Get Pan/Tilt angle)
+    VIDIOCPWCMPTSANGLE (Set Pan/Tilt angle)
+    
 - gspca 	v01.00.20
-- Quickam	v0.6.6
-- bttv		(kernel 2.6.18 & 2.6.24)
+  gspca in its current version is still a V4L1 driver although the author
+  is actively working on porting it to V4L2. But for now, a few private
+  ioctls dont have a V4L1 control counterpart, so libv4l exports the
+  following private ioctls:
+    SPCASVIDIOPARAM / SPCAGVIDIOPARAM (Set and Get autobrightness, quality,
+    frame interval and image flicker)
+
+- qc-usb	v0.6.6
+  qc-usb (Quickcam driver) is V4L1 driver and many private ioctls are not
+  available as V4L1 control. libv4l exposes the following ioctls:
+    VIDIOCQCSSETTLE / VIDIOCQCGSETTLE (Let Brigthness settle ???)
+    VIDIOCQCSCOMPRESS / VIDIOCQCGCOMPRESS (compression factor)
+    VIDIOCQCSQUALITY / VIDIOCQCGQUALITY (interpolation)
+    VIDIOCQCSADAPTIVE / VIDIOCQCGADAPTIVE (autobrightness)
+    VIDIOCQCSEQUALIZE / VIDIOCQCGEQUALIZE (equalise image)
+
+
+    
 
 
