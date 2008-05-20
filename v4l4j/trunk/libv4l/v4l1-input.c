@@ -25,7 +25,7 @@
 #include <sys/ioctl.h>		//for ioctl
 #include <sys/mman.h>		//for mmap
 #include "videodev.h"
-#include "common.h"
+#include "libv4l.h"
 #include "log.h"
 #include "libv4l-err.h"
 
@@ -82,7 +82,17 @@ int set_cap_param_v4l1(struct capture_device *c, int *palettes, int nb) {
 	struct video_window win;
 	struct video_capability vc;
 	int i;
-	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG2, "V4L1: setting capture parameters\n");
+	int def[NB_SUPPORTED_PALETTE] = DEFAULT_PALETTE_ORDER;
+	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG2, "V4L1: Setting capture parameters on device %s.\n", c->file);
+	if(nb<0 || nb>=NB_SUPPORTED_PALETTE) {
+		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG2, "V4L1: Incorrect number of palettes (%d)\n", nb);
+		return LIBV4L_ERR_FORMAT;
+	}
+	if(nb==0 || palettes==NULL) {
+		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG2, "V4L1: No palettes supplied, trying default order.\n");
+		palettes = def;
+		nb = NB_SUPPORTED_PALETTE;
+	}
 	
 	CLEAR(chan);
 	CLEAR(pict);
@@ -161,6 +171,7 @@ int set_cap_param_v4l1(struct capture_device *c, int *palettes, int nb) {
 		
 		if(0 == ioctl(c->fd, VIDIOCSPICT, &pict)){
 			c->palette = palettes[i];
+			c->real_v4l1_palette = palettes[i];
 			c->imagesize  = c->width*c->height*pict.depth / 8;
 			dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: palette %s (%d) accepted - image size: %d\n",
 				libv4l_palettes[palettes[i]].name, palettes[i], c->imagesize);
@@ -178,6 +189,7 @@ int set_cap_param_v4l1(struct capture_device *c, int *palettes, int nb) {
 			
 			if(0 == ioctl(c->fd, VIDIOCSPICT, &pict)){
 				c->palette = YUV420;
+				c->real_v4l1_palette = YUV420P;
 				c->imagesize  = c->width*c->height*pict.depth / 8;
 				dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: palette %s (%d) accepted - image size: %d\n",
 					"YUV420-workaround", YUV420, c->imagesize);
@@ -196,6 +208,7 @@ int set_cap_param_v4l1(struct capture_device *c, int *palettes, int nb) {
 			
 			if(0 == ioctl(c->fd, VIDIOCSPICT, &pict)){
 				c->palette = YUYV;
+				c->real_v4l1_palette = YUV422;
 				c->imagesize  = c->width*c->height*pict.depth / 8;
 				dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: palette %s (%d) accepted - image size: %d\n",
 					"YUYV-workaround", YUYV, c->imagesize);
@@ -252,6 +265,7 @@ int set_cap_param_v4l1(struct capture_device *c, int *palettes, int nb) {
 int init_capture_v4l1(struct capture_device *c) {
 	struct video_mbuf vm;
 	CLEAR(vm);
+	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG2, "V4L1: initialising capture on device %s.\n", c->file);
 
 	if(-1 == ioctl(c->fd, VIDIOCGMBUF, &vm)){
 		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: Error getting mmap information from driver\n");
@@ -304,21 +318,13 @@ int init_capture_v4l1(struct capture_device *c) {
 // start the capture of first buffer VIDIOCMCAPTURE(0)
 int start_capture_v4l1(struct capture_device *c) {
 	struct video_mmap mm;
+	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG2, "V4L1: starting capture on device %s.\n", c->file);
 	
 	CLEAR(mm);
-
-	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: Starting capture of first frame\n");
 	mm.frame = 0;
 	mm.width = c->width;
 	mm.height = c->height;
-	if(c->palette == YUV420)
-		mm.format = VIDEO_PALETTE_YUV420P;
-	else if(c->palette == RGB24)
-		mm.format = VIDEO_PALETTE_RGB24;
-	else {
-		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: Wrong value in c->palette (%d)\n", c->palette);
-		return LIBV4L_ERR_PALETTE;
-	}
+	mm.format = libv4l_palettes[c->real_v4l1_palette].v4l1_palette;
 
 	if(-1 == ioctl(c->fd, VIDIOCMCAPTURE, &mm))	{
 		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: Cant start the capture\n");
@@ -333,46 +339,34 @@ int start_capture_v4l1(struct capture_device *c) {
 // start the capture of next buffer VIDIOCMCAPTURE(x)
 void *dequeue_buffer_v4l1(struct capture_device *c) {
 	struct video_mmap mm;
+	int curr_frame = (int) c->mmap->tmp;
+	int next_frame = curr_frame ^ 1;
+	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG2, "V4L1: dequeuing buffer on device %s.\n", c->file);
 
 	CLEAR(mm);
-	mm.frame = ((int) c->mmap->tmp) ^ 1;
+	
+	mm.frame =  next_frame;
 	mm.width = c->width;
 	mm.height = c->height;
-	if(c->palette == YUV420)
-		mm.format = VIDEO_PALETTE_YUV420P;
-	else if(c->palette == RGB24)
-		mm.format = VIDEO_PALETTE_RGB24;
-	else {
-		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: Wrong value in c->palette (%d)\n", c->palette);
-		return NULL;
-	}
+	mm.format = libv4l_palettes[c->real_v4l1_palette].v4l1_palette;
 
-	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: Starting capture of next frame (%d)\n", mm.frame);
+	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: Starting capture of next frame (%d)\n", next_frame);
 	if(-1 == ioctl(c->fd, VIDIOCMCAPTURE, &mm)){
 		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: Cant initiate the capture of next frame\n");
 		return NULL;
 	}
 
-	c->mmap->tmp = (void *)mm.frame;
-
-	return (void *)1;
-}
-
-//get the address of the buffer where frame is
-//wait till the buffer is available VIDIOCSYNC()
-void *get_frame_buffer_v4l1(struct capture_device *c, void *b, int *len){
-	int buf = ((int) c->mmap->tmp) ^ 1;
-	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: Waiting for frame (%d)\n", buf);
-	if(-1 == ioctl(c->fd, VIDIOCSYNC, &buf)){
-		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: Error waiting for next frame(%d)\n", buf);
+	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: Waiting for frame (%d)\n", curr_frame);
+	if(-1 == ioctl(c->fd, VIDIOCSYNC, &curr_frame)){
+		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: Error waiting for next frame(%d)\n", curr_frame);
 		return NULL;
 	}
-	*len = c->imagesize;
-	return c->mmap->buffers[buf].start;
+	c->mmap->tmp = (void *)next_frame;
+	return c->mmap->buffers[curr_frame].start;
 }
 
 //enqueue the buffer when done using the frame
-void enqueue_buffer_v4l1(struct capture_device *cdev, struct v4l2_buffer *b) {}
+void enqueue_buffer_v4l1(struct capture_device *cdev) {}
 
 //counterpart of start_capture, must be called it start_capture was successful
 int stop_capture_v4l1(struct capture_device *c) {
@@ -381,7 +375,7 @@ int stop_capture_v4l1(struct capture_device *c) {
 
 //counterpart of init_capture, must be called it init_capture was successful
 void free_capture_v4l1(struct capture_device *c) {
-	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG1, "V4L1: freeing capture structures\n");
+	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG1, "V4L1: freeing capture structures on device %s.\n", c->file);
 	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: unmmap %d bytes at %p\n", c->mmap->v4l1_mmap_size, c->mmap->buffers[0].start);
 	if (-1 == munmap(c->mmap->buffers[0].start, (size_t) c->mmap->v4l1_mmap_size))
 			dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: error unmapping mmap'ed buffer\n");

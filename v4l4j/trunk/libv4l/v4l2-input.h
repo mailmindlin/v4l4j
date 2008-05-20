@@ -25,7 +25,7 @@
 #ifndef H_V4L2_INPUT
 #define H_V4L2_INPUT
 
-#include "common.h"
+#include "libv4l.h"
 
 
 /*
@@ -34,10 +34,6 @@
  * by the corresponding init method. counterpart methods must be called if call
  * the init one was successful
  */
-
-//init_libv4l2 initialises required struct, opens the device file, and check if
-//device supports v4l2, capture and streaming. Then creates the V4L control list
-struct capture_device *init_libv4l2(const char *, int, int, int, int, int);
 
 //Check whether the device is V4L2 and has capture and mmap capabilities
 int check_capture_capabilities_v4l2(struct capture_device *);
@@ -58,13 +54,10 @@ int start_capture_v4l2(struct capture_device *);
  */
 
 //dequeue the next buffer with available frame
-struct v4l2_buffer *dequeue_buffer_v4l2(struct capture_device *);
-
-//get the address of the buffer where frame is
-void *get_frame_buffer_v4l2(struct capture_device *, struct v4l2_buffer *, int *);
+void *dequeue_buffer_v4l2(struct capture_device *);
 
 //enqueue the buffer when done using the frame
-void enqueue_buffer_v4l2(struct capture_device *, struct v4l2_buffer *);
+void enqueue_buffer_v4l2(struct capture_device *);
  
 
 /*

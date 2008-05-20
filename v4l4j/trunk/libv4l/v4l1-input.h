@@ -25,7 +25,7 @@
 #ifndef H_V4L1_INPUT
 #define H_V4L1_INPUT
 
-#include "common.h"
+#include "libv4l.h"
 
 
 /*
@@ -68,11 +68,8 @@ void *dequeue_buffer_v4l1(struct capture_device *);
 // wait till the previous buffer is available VIDIOCSYNC(x-1)
 
 
-//get the address of the buffer where frame is
-void *get_frame_buffer_v4l1(struct capture_device *, void *, int *);
-
 //enqueue the buffer when done using the frame
-void enqueue_buffer_v4l1(struct capture_device *, void *);
+void enqueue_buffer_v4l1(struct capture_device *);
  
 
 /*

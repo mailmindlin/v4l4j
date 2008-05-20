@@ -84,7 +84,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_init_1v4l(JNIE
 	}
 
 	dprint(LOG_LIBV4L, "[LIBV4L] Calling 'set_cap_param(dev: %s)'\n",d->c->file);
-	if(set_cap_param(d->c, fmts, NB_SUPPORTED_FORMATS)){
+	if((*d->c->capture.set_cap_param)(d->c, fmts, NB_SUPPORTED_FORMATS)){
 		dprint(LOG_V4L4J, "[V4L4J] set_cap_param failed\n");
 		del_libv4l(d->c);
 		throwV4L4JException(e, "Cant set capture parameters");
@@ -93,7 +93,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_init_1v4l(JNIE
 
 
 	dprint(LOG_LIBV4L, "[LIBV4L] Calling 'init_capture(dev: %s)'\n",d->c->file);
-	if(init_capture(d->c)<0){
+	if((*d->c->capture.init_capture)(d->c)<0){
 		dprint(LOG_V4L4J, "[V4L4J] init_capture failed\n");
 		del_libv4l(d->c);
 		throwV4L4JException(e, "Cant initialise capture ");
@@ -134,7 +134,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_init_1v4l(JNIE
 	ctor = (*e)->GetMethodID(e, v4l2ControlClass, "<init>", "(ILjava/lang/String;IIILau/edu/jcu/v4l4j/FrameGrabber;)V");
 	if(ctor == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the V4L2Control class\n");
-		free_capture(d->c);
+		(*d->c->capture.free_capture)(d->c);
 		del_libv4l(d->c);
 		throwV4L4JException(e, "Cant create V4L2control java objects");
 		return 0;
@@ -155,7 +155,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_init_1v4l(JNIE
 	//setup jpeg param
 	if(init_jpeg_compressor(d, q)!=0) {
 		dprint(LOG_V4L4J, "[V4L4J] Error initialising the JPEG compressor\n");
-		free_capture(d->c);
+		(*d->c->capture.free_capture)(d->c);
 		del_libv4l(d->c);
 		throwV4L4JException(e, "Cant initialise the JPEG compressor");
 	}	
@@ -170,7 +170,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_start(JNIEnv *e, jobje
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object; 
 	dprint(LOG_LIBV4L, "[LIBV4L] Calling start_capture(dev: %s)\n", d->c->file);
-	if(start_capture(d->c)<0){
+	if((*d->c->capture.start_capture)(d->c)<0){
 		dprint(LOG_V4L4J, "[V4L4J] start_capture failed\n");
 		throwV4L4JException(e, "Cant start capture");
 	}
@@ -213,18 +213,18 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getCtrlValue(JNIEnv *e
  */
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getBuffer(JNIEnv *e, jobject t, jlong object) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	int i, len;
-	struct v4l2_buffer *b;
+	int i;
+	void *frame;
 	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object;
 	
 	//get frame from v4l2 
 	dprint(LOG_LIBV4L, "[LIBV4L] Calling dequeue_buffer(dev: %s)\n", d->c->file);
-	if((b = dequeue_buffer(d->c)) != NULL) {
+	if((frame = (*d->c->capture.dequeue_buffer)(d->c)) != NULL) {
 		i = d->buf_id = (d->buf_id == (d->c->mmap->buffer_nr-1)) ? 0 : d->buf_id+1;
 		dprint(LOG_LIBV4L, "[LIBV4L] i=%d\n", i); 
-		(*d->j.jpeg_encode)(d, get_frame_buffer(d->c, b, &len), d->bufs[i]);
+		(*d->j.jpeg_encode)(d, frame, d->bufs[i]);
 		dprint(LOG_LIBV4L, "[LIBV4L] Calling enqueue_buffer(dev: %s)\n", d->c->file);
-		enqueue_buffer(d->c, b);
+		(*d->c->capture.enqueue_buffer)(d->c);
 		return i;
 	}
 	dprint(LOG_V4L4J, "Error dequeuing buffer for capture\n");
@@ -249,7 +249,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_stop(JNIEnv *e, jobjec
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object;
 	dprint(LOG_LIBV4L, "[LIBV4L] Calling stop_capture(dev: %s)\n", d->c->file);
-	if(stop_capture(d->c)<0) {
+	if((*d->c->capture.stop_capture)(d->c)<0) {
 		dprint(LOG_V4L4J, "Error stopping capture\n");
 		//not sure whether we should throw an exception here...
 		//if we do, FrameGrabber wont let us call delete (free_capture,del_libv4l2)
@@ -271,7 +271,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_delete(JNIEnv *e, jobj
 	destroy_jpeg_compressor(d);
 	
 	dprint(LOG_LIBV4L, "[LIBV4L] Calling free_capture(dev: %s)\n", d->c->file);
-	free_capture(d->c);
+	(*d->c->capture.free_capture)(d->c);
 
 	dprint(LOG_V4L4J, "[V4L4J] Freeing %d ByteBuffers areas and array\n",d->c->mmap->buffer_nr);
 	for(i=0; i<d->c->mmap->buffer_nr;i++)

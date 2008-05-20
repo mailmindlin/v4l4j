@@ -99,20 +99,20 @@ int main(int argc, char** argv) {
 	
 	printf("Capturing from /dev/video0 at %dx%d...\n", c->width,c->height);
 	
-	if(set_cap_param(c, NULL, 0)){
+	if((*c->capture.set_cap_param)(c, NULL, 0)){
 		del_libv4l(c);
 		printf("Cant set capture parameters");
 		return -1;
 	}
 
-	if(init_capture(c)<0){
+	if((*c->capture.init_capture)(c)<0){
 		del_libv4l(c);
 		printf("Cant initialise capture ");
 		return -1;
 	}
 	
-	if(start_capture(c)<0){
-		free_capture(c);
+	if((*c->capture.start_capture)(c)<0){
+		(*c->capture.free_capture)(c);
 		del_libv4l(c);
 		printf("Cant start capture");
 		return -1;
@@ -123,31 +123,31 @@ int main(int argc, char** argv) {
 	while(now.tv_sec<start.tv_sec+CAPTURE_LENGTH) {
 	
 		//get frame from v4l2 
-		if((b = dequeue_buffer(c)) != NULL) {
+		if((d = (*c->capture.dequeue_buffer)(c)) != NULL) {
 			//get address of frame
-			d = get_frame_buffer(c, b, &size);
+			//d = get_frame_buffer(c, b, &size);
 			//uncomment the following line to output captured frame 
 			//to a file in PPM format
 			//write_frame(c,d, size);
 			count++;
-		} else
+				//Put frame  
+			if(d != NULL)
+				//return buffer to v4l2
+				(*c->capture.enqueue_buffer)(c);
+			else
+				printf("Cant put buffer back");
+		} else {
 			printf("Cant get buffer ");
-	
-		//Put frame  
-		if(b != NULL) {
-			//return buffer to v4l2
-			enqueue_buffer(c, b);
-		} else
-			printf("Cant put buffer back");
-		
+			break;
+		}	
 		gettimeofday(&now, NULL);
 	}
 	printf("fps: %.1f\n", (count/((now.tv_sec - start.tv_sec) + ((float) (now.tv_usec - start.tv_usec)/1000000))));
 
-	if(stop_capture(c)<0)
+	if((*c->capture.stop_capture)(c)<0)
 		fprintf(stderr, "Error stopping capture\n");
 
-	free_capture(c);
+	(*c->capture.free_capture)(c);
 	del_libv4l(c);
 
 	return 0;

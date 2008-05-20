@@ -10,7 +10,7 @@
 		</fileset>
 	</path>
 	
-	<!-- define the classpath for Standalone deployment -->
+	<!-- define the classpath for test deployment -->
 	<path id="test.classpath">
 		<pathelement location="${project.classes}" />
 		<fileset dir="${project.lib}">
@@ -22,18 +22,20 @@
 	<!-- default target that displays usage -->
 	<target name="usage">
 		<echo message=""/>
-		<echo message="v4l4j"/>
+		<echo message="Video4Linux4Java"/>
 		<echo message=""/>
 		<echo message="Available targets :"/>
 		<echo message=""/>
-		<echo message=" all : Builds the JAR file and JNI library"/>
-		<echo message=" jar : Builds a JAR file with the v4l4j classes"/>
-		<echo message=" jar-src : Builds a JAR file with the v4l4j classes and sources"/>
-		<echo message=" jnilib : Builds the JNI libv4l4j.so library"/>
-		<echo message=" test-single : Run JUNIT tests with a single webcam"/>
-		<echo message=" test-multiple : Run JUNIT tests with two webcams"/>
-		<echo message=" test-all : Run JUNIT tests for both single and multiple webcams"/>
-		<echo message=" clean: removes all build generated files"/>
+		<echo message=" all :         Build the JAR file and JNI library"/>
+		<echo message=" jar :         Build a JAR file with the v4l4j classes"/>
+		<echo message=" javadoc :     Build the v4l4j Java documentation"/>
+		<echo message=" jar-src :     Build a JAR file with the v4l4j classes and sources"/>
+		<echo message=" jnilib :      Build the JNI library (libv4l4j.so)"/>
+		<echo message=" test-fps :    Check the FPS of a video source"/>
+		<echo message=" test-single : Run JUNIT tests with a single video source"/>
+<!--		<echo message=" test-multiple : Run JUNIT tests with two video sources"/>-->
+		<echo message=" test-all :    Run JUNIT tests for both single and multiple webcams"/>
+		<echo message=" clean:        Remove all build generated files"/>
 		<echo message=""/>
 	</target>
 	
@@ -94,6 +96,12 @@
 		</jar>
 	</target>
 	
+	<target name="javadoc">
+		<javadoc sourcepath="${project.src}" packagenames="au.edu.jcu.v4l4j.*" destdir="${project.javadoc.dir}" public="true" use="true">
+			<excludepackage name="au.edu.jcu.v4l4j.test" />
+		</javadoc>
+	</target>
+	
 	<target name="jar-test" depends="compile">
 		<jar jarfile="${project.dir}/${project.name}.jar">
 			<manifest>
@@ -107,26 +115,44 @@
 			</fileset>
 		</jar>
 	</target>
+	
+	<target name="test-fps" depends="jar,jnilib">
+		<java jar="${project.dir}/${project.name}.jar" fork="true" failonerror="true">
+			<jvmarg value="-Djava.library.path=."/>
+			<arg value="${test.device}" /> <!-- device file -->
+			<arg value="${test.width}" /> <!-- width -->
+			<arg value="${test.height}" /> <!-- height -->
+			<arg value="${test.standard}" /> <!-- standard -->
+			<arg value="${test.channel}" /> <!-- channel -->
+			<arg value="${test.qty}" /> <!-- JPEG quality factor -->
+		</java>
+	</target>
 
 	<target name="test-single" depends="jar-test,jnilib">
 		<junit fork="yes" haltonfailure="yes">
 			<jvmarg value="-Djava.library.path=."/>
+			<jvmarg value="-Dtest.device=${test.device}" /> <!-- device file -->
+			<jvmarg value="-Dtest.width=${test.width}" /> <!-- width -->
+			<jvmarg value="-Dtest.height=${test.height}" /> <!-- height -->
+			<jvmarg value="-Dtest.standard=${test.standard}" /> <!-- standard -->
+			<jvmarg value="-Dtest.channel=${test.channel}" /> <!-- channel -->
+			<jvmarg value="-Dtest.qty=${test.qty}" /> <!-- JPEG quality factor -->			
 			<test name="${test.class.name.single}" />
 			<formatter type="plain" usefile="false" />
 			<classpath refid="test.classpath" />
 		</junit>
 	</target>
 	
-	<target name="test-multiple" depends="jar-test,jnilib">
+<!--	<target name="test-multiple" depends="jar-test,jnilib">
 		<junit fork="yes" haltonfailure="yes">
 			<jvmarg value="-Djava.library.path=."/>
 			<test name="${test.class.name.multiple}" />
 			<formatter type="plain" usefile="false" />
 			<classpath refid="test.classpath" />
 		</junit>
-	</target>
+	</target>-->
 	
-	<target name="test-all" depends="test-single, test-multiple"/>
+	<target name="test-all" depends="test-single, test-fps" />
 	
 	<target name="clean">
 		<exec executable="make">
@@ -138,6 +164,7 @@
 		<delete file="${project.dir}/${project.name}.jar" />
 		<delete file="${project.dir}/libv4l4j.so" />
 		<delete dir="${project.classes}"/>
+		<delete dir="${project.javadoc.dir}"/>
 		<delete dir="${project.build}"/>
 		<delete file="${project.dir}/v4l4j.jar" />
 	</target>
