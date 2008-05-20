@@ -45,9 +45,8 @@ int main(int argc, char** argv) {
 		printf("Error initialising device.");
 		return -1;
 	}
-
-	list_cap(c);		
-		
+	c->capture.list_cap(c);
+	
 	del_libv4l(c);
 
 	return 0;

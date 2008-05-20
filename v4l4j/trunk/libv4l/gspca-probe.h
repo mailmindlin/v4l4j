@@ -25,7 +25,7 @@
 #ifndef H_GSPCA_PROBE
 #define H_GSPCA_PROBE
 
-#include "common.h"
+#include "libv4l.h"
 
 // index of the gspca probe in the struct probe_v4l_driver probe_drivers[] in v4l-probe.h
 #define GSPCA_PROBE_INDEX	1

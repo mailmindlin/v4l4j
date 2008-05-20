@@ -72,14 +72,14 @@ int qc_driver_probe(struct capture_device *c, struct control_list *l){
 		else our_ulut.lut[i] = 2;
 	}
 
-	//set it
+	//send it to QC driver
 	our_ulut.flags |= QC_USERLUT_VALUES;
 	our_ulut.flags |= QC_USERLUT_DEFAULT;
 	if(ioctl(c->fd, VIDIOCQCSUSERLUT, &our_ulut)!=0)
 		goto end;
 	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, ".. ..\n");
 
-	//check it
+	//read it back and check it
 	check_ulut.flags |= QC_USERLUT_VALUES;
 	check_ulut.flags |= QC_USERLUT_DEFAULT;
 	if(ioctl(c->fd, VIDIOCQCGUSERLUT, &check_ulut)!=0)
@@ -98,6 +98,7 @@ int qc_driver_probe(struct capture_device *c, struct control_list *l){
 	if(ioctl(c->fd, VIDIOCQCSUSERLUT, &default_ulut)!=0)
 		goto end;
 
+	//do we need more checks ?
 	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: found QC driver\n");
 	XMALLOC(priv, struct qc_probe_private *, sizeof(struct qc_probe_private ));
 	l->probe_priv = (void *)priv;
@@ -178,7 +179,7 @@ int qc_list_ctrl(struct capture_device *c,struct control_list *l, struct v4l2_qu
 	if(priv->ok==1) {
 		
 		//
-		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: Found gspca private ioctl Brightness Settle\n");
+		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: Found quickcam private ioctl Brightness Settle\n");
 		q[i].id=i;
 		q[i].type = V4L2_CTRL_TYPE_INTEGER;
 		strcpy((char *) q[i].name,"Brightness Settle");
@@ -190,7 +191,7 @@ int qc_list_ctrl(struct capture_device *c,struct control_list *l, struct v4l2_qu
 		q[i].reserved[1]=QC_PROBE_INDEX;
 		i++;
 
-		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: Found gspca private ioctl Compression mode\n");
+		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: Found quickcam private ioctl Compression mode\n");
 		q[i].id=i;
 		q[i].type = V4L2_CTRL_TYPE_INTEGER;
 		strcpy((char *) q[i].name,"Compression");
@@ -202,7 +203,7 @@ int qc_list_ctrl(struct capture_device *c,struct control_list *l, struct v4l2_qu
 		q[i].reserved[1]=QC_PROBE_INDEX;
 		i++;
 		
-		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: Found gspca private ioctl Interpolation\n");
+		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: Found quickcam private ioctl Interpolation\n");
 		q[i].id=i;
 		q[i].type = V4L2_CTRL_TYPE_INTEGER;
 		strcpy((char *) q[i].name,"Interpolation");
@@ -214,7 +215,7 @@ int qc_list_ctrl(struct capture_device *c,struct control_list *l, struct v4l2_qu
 		q[i].reserved[1]=QC_PROBE_INDEX;
 		i++;	
 
-		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: Found gspca private ioctl Auto Brightness\n");
+		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: Found quickcam private ioctl Auto Brightness\n");
 		q[i].id=i;
 		q[i].type = V4L2_CTRL_TYPE_INTEGER;
 		strcpy((char *) q[i].name,"Auto Brightness");
@@ -226,7 +227,7 @@ int qc_list_ctrl(struct capture_device *c,struct control_list *l, struct v4l2_qu
 		q[i].reserved[1]=QC_PROBE_INDEX;
 		i++;
 
-		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: Found gspca private ioctl Equalise image\n");
+		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: Found quickcam private ioctl Equalise image\n");
 		q[i].id=i;
 		q[i].type = V4L2_CTRL_TYPE_INTEGER;
 		strcpy((char *) q[i].name,"Equalise image");

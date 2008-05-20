@@ -18,16 +18,24 @@ public class FrameGrabberTest {
 	@Before
 	public void setUp() throws Exception {
 		try {
-			fg = new FrameGrabber("/dev/video0", 320, 240, 0, 0, initialQuality);
+			String dev;
+			int w,h, std, ch;
+			dev = (System.getProperty("test.device")!=null) ? System.getProperty("test.device") : "/dev/video0"; 
+			w = (System.getProperty("test.width")!=null) ? Integer.parseInt(System.getProperty("test.width")) : 320;
+			h = (System.getProperty("test.height")!=null) ? Integer.parseInt(System.getProperty("test.height")) : 240;
+			std = (System.getProperty("test.standard")!=null) ? Integer.parseInt(System.getProperty("test.standard")) : 0;
+			ch = (System.getProperty("test.channel")!=null) ? Integer.parseInt(System.getProperty("test.channel")) : 0;
+			initialQuality = (System.getProperty("test.qty")!=null) ? Integer.parseInt(System.getProperty("test.qty")) : 80; 
+			fg = new FrameGrabber(dev, w, h, ch, std, initialQuality);
 		} catch (V4L4JException e) {
-			fail("Cant createa framegrabber, make sure a webcam is connected and the driver is loaded.");
+			fail("Cant create a framegrabber, make sure a webcam is connected and the driver is loaded.\n"+e.getMessage());
 			throw e;
 		}
 		
 		try{
 			fg.init();
 		} catch (V4L4JException e) {
-			fail("Cant createa framegrabber, make sure a webcam is connected and the driver is loaded.");
+			fail("Cant create a framegrabber, make sure a webcam is connected and the driver is loaded.\n"+e.getMessage());
 			throw e;
 		}
 	}

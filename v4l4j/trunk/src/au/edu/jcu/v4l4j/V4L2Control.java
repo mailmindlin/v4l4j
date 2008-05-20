@@ -33,7 +33,7 @@ package au.edu.jcu.v4l4j;
 public class V4L2Control {
 	
 	/**
-	 * If this control has a type equal to BUTTON, it is a button. It has a value of 0,
+	 * If this control has a type equal to BUTTON, it has a value of 0,
 	 * and pressing it is done by setting any value using <code>setValue()</code> 
 	 */
 	public final static int BUTTON=0;

@@ -23,15 +23,12 @@
 *
 */
 
+
+package au.edu.jcu.v4l4j;
 /**
- * This package contains classes to :
- * - capture JPEG-encoded frames from a Video4Linux2 source.
- * - control the video source
- * The API relies on Video4Linux2 !! Most webcam & capture card drivers now comply with V4L2, but
- * there are still a few exceptions.
+ * 
  * @author gilles 
  */
-package au.edu.jcu.v4l4j;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,20 +36,26 @@ import java.nio.ByteBuffer;
 
 
 /**
- * This is the V4l4j main class. Create an instance of it attached to a V4L2 device to grab JPEG-encoded frames from it.<br>
- * A typical use case:
+ * This class provides methods to :
+ * <ul>
+ * <li>Capture JPEG-encoded framesfrom a Video4Linux source and,</li>
+ * <li>Control the video source.</li>
+ * </ul>
+ * Create an instance of it attached to a V4L device to grab JPEG-encoded frames from it. A typical use is as follows:
  * <ul>
  * <li>Create an instance of FrameGrabber: <code>FrameGrabber f = new FrameGrabber("/dev/video0", 320, 240, 0, 0, 80);</code></li>
  * <li>Initialise the framegrabber: <code>f.init();</code></li>
  * <li>Start the frame capture: <code>f.startCapture();</code></li>
  * <li><code>while (!stop) </code></li> 
- *  <ul><li>Retrieve a frame: <code>f.getFrame();</code></li>
- *  <li>do something useful with it</li></ul>
+ *  <ul><li>Retrieve a frame: <code>ByteBuffer b= f.getFrame();</code></li>
+ *  <li>do something useful with b</li>
+ *  <li>when done, set buffer position to 0: <code>b.position(0);</code></li>
+ *  </ul>
  * <li>Stop the capture: <code>f.stopCapture();</code></li>
  * <li>Free resources: <code>f.remove();</code></li>
  * </ul>
  * Once the frame grabber is intialised, the video source controls are made available (<code>f.getControls</code>) and can be changed at any time.
- * Once the frame grabber is removed, it can be re-initialised again (without the need to create a new instance). 
+ * Once the frame grabber is <code>remove</code>d(), it can be re-initialised again (without the need to create a new instance). 
  * 
  * @author gilles
  *
@@ -109,7 +112,7 @@ public class FrameGrabber {
 	
 	/**
 	 * Construct a FrameGrabber object used to capture JPEG frames from a video source
-	 * @param device the V4L2 device from which to capture
+	 * @param device the V4L device from which to capture
 	 * @param w the requested frame width 
 	 * @param h the requested frame height
 	 * @param ch the channel
@@ -136,8 +139,9 @@ public class FrameGrabber {
 	
 	/**
 	 * Initialise the capture, and apply the capture parameters.
-	 * V4L may adjust the height and width parameters to the closest valid values
-	 * These can be retrieved after calling init() using getWidth() and getHeight()
+	 * V4L may either adjust the height and width parameters to the closest valid values
+	 * or reject them altogether. If the values were adjusted, they can be retrieved 
+	 * after calling init() using getWidth() and getHeight()
 	 * @throws V4L4JException if one of the parameters is invalid
 	 */
 	public void init() throws V4L4JException {
@@ -162,7 +166,9 @@ public class FrameGrabber {
 	}
 	
 	/**
-	 * Retrieve one JPEG-encoded frame from the video source. The ByteBuffer limit is set to the size of the JPEG encoded frame 
+	 * Retrieve one JPEG-encoded frame from the video source. The ByteBuffer <code>limit()</code> is
+	 * set to the size of the JPEG encoded frame. The buffer's <code>position()</code> must be set back
+	 * to 0 when finished. Note that the returned ByteBuffer is not backed by an array.
 	 * @return a ByteBuffer containing the JPEG-encoded frame data
 	 * @throws V4L4JException if there is an error capturing from the source
 	 */
@@ -175,7 +181,7 @@ public class FrameGrabber {
 	}
 	
 	/**
-	 * Stop the capture
+	 * Stop the capture.
 	 * @throws V4L4JException if the method can is not valid (if the capture was never started for instance)
 	 */
 	public void stopCapture() throws V4L4JException {
@@ -202,7 +208,7 @@ public class FrameGrabber {
 	}
 	
 	/**
-	 * Returns the actual height of captured frames 
+	 * Return the actual height of captured frames 
 	 * @return the height
 	 */
 	public int getHeight(){
@@ -210,7 +216,7 @@ public class FrameGrabber {
 	}
 	
 	/**
-	 * Returns the actual width of captured frames
+	 * Return the actual width of captured frames
 	 * @return the width
 	 */
 	public int getWidth(){
@@ -218,7 +224,7 @@ public class FrameGrabber {
 	}
 	
 	/**
-	 * Returns the current JPEG quality 
+	 * Return the current JPEG quality 
 	 * @return the JPEG quality
 	 */
 	public int getJPGQuality(){
@@ -226,19 +232,19 @@ public class FrameGrabber {
 	}
 	
 	/**
-	 * Sets the desired JPEG quality
+	 * Set the desired JPEG quality
 	 * @param q the quality (between 0 and 100 inclusive)
 	 * @throws V4L4JException if the quality value is not valid
 	 */
 	public void setJPGQuality(int q) throws V4L4JException{
 		if(q<0 || q>100)
 			throw new V4L4JException("The JPEG quality must be 0<q<100");
-		quality = q;
 		setQuality(object, q);
+		quality = q;
 	}
 	
 	/**
-	 * Sets the specified control to the specified value
+	 * Set the specified control to the specified value
 	 * @param id the control index (in the array of controls as returned by getControls() )
 	 * @param value the new value
 	 * @throws V4L4JException if something goes wrong
@@ -251,7 +257,7 @@ public class FrameGrabber {
 	}
 
 	/**
-	 * Gets the current value of the specified control
+	 * Get the current value of the specified control
 	 * @param id the control index (in the array of controls as returned by getControls() )
 	 * @return the current value of a control
 	 * @throws V4L4JException if something goes wrong
@@ -264,8 +270,8 @@ public class FrameGrabber {
 	}
 	
 	/**
-	 * retrieves the list of available controls
-	 * @return the list of available controls
+	 * Retrieve an array of available controls
+	 * @return the array of available controls
 	 */
 	public V4L2Control[] getControls() {
 		return ctrls;
@@ -333,21 +339,34 @@ public class FrameGrabber {
 	
 	public static void main(String[] args) throws V4L4JException, IOException {
 		V4L2Control[] ctrls;
-		String dev = args[0];
-		int w = Integer.parseInt(args[1]);
-		int h = Integer.parseInt(args[2]);
-		int std = Integer.parseInt(args[3]);
-		int channel = Integer.parseInt(args[4]);
-		int qty = Integer.parseInt(args[5]);
-		int CAPTURE_LENGTH = 5;
+		String dev;
+		int w, h, std, channel, qty, captureLength = 5;
+		//Check if we have the required args
+		try {
+			dev = args[0];
+			w = Integer.parseInt(args[1]);
+			h = Integer.parseInt(args[2]);
+			std = Integer.parseInt(args[3]);
+			channel = Integer.parseInt(args[4]);
+			qty = Integer.parseInt(args[5]);
+		} catch (Exception e){
+			//otherwise put sensible values in
+			dev = "/dev/video0";
+			w = 320;
+			h = 240;
+			std = 0;
+			channel = 0;
+			qty = 80;
+		}
+		
 
 		long start=0, now=0;
 		int n=0;
 		ByteBuffer b;
 		FrameGrabber f = null;
 
-		System.out.println("This program will open "+dev+", list the available control, capture frames for"
-					+ CAPTURE_LENGTH+ " seconds and print the FPS");
+		System.out.println("This program will open "+dev+", list the available control, capture frames for "
+					+ captureLength+ " seconds and print the FPS");
 		System.out.println("Make sure the webcam is connected and press <Enter>, or Ctrl-C to abort now.");
 		System.in.read();
 
@@ -386,12 +405,14 @@ public class FrameGrabber {
 		}
 
 		try {
-			System.out.println("Starting test capture at "+f.getWidth()+"x"+f.getHeight()+" for "+CAPTURE_LENGTH+" seconds");
+			System.out.println("Starting test capture at "+f.getWidth()+"x"+f.getHeight()+" for "+captureLength+" seconds");
 			now=start=System.currentTimeMillis();
-			while(now<start+(CAPTURE_LENGTH*1000)){
+			while(now<start+(captureLength*1000)){
 				b = f.getFrame();
+				//System.out.println("Frame size:"+b.limit());
+				
 				//Uncomment the following to dump the captured frame to a jpeg file
-				//System.out.println("size:"+b.limit());
+				//also import java.io.FileOutputStream 
 				//new FileOutputStream("file"+n+".jpg").getChannel().write(b);
 				n++;
 				b.position(0);

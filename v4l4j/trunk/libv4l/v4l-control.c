@@ -23,7 +23,7 @@
 */
 
 #include <errno.h>
-#include "common.h"
+#include "libv4l.h"
 #include "log.h"
 #include "v4l-probe.h"
 #include "v4l1-input.h"
@@ -65,7 +65,6 @@ struct control_list *list_control(struct capture_device *c){
 	 * drivers make their private ioctl available through a control (or control class like the camera control class added to 2.6.25)) 
 	 */
 	int priv_ctrl_count;
-	//for(i=0; i<PROBE_NB; i++){
 	while ( ((priv_ctrl_count = probe_drivers[probe_id].probe(c, l)) == -1) && (probe_id<PROBE_NB) )
 		probe_id++;
 	

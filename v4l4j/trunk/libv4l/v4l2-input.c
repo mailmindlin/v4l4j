@@ -25,7 +25,7 @@
 #include <sys/ioctl.h>		//for ioctl
 #include <sys/mman.h>		//for mmap
 #include <errno.h>			//for errno
-#include "common.h"
+#include "libv4l.h"
 #include "log.h"
 #include "libv4l-err.h"
 
@@ -63,15 +63,23 @@ int check_capture_capabilities_v4l2(struct capture_device *c) {
 }
 
 int set_cap_param_v4l2(struct capture_device *c, int *palettes, int nb) {
-
 	struct v4l2_format fmt;
 	struct v4l2_fmtdesc fmtd;
 	struct v4l2_cropcap cc;
 	struct v4l2_crop crop;
 	int i;
+	int def[NB_SUPPORTED_PALETTE] = DEFAULT_PALETTE_ORDER;	
+	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: Setting capture parameters on device %s.\n", c->file);
 	
-
-	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: setting capture parameters\n");
+	if(nb<0 || nb>=NB_SUPPORTED_PALETTE) {
+		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: Incorrect number of palettes (%d)\n", nb);
+		return LIBV4L_ERR_FORMAT;
+	}
+	if(nb==0 || palettes==NULL) {
+		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: No palettes supplied, trying default order.\n");
+		palettes = def;
+		nb = NB_SUPPORTED_PALETTE;
+	}
 	
 	//Select the input
 	if (-1 == ioctl(c->fd, VIDIOC_S_INPUT, &(c->channel))) {
@@ -188,46 +196,6 @@ int set_cap_param_v4l2(struct capture_device *c, int *palettes, int nb) {
 		info("See the ISSUES section in the libv4l README file.\n");
 		c->imagesize = fmt.fmt.pix.sizeimage;
 	}	 
-		
-//	
-//	
-//	//Set image format
-//	//CLEAR(fmt) not required accoring to V4L2 API section 4.1.3
-//	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-//	fmt.fmt.pix.width = c->width;
-//	fmt.fmt.pix.height = c->height;
-//	fmt.fmt.pix.field = V4L2_FIELD_INTERLACED;
-//	
-//	//FIXME: better negotitation ?
-//	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
-//	
-//	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: wanted values: width: %d - height: %d - format: %d\n", c->width, c->height, fmt.fmt.pix.pixelformat);
-//	
-//	if (-1 == ioctl(c->fd, VIDIOC_S_FMT, &fmt)) { 
-//		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_ERR, "V4L2: cant set the image format with YUV420, trying RGB24...\n");
-//		
-//		CLEAR(fmt);
-//		fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-//		if (-1 == ioctl(c->fd, VIDIOC_G_FMT, &fmt)) {
-//			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_ERR, "V4L2: cannot get the current image format\n");
-//			return LIBV4L_ERR_IOCTL;
-//		}
-//		fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-//		fmt.fmt.pix.width = c->width;
-//		fmt.fmt.pix.height = c->height;
-//		fmt.fmt.pix.field = V4L2_FIELD_INTERLACED;
-//		fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
-//		if (-1 == ioctl(c->fd, VIDIOC_S_FMT, &fmt)) {
-//			info("libv4l was unable to find a suitable palette. Both YUV420 and RGB24 failed.\n");
-//			info("Please let the author know about this error.\n");
-//			info("See the ISSUES section in the libv4l README file.\n");
-//			info("Listing the reported capabilities:\n");
-//			list_cap_v4l2(c);
-//			return LIBV4L_ERR_FORMAT; 
-//		}
-//		c->palette = RGB24;
-//	} else
-//		c->palette = YUV420;
 	
 	//Set crop format
 	CLEAR(cc);
@@ -250,11 +218,10 @@ int init_capture_v4l2(struct capture_device *c) {
 	struct v4l2_requestbuffers req;
 	struct v4l2_buffer buf;
 	int i=0;
+	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: Initialising capture on device %s.\n", c->file);
 	
 	CLEAR(req);
 	
-	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: initialising capture\n");
-
 	//allocates v4l2 buffers
 	req.count = c->mmap->req_buffer_nr;
 	req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -301,7 +268,7 @@ int start_capture_v4l2(struct capture_device *c) {
 	struct v4l2_buffer *b;
 	XMALLOC(b,struct v4l2_buffer *, sizeof(struct v4l2_buffer));
 	
-	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: starting capture\n");
+	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: Starting capture on device %s.\n", c->file);
 	
 	//Enqueue all buffers
 	for(i=0; i< c->mmap->buffer_nr; i++) {
@@ -325,37 +292,35 @@ int start_capture_v4l2(struct capture_device *c) {
 	return 0;
 }
 
-struct v4l2_buffer *dequeue_buffer_v4l2(struct capture_device *c) {
+void *dequeue_buffer_v4l2(struct capture_device *c) {
 	struct v4l2_buffer *b = (struct v4l2_buffer *) c->mmap->tmp;
+	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: dequeuing buffer on device %s.\n", c->file);
+	
 	CLEAR(*b);
 
 	b->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	b->memory = V4L2_MEMORY_MMAP;
 	
-	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: dequeuing v4l2 buffer\n");
 	if (-1 == ioctl(c->fd, VIDIOC_DQBUF, b)) {
 		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_ERR, "V4L2: error dequeing buffer\n");
 		return NULL;
 	}
 	
-	return b;
-}
-
-void *get_frame_buffer_v4l2(struct capture_device *c, struct v4l2_buffer *b, int *len){
 	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: getting buffer address\n");
-	*len = b->bytesused;
 	return c->mmap->buffers[b->index].start;
 }
 
-void enqueue_buffer_v4l2(struct capture_device *cdev, struct v4l2_buffer *b) {
-	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: queuing v4l2 buffer\n");
-	if (-1 == ioctl(cdev->fd, VIDIOC_QBUF, b))
+void enqueue_buffer_v4l2(struct capture_device *c) {
+	struct v4l2_buffer *b = (struct v4l2_buffer *) c->mmap->tmp;
+	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: queuing buffer on device %s.\n", c->file);
+	if (-1 == ioctl(c->fd, VIDIOC_QBUF, b))
 			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_ERR, "V4L2: error queuing buffer\n");
 }
 
 
 int stop_capture_v4l2(struct capture_device *c) {
 	int i;
+	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: stopping capture on device %s.\n", c->file);
 	
 	i = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	if( ioctl(c->fd, VIDIOC_STREAMOFF, &i ) < 0 ){
@@ -370,7 +335,7 @@ int stop_capture_v4l2(struct capture_device *c) {
 void free_capture_v4l2(struct capture_device *c) {
 	int i = 0;
 	
-	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG1, "V4L2: freeing capture structures\n");
+	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG1, "V4L2: freeing capture structure on device %s.\n", c->file);
 	
 	for(i=0; i < c->mmap->buffer_nr; i++){
 		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG1, "V4L2: unmmap %d bytes at %p\n",c->mmap->buffers[i].length, c->mmap->buffers[i].start);
@@ -539,6 +504,8 @@ void query_current_image_fmt_v4l2(struct capture_device *cdev) {
 
 void query_capture_intf_v4l2(struct capture_device *cdev) {
 	struct v4l2_input vin;
+	struct v4l2_tuner tun;
+	struct v4l2_frequency freq;
 	int fd = cdev->fd;
 
 	memset(&vin, 0, sizeof(struct v4l2_input));
@@ -551,13 +518,33 @@ void query_capture_intf_v4l2(struct capture_device *cdev) {
 		printf("Type: (%d) ", vin.type);
 		if(vin.type & V4L2_INPUT_TYPE_TUNER) {
 			printf("Tuner\n");
-			printf("Tuner index: %d", vin.tuner);
+			printf("Tuner index: %d\n", vin.tuner);
+			memset(&tun, 0, sizeof(struct v4l2_tuner));
+			tun.index = vin.tuner;
+			if(ioctl(fd, VIDIOC_G_TUNER, &tun)==0) {
+				printf("Name: %s\n", tun.name);
+				if(tun.type==V4L2_TUNER_RADIO) printf("It is a RADIO tuner\n");
+				if(tun.type==V4L2_TUNER_ANALOG_TV) printf("It is a TV tuner\n");
+				if(tun.capability&V4L2_TUNER_CAP_LOW) printf("Frequencies in units of 62.5Hz\n");
+				else printf("Frequencies in units of 62.5kHz\n");
+				if(tun.capability&V4L2_TUNER_CAP_NORM) printf("Multi-standard tuner\n");
+				if(tun.capability&V4L2_TUNER_CAP_STEREO) printf("Stereo reception supported\n");
+				/* More flags here */
+				printf("lowest tunable frequency: %.2f %s\n", tun.rangelow * 62.5, (tun.capability&V4L2_TUNER_CAP_LOW) ? "Hz" : "kHz");
+				printf("highest tunable frequency: %.2f %s\n", tun.rangehigh * 62.5, (tun.capability&V4L2_TUNER_CAP_LOW) ? "Hz" : "kHz");
+				memset(&freq, 0, sizeof(struct v4l2_frequency));
+				freq.tuner = vin.tuner;
+				if(ioctl(fd, VIDIOC_G_FREQUENCY, &freq)==0) {
+					printf("Current frequency: %.2f %s\n", freq.frequency * 62.5, (tun.capability&V4L2_TUNER_CAP_LOW) ? "Hz" : "kHz");
+				}
+			} 
 		}
-		if(vin.type & V4L2_INPUT_TYPE_CAMERA) printf("Camera");
-		printf("\nSupported standards: (%d) ", (int)vin.std);
+		if(vin.type & V4L2_INPUT_TYPE_CAMERA) printf("Camera\n");
+		printf("Supported standards: (%d) ", (int)vin.std);
 		if(vin.std & V4L2_STD_PAL) printf("PAL ");
 		if(vin.std & V4L2_STD_NTSC) printf("NTSC ");
 		if(vin.std & V4L2_STD_SECAM) printf("SECAM ");
+		printf("\n");
 		vin.index++;
 	}
 	printf("\n");
@@ -573,14 +560,12 @@ void query_frame_sizes_v4l2(struct capture_device *cdev){
 	fmtd.index = 0;
 	
 	
-/*	No V4L2 DRIVERS (as of 04/05/07) implement the VIDIOC_ENUM_FRAMESIZES ioctl...
-	Although, i ve seen patches on the v4l ML for pwc.... but nothing released yet.
 	printf("============================================\nQuerying supported frame sizes\n\n");
-	while(ioctl(fd, VIDIOC_ENUM_FMT, &fmtd) >= 0) {
+	while(ioctl(cdev->fd, VIDIOC_ENUM_FMT, &fmtd) >= 0) {
 		printf("Image format: %s\n",fmtd.description);
 		frms.index = 0;
 		frms.pixel_format = fmtd.pixelformat;
-		while(ioctl (fd, VIDIOC_ENUM_FRAMESIZES, &frms) >=0) {
+		while(ioctl (cdev->fd, VIDIOC_ENUM_FRAMESIZES, &frms) >=0) {
 			printf("index %d", frms.index);
 			if (frms.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
 				printf("\tHeight: %d - Width: %d\n",frms.discrete.height, frms.discrete.width);
@@ -594,7 +579,7 @@ void query_frame_sizes_v4l2(struct capture_device *cdev){
 			}
 		}
 		fmtd.index++;
-	}*/
+	}
 	
 }
 
@@ -645,7 +630,6 @@ void list_cap_v4l2(struct capture_device *c) {
 		if (cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) query_capture_intf_v4l2(c);
 		// FIXME Enumerate other capabilites (output, overlay,...
 
-		query_capture_intf_v4l2(c);
 		enum_image_fmt_v4l2(c);
 		query_current_image_fmt_v4l2(c);
 		query_frame_sizes_v4l2(c);

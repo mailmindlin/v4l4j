@@ -33,9 +33,6 @@ package au.edu.jcu.v4l4j;
  *
  */
 public class V4L4JException extends Exception {
-	  /**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 	
 	public V4L4JException(String message) {
