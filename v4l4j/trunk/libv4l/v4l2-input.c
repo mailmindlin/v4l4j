@@ -29,6 +29,9 @@
 #include "log.h"
 #include "libv4l-err.h"
 
+#define MAX_WIDTH 			2048
+#define MAX_HEIGHT 			2048
+
 void list_cap_v4l2(struct capture_device *);
 int check_capture_capabilities_v4l2(struct capture_device *c) {
 	struct v4l2_capability cap;
@@ -144,6 +147,11 @@ int set_cap_param_v4l2(struct capture_device *c, int *palettes, int nb) {
 	}
 	
 	//Set image format
+	if(c->width==0)
+		c->width=MAX_WIDTH;
+	if(c->height==0)
+		c->height=MAX_HEIGHT;
+			
 	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: trying palettes (%d to try in total)\n", nb);
 	for(i=0; i<nb; i++) {
 		CLEAR(fmt);
@@ -163,7 +171,6 @@ int set_cap_param_v4l2(struct capture_device *c, int *palettes, int nb) {
 		
 		if (0 == ioctl(c->fd, VIDIOC_S_FMT, &fmt)) {
 			c->palette = palettes[i];
-			c->imagesize  = c->width*c->height*libv4l_palettes[palettes[i]].depth / 8;
 			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_INFO, "V4L2: palette (%s) accepted\n", 	libv4l_palettes[palettes[i]].name);
 			break;
 		}
@@ -188,21 +195,20 @@ int set_cap_param_v4l2(struct capture_device *c, int *palettes, int nb) {
 	c->width = fmt.fmt.pix.width;
 	c->height= fmt.fmt.pix.height;
 	c->bytesperline = fmt.fmt.pix.bytesperline;
-	
+	c->imagesize  = c->width*c->height*libv4l_palettes[palettes[i]].depth / 8;
 			
 	if(c->imagesize != fmt.fmt.pix.sizeimage) {
 		info("The image size (%d) is not the same as what the driver returned (%d)\n",c->imagesize, fmt.fmt.pix.sizeimage);
 		info("Please let the author know about this error.\n");
 		info("See the ISSUES section in the libv4l README file.\n");
 		c->imagesize = fmt.fmt.pix.sizeimage;
-	}	 
+	}
 	
 	//Set crop format
 	CLEAR(cc);
 	CLEAR(crop);
 	cc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	if( ioctl( c->fd, VIDIOC_CROPCAP, &cc ) >= 0 )
-	{
+	if( ioctl( c->fd, VIDIOC_CROPCAP, &cc ) >= 0 ) {
 		crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		crop.c = cc.defrect;
 		if(ioctl( c->fd, VIDIOC_S_CROP, &crop )!=0) {
