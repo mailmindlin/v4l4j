@@ -104,6 +104,12 @@ int set_cap_param_v4l1(struct capture_device *c, int *palettes, int nb) {
 		return LIBV4L_ERR_NOCAPS;
 	}
 
+	if(c->width==0)
+		c->width=vc.maxwidth;
+
+	if(c->height==0)
+		c->height=vc.maxheight;
+
 	if (c->width > vc.maxwidth) {
 		info("The specified width capture (%d) is greater than supported (%d)\n", c->width, vc.maxwidth);
 		info("Listing the reported capabilities:\n", c->file);

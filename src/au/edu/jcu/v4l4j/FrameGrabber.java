@@ -76,7 +76,17 @@ public class FrameGrabber {
 	/**
 	 * Video standard value for NTSC sources
 	 */
-	public static int NTSC=3;	
+	public static int NTSC=3;
+	/**
+	 * Setting the capture width to this value will set the actual width to the
+	 * maximum width supported by the hardware  
+	 */
+	public static int MAX_WIDTH = 0;
+	/**
+	 * Setting the capture height to this value will set the actual height to the
+	 * maximum height supported by the hardware  
+	 */
+	public static int MAX_HEIGHT = 0;
 	
 	private String dev;
 	private int width;
@@ -96,7 +106,12 @@ public class FrameGrabber {
 	private long object;
 	
 	static {
-		System.loadLibrary("v4l4j");
+		try {
+			System.loadLibrary("v4l4j");
+		} catch (UnsatisfiedLinkError e) {
+			System.err.println("Cant load v4l4j JNI library");
+			throw e;
+		}
 	}
 	
 	private native long allocateObject() throws V4L4JException;
@@ -138,6 +153,31 @@ public class FrameGrabber {
 	}
 	
 	/**
+	 * Construct a FrameGrabber object used to capture JPEG frames from a video source. The capture
+	 * will use the first channel(0) and set the resolution to the maximum supported by the hardware.
+	 * Ths standard will be set to PAL. 
+	 * @param device the V4L device from which to capture
+	 * @param q the JPEG image quality (the higher, the better the quality)
+	 * @throws V4L4JException if one of the parameters is incorrect
+	 */
+	public FrameGrabber(String device, int q) throws V4L4JException {
+		this(device, MAX_WIDTH, MAX_HEIGHT, 0, WEBCAM, q);
+	}
+	
+	/**
+	 * Construct a FrameGrabber object used to capture JPEG frames from a video source. The capture
+	 * will set the resolution to the maximum supported by the hardware. 
+	 * @param device the V4L device from which to capture
+	 * @param ch the channel
+	 * @param std the video standard
+	 * @param q the JPEG image quality (the higher, the better the quality)
+	 * @throws V4L4JException if one of the parameters is incorrect
+	 */
+	public FrameGrabber(String device, int ch, int std, int q) throws V4L4JException {
+		this(device, MAX_WIDTH, MAX_HEIGHT, ch, std, q);
+	}
+	
+	/**
 	 * Initialise the capture, and apply the capture parameters.
 	 * V4L may either adjust the height and width parameters to the closest valid values
 	 * or reject them altogether. If the values were adjusted, they can be retrieved 
@@ -173,16 +213,18 @@ public class FrameGrabber {
 	 * @throws V4L4JException if there is an error capturing from the source
 	 */
 	public ByteBuffer getFrame() throws V4L4JException {
-		if(!state.isStarted())
-			throw new V4L4JException("Invalid method call");
-		ByteBuffer b = bufs[getBuffer(object)];
-		b.limit(getBufferLength(object)).position(0);
-		return b;
+		synchronized(state) {
+			if(!state.isStarted())
+				throw new V4L4JException("Invalid method call");
+			ByteBuffer b = bufs[getBuffer(object)];
+			b.limit(getBufferLength(object)).position(0);
+			return b;
+		}
 	}
 	
 	/**
 	 * Stop the capture.
-	 * @throws V4L4JException if the method can is not valid (if the capture was never started for instance)
+	 * @throws V4L4JException if the method call is not valid (if the capture was never started for instance)
 	 */
 	public void stopCapture() throws V4L4JException {
 		if(!state.stop())
@@ -250,10 +292,12 @@ public class FrameGrabber {
 	 * @throws V4L4JException if something goes wrong
 	 */
 	void setControlValue(int id, int value) throws V4L4JException{
-		if(!state.isInit())
-			throw new V4L4JException("Invalid method call");
-		
-		setCtrlValue(object, id, value);
+		//synchronized(state) {
+			if(!state.isInit() && !state.isStarted())
+				throw new V4L4JException("Invalid method call");
+			
+			setCtrlValue(object, id, value);
+		//}
 	}
 
 	/**
@@ -263,10 +307,12 @@ public class FrameGrabber {
 	 * @throws V4L4JException if something goes wrong
 	 */
 	int getControlValue(int id) throws V4L4JException{
-		if(!state.isInit())
-			throw new V4L4JException("Invalid method call");
-		
-		return getCtrlValue(object, id);
+		//synchronized(state) {
+			if(!state.isInit() && !state.isStarted())
+				throw new V4L4JException("Invalid method call");
+			
+			return getCtrlValue(object, id);
+		//}
 	}
 	
 	/**
@@ -292,16 +338,16 @@ public class FrameGrabber {
 			state=UNINIT;
 		}
 		
-		public boolean init(){
-			if(state==UNINIT || state==REMOVED) {
+		public synchronized boolean init(){
+			if(state==UNINIT || state==REMOVED && temp!=INIT) {
 				temp=INIT;
 				return true;
 			}
 			return false;
 		}
 		
-		public boolean start(){
-			if(state==INIT || state==STOPPED) {
+		public synchronized boolean start(){
+			if(state==INIT || state==STOPPED && temp!=STARTED) {
 				temp=STARTED;
 				return true;
 			}
@@ -316,23 +362,23 @@ public class FrameGrabber {
 			return state==INIT || state==STOPPED;
 		}
 		
-		public boolean stop(){
-			if(state==STARTED) {
+		public synchronized boolean stop(){
+			if(state==STARTED && temp!=STOPPED) {
 				temp=STOPPED;
 				return true;
 			}
 			return false;
 		}
 		
-		public boolean remove(){
-			if(isInit()) {
+		public synchronized boolean remove(){
+			if(state==INIT || state==STOPPED && temp!=REMOVED) {
 				temp=REMOVED;
 				return true;
 			}
 			return false;
 		}
 		
-		public void commit(){
+		public synchronized void commit(){
 			state=temp;
 		}
 	}
@@ -352,8 +398,8 @@ public class FrameGrabber {
 		} catch (Exception e){
 			//otherwise put sensible values in
 			dev = "/dev/video0";
-			w = 320;
-			h = 240;
+			w = MAX_WIDTH;
+			h = MAX_HEIGHT;
 			std = 0;
 			channel = 0;
 			qty = 80;
