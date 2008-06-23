@@ -14,6 +14,8 @@ FEATURES:
 
 REQUIREMENTS:
 v4l4j requires the following:
+- a supported V4L video source (webcam, capture card, tuner card). In addition,
+  v4l4j only supports YUV420 and RGB24 palette formats.
 - Sun JAVA JDK 1.6 (it wont compile with earlier versions)
 - the development files of libjpeg, as well as libjpeg itself
 - Apache Ant
@@ -28,11 +30,12 @@ JAR file v4l4j.jar are copied in the top-level directory.
 INSTALLING:
 In order to use the v4l4j package from your java application, you must do
 two things:
-First, make sure JNI library libv4l4j.so can be loaded by the JVM. This is done
-by either:
-- installing libv4l4j in the JRE lib directory. This is done by running
+FIRST, make sure JNI library libv4l4j.so can be loaded by the JVM. This is done
+by EITHER:
+- installing libv4l4j.so in the JRE lib directory. This is achieved by running
   "ant install-jnilib" as root in the top-level directory. It can be
   uninstalled with "ant uninstall-jnilib" as root later on.
+OR
 - setting the shell variable LD_LIBRARY_PATH to point to the directory where
   libv4l4j.so resides before running your program. By default, libv4l4j.so
   is created in the top-level directory. For example:
@@ -40,18 +43,16 @@ by either:
   The same can be achieved by setting the java.library.path property using:
   "-Djava.library.path=path/to/libv4l4j_dir" when invoking the JVM.
 
-Second, make sure v4l4j.jar is in your application's classpath.
+SECOND, make sure v4l4j.jar is in your application's classpath.
 
 TESTING:
-you can either run a series of Junit tests or run the main method in the 
-FrameGrabber class (which shows the maximum achievable FPS):
-- to run the Junit tests, run "ant test-single"
-- to run the au.edu.jcu.v4l4j.FrameGrabber class's main method (FPS test),
-  run "ant test-fps".
-By default, the tests will capture frames from /dev/video0, at 320x240 and it
-is assumed to be a webcam. You can change any of these settings by editing the
-values at the end of the "build.properties" file, or provide those values on
-the ant command line ("-Dtest.device=...", to change the device file,
+you can either run a series of Junit tests or an FPS test:
+- to run the Junit tests, run "ant test-junit"
+- to run the FPS test, run "ant test-fps".
+By default, both tests will capture frames from /dev/video0, at 320x240 and the
+device is assumed to be a webcam. You can change any of these settings by
+editing the values at the end of the "build.properties" file, or provide those
+values on the ant command line ("-Dtest.device=...", to change the device file,
 "-Dtest.width=.." the change the width, "-Dtest.height=..." for the height and
 so on).
 

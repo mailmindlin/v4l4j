@@ -1,5 +1,5 @@
-libv4l is a C wrapper library around the capture facilities provided by the
-Video4Linux (V4L) API. It offers a very simple API to capture frames from
+libv4l is a GPL-ed C wrapper library around the capture facility provided by
+the Video4Linux (V4L) API. It offers a simplified API to capture frames from
 video devices. Both V4L1 and V4L2 devices are supported. libv4l also provides
 access to all V4L controls reported by the underlying V4L driver. This includes
 the usual controls found on every video device such as brightness & contrast,
@@ -20,7 +20,7 @@ FEATURES:
 liv4l allows:
 - frame capture from V4L devices in a variety of palettes (YUV420, RGB24,...)
 - access to V4L controls
-- access to driver-private ioctl through "fake" V4L controls created by libv4l
+- access to driver-private ioctls through "fake" V4L controls created by libv4l
 
 REQUIREMENTS:
 - a V4l compatible video source (capture card, webcam)
@@ -35,6 +35,10 @@ test programs are shipped:
   resolution. It then prints the frame rate.
 - 'list-caps' which lists information about a given video device.
 To compile the test programs, run "make test".
+The "example" directory contains light_cap, a lighweight application which 
+captures frames and sends them out as a multipart JPEG stream suitable for
+viewing in any standard-compliant web browser. See example/README for more
+details.
 
 DEBUGGING:
 Edit the Makefile, uncomment the line #DEBUG line and recompile libv4l. Extra

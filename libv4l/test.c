@@ -36,20 +36,18 @@
 
 #include "libv4l.h"
 
-#define CAPTURE_LENGTH  	2 // in seconds
+#define CAPTURE_LENGTH  	10 // in seconds
 #define OUTPUT_BLOCK_SIZE 	4096
-#define PPM6_HEADER 		"P6 %d %d 255\n"
 
-void write_frame(struct capture_device *c, void *d, int len) {
-	int outfile, curr, bs;
+void write_frame(struct capture_device *c, void *d) {
+	int outfile, len = 0;
 	char filename[50];
-	char ppm_header[40];
 	struct timeval tv;
 	
 
 	//Construct the filename
 	gettimeofday(&tv, NULL);
-	sprintf(filename,"%s-%d.4-%d.%s", "file" ,(int) tv.tv_sec, (int) tv.tv_usec,  "ppm");
+	sprintf(filename,"raw_frame-%d-%d.raw", (int) tv.tv_sec, (int) tv.tv_usec);
 
 
 	//open file
@@ -58,17 +56,8 @@ void write_frame(struct capture_device *c, void *d, int len) {
 		return;
 	}
 
-	curr = sprintf(ppm_header, PPM6_HEADER, c->width, c->height);
-	printf( "FILE: PPM header %s (size %d)\n", ppm_header, curr);
-	write(outfile, ppm_header, curr);
-	curr=len;	
-	while(curr > 0) {
-		bs = (curr < OUTPUT_BLOCK_SIZE) ? curr: OUTPUT_BLOCK_SIZE;
-		write(outfile, d, bs);
-		curr -= bs;
-		d += bs; 
-	}
-	printf("FILE: written %d bytes in file\n",len);
+	while((len+=write(outfile, (d+len), (c->imagesize-len)))<c->imagesize);
+	
 	close(outfile);
 }
 
@@ -76,12 +65,20 @@ int main(int argc, char** argv) {
 	struct capture_device *c;
 	void *b, *d;
 	struct timeval start, now;
-	int size, count=0;
+	int size, count=0, std=0, channel=0;
 	
-	if(argc!=2) {
+	if(argc!=2 && argc!=4) {
 		printf("This program requires the path to the video device file to be tested.\n");
-		printf("Usage: %s /dev/video0\n", argv[0]);
+		printf("The optional second and third arguments are a video standard and channel.\n");
+		printf("Usage: %s <video_device_file> [standard channel]\n", argv[0]);
+		printf("Video standards: webcam:0 - PAL:1 - SECAM:2 - NTSC:3\n");
 		return -1;
+	}
+	
+	if (argc==4){
+		std = atoi(argv[2]);
+		channel = atoi(argv[3]);
+		printf("Using standard %d, channel %d\n",std, channel);
 	}
 	
 	printf("This program will try capturing frames from %s for"\
@@ -90,20 +87,21 @@ int main(int argc, char** argv) {
 		" only one, and press <Enter>, or Ctrl-C to abort now.");
 	getchar();
 
-	c = init_libv4l(argv[1], 320,240 ,0,0,2);
+	c = init_libv4l(argv[1], 0, 0 ,channel, std,2);
 
 	if(c==NULL) {
 		printf("Error initialising device.");
 		return -1;
 	}
 	
-	printf("Capturing from /dev/video0 at %dx%d...\n", c->width,c->height);
-	
 	if((*c->capture.set_cap_param)(c, NULL, 0)){
 		del_libv4l(c);
 		printf("Cant set capture parameters");
 		return -1;
 	}
+	
+	printf("Capturing from %s at %dx%d.\n", argv[1], c->width,c->height);
+	printf("Image format %s, size: %d\n", libv4l_palettes[c->palette].name, c->imagesize);
 
 	if((*c->capture.init_capture)(c)<0){
 		del_libv4l(c);
@@ -124,11 +122,9 @@ int main(int argc, char** argv) {
 	
 		//get frame from v4l2 
 		if((d = (*c->capture.dequeue_buffer)(c)) != NULL) {
-			//get address of frame
-			//d = get_frame_buffer(c, b, &size);
-			//uncomment the following line to output captured frame 
-			//to a file in PPM format
-			//write_frame(c,d, size);
+			//uncomment the following line to output raw captured frame 
+			//to a file
+			//write_frame(c,d);
 			count++;
 				//Put frame  
 			if(d != NULL)
