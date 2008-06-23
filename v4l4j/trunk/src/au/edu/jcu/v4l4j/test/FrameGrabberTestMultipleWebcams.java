@@ -7,8 +7,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import au.edu.jcu.v4l4j.FrameGrabber;
-import au.edu.jcu.v4l4j.V4L2Control;
-import au.edu.jcu.v4l4j.V4L4JException;
+import au.edu.jcu.v4l4j.Control;
+import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 public class FrameGrabberTestMultipleWebcams {
 	private FrameGrabber fg1;
@@ -91,7 +91,7 @@ public class FrameGrabberTestMultipleWebcams {
 	
 	@Test
 	public void testListControls(){
-		V4L2Control[] v1 = fg1.getControls(), v2 = fg2.getControls();
+		Control[] v1 = fg1.getControls(), v2 = fg2.getControls();
 		System.out.println("Listing controls:");
 		for(int i=0; i<v1.length;i++)
 			System.out.println("Control "+v1[i].getName());

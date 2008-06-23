@@ -8,8 +8,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import au.edu.jcu.v4l4j.FrameGrabber;
-import au.edu.jcu.v4l4j.V4L2Control;
-import au.edu.jcu.v4l4j.V4L4JException;
+import au.edu.jcu.v4l4j.Control;
+import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 public class FrameGrabberTest {
 	private FrameGrabber fg;
@@ -99,7 +99,7 @@ public class FrameGrabberTest {
 
 	@Test
 	public void testSetControlValue(){
-		V4L2Control[] v = fg.getControls();
+		Control[] v = fg.getControls();
 		int val = (v[0].getMax() - v[0].getMin())/2+v[0].getMin();
 		try {
 			v[0].setValue(val);

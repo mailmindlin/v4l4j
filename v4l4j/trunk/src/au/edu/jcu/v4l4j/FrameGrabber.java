@@ -34,6 +34,15 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
+import au.edu.jcu.v4l4j.exceptions.ImageDimensionHeightException;
+import au.edu.jcu.v4l4j.exceptions.ImageDimensionWidthException;
+import au.edu.jcu.v4l4j.exceptions.ImageFormatException;
+import au.edu.jcu.v4l4j.exceptions.InitialistationException;
+import au.edu.jcu.v4l4j.exceptions.StateException;
+import au.edu.jcu.v4l4j.exceptions.V4L4JException;
+import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
+
 
 /**
  * This class provides methods to :
@@ -97,7 +106,7 @@ public class FrameGrabber {
 	private int nbV4LBuffers = 4;
 	private ByteBuffer[] bufs;
 	private State state;
-	private V4L2Control[] ctrls;
+	private Control[] ctrls;
 	
 	/*
 	 * JNI returns an long (which is really a pointer) when a device is allocated for use
@@ -114,16 +123,19 @@ public class FrameGrabber {
 		}
 	}
 	
-	private native long allocateObject() throws V4L4JException;
-	private native ByteBuffer[] init_v4l(long o, String f, int w, int h, int ch, int std, int nbBuf, int q);
+	private native long allocateObject() throws InitialistationException;
+	private native ByteBuffer[] init_v4l(long o, String f, int w, int h, int ch, int std, int nbBuf, int q)
+		throws InitialistationException, ImageDimensionWidthException, ImageDimensionHeightException, CaptureChannelException,
+		ImageFormatException, VideoStandardException;
 	private native void start(long o) throws V4L4JException;
-	private native void setQuality(long o, int i) throws V4L4JException;
+	private native void setQuality(long o, int i);
 	private native int getBuffer(long o) throws V4L4JException;
-	private native int getBufferLength(long o) throws V4L4JException;
-	private native void stop(long o) throws V4L4JException;
+	private native int getBufferLength(long o);
+	private native void stop(long o);
 	private native void delete(long o) throws V4L4JException;
-	private native int getCtrlValue(long o, int i) throws V4L4JException;
-	private native int setCtrlValue(long o, int i, int v) throws V4L4JException;
+	private native int getCtrlValue(long o, int i);
+	private native int setCtrlValue(long o, int i, int v);
+	private native long freeObject(long o);
 	
 	/**
 	 * Construct a FrameGrabber object used to capture JPEG frames from a video source
@@ -182,24 +194,51 @@ public class FrameGrabber {
 	 * V4L may either adjust the height and width parameters to the closest valid values
 	 * or reject them altogether. If the values were adjusted, they can be retrieved 
 	 * after calling init() using getWidth() and getHeight()
-	 * @throws V4L4JException if one of the parameters is invalid
+	 * @throws VideoStandardException 
+	 * @throws ImageFormatException 
+	 * @throws CaptureChannelException 
+	 * @throws ImageDimensionHeightException 
+	 * @throws ImageDimensionWidthException 
+	 * @throws InitialistationException 
+	 * @throws StateException if the framegrabber is already initialised
 	 */
-	public void init() throws V4L4JException {
+	public void init() throws InitialistationException, ImageDimensionWidthException, ImageDimensionHeightException, CaptureChannelException, ImageFormatException, VideoStandardException, StateException{
 		if(!state.init())
-			throw new V4L4JException("Invalid method call");
+			throw new StateException("Invalid method call");
 		
-		object = allocateObject();		
-		bufs = init_v4l(object, dev, width, height, channel, standard, nbV4LBuffers, quality);
+		object = allocateObject();	
+		try {
+			bufs = init_v4l(object, dev, width, height, channel, standard, nbV4LBuffers, quality);
+		} catch (InitialistationException e) {
+			freeObject(object);
+			throw e;
+		} catch (ImageDimensionWidthException e) {
+			freeObject(object);
+			throw e;
+		} catch (ImageDimensionHeightException e) {
+			freeObject(object);
+			throw e;
+		} catch (CaptureChannelException e) {
+			freeObject(object);
+			throw e;
+		} catch (ImageFormatException e) {
+			freeObject(object);
+			throw e;
+		} catch (VideoStandardException e) {
+			freeObject(object);
+			throw e;
+		}
 		state.commit();
 	}
 	
 	/**
 	 * Start the capture. After this call, frames can be retrieved with getFrame()
-	 * @throws V4L4JException if one of the parameters is invalid
+	 * @throws V4L4JException if the capture cant be started
+	 * @throws StateException if <code>init()</code> hasnt been called successfully before.
 	 */
-	public void startCapture() throws V4L4JException {
+	public void startCapture() throws StateException, V4L4JException {
 		if(!state.start())
-			throw new V4L4JException("Invalid method call");
+			throw new StateException("Invalid method call");
 		
 		start(object);
 		state.commit();
@@ -211,11 +250,12 @@ public class FrameGrabber {
 	 * to 0 when finished. Note that the returned ByteBuffer is not backed by an array.
 	 * @return a ByteBuffer containing the JPEG-encoded frame data
 	 * @throws V4L4JException if there is an error capturing from the source
+	 * @throws StateException if the object isnt successfully initialised and started
 	 */
 	public ByteBuffer getFrame() throws V4L4JException {
 		synchronized(state) {
 			if(!state.isStarted())
-				throw new V4L4JException("Invalid method call");
+				throw new StateException("Invalid method call");
 			ByteBuffer b = bufs[getBuffer(object)];
 			b.limit(getBufferLength(object)).position(0);
 			return b;
@@ -225,10 +265,11 @@ public class FrameGrabber {
 	/**
 	 * Stop the capture.
 	 * @throws V4L4JException if the method call is not valid (if the capture was never started for instance)
+	 * @throws StateException if the object isnt successfully initialised and started
 	 */
 	public void stopCapture() throws V4L4JException {
 		if(!state.stop())
-			throw new V4L4JException("Invalid method call");
+			throw new StateException("Invalid method call");
 		
 		stop(object);
 		state.commit();
@@ -237,15 +278,17 @@ public class FrameGrabber {
 	/**
 	 * Free resources used by the FrameCapture object.
 	 * @throws V4L4JException if there is a problem freeing resources
+	 * @throws StateException if the object isnt successfully initialised or the capture isnt stopped
 	 */
 	public void remove() throws V4L4JException {
 		if(state.isStarted())
 			stopCapture();
 		
 		if(!state.remove())
-			throw new V4L4JException("Invalid method call");
+			throw new StateException("Invalid method call");
 		
 		delete(object);
+		freeObject(object);
 		state.commit();
 	}
 	
@@ -289,12 +332,12 @@ public class FrameGrabber {
 	 * Set the specified control to the specified value
 	 * @param id the control index (in the array of controls as returned by getControls() )
 	 * @param value the new value
-	 * @throws V4L4JException if something goes wrong
+	 * @throws StateException if the object isnt initialised
 	 */
 	void setControlValue(int id, int value) throws V4L4JException{
 		//synchronized(state) {
 			if(!state.isInit() && !state.isStarted())
-				throw new V4L4JException("Invalid method call");
+				throw new StateException("Invalid method call");
 			
 			setCtrlValue(object, id, value);
 		//}
@@ -304,12 +347,12 @@ public class FrameGrabber {
 	 * Get the current value of the specified control
 	 * @param id the control index (in the array of controls as returned by getControls() )
 	 * @return the current value of a control
-	 * @throws V4L4JException if something goes wrong
+	 * @throws StateException if the object isnt initialised
 	 */
 	int getControlValue(int id) throws V4L4JException{
 		//synchronized(state) {
 			if(!state.isInit() && !state.isStarted())
-				throw new V4L4JException("Invalid method call");
+				throw new StateException("Invalid method call");
 			
 			return getCtrlValue(object, id);
 		//}
@@ -319,7 +362,7 @@ public class FrameGrabber {
 	 * Retrieve an array of available controls
 	 * @return the array of available controls
 	 */
-	public V4L2Control[] getControls() {
+	public Control[] getControls() {
 		return ctrls;
 	}
 	
@@ -354,10 +397,20 @@ public class FrameGrabber {
 			return false;
 		}
 		
+		/**
+		 * This method returns whether the state is "started". This method should be called
+		 * with the lock held, so the state doesnt change.
+		 * @return
+		 */
 		public boolean isStarted(){
 			return state==STARTED;
 		}
 		
+		/**
+		 * This method returns whether the state is "init" or "stopped". This method should be called
+		 * with the lock held, so the state doesnt change.
+		 * @return
+		 */
 		public boolean isInit(){
 			return state==INIT || state==STOPPED;
 		}
@@ -384,24 +437,39 @@ public class FrameGrabber {
 	}
 	
 	public static void main(String[] args) throws V4L4JException, IOException {
-		V4L2Control[] ctrls;
+		Control[] ctrls;
 		String dev;
 		int w, h, std, channel, qty, captureLength = 5;
 		//Check if we have the required args
+		//otherwise put sensible values in
 		try {
 			dev = args[0];
+		} catch (Exception e){
+			dev = "/dev/video0";
+		}
+		try {
 			w = Integer.parseInt(args[1]);
+		} catch (Exception e){
+			w = MAX_WIDTH;
+		}
+		try{			
 			h = Integer.parseInt(args[2]);
+		} catch  (Exception e) {
+			h = MAX_HEIGHT;
+		}
+		try {
 			std = Integer.parseInt(args[3]);
+		} catch (Exception e) {
+			std = 0;
+		}
+		try {
 			channel = Integer.parseInt(args[4]);
+		} catch (Exception e){
+			channel = 0;
+		}
+		try {
 			qty = Integer.parseInt(args[5]);
 		} catch (Exception e){
-			//otherwise put sensible values in
-			dev = "/dev/video0";
-			w = MAX_WIDTH;
-			h = MAX_HEIGHT;
-			std = 0;
-			channel = 0;
 			qty = 80;
 		}
 		

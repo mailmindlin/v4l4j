@@ -1,6 +1,7 @@
 # Edit the following line to point to the JDK directory
 # It must be a JDK, not a JRE !!!
 JDK_HOME=/usr/lib/jvm/java-6-sun
+#JDK_HOME=/usr/lib/j2sdk1.6-sun
 
 #uncomment the following line to enable debug output from libv4l4j
 #DEBUG=-DDEBUG

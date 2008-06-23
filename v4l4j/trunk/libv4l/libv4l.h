@@ -63,8 +63,11 @@ struct capture_device *init_libv4l(const char *, int, int, int, int, int);
 
 struct capture_device;
 struct capture_actions {
+/*
+ * Init methods
+ */
 //set the capture parameters
-//int * point to an array of image formats to try (see libv4l.h for a list of supported formats)
+//int * point to an array of image formats (palettes) to try (see bottom of libv4l.h for a list of supported palettes)
 //the last argument (int) tells how many formats there are in the previous argument
 //arg2 can be set to NULL and arg3 to 0 to try the default order (again, see libv4l.h) 
 	int (*set_cap_param)(struct capture_device *, int *, int);
@@ -136,10 +139,12 @@ void del_libv4l(struct capture_device *);
 #define	 	RGB555					4
 #define 	RGB565					5
 #define 	GREY					6
+//the default order in which palettes are tried if "set_cap_param(c, NULL, 0)" is used
+#define		DEFAULT_PALETTE_ORDER	{YUV420, RGB24, RGB32, YUYV, RGB555, RGB565, GREY}
 //Dont use the following two, use YUV420 and YUYV instead !!
 #define 	YUV420P					7
 #define 	YUV422					8
-#define	DEFAULT_PALETTE_ORDER		{YUV420, RGB24, RGB32, YUYV, RGB555, RGB565, GREY}
+
 
 
 
