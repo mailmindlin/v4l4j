@@ -24,13 +24,15 @@
 
 package au.edu.jcu.v4l4j;
 
+import au.edu.jcu.v4l4j.exceptions.V4L4JException;
+
 /**
  * Objects of this class represent video source controls of any nature. When a video source is attached to a frame grabber,
- * its controls are automatically detected and made available through the <code>getControls()</code> method of the frame grabber. 
+ * its controls are automatically detected and made available through the <code>getControls()</code> method of a frame grabber object.  
  * @author gilles
  *
  */
-public class V4L2Control {
+public class Control {
 	
 	/**
 	 * If this control has a type equal to BUTTON, it has a value of 0,
@@ -60,7 +62,7 @@ public class V4L2Control {
 	 * @param step the increments
 	 * @param fg the frame grabber associated with this control
 	 */
-	V4L2Control(int id, String name, int min, int max, int step, FrameGrabber fg) {
+	Control(int id, String name, int min, int max, int step, FrameGrabber fg) {
 		this.id = id;
 		this.name = new String(name);
 		this.min=min;

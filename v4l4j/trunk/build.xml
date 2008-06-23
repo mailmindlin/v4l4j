@@ -2,7 +2,6 @@
 	
 	<property file="build.properties"/>
 
-	<!-- define the classpath for Standalone deployment -->
 	<path id="build.classpath">
 		<pathelement location="${project.src}"/>
 		<fileset dir="${project.lib}">
@@ -10,7 +9,6 @@
 		</fileset>
 	</path>
 	
-	<!-- define the classpath for test deployment -->
 	<path id="test.classpath">
 		<pathelement location="${project.classes}" />
 		<fileset dir="${project.lib}">
@@ -32,9 +30,8 @@
 		<echo message=" jar-src :     Build a JAR file with the v4l4j classes and sources"/>
 		<echo message=" jnilib :      Build the JNI library (libv4l4j.so)"/>
 		<echo message=" test-fps :    Check the FPS of a video source"/>
-		<echo message=" test-single : Run JUNIT tests with a single video source"/>
-<!--		<echo message=" test-multiple : Run JUNIT tests with two video sources"/>-->
-		<echo message=" test-all :    Run JUNIT tests for both single and multiple webcams"/>
+		<echo message=" test-junit :  Run JUNIT tests with a single video source"/>
+		<echo message=" test-all :    Run JUNIT and FPS tests"/>
 		<echo message=" clean:        Remove all build generated files"/>
 		<echo message=""/>
 	</target>
@@ -68,6 +65,7 @@
 			<include name="**/*.java"/>
 		</javac>
 	</target>
+	
 	<target name="jar" depends="compile">
 		<jar jarfile="${project.dir}/${project.name}.jar">
 			<manifest>
@@ -128,7 +126,7 @@
 		</java>
 	</target>
 
-	<target name="test-single" depends="jar-test,jnilib">
+	<target name="test-junit" depends="jar-test,jnilib">
 		<junit fork="yes" haltonfailure="yes">
 			<jvmarg value="-Djava.library.path=."/>
 			<jvmarg value="-Dtest.device=${test.device}" /> <!-- device file -->
@@ -152,7 +150,7 @@
 		</junit>
 	</target>-->
 	
-	<target name="test-all" depends="test-single, test-fps" />
+	<target name="test-all" depends="test-junit, test-fps" />
 	
 	<target name="clean">
 		<exec executable="make">
@@ -165,7 +163,5 @@
 		<delete file="${project.dir}/libv4l4j.so" />
 		<delete dir="${project.classes}"/>
 		<delete dir="${project.javadoc.dir}"/>
-		<delete dir="${project.build}"/>
-		<delete file="${project.dir}/v4l4j.jar" />
 	</target>
-     </project>
+</project>

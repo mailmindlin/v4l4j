@@ -22,26 +22,25 @@
 *
 */
 
-/**
- * 
- */
-package au.edu.jcu.v4l4j;
+package au.edu.jcu.v4l4j.exceptions;
 
 /**
- * Signal an error of some sort at the V4L layer
+ * This class of exception is thrown when the specified capture height is invalid / not supported.
  * @author gilles
- *
  */
-public class V4L4JException extends Exception {
-	private static final long serialVersionUID = 1L;
-	
-	public V4L4JException(String message) {
-		    super(message);
-		  }
-		  public V4L4JException(String message, Throwable throwable) {
-		    super(message, throwable);
-		  }
-		  public V4L4JException(Throwable throwable) {
-		    super(throwable);
-		  }
+public class ImageDimensionHeightException extends V4L4JException {
+
+	private static final long serialVersionUID = -3338859321078232443L;
+
+	public ImageDimensionHeightException(String message) {
+		super(message);
+	}
+
+	public ImageDimensionHeightException(String message, Throwable throwable) {
+		super(message, throwable);
+	}
+
+	public ImageDimensionHeightException(Throwable throwable) {
+		super(throwable);
+	}
 }

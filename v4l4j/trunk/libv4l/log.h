@@ -67,10 +67,17 @@
 
 #define dprint(source, level,format, ...) do {if(((source) & LIBV4L_LOG_SOURCE) && ((level) & LIBV4L_LOG_LEVEL)) {\
 				 fprintf (stderr, "[%s:%d %s] " format, __FILE__, __LINE__, __PRETTY_FUNCTION__, ## __VA_ARGS__); fflush(stderr);} } while(0) 
+
+
+#else  //if not DEBUG
+#define dprint(source, level, format, ...)
+#endif // if DEBUG
+
 #define XMALLOC(var, type, size)	\
 		do { \
 			var = (type) malloc(size); \
-			if (!var) dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ERR, "MEMALLOC: Cant allocate %d bytes.\n", size); \
+			if (!var) {fprintf(stderr, "[%s:%d %s] MEMALLOC: OUT OF MEMORY. Cant allocate %d bytes.\n",\
+					__FILE__, __LINE__, __PRETTY_FUNCTION__, size); fflush(stderr);}\
 			else { CLEAR(*var); \
 				dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "MEMALLOC: allocating %d bytes of type %s for var %s (%p).\n", size, #type, #var, var); } \
 		} while (0)
@@ -80,20 +87,5 @@
 			if (var) { free(var); } \
 			else { dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "MEMALLOC: Trying to free a NULL pointer.\n");} \
 		} while (0)
-
-
-#else  //if not DEBUG
-#define dprint(source, level, format, ...)
-#define XMALLOC(var, type, size)	\
-		do { \
-			var = (type) malloc(size); \
-			if (!var) {fprintf(stderr, "[%s:%d %s] MEMALLOC: OUT OF MEMORY. Cant allocate %d bytes.\n",\
-					__FILE__, __LINE__, __PRETTY_FUNCTION__, size); fflush(stderr);}\
-			else { CLEAR(*var);} \
-		} while (0)
-
-#define XFREE(var)	do { if (var) { free(var); } } while (0)
-
-#endif // if DEBUG
 
 #endif

@@ -84,8 +84,7 @@ static void setup_libv4l_actions(struct capture_device *c) {
 		c->capture.query_control = query_control;
 		c->capture.query_frame_sizes = query_frame_sizes_v4l2;
 		c->capture.query_capture_intf = query_capture_intf_v4l2;
-		c->capture.query_current_image_fmt = query_current_image_fmt_v4l2;
-		
+		c->capture.query_current_image_fmt = query_current_image_fmt_v4l2;		
 	}
 }
 
