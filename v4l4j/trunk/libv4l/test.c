@@ -23,7 +23,7 @@
 */
 
 
-// This program tries capturing frames from /dev/video0
+// This program tries capturing frames from the video device given in argument
 // for CAPTURE_LENGTH seconds and prints the resulting fps
 // Uncomment line 144 to write the captured frames to PPM files
 
@@ -65,29 +65,36 @@ int main(int argc, char** argv) {
 	struct capture_device *c;
 	void *b, *d;
 	struct timeval start, now;
-	int size, count=0, std=0, channel=0;
+	int size, count=0, std=0, channel=0, width=0, height=0;
 	
-	if(argc!=2 && argc!=4) {
+	if(argc!=2 && argc!=4 && argc!=6) {
 		printf("This program requires the path to the video device file to be tested.\n");
 		printf("The optional second and third arguments are a video standard and channel.\n");
-		printf("Usage: %s <video_device_file> [standard channel]\n", argv[0]);
+		printf("Usage: %s <video_device_file> [standard channel [ width height ] ]\n", argv[0]);
 		printf("Video standards: webcam:0 - PAL:1 - SECAM:2 - NTSC:3\n");
 		return -1;
 	}
 	
-	if (argc==4){
+        printf("This program will try capturing frames from %s for"\
+	       " %d seconds and will print the FPS\n", argv[1], CAPTURE_LENGTH);
+
+
+	if (argc==4 || argc==6){
 		std = atoi(argv[2]);
 		channel = atoi(argv[3]);
 		printf("Using standard %d, channel %d\n",std, channel);
 	}
+
+	if (argc==6) {
+		width = atoi(argv[4]);
+		height = atoi(argv[5]);
+		printf("Capturing at %dx%d\n", width, height);
+	}
 	
-	printf("This program will try capturing frames from %s for"\
-		" %d seconds and will print the FPS\n", argv[1], CAPTURE_LENGTH);
-	printf("Make sure your webcam is connected, make sure it is the"\
-		" only one, and press <Enter>, or Ctrl-C to abort now.");
+	printf("Make sure your video source is connected, and press <Enter>, or Ctrl-C to abort now.");
 	getchar();
 
-	c = init_libv4l(argv[1], 0, 0 ,channel, std,2);
+	c = init_libv4l(argv[1], width, height ,channel, std,2);
 
 	if(c==NULL) {
 		printf("Error initialising device.");
