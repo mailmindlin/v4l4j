@@ -70,7 +70,7 @@ int set_cap_param_v4l2(struct capture_device *c, int *palettes, int nb) {
 	struct v4l2_fmtdesc fmtd;
 	struct v4l2_cropcap cc;
 	struct v4l2_crop crop;
-	int i;
+	int i=0, found=1;
 	int def[NB_SUPPORTED_PALETTE] = DEFAULT_PALETTE_ORDER;	
 	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: Setting capture parameters on device %s.\n", c->file);
 	
@@ -115,9 +115,42 @@ int set_cap_param_v4l2(struct capture_device *c, int *palettes, int nb) {
 	}
 	if (-1 == ioctl(c->fd, VIDIOC_S_STD, &std)) {
 		info("The specified standard (%d) cannot be selected\n", c->std);
+		found=0;
+		while(found==0 && i++<3) {
+			CLEAR(std);
+			switch (i) {
+				case 0:
+					std = 0;
+					break;
+				case 1:
+					std = V4L2_STD_PAL;
+					break;
+				case 2:
+					std = V4L2_STD_NTSC;
+					break;
+				case 3:
+					std = V4L2_STD_SECAM;
+					break;
+			}
+			if (0 == ioctl(c->fd, VIDIOC_S_STD, &std)){
+				info("The standard has been autodetected and set to\n");
+				found=1;
+				if(std==0)
+					info("webcam\n");
+				else if (std==V4L2_STD_PAL)
+					info("PAL\n");
+				else if (std==V4L2_STD_NTSC)
+					info("NTSC\n");
+				else if (std==V4L2_STD_SECAM)
+					info("SECAM\n");
+			}
+		}
+	}
+	if(found!=1) {
+		info("The specified standard (%d) cannot be selected, and the automated detection failed\n", c->std);
 		info("Listing the reported capabilities:\n");
 		list_cap_v4l2(c);
-		return LIBV4L_ERR_STD;
+		return LIBV4L_ERR_STD;	
 	}
 	
 	//query the current image format

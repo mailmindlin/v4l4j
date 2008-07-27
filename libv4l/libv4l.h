@@ -33,7 +33,7 @@
 		
 struct mmap_buffer {
 	void *start;					//start of the mmaped buffer
-	int length;						//length of the mmaped buffer - does NOT indicate the length of the frame,
+	int length;						//length of the mmaped buffer as given by v4l - does NOT indicate the length of the frame,
 									//use struct capture_device->imagesize instead
 };
 
