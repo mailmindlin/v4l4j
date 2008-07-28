@@ -24,6 +24,7 @@
 
 #include <sys/ioctl.h>		//for ioctl
 #include <sys/mman.h>		//for mmap
+#include "videodev2.h"
 #include "videodev.h"
 #include "libv4l.h"
 #include "log.h"
