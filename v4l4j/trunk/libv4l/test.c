@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 	
-        printf("This program will try capturing frames from %s for"\
+    printf("This program will try capturing frames from %s for"\
 	       " %d seconds and will print the FPS\n", argv[1], CAPTURE_LENGTH);
 
 

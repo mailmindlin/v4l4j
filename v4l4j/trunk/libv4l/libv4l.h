@@ -122,6 +122,13 @@ void del_libv4l(struct capture_device *);
 
 
 
+//
+// Passing these values as desired width and height for the capture
+// will result libv4l using the maximun width and height allowed   
+//
+#define MAX_WIDTH					0
+#define MAX_HEIGHT					0
+
 
 //Supported standards
 #define		WEBCAM					0

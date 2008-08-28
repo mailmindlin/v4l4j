@@ -19,7 +19,7 @@ OBJ=v4l4j_FrameGrabber.o jpeg.o
 CC=gcc
 INCLUDES=-I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ -I$(LIBV4L_PATH) -I.
 OPTIMISATION=-O3
-CFLAGS=$(INCLUDES) $(DEBUG) $(OPTIMISATION)
+CFLAGS=$(INCLUDES) $(DEBUG) $(OPTIMISATION) -fPIC
 
 LD=gcc
 LDFLAGS=-shared  -ljpeg
