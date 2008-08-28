@@ -35,7 +35,7 @@
 // ****************************************
 struct control_list *list_control(struct capture_device *c){
 	struct v4l2_control ctrl;
-	int probe_id = 0, count = 0;
+	int probe_id = 0, count = 0, priv_ctrl_count = 0;
 	struct control_list *l;
 	
 	dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: Listing controls\n");
@@ -58,15 +58,14 @@ struct control_list *list_control(struct capture_device *c){
 	
 	/*
 	 *  The following is an attempt to support driver private (custom) ioctls.
-	 * In struct v4l2_query, the reserved[0] field  is set to a special unused value V4L2_PRIV_IOCTL (currently in kernel 2.6.25, 
-	 * only values from 1 to 6 are used by v4l2).
+	 * First libv4l will probe and detect the underlying video driver. Then, it will create fake V4L controls for every private ioctls so
+	 * that the application can call these private ioctls through normal V4L controls.In struct v4l2_query, libv4l will use the reserved[0]
+	 * field  and set it to a special unused value V4L2_PRIV_IOCTL (currently in kernel 2.6.25, only values from 1 to 6 are used by v4l2). 
 	 * The following code attempts to probe the underlying driver (pwc, bttv, gspca, ...) and create fake v4l2_ctrl based on supported
 	 * ioctl (static list which must be updated manually after inspecting the code for each driver => ugly but there is no other option until all
 	 * drivers make their private ioctl available through a control (or control class like the camera control class added to 2.6.25)) 
 	 */
-	int priv_ctrl_count;
-	while ( ((priv_ctrl_count = probe_drivers[probe_id].probe(c, l)) == -1) && (probe_id<PROBE_NB) )
-		probe_id++;
+	while ( ((priv_ctrl_count = probe_drivers[probe_id].probe(c, l)) == -1) && (probe_id++<PROBE_NB) );
 	
 	count += priv_ctrl_count;
 	
@@ -136,6 +135,18 @@ void free_control_list(struct control_list *l){
 }
 
 
+//lists all extended controls
+void query_ext_controls(struct capture_device *cdev) {
+	struct v4l2_queryctrl qctrl;
+
+	printf("============================================\nQuerying available extended contols\n\n");
+	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
+	while (0 == ioctl (cdev->fd, VIDIOC_QUERYCTRL, &qctrl)) {
+		printf("Control class id:0x%x - type: %d - %s\n", qctrl.id, qctrl.type,  qctrl.name);		
+    	qctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
+	}
+}
+
 //lists all supported controls
 void query_control(struct capture_device *cdev){
 	int i;
@@ -145,47 +156,8 @@ void query_control(struct capture_device *cdev){
 	for(i=0; i<l->count; i++) {
 		printf("Control %d: Name %s - Value: %d (Min: %d Max: %d Step: %d)\n",\
 				i, (char *) l->ctrl[i]. name, get_control_value(cdev, &l->ctrl[i]), l->ctrl[i].minimum, l->ctrl[i].maximum, l->ctrl[i].step);
-	}
-	
-/*	struct v4l2_queryctrl qctrl;
-	struct v4l2_querymenu qmenu;
-	struct v4l2_control ctrl;
-	int fd = cdev->fd;
-	
-	memset(&qctrl, 0, sizeof(struct v4l2_queryctrl));
-	memset(&qmenu, 0, sizeof(struct v4l2_querymenu));
-	memset(&ctrl, 0, sizeof(struct v4l2_control));
-	qctrl.id = V4L2_CID_BASE;	
-  	if(cdev->v4l_version == V4L2_VERSION) {
-		while(ioctl(fd, VIDIOC_QUERYCTRL, &qctrl) == 0) {
-			if (qctrl.flags == V4L2_CTRL_FLAG_DISABLED) continue;
-			if (qctrl.type == V4L2_CTRL_TYPE_CTRL_CLASS) { printf("Control class name: %s\n",qctrl.name); continue; }
-			printf("Name: %s", qctrl.name);
-			switch ((int)qctrl.type) {
-				case V4L2_CTRL_TYPE_INTEGER:
-					ctrl.id = qctrl.id;
-					ioctl(fd, VIDIOC_G_CTRL, &ctrl);
-					printf(" - Value: %d (Min: %d Max: %d Step: %d)\n", ctrl.value, qctrl.minimum, qctrl.maximum, qctrl.step);
-					break;
-				case V4L2_CTRL_TYPE_BOOLEAN:
-					ctrl.id = qctrl.id;
-					ioctl(fd, VIDIOC_G_CTRL, &ctrl);
-					printf(" - Value: %d (On/Off)\n", ctrl.value);
-					break;
-				case V4L2_CTRL_TYPE_BUTTON:
-					ctrl.id = qctrl.id;
-					ioctl(fd, VIDIOC_G_CTRL, &ctrl);
-					printf(" - Value: %d (button)\n", ctrl.value);
-					break;
-				case V4L2_CTRL_TYPE_MENU:
-					qmenu.id = qctrl.id;
-					for(qmenu.index=qctrl.minimum;qmenu.index<=qctrl.maximum;qmenu.index++) {
-						if (0 == ioctl(fd,VIDIOC_QUERYMENU, &qmenu)) printf("Menu item (%d): %s\n", qmenu.index, qmenu.name);
-					}
-					memset(&qmenu, 0, sizeof(struct v4l2_querymenu));
-					break;
-			}
-			qctrl.id++;
-		}
-	}*/
+	}	
+	query_ext_controls(cdev);
 }
+
+
