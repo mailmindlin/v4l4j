@@ -29,8 +29,10 @@
 #include "log.h"
 #include "libv4l-err.h"
 
-#define MAX_WIDTH 			2048
-#define MAX_HEIGHT 			2048
+//Arbitrary values that hopefully will never be reached
+//v4l2 will adjust them to the closest available
+#define V4L2_MAX_WIDTH 			4096
+#define V4L2_MAX_HEIGHT 		4096
 
 void list_cap_v4l2(struct capture_device *);
 int check_capture_capabilities_v4l2(struct capture_device *c) {
@@ -180,10 +182,10 @@ int set_cap_param_v4l2(struct capture_device *c, int *palettes, int nb) {
 	}
 	
 	//Set image format
-	if(c->width==0)
-		c->width=MAX_WIDTH;
-	if(c->height==0)
-		c->height=MAX_HEIGHT;
+	if(c->width==MAX_WIDTH)
+		c->width=V4L2_MAX_WIDTH;
+	if(c->height==MAX_HEIGHT)
+		c->height=V4L2_MAX_HEIGHT;
 			
 	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: trying palettes (%d to try in total)\n", nb);
 	for(i=0; i<nb; i++) {

@@ -1,5 +1,5 @@
 #Uncomment the following line to enable debug output in libv4l2
-#DEBUG=-DDEBUG -ggdb
+DEBUG=-DDEBUG -ggdb
 
 #
 # edit anything below at your own risk
@@ -14,7 +14,7 @@ OBJ=v4l2-input.o v4l-control.o v4l1-input.o libv4l.o pwc-probe.o gspca-probe.o q
 
 CC=gcc
 OPTIMISATION=-O3
-CFLAGS=$(DEBUG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) -DVER_REL=$(VERSION_RELEASE) $(OPTIMISATION)
+CFLAGS=$(DEBUG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) -DVER_REL=$(VERSION_RELEASE) $(OPTIMISATION) -fPIC
 
 LD=gcc
 LDFLAGS=

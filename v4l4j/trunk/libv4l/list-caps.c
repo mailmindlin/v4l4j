@@ -32,14 +32,24 @@
 
 int main(int argc, char** argv) {
 	struct capture_device *c;
+	int std=0, channel=0;
 	
-	if(argc!=2) {
+	if(argc!=2 && argc!=4) {
 		printf("This program requires the path to the video device file to be tested.\n");
-		printf("Usage: %s /dev/video0\n", argv[0]);
+		printf("The optional second and third arguments are a video standard and channel.\n");
+		printf("Usage: %s <video_device_file> [standard channel]\n", argv[0]);
+		printf("Video standards: webcam:0 - PAL:1 - SECAM:2 - NTSC:3\n");
 		return -1;
 	}
 	
-	c = init_libv4l(argv[1], 320,240 ,0,0,2);
+	
+	if (argc==4){
+		std = atoi(argv[2]);
+		channel = atoi(argv[3]);
+		printf("Using standard %d, channel %d\n",std, channel);
+	}
+	
+	c = init_libv4l(argv[1], MAX_WIDTH, MAX_HEIGHT ,std ,channel ,2);
 	
 	if(c==NULL) {
 		printf("Error initialising device.");
