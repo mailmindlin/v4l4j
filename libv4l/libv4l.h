@@ -137,7 +137,7 @@ void del_libv4l(struct capture_device *);
 #define		SECAM					2
 #define		NTSC					3
 
-#define NB_SUPPORTED_PALETTE		8
+#define NB_SUPPORTED_PALETTE		9
 //palette formats
 //YUV420 is the same as YUV420P - YUYV is the same as YUV422
 //DO NOT USE YUV420P NOR YUV422 - they re here for compatibility
@@ -150,11 +150,12 @@ void del_libv4l(struct capture_device *);
 #define 	RGB565					5
 #define 	GREY					6
 #define 	MJPEG					7
+#define 	JPEG					8
 //the default order in which palettes are tried if "set_cap_param(c, NULL, 0)" is used
-#define		DEFAULT_PALETTE_ORDER	{YUV420, MJPEG, RGB24, RGB32, YUYV, RGB555, RGB565, GREY}
+#define		DEFAULT_PALETTE_ORDER	{JPEG, YUV420, MJPEG, RGB24, RGB32, YUYV, RGB555, RGB565, GREY}
 //Dont use the following two, use YUV420 and YUYV instead !!
-#define 	YUV420P					8
-#define 	YUV422					9
+#define 	YUV420P					9
+#define 	YUV422					10
 
 
 
