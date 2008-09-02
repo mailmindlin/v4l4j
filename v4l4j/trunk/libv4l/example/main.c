@@ -37,13 +37,14 @@
 #include <arpa/inet.h>		//for inet_ntoa (convert strcut in_addr to char*)
 
 #include "libv4l.h"
+#include "palettes.h"
 #include "v4l-control.h"
 #include "utils.h"
 #include "jpeg.h"
 #include "log.h"
 
-#define SUPPORTED_FORMATS		{MJPEG, YUV420, RGB24, YUYV}
-#define NB_SUPPORTED_FORMATS	4
+#define SUPPORTED_FORMATS		{JPEG, MJPEG, YUV420, RGB24, YUYV}
+#define NB_SUPPORTED_FORMATS	5
 
 
 #ifdef DEBUG
@@ -90,7 +91,6 @@ int main(int argc, char **argv) {
 	*/
 	struct capture_device *cdev;
 	int sockfd, port;
-	char ver[10];
 	jpeg_quality = JPEG_QUALITY;
 	int fmts[NB_SUPPORTED_FORMATS] = SUPPORTED_FORMATS;
 	
@@ -113,8 +113,6 @@ int main(int argc, char **argv) {
 	log_source = atoi(argv[10]);
 	log_level = atoi(argv[11]);
 #endif
-
-	info(LOG_INFO, "Using libv4l2 version %s\n", get_libv4l_version(ver));
 
 	//init libv4l2 and create cdev struct
 	cdev = init_libv4l(argv[1], atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), 5);
@@ -143,6 +141,8 @@ int main(int argc, char **argv) {
 		del_libv4l(cdev);
 		exit(1);
 	}
+	
+	info(LOG_INFO, "Using palette %s\n", libv4l_palettes[cdev->palette].name);
 	
 	//init tcp server
 	sockfd = setup_tcp_server_sock(port);

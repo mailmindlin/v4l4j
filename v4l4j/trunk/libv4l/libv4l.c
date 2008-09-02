@@ -93,9 +93,12 @@ static void setup_libv4l_actions(struct capture_device *c) {
 struct capture_device *init_libv4l(const char *dev, int w, int h, int ch, int s, int nb_buf){
 	//create capture device
 	struct capture_device *c;
+	char version[10];
 	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Initialising libv4l and creating struct cdev\n");
 	XMALLOC(c, struct capture_device *,sizeof(struct capture_device));
 	XMALLOC(c->mmap, struct mmap *, sizeof(struct mmap));
+	
+	fprintf(stdout, "libv4l version %s\n", get_libv4l_version(version)); 
 	
 	//fill in cdev struct
 	c->mmap->req_buffer_nr = nb_buf;
