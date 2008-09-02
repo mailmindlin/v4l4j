@@ -25,9 +25,11 @@
 #include <sys/ioctl.h>		//for ioctl
 #include <sys/mman.h>		//for mmap
 #include <errno.h>			//for errno
+#include <string.h>			//for memcpy
 #include "libv4l.h"
 #include "log.h"
 #include "libv4l-err.h"
+#include "palettes.h"
 
 //Arbitrary values that hopefully will never be reached
 //v4l2 will adjust them to the closest available
@@ -67,12 +69,33 @@ int check_capture_capabilities_v4l2(struct capture_device *c) {
 	return 0;
 }
 
+static int set_image_format(struct v4l2_format *fmt, int width, int height, int fd, int palette){
+	CLEAR(*fmt);
+	fmt->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	if (-1 == ioctl(fd, VIDIOC_G_FMT, fmt)) {
+		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_ERR, "V4L2: cannot get the current image format\n");
+		return LIBV4L_ERR_IOCTL;
+	}
+	fmt->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	fmt->fmt.pix.width = width;
+	fmt->fmt.pix.height = height;
+	fmt->fmt.pix.field = V4L2_FIELD_ANY;
+	fmt->fmt.pix.pixelformat = palette;
+	
+	if (0 == ioctl(fd, VIDIOC_S_FMT, fmt)) {
+		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_INFO, "V4L2: palette accepted\n");
+		return 0;		
+	}
+	
+	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_ERR, "V4L2: image format rejected\n");
+	return -1;
+}
+
 int set_cap_param_v4l2(struct capture_device *c, int *palettes, int nb) {
 	struct v4l2_format fmt;
-	struct v4l2_fmtdesc fmtd;
 	struct v4l2_cropcap cc;
 	struct v4l2_crop crop;
-	int i=0, found=1;
+	int i=0, found=1, best_palette=-1, best_width =-1, best_height=-1;
 	int def[NB_SUPPORTED_PALETTE] = DEFAULT_PALETTE_ORDER;	
 	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: Setting capture parameters on device %s.\n", c->file);
 	
@@ -115,7 +138,10 @@ int set_cap_param_v4l2(struct capture_device *c, int *palettes, int nb) {
 			list_cap_v4l2(c);
 			return LIBV4L_ERR_STD;
 	}
-	if (-1 == ioctl(c->fd, VIDIOC_S_STD, &std)) {
+	
+	//Linux UVC doesnt like to be ioctl'ed(VIDIOC_S_STD) so
+	//i added the extra if(std!=0) so the ioctl isnt called if we said std="webcam" 
+	if (std!=0 && -1 == ioctl(c->fd, VIDIOC_S_STD, &std)) {
 		info("The specified standard (%d) cannot be selected\n", c->std);
 		found=0;
 		while(found==0 && i++<3) {
@@ -154,33 +180,7 @@ int set_cap_param_v4l2(struct capture_device *c, int *palettes, int nb) {
 		list_cap_v4l2(c);
 		return LIBV4L_ERR_STD;	
 	}
-	
-	//query the current image format
-	CLEAR(fmt);
-	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	if (-1 == ioctl(c->fd, VIDIOC_G_FMT, &fmt)) {
-		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_ERR, "V4L2: cannot get the current image format\n");
-		return LIBV4L_ERR_IOCTL;
-	}
-	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG1, "V4L2: current values: width: %d - height: %d - bytes/line %d - image size: %d\n", \
-			fmt.fmt.pix.width,fmt.fmt.pix.height, fmt.fmt.pix.bytesperline, fmt.fmt.pix.sizeimage);
-	
-	CLEAR(fmtd);
-	fmtd.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	fmtd.index = 0;
-	
-	while(ioctl(c->fd, VIDIOC_ENUM_FMT, &fmtd) >= 0) {
-		if (fmt.fmt.pix.pixelformat == fmtd.pixelformat) {
-			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG1, "V4L2: current image format: %s (compressed : %d) (%d)\n", fmtd.description, fmtd.flags, fmtd.pixelformat);
-			break;
-		}
-		fmtd.index++;
-	}
-	if (fmtd.index == 0) { 
-		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_ERR, "V4L2: cant find the current image format...\n");
-		return LIBV4L_ERR_IOCTL;
-	}
-	
+		
 	//Set image format
 	if(c->width==MAX_WIDTH)
 		c->width=V4L2_MAX_WIDTH;
@@ -188,39 +188,43 @@ int set_cap_param_v4l2(struct capture_device *c, int *palettes, int nb) {
 		c->height=V4L2_MAX_HEIGHT;
 			
 	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: trying palettes (%d to try in total)\n", nb);
+	found=0;
+	//we try all the supplied palettes and find the best one that give us a resolution closes to the desired one
 	for(i=0; i<nb; i++) {
-		CLEAR(fmt);
-		fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		if (-1 == ioctl(c->fd, VIDIOC_G_FMT, &fmt)) {
-			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_ERR, "V4L2: cannot get the current image format\n");
-			return LIBV4L_ERR_IOCTL;
+		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: trying width: %d - height: %d - palette %s (%d)...\n",\
+			c->width, c->height,libv4l_palettes[palettes[i]].name, libv4l_palettes[palettes[i]].v4l2_palette);
+			
+		if( (set_image_format(&fmt, c->width, c->height, c->fd, libv4l_palettes[palettes[i]].v4l2_palette)==0) && ((best_palette == -1) || \
+			 (abs(c->width*c->height - fmt.fmt.pix.width*fmt.fmt.pix.height) < abs(c->width*c->height - best_width*best_height))) ){
+			best_palette = i;
+			best_width = fmt.fmt.pix.width;
+			best_height = fmt.fmt.pix.height;
+			found = 1;
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_INFO, "V4L2: palette (%s) is best palette so far\n", 	libv4l_palettes[palettes[i]].name);
 		}
-		fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		fmt.fmt.pix.width = c->width;
-		fmt.fmt.pix.height = c->height;
-		fmt.fmt.pix.field = V4L2_FIELD_INTERLACED;
-		
-		fmt.fmt.pix.pixelformat = libv4l_palettes[palettes[i]].v4l2_palette;
-		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: trying width: %d - height: %d - palette %s (%d) - depth %d...\n",\
-				c->width, c->height,libv4l_palettes[palettes[i]].name, fmt.fmt.pix.pixelformat, libv4l_palettes[palettes[i]].depth);
-		
-		if (0 == ioctl(c->fd, VIDIOC_S_FMT, &fmt)) {
-			c->palette = palettes[i];
-			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_INFO, "V4L2: palette (%s) accepted\n", 	libv4l_palettes[palettes[i]].name);
-			break;
-		}
-		
-		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_ERR, "V4L2: image format rejected (palette: %s)\n", libv4l_palettes[palettes[i]].name);
 	}
-	if(i==nb) {
+	if(!found) {
 		info("libv4l was unable to find a suitable palette. The following palettes have been tried and failed:\n");
 		for(i=0; i<nb;i++)
-			info("%s - ",libv4l_palettes[palettes[i]].name);
+			info("%s\n",libv4l_palettes[palettes[i]].name);
 		info("Please let the author know about this error.\n");
 		info("See the ISSUES section in the libv4l README file.\n");
 		info("Listing the reported capabilities:\n");
-		list_cap_v4l1(c);
+		list_cap_v4l2(c);
 		return LIBV4L_ERR_FORMAT;
+	} else {
+		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: Setting to best palette %s...\n",\
+				libv4l_palettes[palettes[best_palette]].name);
+		
+		if (0 == set_image_format(&fmt, c->width, c->height, c->fd, libv4l_palettes[palettes[best_palette]].v4l2_palette)) {
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_INFO, "V4L2: palette (%s) accepted\n", 	libv4l_palettes[palettes[best_palette]].name);			
+			c->palette = palettes[best_palette];
+		} else {
+			info("Unable to set the best detected palette: %s\n", libv4l_palettes[palettes[best_palette]].name);
+			info("Please let the author know about this error.\n");
+			info("See the ISSUES section in the libv4l README file.\n");
+			return LIBV4L_ERR_FORMAT;
+		}
 	}
 
 	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_INFO, "V4L2: Using width: %d, height: %d, bytes/line %d, image size: %d\n", \
@@ -230,20 +234,24 @@ int set_cap_param_v4l2(struct capture_device *c, int *palettes, int nb) {
 	c->width = fmt.fmt.pix.width;
 	c->height= fmt.fmt.pix.height;
 	c->bytesperline = fmt.fmt.pix.bytesperline;
-	c->imagesize  = c->width*c->height*libv4l_palettes[palettes[i]].depth / 8;
-			
-	if(c->imagesize != fmt.fmt.pix.sizeimage) {
-		info("The image size (%d) is not the same as what the driver returned (%d)\n",c->imagesize, fmt.fmt.pix.sizeimage);
-		info("Please let the author know about this error.\n");
-		info("See the ISSUES section in the libv4l README file.\n");
+	if (COMPRESSED_FORMAT_DEPTH == libv4l_palettes[palettes[best_palette]].depth)
 		c->imagesize = fmt.fmt.pix.sizeimage;
+	else {
+		c->imagesize  = c->width*c->height*libv4l_palettes[palettes[best_palette]].depth / 8;
+		if(c->imagesize != fmt.fmt.pix.sizeimage) {
+			info("The image size (%d) is not the same as what the driver returned (%d)\n",c->imagesize, fmt.fmt.pix.sizeimage);
+			info("Please let the author know about this error.\n");
+			info("See the ISSUES section in the libv4l README file.\n");
+			c->imagesize = fmt.fmt.pix.sizeimage;
+		}
 	}
 	
 	//Set crop format
 	CLEAR(cc);
 	CLEAR(crop);
 	cc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	if( ioctl( c->fd, VIDIOC_CROPCAP, &cc ) >= 0 ) {
+	//dont set cropping for webcams, Linux UVC doesnt like it
+	if(std!=0 && ioctl( c->fd, VIDIOC_CROPCAP, &cc ) >= 0 ) {
 		crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		crop.c = cc.defrect;
 		if(ioctl( c->fd, VIDIOC_S_CROP, &crop )!=0) {
@@ -333,7 +341,7 @@ int start_capture_v4l2(struct capture_device *c) {
 	return 0;
 }
 
-void *dequeue_buffer_v4l2(struct capture_device *c) {
+void *dequeue_buffer_v4l2(struct capture_device *c, int *len) {
 	struct v4l2_buffer *b = (struct v4l2_buffer *) c->mmap->tmp;
 	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: dequeuing buffer on device %s.\n", c->file);
 	
@@ -348,6 +356,7 @@ void *dequeue_buffer_v4l2(struct capture_device *c) {
 	}
 	
 	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: getting buffer address\n");
+	*len = b->bytesused;
 	return c->mmap->buffers[b->index].start;
 }
 
@@ -392,19 +401,54 @@ void free_capture_v4l2(struct capture_device *c) {
 /*
  * Control related functions
  */
- 
+ struct struct_node {
+ 	int id;
+ 	struct struct_node *next;
+ };
+ typedef struct struct_node node;
+ void add_node(node **list, int id) {
+	node *t;
+	if((t=*list)) {
+		//create the subsequent nodes
+		while(t->next) t = t->next;
+		XMALLOC(t->next, node *, sizeof(node));
+		t->next->id = id;		
+	} else {
+		//create the first node
+		XMALLOC((*list), node *, sizeof(node));
+		(*list)->id = id;
+	}
+ }
+ void empty_list(node *list){
+ 	node *t;
+ 	while(list) {
+		t = list->next;
+		XFREE(list);
+		list = t;
+ 	}
+ }
+ int has_id(node *list, int id){
+ 	for(;list;list=list->next)
+ 		if(list->id==id) return 1;
+
+ 	return 0;
+ }
  //returns the number of controls (standard and private V4L2 controls only)
 int count_v4l2_controls(struct capture_device *c) {
 	struct v4l2_queryctrl qctrl;
+	node *list=NULL;
 	int i, count = 0;
 	
 	CLEAR(qctrl);
-			
+
+				
 	//std ctrls
 	for( i = V4L2_CID_BASE; i< V4L2_CID_LASTP1; i++) {
 		qctrl.id = i;
-		if((ioctl(c->fd, VIDIOC_QUERYCTRL, &qctrl) == 0) && ( ! (qctrl.flags & V4L2_CTRL_FLAG_DISABLED)))
+		if((ioctl(c->fd, VIDIOC_QUERYCTRL, &qctrl) == 0) && ( ! (qctrl.flags & V4L2_CTRL_FLAG_DISABLED))) {
 			count++;
+			add_node(&list, i);
+		}
 	}
 	
 	//priv ctrls
@@ -413,6 +457,7 @@ int count_v4l2_controls(struct capture_device *c) {
 			if (qctrl.flags & V4L2_CTRL_FLAG_DISABLED)
 				continue;
 			count++;
+			add_node(&list, qctrl.id);
 		} else {
 			if (errno == EINVAL)
 				break;
@@ -420,26 +465,45 @@ int count_v4l2_controls(struct capture_device *c) {
 			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_ERR, "V4L2: we shouldnt be here...\n");
 		}
 	}
+	
+	//checking extended controls
+	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
+	while (0 == ioctl (c->fd, VIDIOC_QUERYCTRL, &qctrl)) {
+		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: Control class id:0x%x - type: %d - %s\n", qctrl.id, qctrl.type,  qctrl.name);
+		if(!has_id(list,qctrl.id )){
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: found unique ext ctrl\n");
+			count++;
+		} else {
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: found duplicate ext ctrl\n");
+		}
+    	qctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
+	}
+	
+	empty_list(list);
 	return count;
 }
 
 //Populate the control_list with reported V4L2 controls
 //and returns how many controls were created
+int get_control_value_v4l2(struct capture_device *, struct v4l2_queryctrl *);
 int create_v4l2_controls(struct capture_device *c, struct control_list *l){
+	struct v4l2_queryctrl qctrl;
+	node *list=NULL;
 	int count = 0, i;
 		
-	//list standard V4L controls
+	//create standard V4L controls
 	for( i = V4L2_CID_BASE; i< V4L2_CID_LASTP1 && count < l->count; i++) {
 		l->ctrl[count].id = i;
 		if((ioctl(c->fd, VIDIOC_QUERYCTRL, &l->ctrl[count]) == 0) && ( ! (l->ctrl[count].flags & V4L2_CTRL_FLAG_DISABLED))) {
-			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: found control(id: %d - name: %s - min: %d -max: %d - val: %d)\n", \
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: found control(id: 0x%x - name: %s - min: %d -max: %d - val: %d)\n", \
 					l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum,\
 					get_control_value_v4l2(c, &l->ctrl[count]));
 			count++;
+			add_node(&list, i);
 		}
 	}
 
-	//list device-specific private V4L2 controls
+	//create device-specific private V4L2 controls
 	for (i = V4L2_CID_PRIVATE_BASE;count < l->count; i++) {
 		l->ctrl[count].id = i;
 		if ((0 == ioctl (c->fd, VIDIOC_QUERYCTRL, &l->ctrl[count])) && ( ! (l->ctrl[count].flags & V4L2_CTRL_FLAG_DISABLED))) {
@@ -447,6 +511,7 @@ int create_v4l2_controls(struct capture_device *c, struct control_list *l){
 					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum, \
 					get_control_value_v4l2(c, &l->ctrl[count]));
             count++;
+            add_node(&list, i);
     	} else {
             if (errno == EINVAL)
             	break;
@@ -455,6 +520,27 @@ int create_v4l2_controls(struct capture_device *c, struct control_list *l){
     	}
 	}
 	
+	//create ext ctrls
+	//TODO Add support for group-changes of extended controls. For now, reported ext ctrl can only be changed one at a time.
+	//TODO add an extra method that list ext (so move the following to the new method) so apps are aware of which ctrls are
+	//TODO extended ones, and can decide whether or not to change multiple ctrls at once or not
+	//checking extended controls
+	CLEAR(qctrl);
+	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
+	while (0 == ioctl (c->fd, VIDIOC_QUERYCTRL, &qctrl)) {
+		if(!has_id(list,qctrl.id )){
+			memcpy(&l->ctrl[count], &qctrl, sizeof(l->ctrl[count]));
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: found ext control(id: %d - name: %s - min: %d -max: %d - val: %d)\n"\
+					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum, \
+					get_control_value_v4l2(c, &l->ctrl[count]));
+			count++;
+		} else {
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: found duplicate ext ctrl\n");
+		}
+    	qctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
+	}
+	
+	empty_list(list);
 	return count;
 }
 
@@ -505,7 +591,6 @@ void enum_image_fmt_v4l2(struct capture_device *cdev) {
 		fmtd.index++;
 	}
 	
-	if (fmtd.index == 0) printf("Not supported ...\n");
 	printf("\n");	
 }
 
@@ -538,7 +623,6 @@ void query_current_image_fmt_v4l2(struct capture_device *cdev) {
 			}
 			fmtd.index++;
 		}
-		if (fmtd.index == 0) printf("Not supported ... (%d)\n", fmt.fmt.pix.pixelformat);
 	}
 	printf("\n");
 }

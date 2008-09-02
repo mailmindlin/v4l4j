@@ -122,8 +122,8 @@ struct capture_device *init_libv4l(const char *dev, int w, int h, int ch, int s,
 		c->v4l_version=V4L1_VERSION;
 	} else {
 		info("libv4l was unable to detect the version of V4L used by device %s\n", c->file);
-		info("Please let the author know about this error.\n", c->file);
-		info("See the ISSUES section in the libv4l README file.\n", c->file);
+		info("Please let the author know about this error.\n");
+		info("See the ISSUES section in the libv4l README file.\n");
 		
 		close_device(c);
 		XFREE(c->mmap);

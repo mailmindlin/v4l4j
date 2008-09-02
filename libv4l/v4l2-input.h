@@ -54,7 +54,7 @@ int start_capture_v4l2(struct capture_device *);
  */
 
 //dequeue the next buffer with available frame
-void *dequeue_buffer_v4l2(struct capture_device *);
+void *dequeue_buffer_v4l2(struct capture_device *, int *);
 
 //enqueue the buffer when done using the frame
 void enqueue_buffer_v4l2(struct capture_device *);

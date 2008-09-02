@@ -27,13 +27,14 @@
 #include <jpeglib.h>
 
 #include "libv4l.h"
+#include "v4l-control.h"
 #include "common.h"
 #include "jpeg.h"
 #include "debug.h"
 #include "libv4l-err.h"
 
-#define SUPPORTED_FORMATS		{YUV420, RGB24}
-#define NB_SUPPORTED_FORMATS	2
+#define SUPPORTED_FORMATS		{MJPEG, YUV420, YUYV, RGB24}
+#define NB_SUPPORTED_FORMATS	4
 #define INCR_BUF_ID(i, max)			do { (i) = ((i) >= (max)) ? 0 : ((i) + 1); } while(0)
 
 #define BYTEBUFER_CLASS			"java/nio/ByteBuffer"
@@ -252,10 +253,10 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getBuffer(JNIEnv *e, j
 	
 	//get frame from v4l2 
 	dprint(LOG_LIBV4L, "[LIBV4L] Calling dequeue_buffer(dev: %s)\n", d->c->file);
-	if((frame = (*d->c->capture.dequeue_buffer)(d->c)) != NULL) {
+	if((frame = (*d->c->capture.dequeue_buffer)(d->c, &d->capture_len)) != NULL) {
 		i = d->buf_id = (d->buf_id == (d->c->mmap->buffer_nr-1)) ? 0 : d->buf_id+1;
 		dprint(LOG_LIBV4L, "[LIBV4L] i=%d\n", i); 
-		(*d->j.jpeg_encode)(d, frame, d->bufs[i]);
+		(*d->j->jpeg_encode)(d, frame, d->bufs[i]);
 		dprint(LOG_LIBV4L, "[LIBV4L] Calling enqueue_buffer(dev: %s)\n", d->c->file);
 		(*d->c->capture.enqueue_buffer)(d->c);
 		return i;
