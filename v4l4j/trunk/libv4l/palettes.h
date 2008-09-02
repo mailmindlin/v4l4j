@@ -94,6 +94,15 @@ static struct libv4l_palette libv4l_palettes[] = {
 		COMPRESSED_FORMAT_DEPTH,
 		"MJPEG"
 	},
+		{   
+		JPEG,
+#define VIDEO_PALETTE_UNDEFINED_V4L1	-1
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_JPEG,
+#define COMPRESSED_FORMAT_DEPTH			-1
+		COMPRESSED_FORMAT_DEPTH,
+		"JPEG"
+	},
 //Dont use the following two, use YUV420 and YUYV instead !!
 	{   
 		YUV420P,

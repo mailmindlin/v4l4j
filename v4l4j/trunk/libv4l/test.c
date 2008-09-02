@@ -38,7 +38,7 @@
 #include "libv4l.h"
 #include "palettes.h"
 
-#define CAPTURE_LENGTH  	10 // in seconds
+#define CAPTURE_LENGTH  	2 // in seconds
 
 void write_frame(void *d, int size) {
 	int outfile, len = 0;

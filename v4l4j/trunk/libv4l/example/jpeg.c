@@ -294,6 +294,14 @@ static int jpeg_encode_yuyv(void *source, int src_len, struct capture_device *cd
 	return rgb_size - j->cinfo.dest->free_in_buffer;
 }
 
+static int jpeg_encode_jpeg(void *source, int src_len, struct capture_device *cdev, struct jpeg *j, void *dest) {	
+	dprint(LOG_SOURCE_JPEG, LOG_LEVEL_DEBUG2, "Encoding a %dx%d frame\n", width, height);
+	
+	memcpy(dest, source, src_len);
+	dprint(LOG_SOURCE_JPEG, LOG_LEVEL_DEBUG2, "Compressed to %d bytes\n", src_len);
+	return src_len;
+}
+
 void release_jpeg_encoder(struct capture_device *cdev, struct jpeg *j) {
 	if(cdev->palette == YUYV)
 		XFREE(temp_buf);
@@ -353,6 +361,9 @@ int setup_jpeg_encoder(struct capture_device *cdev, struct jpeg *j){
 	} else if(cdev->palette == MJPEG) {
 		dprint(LOG_SOURCE_HTTP, LOG_LEVEL_DEBUG2, "Setting jpeg compressor for MJPEG\n");
 		j->jpeg_encode = jpeg_encode_mjpeg;
+	} else if(cdev->palette == JPEG) {
+		dprint(LOG_SOURCE_HTTP, LOG_LEVEL_DEBUG2, "Setting jpeg compressor for JPEG\n");
+		j->jpeg_encode = jpeg_encode_jpeg;
 	} else {
 		info(LOG_ERR, "Palette not supported %d\n", cdev->palette);
 		return -1;
