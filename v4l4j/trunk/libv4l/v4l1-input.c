@@ -29,6 +29,7 @@
 #include "libv4l.h"
 #include "log.h"
 #include "libv4l-err.h"
+#include "palettes.h"
 
 
 static int get_capabilities(int fd, struct video_capability *vc) {
@@ -55,16 +56,16 @@ int check_capture_capabilities_v4l1(struct capture_device *c) {
 
 	if (!(vc.type & VID_TYPE_CAPTURE)) {
 		info("The device %s seems to be a valid V4L1 device but without capture capability\n", c->file);
-		info("Please let the author know about this error.\n", c->file);
-		info("See the ISSUES section in the libv4l README file.\n", c->file);
-		info("Listing the reported capabilities:\n", c->file);
+		info("Please let the author know about this error.\n");
+		info("See the ISSUES section in the libv4l README file.\n");
+		info("Listing the reported capabilities:\n");
 		list_cap_v4l1(c);
 		return -1;
 	}
 
 	if( c->channel < 0 || c->channel >= vc.channels ) {
 		info("The specified input channel (%d) does NOT exist on device %s \n",c->channel, c->file);
-		info("Listing reported channels:\n", c->file);
+		info("Listing reported channels:\n");
 		list_cap_v4l1(c);
 		return -1;
 	}
@@ -113,28 +114,28 @@ int set_cap_param_v4l1(struct capture_device *c, int *palettes, int nb) {
 
 	if (c->width > vc.maxwidth) {
 		info("The specified width capture (%d) is greater than supported (%d)\n", c->width, vc.maxwidth);
-		info("Listing the reported capabilities:\n", c->file);
+		info("Listing the reported capabilities:\n");
 		list_cap_v4l1(c);
 		return LIBV4L_ERR_WIDTH;
 	}
 
 	if (c->height > vc.maxheight) {
 		info("The specified height capture (%d) is greater than supported (%d)\n", c->height, vc.maxheight);
-		info("Listing the reported capabilities:\n", c->file);
+		info("Listing the reported capabilities:\n");
 		list_cap_v4l1(c);
 		return LIBV4L_ERR_HEIGHT;
 	}
 
 	if (c->width < vc.minwidth) {
 		info("The specified width capture (%d) is lower than supported (%d)\n", c->width, vc.minwidth);
-		info("Listing the reported capabilities:\n", c->file);
+		info("Listing the reported capabilities:\n");
 		list_cap_v4l1(c);
 		return LIBV4L_ERR_WIDTH;
 	}
 
 	if (c->height < vc.minheight) {
 		info("The specified height capture (%d) lower than supported (%d)\n", c->height, vc.minheight);
-		info("Listing the reported capabilities:\n", c->file);
+		info("Listing the reported capabilities:\n");
 		list_cap_v4l1(c);
 		return LIBV4L_ERR_HEIGHT;
 	}
@@ -158,7 +159,7 @@ int set_cap_param_v4l1(struct capture_device *c, int *palettes, int nb) {
 	}
 	if (-1 == ioctl( c->fd, VIDIOCSCHAN, &chan )) {
 		info("The desired input channel(%d)/standard(%d) cannot be selected\n", c->channel, c->std);
-		info("Listing the reported capabilities:\n", c->file);
+		info("Listing the reported capabilities:\n");
 		list_cap_v4l1(c);
 		return LIBV4L_ERR_CHANNEL_SETUP;
 	}
@@ -171,6 +172,7 @@ int set_cap_param_v4l1(struct capture_device *c, int *palettes, int nb) {
 
 	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: trying palettes (%d to try in total)\n", nb);
 	for(i=0; i<nb; i++) {
+		if(palettes[i]==VIDEO_PALETTE_UNDEFINED_V4L1) continue;
 		pict.palette = libv4l_palettes[palettes[i]].v4l1_palette;
 		pict.depth = libv4l_palettes[palettes[i]].depth;
 		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: trying palette %s (%d) - depth %d...\n",\
@@ -229,9 +231,9 @@ int set_cap_param_v4l1(struct capture_device *c, int *palettes, int nb) {
 		info("libv4l was unable to find a suitable palette. The following palettes have been tried and failed:\n");
 		for(i=0; i<nb;i++)
 			info("%s\n",libv4l_palettes[palettes[i]].name);
-		info("Please let the author know about this error.\n", c->file);
-		info("See the ISSUES section in the libv4l README file.\n", c->file);
-		info("Listing the reported capabilities:\n", c->file);
+		info("Please let the author know about this error.\n");
+		info("See the ISSUES section in the libv4l README file.\n");
+		info("Listing the reported capabilities:\n");
 		list_cap_v4l1(c);
 		return LIBV4L_ERR_FORMAT;
 	}
@@ -293,13 +295,13 @@ int init_capture_v4l1(struct capture_device *c) {
 	 */
 
 	if(vm.frames>2) {
-		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: Using only 2 buffers\n", vm.frames);
+		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: Using only 2 buffers\n");
 	} else if (vm.frames<2) {
 		//although it wont require much fixing...
 		//do drivers allocate only 1 buffer anyway ?
 		info("The video driver returned an unsupported number of MMAP buffers(%d).\n", vm.frames);
-		info("Please let the author know about this error.\n", c->file);
-		info("See the ISSUES section in the libv4l README file.\n", c->file);
+		info("Please let the author know about this error.\n");
+		info("See the ISSUES section in the libv4l README file.\n");
 		return LIBV4L_ERR_INVALID_BUF_NB;
 	}
 	
@@ -344,10 +346,11 @@ int start_capture_v4l1(struct capture_device *c) {
 
 //dequeue the next buffer with available frame
 // start the capture of next buffer VIDIOCMCAPTURE(x)
-void *dequeue_buffer_v4l1(struct capture_device *c) {
+void *dequeue_buffer_v4l1(struct capture_device *c, int *len) {
 	struct video_mmap mm;
 	int curr_frame = (int) c->mmap->tmp;
 	int next_frame = curr_frame ^ 1;
+	*len=c->imagesize;
 	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG2, "V4L1: dequeuing buffer on device %s.\n", c->file);
 
 	CLEAR(mm);
@@ -360,12 +363,14 @@ void *dequeue_buffer_v4l1(struct capture_device *c) {
 	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: Starting capture of next frame (%d)\n", next_frame);
 	if(-1 == ioctl(c->fd, VIDIOCMCAPTURE, &mm)){
 		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: Cant initiate the capture of next frame\n");
+		*len = 0;
 		return NULL;
 	}
 
 	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: Waiting for frame (%d)\n", curr_frame);
 	if(-1 == ioctl(c->fd, VIDIOCSYNC, &curr_frame)){
 		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: Error waiting for next frame(%d)\n", curr_frame);
+		*len = 0;
 		return NULL;
 	}
 	c->mmap->tmp = (void *)next_frame;
@@ -402,6 +407,7 @@ int count_v4l1_controls(struct capture_device *c) {
 
 //Populate the control_list with fake V4L2 controls matching V4L1 video
 //controls and returns how many fake controls were created
+int get_control_value_v4l1(struct capture_device *, struct v4l2_queryctrl *);
 int create_v4l1_controls(struct capture_device *c, struct control_list *l){
 	int count = 0;
 			

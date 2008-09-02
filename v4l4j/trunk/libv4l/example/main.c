@@ -14,7 +14,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar; if not, write to the Free Software
+    along with light_cap; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
@@ -22,13 +22,13 @@
 #include <pthread.h>
 #include <signal.h>
 #include <assert.h>
-#include <string.h>			//strstr
-#include <fcntl.h>			//for 
+#include <string.h>			//strstr, memcpy
+#include <fcntl.h>			//for file open flags O_*
 #include <stdlib.h>
 #include <unistd.h>			//for close, write, open
 #include <errno.h>
 #include <stdio.h>
-#include <jpeglib.h>
+#include <stdlib.h>			//for atoi and friends
 #include <time.h>			//for nanosleep
 #include <sys/types.h> 
 #include <sys/socket.h>
@@ -37,11 +37,13 @@
 #include <arpa/inet.h>		//for inet_ntoa (convert strcut in_addr to char*)
 
 #include "libv4l.h"
+#include "v4l-control.h"
 #include "utils.h"
+#include "jpeg.h"
 #include "log.h"
 
-#define SUPPORTED_FORMATS		{YUV420, RGB24}
-#define NB_SUPPORTED_FORMATS	2
+#define SUPPORTED_FORMATS		{MJPEG, YUV420, RGB24, YUYV}
+#define NB_SUPPORTED_FORMATS	4
 
 
 #ifdef DEBUG
@@ -377,49 +379,19 @@ void *send_stream_to(void *v) {
 	struct jpeg j;
 	struct thread_data *td = (struct thread_data *)v;
 	struct capture_device *cdev = td->cdev;
-	int jpeg_len, f_nr = 0, retval = 0, sock = td->sock; //, calibrated = 1;
+	int jpeg_len, yuv_len, f_nr = 0, retval = 0, sock = td->sock; //, calibrated = 1;
 	void *yuv_data, *jpeg_data;
 	float ts, last_fps;
 	
 	XMALLOC(jpeg_data, void *, (cdev->width * cdev->height * 3));
 	dprint(LOG_SOURCE_HTTP, LOG_LEVEL_DEBUG2, "New thread starting sock: %d, jpeg_quality: %d\n", sock, jpeg_quality);
-	
-	//setup jpeg param
- 	j.cinfo.err = jpeg_std_error(&j.jerr);
- 	jpeg_create_compress(&j.cinfo);
- 	j.destmgr.init_destination = init_destination;
- 	j.destmgr.empty_output_buffer = empty_output_buffer;
- 	j.destmgr.term_destination = term_destination;
- 	j.cinfo.dest = &j.destmgr;
 
- 	j.cinfo.image_width = cdev->width;
- 	j.cinfo.image_height = cdev->height;
- 	j.cinfo.input_components = 3;
-
-	if(cdev->palette == YUV420) {
-		dprint(LOG_SOURCE_HTTP, LOG_LEVEL_DEBUG2, "Setting jpeg compressor for YUV\n");	
-		jpeg_set_defaults(&j.cinfo);
-		jpeg_set_colorspace(&j.cinfo, JCS_YCbCr);
-		j.cinfo.raw_data_in = TRUE; // supply downsampled data
-		j.cinfo.comp_info[0].h_samp_factor = 2;
-		j.cinfo.comp_info[0].v_samp_factor = 2;
-		j.cinfo.comp_info[1].h_samp_factor = 1;
-		j.cinfo.comp_info[1].v_samp_factor = 1;
-		j.cinfo.comp_info[2].h_samp_factor = 1;
-		j.cinfo.comp_info[2].v_samp_factor = 1;
-		j.cinfo.dct_method = JDCT_FASTEST;
-		j.jpeg_encode = jpeg_encode_yuv;
-	} else if (cdev->palette == RGB24) {
-		dprint(LOG_SOURCE_HTTP, LOG_LEVEL_DEBUG2, "Setting jpeg compressor for RGB\n");
-		j.cinfo.in_color_space = JCS_RGB;
-		jpeg_set_defaults(&j.cinfo) ;
-		j.jpeg_encode = jpeg_encode_rgb;
-	} else {
-		info(LOG_ERR, "Palette not supported %d\n", cdev->palette);
+	//setup the jpeg encoder based on the image palette
+	if(setup_jpeg_encoder(cdev, &j)!=0) {
+		info(LOG_ERR, "Error setting the JPEG encoder\n");
 		goto end;
 	}
-
-	jpeg_set_quality(&j.cinfo, jpeg_quality,TRUE);
+		
 
 	//send mjpeg header
 	if (send_mjpeg_header(sock) != 0 )
@@ -429,7 +401,6 @@ void *send_stream_to(void *v) {
 	sleep_rem.tv_sec = sleep_rem.tv_nsec = 0;
 		
 	while((retval>=0) && keep_going) {
-
 		
 		gettimeofday(&now, NULL);
 		if((now.tv_sec>=start.tv_sec + SHOW_FPS_INTERVAL)) {
@@ -469,10 +440,10 @@ void *send_stream_to(void *v) {
 		}
 	
 		//get frame from v4l2 
-		if((yuv_data = (*cdev->capture.dequeue_buffer)(cdev)) != NULL) {
+		if((yuv_data = (*cdev->capture.dequeue_buffer)(cdev, &yuv_len)) != NULL) {
 			
 			//encode in JPEG
-			(*j.jpeg_encode)(yuv_data, cdev->width, cdev->height, &jpeg_len, &j, jpeg_data);
+			jpeg_len = (*j.jpeg_encode)(yuv_data,yuv_len, cdev, &j, jpeg_data);
 
 			//return buffer to v4l2
 			(*cdev->capture.enqueue_buffer)(cdev);
@@ -485,13 +456,14 @@ void *send_stream_to(void *v) {
 	}
 	
 	end:
+
 	XFREE(jpeg_data);
-	client_nr--;
+	release_jpeg_encoder(cdev, &j);
 	//not thread safe!!
 	//if multiple clients enabled, needs locking
 	//concurrent paths with start_client_thread() could lead to bad thinds
 	//FIXME if MAX_CLIENT > 1
-	if(client_nr==0) {
+	if(--client_nr==0) {
 		dprint(LOG_SOURCE_HTTP, LOG_LEVEL_DEBUG2, "Last client, stopping capture \n");
 		//Stop capture
 		(*cdev->capture.stop_capture)(cdev);
@@ -502,7 +474,7 @@ void *send_stream_to(void *v) {
 	close(sock);
 	
 	XFREE(v);
-	jpeg_destroy_compress(&j.cinfo);
+
 	return NULL;
 }
 /* Sends a motion JPEG frame at "d" of size "len" over socket "sock"
@@ -518,7 +490,9 @@ int send_frame(int sock, void *d, int len) {
 		retval = -1;
 		goto end;
 	}	
+
 	sprintf(c, "%d\r\n\r\n",len);
+
 	if(write(sock, c, strlen(c))<0) {
 		dprint(LOG_SOURCE_HTTP, LOG_LEVEL_DEBUG1, "Error sending the MJPEG frame header\n");
 		retval = -1;
@@ -539,80 +513,6 @@ int send_frame(int sock, void *d, int len) {
 	
 	end:
 	return retval;
-}
-
-/* Encodes a RGB24 frame of width "width and height "height" at "src" straight 
- * into a JPEG frame at "dst" (must be allocated y caller). "len" is set to the
- * length of the compressed JPEG frame. "j" contains the JPEG compressor and 
- * must be initialised correctly by the caller
- */
-void jpeg_encode_rgb(void *src, int width, int height, int *len, struct jpeg *j, void *dst) {
-	//Code for this function is taken from Motion
-	//Credit to them !!!
-	
-	JSAMPROW row_ptr[1];
-	int rgb_size, stride, bytes=0;
-	
-	//init JPEG dest mgr
-	rgb_size = width * height * 3;
-	dprint(LOG_SOURCE_JPEG, LOG_LEVEL_DEBUG2, "Encoding a %dx%d frame (%d bytes)\n", width, height, rgb_size);
-
-	j->destmgr.next_output_byte = dst;
-	j->destmgr.free_in_buffer = rgb_size;
-	jpeg_set_quality(&j->cinfo, jpeg_quality,TRUE);
-	jpeg_start_compress( &j->cinfo, TRUE );
-	stride = j->cinfo.image_width * 3;
-
-	while(j->cinfo.next_scanline < j->cinfo.image_height ) {
-		bytes += stride;
-		row_ptr[0] = src + j->cinfo.next_scanline * stride;
-		jpeg_write_scanlines( &j->cinfo, row_ptr, 1 );
-	}
-	jpeg_finish_compress( &j->cinfo );
-
-	*len = rgb_size - j->cinfo.dest->free_in_buffer;
-	dprint(LOG_SOURCE_JPEG, LOG_LEVEL_DEBUG2, "Compressed %d bytes to %d bytes\n", rgb_size, *len);
-}
-
-/* Encodes a YUV planar frame of width "width and height "height" at "src" straight 
- * into a JPEG frame at "dst" (must be allocated y caller). "len" is set to the
- * length of the compressed JPEG frame. "j" contains the JPEG compressor and 
- * must be initialised correctly by the caller
- */
-void jpeg_encode_yuv(void *src, int width, int height, int *len, struct jpeg *j, void *dst) {
-	//Code for this function is taken from Motion
-	//Credit to them !!!
-	
-	JSAMPROW y[16],cb[16],cr[16]; 
-	JSAMPARRAY data[3]; 
-	int i, line, rgb_size;
-	
-	dprint(LOG_SOURCE_JPEG, LOG_LEVEL_DEBUG2, "Encoding a %dx%d frame\n", width, height);
-	
-	data[0] = y;
-	data[1] = cb;
-	data[2] = cr;
-	
-	//init JPEG dest mgr
-	rgb_size = width * height * 3;
-	j->destmgr.next_output_byte = dst;
-	j->destmgr.free_in_buffer = rgb_size;
-	jpeg_set_quality(&j->cinfo, jpeg_quality,TRUE);
-		
-	jpeg_start_compress( &j->cinfo, TRUE );
-	for (line=0; line<height; line+=16) {
-		for (i=0; i<16; i++) {
-			y[i] = src + width*(i+line);
-			if (i%2 == 0) {
-				cb[i/2] = src + width*height + width/2*((i+line)/2);
-				cr[i/2] = src + width*height + width*height/4 + width/2*((i+line)/2);
-			}
-		}
-		jpeg_write_raw_data(&j->cinfo, data, 16);
-	}
-	jpeg_finish_compress(&j->cinfo);
-	*len = rgb_size - j->cinfo.dest->free_in_buffer;
-	dprint(LOG_SOURCE_JPEG, LOG_LEVEL_DEBUG2, "Compressed %d bytes to %d bytes\n", rgb_size, *len);
 }
 
 /* Sends an MJPEG HTTP header over socket "sock"

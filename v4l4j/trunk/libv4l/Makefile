@@ -1,12 +1,12 @@
 #Uncomment the following line to enable debug output in libv4l2
-DEBUG=-DDEBUG -ggdb
+#DEBUG=-DDEBUG -ggdb -Wall
 
 #
 # edit anything below at your own risk
 #
 VERSION_MAJOR=0
 VERSION_MINOR=5
-VERSION_RELEASE=3
+VERSION_RELEASE=6
 
 LIB=libv4l.a
 TESTOBJ=test.o list-caps.o

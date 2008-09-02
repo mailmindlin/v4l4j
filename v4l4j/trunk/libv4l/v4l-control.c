@@ -142,7 +142,7 @@ void query_ext_controls(struct capture_device *cdev) {
 	printf("============================================\nQuerying available extended contols\n\n");
 	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
 	while (0 == ioctl (cdev->fd, VIDIOC_QUERYCTRL, &qctrl)) {
-		printf("Control class id:0x%x - type: %d - %s\n", qctrl.id, qctrl.type,  qctrl.name);		
+		printf("Control class :0x%x - type: %d - %s (class ID: 0x%lx)\n", qctrl.id, qctrl.type,  qctrl.name, V4L2_CTRL_ID2CLASS(qctrl.id));		
     	qctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
 	}
 }
