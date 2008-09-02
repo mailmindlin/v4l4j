@@ -439,7 +439,7 @@ public class FrameGrabber {
 	public static void main(String[] args) throws V4L4JException, IOException {
 		Control[] ctrls;
 		String dev;
-		int w, h, std, channel, qty, captureLength = 5;
+		int w, h, std, channel, qty, captureLength = 10;
 		//Check if we have the required args
 		//otherwise put sensible values in
 		try {

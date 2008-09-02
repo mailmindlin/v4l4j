@@ -12,6 +12,7 @@
 #ifndef __LINUX_VIDEODEV_H
 #define __LINUX_VIDEODEV_H
 
+#include <linux/ioctl.h>
 #include <linux/videodev2.h>
 
 #if defined(CONFIG_VIDEO_V4L1_COMPAT) || !defined (__KERNEL__)
@@ -129,7 +130,7 @@ struct video_window
 	__u32	width,height;		/* Its size */
 	__u32	chromakey;
 	__u32	flags;
-	struct	video_clip *clips;	/* Set only */
+	struct	video_clip __user *clips;	/* Set only */
 	int	clipcount;
 #define VIDEO_WINDOW_INTERLACE	1
 #define VIDEO_WINDOW_CHROMAKEY	16	/* Overlay by chromakey */

@@ -25,21 +25,22 @@
 
 // This program tries capturing frames from the video device given in argument
 // for CAPTURE_LENGTH seconds and prints the resulting fps
-// Uncomment line 144 to write the captured frames to PPM files
+// Uncomment line 144 to write the captured frames to raw files
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
 #include <sys/time.h>
 #include <fcntl.h>
 #include <unistd.h>
 
 #include "libv4l.h"
+#include "palettes.h"
 
 #define CAPTURE_LENGTH  	10 // in seconds
-#define OUTPUT_BLOCK_SIZE 	4096
 
-void write_frame(struct capture_device *c, void *d) {
+void write_frame(void *d, int size) {
 	int outfile, len = 0;
 	char filename[50];
 	struct timeval tv;
@@ -56,14 +57,15 @@ void write_frame(struct capture_device *c, void *d) {
 		return;
 	}
 
-	while((len+=write(outfile, (d+len), (c->imagesize-len)))<c->imagesize);
+	//printf( "FILE: writing %d bytes to file\n", size);
+	while((len+=write(outfile, (d+len), (size-len)))<size);
 	
 	close(outfile);
 }
 
 int main(int argc, char** argv) {
 	struct capture_device *c;
-	void *b, *d;
+	void *d;
 	struct timeval start, now;
 	int size, count=0, std=0, channel=0, width=0, height=0;
 	
@@ -88,7 +90,7 @@ int main(int argc, char** argv) {
 	if (argc==6) {
 		width = atoi(argv[4]);
 		height = atoi(argv[5]);
-		printf("Capturing at %dx%d\n", width, height);
+		printf("Trying to capture at %dx%d\n", width, height);
 	}
 	
 	printf("Make sure your video source is connected, and press <Enter>, or Ctrl-C to abort now.");
@@ -97,13 +99,13 @@ int main(int argc, char** argv) {
 	c = init_libv4l(argv[1], width, height ,channel, std,2);
 
 	if(c==NULL) {
-		printf("Error initialising device.");
+		printf("Error initialising device.\n");
 		return -1;
 	}
 	
 	if((*c->capture.set_cap_param)(c, NULL, 0)){
 		del_libv4l(c);
-		printf("Cant set capture parameters");
+		printf("Cant set capture parameters\n");
 		return -1;
 	}
 	
@@ -128,10 +130,10 @@ int main(int argc, char** argv) {
 	while(now.tv_sec<start.tv_sec+CAPTURE_LENGTH) {
 	
 		//get frame from v4l2 
-		if((d = (*c->capture.dequeue_buffer)(c)) != NULL) {
+		if((d = (*c->capture.dequeue_buffer)(c, &size)) != NULL) {
 			//uncomment the following line to output raw captured frame 
 			//to a file
-			//write_frame(c,d);
+			//write_frame(d, size);
 			count++;
 				//Put frame  
 			if(d != NULL)

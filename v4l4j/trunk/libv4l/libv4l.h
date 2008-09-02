@@ -51,6 +51,8 @@ struct control_list {
 	void *probe_priv;				//pointer to driver probe code's private data, do not touch
 };
 
+struct capture_device; //defined further down
+
 //Put the version in string & return it. allocation and freeing must be done by caller
 //passing a char[10] is enough.
 char *get_libv4l_version(char *);
@@ -61,7 +63,6 @@ char *get_libv4l_version(char *);
 //Arguments: device file, width, height, channel, std, nb_buf
 struct capture_device *init_libv4l(const char *, int, int, int, int, int);
 
-struct capture_device;
 struct capture_actions {
 /*
  * Init methods
@@ -84,7 +85,7 @@ struct capture_actions {
  */
 
 //dequeue the next buffer with available frame
-	void * (*dequeue_buffer)(struct capture_device *);
+	void * (*dequeue_buffer)(struct capture_device *, int *);
 
 //enqueue the buffer when done using the frame
 	void (*enqueue_buffer)(struct capture_device *);
@@ -136,9 +137,11 @@ void del_libv4l(struct capture_device *);
 #define		SECAM					2
 #define		NTSC					3
 
-#define NB_SUPPORTED_PALETTE		7
+#define NB_SUPPORTED_PALETTE		8
 //palette formats
 //YUV420 is the same as YUV420P - YUYV is the same as YUV422
+//DO NOT USE YUV420P NOR YUV422 - they re here for compatibility
+//USE YUV420 OR YUYV INSTEAD !!!!
 #define 	YUV420					0
 #define  	YUYV					1
 #define 	RGB24					2
@@ -146,11 +149,12 @@ void del_libv4l(struct capture_device *);
 #define	 	RGB555					4
 #define 	RGB565					5
 #define 	GREY					6
+#define 	MJPEG					7
 //the default order in which palettes are tried if "set_cap_param(c, NULL, 0)" is used
-#define		DEFAULT_PALETTE_ORDER	{YUV420, RGB24, RGB32, YUYV, RGB555, RGB565, GREY}
+#define		DEFAULT_PALETTE_ORDER	{YUV420, MJPEG, RGB24, RGB32, YUYV, RGB555, RGB565, GREY}
 //Dont use the following two, use YUV420 and YUYV instead !!
-#define 	YUV420P					7
-#define 	YUV422					8
+#define 	YUV420P					8
+#define 	YUV422					9
 
 
 
@@ -177,81 +181,6 @@ struct capture_device {
 									//but they are the same (same goes for YUYV and YUV422). In this field
 									//we store the real palette used by v4l1. In the palette field above,
 									//we store what the application should know (YUYV instead of YUV422)
-};
-
-struct libv4l_palette{
-	int libv4l_palette;
-	int v4l1_palette;
-	int v4l2_palette;
-	int depth;
-	char name[10];
-};
-
-static struct libv4l_palette libv4l_palettes[] = {
-	{   
-		YUV420,
-		VIDEO_PALETTE_YUV420,
-		V4L2_PIX_FMT_YUV420,
-		12,		
-		"YUV420"
-	},
-	{   
-		YUYV,
-		VIDEO_PALETTE_YUYV,
-		V4L2_PIX_FMT_YUYV,
-		8,
-		"YUYV"
-	},
-		{   
-		RGB24,
-		VIDEO_PALETTE_RGB24,
-		V4L2_PIX_FMT_RGB24,
-		24,
-		"RGB24"
-	},
-		{   
-		RGB32,
-		VIDEO_PALETTE_RGB32,
-		V4L2_PIX_FMT_RGB32,
-		32,
-		"RGB32"
-	},
-		{   
-		RGB555,
-		VIDEO_PALETTE_RGB555,
-		V4L2_PIX_FMT_RGB555,
-		16,
-		"RGB555"
-	},
-		{   
-		RGB565,
-		VIDEO_PALETTE_RGB565,
-		V4L2_PIX_FMT_RGB565,
-		16,
-		"RGB565"
-	},
-		{   
-		GREY,
-		VIDEO_PALETTE_GREY,
-		V4L2_PIX_FMT_GREY,
-		8,
-		"GREY"
-	},
-//Dont use the following two, use YUV420 and YUYV instead !!
-	{   
-		YUV420P,
-		VIDEO_PALETTE_YUV420P,
-		0,
-		12,
-		"YUV420"
-	},
-		{   
-		YUV422,
-		VIDEO_PALETTE_YUV422,
-		0,
-		8,
-		"YUYV"
-	}
 };
 
 #endif

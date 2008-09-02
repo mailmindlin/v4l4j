@@ -14,7 +14,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar; if not, write to the Free Software
+    along with light_cap; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
@@ -22,7 +22,9 @@
 #ifndef H_UTILS
 #define H_UTILS
 
+#include <stdlib.h>
 #include <string.h>
+#include <jpeglib.h>
 #include "log.h"
 
 #define DEFAULT_NB_ARGS					(9 + 1)
@@ -70,7 +72,7 @@ struct jpeg {
 	struct jpeg_compress_struct cinfo;
 	struct jpeg_error_mgr jerr;
 	struct jpeg_destination_mgr destmgr;
-	void (*jpeg_encode) (void *, int, int , int * , struct jpeg *, void *);
+	int (*jpeg_encode) (void *, int, struct capture_device * , struct jpeg *, void *);
 };
 
 struct thread_data {
@@ -79,12 +81,6 @@ struct thread_data {
 };
 
 
-
-//jpeg callbacks (dummy functions, do nothing)
-void init_destination( j_compress_ptr );
-boolean empty_output_buffer( j_compress_ptr );
-void term_destination( j_compress_ptr );
-
 //function prototypes
 void set_fps(int);
 void incr_nanosleep();
@@ -92,8 +88,6 @@ void decr_nanosleep();
 void list_cap_param(int,struct capture_device *);
 int get_action(int, struct capture_device *);
 int send_frame(int , void *, int);
-void jpeg_encode_yuv(void *, int, int, int *, struct jpeg *, void *);
-void jpeg_encode_rgb(void *, int, int, int *, struct jpeg *, void *);
 void start_thread_client(int, struct capture_device *);
 int send_mjpeg_header(int);
 void *send_stream_to(void *);

@@ -1,3 +1,19 @@
+v0.5.6:
+- Added selection of the best palette to achieve capture resolution closest
+  to the one requested. After adding support for linux UVC driver, i noticed
+  MJPEG palette couldnt capture at higher resolutions (>930x720), whereas
+  YUYV could. So now, the best palette is chosen (amongst the one requested
+  by user) so the resolution is as close as possible to the one requested.
+v0.5.5:
+- Added detection and reporting of extended controls (first pass). The
+  extended controls are listed, duplicates with classic controls are removed
+  and the unique ones are reported as normal V4L2 controls. The next step is
+  to add methods to the interface so ext. controls can be changed at once.
+- Tested Logitech Quickcam Communicate Deluxe with the linux UVC driver, for
+  which I added support for YUYV (YUV422) and MJPEG formats. There is no need
+  to probe the linux UVC driver as it doesnt have any private ioctl (as of
+  SVN revision 246).
+
 v0.5.4:
 - replaced libv4l generic code with a struct libv4l_actions to avoid the
   overhead of calling two methods to get the job done(1 method to check the
