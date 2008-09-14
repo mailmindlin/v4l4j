@@ -33,6 +33,8 @@ package au.edu.jcu.v4l4j;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Vector;
 
 import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
 import au.edu.jcu.v4l4j.exceptions.ImageDimensionHeightException;
@@ -47,7 +49,7 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
 /**
  * This class provides methods to :
  * <ul>
- * <li>Capture JPEG-encoded framesfrom a Video4Linux source and,</li>
+ * <li>Capture JPEG-encoded frames from a Video4Linux source and,</li>
  * <li>Control the video source.</li>
  * </ul>
  * Create an instance of it attached to a V4L device to grab JPEG-encoded frames from it. A typical use is as follows:
@@ -97,6 +99,16 @@ public class FrameGrabber {
 	 */
 	public static int MAX_HEIGHT = 0;
 	
+	/**
+	 * This value represents the maximum value of the JPEG quality setting
+	 */
+	public static int MAX_JPEG_QUALITY = 100;
+	
+	/**
+	 * This value represents the minimum value of the JPEG quality setting
+	 */
+	public static int MIN_JPEG_QUALITY = 0;	
+	
 	private String dev;
 	private int width;
 	private int height;
@@ -145,13 +157,13 @@ public class FrameGrabber {
 	 * @param ch the channel
 	 * @param std the video standard
 	 * @param q the JPEG image quality (the higher, the better the quality)
-	 * @throws V4L4JException if one of the parameters is incorrect
+	 * @throws V4L4JException if one of the JPEG quality value is incorrect or the device file is not a readable file
 	 */
 	public FrameGrabber(String device, int w, int h, int ch, int std, int q) throws V4L4JException {
 		if(!(new File(device).canRead()))
 			throw new V4L4JException("The device file is not readable");
 		
-		if(q<0 || q>100)
+		if(q<MIN_JPEG_QUALITY || q>MAX_JPEG_QUALITY)
 			throw new V4L4JException("The JPEG quality must be 0<q<100");
 		
 		state= new State();
@@ -170,7 +182,7 @@ public class FrameGrabber {
 	 * Ths standard will be set to PAL. 
 	 * @param device the V4L device from which to capture
 	 * @param q the JPEG image quality (the higher, the better the quality)
-	 * @throws V4L4JException if one of the parameters is incorrect
+	 * @throws V4L4JException if one of the JPEG quality value is incorrect or the device file is not a readable file
 	 */
 	public FrameGrabber(String device, int q) throws V4L4JException {
 		this(device, MAX_WIDTH, MAX_HEIGHT, 0, WEBCAM, q);
@@ -183,7 +195,7 @@ public class FrameGrabber {
 	 * @param ch the channel
 	 * @param std the video standard
 	 * @param q the JPEG image quality (the higher, the better the quality)
-	 * @throws V4L4JException if one of the parameters is incorrect
+	 * @throws V4L4JException if one of the JPEG quality value is incorrect or the device file is not a readable file
 	 */
 	public FrameGrabber(String device, int ch, int std, int q) throws V4L4JException {
 		this(device, MAX_WIDTH, MAX_HEIGHT, ch, std, q);
@@ -194,12 +206,12 @@ public class FrameGrabber {
 	 * V4L may either adjust the height and width parameters to the closest valid values
 	 * or reject them altogether. If the values were adjusted, they can be retrieved 
 	 * after calling init() using getWidth() and getHeight()
-	 * @throws VideoStandardException 
-	 * @throws ImageFormatException 
-	 * @throws CaptureChannelException 
-	 * @throws ImageDimensionHeightException 
-	 * @throws ImageDimensionWidthException 
-	 * @throws InitialistationException 
+	 * @throws VideoStandardException if the chosen video standard is not supported
+	 * @throws ImageFormatException if the selected video device uses an unsupported image format (let the author know, see README file)
+	 * @throws CaptureChannelException if the given channel number value is not valid
+	 * @throws ImageDimensionHeightException if the given height value is not supported
+	 * @throws ImageDimensionWidthException if the given width value is not supported
+	 * @throws InitialistationException if the video device file cant be initialised 
 	 * @throws StateException if the framegrabber is already initialised
 	 */
 	public void init() throws InitialistationException, ImageDimensionWidthException, ImageDimensionHeightException, CaptureChannelException, ImageFormatException, VideoStandardException, StateException{
@@ -264,10 +276,9 @@ public class FrameGrabber {
 	
 	/**
 	 * Stop the capture.
-	 * @throws V4L4JException if the method call is not valid (if the capture was never started for instance)
 	 * @throws StateException if the object isnt successfully initialised and started
 	 */
-	public void stopCapture() throws V4L4JException {
+	public void stopCapture() throws StateException {
 		if(!state.stop())
 			throw new StateException("Invalid method call");
 		
@@ -322,8 +333,8 @@ public class FrameGrabber {
 	 * @throws V4L4JException if the quality value is not valid
 	 */
 	public void setJPGQuality(int q) throws V4L4JException{
-		if(q<0 || q>100)
-			throw new V4L4JException("The JPEG quality must be 0<q<100");
+		if(q<MIN_JPEG_QUALITY || q>MAX_JPEG_QUALITY)
+			throw new V4L4JException("The JPEG quality must be "+MIN_JPEG_QUALITY+"<q<"+MAX_JPEG_QUALITY);
 		setQuality(object, q);
 		quality = q;
 	}
@@ -359,11 +370,13 @@ public class FrameGrabber {
 	}
 	
 	/**
-	 * Retrieve an array of available controls
-	 * @return the array of available controls
+	 * Retrieve a list of available controls
+	 * @return a list of available controls
 	 */
-	public Control[] getControls() {
-		return ctrls;
+	public List<Control> getControls() {
+		Vector<Control> v = new Vector<Control>();
+		v.copyInto(ctrls);
+		return v;
 	}
 	
 	private class State {
@@ -437,7 +450,7 @@ public class FrameGrabber {
 	}
 	
 	public static void main(String[] args) throws V4L4JException, IOException {
-		Control[] ctrls;
+		List<Control> ctrls;
 		String dev;
 		int w, h, std, channel, qty, captureLength = 10;
 		//Check if we have the required args
@@ -500,10 +513,10 @@ public class FrameGrabber {
 			throw e;
 		}
 		ctrls = f.getControls();
-		System.out.println("Found "+ctrls.length+" controls");
+		System.out.println("Found "+ctrls.size()+" controls");
 		try {
-			for (int i = 0; i < ctrls.length; i++)
-				System.out.println("control "+i+" - name: "+ctrls[i].getName()+" - min: "+ctrls[i].getMin()+" - max: "+ctrls[i].getMax()+" - step: "+ctrls[i].getStep()+" - value: "+ctrls[i].getValue());
+			for (Control c: ctrls)
+				System.out.println("control name: "+c.getName()+" - min: "+c.getMin()+" - max: "+c.getMax()+" - step: "+c.getStep()+" - value: "+c.getValue());
 		} catch (V4L4JException e) {
 			e.printStackTrace();
 			System.out.println("Failed to list associated controls");

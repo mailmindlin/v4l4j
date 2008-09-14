@@ -1,6 +1,3 @@
-#ifndef PWC_IOCTL_H
-#define PWC_IOCTL_H
-
 /* (C) 2001-2004 Nemosoft Unv.
    (C) 2004-2006 Luc Saillard (luc@saillard.org)
 
@@ -50,6 +47,9 @@
             S           optional: Set
              ... 	the function
  */
+#ifndef PWC_IOCTL_H
+#define PWC_IOCTL_H
+
 
 #include <linux/types.h>
 #include <linux/version.h>

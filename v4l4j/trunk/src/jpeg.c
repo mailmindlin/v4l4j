@@ -1,3 +1,27 @@
+/*
+* Copyright (C) 2007-2008 Gilles Gigan (gilles.gigan@gmail.com)
+* eResearch Centre, James Cook University (eresearch.jcu.edu.au)
+*
+* This program was developed as part of the ARCHER project
+* (Australian Research Enabling Environment) funded by a   
+* Systemic Infrastructure Initiative (SII) grant and supported by the Australian
+* Department of Innovation, Industry, Science and Research
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public  License as published by the
+* Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+* or FITNESS FOR A PARTICULAR PURPOSE.  
+* See the GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+*/
+
 #include "common.h"
 #include "debug.h"
 #include "libv4l.h"
@@ -114,6 +138,12 @@ static void jpeg_encode_rgb24(struct v4l4j_device *d, void *src, void *dst){
 	dprint(LOG_JPEG, "[JPEG] Finished compression (%d bytes)\n", d->len);
 }
 
+static void jpeg_encode_jpeg(struct v4l4j_device *d, void *src, void *dst){
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	memcpy(dst, src, d->capture_len);
+	dprint(LOG_JPEG, "[JPEG] Finished compression (%d bytes)\n", d->capture_len);
+}
+
 static void jpeg_encode_mjpeg(struct v4l4j_device *d, void *src, void *dst){	
 	int has_dht=0, ptr=0, size;
 	unsigned char *source = src, *dest = dst;
@@ -124,7 +154,7 @@ static void jpeg_encode_mjpeg(struct v4l4j_device *d, void *src, void *dst){
 		return;
 	}
 
-	dprint(LOG_JPEG, "[JPEG] Adding Huffman tables (%d bytes)\n", d->capture_len);
+	dprint(LOG_JPEG, "[JPEG] Adding Huffman tables\n");
 	memcpy(dest,source,2);
 	ptr += 2;
 
@@ -269,6 +299,9 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 	} else if(d->c->palette == MJPEG) {
 		dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for MJPEG\n");
 		d->j->jpeg_encode = jpeg_encode_mjpeg;
+	} else if(d->c->palette == JPEG) {
+		dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for JPEG\n");
+		d->j->jpeg_encode = jpeg_encode_jpeg;
 	} else {
 		dprint(LOG_JPEG, "[JPEG] Palette not supported %d\n", d->c->palette);
 		return -1;
