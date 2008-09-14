@@ -17,6 +17,9 @@ is then done via driver-specific ioctls. libv4l will probe the driver.If it is
 PWC, it will probe the device and if the device supports Pan/Tilt features,
 libv4l will create V4L controls to provide access to Pan & tilt.
 
+TESTED DEVICES:
+see TestedHardware file
+
 FEATURES:
 liv4l allows:
 - frame capture from V4L devices in a variety of palettes (YUV420, RGB24,...)
