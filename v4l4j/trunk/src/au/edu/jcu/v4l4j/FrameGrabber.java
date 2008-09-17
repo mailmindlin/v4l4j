@@ -33,6 +33,7 @@ package au.edu.jcu.v4l4j;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
@@ -374,9 +375,7 @@ public class FrameGrabber {
 	 * @return a list of available controls
 	 */
 	public List<Control> getControls() {
-		Vector<Control> v = new Vector<Control>();
-		v.copyInto(ctrls);
-		return v;
+		return new Vector<Control>(Arrays.asList(ctrls));
 	}
 	
 	private class State {
