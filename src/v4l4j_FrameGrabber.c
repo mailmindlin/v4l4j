@@ -33,9 +33,9 @@
 #include "debug.h"
 #include "libv4l-err.h"
 
-#define SUPPORTED_FORMATS		{MJPEG, YUV420, YUYV, RGB24}
-#define NB_SUPPORTED_FORMATS	4
-#define INCR_BUF_ID(i, max)			do { (i) = ((i) >= (max)) ? 0 : ((i) + 1); } while(0)
+#define SUPPORTED_FORMATS		{JPEG, MJPEG, YUV420, YUYV, RGB24}
+#define NB_SUPPORTED_FORMATS	5
+#define INCR_BUF_ID(i, max)		do { (i) = ((i) >= (max)) ? 0 : ((i) + 1); } while(0)
 
 #define BYTEBUFER_CLASS			"java/nio/ByteBuffer"
 #define V4L4J_PACKAGE			"au/edu/jcu/v4l4j/"
