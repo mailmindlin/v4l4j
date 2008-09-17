@@ -1,0 +1,39 @@
+#summary a step-by-step guide to downloading & installing v4l4j
+#labels Featured
+
+=Download=
+The latest snapshot of v4l4j can be downloaded using:
+{{{
+svn co http://v4l4j.googlecode.com/svn/v4l4j/trunk v4l4j
+}}}
+
+
+=Requirements=
+v4l4j requires the following:
+ * a supported V4L video source (webcam, capture card, tuner card) supporting either JPEG, MJPEG, YUV420, YUYV or RGB24 image formats.
+ * Sun JAVA JDK 1.6 (it wont compile with earlier versions and it *must* be a JDK !!!),
+ * the development files of libjpeg, as well as libjpeg itself,
+ * make, gcc and Apache Ant (to build the classes and JNI library). 
+
+=Build=
+To compile the JNI library and java classes, run `ant all` in v4l4/. This will first compile libv4l and the JNI code, and then link both of these to produce the JNI library libv4l4j. It will then compile the java classes and pack them in a JAR file. Both the JNI library libv4l4j.so and the JAR file v4l4j.jar are copied in the top-level directory.
+
+=Installing=
+In order to use the v4l4j package from your java application, you must do two things:
+ * First, make sure JNI library libv4l4j.so can be loaded by the JVM. This is done by either:
+   * installing libv4l4j.so in the JRE's lib/ directory. This is achieved by running `ant install-jnilib` as root in v4l4j/. It can be uninstalled with `ant uninstall-jnilib` as root later on.
+   * OR setting the shell variable LD_LIBRARY_PATH to point to the directory where libv4l4j.so resides before running your program, for example: `LD_LIBRARY_PATH=path/to/libv4l4j_dir java my.package.MyApp` . The same can be achieved by setting the java.library.path property using: `-Djava.library.path=path/to/libv4l4j_dir` when invoking the JVM, for example: `java -Djava.library.path=path/to/libv4l4j_dir my.package.MyApp`
+ * Second, make sure v4l4j.jar is in your application's classpath.
+
+=Testing=
+You can either run a series of Junit tests or an FPS test:
+ * to run the Junit tests, run `ant test-junit`
+ * to run the FPS test, run `ant test-fps`
+By default, both tests will capture frames from /dev/video0, at 320x240 and the device is assumed to be a webcam. You can change any of these settings by editing the values at the end of the "build.properties" file, or provide those values on the ant command line (`-Dtest.device=...`, to change the device file, `-Dtest.width=...` the change the width, `-Dtest.height=...` for the height and so on).
+
+=Debugging=
+You can compile both the wrapper library libv4l and v4l4j with extra debug output: uncomment the #DEBUG line in libv4l/Makefile, in src/Makefile and recompile. In addition, troubleshooting can be done using the test programs in libv4l/. Check the the [libv4l libv4l page].
+
+=Issues=
+Feedback is is greatly appreciated, specially because v4l4j has only been tested with a very limited number of webcams and capture cards.
+Issues and queries can be emailed to the [http://groups.google.com/group/v4l4j v4l4j mailing list] along with a description of what went wrong (or right) and what hardware you run v4l4j on. Also, to facilitate troubleshooting, see the Issues section on the [libv4l libv4 page] and attach the two files with your query.
