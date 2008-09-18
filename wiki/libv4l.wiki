@@ -99,7 +99,14 @@ if((*c->capture.set_cap_param)(c, formats, 5)){
 printf("Capturing from %s at %dx%d.\n", c->file, c->width,c->height);
 printf("Image format %s, size: %d\n", libv4l_palettes[c->palette].name, c->imagesize);
 }}}
- Note that if set_cap_param() fails but init_libv4l() succeeded, you must call del_libv4l() to free resources.
+ After a successful call to set_cap_param(), the members of `struct capture_device c` will be set to reflect the actual capture parameters. For example, there may be a difference between the desired resolution (specified when calling `init_libv4l()`) and the one that will be used for capture:
+{{{
+c->palette   //image format
+c->width     //image width
+c->height    //image height
+c->imagesize //size in bytes, valid only for uncompressed image formats !!!
+             //for compressed formats, the size is returned when capturing the frame
+}}}
 
  * Intialise V4L buffers.
 {{{
