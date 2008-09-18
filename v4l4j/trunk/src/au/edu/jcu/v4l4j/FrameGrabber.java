@@ -37,8 +37,7 @@ import java.util.List;
 import java.util.Vector;
 
 import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
-import au.edu.jcu.v4l4j.exceptions.ImageDimensionHeightException;
-import au.edu.jcu.v4l4j.exceptions.ImageDimensionWidthException;
+import au.edu.jcu.v4l4j.exceptions.ImageDimensionsException;
 import au.edu.jcu.v4l4j.exceptions.ImageFormatException;
 import au.edu.jcu.v4l4j.exceptions.InitialistationException;
 import au.edu.jcu.v4l4j.exceptions.StateException;
@@ -136,8 +135,7 @@ public class FrameGrabber {
 	
 	private native long allocateObject() throws InitialistationException;
 	private native ByteBuffer[] init_v4l(long o, String f, int w, int h, int ch, int std, int nbBuf, int q)
-		throws InitialistationException, ImageDimensionWidthException, ImageDimensionHeightException, CaptureChannelException,
-		ImageFormatException, VideoStandardException;
+		throws V4L4JException;
 	private native void start(long o) throws V4L4JException;
 	private native void setQuality(long o, int i);
 	private native int getBuffer(long o) throws V4L4JException;
@@ -208,12 +206,12 @@ public class FrameGrabber {
 	 * @throws VideoStandardException if the chosen video standard is not supported
 	 * @throws ImageFormatException if the selected video device uses an unsupported image format (let the author know, see README file)
 	 * @throws CaptureChannelException if the given channel number value is not valid
-	 * @throws ImageDimensionHeightException if the given height value is not supported
-	 * @throws ImageDimensionWidthException if the given width value is not supported
+	 * @throws ImageDimensionException if the given image dimensions are not supported
 	 * @throws InitialistationException if the video device file cant be initialised 
 	 * @throws StateException if the framegrabber is already initialised
+	 * @throws V4L4JException if there is an error applying capture parameters
 	 */
-	public void init() throws InitialistationException, ImageDimensionWidthException, ImageDimensionHeightException, CaptureChannelException, ImageFormatException, VideoStandardException, StateException{
+	public void init() throws V4L4JException{
 		if(!state.init())
 			throw new StateException("Invalid method call");
 		
@@ -223,10 +221,7 @@ public class FrameGrabber {
 		} catch (InitialistationException e) {
 			freeObject(object);
 			throw e;
-		} catch (ImageDimensionWidthException e) {
-			freeObject(object);
-			throw e;
-		} catch (ImageDimensionHeightException e) {
+		} catch (ImageDimensionsException e) {
 			freeObject(object);
 			throw e;
 		} catch (CaptureChannelException e) {
@@ -264,6 +259,8 @@ public class FrameGrabber {
 	 * @throws StateException if the object isnt successfully initialised and started
 	 */
 	public ByteBuffer getFrame() throws V4L4JException {
+		//we need the synchronized statement to serialise calls to getBuffer
+		//since libv4l is not reentrant
 		synchronized(state) {
 			if(!state.isStarted())
 				throw new StateException("Invalid method call");
@@ -345,12 +342,11 @@ public class FrameGrabber {
 	 * @throws StateException if the object isnt initialised
 	 */
 	void setControlValue(int id, int value) throws V4L4JException{
-		//synchronized(state) {
-			if(!state.isInit() && !state.isStarted())
-				throw new StateException("Invalid method call");
-			
-			setCtrlValue(object, id, value);
-		//}
+		if(!state.get())
+			throw new StateException("Invalid method call");
+
+		setCtrlValue(object, id, value);
+		state.put();
 	}
 
 	/**
@@ -360,12 +356,11 @@ public class FrameGrabber {
 	 * @throws StateException if the object isnt initialised
 	 */
 	int getControlValue(int id) throws V4L4JException{
-		//synchronized(state) {
-			if(!state.isInit() && !state.isStarted())
-				throw new StateException("Invalid method call");
-			
-			return getCtrlValue(object, id);
-		//}
+		if(!state.get())
+			throw new StateException("Invalid method call");
+		int ret = getCtrlValue(object, id);
+		state.put();
+		return ret;
 	}
 	
 	/**
@@ -380,6 +375,7 @@ public class FrameGrabber {
 
 		private int state;
 		private int temp;
+		private int users;
 		
 		private int UNINIT=0;
 		private int INIT=1;
@@ -388,7 +384,9 @@ public class FrameGrabber {
 		private int REMOVED=4;
 
 		public State() {
-			state=UNINIT;
+			state = UNINIT;
+			temp = UNINIT;
+			users = 0;
 		}
 		
 		public synchronized boolean init(){
@@ -407,17 +405,42 @@ public class FrameGrabber {
 			return false;
 		}
 		
+		/**
+		 * Must be called with object lock held
+		 * @return
+		 */
 		public boolean isStarted(){
-			return state==STARTED;
+			return state==STARTED && temp!=STOPPED;
+		}
+
+		public synchronized boolean get(){
+			if(state==INIT || state==STARTED && temp!=STOPPED) {
+				users++;
+				return true;
+			} else
+				return false;
 		}
 		
-		public boolean isInit(){
-			return state==INIT || state==STOPPED;
+		public synchronized boolean put(){
+			if(state==INIT || state==STARTED) {
+				if(--users==0  && temp!=STOPPED)
+					notify();
+				return true;
+			} else
+				return false;
 		}
+		
 		
 		public synchronized boolean stop(){
 			if(state==STARTED && temp!=STOPPED) {
 				temp=STOPPED;
+				while(users!=0)
+					try {
+						wait();
+					} catch (InterruptedException e) {
+						System.err.println("Interrupted while waiting for v4l4j users to complete");
+						e.printStackTrace();
+					}
 				return true;
 			}
 			return false;
