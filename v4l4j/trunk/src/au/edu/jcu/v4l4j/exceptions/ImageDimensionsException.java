@@ -25,22 +25,22 @@
 package au.edu.jcu.v4l4j.exceptions;
 
 /**
- * This class of exception is thrown when the specified capture height is invalid / not supported.
+ * This class of exception is thrown when the specified capture width / height is invalid / not supported.
  * @author gilles
  */
-public class ImageDimensionHeightException extends V4L4JException {
+public class ImageDimensionsException extends V4L4JException {
 
 	private static final long serialVersionUID = -3338859321078232443L;
 
-	public ImageDimensionHeightException(String message) {
+	public ImageDimensionsException(String message) {
 		super(message);
 	}
 
-	public ImageDimensionHeightException(String message, Throwable throwable) {
+	public ImageDimensionsException(String message, Throwable throwable) {
 		super(message, throwable);
 	}
 
-	public ImageDimensionHeightException(Throwable throwable) {
+	public ImageDimensionsException(Throwable throwable) {
 		super(throwable);
 	}
 }

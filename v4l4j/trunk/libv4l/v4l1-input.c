@@ -3,7 +3,7 @@
 * eResearch Centre, James Cook University (eresearch.jcu.edu.au)
 *
 * This program was developed as part of the ARCHER project
-* (Australian Research Enabling Environment) funded by a   
+* (Australian Research Enabling Environment) funded by a
 * Systemic Infrastructure Initiative (SII) grant and supported by the Australian
 * Department of Innovation, Industry, Science and Research
 *
@@ -14,7 +14,7 @@
 *
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  
+* or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU General Public License for more details.
 *
 * You should have received a copy of the GNU General Public License
@@ -48,7 +48,7 @@ int check_capture_capabilities_v4l1(struct capture_device *c) {
 	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG2, "V4L1: Checking capture device\n");
 
 	CLEAR(vc);
-	
+
 	if (get_capabilities(c->fd, &vc)!=0){
 		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: error getting capabilities.\n");
 		return -1;
@@ -74,9 +74,9 @@ int check_capture_capabilities_v4l1(struct capture_device *c) {
 }
 
 // set the capture parameters (hardcoded to require YUV420 for now)
-// set video channel 	VIDIOCSCHAN - 
-// set picture format 	VIDIOCSPICT - 
-// set window 		VIDIOCSWIN  
+// set video channel 	VIDIOCSCHAN -
+// set picture format 	VIDIOCSPICT -
+// set window 		VIDIOCSWIN
 // get window format	VIDIOCGWIN  (to double check)
 int set_cap_param_v4l1(struct capture_device *c, int *palettes, int nb) {
 	struct video_channel chan;
@@ -95,51 +95,30 @@ int set_cap_param_v4l1(struct capture_device *c, int *palettes, int nb) {
 		palettes = def;
 		nb = NB_SUPPORTED_PALETTE;
 	}
-	
+
 	CLEAR(chan);
 	CLEAR(pict);
 	CLEAR(win);
 	CLEAR(vc);
-	
+
 	if (get_capabilities(c->fd, &vc)!=0){
 		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: error getting capabilities.\n");
 		return LIBV4L_ERR_NOCAPS;
 	}
 
-	if(c->width==MAX_WIDTH)
+	//dont fail if requested width/height outside the allowed range
+	if(c->width==MAX_WIDTH || c->width > vc.maxwidth)
 		c->width=vc.maxwidth;
 
-	if(c->height==MAX_HEIGHT)
+	if(c->height==MAX_HEIGHT || c->height > vc.maxheight)
 		c->height=vc.maxheight;
 
-	if (c->width > vc.maxwidth) {
-		info("The specified width capture (%d) is greater than supported (%d)\n", c->width, vc.maxwidth);
-		info("Listing the reported capabilities:\n");
-		list_cap_v4l1(c);
-		return LIBV4L_ERR_WIDTH;
-	}
+	if(c->width < vc.minwidth)
+		c->width=vc.minwidth;
 
-	if (c->height > vc.maxheight) {
-		info("The specified height capture (%d) is greater than supported (%d)\n", c->height, vc.maxheight);
-		info("Listing the reported capabilities:\n");
-		list_cap_v4l1(c);
-		return LIBV4L_ERR_HEIGHT;
-	}
+	if(c->height < vc.minheight)
+		c->height=vc.minheight;
 
-	if (c->width < vc.minwidth) {
-		info("The specified width capture (%d) is lower than supported (%d)\n", c->width, vc.minwidth);
-		info("Listing the reported capabilities:\n");
-		list_cap_v4l1(c);
-		return LIBV4L_ERR_WIDTH;
-	}
-
-	if (c->height < vc.minheight) {
-		info("The specified height capture (%d) lower than supported (%d)\n", c->height, vc.minheight);
-		info("Listing the reported capabilities:\n");
-		list_cap_v4l1(c);
-		return LIBV4L_ERR_HEIGHT;
-	}
-	
 	//Select the input channel
 	chan.channel = c->channel;
 	switch( c->std )
@@ -163,7 +142,7 @@ int set_cap_param_v4l1(struct capture_device *c, int *palettes, int nb) {
 		list_cap_v4l1(c);
 		return LIBV4L_ERR_CHANNEL_SETUP;
 	}
-	
+
 	//query the current image format
 	if(-1 == ioctl(c->fd, VIDIOCGPICT, &pict)) {
 		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: cannot get the current palette format\n");
@@ -177,7 +156,7 @@ int set_cap_param_v4l1(struct capture_device *c, int *palettes, int nb) {
 		pict.depth = libv4l_palettes[palettes[i]].depth;
 		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: trying palette %s (%d) - depth %d...\n",\
 				libv4l_palettes[palettes[i]].name, pict.palette, pict.depth);
-		
+
 		if(0 == ioctl(c->fd, VIDIOCSPICT, &pict)){
 			c->palette = palettes[i];
 			c->real_v4l1_palette = palettes[i];
@@ -186,7 +165,7 @@ int set_cap_param_v4l1(struct capture_device *c, int *palettes, int nb) {
 				libv4l_palettes[palettes[i]].name, palettes[i], c->imagesize);
 			break;
 		}
-		
+
 		/*
 		 * V4L1 weirdness
 		 */
@@ -195,7 +174,7 @@ int set_cap_param_v4l1(struct capture_device *c, int *palettes, int nb) {
 			pict.depth = libv4l_palettes[palettes[i]].depth;
 			dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: trying palette %s (%d) - depth %d...\n",\
 					"YUV420-workaround", YUV420, pict.depth);
-			
+
 			if(0 == ioctl(c->fd, VIDIOCSPICT, &pict)){
 				c->palette = YUV420;
 				c->real_v4l1_palette = YUV420P;
@@ -205,7 +184,7 @@ int set_cap_param_v4l1(struct capture_device *c, int *palettes, int nb) {
 				break;
 			}
 		}
-		
+
 		/*
 		 * More V4L1 weirdness
 		 */
@@ -214,7 +193,7 @@ int set_cap_param_v4l1(struct capture_device *c, int *palettes, int nb) {
 			pict.depth = libv4l_palettes[palettes[i]].depth;
 			dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: trying palette %s (%d) - depth %d...\n",\
 					"YUYV-workaround", YUYV, pict.depth);
-			
+
 			if(0 == ioctl(c->fd, VIDIOCSPICT, &pict)){
 				c->palette = YUYV;
 				c->real_v4l1_palette = YUV422;
@@ -224,7 +203,7 @@ int set_cap_param_v4l1(struct capture_device *c, int *palettes, int nb) {
 				break;
 			}
 		}
-		
+
 		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: palette %s rejected\n", libv4l_palettes[palettes[i]].name);
 	}
 	if(i==nb) {
@@ -248,14 +227,14 @@ int set_cap_param_v4l1(struct capture_device *c, int *palettes, int nb) {
 	if(-1 == ioctl(c->fd, VIDIOCSWIN,&win))	{
 		info("libv4l was unable to set the requested capture size (%dx%d).\n", c->width, c->height);
 		info("Maybe the device doesnt support this combination of width and height.\n");
-		return LIBV4L_ERR_FORMAT;
+		return LIBV4L_ERR_DIMENSIONS;
 	}
 
 	CLEAR(win);
 
 	if(-1 == ioctl(c->fd, VIDIOCGWIN, &win)){
 		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: cannot verify the image size\n");
-		return LIBV4L_ERR_CROP;
+		return LIBV4L_ERR_DIMENSIONS;
 	}
 
 	if( win.width != c->width || win.height != c->height ){
@@ -280,7 +259,7 @@ int init_capture_v4l1(struct capture_device *c) {
 		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: Error getting mmap information from driver\n");
 		return LIBV4L_ERR_REQ_MMAP;
 	}
-	
+
 	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: driver allocated %d simlutaneous buffers\n", vm.frames);
 	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: first offset [0] %d\n", vm.offsets[0]);
 	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: second offset [1] %d\n", vm.offsets[1]);
@@ -290,8 +269,8 @@ int init_capture_v4l1(struct capture_device *c) {
 	 * we only use two buffers, regardless of what the driver returned, unless it said 1, in which case we abort.
 	 * For info, the QC driver returns vm.offset[0]=vm.offset[1]=0 ... gspca doesnt...
 	 * because of this, we will store vm.size in c->mmap->v4l1_mmap_size so we can re-use it when unmmap'ing
-	 * and we set c->mmap->buffers[0] == c->mmap->buffers[1] = vm.offset[1] - 1, 
-	 * so we have sensible values in the length fields, and we can still unmmap the area with the right value 
+	 * and we set c->mmap->buffers[0] == c->mmap->buffers[1] = vm.offset[1] - 1,
+	 * so we have sensible values in the length fields, and we can still unmmap the area with the right value
 	 */
 
 	if(vm.frames>2) {
@@ -304,9 +283,9 @@ int init_capture_v4l1(struct capture_device *c) {
 		info("See the ISSUES section in the libv4l README file.\n");
 		return LIBV4L_ERR_INVALID_BUF_NB;
 	}
-	
+
 	c->mmap->buffer_nr = 2;
-		
+
 	XMALLOC( c->mmap->buffers, struct mmap_buffer *, (c->mmap->buffer_nr * sizeof(struct mmap_buffer)) );
 
 	c->mmap->buffers[0].start = mmap(NULL, vm.size, PROT_READ, MAP_SHARED, c->fd, 0);
@@ -328,7 +307,7 @@ int init_capture_v4l1(struct capture_device *c) {
 int start_capture_v4l1(struct capture_device *c) {
 	struct video_mmap mm;
 	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG2, "V4L1: starting capture on device %s.\n", c->file);
-	
+
 	CLEAR(mm);
 	mm.frame = 0;
 	mm.width = c->width;
@@ -354,7 +333,7 @@ void *dequeue_buffer_v4l1(struct capture_device *c, int *len) {
 	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG2, "V4L1: dequeuing buffer on device %s.\n", c->file);
 
 	CLEAR(mm);
-	
+
 	mm.frame =  next_frame;
 	mm.width = c->width;
 	mm.height = c->height;
@@ -410,7 +389,7 @@ int count_v4l1_controls(struct capture_device *c) {
 int get_control_value_v4l1(struct capture_device *, struct v4l2_queryctrl *);
 int create_v4l1_controls(struct capture_device *c, struct control_list *l){
 	int count = 0;
-			
+
 	//list standard V4L controls
 	//brightness
 	l->ctrl[count].id = V4L2_CID_BRIGHTNESS;
@@ -425,7 +404,7 @@ int create_v4l1_controls(struct capture_device *c, struct control_list *l){
 					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum, \
 					get_control_value_v4l1(c, &l->ctrl[count]));
 	count++;
-	
+
 	//hue
 	l->ctrl[count].id = V4L2_CID_HUE;
 	l->ctrl[count].type = V4L2_CTRL_TYPE_INTEGER;
@@ -439,7 +418,7 @@ int create_v4l1_controls(struct capture_device *c, struct control_list *l){
 					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum, \
 					get_control_value_v4l1(c, &l->ctrl[count]));
 	count++;
-	
+
 	//color
 	l->ctrl[count].id = V4L2_CID_SATURATION;
 	l->ctrl[count].type = V4L2_CTRL_TYPE_INTEGER;
@@ -453,7 +432,7 @@ int create_v4l1_controls(struct capture_device *c, struct control_list *l){
 					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum, \
 					get_control_value_v4l1(c, &l->ctrl[count]));
 	count++;
-	
+
 	//contrast
 	l->ctrl[count].id = V4L2_CID_CONTRAST;
 	l->ctrl[count].type = V4L2_CTRL_TYPE_INTEGER;
@@ -467,7 +446,7 @@ int create_v4l1_controls(struct capture_device *c, struct control_list *l){
 					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum, \
 					get_control_value_v4l1(c, &l->ctrl[count]));
 	count++;
-	
+
 	return count;
 }
 
@@ -504,7 +483,7 @@ void set_control_value_v4l1(struct capture_device *c, struct v4l2_queryctrl *ctr
 		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: cannot get the current value for control %s\n", (char *) &ctrl->name );
 		return;
 	}
-	
+
 	switch(ctrl->id) {
 		case V4L2_CID_BRIGHTNESS:
 			pict.brightness = v;
@@ -522,7 +501,7 @@ void set_control_value_v4l1(struct capture_device *c, struct v4l2_queryctrl *ctr
 			dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: unknown control %s (id: %d)\n", (char *) &ctrl->name, ctrl->id);
 			return;
 	}
-	
+
 	//set the current image format
 	if((-1 == ioctl(c->fd, VIDIOCSPICT, &pict)))
 		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: Error setting the new value (%d) for control %s\n", v, (char *) &ctrl->name );
@@ -541,9 +520,9 @@ void enum_image_fmt_v4l1(struct capture_device *cdev) {
 	int fd = cdev->fd;
 	int i;
 	CLEAR(pic);
-	
+
 	printf("============================================\nQuerying image format\n\n");
-	
+
 	if(ioctl(fd, VIDIOCGPICT, &pic) >= 0) {
 		printf("brightness: %d - hue: %d - colour: %d - contrast: %d - depth: %d (palette %d)\n",\
 			pic.brightness, pic.hue, pic.colour, pic.contrast, pic.depth, pic.palette);
@@ -693,7 +672,7 @@ void enum_image_fmt_v4l1(struct capture_device *cdev) {
 		if(i==pic.palette) printf(" (current setting)");
 		printf("\n");
 
-	} else 
+	} else
 		printf("Not supported ...\n");
 	printf("\n");
 }
@@ -706,7 +685,7 @@ void query_current_image_fmt_v4l1(struct capture_device *cdev) {
 	if(-1 == ioctl(cdev->fd, VIDIOCGWIN, &win)){
 		printf("Cannot get the image size\n");
 		return;
-	}	
+	}
 	printf("Current width: %d\n", win.width);
 	printf("Current height: %d\n", win.height);
 	printf("\n");
@@ -718,11 +697,11 @@ void query_capture_intf_v4l1(struct capture_device *cdev) {
 	int i;
 	CLEAR(vc);
 	int fd = cdev->fd;
-	
+
 	if (-1 == ioctl( fd, VIDIOCGCAP, &vc)) {
 		printf("Failed to get capabilities.\n");
 		return;
-	}	
+	}
 
 
 	printf("============================================\nQuerying capture interfaces\n");
@@ -732,18 +711,18 @@ void query_capture_intf_v4l1(struct capture_device *cdev) {
 		if (-1 == ioctl(fd, VIDIOCGCHAN, &chan)) {
 			printf("Failed to get input details.");
 			return;
-		}	
+		}
 		printf("Input number: %d\n", chan.channel);
 		printf("Name: %s\n", chan.name);
 		if(chan.flags & VIDEO_VC_TUNER) {
 			printf("Has tuners\n");
 			printf("\tNumber of tuners: (%d) ", chan.tuners);
-			//TODO: list tuner using struct video_tuner and VIDIOCGTUNER		
-		} else 
+			//TODO: list tuner using struct video_tuner and VIDIOCGTUNER
+		} else
 			printf("Doesnt have tuners\n");
 		if(chan.flags & VIDEO_VC_AUDIO)
-			printf("Has audio\n");		
-		
+			printf("Has audio\n");
+
 		printf("Type: ");
 		if(chan.type & VIDEO_TYPE_TV) printf("TV\n");
 		if(chan.type & VIDEO_TYPE_CAMERA) printf("Camera\n");
@@ -756,11 +735,11 @@ void query_frame_sizes_v4l1(struct capture_device *cdev){
 	struct video_capability vc;
 	CLEAR(vc);
 	int fd = cdev->fd;
-	
+
 	if (-1 == ioctl( fd, VIDIOCGCAP, &vc)) {
 		printf("Failed to get capabilities.");
 		return;
-	}	
+	}
 
 	printf("============================================\nQuerying supported frame sizes\n\n");
 	printf("Min width: %d - Min height %d\n", vc.minwidth, vc.minheight);
@@ -774,14 +753,14 @@ void list_cap_v4l1(struct capture_device *c) {
 	struct video_capability vc;
 	CLEAR(vc);
 	int fd = c->fd;
-	
+
 	if (-1 == ioctl( fd, VIDIOCGCAP, &vc)) {
 		printf("Failed to get capabilities.");
 		return;
 	}
-	
+
 	printf("============================================\nQuerying general capabilities\n\n");
-	
+
 	//print capabilities
 	printf("Driver name: %s\n",vc.name);
 	if (vc.type & VID_TYPE_CAPTURE) printf("Has"); else printf("Does NOT have");
@@ -804,7 +783,7 @@ void list_cap_v4l1(struct capture_device *c) {
 	printf(" monochrome only capture\n");
 	if (vc.type & VID_TYPE_SUBCAPTURE) printf("Has"); else printf("Does NOT have");
 	printf(" sub capture capability\n");
-	
+
 	query_capture_intf_v4l1(c);
 	enum_image_fmt_v4l1(c);
 	query_current_image_fmt_v4l1(c);
