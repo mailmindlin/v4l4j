@@ -119,7 +119,7 @@ public class FrameGrabber {
 	private Control[] ctrls;
 	
 	/*
-	 * JNI returns an long (which is really a pointer) when a device is allocated for use
+	 * JNI returns a long (which is really a pointer) when a device is allocated for use
 	 * This field is read-only (!!!) 
 	 */
 	private long object;
@@ -175,7 +175,7 @@ public class FrameGrabber {
 	
 	/**
 	 * Construct a FrameGrabber object used to capture JPEG frames from a video source. The capture
-	 * will use the first channel(0) and set the resolution to the maximum supported by the hardware.
+	 * will use the first channel(0) and the resolution will be set to the maximum supported by the hardware.
 	 * Ths standard will be set to PAL. 
 	 * @param device the V4L device from which to capture
 	 * @param q the JPEG image quality (the higher, the better the quality)
@@ -186,8 +186,8 @@ public class FrameGrabber {
 	}
 	
 	/**
-	 * Construct a FrameGrabber object used to capture JPEG frames from a video source. The capture
-	 * will set the resolution to the maximum supported by the hardware. 
+	 * Construct a FrameGrabber object used to capture JPEG frames from a video source. The
+	 * resolution will be set to the maximum supported by the hardware. 
 	 * @param device the V4L device from which to capture
 	 * @param ch the channel
 	 * @param std the video standard
@@ -197,6 +197,21 @@ public class FrameGrabber {
 	public FrameGrabber(String device, int ch, int std, int q) throws V4L4JException {
 		this(device, MAX_WIDTH, MAX_HEIGHT, ch, std, q);
 	}
+	
+	
+	/**
+	 * Construct a FrameGrabber object used to capture JPEG frames from a webcam video source. The
+	 * resolution will be set to that specified by parameters w and h, if supported. Otherwise,
+	 * the closest one will be used.	 
+	 * @param device the V4L device from which to capture
+	 * @param w image width
+	 * @param h image height
+	 * @throws V4L4JException if the device file is not a readable file
+	 */
+	public FrameGrabber(String device, int w, int h) throws V4L4JException {
+		this(device, w, h, 0, WEBCAM, 80);
+	}
+
 	
 	/**
 	 * Initialise the capture, and apply the capture parameters.
