@@ -52,7 +52,7 @@ void write_frame(void *d, int size) {
 
 
 	//open file
-	if ((outfile = open(filename, O_WRONLY | O_CREAT | O_TRUNC)) < 0) {
+	if ((outfile = open(filename, O_WRONLY | O_TRUNC | O_CREAT, 0644)) < 0) {
 		printf( "FILE: can't open %s\n", filename);
 		return;
 	}
