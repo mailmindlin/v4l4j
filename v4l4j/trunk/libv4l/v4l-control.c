@@ -3,7 +3,7 @@
 * eResearch Centre, James Cook University (eresearch.jcu.edu.au)
 *
 * This program was developed as part of the ARCHER project
-* (Australian Research Enabling Environment) funded by a   
+* (Australian Research Enabling Environment) funded by a
 * Systemic Infrastructure Initiative (SII) grant and supported by the Australian
 * Department of Innovation, Industry, Science and Research
 *
@@ -14,7 +14,7 @@
 *
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  
+* or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU General Public License for more details.
 *
 * You should have received a copy of the GNU General Public License
@@ -37,11 +37,11 @@ struct control_list *list_control(struct capture_device *c){
 	struct v4l2_control ctrl;
 	int probe_id = 0, count = 0, priv_ctrl_count = 0;
 	struct control_list *l;
-	
+
 	dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: Listing controls\n");
-	 
+
 	XMALLOC(l, struct control_list *, sizeof(struct control_list));
-	CLEAR(ctrl);	
+	CLEAR(ctrl);
 
 	//dry run to see how many control we have
 	if(c->v4l_version==V4L2_VERSION)
@@ -55,39 +55,42 @@ struct control_list *list_control(struct capture_device *c){
 		return l;
 	}
 
-	
+
 	/*
 	 *  The following is an attempt to support driver private (custom) ioctls.
 	 * First libv4l will probe and detect the underlying video driver. Then, it will create fake V4L controls for every private ioctls so
 	 * that the application can call these private ioctls through normal V4L controls.In struct v4l2_query, libv4l will use the reserved[0]
-	 * field  and set it to a special unused value V4L2_PRIV_IOCTL (currently in kernel 2.6.25, only values from 1 to 6 are used by v4l2). 
+	 * field  and set it to a special unused value V4L2_PRIV_IOCTL (currently in kernel 2.6.25, only values from 1 to 6 are used by v4l2).
 	 * The following code attempts to probe the underlying driver (pwc, bttv, gspca, ...) and create fake v4l2_ctrl based on supported
 	 * ioctl (static list which must be updated manually after inspecting the code for each driver => ugly but there is no other option until all
-	 * drivers make their private ioctl available through a control (or control class like the camera control class added to 2.6.25)) 
+	 * drivers make their private ioctl available through a control (or control class like the camera control class added to 2.6.25))
 	 */
 	while ( ((priv_ctrl_count = probe_drivers[probe_id].probe(c, l)) == -1) && (probe_id++<PROBE_NB) );
-	
-	count += priv_ctrl_count;
-	
+
+	count += priv_ctrl_count > 0 ? priv_ctrl_count : 0;
+
 	l->count = count;
 	if(count>0) {
 		XMALLOC( l->ctrl , struct v4l2_queryctrl *, (l->count * sizeof(struct v4l2_queryctrl)) );
-		
+
 		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: listing controls (found %d)...\n", count);
-		
+
 		//fill in controls
 		if(c->v4l_version==V4L2_VERSION)
 			count = create_v4l2_controls(c, l);
 		else if(c->v4l_version==V4L1_VERSION)
 			count = create_v4l1_controls(c, l);
-		
+
+		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: listing private controls (found %d)...\n", priv_ctrl_count);
 		//probe the driver for private ioctl and turn them into fake V4L2 controls
-		if(priv_ctrl_count!=0)
+		if(priv_ctrl_count>0)
 	 		probe_drivers[probe_id].list_ctrl(c, l, &l->ctrl[count]);
+		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: done listing controls\n");
+
 	} else {
 		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: No controls found...\n");
 	}
-	
+
 	return l;
 }
 
@@ -142,7 +145,7 @@ void query_ext_controls(struct capture_device *cdev) {
 	printf("============================================\nQuerying available extended contols\n\n");
 	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
 	while (0 == ioctl (cdev->fd, VIDIOC_QUERYCTRL, &qctrl)) {
-		printf("Control class :0x%x - type: %d - %s (class ID: 0x%lx)\n", qctrl.id, qctrl.type,  qctrl.name, V4L2_CTRL_ID2CLASS(qctrl.id));		
+		printf("Control class :0x%x - type: %d - %s (class ID: 0x%lx)\n", qctrl.id, qctrl.type,  qctrl.name, V4L2_CTRL_ID2CLASS(qctrl.id));
     	qctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
 	}
 }
@@ -150,13 +153,13 @@ void query_ext_controls(struct capture_device *cdev) {
 //lists all supported controls
 void query_control(struct capture_device *cdev){
 	int i;
-	
+
 	printf("============================================\nQuerying available contols\n\n");
-	struct control_list *l = cdev->ctrls; 
+	struct control_list *l = cdev->ctrls;
 	for(i=0; i<l->count; i++) {
 		printf("Control %d: Name %s - Value: %d (Min: %d Max: %d Step: %d)\n",\
 				i, (char *) l->ctrl[i]. name, get_control_value(cdev, &l->ctrl[i]), l->ctrl[i].minimum, l->ctrl[i].maximum, l->ctrl[i].step);
-	}	
+	}
 	query_ext_controls(cdev);
 }
 

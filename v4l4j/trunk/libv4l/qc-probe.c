@@ -3,7 +3,7 @@
 * eResearch Centre, James Cook University (eresearch.jcu.edu.au)
 *
 * This program was developed as part of the ARCHER project
-* (Australian Research Enabling Environment) funded by a   
+* (Australian Research Enabling Environment) funded by a
 * Systemic Infrastructure Initiative (SII) grant and supported by the Australian
 * Department of Innovation, Industry, Science and Research
 *
@@ -14,7 +14,7 @@
 *
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  
+* or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU General Public License for more details.
 *
 * You should have received a copy of the GNU General Public License
@@ -46,11 +46,11 @@ int qc_driver_probe(struct capture_device *c, struct control_list *l){
 	struct qc_probe_private *priv;
 	int i=-1;
 	struct qc_userlut default_ulut, our_ulut, check_ulut;
-		
+
 	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: probing Quickam\n");
 	/*
-	 * Probing qc .... 
-	 * qc has many private ioctls: among them, VIDIOCQCGCOMPATIBLE and VIDIOCQCSCOMPATIBLE set 
+	 * Probing qc ....
+	 * qc has many private ioctls: among them, VIDIOCQCGCOMPATIBLE and VIDIOCQCSCOMPATIBLE set
 	 * a 3-bit field. so writing any value <8 should read the same, writing anything >8 will read 0
 	 * also, VIDIOCQCGVIDEONR should return the correct device number.
 	 * VIDIOCQCSUSERLUT set a user lookup table, so reading from it, should return the same
@@ -104,10 +104,10 @@ int qc_driver_probe(struct capture_device *c, struct control_list *l){
 	l->probe_priv = (void *)priv;
 	priv->ok = 1;
 	return NB_PRIV_IOCTL;
-	
+
 end:
 	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "QC: not found\n");
-	return 0;		
+	return -1;
 }
 
 int qc_get_ctrl(struct capture_device *c, struct v4l2_queryctrl *q){
@@ -177,7 +177,7 @@ int qc_list_ctrl(struct capture_device *c,struct control_list *l, struct v4l2_qu
 	int i=0;
  	struct qc_probe_private *priv = (struct qc_probe_private *) l->probe_priv;
 	if(priv->ok==1) {
-		
+
 		//
 		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: Found quickcam private ioctl Brightness Settle\n");
 		q[i].id=i;
@@ -202,7 +202,7 @@ int qc_list_ctrl(struct capture_device *c,struct control_list *l, struct v4l2_qu
 		q[i].reserved[0]=V4L2_PRIV_IOCTL;
 		q[i].reserved[1]=QC_PROBE_INDEX;
 		i++;
-		
+
 		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: Found quickcam private ioctl Interpolation\n");
 		q[i].id=i;
 		q[i].type = V4L2_CTRL_TYPE_INTEGER;
@@ -213,7 +213,7 @@ int qc_list_ctrl(struct capture_device *c,struct control_list *l, struct v4l2_qu
 		q[i].default_value = 0;
 		q[i].reserved[0]=V4L2_PRIV_IOCTL;
 		q[i].reserved[1]=QC_PROBE_INDEX;
-		i++;	
+		i++;
 
 		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: Found quickcam private ioctl Auto Brightness\n");
 		q[i].id=i;
