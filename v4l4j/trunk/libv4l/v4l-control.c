@@ -65,7 +65,7 @@ struct control_list *list_control(struct capture_device *c){
 	 * ioctl (static list which must be updated manually after inspecting the code for each driver => ugly but there is no other option until all
 	 * drivers make their private ioctl available through a control (or control class like the camera control class added to 2.6.25))
 	 */
-	while ( ((priv_ctrl_count = probe_drivers[probe_id].probe(c, l)) == -1) && (probe_id++<PROBE_NB) );
+	while ( ((priv_ctrl_count = probe_drivers[probe_id++].probe(c, l)) == -1) && (probe_id<PROBE_NB) );
 
 	count += priv_ctrl_count > 0 ? priv_ctrl_count : 0;
 
