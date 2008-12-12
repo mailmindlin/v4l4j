@@ -105,7 +105,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_init_1v4l(JNIE
 	(*e)->ReleaseStringUTFChars(e, f,device_file);
 
 	dprint(LOG_LIBV4L, "[LIBV4L] Calling 'set_cap_param(dev: %s)'\n",d->c->file);
-	if((i=(*d->c->capture.set_cap_param)(d->c, fmts, NB_SUPPORTED_FORMATS))!=0){
+	if((i=(*d->c->capture->set_cap_param)(d->c, fmts, NB_SUPPORTED_FORMATS))!=0){
 		dprint(LOG_V4L4J, "[V4L4J] set_cap_param failed\n");
 		del_libv4l(d->c);
 		if(i==LIBV4L_ERR_DIMENSIONS)
@@ -124,7 +124,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_init_1v4l(JNIE
 
 
 	dprint(LOG_LIBV4L, "[LIBV4L] Calling 'init_capture(dev: %s)'\n",d->c->file);
-	if((i=(*d->c->capture.init_capture)(d->c))<0){
+	if((i=(*d->c->capture->init_capture)(d->c))<0){
 		dprint(LOG_V4L4J, "[V4L4J] init_capture failed\n");
 		del_libv4l(d->c);
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error initialising capture (error=%d)",i);
@@ -165,7 +165,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_init_1v4l(JNIE
 	ctor = (*e)->GetMethodID(e, v4l2ControlClass, "<init>", "(ILjava/lang/String;IIIL" FRAMEGRABBER_CLASS ";)V");
 	if(ctor == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the Control class\n");
-		(*d->c->capture.free_capture)(d->c);
+		(*d->c->capture->free_capture)(d->c);
 		del_libv4l(d->c);
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up Control java objects");
 		return 0;
@@ -186,7 +186,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_init_1v4l(JNIE
 	//setup jpeg param
 	if(init_jpeg_compressor(d, q)!=0) {
 		dprint(LOG_V4L4J, "[V4L4J] Error initialising the JPEG compressor\n");
-		(*d->c->capture.free_capture)(d->c);
+		(*d->c->capture->free_capture)(d->c);
 		del_libv4l(d->c);
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up Control java objects");
 	}
@@ -201,7 +201,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_start(JNIEnv *e, jobje
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object;
 	dprint(LOG_LIBV4L, "[LIBV4L] Calling start_capture(dev: %s)\n", d->c->file);
-	if((*d->c->capture.start_capture)(d->c)<0){
+	if((*d->c->capture->start_capture)(d->c)<0){
 		dprint(LOG_V4L4J, "[V4L4J] start_capture failed\n");
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error starting the capture");
 	}
@@ -250,12 +250,12 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getBuffer(JNIEnv *e, j
 
 	//get frame from v4l2
 	dprint(LOG_LIBV4L, "[LIBV4L] Calling dequeue_buffer(dev: %s)\n", d->c->file);
-	if((frame = (*d->c->capture.dequeue_buffer)(d->c, &d->capture_len)) != NULL) {
+	if((frame = (*d->c->capture->dequeue_buffer)(d->c, &d->capture_len)) != NULL) {
 		i = d->buf_id = (d->buf_id == (d->c->mmap->buffer_nr-1)) ? 0 : d->buf_id+1;
 		dprint(LOG_LIBV4L, "[LIBV4L] i=%d\n", i);
 		(*d->j->jpeg_encode)(d, frame, d->bufs[i]);
 		dprint(LOG_LIBV4L, "[LIBV4L] Calling enqueue_buffer(dev: %s)\n", d->c->file);
-		(*d->c->capture.enqueue_buffer)(d->c);
+		(*d->c->capture->enqueue_buffer)(d->c);
 		return i;
 	}
 	dprint(LOG_V4L4J, "Error dequeuing buffer for capture\n");
@@ -280,7 +280,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_stop(JNIEnv *e, jobjec
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object;
 	dprint(LOG_LIBV4L, "[LIBV4L] Calling stop_capture(dev: %s)\n", d->c->file);
-	if((*d->c->capture.stop_capture)(d->c)<0) {
+	if((*d->c->capture->stop_capture)(d->c)<0) {
 		dprint(LOG_V4L4J, "Error stopping capture\n");
 		//not sure whether we should throw an exception here...
 		//if we do, FrameGrabber wont let us call delete (free_capture,del_libv4l2)
@@ -301,7 +301,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_delete(JNIEnv *e, jobj
 	destroy_jpeg_compressor(d);
 
 	dprint(LOG_LIBV4L, "[LIBV4L] Calling free_capture(dev: %s)\n", d->c->file);
-	(*d->c->capture.free_capture)(d->c);
+	(*d->c->capture->free_capture)(d->c);
 
 	dprint(LOG_V4L4J, "[V4L4J] Freeing %d ByteBuffers areas and array\n",d->c->mmap->buffer_nr);
 	for(i=0; i<d->c->mmap->buffer_nr;i++)
