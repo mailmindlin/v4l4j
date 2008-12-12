@@ -1,0 +1,13 @@
+TODO List:
+- Add support for changing capture parameters that can be changed while
+  capturing (tuner frequency, video input, video standard, frame interval...)
+- Add methods to set multiple extended controls at once
+- Reorganise/clean up header files.
+- Implement setting of frequency for TV tuners.
+- Add probe for TV-tuner drivers (bttv, ivtv, mxb, ...)
+- Add support for setting the fps, instead of having it done by the application
+- Add probe for more drivers (need some help from people having hardware for that).
+- libv4l is NOT reentrant and does NOT implement a proper locking scheme yet.
+  Therefore, it is the caller's responsibility to ensure accesses to libv4l2
+  are synchronised.
+
