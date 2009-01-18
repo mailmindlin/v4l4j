@@ -146,7 +146,7 @@ struct capture_device *init_libv4l(const char *dev, int w, int h, int ch, int s,
 void del_libv4l(struct capture_device *c){
 	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Freeing libv4l on device %s.\n", c->file);
 	XFREE(c->capture);
-	free_control_list(c->ctrls);
+	free_control_list(c);
 	close_device(c);
 	XFREE(c->mmap);
 	XFREE(c);

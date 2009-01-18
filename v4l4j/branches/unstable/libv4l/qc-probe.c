@@ -42,7 +42,7 @@ struct qc_probe_private {
 };
 
 
-int qc_driver_probe(struct capture_device *c, struct control_list *l){
+int qc_driver_probe(struct capture_device *c, void **data){
 	struct qc_probe_private *priv;
 	int i=-1;
 	struct qc_userlut default_ulut, our_ulut, check_ulut;
@@ -101,7 +101,7 @@ int qc_driver_probe(struct capture_device *c, struct control_list *l){
 	//do we need more checks ?
 	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: found QC driver\n");
 	XMALLOC(priv, struct qc_probe_private *, sizeof(struct qc_probe_private ));
-	l->probe_priv = (void *)priv;
+	*data = (void *)priv;
 	priv->ok = 1;
 	return NB_PRIV_IOCTL;
 
@@ -110,7 +110,7 @@ end:
 	return -1;
 }
 
-int qc_get_ctrl(struct capture_device *c, struct v4l2_queryctrl *q){
+int qc_get_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, void *d){
 	int val;
 	switch (q->id) {
 		case 0:
@@ -142,7 +142,7 @@ int qc_get_ctrl(struct capture_device *c, struct v4l2_queryctrl *q){
 	return -1;
 }
 
-int qc_set_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, int val){
+int qc_set_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, int val, void *d){
 	switch (q->id) {
 		case 0:
 			if(ioctl(c->fd, VIDIOCQCSSETTLE, &val)==0)
@@ -173,9 +173,9 @@ int qc_set_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, int val){
 	return 0;
 }
 
-int qc_list_ctrl(struct capture_device *c,struct control_list *l, struct v4l2_queryctrl *q){
+int qc_list_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, void *d){
 	int i=0;
- 	struct qc_probe_private *priv = (struct qc_probe_private *) l->probe_priv;
+ 	struct qc_probe_private *priv = (struct qc_probe_private *) d;
 	if(priv->ok==1) {
 
 		//

@@ -6,18 +6,18 @@
 #
 VERSION_MAJOR=0
 VERSION_MINOR=5
-VERSION_RELEASE=6
+VERSION_RELEASE=7
 
 LIB=libv4l.a
 TESTOBJ=test.o list-caps.o
-OBJ=v4l2-input.o v4l-control.o v4l1-input.o libv4l.o pwc-probe.o gspca-probe.o qc-probe.o
+OBJ=v4l2-input.o v4l-control.o v4l1-input.o libv4l.o pwc-probe.o gspca-probe.o qc-probe.o fps-param-probe.o
 
 CC=gcc
 OPTIMISATION=-O3
 CFLAGS=$(DEBUG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) -DVER_REL=$(VERSION_RELEASE) $(OPTIMISATION) -fPIC
 
 LD=gcc
-LDFLAGS=-lefence
+LDFLAGS=
 
 all: $(LIB)
 
