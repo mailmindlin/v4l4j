@@ -1,3 +1,9 @@
+v0.5.7:
+- Reorganised V4L control code and driver probe sections.
+- Now, multiple driver probes can be successful (instead of only 1 before),
+  allowing for "plugin"-style code adding functionnality based on the driver
+  in use
+- header files for V4L control have been reorganised
 v0.5.6:
 - Added selection of the best palette to achieve capture resolution closest
   to the one requested. After adding support for linux UVC driver, i noticed

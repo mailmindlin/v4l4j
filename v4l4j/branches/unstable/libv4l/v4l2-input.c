@@ -69,56 +69,9 @@ int check_capture_capabilities_v4l2(struct capture_device *c) {
 	return 0;
 }
 
-static int set_image_format(struct v4l2_format *fmt, int width, int height, int fd, int palette){
-	CLEAR(*fmt);
-	fmt->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	if (-1 == ioctl(fd, VIDIOC_G_FMT, fmt)) {
-		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_ERR, "V4L2: cannot get the current image format\n");
-		return LIBV4L_ERR_IOCTL;
-	}
-	fmt->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	fmt->fmt.pix.width = width;
-	fmt->fmt.pix.height = height;
-	fmt->fmt.pix.field = V4L2_FIELD_ANY;
-	fmt->fmt.pix.pixelformat = palette;
-
-	if (0 == ioctl(fd, VIDIOC_S_FMT, fmt)) {
-		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_INFO, "V4L2: palette accepted\n");
-		return 0;
-	}
-
-	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_ERR, "V4L2: image format rejected\n");
-	return -1;
-}
-
-int set_cap_param_v4l2(struct capture_device *c, int *palettes, int nb) {
-	struct v4l2_format fmt;
-	struct v4l2_cropcap cc;
-	struct v4l2_crop crop;
-	int i=0, found=1, best_palette=-1, best_width =-1, best_height=-1;
-	int def[NB_SUPPORTED_PALETTE] = DEFAULT_PALETTE_ORDER;
-	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: Setting capture parameters on device %s.\n", c->file);
-
-	if(nb<0 || nb>=NB_SUPPORTED_PALETTE) {
-		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: Incorrect number of palettes (%d)\n", nb);
-		return LIBV4L_ERR_FORMAT;
-	}
-	if(nb==0 || palettes==NULL) {
-		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: No palettes supplied, trying default order.\n");
-		palettes = def;
-		nb = NB_SUPPORTED_PALETTE;
-	}
-
-	//Select the input
-	if (-1 == ioctl(c->fd, VIDIOC_S_INPUT, &(c->channel))) {
-		info("The desired input (%d) cannot be selected.\n", c->channel);
-		info("Listing the reported capabilities:\n");
-		list_cap_v4l2(c);
-		return LIBV4L_ERR_CHANNEL;
-	}
-
-	//Set the video standard if not a webcam
+static int set_std(struct capture_device *c){
 	v4l2_std_id std;
+	int found=1, i=0;
 	switch (c->std) {
 		case WEBCAM:
 			std = 0;
@@ -134,17 +87,16 @@ int set_cap_param_v4l2(struct capture_device *c, int *palettes, int nb) {
 			break;
 		default:
 			info("The specified standard (%d) is invalid.\n", c->std);
-			info("Listing the reported capabilities:\n");
-			list_cap_v4l2(c);
-			return LIBV4L_ERR_STD;
+			return -1;
 	}
 
-	//Linux UVC doesnt like to be ioctl'ed(VIDIOC_S_STD) so
-	//i added the extra if(std!=0) so the ioctl isnt called if we said std="webcam"
-	if (std!=0 && -1 == ioctl(c->fd, VIDIOC_S_STD, &std)) {
+	//Linux UVC doesnt like to be ioctl'ed(VIDIOC_S_STD) even though v4l2 specs say nothing
+	//about usb cam drivers returning EINVAL
+	//so we only execute them if std!="webcam"
+	if (c->std !=WEBCAM && -1 == ioctl(c->fd, VIDIOC_S_STD, &std)) {
 		info("The specified standard (%d) cannot be selected\n", c->std);
 		found=0;
-		while(found==0 && i++<3) {
+		while(found==0 && i<4) {
 			CLEAR(std);
 			switch (i) {
 				case 0:
@@ -163,38 +115,89 @@ int set_cap_param_v4l2(struct capture_device *c, int *palettes, int nb) {
 			if (0 == ioctl(c->fd, VIDIOC_S_STD, &std)){
 				info("The standard has been autodetected and set to\n");
 				found=1;
-				if(std==0)
+				if(std==0) {
 					info("webcam\n");
-				else if (std==V4L2_STD_PAL)
+					c->std = WEBCAM;
+				} else if (std==V4L2_STD_PAL) {
 					info("PAL\n");
-				else if (std==V4L2_STD_NTSC)
+					c->std = PAL;
+				} else if (std==V4L2_STD_NTSC) {
 					info("NTSC\n");
-				else if (std==V4L2_STD_SECAM)
+					c->std = NTSC;
+				} else if (std==V4L2_STD_SECAM) {
 					info("SECAM\n");
+					c->std = SECAM;
+				} else {
+					found = 0;
+					info("Unknown autodetected standard (%d)\n", (int) std);
+					info("This is a bug in v4l4j. Please let the author know about this error.\n");
+					info("See the ISSUES section in the libv4l README file.\n");	
+				}
 			}
+			i++;
 		}
 	}
+
 	if(found!=1) {
 		info("The specified standard (%d) cannot be selected, and the automated detection failed\n", c->std);
-		info("Listing the reported capabilities:\n");
-		list_cap_v4l2(c);
-		return LIBV4L_ERR_STD;
+		return -1;
+	}
+	return 0;
+}
+
+static int set_input(struct capture_device *c){
+	//Linux UVC doesnt like to be ioctl'ed (VIDIOC_S_INPUT)
+	//so we only execute them if std!="webcam"
+	
+	//TODO: Add autodetection here so if the given input channel is invalid
+	//a valid one is selected
+	if (c->std!=WEBCAM && -1 == ioctl(c->fd, VIDIOC_S_INPUT, &(c->channel))) {
+			info("The desired input (%d) cannot be selected.\n", c->channel);
+			return -1;
+	}
+	return 0;
+}
+
+static int try_image_format(struct v4l2_format *fmt, int width, int height, int fd, int palette){
+	CLEAR(*fmt);
+	fmt->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	if (-1 == ioctl(fd, VIDIOC_G_FMT, fmt)) {
+		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_ERR, "V4L2: cannot get the current image format\n");
+		return LIBV4L_ERR_IOCTL;
+	}
+	fmt->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	fmt->fmt.pix.width = width;
+	fmt->fmt.pix.height = height;
+	fmt->fmt.pix.field = V4L2_FIELD_ANY;
+	fmt->fmt.pix.pixelformat = palette;
+
+	if (0 == ioctl(fd, VIDIOC_S_FMT, fmt)) {
+		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_INFO, "V4L2: palette accepted\n");
+		return 0;
 	}
 
-	//Set image format
+	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_ERR, "V4L2: palette rejected\n");
+	return -1;
+}
+
+
+static int set_image_format(struct capture_device *c, int *palettes, int nb){
+	int found=0, i, best_palette=-1, best_width =-1, best_height=-1;
+	struct v4l2_format fmt;
+	
 	if(c->width==MAX_WIDTH)
 		c->width=V4L2_MAX_WIDTH;
 	if(c->height==MAX_HEIGHT)
 		c->height=V4L2_MAX_HEIGHT;
 
 	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: trying palettes (%d to try in total)\n", nb);
-	found=0;
+
 	//we try all the supplied palettes and find the best one that give us a resolution closes to the desired one
 	for(i=0; i<nb; i++) {
 		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: trying width: %d - height: %d - palette %s (%d)...\n",\
 			c->width, c->height,libv4l_palettes[palettes[i]].name, libv4l_palettes[palettes[i]].v4l2_palette);
 
-		if( (set_image_format(&fmt, c->width, c->height, c->fd, libv4l_palettes[palettes[i]].v4l2_palette)==0) && ((best_palette == -1) || \
+		if( (try_image_format(&fmt, c->width, c->height, c->fd, libv4l_palettes[palettes[i]].v4l2_palette)==0) && ((best_palette == -1) || \
 			 (abs(c->width*c->height - fmt.fmt.pix.width*fmt.fmt.pix.height) < abs(c->width*c->height - best_width*best_height))) ){
 			best_palette = i;
 			best_width = fmt.fmt.pix.width;
@@ -209,21 +212,19 @@ int set_cap_param_v4l2(struct capture_device *c, int *palettes, int nb) {
 			info("%s\n",libv4l_palettes[palettes[i]].name);
 		info("Please let the author know about this error.\n");
 		info("See the ISSUES section in the libv4l README file.\n");
-		info("Listing the reported capabilities:\n");
-		list_cap_v4l2(c);
-		return LIBV4L_ERR_FORMAT;
+		return -1;
 	} else {
 		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: Setting to best palette %s...\n",\
 				libv4l_palettes[palettes[best_palette]].name);
 
-		if (0 == set_image_format(&fmt, c->width, c->height, c->fd, libv4l_palettes[palettes[best_palette]].v4l2_palette)) {
+		if (0 == try_image_format(&fmt, c->width, c->height, c->fd, libv4l_palettes[palettes[best_palette]].v4l2_palette)) {
 			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_INFO, "V4L2: palette (%s) accepted\n", 	libv4l_palettes[palettes[best_palette]].name);
 			c->palette = palettes[best_palette];
 		} else {
 			info("Unable to set the best detected palette: %s\n", libv4l_palettes[palettes[best_palette]].name);
 			info("Please let the author know about this error.\n");
 			info("See the ISSUES section in the libv4l README file.\n");
-			return LIBV4L_ERR_FORMAT;
+			return -1;
 		}
 	}
 
@@ -245,22 +246,96 @@ int set_cap_param_v4l2(struct capture_device *c, int *palettes, int nb) {
 			c->imagesize = fmt.fmt.pix.sizeimage;
 		}
 	}
+	
+	return 0;
+}
 
-	//Set crop format
+static int set_crop(struct capture_device *c) {
+	struct v4l2_cropcap cc;
+	struct v4l2_crop crop;
+	
 	CLEAR(cc);
 	CLEAR(crop);
 	cc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	//dont set cropping for webcams, Linux UVC doesnt like it
-	if(std!=0 && ioctl( c->fd, VIDIOC_CROPCAP, &cc ) >= 0 ) {
+	if(c->std!=WEBCAM && ioctl( c->fd, VIDIOC_CROPCAP, &cc ) >= 0 ) {
 		crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		crop.c = cc.defrect;
 		if(ioctl( c->fd, VIDIOC_S_CROP, &crop )!=0) {
 			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_INFO, "V4L2: Error setting cropping info\n");
-			return LIBV4L_ERR_CROP;
+			return -1;
 		}
 	}
-
+	
 	return 0;
+}
+
+static int set_param(struct capture_device *c) {
+	struct v4l2_streamparm param;
+	
+	//TODO: for now the FPS is hardcoded to 25. could be improved ?
+	
+	CLEAR(param);
+	param.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	param.parm.capture.timeperframe.numerator = 1;
+	param.parm.capture.timeperframe.denominator = 25;
+	if (0 != ioctl(c->fd, VIDIOC_S_PARM, &param)) {
+		info("Cant set FPS\n");	
+	}
+	
+	return 0;
+}
+
+int set_cap_param_v4l2(struct capture_device *c, int *palettes, int nb) {
+	int ret = 0;
+	int def[NB_SUPPORTED_PALETTE] = DEFAULT_PALETTE_ORDER;
+	
+	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: Setting capture parameters on device %s.\n", c->file);
+
+	if(nb<0 || nb>=NB_SUPPORTED_PALETTE) {
+		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: Incorrect number of palettes (%d)\n", nb);
+		return LIBV4L_ERR_FORMAT;
+	}
+	if(nb==0 || palettes==NULL) {
+		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: No palettes supplied, trying default order.\n");
+		palettes = def;
+		nb = NB_SUPPORTED_PALETTE;
+	}
+
+	//set desired standard
+	if (set_std(c) !=0 ) {
+		ret = LIBV4L_ERR_STD;
+		goto fail;
+	}
+	
+	//set desired input
+	if (set_input(c) != 0) {
+		ret = LIBV4L_ERR_CHANNEL;
+		goto fail;
+	}	
+
+	//Set image format
+	if (set_image_format(c, palettes, nb) != 0) {
+		ret = LIBV4L_ERR_FORMAT;
+		goto fail;
+	}
+
+	//Set crop format
+	if (set_crop(c) != 0) {
+		info("Listing the reported capabilities:\n");
+		ret = LIBV4L_ERR_CROP;
+		goto fail;
+	}
+	
+	//set FPS
+	set_param(c);
+	
+	return ret;
+
+fail:
+	info("Listing the reported capabilities:\n");
+	list_cap_v4l2(c);
+	return ret;
 }
 
 int init_capture_v4l2(struct capture_device *c) {

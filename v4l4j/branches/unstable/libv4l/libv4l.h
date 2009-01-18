@@ -48,10 +48,28 @@ struct mmap {
 struct control_list {
 	int count;						//how many controls are available
 	struct v4l2_queryctrl *ctrl;	//array of 'count' v4l2_queryctrl' controls (see videodev.h)
-	void *probe_priv;				//pointer to driver probe code's private data, do not touch
 };
 
 struct capture_device; //defined further down
+
+//struct used to represent a driver probe. Used and populated in v4l-control.c
+struct v4l_driver_probe {
+	int (*probe) (struct capture_device *, void **);
+	int (*list_ctrl)(struct capture_device *, struct v4l2_queryctrl *, void *);
+	int (*get_ctrl)(struct capture_device *, struct v4l2_queryctrl *, void *);
+	int (*set_ctrl)(struct capture_device *,  struct v4l2_queryctrl *, int, void *);
+	void *priv;
+};
+
+/* 
+ * element in linked list of driver probe
+ */
+struct struct_elem {
+	struct v4l_driver_probe *probe;
+ 	struct struct_elem *next;
+ };
+typedef struct struct_elem driver_probe;
+
 
 //Put the version in string & return it. allocation and freeing must be done by caller
 //passing a char[10] is enough.
@@ -184,6 +202,7 @@ struct capture_device {
 									//but they are the same (same goes for YUYV and YUV422). In this field
 									//we store the real palette used by v4l1. In the palette field above,
 									//we store what the application should know (YUYV instead of YUV422)
+	driver_probe *probes; 			//linked list of driver probes, allocated in v4l-control.c
 };
 
 #endif

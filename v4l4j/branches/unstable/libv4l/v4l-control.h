@@ -27,17 +27,10 @@
 
 #include "libv4l.h"
 
-struct probe_v4l_driver {
-	int (*probe) (struct capture_device *, struct control_list *);
-	int (*list_ctrl)(struct capture_device *, struct control_list *, struct v4l2_queryctrl *);
-	int (*get_ctrl)(struct capture_device *, struct v4l2_queryctrl *);
-	int (*set_ctrl)(struct capture_device *,  struct v4l2_queryctrl *, int);
-};
-
 struct control_list *list_control(struct capture_device *);
 int get_control_value(struct capture_device *, struct v4l2_queryctrl *);
 void set_control_value(struct capture_device *, struct v4l2_queryctrl *,  int);
-void free_control_list(struct control_list *);
+void free_control_list(struct capture_device *);
 void query_control(struct capture_device *);
 
 #endif
