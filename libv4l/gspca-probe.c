@@ -60,7 +60,7 @@ struct gspca_probe_private {
 };
 
 
-int gspca_driver_probe(struct capture_device *c, struct control_list *l){
+int gspca_driver_probe(struct capture_device *c, void **data){
 	struct gspca_probe_private *priv;
 	struct video_param p;
 		
@@ -125,7 +125,7 @@ int gspca_driver_probe(struct capture_device *c, struct control_list *l){
 						if(p.light_freq==0) {
 							dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: found GSPCA driver\n");
 							XMALLOC(priv, struct gspca_probe_private *, sizeof(struct gspca_probe_private ));
-							l->probe_priv = (void *)priv;
+							*data = (void *)priv;
 							priv->ok = 1;
 							return NB_PRIV_IOCTL;
 						}
@@ -139,7 +139,7 @@ end:
 	return -1;		
 }
 
-int gspca_get_ctrl(struct capture_device *c, struct v4l2_queryctrl *q){
+int gspca_get_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, void *d){
 	int ret = -1;
 	struct video_param p;
 	if(ioctl(c->fd, SPCAGVIDIOPARAM, &p)<0) {
@@ -165,7 +165,7 @@ int gspca_get_ctrl(struct capture_device *c, struct v4l2_queryctrl *q){
 	return ret;
 }
 
-int gspca_set_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, int val){
+int gspca_set_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, int val, void *d){
 	struct video_param p;
 	switch (q->id) {
 		case 0:
@@ -196,9 +196,9 @@ int gspca_set_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, int val){
 	return 0;
 }
 
-int gspca_list_ctrl(struct capture_device *c,struct control_list *l, struct v4l2_queryctrl *q){
+int gspca_list_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, void *d){
 	int i=0;
-	struct gspca_probe_private *priv = (struct gspca_probe_private *) l->probe_priv;
+	struct gspca_probe_private *priv = (struct gspca_probe_private *) d;
 	if(priv->ok==1) {
 		
 		//

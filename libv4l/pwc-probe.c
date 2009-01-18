@@ -42,7 +42,7 @@ struct pwc_probe_private {
 };
 
 
-int pwc_driver_probe(struct capture_device *c, struct control_list *l){
+int pwc_driver_probe(struct capture_device *c, void **data){
 	struct v4l2_capability cap;
 	struct pwc_probe p;
 	struct pwc_probe_private *priv;
@@ -60,7 +60,7 @@ int pwc_driver_probe(struct capture_device *c, struct control_list *l){
 		
 		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "PWC: found pwc driver\n");
 		XMALLOC(priv, struct pwc_probe_private *, sizeof(struct pwc_probe_private ));
-		l->probe_priv = (void *)priv;
+		*data = (void *) priv;
 		if(ioctl(c->fd, VIDIOCPWCMPTRESET, &i)>=0) {
 			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "PWC: found PTZ-capable camera\n");
 			priv->isPTZ=1;
@@ -77,7 +77,7 @@ end:
 	return -1;
 }
 
-int pwc_get_ctrl(struct capture_device *c, struct v4l2_queryctrl *q){
+int pwc_get_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, void *d){
 	struct pwc_mpt_angles angles;
 	int ret = -1;
 
@@ -110,7 +110,7 @@ int pwc_get_ctrl(struct capture_device *c, struct v4l2_queryctrl *q){
 	return ret;
 }
 
-int pwc_set_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, int val){
+int pwc_set_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, int val, void *d){
 	struct pwc_mpt_angles angles;
 	int ret = -1;
 
@@ -170,9 +170,9 @@ int pwc_set_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, int val){
 	return ret;
 }
 
-int pwc_list_ctrl(struct capture_device *c,struct control_list *l, struct v4l2_queryctrl *q){
+int pwc_list_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, void *data ){
 	int i=0;
-	struct pwc_probe_private *priv = (struct pwc_probe_private *) l->probe_priv;
+	struct pwc_probe_private *priv = (struct pwc_probe_private *) data;
 	if(priv->isPTZ==1) {
 		
 		struct pwc_mpt_range range;

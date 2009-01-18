@@ -28,6 +28,9 @@
 //
 // Marks V4L2 controls created by v4l4j as "fake" controls
 // representing private IOCTLs....
+// after probing the underlying driver, v4l4j creates fake v4l2_ctrl for each private ioctl detected 
+// these fake v4l2_controls are marked with the following value (in the reserved[0] field) so set/get
+// can be intercepted by v4l4j and dealt with properly.
 //
 #define V4L2_PRIV_IOCTL	0x54E83
 
