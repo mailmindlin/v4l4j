@@ -3,7 +3,7 @@
 * eResearch Centre, James Cook University (eresearch.jcu.edu.au)
 *
 * This program was developed as part of the ARCHER project
-* (Australian Research Enabling Environment) funded by a   
+* (Australian Research Enabling Environment) funded by a
 * Systemic Infrastructure Initiative (SII) grant and supported by the Australian
 * Department of Innovation, Industry, Science and Research
 *
@@ -14,7 +14,7 @@
 *
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  
+* or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU General Public License for more details.
 *
 * You should have received a copy of the GNU General Public License
@@ -30,7 +30,7 @@
 #include "videodev.h"
 
 #define CLEAR(x) memset(&x, 0x0, sizeof(x));
-		
+
 struct mmap_buffer {
 	void *start;					//start of the mmaped buffer
 	int length;						//length of the mmaped buffer as given by v4l - does NOT indicate the length of the frame,
@@ -48,10 +48,28 @@ struct mmap {
 struct control_list {
 	int count;						//how many controls are available
 	struct v4l2_queryctrl *ctrl;	//array of 'count' v4l2_queryctrl' controls (see videodev.h)
-	void *probe_priv;				//pointer to driver probe code's private data, do not touch
 };
 
 struct capture_device; //defined further down
+
+//struct used to represent a driver probe. Used and populated in v4l-control.c
+struct v4l_driver_probe {
+	int (*probe) (struct capture_device *, void **);
+	int (*list_ctrl)(struct capture_device *, struct v4l2_queryctrl *, void *);
+	int (*get_ctrl)(struct capture_device *, struct v4l2_queryctrl *, void *);
+	int (*set_ctrl)(struct capture_device *,  struct v4l2_queryctrl *, int, void *);
+	void *priv;
+};
+
+/* 
+ * element in linked list of driver probe
+ */
+struct struct_elem {
+	struct v4l_driver_probe *probe;
+ 	struct struct_elem *next;
+ };
+typedef struct struct_elem driver_probe;
+
 
 //Put the version in string & return it. allocation and freeing must be done by caller
 //passing a char[10] is enough.
@@ -63,6 +81,10 @@ char *get_libv4l_version(char *);
 //Arguments: device file, width, height, channel, std, nb_buf
 struct capture_device *init_libv4l(const char *, int, int, int, int, int);
 
+/*
+ * functions pointed to by the members of this structure should be used
+ * by the calling application, to capture frame from the video device.
+ */
 struct capture_actions {
 /*
  * Init methods
@@ -70,7 +92,7 @@ struct capture_actions {
 //set the capture parameters
 //int * point to an array of image formats (palettes) to try (see bottom of libv4l.h for a list of supported palettes)
 //the last argument (int) tells how many formats there are in the previous argument
-//arg2 can be set to NULL and arg3 to 0 to try the default order (again, see libv4l.h) 
+//arg2 can be set to NULL and arg3 to 0 to try the default order (again, see libv4l.h)
 	int (*set_cap_param)(struct capture_device *, int *, int);
 
 //initialise streaming, request create mmap'ed buffers
@@ -89,7 +111,7 @@ struct capture_actions {
 
 //enqueue the buffer when done using the frame
 	void (*enqueue_buffer)(struct capture_device *);
- 
+
 
 /*
  * Freeing resources
@@ -115,17 +137,15 @@ struct capture_actions {
 	void (*query_frame_sizes)(struct capture_device *);	// not implemented
 	void (*query_capture_intf)(struct capture_device *);	//prints capabilities
 	void (*query_current_image_fmt)(struct capture_device *);	//print max width max height for v4l1 and current settings for v4l2
-	
 };
 
 //counterpart of init_libv4l2, must be called it init_libv4l2 was successful
 void del_libv4l(struct capture_device *);
 
 
-
 //
 // Passing these values as desired width and height for the capture
-// will result libv4l using the maximun width and height allowed   
+// will result libv4l using the maximun width and height allowed
 //
 #define MAX_WIDTH					0
 #define MAX_HEIGHT					0
@@ -164,7 +184,7 @@ void del_libv4l(struct capture_device *);
 struct capture_device {
 	struct mmap *mmap;				//do not touch
 	struct control_list *ctrls;		//video controls
-	
+
 #define V4L1_VERSION		1
 #define V4L2_VERSION		2
 	int v4l_version;				//
@@ -177,11 +197,12 @@ struct capture_device {
 	char file[100];					//device file name
 	int bytesperline;				//number of bytes per line in the captured image
 	int imagesize;					//in bytes
-	struct capture_actions capture;	//see below
-	int real_v4l1_palette;			//v4l1 weirdness: v4l1 defines 2 distinct palettes YUV420 and YUV420P 
+	struct capture_actions *capture;	//see def above
+	int real_v4l1_palette;			//v4l1 weirdness: v4l1 defines 2 distinct palettes YUV420 and YUV420P
 									//but they are the same (same goes for YUYV and YUV422). In this field
 									//we store the real palette used by v4l1. In the palette field above,
 									//we store what the application should know (YUYV instead of YUV422)
+	driver_probe *probes; 			//linked list of driver probes, allocated in v4l-control.c
 };
 
 #endif

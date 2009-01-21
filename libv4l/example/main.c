@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
 	}
 	
 	//Set capture param (image format, color, size, crop...)
-	if ((*cdev->capture.set_cap_param)(cdev, fmts , NB_SUPPORTED_FORMATS)!=0) {
+	if ((*cdev->capture->set_cap_param)(cdev, fmts , NB_SUPPORTED_FORMATS)!=0) {
 		info(LOG_ERR, "Unable to set capture parameters. It could be due to:\n");
 		info(LOG_ERR, " - the chosen width and height,\n - the driver not supporting the image formats libv4l tried\n");
 		info(LOG_ERR, "Recompile libv4l with debugging enabled (see README)\n");
@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
 	info(LOG_INFO, "Capturing at %dx%d\n", cdev->width, cdev->height);
 
 	//Prepare capture:Allocates v4l2 buffers, mmap buffers, enqueue buffers
-	if ((*cdev->capture.init_capture)(cdev)) {
+	if ((*cdev->capture->init_capture)(cdev)) {
 		info(LOG_ERR, "Failed to setup capture\n");
 		del_libv4l(cdev);
 		exit(1);
@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
 	close(sockfd);
 
 	//Deallocates V4l2 buffers
-	(*cdev->capture.free_capture)(cdev);
+	(*cdev->capture->free_capture)(cdev);
 	
 	//delete cdev
 	del_libv4l(cdev);
@@ -345,7 +345,7 @@ void start_thread_client(int sock, struct capture_device *cdev) {
 		if(client_nr==0) {
 			//Start capture
 			dprint(LOG_SOURCE_HTTP, LOG_LEVEL_DEBUG2, "First client, starting capture \n");
-			if ((*cdev->capture.start_capture)(cdev) !=0 ) {
+			if ((*cdev->capture->start_capture)(cdev) !=0 ) {
 				info(LOG_ERR, "Cant initiate capture...\n");
 				keep_going = 0;
 				XFREE(td);
@@ -357,7 +357,7 @@ void start_thread_client(int sock, struct capture_device *cdev) {
 			dprint(LOG_SOURCE_HTTP, LOG_LEVEL_DEBUG2, "Created new thread \n");
 		}
 		else {
-			(*cdev->capture.stop_capture)(cdev);
+			(*cdev->capture->stop_capture)(cdev);
 			info(LOG_ERR, "Cant create a thread to handle the connection...\n");
 		}
 
@@ -440,13 +440,13 @@ void *send_stream_to(void *v) {
 		}
 	
 		//get frame from v4l2 
-		if((yuv_data = (*cdev->capture.dequeue_buffer)(cdev, &yuv_len)) != NULL) {
+		if((yuv_data = (*cdev->capture->dequeue_buffer)(cdev, &yuv_len)) != NULL) {
 			
 			//encode in JPEG
 			jpeg_len = (*j.jpeg_encode)(yuv_data,yuv_len, cdev, &j, jpeg_data);
 
 			//return buffer to v4l2
-			(*cdev->capture.enqueue_buffer)(cdev);
+			(*cdev->capture->enqueue_buffer)(cdev);
 			
 			//send in multipart_jpeg stream	
 			retval = send_frame(sock, jpeg_data, jpeg_len);
@@ -466,7 +466,7 @@ void *send_stream_to(void *v) {
 	if(--client_nr==0) {
 		dprint(LOG_SOURCE_HTTP, LOG_LEVEL_DEBUG2, "Last client, stopping capture \n");
 		//Stop capture
-		(*cdev->capture.stop_capture)(cdev);
+		(*cdev->capture->stop_capture)(cdev);
 	}
 	
 	//close socket
