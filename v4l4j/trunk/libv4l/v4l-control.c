@@ -23,19 +23,82 @@
 */
 
 #include <errno.h>
+#include <sys/ioctl.h>
 #include "libv4l.h"
+#include "v4l-control.h"
+#include "pwc-probe.h"
+#include "qc-probe.h"
+#include "gspca-probe.h"
+#include "fps-param-probe.h"
 #include "log.h"
-#include "v4l-probe.h"
 #include "v4l1-input.h"
 #include "v4l2-input.h"
 #include "videodev_additions.h"
+
+
+static struct v4l_driver_probe known_driver_probes[] = {
+	{
+		.probe 		= pwc_driver_probe,
+		.list_ctrl 	= pwc_list_ctrl,
+		.get_ctrl	= pwc_get_ctrl,
+		.set_ctrl	= pwc_set_ctrl,
+		.priv = NULL,
+	},
+	{
+		.probe 		= gspca_driver_probe,
+		.list_ctrl 	= gspca_list_ctrl,
+		.get_ctrl	= gspca_get_ctrl,
+		.set_ctrl	= gspca_set_ctrl,
+		.priv = NULL,
+	},
+	{
+		.probe 		= qc_driver_probe,
+		.list_ctrl 	= qc_list_ctrl,
+		.get_ctrl	= qc_get_ctrl,
+		.set_ctrl	= qc_set_ctrl,
+		.priv = NULL,
+	},
+	{
+		.probe 		= fps_param_probe,
+		.list_ctrl 	= fps_param_list_ctrl,
+		.get_ctrl	= fps_param_get_ctrl,
+		.set_ctrl	= fps_param_set_ctrl,
+		.priv = NULL,
+	},
+};
+
+#define PROBE_NB 4
+
+
+static void add_node(driver_probe **list, struct v4l_driver_probe *probe) {
+	driver_probe *t;
+	if((t=*list)) {
+		//create the subsequent nodes
+		while(t->next) t = t->next;
+		XMALLOC(t->next, driver_probe *, sizeof(driver_probe));
+		t->next->probe = probe;
+	} else {
+		//create the first node
+		XMALLOC((*list), driver_probe *, sizeof(driver_probe));
+		(*list)->probe = probe;
+	}
+ }
+static void empty_list(driver_probe *list){
+	driver_probe *t;
+ 	while(list) {
+		t = list->next;
+		XFREE(list);
+		list = t;
+ 	}
+ }
 
 // ****************************************
 // Control methods
 // ****************************************
 struct control_list *list_control(struct capture_device *c){
 	struct v4l2_control ctrl;
-	int probe_id = 0, count = 0, priv_ctrl_count = 0;
+	int probe_id = 0, count = 0, priv_ctrl_count = 0, nb=0;
+	driver_probe *e = NULL;
 	struct control_list *l;
 
 	dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: Listing controls\n");
@@ -65,9 +128,18 @@ struct control_list *list_control(struct capture_device *c){
 	 * ioctl (static list which must be updated manually after inspecting the code for each driver => ugly but there is no other option until all
 	 * drivers make their private ioctl available through a control (or control class like the camera control class added to 2.6.25))
 	 */
-	while ( ((priv_ctrl_count = probe_drivers[probe_id++].probe(c, l)) == -1) && (probe_id<PROBE_NB) );
+	//go through all probes
+	while ( probe_id<PROBE_NB ){
+		if ( (nb = known_driver_probes[probe_id].probe(c, &known_driver_probes[probe_id].priv)) != -1) {
+			//if the probe is successful, add the nb of private controls detected to the grand total
+			priv_ctrl_count += nb;
+			add_node(&c->probes,&known_driver_probes[probe_id]);			
+		}
+		probe_id++;
+	}
 
-	count += priv_ctrl_count > 0 ? priv_ctrl_count : 0;
+
+	count += priv_ctrl_count;
 
 	l->count = count;
 	if(count>0) {
@@ -83,8 +155,10 @@ struct control_list *list_control(struct capture_device *c){
 
 		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: listing private controls (found %d)...\n", priv_ctrl_count);
 		//probe the driver for private ioctl and turn them into fake V4L2 controls
-		if(priv_ctrl_count>0)
-	 		probe_drivers[probe_id].list_ctrl(c, l, &l->ctrl[count]);
+		//if(priv_ctrl_count>0)
+
+		for(e = c->probes;e;e=e->next)
+		 		e->probe->list_ctrl(c, &l->ctrl[count], e->probe->priv);
 		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: done listing controls\n");
 
 	} else {
@@ -97,7 +171,8 @@ struct control_list *list_control(struct capture_device *c){
 int get_control_value(struct capture_device *c, struct v4l2_queryctrl *ctrl){
 	dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: getting value for control %s\n", ctrl->name);
 	if(ctrl->reserved[0]==V4L2_PRIV_IOCTL){
-		return probe_drivers[ctrl->reserved[1]].get_ctrl(c, ctrl);
+		struct v4l_driver_probe *s = &known_driver_probes[ctrl->reserved[1]]; 
+		return s->get_ctrl(c, ctrl, s->priv);
 	} else {
 		if(c->v4l_version==V4L2_VERSION)
 			return get_control_value_v4l2(c, ctrl);
@@ -114,7 +189,8 @@ void set_control_value(struct capture_device *c, struct v4l2_queryctrl *ctrl, in
 	dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: setting value (%d) for control %s\n",i, ctrl->name);
 	i = (i<ctrl->minimum || i > ctrl->maximum) ? ctrl->minimum : i;
 	if(ctrl->reserved[0]==V4L2_PRIV_IOCTL){
-		probe_drivers[ctrl->reserved[1]].set_ctrl(c, ctrl, i);
+		struct v4l_driver_probe *s = &known_driver_probes[ctrl->reserved[1]];
+		s->set_ctrl(c, ctrl, i,s->priv);
 	} else {
 		if(c->v4l_version==V4L2_VERSION)
 			set_control_value_v4l2(c, ctrl, i);
@@ -125,16 +201,20 @@ void set_control_value(struct capture_device *c, struct v4l2_queryctrl *ctrl, in
 	}
 }
 
-void free_control_list(struct control_list *l){
+void free_control_list(struct capture_device *c){
 	dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: Freeing controls \n");
-	if (l->ctrl)
-		XFREE(l->ctrl);
+	driver_probe *e;
+	if (c->ctrls->ctrl)
+		XFREE(c->ctrls->ctrl);
 
-	if(l->probe_priv)
-		XFREE(l->probe_priv);
+	for(e = c->probes; e; e = e->next)
+		if (e->probe->priv) 
+			XFREE(e->probe->priv);
+			
+	empty_list(c->probes);
 
-	if (l)
-		XFREE(l);
+	if (c->ctrls)
+		XFREE(c->ctrls);
 }
 
 

@@ -3,7 +3,7 @@
 * eResearch Centre, James Cook University (eresearch.jcu.edu.au)
 *
 * This program was developed as part of the ARCHER project
-* (Australian Research Enabling Environment) funded by a   
+* (Australian Research Enabling Environment) funded by a
 * Systemic Infrastructure Initiative (SII) grant and supported by the Australian
 * Department of Innovation, Industry, Science and Research
 *
@@ -14,7 +14,7 @@
 *
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  
+* or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU General Public License for more details.
 *
 * You should have received a copy of the GNU General Public License
@@ -38,13 +38,13 @@
 #include "libv4l.h"
 #include "palettes.h"
 
-#define CAPTURE_LENGTH  	2 // in seconds
+#define CAPTURE_LENGTH  	10 // in seconds
 
 void write_frame(void *d, int size) {
 	int outfile, len = 0;
 	char filename[50];
 	struct timeval tv;
-	
+
 
 	//Construct the filename
 	gettimeofday(&tv, NULL);
@@ -59,7 +59,7 @@ void write_frame(void *d, int size) {
 
 	//printf( "FILE: writing %d bytes to file\n", size);
 	while((len+=write(outfile, (d+len), (size-len)))<size);
-	
+
 	close(outfile);
 }
 
@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
 	void *d;
 	struct timeval start, now;
 	int size, count=0, std=0, channel=0, width=0, height=0;
-	
+
 	if(argc!=2 && argc!=4 && argc!=6) {
 		printf("This program requires the path to the video device file to be tested.\n");
 		printf("The optional second and third arguments are a video standard and channel.\n");
@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
 		printf("Video standards: webcam:0 - PAL:1 - SECAM:2 - NTSC:3\n");
 		return -1;
 	}
-	
+
     printf("This program will try capturing frames from %s for"\
 	       " %d seconds and will print the FPS\n", argv[1], CAPTURE_LENGTH);
 
@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
 		height = atoi(argv[5]);
 		printf("Trying to capture at %dx%d\n", width, height);
 	}
-	
+
 	printf("Make sure your video source is connected, and press <Enter>, or Ctrl-C to abort now.");
 	getchar();
 
@@ -102,57 +102,57 @@ int main(int argc, char** argv) {
 		printf("Error initialising device.\n");
 		return -1;
 	}
-	
-	if((*c->capture.set_cap_param)(c, NULL, 0)){
+
+	if((*c->capture->set_cap_param)(c, NULL, 0)){
 		del_libv4l(c);
 		printf("Cant set capture parameters\n");
 		return -1;
 	}
-	
+
 	printf("Capturing from %s at %dx%d.\n", argv[1], c->width,c->height);
 	printf("Image format %s, size: %d\n", libv4l_palettes[c->palette].name, c->imagesize);
 
-	if((*c->capture.init_capture)(c)<0){
+	if((*c->capture->init_capture)(c)<0){
 		del_libv4l(c);
 		printf("Cant initialise capture ");
 		return -1;
 	}
-	
-	if((*c->capture.start_capture)(c)<0){
-		(*c->capture.free_capture)(c);
+
+	if((*c->capture->start_capture)(c)<0){
+		(*c->capture->free_capture)(c);
 		del_libv4l(c);
 		printf("Cant start capture");
 		return -1;
 	}
-	
+
 	gettimeofday(&start, NULL);
 	gettimeofday(&now, NULL);
 	while(now.tv_sec<start.tv_sec+CAPTURE_LENGTH) {
-	
-		//get frame from v4l2 
-		if((d = (*c->capture.dequeue_buffer)(c, &size)) != NULL) {
-			//uncomment the following line to output raw captured frame 
+
+		//get frame from v4l2
+		if((d = (*c->capture->dequeue_buffer)(c, &size)) != NULL) {
+			//uncomment the following line to output raw captured frame
 			//to a file
 			//write_frame(d, size);
 			count++;
-				//Put frame  
+				//Put frame
 			if(d != NULL)
 				//return buffer to v4l2
-				(*c->capture.enqueue_buffer)(c);
+				(*c->capture->enqueue_buffer)(c);
 			else
 				printf("Cant put buffer back");
 		} else {
 			printf("Cant get buffer ");
 			break;
-		}	
+		}
 		gettimeofday(&now, NULL);
 	}
 	printf("fps: %.1f\n", (count/((now.tv_sec - start.tv_sec) + ((float) (now.tv_usec - start.tv_usec)/1000000))));
 
-	if((*c->capture.stop_capture)(c)<0)
+	if((*c->capture->stop_capture)(c)<0)
 		fprintf(stderr, "Error stopping capture\n");
 
-	(*c->capture.free_capture)(c);
+	(*c->capture->free_capture)(c);
 	del_libv4l(c);
 
 	return 0;
