@@ -3,7 +3,7 @@
 * eResearch Centre, James Cook University (eresearch.jcu.edu.au)
 *
 * This program was developed as part of the ARCHER project
-* (Australian Research Enabling Environment) funded by a   
+* (Australian Research Enabling Environment) funded by a
 * Systemic Infrastructure Initiative (SII) grant and supported by the Australian
 * Department of Innovation, Industry, Science and Research
 *
@@ -14,7 +14,7 @@
 *
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  
+* or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU General Public License for more details.
 *
 * You should have received a copy of the GNU General Public License
@@ -30,7 +30,7 @@
 struct control_list *list_control(struct capture_device *);
 int get_control_value(struct capture_device *, struct v4l2_queryctrl *);
 void set_control_value(struct capture_device *, struct v4l2_queryctrl *,  int);
-void free_control_list(struct control_list *);
+void free_control_list(struct capture_device *);
 void query_control(struct capture_device *);
 
 #endif

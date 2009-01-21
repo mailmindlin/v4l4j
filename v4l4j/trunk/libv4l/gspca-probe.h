@@ -29,9 +29,9 @@
 
 // index of the gspca probe in the struct probe_v4l_driver probe_drivers[] in v4l-probe.h
 #define GSPCA_PROBE_INDEX	1
-int gspca_driver_probe(struct capture_device *, struct control_list*);
-int gspca_list_ctrl(struct capture_device *, struct control_list *, struct v4l2_queryctrl *);
-int gspca_get_ctrl(struct capture_device *,  struct v4l2_queryctrl *);
-int gspca_set_ctrl(struct capture_device *, struct v4l2_queryctrl *, int);
+int gspca_driver_probe(struct capture_device *, void **);
+int gspca_list_ctrl(struct capture_device *, struct v4l2_queryctrl *, void *);
+int gspca_get_ctrl(struct capture_device *,  struct v4l2_queryctrl *, void *);
+int gspca_set_ctrl(struct capture_device *, struct v4l2_queryctrl *, int, void *);
 
 #endif /*H_GSPCA_PROBE*/
