@@ -76,10 +76,10 @@
 #define XMALLOC(var, type, size)	\
 		do { \
 			var = (type) malloc(size); \
-			if (!var) {fprintf(stderr, "[%s:%d %s] MEMALLOC: OUT OF MEMORY. Cant allocate %d bytes.\n",\
+			if (!var) {fprintf(stderr, "[%s:%d %s] MEMALLOC: OUT OF MEMORY. Cant allocate %lu bytes.\n",\
 					__FILE__, __LINE__, __PRETTY_FUNCTION__, size); fflush(stderr);}\
 			else { CLEAR(*var); \
-				dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "MEMALLOC: allocating %d bytes of type %s for var %s (%p).\n", size, #type, #var, var); } \
+				dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "MEMALLOC: allocating %lu bytes of type %s for var %s (%p).\n", size, #type, #var, var); } \
 		} while (0)
 
 #define XFREE(var)					\

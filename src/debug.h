@@ -51,9 +51,9 @@
 #define XMALLOC(var, type, size)	\
 		do { \
 			var = (type) malloc(size); \
-			if (!var) {dprint(LOG_MEMALLOC, "[MEMALLOC]: Cant allocate %d bytes.\n", size);} \
+			if (!var) {dprint(LOG_MEMALLOC, "[MEMALLOC]: Cant allocate %lu bytes.\n", size);} \
 			else { CLEAR(*var); \
-				dprint(LOG_MEMALLOC, "[MEMALLOC]: allocated %d bytes of type %s for var %s (%p).\n", size, #type, #var, var);}\
+				dprint(LOG_MEMALLOC, "[MEMALLOC]: allocated %lu bytes of type %s for var %s (%p).\n", size, #type, #var, var);}\
 		} while (0)
 		
 #define XFREE(var)					\
