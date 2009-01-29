@@ -22,43 +22,12 @@
 *
 */
 
-
-// This program list capture parameters from /dev/video0
-
-
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef V4L2QUERY_H_
+#define V4L2QUERY_H_
 
 #include "libv4l.h"
 
-int main(int argc, char** argv) {
-	struct capture_device *c;
-	int std=0, channel=0;
+int query_device_v4l2(struct video_device *vd);
+void free_video_device_v4l2(struct video_device *);
 
-	if(argc!=2 && argc!=4) {
-		printf("This program requires the path to the video device file to be tested.\n");
-		printf("The optional second and third arguments are a video standard and channel.\n");
-		printf("Usage: %s <video_device_file> [standard channel]\n", argv[0]);
-		printf("Video standards: webcam:0 - PAL:1 - SECAM:2 - NTSC:3\n");
-		return -1;
-	}
-
-
-	if (argc==4){
-		std = atoi(argv[2]);
-		channel = atoi(argv[3]);
-		printf("Using standard %d, channel %d\n",std, channel);
-	}
-
-	c = init_capture_device(argv[1], MAX_WIDTH, MAX_HEIGHT ,std ,channel ,2);
-
-	if(c==NULL) {
-		printf("Error initialising device.");
-		return -1;
-	}
-	c->capture->list_cap(c);
-
-	free_capture_device(c);
-
-	return 0;
-}
+#endif /* V4L2QUERY_H_ */

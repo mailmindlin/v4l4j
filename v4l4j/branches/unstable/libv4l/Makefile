@@ -1,5 +1,5 @@
 #Uncomment the following line to enable debug output in libv4l2
-#DEBUG=-DDEBUG -ggdb -Wall
+DEBUG=-DDEBUG -ggdb -Wall
 
 #
 # edit anything below at your own risk
@@ -9,8 +9,8 @@ VERSION_MINOR=5
 VERSION_RELEASE=7
 
 LIB=libv4l.a
-TESTOBJ=test.o list-caps.o
-OBJ=v4l2-input.o v4l-control.o v4l1-input.o libv4l.o pwc-probe.o gspca-probe.o qc-probe.o fps-param-probe.o
+TESTOBJ=test.o list-caps.o test-list-caps.o
+OBJ=v4l2-input.o v4l-control.o v4l1-input.o libv4l.o pwc-probe.o gspca-probe.o qc-probe.o fps-param-probe.o v4l1-query.o v4l2-query.o
 
 CC=gcc
 OPTIMISATION=-O3
@@ -27,6 +27,7 @@ $(LIB): $(OBJ)
 test: $(TESTOBJ) $(OBJ)
 	$(LD) $(LDFLAGS) test.o $(OBJ) -o test-capture
 	$(LD) $(LDFLAGS) list-caps.o $(OBJ) -o list-caps
+	$(LD) $(LDFLAGS) test-list-caps.o $(OBJ) -o test-list-caps
 
 clean:
-	rm -f $(OBJ) $(BIN) $(LIB) $(TESTOBJ) list-caps test-capture ./*~
+	rm -f $(OBJ) $(BIN) $(LIB) $(TESTOBJ) list-caps test-capture test-list-caps ./*~
