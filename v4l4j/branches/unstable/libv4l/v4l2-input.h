@@ -3,7 +3,7 @@
 * eResearch Centre, James Cook University (eresearch.jcu.edu.au)
 *
 * This program was developed as part of the ARCHER project
-* (Australian Research Enabling Environment) funded by a   
+* (Australian Research Enabling Environment) funded by a
 * Systemic Infrastructure Initiative (SII) grant and supported by the Australian
 * Department of Innovation, Industry, Science and Research
 *
@@ -14,7 +14,7 @@
 *
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  
+* or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU General Public License for more details.
 *
 * You should have received a copy of the GNU General Public License
@@ -34,6 +34,9 @@
  * by the corresponding init method. counterpart methods must be called if call
  * the init one was successful
  */
+
+//Check whether the supplied device file is a v4l2 device
+int check_v4l2(int fd, struct v4l2_capability *);
 
 //Check whether the device is V4L2 and has capture and mmap capabilities
 int check_capture_capabilities_v4l2(struct capture_device *);
@@ -58,7 +61,7 @@ void *dequeue_buffer_v4l2(struct capture_device *, int *);
 
 //enqueue the buffer when done using the frame
 void enqueue_buffer_v4l2(struct capture_device *);
- 
+
 
 /*
  * Freeing resources
@@ -73,8 +76,8 @@ int stop_capture_v4l2(struct capture_device *);
 //counterpart of init_capture, must be called it init_capture was successful
 void free_capture_v4l2(struct capture_device *);
 
-//counterpart of init_libv4l2, must be called it init_libv4l2 was successful
-void del_libv4l2(struct capture_device *);
+//counterpart of init_capture_device, must be called it init_capture_device was successful
+void free_capture_device2(struct capture_device *);
 
 
 /*
@@ -93,7 +96,7 @@ void set_control_value_v4l2(struct capture_device *, struct v4l2_queryctrl *, in
 
 /*
  * Query and list methods (printf to stdout, use to debug)
- * these methods can be called after init_libv4l2 and before del_libv4l2
+ * these methods can be called after init_capture_device2 and before free_capture_device2
  */
 void list_cap_v4l2(struct capture_device *);			//prints results from query methods listed below
 void enum_image_fmt_v4l2(struct capture_device *);		//lists all supported image formats

@@ -3,7 +3,7 @@
 * eResearch Centre, James Cook University (eresearch.jcu.edu.au)
 *
 * This program was developed as part of the ARCHER project
-* (Australian Research Enabling Environment) funded by a   
+* (Australian Research Enabling Environment) funded by a
 * Systemic Infrastructure Initiative (SII) grant and supported by the Australian
 * Department of Innovation, Industry, Science and Research
 *
@@ -14,7 +14,7 @@
 *
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  
+* or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU General Public License for more details.
 *
 * You should have received a copy of the GNU General Public License
@@ -36,15 +36,18 @@
  */
 
 
+//Check whether the supplied device file is a v4l1 device
+int check_v4l1(int fd, struct video_capability *);
+
 //Check whether the device is V4L1 and has capture and mmap capabilities
 // get capabilities VIDIOCGCAP - check max height and width
 int check_capture_capabilities_v4l1(struct capture_device *);
 
 // set the capture parameters trying the nb(last arg) palettes(second arg) in order
 int set_cap_param_v4l1(struct capture_device *, int *, int);
-// set video channel 	VIDIOCSCHAN - 
-// set picture format 	VIDIOCSPICT - 
-// set window 		VIDIOCSWIN  
+// set video channel 	VIDIOCSCHAN -
+// set picture format 	VIDIOCSPICT -
+// set window 		VIDIOCSWIN
 // get window format	VIDIOCGWIN  (to double check)
 
 
@@ -70,7 +73,7 @@ void *dequeue_buffer_v4l1(struct capture_device *, int *);
 
 //enqueue the buffer when done using the frame
 void enqueue_buffer_v4l1(struct capture_device *);
- 
+
 
 /*
  * Freeing resources
@@ -85,8 +88,8 @@ int stop_capture_v4l1(struct capture_device *);
 //counterpart of init_capture, must be called it init_capture was successful
 void free_capture_v4l1(struct capture_device *);
 
-//counterpart of init_libv4l1, must be called it init_libv4l2 was successful
-void del_libv4l1(struct capture_device *);
+//counterpart of init_capture_device, must be called it init_capture_device was successful
+void free_capture_device1(struct capture_device *);
 
 
 
@@ -106,7 +109,7 @@ void set_control_value_v4l1(struct capture_device *, struct v4l2_queryctrl *, in
 
 /*
  * Query and list methods (printf to stdout, use to debug)
- * these methods can be called after init_libv4l2 and before del_libv4l2
+ * these methods can be called after init_capture_device and before free_capture_device1
  */
 void list_cap_v4l1(struct capture_device *);			//prints results from query methods listed below
 void enum_image_fmt_v4l1(struct capture_device *);		//lists all supported image formats

@@ -36,6 +36,10 @@
 #define V4L2_MAX_WIDTH 			4096
 #define V4L2_MAX_HEIGHT 		4096
 
+int check_v4l2(int fd, struct v4l2_capability* caps){
+	return ioctl(fd, VIDIOC_QUERYCAP, caps);
+}
+
 void list_cap_v4l2(struct capture_device *);
 int check_capture_capabilities_v4l2(struct capture_device *c) {
 	struct v4l2_capability cap;
@@ -43,7 +47,7 @@ int check_capture_capabilities_v4l2(struct capture_device *c) {
 
 	CLEAR(cap);
 
-	if (-1 == ioctl(c->fd, VIDIOC_QUERYCAP, &cap)) {
+	if (-1 == check_v4l2(c->fd, &cap)) {
 		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_ERR, "V4L2: Not a V4L2 device.\n");
 		return -1;
 	}
@@ -131,7 +135,7 @@ static int set_std(struct capture_device *c){
 					found = 0;
 					info("Unknown autodetected standard (%d)\n", (int) std);
 					info("This is a bug in v4l4j. Please let the author know about this error.\n");
-					info("See the ISSUES section in the libv4l README file.\n");	
+					info("See the ISSUES section in the libv4l README file.\n");
 				}
 			}
 			i++;
@@ -148,7 +152,7 @@ static int set_std(struct capture_device *c){
 static int set_input(struct capture_device *c){
 	//Linux UVC doesnt like to be ioctl'ed (VIDIOC_S_INPUT)
 	//so we only execute them if std!="webcam"
-	
+
 	//TODO: Add autodetection here so if the given input channel is invalid
 	//a valid one is selected
 	if (c->std!=WEBCAM && -1 == ioctl(c->fd, VIDIOC_S_INPUT, &(c->channel))) {
@@ -184,7 +188,7 @@ static int try_image_format(struct v4l2_format *fmt, int width, int height, int 
 static int set_image_format(struct capture_device *c, int *palettes, int nb){
 	int found=0, i, best_palette=-1, best_width =-1, best_height=-1;
 	struct v4l2_format fmt;
-	
+
 	if(c->width==MAX_WIDTH)
 		c->width=V4L2_MAX_WIDTH;
 	if(c->height==MAX_HEIGHT)
@@ -246,14 +250,14 @@ static int set_image_format(struct capture_device *c, int *palettes, int nb){
 			c->imagesize = fmt.fmt.pix.sizeimage;
 		}
 	}
-	
+
 	return 0;
 }
 
 static int set_crop(struct capture_device *c) {
 	struct v4l2_cropcap cc;
 	struct v4l2_crop crop;
-	
+
 	CLEAR(cc);
 	CLEAR(crop);
 	cc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -266,30 +270,30 @@ static int set_crop(struct capture_device *c) {
 			return -1;
 		}
 	}
-	
+
 	return 0;
 }
 
 static int set_param(struct capture_device *c) {
 	struct v4l2_streamparm param;
-	
+
 	//TODO: for now the FPS is hardcoded to 25. could be improved ?
-	
+
 	CLEAR(param);
 	param.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	param.parm.capture.timeperframe.numerator = 1;
 	param.parm.capture.timeperframe.denominator = 25;
 	if (0 != ioctl(c->fd, VIDIOC_S_PARM, &param)) {
-		info("Cant set FPS\n");	
+		info("Cant set FPS\n");
 	}
-	
+
 	return 0;
 }
 
 int set_cap_param_v4l2(struct capture_device *c, int *palettes, int nb) {
 	int ret = 0;
 	int def[NB_SUPPORTED_PALETTE] = DEFAULT_PALETTE_ORDER;
-	
+
 	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: Setting capture parameters on device %s.\n", c->file);
 
 	if(nb<0 || nb>=NB_SUPPORTED_PALETTE) {
@@ -307,12 +311,12 @@ int set_cap_param_v4l2(struct capture_device *c, int *palettes, int nb) {
 		ret = LIBV4L_ERR_STD;
 		goto fail;
 	}
-	
+
 	//set desired input
 	if (set_input(c) != 0) {
 		ret = LIBV4L_ERR_CHANNEL;
 		goto fail;
-	}	
+	}
 
 	//Set image format
 	if (set_image_format(c, palettes, nb) != 0) {
@@ -326,10 +330,10 @@ int set_cap_param_v4l2(struct capture_device *c, int *palettes, int nb) {
 		ret = LIBV4L_ERR_CROP;
 		goto fail;
 	}
-	
+
 	//set FPS
 	set_param(c);
-	
+
 	return ret;
 
 fail:
@@ -569,6 +573,7 @@ int create_v4l2_controls(struct capture_device *c, struct control_list *l){
 
 	//create standard V4L controls
 	for( i = V4L2_CID_BASE; i< V4L2_CID_LASTP1 && count < l->count; i++) {
+		CLEAR(l->ctrl[count]);
 		l->ctrl[count].id = i;
 		if((ioctl(c->fd, VIDIOC_QUERYCTRL, &l->ctrl[count]) == 0) && ( ! (l->ctrl[count].flags & V4L2_CTRL_FLAG_DISABLED))) {
 			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: found control(id: 0x%x - name: %s - min: %d -max: %d - val: %d)\n", \
@@ -581,6 +586,7 @@ int create_v4l2_controls(struct capture_device *c, struct control_list *l){
 
 	//create device-specific private V4L2 controls
 	for (i = V4L2_CID_PRIVATE_BASE;count < l->count; i++) {
+		CLEAR(l->ctrl[count]);
 		l->ctrl[count].id = i;
 		if ((0 == ioctl (c->fd, VIDIOC_QUERYCTRL, &l->ctrl[count])) && ( ! (l->ctrl[count].flags & V4L2_CTRL_FLAG_DISABLED))) {
 			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: found control(id: %d - name: %s - min: %d -max: %d - val: %d)\n"\
@@ -605,6 +611,7 @@ int create_v4l2_controls(struct capture_device *c, struct control_list *l){
 	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
 	while (0 == ioctl (c->fd, VIDIOC_QUERYCTRL, &qctrl)) {
 		if(!has_id(list,qctrl.id )){
+			CLEAR(l->ctrl[count]);
 			memcpy(&l->ctrl[count], &qctrl, sizeof(l->ctrl[count]));
 			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: found ext control(id: %d - name: %s - min: %d -max: %d - val: %d)\n"\
 					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum, \

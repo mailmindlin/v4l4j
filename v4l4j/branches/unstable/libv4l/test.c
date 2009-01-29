@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
 	printf("Make sure your video source is connected, and press <Enter>, or Ctrl-C to abort now.");
 	getchar();
 
-	c = init_libv4l(argv[1], width, height ,channel, std,2);
+	c = init_capture_device(argv[1], width, height ,channel, std,2);
 
 	if(c==NULL) {
 		printf("Error initialising device.\n");
@@ -104,7 +104,7 @@ int main(int argc, char** argv) {
 	}
 
 	if((*c->capture->set_cap_param)(c, NULL, 0)){
-		del_libv4l(c);
+		free_capture_device(c);
 		printf("Cant set capture parameters\n");
 		return -1;
 	}
@@ -113,14 +113,14 @@ int main(int argc, char** argv) {
 	printf("Image format %s, size: %d\n", libv4l_palettes[c->palette].name, c->imagesize);
 
 	if((*c->capture->init_capture)(c)<0){
-		del_libv4l(c);
+		free_capture_device(c);
 		printf("Cant initialise capture ");
 		return -1;
 	}
 
 	if((*c->capture->start_capture)(c)<0){
 		(*c->capture->free_capture)(c);
-		del_libv4l(c);
+		free_capture_device(c);
 		printf("Cant start capture");
 		return -1;
 	}
@@ -153,7 +153,7 @@ int main(int argc, char** argv) {
 		fprintf(stderr, "Error stopping capture\n");
 
 	(*c->capture->free_capture)(c);
-	del_libv4l(c);
+	free_capture_device(c);
 
 	return 0;
 }

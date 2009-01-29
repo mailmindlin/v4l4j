@@ -32,12 +32,8 @@
 #include "palettes.h"
 
 
-static int get_capabilities(int fd, struct video_capability *vc) {
-	if (-1 == ioctl( fd, VIDIOCGCAP, vc)) {
-		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: Not a V4L1 device.\n");
-		return -1;
-	}
-	return 0;
+int check_v4l1(int fd, struct video_capability *vc) {
+	return ioctl( fd, VIDIOCGCAP, vc);
 }
 
 void list_cap_v4l1(struct capture_device *);
@@ -49,8 +45,8 @@ int check_capture_capabilities_v4l1(struct capture_device *c) {
 
 	CLEAR(vc);
 
-	if (get_capabilities(c->fd, &vc)!=0){
-		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: error getting capabilities.\n");
+	if (check_v4l1(c->fd, &vc)!=0){
+		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: Not a V4L1 device.\n");
 		return -1;
 	}
 
@@ -73,7 +69,7 @@ int check_capture_capabilities_v4l1(struct capture_device *c) {
 	return 0;
 }
 
-// set the capture parameters (hardcoded to require YUV420 for now)
+// set the capture parameters
 // set video channel 	VIDIOCSCHAN -
 // set picture format 	VIDIOCSPICT -
 // set window 		VIDIOCSWIN
@@ -101,7 +97,7 @@ int set_cap_param_v4l1(struct capture_device *c, int *palettes, int nb) {
 	CLEAR(win);
 	CLEAR(vc);
 
-	if (get_capabilities(c->fd, &vc)!=0){
+	if (check_v4l1(c->fd, &vc)!=0){
 		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: error getting capabilities.\n");
 		return LIBV4L_ERR_NOCAPS;
 	}
@@ -392,6 +388,7 @@ int create_v4l1_controls(struct capture_device *c, struct control_list *l){
 
 	//list standard V4L controls
 	//brightness
+	CLEAR(l->ctrl[count]);
 	l->ctrl[count].id = V4L2_CID_BRIGHTNESS;
 	l->ctrl[count].type = V4L2_CTRL_TYPE_INTEGER;
 	strcpy((char *)l->ctrl[count].name, "Brightness\0");
@@ -406,6 +403,7 @@ int create_v4l1_controls(struct capture_device *c, struct control_list *l){
 	count++;
 
 	//hue
+	CLEAR(l->ctrl[count]);
 	l->ctrl[count].id = V4L2_CID_HUE;
 	l->ctrl[count].type = V4L2_CTRL_TYPE_INTEGER;
 	strcpy((char *)l->ctrl[count].name, "Hue\0");
@@ -420,6 +418,7 @@ int create_v4l1_controls(struct capture_device *c, struct control_list *l){
 	count++;
 
 	//color
+	CLEAR(l->ctrl[count]);
 	l->ctrl[count].id = V4L2_CID_SATURATION;
 	l->ctrl[count].type = V4L2_CTRL_TYPE_INTEGER;
 	strcpy((char *)l->ctrl[count].name, "Saturation\0");
@@ -434,6 +433,7 @@ int create_v4l1_controls(struct capture_device *c, struct control_list *l){
 	count++;
 
 	//contrast
+	CLEAR(l->ctrl[count]);
 	l->ctrl[count].id = V4L2_CID_CONTRAST;
 	l->ctrl[count].type = V4L2_CTRL_TYPE_INTEGER;
 	strcpy((char *)l->ctrl[count].name, "Contrast\0");

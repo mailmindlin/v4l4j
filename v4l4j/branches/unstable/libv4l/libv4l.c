@@ -31,6 +31,8 @@
 #include "libv4l.h"
 #include "v4l2-input.h"
 #include "v4l1-input.h"
+#include "v4l1-query.h"
+#include "v4l2-query.h"
 #include "v4l-control.h"
 
 
@@ -39,15 +41,15 @@ char *get_libv4l_version(char * c) {
 	return c;
 }
 
-static int open_device(struct capture_device *c) {
-	int retval = 0;
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Opening device file %s.\n", c->file);
-	if ((strlen(c->file) == 0) || ((c->fd = open(c->file,O_RDWR )) < 0)) {
-		info("V4L: unable to open device file %s. Check the name and permissions\n", c->file);
-		retval = -1;
+static int open_device(const char *file) {
+	int fd = -1;
+	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Opening device file %s.\n", file);
+	if ((strlen(file) == 0) || ((fd = open(file,O_RDWR )) < 0)) {
+		info("V4L: unable to open device file %s. Check the name and permissions\n", file);
+		fd = -1;
 	}
 
-	return retval;
+	return fd;
 }
 
 static void close_device(struct capture_device *c) {
@@ -91,7 +93,7 @@ static void setup_libv4l_actions(struct capture_device *c) {
 
 
 //device file, width, height, channel, std, nb_buf
-struct capture_device *init_libv4l(const char *dev, int w, int h, int ch, int s, int nb_buf){
+struct capture_device *init_capture_device(const char *dev, int w, int h, int ch, int s, int nb_buf){
 	//create capture device
 	struct capture_device *c;
 	char version[10];
@@ -110,7 +112,7 @@ struct capture_device *init_libv4l(const char *dev, int w, int h, int ch, int s,
 	c->std = s;
 
 	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Opening device %s\n", c->file);
-	if(open_device(c)!=0) {
+	if((c->fd=open_device(c->file))==-1) {
 		XFREE(c->mmap);
 		XFREE(c);
 		return NULL;
@@ -142,12 +144,69 @@ struct capture_device *init_libv4l(const char *dev, int w, int h, int ch, int s,
 	return c;
 }
 
-//counterpart of init_libv4l, must be called it init_libv4l was successful
-void del_libv4l(struct capture_device *c){
+//counterpart of init_capture_device, must be called it init_capture_device was successful
+void free_capture_device(struct capture_device *c){
 	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Freeing libv4l on device %s.\n", c->file);
 	XFREE(c->capture);
 	free_control_list(c);
 	close_device(c);
 	XFREE(c->mmap);
 	XFREE(c);
+}
+
+/*
+ *
+ * QUERY INTERFACE
+ *
+ */
+struct video_device * query_device(const char *device_file){
+	int fd;
+	struct video_device *vd = NULL;
+	struct v4l2_capability caps;
+	struct video_capability vc;
+
+	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Querying device %s.\n", device_file);
+
+	if ((fd = open_device(device_file)) != -1) {
+		XMALLOC(vd, struct video_device *, sizeof(struct video_device));
+		vd->fd = fd;
+
+		XMALLOC(vd->file, char *, strlen(device_file) * sizeof(char) + 1);
+		strncpy(vd->file, device_file, strlen(device_file));
+
+		if(-1 != check_v4l2(fd, &caps)) {
+			//v4l2 device
+			vd->version = V4L2_VERSION;
+			query_device_v4l2(vd);
+		} else if (-1 != check_v4l1(fd, &vc)) {
+			//v4l1 device
+			vd->version = V4L1_VERSION;
+			query_device_v4l1(vd);
+		} else {
+			info("libv4l was unable to detect the version of V4L used by device %s\n", device_file);
+			info("Please let the author know about this error.\n");
+			info("See the ISSUES section in the libv4l README file.\n");
+			XFREE(vd->file);
+			XFREE(vd);
+		}
+		close(fd);
+	}
+
+	return vd;
+}
+
+void free_video_device(struct video_device *vd){
+	if(vd->version == V4L2_VERSION) {
+		//v4l2 device
+		free_video_device_v4l2(vd);
+	} else if (vd->version == V4L1_VERSION) {
+		//v4l1 device
+		free_video_device_v4l1(vd);
+	} else {
+		info("Unknown V4L version");
+	}
+
+	XFREE(vd->file);
+	XFREE(vd);
+
 }
