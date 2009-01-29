@@ -34,7 +34,7 @@
 //Cant set standard (set_cap_param_v4l1)
 #define LIBV4L_ERR_CHANNEL_SETUP			-3
 
-//cant get capabilities (set_cap_param_v4l1)
+//cant get capabilities (set_cap_param_v4l1, query_device_v4l1)
 #define LIBV4L_ERR_NOCAPS					-4
 
 //
@@ -43,7 +43,7 @@
 //wrong height (set_cap_param_v4l1)
 #define LIBV4L_ERR_DIMENSIONS				-6
 
-//generic IOCTL error
+//generic IOCTL error (check_inputs_v4l1)
 #define LIBV4L_ERR_IOCTL					-7
 
 //cant set the image format, palette, width, height, ... (set_cap_param_v4l1 & 2)

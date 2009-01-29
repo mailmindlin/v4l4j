@@ -3,7 +3,7 @@
 * eResearch Centre, James Cook University (eresearch.jcu.edu.au)
 *
 * This program was developed as part of the ARCHER project
-* (Australian Research Enabling Environment) funded by a   
+* (Australian Research Enabling Environment) funded by a
 * Systemic Infrastructure Initiative (SII) grant and supported by the Australian
 * Department of Innovation, Industry, Science and Research
 *
@@ -14,7 +14,7 @@
 *
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  
+* or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU General Public License for more details.
 *
 * You should have received a copy of the GNU General Public License
@@ -28,6 +28,8 @@
 #include <stdio.h>		//for fprintf
 #include <stdlib.h>		//for malloc
 #include <string.h>		//for memset
+
+#include "libv4l.h"
 
 #define info(format, ...) do { fprintf (stderr, "[ %s:%d ] " format, __FILE__, __LINE__, ## __VA_ARGS__);\
 								 fflush(stderr); } while(0)
@@ -66,7 +68,7 @@
 #endif
 
 #define dprint(source, level,format, ...) do {if(((source) & LIBV4L_LOG_SOURCE) && ((level) & LIBV4L_LOG_LEVEL)) {\
-				 fprintf (stderr, "[%s:%d %s] " format, __FILE__, __LINE__, __PRETTY_FUNCTION__, ## __VA_ARGS__); fflush(stderr);} } while(0) 
+				 fprintf (stderr, "[%s:%d %s] " format, __FILE__, __LINE__, __PRETTY_FUNCTION__, ## __VA_ARGS__); fflush(stderr);} } while(0)
 
 
 #else  //if not DEBUG
@@ -82,10 +84,26 @@
 				dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "MEMALLOC: allocating %d bytes of type %s for var %s (%p).\n", size, #type, #var, var); } \
 		} while (0)
 
+#define XREALLOC(var, type, size)	\
+		do { \
+			int should_clear = var == NULL ? 1 : 0;\
+			var = (type) realloc(var, size); \
+			if (!var) {fprintf(stderr, "[%s:%d %s] REALLOC: OUT OF MEMORY. Cant reallocate %d bytes.\n",\
+					__FILE__, __LINE__, __PRETTY_FUNCTION__, size); fflush(stderr);}\
+			else { \
+					if (should_clear) {\
+						CLEAR(*var); \
+						dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "REALLOC: Allocating %d bytes of type %s for var %s (%p).\n", size, #type, #var, var); \
+					} else \
+						{dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "REALLOC: re-allocating %d bytes of type %s for var %s (%p).\n", size, #type, #var, var);} \
+			}\
+		} while (0)
+
 #define XFREE(var)					\
 		do { dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "MEMALLOC: freeing memory for var %s (%p).\n", #var, var); \
 			if (var) { free(var); } \
 			else { dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "MEMALLOC: Trying to free a NULL pointer.\n");} \
+			var = NULL;\
 		} while (0)
 
 #endif

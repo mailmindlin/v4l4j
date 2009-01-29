@@ -3,7 +3,7 @@
 * eResearch Centre, James Cook University (eresearch.jcu.edu.au)
 *
 * This program was developed as part of the ARCHER project
-* (Australian Research Enabling Environment) funded by a   
+* (Australian Research Enabling Environment) funded by a
 * Systemic Infrastructure Initiative (SII) grant and supported by the Australian
 * Department of Innovation, Industry, Science and Research
 *
@@ -14,7 +14,7 @@
 *
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  
+* or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU General Public License for more details.
 *
 * You should have received a copy of the GNU General Public License
@@ -46,7 +46,32 @@ struct v4l4j_device {
 	int capture_len;			//the size of the last captured frame returned by libv4l
 	int len;					//the size of the last JPEG compressed frame
 	int buf_id;					//the index of the buffer where the next frame goes
-}; 
+};
+
+
+#define BYTEBUFER_CLASS			"java/nio/ByteBuffer"
+#define V4L4J_PACKAGE			"au/edu/jcu/v4l4j/"
+#define FRAMEGRABBER_CLASS		V4L4J_PACKAGE "FrameGrabber"
+#define CONTROL_CLASS			V4L4J_PACKAGE "Control"
+#define EXCEPTION_PACKAGE		V4L4J_PACKAGE "exceptions/"
+#define GENERIC_EXCP			EXCEPTION_PACKAGE "V4L4JException"
+#define INIT_EXCP				EXCEPTION_PACKAGE "InitialisationException"
+#define DIM_EXCP				EXCEPTION_PACKAGE "ImageDimensionException"
+#define CHANNEL_EXCP			EXCEPTION_PACKAGE "CaptureChannelException"
+#define FORMAT_EXCP				EXCEPTION_PACKAGE "ImageFormatException"
+#define STD_EXCP				EXCEPTION_PACKAGE "VideoStandardException"
+
+
+/* Exception throwing helper */
+#define EXCEPTION_MSG_LENGTH	100
+#define THROW_EXCEPTION(e, c, format, ...)\
+								do {\
+									char msg[EXCEPTION_MSG_LENGTH+1];\
+									jclass JV4L4JException = (*e)->FindClass(e,c);\
+									snprintf(msg, EXCEPTION_MSG_LENGTH, format, ## __VA_ARGS__);\
+									if(JV4L4JException!=0) (*e)->ThrowNew(e, JV4L4JException, msg);\
+								} while(0)
+
 
 
 #endif /*H_COMMON_*/
