@@ -34,6 +34,7 @@
  */
 #include "quickcam.h"
 #include "log.h"
+#include "libv4l-err.h"
 
 #define NB_PRIV_IOCTL 5
 
@@ -110,36 +111,33 @@ end:
 	return -1;
 }
 
-int qc_get_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, void *d){
-	int val;
+int qc_get_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, void *d, int *val){
+	int ret = LIBV4L_ERR_IOCTL;
 	switch (q->id) {
 		case 0:
-			if(ioctl(c->fd, VIDIOCQCGSETTLE, &val)==0)
-				return val;
+			if(ioctl(c->fd, VIDIOCQCGSETTLE, val)==0)
+				ret = 0;
 			break;
 		case 1:
-			if(ioctl(c->fd, VIDIOCQCGCOMPRESS, &val)==0)
-				return val;
+			if(ioctl(c->fd, VIDIOCQCGCOMPRESS, val)==0)
+				ret = 0;
 			break;
 		case 2:
-			if(ioctl(c->fd, VIDIOCQCGQUALITY, &val)==0)
-				return val;
+			if(ioctl(c->fd, VIDIOCQCGQUALITY, val)==0)
+				ret = 0;
 			break;
 		case 3:
-			if(ioctl(c->fd, VIDIOCQCGADAPTIVE, &val)==0)
-				return val;
+			if(ioctl(c->fd, VIDIOCQCGADAPTIVE, val)==0)
+				ret = 0;
 			break;
 		case 4:
-			if(ioctl(c->fd, VIDIOCQCGEQUALIZE, &val)==0)
-				return val;
+			if(ioctl(c->fd, VIDIOCQCGEQUALIZE, val)==0)
+				ret = 0;
 			break;
 		default:
 			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "QC: Cant identify control %d\n",q->id);
-			return -1;
 	}
-
-	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "QC: Cant get value of control %s\n",q->name);
-	return -1;
+	return ret;
 }
 
 int qc_set_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, int val, void *d){
@@ -166,11 +164,11 @@ int qc_set_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, int val, voi
 			break;
 		default:
 			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "QC: Cant identify control %d\n",q->id);
-			return 0;
+			return LIBV4L_ERR_IOCTL;
 	}
 
 	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "QC: Cant set value of control %s\n",q->name);
-	return 0;
+	return LIBV4L_ERR_IOCTL;
 }
 
 int qc_list_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, void *d){

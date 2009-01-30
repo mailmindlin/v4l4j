@@ -3,7 +3,7 @@
 * eResearch Centre, James Cook University (eresearch.jcu.edu.au)
 *
 * This program was developed as part of the ARCHER project
-* (Australian Research Enabling Environment) funded by a   
+* (Australian Research Enabling Environment) funded by a
 * Systemic Infrastructure Initiative (SII) grant and supported by the Australian
 * Department of Innovation, Industry, Science and Research
 *
@@ -14,7 +14,7 @@
 *
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  
+* or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU General Public License for more details.
 *
 * You should have received a copy of the GNU General Public License
@@ -31,7 +31,7 @@
 #define GSPCA_PROBE_INDEX	1
 int gspca_driver_probe(struct capture_device *, void **);
 int gspca_list_ctrl(struct capture_device *, struct v4l2_queryctrl *, void *);
-int gspca_get_ctrl(struct capture_device *,  struct v4l2_queryctrl *, void *);
+int gspca_get_ctrl(struct capture_device *,  struct v4l2_queryctrl *, void *, int *);
 int gspca_set_ctrl(struct capture_device *, struct v4l2_queryctrl *, int, void *);
 
 #endif /*H_GSPCA_PROBE*/

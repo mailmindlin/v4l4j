@@ -34,6 +34,7 @@
 #include "v4l1-input.h"
 #include "v4l2-input.h"
 #include "videodev_additions.h"
+#include "libv4l-err.h"
 
 
 static struct v4l_driver_probe known_driver_probes[] = {
@@ -133,7 +134,7 @@ struct control_list *list_control(struct capture_device *c){
 		if ( (nb = known_driver_probes[probe_id].probe(c, &known_driver_probes[probe_id].priv)) != -1) {
 			//if the probe is successful, add the nb of private controls detected to the grand total
 			priv_ctrl_count += nb;
-			add_node(&c->probes,&known_driver_probes[probe_id]);			
+			add_node(&c->probes,&known_driver_probes[probe_id]);
 		}
 		probe_id++;
 	}
@@ -168,37 +169,48 @@ struct control_list *list_control(struct capture_device *c){
 	return l;
 }
 
-int get_control_value(struct capture_device *c, struct v4l2_queryctrl *ctrl){
+int get_control_value(struct capture_device *c, struct v4l2_queryctrl *ctrl, int *val){
+	int ret = 0;
 	dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: getting value for control %s\n", ctrl->name);
 	if(ctrl->reserved[0]==V4L2_PRIV_IOCTL){
-		struct v4l_driver_probe *s = &known_driver_probes[ctrl->reserved[1]]; 
-		return s->get_ctrl(c, ctrl, s->priv);
+		struct v4l_driver_probe *s = &known_driver_probes[ctrl->reserved[1]];
+		ret = s->get_ctrl(c, ctrl, s->priv, val);
 	} else {
 		if(c->v4l_version==V4L2_VERSION)
-			return get_control_value_v4l2(c, ctrl);
+			ret = get_control_value_v4l2(c, ctrl, val);
 		else if(c->v4l_version==V4L1_VERSION)
-			return get_control_value_v4l1(c, ctrl);
+			ret =  get_control_value_v4l1(c, ctrl, val);
 		else {
 			dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: Weird V4L version (%d)...\n", c->v4l_version);
-			return 0;
+			ret =  LIBV4L_ERR_WRONG_VERSION;
 		}
 	}
+	return ret;
 }
 
-void set_control_value(struct capture_device *c, struct v4l2_queryctrl *ctrl, int i){
+int set_control_value(struct capture_device *c, struct v4l2_queryctrl *ctrl, int i){
+	int ret = 0;
 	dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: setting value (%d) for control %s\n",i, ctrl->name);
-	i = (i<ctrl->minimum || i > ctrl->maximum) ? ctrl->minimum : i;
+	if(i<ctrl->minimum || i > ctrl->maximum){
+		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: control value out of range\n");
+		return LIBV4L_ERR_OUT_OF_RANGE;
+	}
+
 	if(ctrl->reserved[0]==V4L2_PRIV_IOCTL){
 		struct v4l_driver_probe *s = &known_driver_probes[ctrl->reserved[1]];
-		s->set_ctrl(c, ctrl, i,s->priv);
+		ret = s->set_ctrl(c, ctrl, i,s->priv);
 	} else {
 		if(c->v4l_version==V4L2_VERSION)
-			set_control_value_v4l2(c, ctrl, i);
+			ret = set_control_value_v4l2(c, ctrl, i);
 		else if(c->v4l_version==V4L1_VERSION)
-			set_control_value_v4l1(c, ctrl, i);
-		else
+			ret = set_control_value_v4l1(c, ctrl, i);
+		else {
 			dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: Weird V4L version (%d)...\n", c->v4l_version);
+			ret = LIBV4L_ERR_WRONG_VERSION;
+		}
+
 	}
+	return ret;
 }
 
 void free_control_list(struct capture_device *c){
@@ -208,9 +220,9 @@ void free_control_list(struct capture_device *c){
 		XFREE(c->ctrls->ctrl);
 
 	for(e = c->probes; e; e = e->next)
-		if (e->probe->priv) 
+		if (e->probe->priv)
 			XFREE(e->probe->priv);
-			
+
 	empty_list(c->probes);
 
 	if (c->ctrls)
@@ -237,8 +249,8 @@ void query_control(struct capture_device *cdev){
 	printf("============================================\nQuerying available contols\n\n");
 	struct control_list *l = cdev->ctrls;
 	for(i=0; i<l->count; i++) {
-		printf("Control %d: Name %s - Value: %d (Min: %d Max: %d Step: %d)\n",\
-				i, (char *) l->ctrl[i]. name, get_control_value(cdev, &l->ctrl[i]), l->ctrl[i].minimum, l->ctrl[i].maximum, l->ctrl[i].step);
+		printf("Control %d: Name %s (Min: %d Max: %d Step: %d)\n",\
+				i, (char *) l->ctrl[i]. name, l->ctrl[i].minimum, l->ctrl[i].maximum, l->ctrl[i].step);
 	}
 	query_ext_controls(cdev);
 }

@@ -197,10 +197,13 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_setQuality(JNIEnv *e, 
  * Set a new value on a v4l2 control
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_setCtrlValue(JNIEnv *e, jobject t, jlong object, jint id, jint value){
+	int ret;
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object;
 	dprint(LOG_LIBV4L, "[LIBV4L] Calling set_control_value(dev: %s, ctrl name:%s, val: %d)\n", d->c->file,d->c->ctrls->ctrl[id].name,value);
-	set_control_value(d->c, &(d->c->ctrls->ctrl[id]), value);
+	ret = set_control_value(d->c, &(d->c->ctrls->ctrl[id]), value);
+	if(ret != 0)
+		THROW_EXCEPTION(e, CTRL_EXCP, "Error setting current value for control '%s'", d->c->ctrls->ctrl[id].name);
 }
 
 /*
@@ -209,7 +212,13 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_setCtrlValue(JNIEnv *e
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getCtrlValue(JNIEnv *e, jobject t, jlong object, jint id){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object;
-	int val = get_control_value(d->c,&(d->c->ctrls->ctrl[id]));
+	int val = 0, ret;
+	ret = get_control_value(d->c,&(d->c->ctrls->ctrl[id]), &val);
+	if(ret != 0) {
+		THROW_EXCEPTION(e, CTRL_EXCP, "Error getting current value for control '%s'", d->c->ctrls->ctrl[id].name);
+		return -1;
+	}
+
 	dprint(LOG_LIBV4L, "[LIBV4L] Calling get_control_value(dev: %s, ctrl name:%s, val: %d)\n", d->c->file,d->c->ctrls->ctrl[id].name,val);
 	return val;
 }

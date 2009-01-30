@@ -102,9 +102,9 @@ int count_v4l1_controls(struct capture_device *);
 //controls and returns how many fake controls were created
 int create_v4l1_controls(struct capture_device *, struct control_list *);
 //returns the value of a control
-int get_control_value_v4l1(struct capture_device *c, struct v4l2_queryctrl *ctrl);
+int get_control_value_v4l1(struct capture_device *c, struct v4l2_queryctrl *ctrl, int *);
 //sets the value of a control
-void set_control_value_v4l1(struct capture_device *, struct v4l2_queryctrl *, int);
+int set_control_value_v4l1(struct capture_device *, struct v4l2_queryctrl *, int);
 
 
 /*
