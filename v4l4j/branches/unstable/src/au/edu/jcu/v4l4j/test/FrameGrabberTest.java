@@ -35,6 +35,7 @@ import org.junit.Test;
 
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.Control;
+import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 public class FrameGrabberTest {
@@ -83,11 +84,7 @@ public class FrameGrabberTest {
 			fail("Failed to start capture");
 		}
 		
-		try {
-			fg.stopCapture();
-		} catch (V4L4JException e) {
-			fail("failed to stop capture");
-		}
+		fg.stopCapture();
 	}
 
 	@Test
@@ -145,18 +142,15 @@ public class FrameGrabberTest {
 		fg.startCapture();
 	}
 	
-	@Test(expected=V4L4JException.class)
-	public void testDoubleStopCapture() throws V4L4JException{
+	@Test(expected=StateException.class)
+	public void testDoubleStopCapture() throws StateException{
 		try {
 			fg.startCapture();
 		} catch (V4L4JException e) {
 			fail("Error: Should be able to start the capture here");
 		}
-		try {
-			fg.stopCapture();
-		} catch (V4L4JException e) {
-			fail("Error: Should be able to stop the capture here");
-		}
+		fg.stopCapture();
+
 		fg.stopCapture();
 	}
 	

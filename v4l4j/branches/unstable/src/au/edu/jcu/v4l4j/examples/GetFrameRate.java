@@ -5,6 +5,7 @@ import java.util.List;
 
 import au.edu.jcu.v4l4j.Control;
 import au.edu.jcu.v4l4j.FrameGrabber;
+import au.edu.jcu.v4l4j.exceptions.ControlException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 public class GetFrameRate {
@@ -72,13 +73,13 @@ public class GetFrameRate {
 		}
 		ctrls = f.getControls();
 		System.out.println("Found "+ctrls.size()+" controls");
-		try {
-			for (Control c: ctrls)
+		for (Control c: ctrls) {
+			try {
 				System.out.println("control name: "+c.getName()+" - min: "+c.getMin()+" - max: "+c.getMax()+" - step: "+c.getStep()+" - value: "+c.getValue());
-		} catch (V4L4JException e) {
-			e.printStackTrace();
-			System.out.println("Failed to list associated controls");
-			throw e;
+			} catch (ControlException e) {
+				e.printStackTrace();
+				System.out.println("Failed to get value for control "+c.getName());
+			}
 		}
 
 		try {

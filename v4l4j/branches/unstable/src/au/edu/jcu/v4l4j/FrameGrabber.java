@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Vector;
 
 import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
+import au.edu.jcu.v4l4j.exceptions.ControlException;
 import au.edu.jcu.v4l4j.exceptions.ImageDimensionsException;
 import au.edu.jcu.v4l4j.exceptions.ImageFormatException;
 import au.edu.jcu.v4l4j.exceptions.InitialistationException;
@@ -142,8 +143,8 @@ public class FrameGrabber {
 	private native int getBufferLength(long o);
 	private native void stop(long o);
 	private native void delete(long o) throws V4L4JException;
-	private native int getCtrlValue(long o, int i);
-	private native int setCtrlValue(long o, int i, int v);
+	private native int getCtrlValue(long o, int i) throws ControlException;
+	private native int setCtrlValue(long o, int i, int v) throws ControlException;
 	private native long freeObject(long o);
 	
 	/**
@@ -354,9 +355,10 @@ public class FrameGrabber {
 	 * Set the specified control to the specified value
 	 * @param id the control index (in the array of controls as returned by getControls() )
 	 * @param value the new value
-	 * @throws StateException if the object isnt initialised
+	 * @throws StateException if the object is not initialised
+	 * @throws ControlException if the value can not be retrieved
 	 */
-	void setControlValue(int id, int value) throws V4L4JException{
+	void setControlValue(int id, int value) throws StateException, ControlException{
 		if(!state.get())
 			throw new StateException("Invalid method call");
 
@@ -368,9 +370,10 @@ public class FrameGrabber {
 	 * Get the current value of the specified control
 	 * @param id the control index (in the array of controls as returned by getControls() )
 	 * @return the current value of a control
-	 * @throws StateException if the object isnt initialised
+	 * @throws StateException if the object is not initialised
+	 * @throws ControlException if the value can not be retrieved
 	 */
-	int getControlValue(int id) throws V4L4JException{
+	int getControlValue(int id) throws StateException, ControlException{
 		if(!state.get())
 			throw new StateException("Invalid method call");
 		int ret = getCtrlValue(object, id);

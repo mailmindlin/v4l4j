@@ -216,7 +216,10 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getCtrlValue(JNIEnv *e
 	int val = 0, ret;
 	ret = get_control_value(d->c,&(d->c->ctrls->ctrl[id]), &val);
 	if(ret != 0) {
-		THROW_EXCEPTION(e, CTRL_EXCP, "Error getting current value for control '%s'", d->c->ctrls->ctrl[id].name);
+		if(ret == LIBV4L_ERR_STREAMING)
+			THROW_EXCEPTION(e, CTRL_EXCP, "Can not get value for control '%s' while streaming", d->c->ctrls->ctrl[id].name);
+		else
+			THROW_EXCEPTION(e, CTRL_EXCP, "Error getting current value for control '%s'", d->c->ctrls->ctrl[id].name);
 		return -1;
 	}
 
