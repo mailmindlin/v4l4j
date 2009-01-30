@@ -31,7 +31,7 @@ package au.edu.jcu.v4l4j.exceptions;
  * a StateException. 
  * @author gilles
  */
-public class StateException extends V4L4JException {
+public class StateException extends RuntimeException {
 
 	private static final long serialVersionUID = 1351714754008657462L;
 

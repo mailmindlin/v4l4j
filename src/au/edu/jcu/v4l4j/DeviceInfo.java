@@ -101,8 +101,17 @@ public class DeviceInfo {
 			System.out.println("\tName: "+i.getName());
 			System.out.println("\tType: "+i.getType()+"("+(i.getType() == Input.CAMERA ? "Camera" : "Tuner")+")");
 			System.out.println("\tSupported standards:");
-			for(Integer s: i.getSupportedStandards())
-				System.out.println("\t\t"+s);
+			for(Integer s: i.getSupportedStandards()){
+				System.out.print("\t\t"+s);
+				if(s==FrameGrabber.PAL)
+					System.out.println("(PAL)");
+				else if(s==FrameGrabber.NTSC)
+					System.out.println("(NTSC)");
+				else if(s==FrameGrabber.SECAM)
+					System.out.println("(SECAM)");
+				else
+					System.out.println("(None/Webcam)");
+			}
 			if(i.getType() == Input.TUNER) {
 				Tuner t = i.getTuner();
 				System.out.println("\tTuner");

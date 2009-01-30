@@ -84,18 +84,11 @@ public class FrameGrabberTestMultipleWebcams {
 			fail("Failed to start capture");
 		}
 		
-		
-		try {
-			fg1.stopCapture();
-		} catch (V4L4JException e) {
-			fail("failed to stop capture");
-		}
-		
-		try {
-			fg2.stopCapture();
-		} catch (V4L4JException e) {
-			fail("Failed to start capture");
-		}
+
+		fg1.stopCapture();
+
+		fg2.stopCapture();
+
 	}
 
 	@Test
