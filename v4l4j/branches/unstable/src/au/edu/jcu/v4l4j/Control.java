@@ -24,6 +24,8 @@
 
 package au.edu.jcu.v4l4j;
 
+import au.edu.jcu.v4l4j.exceptions.ControlException;
+import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 /**
@@ -75,9 +77,10 @@ public class Control {
 	/**
 	 * retrieves the current value of this control
 	 * @return the value (0 if it is a button)
-	 * @throws V4L4JException if something goes wrong
+	 * @throws ControlException if the value cant be retrieved
+	 * @throws StateException if the framegrabber object is not initialised
 	 */
-	public int getValue() throws V4L4JException {
+	public int getValue() throws ControlException, StateException {
 		if(type==BUTTON) return 0;
 		return fg.getControlValue(id);
 	}
@@ -85,9 +88,10 @@ public class Control {
 	/**
 	 * Sets a new value for this control
 	 * @param value the new value
-	 * @throws V4L4JException if the value is incorrect
+	 * @throws ControlException if the value can not be set
+	 * @throws StateException if the framegrabber object is not initialised
 	 */
-	public void setValue(int value) throws V4L4JException {
+	public void setValue(int value) throws V4L4JException, StateException {
 		fg.setControlValue(id, value);
 	}
 
