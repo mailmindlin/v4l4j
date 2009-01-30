@@ -25,6 +25,7 @@
 #include <jni.h>
 #include <stdio.h>
 #include <jpeglib.h>
+#include <stdint.h>
 
 #include "libv4l.h"
 #include "v4l-control.h"
@@ -45,7 +46,7 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_allocateObject(JNIEnv
 	struct v4l4j_device *d;
 	XMALLOC(d, struct v4l4j_device *, sizeof(struct v4l4j_device));
 	if(d==NULL) THROW_EXCEPTION(e, INIT_EXCP, "Error creating new v4l4j object - out of memory");
-	return (jint) d;
+	return (uintptr_t) d;
 }
 
 /*
@@ -64,11 +65,11 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_init_1v4l(JNIE
 	jobjectArray arr, ctrls;
 	const char * device_file = (*e)->GetStringUTFChars(e, f, 0);
 	struct control_list *l;
-	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object;
+	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 	int fmts[NB_SUPPORTED_FORMATS] = SUPPORTED_FORMATS;
 
 	dprint(LOG_LIBV4L, "[LIBV4L] Calling 'init_capture_device(dev:%s, w:%d,h:%d,"
-			"ch:%d, std:%d, nb_buf:%d)'\n",device_file,w,h,ch,std,n);
+			"ch:%d, std:%d, nb_buf:%d, dev:%p)'\n",device_file,w,h,ch,std,n, (void *) d);
 	d->c = init_capture_device(device_file, w,h,ch,std,n);
 
 	if(d->c==NULL) {
@@ -175,7 +176,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_init_1v4l(JNIE
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_start(JNIEnv *e, jobject t, jlong object){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object;
+	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 	dprint(LOG_LIBV4L, "[LIBV4L] Calling start_capture(dev: %s)\n", d->c->file);
 	if((*d->c->capture->start_capture)(d->c)<0){
 		dprint(LOG_V4L4J, "[V4L4J] start_capture failed\n");
@@ -188,7 +189,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_start(JNIEnv *e, jobje
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_setQuality(JNIEnv *e, jobject t, jlong object, jint q){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object;
+	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 	dprint(LOG_V4L4J, "[V4L4J] Setting JPEG quality to %d\n",q);
 	d->jpeg_quality = q;
 }
@@ -199,7 +200,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_setQuality(JNIEnv *e, 
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_setCtrlValue(JNIEnv *e, jobject t, jlong object, jint id, jint value){
 	int ret;
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object;
+	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 	dprint(LOG_LIBV4L, "[LIBV4L] Calling set_control_value(dev: %s, ctrl name:%s, val: %d)\n", d->c->file,d->c->ctrls->ctrl[id].name,value);
 	ret = set_control_value(d->c, &(d->c->ctrls->ctrl[id]), value);
 	if(ret != 0)
@@ -211,7 +212,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_setCtrlValue(JNIEnv *e
  */
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getCtrlValue(JNIEnv *e, jobject t, jlong object, jint id){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object;
+	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 	int val = 0, ret;
 	ret = get_control_value(d->c,&(d->c->ctrls->ctrl[id]), &val);
 	if(ret != 0) {
@@ -231,7 +232,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getBuffer(JNIEnv *e, j
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	int i;
 	void *frame;
-	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object;
+	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
 	//get frame from v4l2
 	dprint(LOG_LIBV4L, "[LIBV4L] Calling dequeue_buffer(dev: %s)\n", d->c->file);
@@ -253,7 +254,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getBuffer(JNIEnv *e, j
  */
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getBufferLength(JNIEnv *e, jobject t, jlong object){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object;
+	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 	dprint(LOG_V4L4J, "[V4L4J] Getting last frame length: %d\n", d->len);
 	return d->len;
 }
@@ -263,7 +264,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getBufferLength(JNIEnv
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_stop(JNIEnv *e, jobject t, jlong object){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object;
+	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 	dprint(LOG_LIBV4L, "[LIBV4L] Calling stop_capture(dev: %s)\n", d->c->file);
 	if((*d->c->capture->stop_capture)(d->c)<0) {
 		dprint(LOG_V4L4J, "Error stopping capture\n");
@@ -280,7 +281,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_stop(JNIEnv *e, jobjec
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_delete(JNIEnv *e, jobject t, jlong object){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object;
+	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 	int i;
 
 	destroy_jpeg_compressor(d);
@@ -302,7 +303,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_delete(JNIEnv *e, jobj
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_freeObject(JNIEnv *e, jobject t, jlong object){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	struct v4l4j_device *d = (struct v4l4j_device *) (jint) object;
+	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
 	dprint(LOG_V4L4J, "[V4L4J] Freeing v4l4j device\n");
 	XFREE(d);
