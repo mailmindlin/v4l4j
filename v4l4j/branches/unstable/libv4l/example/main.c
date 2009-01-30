@@ -244,7 +244,7 @@ void main_loop(int serv_sockfd, struct capture_device *cdev) {
 void list_cap_param(int newsockfd,struct capture_device *cdev) {
 	char *page, *ptr;
 	struct control_list *l;
-	int i;
+	int i, v;
 
 	XMALLOC(page, char *, PARAM_PAGE_SIZE);
 	ptr = page;
@@ -267,8 +267,12 @@ void list_cap_param(int newsockfd,struct capture_device *cdev) {
 	//outputs controls
 	l = cdev->ctrls;
 	for(i = 0; i< l->count; i++) {
-		ptr += sprintf(ptr,"<form method=\"get\"><h4>%s</h4>Value: %d (min: %d, max: %d, step: %d)<br>\n", l->ctrl[i].name, get_control_value(cdev, &l->ctrl[i]) , l->ctrl[i].minimum, l->ctrl[i].maximum, l->ctrl[i].step);
-		ptr += sprintf(ptr,"<input type=\"text\" name=\"val\" value=\"%d\" size=\"5\"> &nbsp; <input type=\"submit\" name=\"%d\" value=\"update\"></form>", get_control_value(cdev, &l->ctrl[i]), i);
+		if(get_control_value(cdev, &l->ctrl[i], &v) != 0) {
+			info(LOG_ERR, "Error getting value for control %s\n", l->ctrl[i].name);
+			v = 0;
+		}
+		ptr += sprintf(ptr,"<form method=\"get\"><h4>%s</h4>Value: %d (min: %d, max: %d, step: %d)<br>\n", l->ctrl[i].name, v, l->ctrl[i].minimum, l->ctrl[i].maximum, l->ctrl[i].step);
+		ptr += sprintf(ptr,"<input type=\"text\" name=\"val\" value=\"%d\" size=\"5\"> &nbsp; <input type=\"submit\" name=\"%d\" value=\"update\"></form>", v, i);
 		write(newsockfd, page, strlen(page));
 		ptr = page;
 		memset(page, 0, PARAM_PAGE_SIZE);

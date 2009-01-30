@@ -65,6 +65,7 @@
 #endif
 #ifndef LIBV4L_LOG_SOURCE
 #define LIBV4L_LOG_SOURCE 		LIBV4L_LOG_SOURCE_ALL
+//#define LIBV4L_LOG_SOURCE 		LIBV4L_LOG_SOURCE_CTRL_PROBE
 #endif
 
 #define dprint(source, level,format, ...) do {if(((source) & LIBV4L_LOG_SOURCE) && ((level) & LIBV4L_LOG_LEVEL)) {\

@@ -430,7 +430,7 @@ void *dequeue_buffer_v4l2(struct capture_device *c, int *len) {
 	b->memory = V4L2_MEMORY_MMAP;
 
 	if (-1 == ioctl(c->fd, VIDIOC_DQBUF, b)) {
-		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_ERR, "V4L2: error dequeing buffer\n");
+		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_ERR, "V4L2: error dequeuing buffer\n");
 		return NULL;
 	}
 
@@ -565,7 +565,7 @@ int count_v4l2_controls(struct capture_device *c) {
 
 //Populate the control_list with reported V4L2 controls
 //and returns how many controls were created
-int get_control_value_v4l2(struct capture_device *, struct v4l2_queryctrl *);
+int get_control_value_v4l2(struct capture_device *, struct v4l2_queryctrl *, int *);
 int create_v4l2_controls(struct capture_device *c, struct control_list *l){
 	struct v4l2_queryctrl qctrl;
 	node *list=NULL;
@@ -576,9 +576,8 @@ int create_v4l2_controls(struct capture_device *c, struct control_list *l){
 		CLEAR(l->ctrl[count]);
 		l->ctrl[count].id = i;
 		if((ioctl(c->fd, VIDIOC_QUERYCTRL, &l->ctrl[count]) == 0) && ( ! (l->ctrl[count].flags & V4L2_CTRL_FLAG_DISABLED))) {
-			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: found control(id: 0x%x - name: %s - min: %d -max: %d - val: %d)\n", \
-					l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum,\
-					get_control_value_v4l2(c, &l->ctrl[count]));
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: found control(id: 0x%x - name: %s - min: %d -max: %d)\n", \
+					l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum);
 			count++;
 			add_node(&list, i);
 		}
@@ -589,9 +588,8 @@ int create_v4l2_controls(struct capture_device *c, struct control_list *l){
 		CLEAR(l->ctrl[count]);
 		l->ctrl[count].id = i;
 		if ((0 == ioctl (c->fd, VIDIOC_QUERYCTRL, &l->ctrl[count])) && ( ! (l->ctrl[count].flags & V4L2_CTRL_FLAG_DISABLED))) {
-			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: found control(id: %d - name: %s - min: %d -max: %d - val: %d)\n"\
-					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum, \
-					get_control_value_v4l2(c, &l->ctrl[count]));
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: found control(id: %d - name: %s - min: %d -max: %d)\n"\
+					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum);
             count++;
             add_node(&list, i);
     	} else {
@@ -613,9 +611,8 @@ int create_v4l2_controls(struct capture_device *c, struct control_list *l){
 		if(!has_id(list,qctrl.id )){
 			CLEAR(l->ctrl[count]);
 			memcpy(&l->ctrl[count], &qctrl, sizeof(l->ctrl[count]));
-			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: found ext control(id: %d - name: %s - min: %d -max: %d - val: %d)\n"\
-					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum, \
-					get_control_value_v4l2(c, &l->ctrl[count]));
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: found ext control(id: %d - name: %s - min: %d -max: %d )\n"\
+					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum);
 			count++;
 		} else {
 			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: found duplicate ext ctrl\n");
@@ -628,32 +625,34 @@ int create_v4l2_controls(struct capture_device *c, struct control_list *l){
 }
 
 //returns the value of a control
-int get_control_value_v4l2(struct capture_device *c, struct v4l2_queryctrl *ctrl){
+int get_control_value_v4l2(struct capture_device *c, struct v4l2_queryctrl *ctrl, int *val){
 	struct v4l2_control vc;
+	int ret = LIBV4L_ERR_IOCTL;
 	CLEAR(vc);
 	vc.id = ctrl->id;
-	if(ioctl(c->fd, VIDIOC_G_CTRL, &vc) == 0 )
-		return vc.value;
-	else
-		return 0;
+	if(ioctl(c->fd, VIDIOC_G_CTRL, &vc) == 0 ){
+		*val = vc.value;
+		ret = 0;
+	} else
+		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: Error getting current FPS\n");
+
+	return ret;
 }
 
 //sets the value of a control
-void set_control_value_v4l2(struct capture_device *c, struct v4l2_queryctrl *ctrl, int i) {
+int set_control_value_v4l2(struct capture_device *c, struct v4l2_queryctrl *ctrl, int i) {
 	struct v4l2_control vc;
-	int u;
 	vc.id = ctrl->id;
 	vc.value = i;
-	//sanity check
-	if ( (i>=ctrl->minimum) && (i<=ctrl->maximum) ) {
-			if(ioctl(c->fd, VIDIOC_S_CTRL, &vc)!= 0) {
-				dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: ioctl error: ");
-				if(errno == EINVAL) dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: einval\n");
-				else if(errno == ERANGE) dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: erange\n");
-				else dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: unknown error %d\n", errno);
-			} else if ((u = get_control_value_v4l2(c, ctrl)) != i)
-				dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR,"CTRL: Error setting control '%s' to value '%d' (current value '%d')\n", (char *) &ctrl->name, i, u);
+
+	if(ioctl(c->fd, VIDIOC_S_CTRL, &vc)!= 0) {
+		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: ioctl error: ");
+		if(errno == EINVAL) dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: einval\n");
+		else if(errno == ERANGE) dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: erange\n");
+		else dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: unknown error %d\n", errno);
+		return LIBV4L_ERR_IOCTL;
 	}
+	return 0;
 }
 
 // ****************************************
