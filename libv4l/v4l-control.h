@@ -28,8 +28,10 @@
 #include "libv4l.h"
 
 struct control_list *list_control(struct capture_device *);
-int get_control_value(struct capture_device *, struct v4l2_queryctrl *);
-void set_control_value(struct capture_device *, struct v4l2_queryctrl *,  int);
+//returns 0, LIBV4L_ERR_WRONG_VERSION, LIBV4L_ERR_IOCTL
+int get_control_value(struct capture_device *, struct v4l2_queryctrl *, int *);
+//returns 0, LIBV4L_ERR_WRONG_VERSION, LIBV4L_ERR_IOCTL or LIBV4L_ERR_STREAMING
+int set_control_value(struct capture_device *, struct v4l2_queryctrl *,  int);
 void free_control_list(struct capture_device *);
 void query_control(struct capture_device *);
 

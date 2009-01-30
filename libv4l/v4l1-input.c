@@ -382,7 +382,7 @@ int count_v4l1_controls(struct capture_device *c) {
 
 //Populate the control_list with fake V4L2 controls matching V4L1 video
 //controls and returns how many fake controls were created
-int get_control_value_v4l1(struct capture_device *, struct v4l2_queryctrl *);
+int get_control_value_v4l1(struct capture_device *, struct v4l2_queryctrl *, int *);
 int create_v4l1_controls(struct capture_device *c, struct control_list *l){
 	int count = 0;
 
@@ -397,9 +397,8 @@ int create_v4l1_controls(struct capture_device *c, struct control_list *l){
 	l->ctrl[count].step = 1;
 	l->ctrl[count].default_value = 32768;
 	l->ctrl[count].flags = 0;
-	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: found control(id: %d - name: %s - min: %d -max: %d - val: %d)\n"\
-					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum, \
-					get_control_value_v4l1(c, &l->ctrl[count]));
+	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: found control(id: %d - name: %s - min: %d -max: %d)\n"\
+					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum);
 	count++;
 
 	//hue
@@ -412,9 +411,8 @@ int create_v4l1_controls(struct capture_device *c, struct control_list *l){
 	l->ctrl[count].step = 1;
 	l->ctrl[count].default_value = 32768;
 	l->ctrl[count].flags = 0;
-	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: found control(id: %d - name: %s - min: %d -max: %d - val: %d)\n"\
-					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum, \
-					get_control_value_v4l1(c, &l->ctrl[count]));
+	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: found control(id: %d - name: %s - min: %d -max: %d)\n"\
+					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum);
 	count++;
 
 	//color
@@ -427,9 +425,8 @@ int create_v4l1_controls(struct capture_device *c, struct control_list *l){
 	l->ctrl[count].step = 1;
 	l->ctrl[count].default_value = 32768;
 	l->ctrl[count].flags = 0;
-	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: found control(id: %d - name: %s - min: %d -max: %d - val: %d)\n"\
-					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum, \
-					get_control_value_v4l1(c, &l->ctrl[count]));
+	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: found control(id: %d - name: %s - min: %d -max: %d)\n"\
+					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum);
 	count++;
 
 	//contrast
@@ -442,46 +439,46 @@ int create_v4l1_controls(struct capture_device *c, struct control_list *l){
 	l->ctrl[count].step = 1;
 	l->ctrl[count].default_value = 32768;
 	l->ctrl[count].flags = 0;
-	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: found control(id: %d - name: %s - min: %d -max: %d - val: %d)\n"\
-					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum, \
-					get_control_value_v4l1(c, &l->ctrl[count]));
+	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: found control(id: %d - name: %s - min: %d -max: %d)\n"\
+					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum);
 	count++;
 
 	return count;
 }
 
 //returns the value of a control
-int get_control_value_v4l1(struct capture_device *c, struct v4l2_queryctrl *ctrl){
+int get_control_value_v4l1(struct capture_device *c, struct v4l2_queryctrl *ctrl, int *val){
 	struct video_picture pict;
 	CLEAR(pict);
 	//query the current image format
 	if(-1 == ioctl(c->fd, VIDIOCGPICT, &pict)) {
 		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: cannot get the value for control %s\n", (char *) &ctrl->name );
-		return 0;
+		return LIBV4L_ERR_IOCTL;
 	}
 	switch(ctrl->id) {
 		case V4L2_CID_BRIGHTNESS:
-			return pict.brightness;
+			*val = pict.brightness;
 		case V4L2_CID_HUE:
-			return pict.hue;
+			*val = pict.hue;
 		case V4L2_CID_SATURATION:
-			return pict.colour;
+			*val = pict.colour;
 		case V4L2_CID_CONTRAST:
-			return pict.contrast;
+			*val = pict.contrast;
 		default:
 			dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: unknown control %s (id: %d)\n", (char *) &ctrl->name, ctrl->id);
-			return 0;
+			return LIBV4L_ERR_IOCTL;
 	}
+	return 0;
 }
 
 //sets the value of a control
-void set_control_value_v4l1(struct capture_device *c, struct v4l2_queryctrl *ctrl, int v){
+int set_control_value_v4l1(struct capture_device *c, struct v4l2_queryctrl *ctrl, int v){
 	struct video_picture pict;
 	CLEAR(pict);
 	//query the current image format
 	if(-1 == ioctl(c->fd, VIDIOCGPICT, &pict)) {
 		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: cannot get the current value for control %s\n", (char *) &ctrl->name );
-		return;
+		return LIBV4L_ERR_IOCTL;
 	}
 
 	switch(ctrl->id) {
@@ -499,14 +496,16 @@ void set_control_value_v4l1(struct capture_device *c, struct v4l2_queryctrl *ctr
 			break;
 		default:
 			dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: unknown control %s (id: %d)\n", (char *) &ctrl->name, ctrl->id);
-			return;
+			return LIBV4L_ERR_IOCTL;
 	}
 
 	//set the current image format
-	if((-1 == ioctl(c->fd, VIDIOCSPICT, &pict)))
+	if((-1 == ioctl(c->fd, VIDIOCSPICT, &pict))) {
 		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: Error setting the new value (%d) for control %s\n", v, (char *) &ctrl->name );
-	if (get_control_value_v4l1(c, ctrl)!= v)
-		dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_ERR, "V4L1: Error setting the new value (%d) for control %s\n", v, (char *) &ctrl->name );
+		return LIBV4L_ERR_IOCTL;
+	}
+
+	return 0;
 }
 
 

@@ -256,6 +256,6 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobje
 		/* set the formats field */
 		create_formats_object(e, t, this_class, vd);
 
-		//free_video_device(vd);
+		free_video_device(vd);
 	}
 }

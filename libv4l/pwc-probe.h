@@ -31,7 +31,7 @@
 #define PWC_PROBE_INDEX	0
 int pwc_driver_probe(struct capture_device *, void **);
 int pwc_list_ctrl(struct capture_device *, struct v4l2_queryctrl *, void *);
-int pwc_get_ctrl(struct capture_device *,  struct v4l2_queryctrl *, void *);
+int pwc_get_ctrl(struct capture_device *,  struct v4l2_queryctrl *, void *, int *);
 int pwc_set_ctrl(struct capture_device *, struct v4l2_queryctrl *, int, void *);
 
 #endif /*H_PWC_PROBE*/

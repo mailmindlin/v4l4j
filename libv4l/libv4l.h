@@ -56,7 +56,7 @@ struct capture_device; //defined further down
 struct v4l_driver_probe {
 	int (*probe) (struct capture_device *, void **);
 	int (*list_ctrl)(struct capture_device *, struct v4l2_queryctrl *, void *);
-	int (*get_ctrl)(struct capture_device *, struct v4l2_queryctrl *, void *);
+	int (*get_ctrl)(struct capture_device *, struct v4l2_queryctrl *, void *, int *);
 	int (*set_ctrl)(struct capture_device *,  struct v4l2_queryctrl *, int, void *);
 	void *priv;
 };

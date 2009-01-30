@@ -60,6 +60,7 @@ struct v4l4j_device {
 #define CHANNEL_EXCP			EXCEPTION_PACKAGE "CaptureChannelException"
 #define FORMAT_EXCP				EXCEPTION_PACKAGE "ImageFormatException"
 #define STD_EXCP				EXCEPTION_PACKAGE "VideoStandardException"
+#define CTRL_EXCP				EXCEPTION_PACKAGE "ControlException"
 
 
 /* Exception throwing helper */

@@ -3,7 +3,7 @@
 * eResearch Centre, James Cook University (eresearch.jcu.edu.au)
 *
 * This program was developed as part of the ARCHER project
-* (Australian Research Enabling Environment) funded by a
+* (Australian Research Enabling Environment) funded by a   
 * Systemic Infrastructure Initiative (SII) grant and supported by the Australian
 * Department of Innovation, Industry, Science and Research
 *
@@ -14,24 +14,34 @@
 *
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.
+* or FITNESS FOR A PARTICULAR PURPOSE.  
 * See the GNU General Public License for more details.
 *
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
+package au.edu.jcu.v4l4j.exceptions;
+/**
+ * Exceptions of this type are thrown whenever an error occurs retrieving or setting
+ * the value of a control
+ * @author gilles
+ *
+ */
+public class ControlException extends V4L4JException{
 
-#ifndef H_FPS_PARAM_PROBE
-#define H_FPS_PARAM_PROBE
+	private static final long serialVersionUID = -8310718978974706151L;
 
-#include "libv4l.h"
+	public ControlException(String message) {
+		super(message);
+	}
 
-//index of the fps-param probe in the struct v4l_driver_probe known_driver_probes[] in v4l-control.c
-#define FPS_PARAM_PROBE_INDEX	3
-int fps_param_probe(struct capture_device *, void **);
-int fps_param_list_ctrl(struct capture_device *, struct v4l2_queryctrl *, void *);
-int fps_param_get_ctrl(struct capture_device *,  struct v4l2_queryctrl *, void *, int *);
-int fps_param_set_ctrl(struct capture_device *, struct v4l2_queryctrl *, int, void *);
+	public ControlException(String message, Throwable throwable) {
+		super(message, throwable);
+	}
 
-#endif /*H_FPS_PARAM_PROBE*/
+	public ControlException(Throwable throwable) {
+		super(throwable);
+	}
+
+}
