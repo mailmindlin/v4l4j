@@ -1,0 +1,219 @@
+#Simple examples of video capture using v4l4j.
+
+This page shows a few examples in Java on how to use v4l4j. It assumes you have successfully compiled and installed v4l4j (see GettingStarted page for detailled instructions). Here, video source refers to any video-capture device supported by the Linux kernel, and accessible through the Video4Linux API using the associated device file. Typical capture devices include USB webcams and capture cards (with S-Video, composite or TV tuner inputs)
+ * *Initialising the video device*: Creating a java object to interact with a video device.
+ * *Dealing with controls*: List the controls associated with a video device and get / set their values.
+ * *Display video in a GUI (JFrame)*: Create a graphical interface (JFrame) to display the captured video stream.
+Suggestions for more examples are welcome.
+
+= Initialising the video device =
+All interactions with a video device are done using a `FrameGrabber` object. How to instantiate a `FrameGrabber` depends on the type of video device. The most extended form of the constructor needs 6 arguments:
+ * the full path to the corresponding device file, usually `/dev/videoXX`
+ * the desired capture resolution in pixels - width and height. Setting them to `FrameGrabber.MAX_WIDTH` and `FrameGrabber.MAX_HEIGHT` will request the best supported resolution.
+ * the input channel, this depends on the hardware, webcams have only 1 input (0), capture cards can have many,
+ * the video standard (`FrameGrabber.WEBCAM`, `FrameGrabber.PAL`, `FrameGrabber.SECAM`, `FrameGrabber.NTSC`)
+ * the JPEG compression quality, from 0 (lowest qualtiy - smallest frame size) to 100 (highest qualtiy - largest frame size)
+
+{{{
+String dev = "/dev/video0";
+int quality = 80, width = 640, height = 480, input = 1, std = FrameGrabber.PAL, comp = 80;
+FrameGrabber f = new FrameGrabber(dev, width, height, input, std, comp);
+}}}
+The above code creates a `FrameGrabber` object using the video device at `/dev/video0`. The requested capture resolution is 640x480, from input 1 using PAL video standard and a JPEG compression factor of 80.
+If the video device is a webcam, simpler constructors are available:
+{{{
+String dev = "/dev/video0";
+int quality = 80;
+FrameGrabber f = new FrameGrabber(dev, quality);
+}}}
+and
+{{{
+String dev = "/dev/video0";
+int width = 640, height = 480;
+FrameGrabber f = new FrameGrabber(dev, width, height);
+}}}
+Lastly, to capture frames at the maximum supported resolution, use:
+{{{
+String dev = "/dev/video0";
+int quality = 80, input = 1, std = FrameGrabber.PAL, comp = 80;
+FrameGrabber f = new FrameGrabber(dev, input, std, comp);
+}}}
+
+Once the `FrameGrabber` object is instanciated, before it can be used, it must be initialised using:
+{{{
+f.init();
+}}}
+
+It is important to note that the requested capture resolution given in the constructor is simply an indication and can be adjusted by V4L to the closest resolution supported by the video device. Once the `FrameGrabber` has been initialised with a call to `init()`, the actual width and height that will be used can be retrieved using:
+{{{
+int actualWidth = f.getwidth();
+int actualHeight = f.getHeight();
+}}}
+
+After a successful call to `init()`, if the `FrameGrabber` is no longer used, resources must be released by calling `remove().
+
+= Dealing with controls =
+Once the `FrameGrabber` is intialised, a call to `getControls()` will return a `List<Control>` object. The following loops over all controls and prints their name, range of acceptable values, and current value.
+{{{
+List<Control> controls = f.getControls();
+for(Control c: controls)
+ System.out.println("control name: "+c.getName()+" - min: "+c.getMin()+" - max: "+c.getMax()+" - step: "+c.getStep()+" - value: "+c.getValue());
+}}}
+Resetting the Pan angle on a Logitech Quickcam Sphere can be done using:
+{{{
+for(Control c: controls)
+ if(c.getName().equals("Pan Reset"))
+  c.setValue(1);
+}}}
+
+= Display video in a GUI (JFrame) =
+Assuming the `FrameGrabber` object `f` has been successfully initialised, to start capturing JPEG-encoded frames, do the following:
+{{{
+ByteBuffer b;
+int stop=0;
+f.startCapture();
+while(!stop) {
+ b = f.getFrame();
+ //do something useful with b
+ //the captured frame size is returned by calling b.limit()
+}
+f.stopCapture()
+//dont forget to call f.remove() when done with f
+}
+}}}
+
+The following example shows you how to capture JPEG-encoded frames from your video device and display them in a JFrame object.
+{{{
+package v4l4jTest;
+
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+
+import au.edu.jcu.v4l4j.FrameGrabber;
+import au.edu.jcu.v4l4j.exceptions.V4L4JException;
+
+public class Viewer extends WindowAdapter implements Runnable {
+	private JLabel l;
+	private JFrame f;
+	private long start = 0;
+	private int n;
+	private FrameGrabber fg;
+	private Thread captureThread;
+	private boolean stop;
+	
+	/**
+	 * Builds a WebcamViewer object
+	 * @param dev the video device file to capture from
+	 * @param w the desired capture width
+	 * @param h the desired capture height
+	 * @param std the capture standard
+	 * @param channel the capture channel
+	 * @param qty the JPEG compression quality
+	 * @throws V4L4JException if any parameter if invalid
+	 */
+    public Viewer(String dev, int w, int h, int std, int channel, int qty) throws V4L4JException{
+        initFrameGrabber(dev, w, h, std, channel, qty);
+        initGUI();
+        stop = false;
+        captureThread = new Thread(this, "Capture Thread");
+        captureThread.start();
+    }
+    
+    /** 
+     * Creates the graphical interface components and initialises them
+     */
+    private void initGUI(){
+        f = new JFrame();
+        l = new JLabel();
+        f.getContentPane().add(l);
+        f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        f.addWindowListener(this);
+        f.setVisible(true);
+        f.setSize(fg.getWidth(), fg.getHeight());    	
+    }
+    
+    /**
+     * Initialises the FrameGrabber object with the given parameters
+	 * @param dev the video device file to capture from
+	 * @param w the desired capture width
+	 * @param h the desired capture height
+	 * @param std the capture standard
+	 * @param channel the capture channel
+	 * @param qty the JPEG compression quality
+	 * @throws V4L4JException if any parameter if invalid
+     */
+    private void initFrameGrabber(String dev, int w, int h, int std, int channel, int qty) throws V4L4JException{
+	fg= new FrameGrabber(dev, w, h, channel, std, qty);
+	fg.init();
+	fg.startCapture();
+	System.out.println("Starting capture at "+fg.getWidth()+"x"+fg.getHeight());	    	
+    }
+    
+    /**
+     * Updates the image shown in the JLabel
+     * @param b
+     */
+    public void setImage(byte[] b) {
+    	l.setIcon(new ImageIcon(b));
+    }
+    
+    /**
+     * Implements the capture thread: get a frame from the FrameGrabber, and display it
+     */
+    public void run(){
+	ByteBuffer bb;
+	byte[] b;
+	try {			
+		while(!stop){
+			bb = fg.getFrame();
+			b = new byte[bb.limit()];
+			bb.get(b);
+			setImage(b);
+		}
+	} catch (V4L4JException e) {
+		e.printStackTrace();
+		System.out.println("Failed to capture image");
+	}
+    }
+    
+    /**
+     * Catch window closing event so we can free up resources before exiting
+     * @param e
+     */
+	public void windowClosing(WindowEvent e) {
+		if(captureThread.isAlive()){
+    			stop = true;
+    			try {
+				captureThread.join();
+			} catch (InterruptedException e1) {}
+    		}
+		
+		try {
+			fg.stopCapture();
+			fg.remove();
+		} catch (V4L4JException e1) {
+			e1.printStackTrace();
+			System.out.println("Failed to stop capture");
+		}
+		
+    		f.dispose();		
+	}
+	
+	
+
+	public static void main(String[] args) throws V4L4JException, IOException {
+
+		String dev = "/dev/video0";
+		int w=FrameGrabber.MAX_WIDTH, h=FrameGrabber.MAX_HEIGHT, std=FrameGrabber.WEBCAM, channel = 0, qty = 60;
+
+		new Viewer(dev,w,h,std,channel,qty);
+	}
+}
+
+}}}
