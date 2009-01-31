@@ -11,7 +11,7 @@ libv4l has been compiled and tested successfully on the following platforms:
  * Ubuntu 8.04 - x86 & x86_64
  * Debian Etch - x86
  * Debian Lenny - Neo FreeRunner
- * Gentoo r4 - x86_64
+ * Gentoo 2008.0 - x86_64
 
 ==Tested video devices and drivers==
 || *Device IDs* || *Device Name* || *Device Driver* ||
