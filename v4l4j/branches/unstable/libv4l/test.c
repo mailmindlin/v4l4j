@@ -65,6 +65,7 @@ void write_frame(void *d, int size) {
 
 int main(int argc, char** argv) {
 	struct capture_device *c;
+	struct video_device *v;
 	void *d;
 	struct timeval start, now;
 	int size, count=0, std=0, channel=0, width=0, height=0;
@@ -96,15 +97,21 @@ int main(int argc, char** argv) {
 	printf("Make sure your video source is connected, and press <Enter>, or Ctrl-C to abort now.");
 	getchar();
 
-	c = init_capture_device(argv[1], width, height ,channel, std,2);
+	v = open_device(argv[1]);
+	if(v==NULL){
+		printf("Error opening device %s", argv[1]);
+		return -1;
+	}
+	c = init_capture_device(v, width, height ,channel, std,2);
 
 	if(c==NULL) {
 		printf("Error initialising device.\n");
 		return -1;
 	}
 
-	if((*c->capture->set_cap_param)(c, NULL, 0)){
-		free_capture_device(c);
+	if((*c->actions->set_cap_param)(v, NULL, 0)){
+		free_capture_device(v);
+		close_device(v);
 		printf("Cant set capture parameters\n");
 		return -1;
 	}
@@ -112,15 +119,17 @@ int main(int argc, char** argv) {
 	printf("Capturing from %s at %dx%d.\n", argv[1], c->width,c->height);
 	printf("Image format %s, size: %d\n", libv4l_palettes[c->palette].name, c->imagesize);
 
-	if((*c->capture->init_capture)(c)<0){
-		free_capture_device(c);
+	if((*c->actions->init_capture)(v)<0){
+		free_capture_device(v);
+		close_device(v);
 		printf("Cant initialise capture ");
 		return -1;
 	}
 
-	if((*c->capture->start_capture)(c)<0){
-		(*c->capture->free_capture)(c);
-		free_capture_device(c);
+	if((*c->actions->start_capture)(v)<0){
+		(*c->actions->free_capture)(v);
+		free_capture_device(v);
+		close_device(v);
 		printf("Cant start capture");
 		return -1;
 	}
@@ -130,7 +139,7 @@ int main(int argc, char** argv) {
 	while(now.tv_sec<start.tv_sec+CAPTURE_LENGTH) {
 
 		//get frame from v4l2
-		if((d = (*c->capture->dequeue_buffer)(c, &size)) != NULL) {
+		if((d = (*c->actions->dequeue_buffer)(v, &size)) != NULL) {
 			//uncomment the following line to output raw captured frame
 			//to a file
 			//write_frame(d, size);
@@ -138,7 +147,7 @@ int main(int argc, char** argv) {
 				//Put frame
 			if(d != NULL)
 				//return buffer to v4l2
-				(*c->capture->enqueue_buffer)(c);
+				(*c->actions->enqueue_buffer)(v);
 			else
 				printf("Cant put buffer back");
 		} else {
@@ -149,11 +158,12 @@ int main(int argc, char** argv) {
 	}
 	printf("fps: %.1f\n", (count/((now.tv_sec - start.tv_sec) + ((float) (now.tv_usec - start.tv_usec)/1000000))));
 
-	if((*c->capture->stop_capture)(c)<0)
+	if((*c->actions->stop_capture)(v)<0)
 		fprintf(stderr, "Error stopping capture\n");
 
-	(*c->capture->free_capture)(c);
-	free_capture_device(c);
+	(*c->actions->free_capture)(v);
+	free_capture_device(v);
+	close_device(v);
 
 	return 0;
 }

@@ -3,7 +3,7 @@ package au.edu.jcu.v4l4j;
 import java.util.List;
 import java.util.Vector;
 
-import au.edu.jcu.v4l4j.exceptions.NoTunerException;
+import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 
 public class DeviceInfo {
@@ -12,7 +12,7 @@ public class DeviceInfo {
 	 * Native method interacting with libv4l to get info on device f
 	 * @param f the full path to the V4L device file
 	 */
-	private native void getInfo(String f);
+	private native void getInfo(long o);
 	
 	static {
 		try {
@@ -36,12 +36,13 @@ public class DeviceInfo {
 	/**
 	 * A list of inputs connected to this device
 	 */
-	private List<Input> inputs;
+	private List<InputInfo> inputs;
 	
 	/**
 	 * A list of supported image formats
 	 */
 	private List<ImageFormat> formats;	
+	
 	
 	/**
 	 * @return the name
@@ -61,8 +62,8 @@ public class DeviceInfo {
 	/**
 	 * @return the inputs
 	 */
-	public List<Input> getInputs() {
-		return new Vector<Input>(inputs);
+	public List<InputInfo> getInputs() {
+		return new Vector<InputInfo>(inputs);
 	}
 
 
@@ -77,51 +78,15 @@ public class DeviceInfo {
 	/**
 	 * This constructor build a DeviceInfo object containing information about the 
 	 * given V4L device
-	 * @param f the full path to the V4L device file
+	 * @param object the JNI C pointer to struct v4l4j_device
+	 * @throws V4L4JException if there is an error retrieving information from the vide device
 	 */	
-	public DeviceInfo(String f){
-		deviceFile = f;
-		inputs = new Vector<Input>();
+	DeviceInfo(long object, String dev) throws V4L4JException{
+		inputs = new Vector<InputInfo>();
 		formats = new Vector<ImageFormat>();
-		
-		getInfo(deviceFile);
-	}
+		deviceFile = dev;
 	
-	public static void main(String[] args) throws NoTunerException{
-		DeviceInfo d = new DeviceInfo(args[0]);
-		System.out.println("name: "+d.getName());
-		System.out.println("Device file: "+d.getDeviceFile());
-		System.out.println("Supported formats:");
-		
-		for(ImageFormat f : d.getFormats())
-			System.out.println("\t"+f.getName()+" - "+f.getLibv4lID());
-		
-		System.out.println("Inputs:");
-		for(Input i: d.getInputs()){
-			System.out.println("\tName: "+i.getName());
-			System.out.println("\tType: "+i.getType()+"("+(i.getType() == Input.CAMERA ? "Camera" : "Tuner")+")");
-			System.out.println("\tSupported standards:");
-			for(Integer s: i.getSupportedStandards()){
-				System.out.print("\t\t"+s);
-				if(s==FrameGrabber.PAL)
-					System.out.println("(PAL)");
-				else if(s==FrameGrabber.NTSC)
-					System.out.println("(NTSC)");
-				else if(s==FrameGrabber.SECAM)
-					System.out.println("(SECAM)");
-				else
-					System.out.println("(None/Webcam)");
-			}
-			if(i.getType() == Input.TUNER) {
-				Tuner t = i.getTuner();
-				System.out.println("\tTuner");
-				System.out.println("\t\tname: "+t.getName());
-				System.out.println("\t\tRange high: "+t.getRangeHigh());
-				System.out.println("\t\tRange low: "+t.getRangeLow());
-				System.out.println("\t\tUnit: "+t.getUnit()+"("+(t.getUnit() == Tuner.MHZ ? "MHz" : "kHz")+")");
-				System.out.println("\t\tType: "+t.getType()+"("+(t.getType() == Tuner.RADIO ? "Radio" : "TV")+")");				
-			}
-		}
+		getInfo(object);
 	}
 
 }

@@ -159,7 +159,7 @@
 	</target>
 	
 	<target name="deviceInfo" depends="jar,jnilib">
-		<java classname="au.edu.jcu.v4l4j.DeviceInfo" fork="true" failonerror="true">
+		<java classname="au.edu.jcu.v4l4j.VideoDevice" fork="true" failonerror="true">
 			<classpath>
 			      <pathelement location="${project.dir}/${project.name}.jar"/>
 		    </classpath>
@@ -168,7 +168,7 @@
 		</java>
 	</target>
 
-<!--	<target name="test-junit" depends="jar-test,jnilib">
+	<target name="test-junit" depends="jar-test,jnilib">
 		<junit fork="yes" haltonfailure="yes">
 			<jvmarg value="-Djava.library.path=."/>
 			<jvmarg value="-Dtest.device=${test.device}" />
@@ -183,7 +183,7 @@
 		</junit>
 	</target>
 	
-	<target name="test-multiple" depends="jar-test,jnilib">
+<!--	<target name="test-multiple" depends="jar-test,jnilib">
 		<junit fork="yes" haltonfailure="yes">
 			<jvmarg value="-Djava.library.path=."/>
 			<test name="${test.class.name.multiple}" />

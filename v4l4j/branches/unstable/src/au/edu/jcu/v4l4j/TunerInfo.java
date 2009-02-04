@@ -1,6 +1,6 @@
 package au.edu.jcu.v4l4j;
 
-public class Tuner {
+public class TunerInfo {
 	/**
 	 * Radio tuner
 	 */
@@ -35,16 +35,24 @@ public class Tuner {
 	private long rangeLow, rangeHigh;
 	
 	/**
-	 * The name fo this tuner
+	 * The name of this tuner
 	 */
 	private String name;
 	
-	public Tuner(String n,int u, int t, long low, long high){
+	/**
+	 * The V4L index of this tuner 
+	 */
+	private int index;
+	
+	
+	public TunerInfo(String n, int u, int t, int id, long low, long high){
 		type = t;
 		unit = u;
 		rangeLow = low & 0xffffffff;
 		rangeHigh = high & 0xffffffff;
-		name = n;		
+		name = n;
+		index = id;
+		
 	}
 
 	/**
@@ -88,5 +96,13 @@ public class Tuner {
 	 */
 	public String getName() {
 		return name;
+	}
+	
+	/**
+	 * This method returns the V4L index of this tuner.
+	 * @return the V4L index of this tuner.
+	 */
+	int getIndex(){
+		return index;
 	}
 }

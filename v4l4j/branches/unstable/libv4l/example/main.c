@@ -38,7 +38,6 @@
 
 #include "libv4l.h"
 #include "palettes.h"
-#include "v4l-control.h"
 #include "utils.h"
 #include "jpeg.h"
 #include "log.h"
@@ -89,6 +88,7 @@ int main(int argc, char **argv) {
 	1: V4L2 dev name, 2: height, 3: width, 4: channel
 	5: standard, 6: jpeg_quality, 7: verbosity, 8: log source, 9: log_level
 	*/
+	struct video_device *d;
 	struct capture_device *cdev;
 	int sockfd, port;
 	jpeg_quality = JPEG_QUALITY;
@@ -114,8 +114,14 @@ int main(int argc, char **argv) {
 	log_level = atoi(argv[11]);
 #endif
 
+	d = open_device(argv[1]);
+	if(d==NULL){
+		info(LOG_ERR, "Cant open device %s",argv[1]);
+		exit(1);
+	}
+
 	//create capture device
-	cdev = init_capture_device(argv[1], atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), 5);
+	cdev = init_capture_device(d, atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), 5);
 	if(cdev==NULL) {
 		info(LOG_ERR, "Failed to initialise video device\n");
 		info(LOG_ERR, "Recompile libv4l with debugging enabled (see README)\n");
@@ -124,21 +130,23 @@ int main(int argc, char **argv) {
 	}
 
 	//Set capture param (image format, color, size, crop...)
-	if ((*cdev->capture->set_cap_param)(cdev, fmts , NB_SUPPORTED_FORMATS)!=0) {
+	if ((*cdev->actions->set_cap_param)(d, fmts , NB_SUPPORTED_FORMATS)!=0) {
 		info(LOG_ERR, "Unable to set capture parameters. It could be due to:\n");
 		info(LOG_ERR, " - the chosen width and height,\n - the driver not supporting the image formats libv4l tried\n");
 		info(LOG_ERR, "Recompile libv4l with debugging enabled (see README)\n");
 		info(LOG_ERR, "to see why/where the setup fails.\n");
-		free_capture_device(cdev);
+		free_capture_device(d);
+		close_device(d);
 		exit(1);
 	}
 
 	info(LOG_INFO, "Capturing at %dx%d\n", cdev->width, cdev->height);
 
 	//Prepare capture:Allocates v4l2 buffers, mmap buffers, enqueue buffers
-	if ((*cdev->capture->init_capture)(cdev)) {
+	if ((*cdev->actions->init_capture)(d)) {
 		info(LOG_ERR, "Failed to setup capture\n");
-		free_capture_device(cdev);
+		free_capture_device(d);
+		close_device(d);
 		exit(1);
 	}
 
@@ -148,16 +156,19 @@ int main(int argc, char **argv) {
 	sockfd = setup_tcp_server_sock(port);
 
 	//main loop
-	main_loop(sockfd, cdev);
+	main_loop(sockfd, d);
 
 	//close tcp socket
 	close(sockfd);
 
 	//Deallocates V4l2 buffers
-	(*cdev->capture->free_capture)(cdev);
+	(*cdev->actions->free_capture)(d);
 
 	//delete cdev
-	free_capture_device(cdev);
+	free_capture_device(d);
+
+	//close device
+	close_device(d);
 
 	return 0;
 }
@@ -196,7 +207,7 @@ int setup_tcp_server_sock(int port) {
 /* main loop: waits for incoming TCP connections on "serv_sockfd", and service them
  * cdev is the initialised V4L2 device
  */
-void main_loop(int serv_sockfd, struct capture_device *cdev) {
+void main_loop(int serv_sockfd, struct video_device *d) {
 	int clilen, newsockfd;
 	struct sockaddr_in cli_addr;
 	fd_set rfds;
@@ -211,13 +222,13 @@ void main_loop(int serv_sockfd, struct capture_device *cdev) {
 		//using non blocking socket was not good because the while loop would use 100% CPU while accept'ing
 		if (select(serv_sockfd+1, &rfds, NULL, NULL, NULL)>0) {
 			newsockfd = accept(serv_sockfd, (struct sockaddr *) &cli_addr, (unsigned int *) &clilen);
-			info(LOG_INFO, "New connection from %s:%d on socket %d\n", inet_ntoa(cli_addr.sin_addr), cli_addr.sin_port, newsockfd );
+			//info(LOG_INFO, "New connection from %s:%d on socket %d\n", inet_ntoa(cli_addr.sin_addr), cli_addr.sin_port, newsockfd );
 			if(newsockfd > 0) {
-				switch(get_action(newsockfd, cdev)){
+				switch(get_action(newsockfd, d)){
 					case ACTION_CAPTURE:
 						if(client_nr < MAX_CLIENTS) {
 			    	 		//send stream
-			     			start_thread_client(newsockfd, cdev);
+			     			start_thread_client(newsockfd, d);
 						}
 			 			else {
 							info(LOG_ERR, "Cant accept anymore clients.try increasing MAX_CLIENT in utils.h and recompile\n");
@@ -226,7 +237,7 @@ void main_loop(int serv_sockfd, struct capture_device *cdev) {
 						break;
 					case ACTION_LIST:
 						//output current capture params
-						list_cap_param(newsockfd, cdev);
+						list_cap_param(newsockfd, d);
 						info(LOG_INFO, "closing connection on socket %d\n", newsockfd );
 						close(newsockfd);
 						break;
@@ -241,7 +252,7 @@ void main_loop(int serv_sockfd, struct capture_device *cdev) {
 /* send an HTMl page over the "newsockfd" socket with a list of V4L2 controls (brightness, contrast, ...)
  * as well as JPEG and fps controls
  */
-void list_cap_param(int newsockfd,struct capture_device *cdev) {
+void list_cap_param(int newsockfd,struct video_device *d) {
 	char *page, *ptr;
 	struct control_list *l;
 	int i, v;
@@ -265,9 +276,9 @@ void list_cap_param(int newsockfd,struct capture_device *cdev) {
 	memset(page, 0, PARAM_PAGE_SIZE);
 
 	//outputs controls
-	l = cdev->ctrls;
+	l = d->controls;
 	for(i = 0; i< l->count; i++) {
-		if(get_control_value(cdev, &l->ctrl[i], &v) != 0) {
+		if(get_control_value(d, &l->ctrl[i], &v) != 0) {
 			info(LOG_ERR, "Error getting value for control %s\n", l->ctrl[i].name);
 			v = 0;
 		}
@@ -287,7 +298,7 @@ void list_cap_param(int newsockfd,struct capture_device *cdev) {
  * In the latter case (list of controls), more bytes are parsed to see whether we should also set a new value to one
  * of the controls
  */
-int get_action(int sock, struct capture_device *cdev) {
+int get_action(int sock, struct video_device *d) {
 	int c, ctrl_index = 0, value = 0, ret = ACTION_CAPTURE;
 	char *buf, *sptr, *fptr;
 	struct control_list *l;
@@ -318,10 +329,10 @@ int get_action(int sock, struct capture_device *cdev) {
 						requested_fps = value; set_fps(requested_fps);
 					} else info(LOG_ERR, "Invalid frame rate %d\n", value);
 				} else {
-					l = cdev->ctrls;
+					l = d->controls;
 					assert(ctrl_index < l->count);
 					info(LOG_INFO, "Setting %s to %d\n", l->ctrl[ctrl_index].name, value);
-					set_control_value(cdev, &l->ctrl[ctrl_index], value);
+					set_control_value(d, &l->ctrl[ctrl_index], value);
 				}
 			} else
 				info(LOG_ERR, "Error parsing URL. Unable to set new value\n");
@@ -333,7 +344,7 @@ int get_action(int sock, struct capture_device *cdev) {
 
 /* Starts a thread to handle a webcam connection on "sock" socket
  */
-void start_thread_client(int sock, struct capture_device *cdev) {
+void start_thread_client(int sock, struct video_device *d) {
 	pthread_attr_t attr;
 	pthread_t tid;
 	struct thread_data *td;
@@ -341,7 +352,7 @@ void start_thread_client(int sock, struct capture_device *cdev) {
 	XMALLOC(td, struct thread_data *, sizeof(struct thread_data));
 	if (td != NULL) {
 		td->sock = sock;
-		td->cdev = cdev;
+		td->vdev = d;
 		pthread_attr_init(&attr);
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
@@ -349,7 +360,7 @@ void start_thread_client(int sock, struct capture_device *cdev) {
 		if(client_nr==0) {
 			//Start capture
 			dprint(LOG_SOURCE_HTTP, LOG_LEVEL_DEBUG2, "First client, starting capture \n");
-			if ((*cdev->capture->start_capture)(cdev) !=0 ) {
+			if ((*d->capture->actions->start_capture)(d) !=0 ) {
 				info(LOG_ERR, "Cant initiate capture...\n");
 				keep_going = 0;
 				XFREE(td);
@@ -361,7 +372,7 @@ void start_thread_client(int sock, struct capture_device *cdev) {
 			dprint(LOG_SOURCE_HTTP, LOG_LEVEL_DEBUG2, "Created new thread \n");
 		}
 		else {
-			(*cdev->capture->stop_capture)(cdev);
+			(*d->capture->actions->stop_capture)(d);
 			info(LOG_ERR, "Cant create a thread to handle the connection...\n");
 		}
 
@@ -382,11 +393,13 @@ void *send_stream_to(void *v) {
 	struct timespec sleep_length, sleep_rem;
 	struct jpeg j;
 	struct thread_data *td = (struct thread_data *)v;
-	struct capture_device *cdev = td->cdev;
+	struct video_device *d = td->vdev;
+	struct capture_device *cdev = d->capture;
 	int jpeg_len, yuv_len, f_nr = 0, retval = 0, sock = td->sock; //, calibrated = 1;
 	void *yuv_data, *jpeg_data;
 	float ts, last_fps;
 
+	CLEAR(j);
 	XMALLOC(jpeg_data, void *, (cdev->width * cdev->height * 3));
 	dprint(LOG_SOURCE_HTTP, LOG_LEVEL_DEBUG2, "New thread starting sock: %d, jpeg_quality: %d\n", sock, jpeg_quality);
 
@@ -444,13 +457,13 @@ void *send_stream_to(void *v) {
 		}
 
 		//get frame from v4l2
-		if((yuv_data = (*cdev->capture->dequeue_buffer)(cdev, &yuv_len)) != NULL) {
+		if((yuv_data = (*cdev->actions->dequeue_buffer)(d, &yuv_len)) != NULL) {
 
 			//encode in JPEG
 			jpeg_len = (*j.jpeg_encode)(yuv_data,yuv_len, cdev, &j, jpeg_data);
 
 			//return buffer to v4l2
-			(*cdev->capture->enqueue_buffer)(cdev);
+			(*cdev->actions->enqueue_buffer)(d);
 
 			//send in multipart_jpeg stream
 			retval = send_frame(sock, jpeg_data, jpeg_len);
@@ -470,7 +483,7 @@ void *send_stream_to(void *v) {
 	if(--client_nr==0) {
 		dprint(LOG_SOURCE_HTTP, LOG_LEVEL_DEBUG2, "Last client, stopping capture \n");
 		//Stop capture
-		(*cdev->capture->stop_capture)(cdev);
+		(*cdev->actions->stop_capture)(d);
 	}
 
 	//close socket

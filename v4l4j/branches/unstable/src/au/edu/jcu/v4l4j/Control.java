@@ -25,16 +25,35 @@
 package au.edu.jcu.v4l4j;
 
 import au.edu.jcu.v4l4j.exceptions.ControlException;
-import au.edu.jcu.v4l4j.exceptions.StateException;
-import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 /**
- * Objects of this class represent video source controls of any nature. When a video source is attached to a frame grabber,
- * its controls are automatically detected and made available through the <code>getControls()</code> method of a frame grabber object.  
+ * Objects of this class represent video source controls of any nature. <code>Control</code>s are not directly
+ * instantiated, instead a list of <code>Control</code>s associated with a <code>VideoDevice</code> can be obtained
+ * by calling <code>VideoDevice.getControlList()</code>. Once the controls are no longer used, they must be released
+ * by calling <code>VideoDevice.releaseControlList()</code>
  * @author gilles
  *
  */
 public class Control {
+	
+	/**
+	 * This JNI method returns the value of a control given its id
+	 * @param o a C pointer to a struct v4l4j_device
+	 * @param id the id of the control
+	 * @return the value
+	 * @throws ControlException if the value cant be retrieved
+	 */
+	private native int doGetValue(long o, int id) throws ControlException;
+	
+	/**
+	 * This JNI method sets the value of a control given its id
+	 * @param o a C pointer to a struct v4l4j_device
+	 * @param id the id of the control
+	 * @param v the new value
+	 * @throws ControlException if the value cant be set
+	 */
+	private native void doSetValue(long o, int id, int v)  throws ControlException;
+	
 	
 	/**
 	 * If this control has a type equal to BUTTON, it has a value of 0,
@@ -53,7 +72,7 @@ public class Control {
 	private int min;
 	private int step;
 	private int type;
-	private FrameGrabber fg;
+	private long v4l4jObject;
 	
 	/**
 	 * Builds a V4L2 control associated with a frame grabber 
@@ -62,37 +81,53 @@ public class Control {
 	 * @param min the minimum value it will accept
 	 * @param max the maximum value it will accept
 	 * @param step the increments
-	 * @param fg the frame grabber associated with this control
+	 * @param o A C pointer to a struct v4l4j_device
 	 */
-	Control(int id, String name, int min, int max, int step, FrameGrabber fg) {
+	Control(int id, String name, int min, int max, int step, long o) {
 		this.id = id;
 		this.name = new String(name);
 		this.min=min;
 		this.max=max;
 		this.step=step;
 		this.type= min==max ? BUTTON : SLIDER;
-		this.fg = fg;
+		v4l4jObject = o;
 	}
 
 	/**
 	 * retrieves the current value of this control
 	 * @return the value (0 if it is a button)
 	 * @throws ControlException if the value cant be retrieved
-	 * @throws StateException if the framegrabber object is not initialised
 	 */
-	public int getValue() throws ControlException, StateException {
+	public int getValue() throws ControlException{
 		if(type==BUTTON) return 0;
-		return fg.getControlValue(id);
+		return doGetValue(v4l4jObject, id);
 	}
 
 	/**
 	 * Sets a new value for this control
 	 * @param value the new value
 	 * @throws ControlException if the value can not be set
-	 * @throws StateException if the framegrabber object is not initialised
 	 */
-	public void setValue(int value) throws V4L4JException, StateException {
-		fg.setControlValue(id, value);
+	public void setValue(int value) throws ControlException {
+		doSetValue(v4l4jObject,id, validateValue(value));
+	}
+	
+	/**
+	 * This method increases this control's current value by its step (as returned
+	 * by <code>getStep()</code>. 
+	 * @throws ControlException if the value can not be increased
+	 */
+	public void increaseValue() throws ControlException {
+		doSetValue(v4l4jObject,id, validateValue(doGetValue(v4l4jObject,id)+step));
+	}
+	
+	/**
+	 * This method decreases this control's current value by its step (as returned
+	 * by <code>getStep()</code>. 
+	 * @throws ControlException if the value can not be increased
+	 */
+	public void decreaseValue() throws ControlException {
+		doSetValue(v4l4jObject,id, validateValue(doGetValue(v4l4jObject,id)-step));
 	}
 
 	/**
@@ -135,5 +170,20 @@ public class Control {
 	 */
 	public int getType() {
 		return type;
+	}
+	
+	/**
+	 * This method validates the given value, ie it checks that it is between
+	 * the allowed minimum & maximum. If it is, the given value is returned.
+	 * Otherwise, it throws a ControlException  
+	 * @param val the value to be checked
+	 * @return the value
+	 * @throws ControlException if the value is off-limit
+	 */
+	private int validateValue(int val) throws ControlException{
+		if(val < min || val > max)
+			throw new ControlException("The value '"+val+"' is outside the allowed range");
+		
+		return val;
 	}
 }
