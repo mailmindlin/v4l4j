@@ -1,15 +1,30 @@
 package au.edu.jcu.v4l4j.examples;
 
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Hashtable;
 
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 
+import au.edu.jcu.v4l4j.Control;
 import au.edu.jcu.v4l4j.FrameGrabber;
+import au.edu.jcu.v4l4j.V4l4JConstants;
+import au.edu.jcu.v4l4j.VideoDevice;
+import au.edu.jcu.v4l4j.exceptions.ControlException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 /**
@@ -20,11 +35,14 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 public class WebcamViewer extends WindowAdapter implements Runnable {
 	private JLabel l;
 	private JFrame f;
+	private JPanel controlPanel;
 	private long start = 0;
 	private int n;
 	private FrameGrabber fg;
+	Hashtable<String,Control> controls; 
 	private Thread captureThread;
 	private boolean stop;
+	private VideoDevice vd;
 	
 	/**
 	 * Builds a WebcamViewer object
@@ -49,12 +67,29 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
      */
     private void initGUI(){
         f = new JFrame();
+        f.setLayout(new BoxLayout(f.getContentPane(),BoxLayout.LINE_AXIS));
+        
         l = new JLabel();
+        l.setMinimumSize(new Dimension(fg.getWidth(), fg.getHeight()));
+        controlPanel = new JPanel();
+        controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.PAGE_AXIS));
+        
         f.getContentPane().add(l);
+        f.getContentPane().add(controlPanel);
+        
+        initControlPane();
+
         f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         f.addWindowListener(this);
+        f.setMinimumSize(new Dimension(fg.getWidth(), fg.getHeight()));
+        f.pack();
         f.setVisible(true);
-        f.setSize(fg.getWidth(), fg.getHeight());    	
+    }
+    
+    private void initControlPane(){
+    	controls = vd.getControlList();
+    	for(Control c: controls.values())
+    		controlPanel.add(new ControlPanel(c).getPanel());
     }
     
     /**
@@ -68,8 +103,8 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
 	 * @throws V4L4JException if any parameter if invalid
      */
     private void initFrameGrabber(String dev, int w, int h, int std, int channel, int qty) throws V4L4JException{
-		fg= new FrameGrabber(dev, w, h, channel, std, qty);
-		fg.init();
+    	vd = new VideoDevice(dev);
+		fg= vd.getJPEGFrameGrabber(w, h, channel, std, qty);
 		fg.startCapture();
 		System.out.println("Starting capture at "+fg.getWidth()+"x"+fg.getHeight());	    	
     }
@@ -125,7 +160,9 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
 		
 		try {
 			fg.stopCapture();
-			fg.remove();
+			vd.releaseFrameGrabber();
+			vd.releaseControlList();
+			vd.release();
 		} catch (V4L4JException e1) {
 			e1.printStackTrace();
 			System.out.println("Failed to stop capture");
@@ -151,12 +188,12 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
 		try {
 			w = Integer.parseInt(args[1]);
 		} catch (Exception e){
-			w = FrameGrabber.MAX_WIDTH;
+			w = V4l4JConstants.MAX_WIDTH;
 		}
 		try{			
 			h = Integer.parseInt(args[2]);
 		} catch  (Exception e) {
-			h = FrameGrabber.MAX_HEIGHT;
+			h = V4l4JConstants.MAX_HEIGHT;
 		}
 		try {
 			std = Integer.parseInt(args[3]);
@@ -175,5 +212,90 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
 		}
 		
 		new WebcamViewer(dev,w,h,std,channel,qty);
+	}
+	
+	public static class ControlPanel extends MouseAdapter{
+		private JPanel contentPanel, buttonPanel, labelPanel;
+		private JButton up, down;
+		private JLabel value, name;
+		private Control ctrl;
+		
+		public ControlPanel(Control c){
+			ctrl = c;
+			initControlGUI();
+			updateValue();
+		}
+		
+		private void initControlGUI(){
+			contentPanel = new JPanel();
+			contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.LINE_AXIS));
+			buttonPanel = new JPanel();
+			buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.PAGE_AXIS));
+			labelPanel = new JPanel();
+			labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.PAGE_AXIS));
+			
+    		contentPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    		contentPanel.setBorder(BorderFactory.createEmptyBorder(1, 0, 1, 0));
+			
+			up = new JButton("+");
+			up.setAlignmentX(Component.CENTER_ALIGNMENT);
+			down = new JButton("-");
+			down.setAlignmentX(Component.CENTER_ALIGNMENT);
+			
+			value = new JLabel("Value: ",JLabel.CENTER);
+			name = new JLabel(ctrl.getName(), JLabel.CENTER);
+			
+			buttonPanel.add(up);
+			buttonPanel.add(down);
+			
+			labelPanel.add(name);
+			labelPanel.add(Box.createRigidArea(new Dimension(0, 3)));
+			labelPanel.add(value);
+			
+			contentPanel.add(buttonPanel);
+			contentPanel.add(labelPanel);
+			
+			up.addMouseListener(this);
+			down.addMouseListener(this);
+		}
+		
+		public void mouseClicked(MouseEvent e) {
+			JButton b = (JButton) e.getComponent() ;
+			//JOptionPane.showMessageDialog(null, b.getText()+ " for "+ ctrl.getName());
+			if(b.getText().equals("-"))
+				try {
+					ctrl.decreaseValue();
+				} catch (ControlException e1) {
+					JOptionPane.showMessageDialog(contentPanel, "The value can not be decreased\n"+e1.getMessage());
+				}
+			else
+				try {
+					ctrl.increaseValue();
+				} catch (ControlException e1) {
+					JOptionPane.showMessageDialog(contentPanel, "The value can not be increased\n"+e1.getMessage());
+				}
+			
+			updateValue();
+				
+		}
+		
+		public void updateValue(){
+			try {
+				setValue(ctrl.getValue());
+			} catch (ControlException e1) {}
+		}
+		
+		public void setValue(String v){
+			value.setText("Value: "+v);
+		}
+		
+		public void setValue(int v){
+			value.setText("Value: "+v);
+		}
+		
+		public JPanel getPanel(){
+			return contentPanel;
+		}
+		 
 	}
 }

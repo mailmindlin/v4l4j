@@ -80,23 +80,23 @@
 		do { \
 			var = (type) malloc(size); \
 			if (!var) {fprintf(stderr, "[%s:%d %s] MEMALLOC: OUT OF MEMORY. Cant allocate %lu bytes.\n",\
-					__FILE__, __LINE__, __PRETTY_FUNCTION__, size); fflush(stderr);}\
+					__FILE__, __LINE__, __PRETTY_FUNCTION__, (long unsigned int) size); fflush(stderr);}\
 			else { CLEAR(*var); \
-				dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "MEMALLOC: allocating %lu bytes of type %s for var %s (%p).\n", size, #type, #var, var); } \
+				dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "MEMALLOC: allocating %lu bytes of type %s for var %s (%p).\n", (long unsigned int) size, #type, #var, var); } \
 		} while (0)
 
 #define XREALLOC(var, type, size)	\
 		do { \
 			int should_clear = var == NULL ? 1 : 0;\
 			var = (type) realloc(var, size); \
-			if (!var) {fprintf(stderr, "[%s:%d %s] REALLOC: OUT OF MEMORY. Cant reallocate %d bytes.\n",\
-					__FILE__, __LINE__, __PRETTY_FUNCTION__, size); fflush(stderr);}\
+			if (!var) {fprintf(stderr, "[%s:%d %s] REALLOC: OUT OF MEMORY. Cant reallocate %lu bytes.\n",\
+					__FILE__, __LINE__, __PRETTY_FUNCTION__,(long unsigned int)  size); fflush(stderr);}\
 			else { \
 					if (should_clear) {\
 						CLEAR(*var); \
-						dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "REALLOC: Allocating %d bytes of type %s for var %s (%p).\n", size, #type, #var, var); \
+						dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "REALLOC: Allocating %lu bytes of type %s for var %s (%p).\n", (long unsigned int) size, #type, #var, var); \
 					} else \
-						{dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "REALLOC: re-allocating %d bytes of type %s for var %s (%p).\n", size, #type, #var, var);} \
+						{dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "REALLOC: re-allocating %lu bytes of type %s for var %s (%p).\n", (long unsigned int) size, #type, #var, var);} \
 			}\
 		} while (0)
 

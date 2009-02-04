@@ -27,13 +27,19 @@
 #include <unistd.h>		//for write, close
 
 
-#include "log.h"
+
+#include "fps-param-probe.h"
+#include "gspca-probe.h"
 #include "libv4l.h"
-#include "v4l2-input.h"
+#include "libv4l-err.h"
+#include "log.h"
+#include "pwc-probe.h"
+#include "qc-probe.h"
 #include "v4l1-input.h"
 #include "v4l1-query.h"
+#include "v4l2-input.h"
 #include "v4l2-query.h"
-#include "v4l-control.h"
+#include "videodev_additions.h"
 
 
 char *get_libv4l_version(char * c) {
@@ -41,117 +47,131 @@ char *get_libv4l_version(char * c) {
 	return c;
 }
 
-static int open_device(const char *file) {
+/*
+ *
+ * VIDEO DEVICE INTERFACE
+ *
+ */
+struct video_device *open_device(char *file) {
+	struct video_device *vdev;
 	int fd = -1;
+	char version[10];
+
+	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_INFO, "Using libv4l version %s\n", get_libv4l_version(version));
+
+	//open device
 	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Opening device file %s.\n", file);
 	if ((strlen(file) == 0) || ((fd = open(file,O_RDWR )) < 0)) {
 		info("V4L: unable to open device file %s. Check the name and permissions\n", file);
 		fd = -1;
 	}
 
-	return fd;
-}
+	XMALLOC(vdev, struct video_device *, sizeof(struct video_device));
 
-static void close_device(struct capture_device *c) {
-	//Close device file
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: closing device file %s.\n", c->file);
-	close(c->fd);
-}
-
-static void setup_libv4l_actions(struct capture_device *c) {
-	XMALLOC(c->capture, struct capture_actions *, sizeof(struct capture_actions) );
-	if(c->v4l_version == V4L1_VERSION) {
-		c->capture->set_cap_param = set_cap_param_v4l1;
-		c->capture->init_capture = init_capture_v4l1;
-		c->capture->start_capture = start_capture_v4l1;
-		c->capture->dequeue_buffer = dequeue_buffer_v4l1;
-		c->capture->enqueue_buffer = enqueue_buffer_v4l1;
-		c->capture->stop_capture = stop_capture_v4l1;
-		c->capture->free_capture = free_capture_v4l1;
-		c->capture->list_cap = list_cap_v4l1;
-		c->capture->enum_image_fmt = enum_image_fmt_v4l1;
-		c->capture->query_control = query_control;
-		c->capture->query_frame_sizes = query_frame_sizes_v4l1;
-		c->capture->query_capture_intf = query_capture_intf_v4l1;
-		c->capture->query_current_image_fmt = query_current_image_fmt_v4l1;
+	//Check v4l version (V4L2 first)
+	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Checking V4L version on device %s\n", file);
+	if(check_capture_capabilities_v4l2(fd, file)==0) {
+		dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: device %s is V4L2\n", file);
+		vdev->v4l_version=V4L2_VERSION;
+	} else if(check_capture_capabilities_v4l1(fd, file)==0){
+		dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: device %s is V4L1\n", file);
+		vdev->v4l_version=V4L1_VERSION;
 	} else {
-		c->capture->set_cap_param = set_cap_param_v4l2;
-		c->capture->init_capture = init_capture_v4l2;
-		c->capture->start_capture = start_capture_v4l2;
-		c->capture->dequeue_buffer = dequeue_buffer_v4l2;
-		c->capture->enqueue_buffer = enqueue_buffer_v4l2;
-		c->capture->stop_capture = stop_capture_v4l2;
-		c->capture->free_capture = free_capture_v4l2;
-		c->capture->list_cap = list_cap_v4l2;
-		c->capture->enum_image_fmt = enum_image_fmt_v4l2;
-		c->capture->query_control = query_control;
-		c->capture->query_frame_sizes = query_frame_sizes_v4l2;
-		c->capture->query_capture_intf = query_capture_intf_v4l2;
-		c->capture->query_current_image_fmt = query_current_image_fmt_v4l2;
+		info("libv4l was unable to detect the version of V4L used by device %s\n", file);
+		info("Please let the author know about this error.\n");
+		info("See the ISSUES section in the libv4l README file.\n");
+
+		close_device(vdev);
+		return NULL;
+	}
+
+	vdev->fd = fd;
+	strncpy(vdev->file, file, FILENAME_LENGTH -1);
+
+	return vdev;
+}
+
+int close_device(struct video_device *vdev) {
+	//Close device file
+	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: closing device file %s.\n", vdev->file);
+
+	//TODO: try and release info, capture and controls instead of failing
+	//check that we have released the info, capture and controls stuff
+	if(vdev->info) {
+		dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_ERR, "V4L: Cant close device file %s - device info data not released\n", vdev->file);
+		return LIBV4L_ERR_INFO_IN_USE;
+	}
+	if(vdev->capture) {
+		dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_ERR, "V4L: Cant close device file %s - capture interface not released\n", vdev->file);
+		return LIBV4L_ERR_CAPTURE_IN_USE;
+	}
+	if(vdev->controls) {
+		dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_ERR, "V4L: Cant close device file %s - control interface not released\n", vdev->file);
+		return LIBV4L_ERR_CONTROL_IN_USE;
+	}
+
+	close(vdev->fd);
+	XFREE(vdev);
+	return 0;
+}
+
+/*
+ *
+ * CAPTURE INTERFACE
+ *
+ */
+
+static void setup_capture_actions(struct video_device *vdev) {
+	struct capture_device *c = vdev->capture;
+	XMALLOC(c->actions, struct capture_actions *, sizeof(struct capture_actions) );
+	if(vdev->v4l_version == V4L1_VERSION) {
+		c->actions->set_cap_param = set_cap_param_v4l1;
+		c->actions->init_capture = init_capture_v4l1;
+		c->actions->start_capture = start_capture_v4l1;
+		c->actions->dequeue_buffer = dequeue_buffer_v4l1;
+		c->actions->enqueue_buffer = enqueue_buffer_v4l1;
+		c->actions->stop_capture = stop_capture_v4l1;
+		c->actions->free_capture = free_capture_v4l1;
+		c->actions->list_cap = list_cap_v4l1;
+
+	} else {
+		c->actions->set_cap_param = set_cap_param_v4l2;
+		c->actions->init_capture = init_capture_v4l2;
+		c->actions->start_capture = start_capture_v4l2;
+		c->actions->dequeue_buffer = dequeue_buffer_v4l2;
+		c->actions->enqueue_buffer = enqueue_buffer_v4l2;
+		c->actions->stop_capture = stop_capture_v4l2;
+		c->actions->free_capture = free_capture_v4l2;
+		c->actions->list_cap = list_cap_v4l2;
 	}
 }
 
 
 //device file, width, height, channel, std, nb_buf
-struct capture_device *init_capture_device(const char *dev, int w, int h, int ch, int s, int nb_buf){
+struct capture_device *init_capture_device(struct video_device *vdev, int w, int h, int ch, int s, int nb_buf){
 	//create capture device
-	struct capture_device *c;
-	char version[10];
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Initialising libv4l and creating struct cdev\n");
-	XMALLOC(c, struct capture_device *,sizeof(struct capture_device));
-	XMALLOC(c->mmap, struct mmap *, sizeof(struct mmap));
-
-	fprintf(stdout, "libv4l version %s\n", get_libv4l_version(version));
+	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Initialising capture interface\n");
+	XMALLOC(vdev->capture, struct capture_device *,sizeof(struct capture_device));
+	XMALLOC(vdev->capture->mmap, struct mmap *, sizeof(struct mmap));
 
 	//fill in cdev struct
-	c->mmap->req_buffer_nr = nb_buf;
-	strcpy(c->file, dev);
-	c->width = w;
-	c->height = h;
-	c->channel = ch;
-	c->std = s;
+	vdev->capture->mmap->req_buffer_nr = nb_buf;
+	vdev->capture->width = w;
+	vdev->capture->height = h;
+	vdev->capture->channel = ch;
+	vdev->capture->std = s;
 
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Opening device %s\n", c->file);
-	if((c->fd=open_device(c->file))==-1) {
-		XFREE(c->mmap);
-		XFREE(c);
-		return NULL;
-	}
+	setup_capture_actions(vdev);
 
-	//Check if V4L2 first
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Checking V4L version on device %s\n", c->file);
-	if(check_capture_capabilities_v4l2(c)==0) {
-		dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: device %s is V4L2\n", c->file);
-		c->v4l_version=V4L2_VERSION;
-	} else if(check_capture_capabilities_v4l1(c)==0){
-		dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: device %s is V4L1\n", c->file);
-		c->v4l_version=V4L1_VERSION;
-	} else {
-		info("libv4l was unable to detect the version of V4L used by device %s\n", c->file);
-		info("Please let the author know about this error.\n");
-		info("See the ISSUES section in the libv4l README file.\n");
-
-		close_device(c);
-		XFREE(c->mmap);
-		XFREE(c);
-		return NULL;
-	}
-
-	setup_libv4l_actions(c);
-
-	c->ctrls = list_control(c);
-
-	return c;
+	return vdev->capture;
 }
 
 //counterpart of init_capture_device, must be called it init_capture_device was successful
-void free_capture_device(struct capture_device *c){
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Freeing libv4l on device %s.\n", c->file);
-	XFREE(c->capture);
-	free_control_list(c);
-	close_device(c);
-	XFREE(c->mmap);
-	XFREE(c);
+void free_capture_device(struct video_device *vdev){
+	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Freeing libv4l on device %s.\n", vdev->file);
+	XFREE(vdev->capture->actions);
+	XFREE(vdev->capture->mmap);
+	XFREE(vdev->capture);
 }
 
 /*
@@ -159,54 +179,240 @@ void free_capture_device(struct capture_device *c){
  * QUERY INTERFACE
  *
  */
-struct video_device * query_device(const char *device_file){
-	int fd;
-	struct video_device *vd = NULL;
-	struct v4l2_capability caps;
-	struct video_capability vc;
+struct device_info *get_device_info(struct video_device *vdev){
+	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Querying device %s.\n", vdev->file);
 
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Querying device %s.\n", device_file);
+	XMALLOC(vdev->info, struct device_info *, sizeof(struct device_info));
 
-	if ((fd = open_device(device_file)) != -1) {
-		XMALLOC(vd, struct video_device *, sizeof(struct video_device));
-		vd->fd = fd;
-
-		XMALLOC(vd->file, char *, strlen(device_file) * sizeof(char) + 1);
-		strncpy(vd->file, device_file, strlen(device_file));
-
-		if(-1 != check_v4l2(fd, &caps)) {
-			//v4l2 device
-			vd->version = V4L2_VERSION;
-			query_device_v4l2(vd);
-		} else if (-1 != check_v4l1(fd, &vc)) {
-			//v4l1 device
-			vd->version = V4L1_VERSION;
-			query_device_v4l1(vd);
-		} else {
-			info("libv4l was unable to detect the version of V4L used by device %s\n", device_file);
-			info("Please let the author know about this error.\n");
-			info("See the ISSUES section in the libv4l README file.\n");
-			XFREE(vd->file);
-			XFREE(vd);
-		}
-		close(fd);
+	if(vdev->v4l_version == V4L2_VERSION) {
+		//v4l2 device
+		query_device_v4l2(vdev);
+	} else if (vdev->v4l_version == V4L1_VERSION) {
+		//v4l1 device
+		query_device_v4l1(vdev);
+	} else {
+		info("libv4l was unable to detect the version of V4L used by device %s\n", vdev->file);
+		info("Please let the author know about this error.\n");
+		info("See the ISSUES section in the libv4l README file.\n");
+		XFREE(vdev->info);
 	}
 
-	return vd;
+	return vdev->info;
 }
 
-void free_video_device(struct video_device *vd){
-	if(vd->version == V4L2_VERSION) {
+void release_device_info(struct video_device *vdev){
+	if(vdev->v4l_version == V4L2_VERSION) {
 		//v4l2 device
-		free_video_device_v4l2(vd);
-	} else if (vd->version == V4L1_VERSION) {
+		free_video_device_v4l2(vdev);
+	} else if (vdev->v4l_version == V4L1_VERSION) {
 		//v4l1 device
-		free_video_device_v4l1(vd);
+		free_video_device_v4l1(vdev);
 	} else {
-		info("Unknown V4L version");
+		info("libv4l was unable to detect the version of V4L used by device %s\n", vdev->file);
+		info("Please let the author know about this error.\n");
+		info("See the ISSUES section in the libv4l README file.\n");
+		return;
 	}
 
-	XFREE(vd->file);
-	XFREE(vd);
+	XFREE(vdev->info);
+}
 
+
+/*
+ *
+ * CONTROL INTERFACE
+ *
+ */
+static struct v4l_driver_probe known_driver_probes[] = {
+	{
+		.probe 		= pwc_driver_probe,
+		.list_ctrl 	= pwc_list_ctrl,
+		.get_ctrl	= pwc_get_ctrl,
+		.set_ctrl	= pwc_set_ctrl,
+		.priv = NULL,
+	},
+	{
+		.probe 		= gspca_driver_probe,
+		.list_ctrl 	= gspca_list_ctrl,
+		.get_ctrl	= gspca_get_ctrl,
+		.set_ctrl	= gspca_set_ctrl,
+		.priv = NULL,
+	},
+	{
+		.probe 		= qc_driver_probe,
+		.list_ctrl 	= qc_list_ctrl,
+		.get_ctrl	= qc_get_ctrl,
+		.set_ctrl	= qc_set_ctrl,
+		.priv = NULL,
+	},
+	{
+		.probe 		= fps_param_probe,
+		.list_ctrl 	= fps_param_list_ctrl,
+		.get_ctrl	= fps_param_get_ctrl,
+		.set_ctrl	= fps_param_set_ctrl,
+		.priv = NULL,
+	},
+};
+
+#define PROBE_NB 4
+
+
+static void add_node(driver_probe **list, struct v4l_driver_probe *probe) {
+	driver_probe *t;
+	if((t=*list)) {
+		//create the subsequent nodes
+		while(t->next) t = t->next;
+		XMALLOC(t->next, driver_probe *, sizeof(driver_probe));
+		t->next->probe = probe;
+	} else {
+		//create the first node
+		XMALLOC((*list), driver_probe *, sizeof(driver_probe));
+		(*list)->probe = probe;
+	}
+ }
+static void empty_list(driver_probe *list){
+	driver_probe *t;
+ 	while(list) {
+		t = list->next;
+		XFREE(list);
+		list = t;
+ 	}
+ }
+
+// ****************************************
+// Control methods
+// ****************************************
+struct control_list *get_control_list(struct video_device *vdev){
+	struct v4l2_control ctrl;
+	int probe_id = 0, count = 0, priv_ctrl_count = 0, nb=0;
+	driver_probe *e = NULL;
+	struct control_list *l;
+
+	dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: Listing controls\n");
+
+	XMALLOC(vdev->controls, struct control_list *, sizeof(struct control_list));
+	l = vdev->controls;
+
+	CLEAR(ctrl);
+
+	//dry run to see how many control we have
+	if(vdev->v4l_version==V4L2_VERSION)
+		count = count_v4l2_controls(vdev);
+	else if(vdev->v4l_version==V4L1_VERSION)
+		//4 basic controls in V4L1
+		count = count_v4l1_controls(vdev);
+	else {
+		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: Weird V4L version (%d)...\n", vdev->v4l_version);
+		l->count=0;
+		return l;
+	}
+
+
+	/*
+	 *  The following is an attempt to support driver private (custom) ioctls.
+	 * First libv4l will probe and detect the underlying video driver. Then, it will create fake V4L controls for every private ioctls so
+	 * that the application can call these private ioctls through normal V4L controls.In struct v4l2_query, libv4l will use the reserved[0]
+	 * field  and set it to a special unused value V4L2_PRIV_IOCTL (currently in kernel 2.6.25, only values from 1 to 6 are used by v4l2).
+	 * The following code attempts to probe the underlying driver (pwc, bttv, gspca, ...) and create fake v4l2_ctrl based on supported
+	 * ioctl (static list which must be updated manually after inspecting the code for each driver => ugly but there is no other option until all
+	 * drivers make their private ioctl available through a control (or control class like the camera control class added to 2.6.25))
+	 */
+	//go through all probes
+	while ( probe_id<PROBE_NB ){
+		if ( (nb = known_driver_probes[probe_id].probe(vdev, &known_driver_probes[probe_id].priv)) != -1) {
+			//if the probe is successful, add the nb of private controls detected to the grand total
+			priv_ctrl_count += nb;
+			add_node(&l->probes,&known_driver_probes[probe_id]);
+		}
+		probe_id++;
+	}
+
+
+	count += priv_ctrl_count;
+
+	l->count = count;
+	if(count>0) {
+		XMALLOC( l->ctrl , struct v4l2_queryctrl *, (l->count * sizeof(struct v4l2_queryctrl)) );
+
+		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: listing controls (found %d)...\n", count);
+
+		//fill in controls
+		if(vdev->v4l_version==V4L2_VERSION)
+			count = create_v4l2_controls(vdev, l);
+		else if(vdev->v4l_version==V4L1_VERSION)
+			count = create_v4l1_controls(vdev, l);
+
+		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: listing private controls (found %d)...\n", priv_ctrl_count);
+		//probe the driver for private ioctl and turn them into fake V4L2 controls
+		//if(priv_ctrl_count>0)
+
+		for(e = l->probes;e;e=e->next)
+		 		e->probe->list_ctrl(vdev, &l->ctrl[count], e->probe->priv);
+		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: done listing controls\n");
+
+	} else {
+		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: No controls found...\n");
+	}
+
+	return l;
+}
+
+int get_control_value(struct video_device *vdev, struct v4l2_queryctrl *ctrl, int *val){
+	int ret = 0;
+	dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: getting value for control %s\n", ctrl->name);
+	if(ctrl->reserved[0]==V4L2_PRIV_IOCTL){
+		struct v4l_driver_probe *s = &known_driver_probes[ctrl->reserved[1]];
+		ret = s->get_ctrl(vdev, ctrl, s->priv, val);
+	} else {
+		if(vdev->v4l_version==V4L2_VERSION)
+			ret = get_control_value_v4l2(vdev, ctrl, val);
+		else if(vdev->v4l_version==V4L1_VERSION)
+			ret =  get_control_value_v4l1(vdev, ctrl, val);
+		else {
+			dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: Weird V4L version (%d)...\n", vdev->v4l_version);
+			ret =  LIBV4L_ERR_WRONG_VERSION;
+		}
+	}
+	return ret;
+}
+
+int set_control_value(struct video_device *vdev, struct v4l2_queryctrl *ctrl, int i){
+	int ret = 0;
+	dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: setting value (%d) for control %s\n",i, ctrl->name);
+	if(i<ctrl->minimum || i > ctrl->maximum){
+		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: control value out of range\n");
+		return LIBV4L_ERR_OUT_OF_RANGE;
+	}
+
+	if(ctrl->reserved[0]==V4L2_PRIV_IOCTL){
+		struct v4l_driver_probe *s = &known_driver_probes[ctrl->reserved[1]];
+		ret = s->set_ctrl(vdev, ctrl, i,s->priv);
+	} else {
+		if(vdev->v4l_version==V4L2_VERSION)
+			ret = set_control_value_v4l2(vdev, ctrl, i);
+		else if(vdev->v4l_version==V4L1_VERSION)
+			ret = set_control_value_v4l1(vdev, ctrl, i);
+		else {
+			dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: Weird V4L version (%d)...\n", vdev->v4l_version);
+			ret = LIBV4L_ERR_WRONG_VERSION;
+		}
+
+	}
+	return ret;
+}
+
+void release_control_list(struct video_device *vdev){
+	dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: Freeing controls \n");
+	driver_probe *e;
+	if (vdev->controls->ctrl)
+		XFREE(vdev->controls->ctrl);
+
+	for(e = vdev->controls->probes; e; e = e->next)
+		if (e->probe->priv)
+			XFREE(e->probe->priv);
+
+	empty_list(vdev->controls->probes);
+
+	if (vdev->controls)
+		XFREE(vdev->controls);
 }

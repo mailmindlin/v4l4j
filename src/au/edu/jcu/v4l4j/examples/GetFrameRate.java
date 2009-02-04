@@ -2,9 +2,12 @@ package au.edu.jcu.v4l4j.examples;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Vector;
 
 import au.edu.jcu.v4l4j.Control;
 import au.edu.jcu.v4l4j.FrameGrabber;
+import au.edu.jcu.v4l4j.V4l4JConstants;
+import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.exceptions.ControlException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
@@ -23,12 +26,12 @@ public class GetFrameRate {
 		try {
 			w = Integer.parseInt(args[1]);
 		} catch (Exception e){
-			w = FrameGrabber.MAX_WIDTH;
+			w = V4l4JConstants.MAX_WIDTH;
 		}
 		try{			
 			h = Integer.parseInt(args[2]);
 		} catch  (Exception e) {
-			h = FrameGrabber.MAX_HEIGHT;
+			h = V4l4JConstants.MAX_HEIGHT;
 		}
 		try {
 			std = Integer.parseInt(args[3]);
@@ -50,6 +53,7 @@ public class GetFrameRate {
 		long start=0, now=0;
 		int n=0;
 		FrameGrabber f = null;
+		VideoDevice vd = null;
 
 		System.out.println("This program will open "+dev+", list the available control, capture frames for "
 					+ captureLength+ " seconds and print the FPS");
@@ -57,21 +61,22 @@ public class GetFrameRate {
 		System.in.read();
 
 		try {
-			f= new FrameGrabber(dev, w, h, channel, std, qty);
+			vd = new VideoDevice(dev);
+			if(vd.canJPEGEncode()) {
+				f= vd.getJPEGFrameGrabber(w, h, channel, std, qty);
+				System.out.println("Frames from this device can be JPEG-encoded");
+			} else {
+				f= vd.getRawFrameGrabber(w, h, channel, std);
+				System.out.println("Frames from this device can *NOT* be JPEG-encoded");
+			}
 		} catch (V4L4JException e) {
 			e.printStackTrace();
 			System.out.println("Failed to instanciate the FrameGrabber ("+dev+")");
 			throw e;
 		}
+		
+		ctrls = new Vector<Control>(vd.getControlList().values());
 
-		try {
-			f.init();
-		} catch (V4L4JException e) {
-			e.printStackTrace();
-			System.out.println("Failed to initialise the device "+dev+"");
-			throw e;
-		}
-		ctrls = f.getControls();
 		System.out.println("Found "+ctrls.size()+" controls");
 		for (Control c: ctrls) {
 			try {
@@ -113,7 +118,9 @@ public class GetFrameRate {
 		System.out.println(" =====  END  RESULTS  =====");
 		try {
 			f.stopCapture();
-			f.remove();
+			vd.releaseFrameGrabber();
+			vd.releaseControlList();
+			vd.release();
 		} catch (V4L4JException e) {
 			e.printStackTrace();
 			System.out.println("Failed to stop capture");

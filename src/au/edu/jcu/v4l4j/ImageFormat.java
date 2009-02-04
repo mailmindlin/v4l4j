@@ -2,6 +2,22 @@ package au.edu.jcu.v4l4j;
 
 import java.util.List;
 
+/**
+ * Objects of this class represent an image format. <code>ImageFormat</code> are not directly
+ * instanciated. Instead, they can be enumerated by instantiating a <code>VideoDevice</code>, and 
+ * checking the <code>DeviceInfo</code> object associated with it:
+ * <br><code>
+ * <br>VideoDevice vd = new VideoDevice("/dev/video0");
+ * <br>vd.init();
+ * <br>List<ImageFormat> fmts = vd.getDeviceInfo().getFormats();
+ * <br>for(ImageFormat im: fmts)
+ * <br>&nbsp;&nbsp; System.out.println("Format name: "+im.getName()+" - Index: "+im.getIndex());
+ * <br>vd.release();
+ * </code>
+ * 
+ * @author gilles
+ *
+ */
 public class ImageFormat {
 	
 	/**
@@ -35,7 +51,7 @@ public class ImageFormat {
 	}
 	
 	
-	public ImageFormat(String n, int i) {
+	ImageFormat(String n, int i) {
 		name = n;
 		libv4lID = i;
 	}
@@ -49,15 +65,10 @@ public class ImageFormat {
 	}
 
 	/**
-	 * this method returns the libv4l ID for this format  
-	 * @return the libv4l ID
+	 * this method returns the index for this format  
+	 * @return the index of this format
 	 */
-	public int getLibv4lID() {
+	public int getIndex() {
 		return libv4lID;
-	}
-	
-	public static void main(String[] args){
-		for(ImageFormat i: formats)
-			System.out.println(i.getName() + " - "+i.getLibv4lID());
 	}
 }

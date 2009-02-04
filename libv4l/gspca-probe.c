@@ -61,7 +61,7 @@ struct gspca_probe_private {
 };
 
 
-int gspca_driver_probe(struct capture_device *c, void **data){
+int gspca_driver_probe(struct video_device *vdev, void **data){
 	struct gspca_probe_private *priv;
 	struct video_param p;
 
@@ -77,10 +77,10 @@ int gspca_driver_probe(struct capture_device *c, void **data){
 	p.chg_para = CHGLIGHTFREQ;
 	p.light_freq = 60;
 	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: probing GSPCA\n");
-	if(ioctl(c->fd, SPCASVIDIOPARAM, &p)==0) {
+	if(ioctl(vdev->fd, SPCASVIDIOPARAM, &p)==0) {
 		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "..\n");
 		CLEAR(p);
-		if(ioctl(c->fd, SPCAGVIDIOPARAM, &p)!=0)
+		if(ioctl(vdev->fd, SPCAGVIDIOPARAM, &p)!=0)
 			goto end;
 
 		if(p.light_freq!=60) {
@@ -91,10 +91,10 @@ int gspca_driver_probe(struct capture_device *c, void **data){
 		CLEAR(p);
 		p.chg_para = CHGLIGHTFREQ;
 		p.light_freq = 50;
-		if(ioctl(c->fd, SPCASVIDIOPARAM, &p)==0) {
+		if(ioctl(vdev->fd, SPCASVIDIOPARAM, &p)==0) {
 			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, ".. ..\n");
 			CLEAR(p);
-			if(ioctl(c->fd, SPCAGVIDIOPARAM, &p)!=0)
+			if(ioctl(vdev->fd, SPCAGVIDIOPARAM, &p)!=0)
 				goto end;
 
 			if(p.light_freq!=50){
@@ -105,10 +105,10 @@ int gspca_driver_probe(struct capture_device *c, void **data){
 			CLEAR(p);
 			p.chg_para = CHGLIGHTFREQ;
 			p.light_freq = 0;
-			if(ioctl(c->fd, SPCASVIDIOPARAM, &p)==0) {
+			if(ioctl(vdev->fd, SPCASVIDIOPARAM, &p)==0) {
 				dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, ".. .. ..\n");
 					CLEAR(p);
-					if(ioctl(c->fd, SPCAGVIDIOPARAM, &p)!=0)
+					if(ioctl(vdev->fd, SPCAGVIDIOPARAM, &p)!=0)
 						goto end;
 
 					if(p.light_freq!=0) {
@@ -119,9 +119,9 @@ int gspca_driver_probe(struct capture_device *c, void **data){
 					p.chg_para = CHGLIGHTFREQ;
 					p.light_freq = 90;
 					//weird: this ioctl should fail. but instead it succeed...
-					if(ioctl(c->fd, SPCASVIDIOPARAM, &p)==0) {
+					if(ioctl(vdev->fd, SPCASVIDIOPARAM, &p)==0) {
 						CLEAR(p);
-						if(ioctl(c->fd, SPCAGVIDIOPARAM, &p)!=0)
+						if(ioctl(vdev->fd, SPCAGVIDIOPARAM, &p)!=0)
 							goto end;
 						if(p.light_freq==0) {
 							dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: found GSPCA driver\n");
@@ -140,10 +140,10 @@ end:
 	return -1;
 }
 
-int gspca_get_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, void *d, int *val){
+int gspca_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, int *val){
 	int ret = 0;
 	struct video_param p;
-	if(ioctl(c->fd, SPCAGVIDIOPARAM, &p)<0) {
+	if(ioctl(vdev->fd, SPCAGVIDIOPARAM, &p)<0) {
 		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "GSPCA: Cant get value of control %s\n",q->name);
 		return ret;
 	}
@@ -167,7 +167,7 @@ int gspca_get_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, void *d, 
 	return ret;
 }
 
-int gspca_set_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, int val, void *d){
+int gspca_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int val, void *d){
 	struct video_param p;
 	switch (q->id) {
 		case 0:
@@ -191,7 +191,7 @@ int gspca_set_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, int val, 
 			return -1;
 	}
 
-	if(ioctl(c->fd, SPCASVIDIOPARAM, &p)<0) {
+	if(ioctl(vdev->fd, SPCASVIDIOPARAM, &p)<0) {
 		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "GSPCA: Cant set control %s to value %d\n",q->name, val);
 		return LIBV4L_ERR_IOCTL;
 	}
@@ -199,7 +199,7 @@ int gspca_set_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, int val, 
 	return 0;
 }
 
-int gspca_list_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, void *d){
+int gspca_list_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d){
 	int i=0;
 	struct gspca_probe_private *priv = (struct gspca_probe_private *) d;
 	if(priv->ok==1) {

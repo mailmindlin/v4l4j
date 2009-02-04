@@ -65,21 +65,21 @@ static void float_to_fraction(float f, int *num, int *den)
 }
 
 
-int fps_param_probe(struct capture_device *c, void **data){
+int fps_param_probe(struct video_device *vdev, void **data){
 	struct v4l2_streamparm *param;
 
 	XMALLOC(param, struct v4l2_streamparm *, sizeof(struct v4l2_streamparm ));
 
 	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "FPS-PARAM: probing FPS adjust caps ...\n");
 
-	if(c->v4l_version!=V4L2_VERSION)
+	if(vdev->v4l_version!=V4L2_VERSION)
 		goto end;
 
 	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "FPS-PARAM: .. \n");
 
 	CLEAR(*param);
 	param->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	if (0 != ioctl(c->fd, VIDIOC_G_PARM, param))
+	if (0 != ioctl(vdev->fd, VIDIOC_G_PARM, param))
 		goto end;
 
 	if(!param->parm.capture.capability & V4L2_CAP_TIMEPERFRAME)
@@ -87,7 +87,7 @@ int fps_param_probe(struct capture_device *c, void **data){
 
 	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "FPS-PARAM: .. .. \n");
 
-	if (0 != ioctl(c->fd, VIDIOC_S_PARM, param))
+	if (0 != ioctl(vdev->fd, VIDIOC_S_PARM, param))
 		goto end;
 
 	*data = (void *) param;
@@ -101,13 +101,13 @@ end:
 	return -1;
 }
 
-int fps_param_get_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, void *d, int *val){
+int fps_param_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, int *val){
 	struct v4l2_streamparm *param = (struct v4l2_streamparm *) d;
 	int ret = LIBV4L_ERR_IOCTL;
 
 	CLEAR(*param);
 	param->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	if (0 == ioctl(c->fd, VIDIOC_G_PARM, param)) {
+	if (0 == ioctl(vdev->fd, VIDIOC_G_PARM, param)) {
 		*val = (int) param->parm.capture.timeperframe.numerator / param->parm.capture.timeperframe.denominator;
 		ret = 0;
 	} else
@@ -116,7 +116,7 @@ int fps_param_get_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, void 
 	return ret;
 }
 
-int fps_param_set_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, int val, void *d){
+int fps_param_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int val, void *d){
 	struct v4l2_streamparm *param = (struct v4l2_streamparm *) d;
 	int n = 0, dd = 0;
 
@@ -129,7 +129,7 @@ int fps_param_set_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, int v
 	param->parm.capture.timeperframe.denominator = n;
 
 
-	if (-1 == ioctl(c->fd, VIDIOC_S_PARM, param)) {
+	if (-1 == ioctl(vdev->fd, VIDIOC_S_PARM, param)) {
 		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "FPS-PARAM: Error setting new FPS %d\n",val);
 		return LIBV4L_ERR_STREAMING;
 	}
@@ -137,12 +137,12 @@ int fps_param_set_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, int v
 	return 0;
 }
 
-int fps_param_list_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, void *d){
+int fps_param_list_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d){
 	struct v4l2_streamparm *param = (struct v4l2_streamparm *) d;
 	if(param != NULL) {
 		CLEAR(*param);
 		param->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		if (0 != ioctl(c->fd, VIDIOC_G_PARM, param))
+		if (0 != ioctl(vdev->fd, VIDIOC_G_PARM, param))
 			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "FPS-PARAM: Error getting current FPS\n");
 
 		//Set FPS

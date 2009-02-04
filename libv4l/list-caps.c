@@ -33,6 +33,7 @@
 
 int main(int argc, char** argv) {
 	struct capture_device *c;
+	struct video_device *v;
 	int std=0, channel=0;
 
 	if(argc!=2 && argc!=4) {
@@ -50,15 +51,21 @@ int main(int argc, char** argv) {
 		printf("Using standard %d, channel %d\n",std, channel);
 	}
 
-	c = init_capture_device(argv[1], MAX_WIDTH, MAX_HEIGHT ,std ,channel ,2);
+	v = open_device(argv[1]);
+	if(v==NULL){
+		printf("Error opening device\n");
+		return -1;
+	}
+	c = init_capture_device(v, MAX_WIDTH, MAX_HEIGHT ,std ,channel ,2);
 
 	if(c==NULL) {
 		printf("Error initialising device.");
 		return -1;
 	}
-	c->capture->list_cap(c);
+	c->actions->list_cap(v->fd);
 
-	free_capture_device(c);
+	free_capture_device(v);
+	close_device(v);
 
 	return 0;
 }

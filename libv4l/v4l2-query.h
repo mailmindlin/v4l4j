@@ -27,7 +27,7 @@
 
 #include "libv4l.h"
 
-int query_device_v4l2(struct video_device *vd);
+int query_device_v4l2(struct video_device *);
 void free_video_device_v4l2(struct video_device *);
 
 #endif /* V4L2QUERY_H_ */
