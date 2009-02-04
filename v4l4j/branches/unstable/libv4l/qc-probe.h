@@ -29,9 +29,9 @@
 
 // index of the qc probe in the struct probe_v4l_driver probe_drivers[] in v4l-probe.h
 #define QC_PROBE_INDEX	2
-int qc_driver_probe(struct capture_device *, void **);
-int qc_list_ctrl(struct capture_device *, struct v4l2_queryctrl *, void *);
-int qc_get_ctrl(struct capture_device *,  struct v4l2_queryctrl *, void *, int *);
-int qc_set_ctrl(struct capture_device *, struct v4l2_queryctrl *, int, void *);
+int qc_driver_probe(struct video_device *, void **);
+int qc_list_ctrl(struct video_device *, struct v4l2_queryctrl *, void *);
+int qc_get_ctrl(struct video_device *,  struct v4l2_queryctrl *, void *, int *);
+int qc_set_ctrl(struct video_device *, struct v4l2_queryctrl *, int, void *);
 
 #endif /*H_QC_PROBE*/

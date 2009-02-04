@@ -73,5 +73,14 @@
 //control value out of range (v4l2-input.c)
 #define LIBV4L_ERR_OUT_OF_RANGE				-16
 
+//device_info in use (libv4.c)
+#define LIBV4L_ERR_INFO_IN_USE				-17
+
+//capture in use (libv4.c)
+#define LIBV4L_ERR_CAPTURE_IN_USE			-18
+
+//control in use (libv4.c)
+#define LIBV4L_ERR_CONTROL_IN_USE			-19
+
 #endif
 

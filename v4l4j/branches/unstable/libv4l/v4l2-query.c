@@ -47,16 +47,17 @@ static int find_v4l2_palette(int v4l2_fmt){
 	return UNSUPPORTED_PALETTE;
 }
 
-static void add_supported_palette(struct video_device *vd, int fmt){
-	vd->nb_palettes++;
-	XREALLOC(vd->palettes, int *, vd->nb_palettes * sizeof(int));
-	vd->palettes[(vd->nb_palettes - 1)] = fmt;
+static void add_supported_palette(struct device_info *di, int fmt){
+	di->nb_palettes++;
+	XREALLOC(di->palettes, int *, di->nb_palettes * sizeof(int));
+	di->palettes[(di->nb_palettes - 1)] = fmt;
 }
 
-static int check_palettes_v4l2(struct video_device *vd){
+static int check_palettes_v4l2(struct video_device *vdev){
 	struct v4l2_fmtdesc fmtd;
 	CLEAR(fmtd);
-	vd->palettes = NULL;
+	struct device_info *di = vdev->info;
+	di->palettes = NULL;
 	int p;
 
 	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG1, "V4L2: Checking supported palettes.\n");
@@ -64,7 +65,7 @@ static int check_palettes_v4l2(struct video_device *vd){
 	fmtd.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	fmtd.index = 0;
 
-	while(ioctl(vd->fd, VIDIOC_ENUM_FMT, &fmtd) >= 0) {
+	while(ioctl(vdev->fd, VIDIOC_ENUM_FMT, &fmtd) >= 0) {
 		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: looking for palette %d\n", fmtd.pixelformat);
 		if ((p=find_v4l2_palette(fmtd.pixelformat)) == UNSUPPORTED_PALETTE) {
 			info("libv4l has encountered an unsupported image format:\n");
@@ -74,7 +75,7 @@ static int check_palettes_v4l2(struct video_device *vd){
 		} else {
 			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG1,
 					"V4L2: %s supported (%d)\n", libv4l_palettes[p].name, p);
-			add_supported_palette(vd, p);
+			add_supported_palette(di, p);
 		}
 		fmtd.index++;
 	}
@@ -96,6 +97,7 @@ static int query_tuner(struct video_input *vi, int fd, int index){
 
 	XMALLOC(vi->tuner, struct tuner *, sizeof(struct tuner));
 	strncpy(vi->tuner->name, (char *) t.name, NAME_FIELD_LENGTH);
+	vi->tuner->index = index;
 	vi->tuner->unit = t.capability & VIDEO_TUNER_LOW ? KHZ_UNIT : MHZ_UNIT;
 	vi->tuner->rssi = t.signal;
 	vi->tuner->type =  t.type == V4L2_TUNER_RADIO ? RADIO_TYPE : TV_TYPE;
@@ -131,93 +133,94 @@ static void add_supported_std(struct video_input *vi, int std){
 	vi->supported_stds[(vi->nb_stds - 1)] = std;
 }
 
-int check_inputs_v4l2(struct video_device *vd){
+int check_inputs_v4l2(struct video_device *vdev){
 	struct v4l2_input vi;
 	int i, ret = 0;
+	struct device_info *di = vdev->info;
 	CLEAR(vi);
-	vd->inputs = NULL;
+	di->inputs = NULL;
 
 	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG1, "V4L2: querying inputs\n");
 
 	//Check how many inputs there are
-	while (-1 != ioctl(vd->fd, VIDIOC_ENUMINPUT, &vi))
+	while (-1 != ioctl(vdev->fd, VIDIOC_ENUMINPUT, &vi))
 		vi.index++;
 
-	vd->nb_inputs = vi.index;
+	di->nb_inputs = vi.index;
 
-	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG1, "V4L2: found %d inputs\n", vd->nb_inputs );
+	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG1, "V4L2: found %d inputs\n", di->nb_inputs );
 
-	XMALLOC(vd->inputs, struct video_input *, vd->nb_inputs * sizeof(struct video_input ));
+	XMALLOC(di->inputs, struct video_input *, di->nb_inputs * sizeof(struct video_input ));
 
-	for (i=0; i<vd->nb_inputs; i++) {
+	for (i=0; i<di->nb_inputs; i++) {
 		CLEAR(vi);
-		CLEAR(vd->inputs[i]);
+		CLEAR(di->inputs[i]);
 		vi.index = i;
-		if (-1 == ioctl(vd->fd, VIDIOC_ENUMINPUT, &vi)) {
-			info("Failed to get details of input %d on device %s\n", i, vd->file);
+		if (-1 == ioctl(vdev->fd, VIDIOC_ENUMINPUT, &vi)) {
+			info("Failed to get details of input %d on device %s\n", i, vdev->file);
 			ret = LIBV4L_ERR_IOCTL;
-			free_video_inputs(vd->inputs,i);
+			free_video_inputs(di->inputs,i);
 			goto end;
 		}
 
 		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: input %d - %s - %s - tuner: %d\n", i, vi.name, (vi.type == V4L2_INPUT_TYPE_TUNER) ? "Tuner" : "Camera",vi.tuner);
 
-		strncpy(vd->inputs[i].name, (char *) vi.name, NAME_FIELD_LENGTH);
-		vd->inputs[i].type = (vi.type == V4L2_INPUT_TYPE_TUNER) ? INPUT_TYPE_TUNER : INPUT_TYPE_CAMERA;
+		strncpy(di->inputs[i].name, (char *) vi.name, NAME_FIELD_LENGTH);
+		di->inputs[i].index = i;
+		di->inputs[i].type = (vi.type == V4L2_INPUT_TYPE_TUNER) ? INPUT_TYPE_TUNER : INPUT_TYPE_CAMERA;
 
 		if (vi.type & V4L2_INPUT_TYPE_TUNER) {
 			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG1, "V4L2: Querying tuner\n");
-			if (-1 == query_tuner(&vd->inputs[i], vd->fd, vi.tuner)) {
-				info("Failed to get details of tuner on input %d of device %s\n", i, vd->file);
+			if (-1 == query_tuner(&di->inputs[i], vdev->fd, vi.tuner)) {
+				info("Failed to get details of tuner on input %d of device %s\n", i, vdev->file);
 				ret = LIBV4L_ERR_IOCTL;
-				free_video_inputs(vd->inputs,i);
+				free_video_inputs(di->inputs,i);
 				goto end;
 			}
 		} else {
 			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG1, "V4L2: No tuner\n");
-			vd->inputs[i].tuner = NULL;
+			di->inputs[i].tuner = NULL;
 		}
 
-		if(vi.std & V4L2_STD_PAL) add_supported_std(&vd->inputs[i], PAL);
-		if(vi.std & V4L2_STD_NTSC) add_supported_std(&vd->inputs[i], NTSC);
-		if(vi.std & V4L2_STD_SECAM) add_supported_std(&vd->inputs[i], SECAM);
-		if(vi.std == V4L2_STD_UNKNOWN) add_supported_std(&vd->inputs[i], WEBCAM);
+		if(vi.std & V4L2_STD_PAL) add_supported_std(&di->inputs[i], PAL);
+		if(vi.std & V4L2_STD_NTSC) add_supported_std(&di->inputs[i], NTSC);
+		if(vi.std & V4L2_STD_SECAM) add_supported_std(&di->inputs[i], SECAM);
+		if(vi.std == V4L2_STD_UNKNOWN) add_supported_std(&di->inputs[i], WEBCAM);
 
 	}
 	end:
 	return ret;
 }
 
-int query_device_v4l2(struct video_device *vd){
+int query_device_v4l2(struct video_device *vdev){
 	int ret = 0;
 	struct v4l2_capability caps;
 
 	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG1, "V4L2: Querying V4L2 device.\n");
 
-	if (check_v4l2(vd->fd, &caps)==-1) {
-		info("Error checking capabilities of V4L2 video device %s", vd->file);
+	if (check_v4l2(vdev->fd, &caps)==-1) {
+		info("Error checking capabilities of V4L2 video device %s", vdev->file);
 		ret = LIBV4L_ERR_NOCAPS;
 		goto end;
 	}
 	//fill name field
-	strncpy(vd->name, (char *) caps.card, NAME_FIELD_LENGTH);
+	strncpy(vdev->info->name, (char *) caps.card, NAME_FIELD_LENGTH);
 
 	//fill input field
-	if(check_inputs_v4l2(vd)==-1){
-		info("Error checking available inputs on V4L2 video device %s", vd->file);
+	if(check_inputs_v4l2(vdev)==-1){
+		info("Error checking available inputs on V4L2 video device %s", vdev->file);
 		ret = LIBV4L_ERR_NOCAPS;
 		goto end;
 	}
 
 	//fill palettes field
-	vd->nb_palettes = check_palettes_v4l2(vd);
+	vdev->info->nb_palettes = check_palettes_v4l2(vdev);
 
 	end:
 	return ret;
-
 }
 
 void free_video_device_v4l2(struct video_device *vd){
-	free_video_inputs(vd->inputs, vd->nb_inputs);
-	XFREE(vd->palettes);
+	XFREE(vd->info->palettes);
+	free_video_inputs(vd->info->inputs, vd->info->nb_inputs);
 }

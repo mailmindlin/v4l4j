@@ -28,6 +28,8 @@
 #include <stdio.h>
 #include <jpeglib.h>
 
+#include "libv4l.h"
+
 struct v4l4j_device;
 
 struct jpeg {
@@ -39,15 +41,17 @@ struct jpeg {
 };
 
 struct v4l4j_device {
-	struct capture_device *c;	//the V4L2 struct
+	struct video_device *vdev;	//the libv4l struct
 	struct jpeg *j;				//the jpeg compressor
 	unsigned char **bufs;		//the buffers holding the last JPEG compressed frame
-	int jpeg_quality;			//the jpeg quality
+	int jpeg_quality;			//the jpeg quality, set to -1 if disable
 	int capture_len;			//the size of the last captured frame returned by libv4l
 	int len;					//the size of the last JPEG compressed frame
 	int buf_id;					//the index of the buffer where the next frame goes
 };
 
+#define JPEG_SUPPORTED_FORMATS		{JPEG, MJPEG, YUV420, YUYV, RGB24}
+#define NB_JPEG_SUPPORTED_FORMATS	5
 
 #define BYTEBUFER_CLASS			"java/nio/ByteBuffer"
 #define V4L4J_PACKAGE			"au/edu/jcu/v4l4j/"
@@ -61,6 +65,7 @@ struct v4l4j_device {
 #define FORMAT_EXCP				EXCEPTION_PACKAGE "ImageFormatException"
 #define STD_EXCP				EXCEPTION_PACKAGE "VideoStandardException"
 #define CTRL_EXCP				EXCEPTION_PACKAGE "ControlException"
+#define RELEASE_EXCP			EXCEPTION_PACKAGE "ReleaseException"
 
 
 /* Exception throwing helper */

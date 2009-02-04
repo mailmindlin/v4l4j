@@ -22,6 +22,7 @@
 *
 */
 #include <jni.h>
+#include <stdint.h>
 
 #include "libv4l.h"
 #include "palettes.h"
@@ -32,33 +33,32 @@ static jobject create_tuner_object(JNIEnv *e, jobject t, jclass this_class, stru
 	jclass tuner_class;
 	jmethodID ctor;
 
-	tuner_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/Tuner");
+	tuner_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/TunerInfo");
 	if(tuner_class == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the tuner class\n");
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up tuner class");
 		return 0;
 	}
 
-	ctor = (*e)->GetMethodID(e, tuner_class, "<init>", "(Ljava/lang/String;IIJJ)V");
-	//ctor = (*e)->GetMethodID(e, tuner_class, "<init>", "(Ljava/lang/String;II)V");
+	ctor = (*e)->GetMethodID(e, tuner_class, "<init>", "(Ljava/lang/String;IIIJJ)V");
 	if(ctor == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the constructor of tuner class\n");
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up constructor of tuner class");
 		return 0;
 	}
 
-	dprint(LOG_V4L4J, "[V4L4J] Creating tuner object: name '%s' - low: %ld - high: %ld - unit: %d - type: %d\n",
-			tuner->name, tuner->rangelow, tuner->rangehigh, tuner->unit, tuner->type);
+	dprint(LOG_V4L4J, "[V4L4J] Creating tuner object: index: %d - name '%s' - low: %ld - high: %ld - unit: %d - type: %d\n",
+			tuner->index, tuner->name, tuner->rangelow, tuner->rangehigh, tuner->unit, tuner->type);
 
 	return (*e)->NewObject(e, tuner_class, ctor,
-			(*e)->NewStringUTF(e,(const char *)tuner->name), tuner->unit , tuner->type,
+			(*e)->NewStringUTF(e,(const char *)tuner->name), tuner->index, tuner->unit , tuner->type,
 			(jlong) (tuner->rangelow & 0xffffffff), (jlong) (tuner->rangehigh & 0xffffffff));
 }
 
 static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct video_device *vd){
 	jclass input_class, vector_class;
 	jfieldID inputs_field;
-	jmethodID ctor, add_method;
+	jmethodID ctor_wotuner, ctor_wtuner, add_method;
 	jintArray stds;
 	jobject obj, input_list_object;
 
@@ -67,10 +67,10 @@ static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct
 
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 
-	input_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/Input");
+	input_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/InputInfo");
 	if(input_class == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the input class\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up input class");
+		dprint(LOG_V4L4J, "[V4L4J] Error looking up the InputInfo class\n");
+		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up InputInfo class");
 		return;
 	}
 
@@ -102,8 +102,22 @@ static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct
 		return;
 	}
 
-	for(i = 0; i< vd->nb_inputs; i++){
-		vi = &vd->inputs[i];
+	ctor_wotuner = (*e)->GetMethodID(e, input_class, "<init>", "(Ljava/lang/String;[II)V");
+	if(ctor_wotuner == NULL){
+		dprint(LOG_V4L4J, "[V4L4J] Error looking up the constructor of Input class\n");
+		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up the constructor of Input  class");
+		return;
+	}
+
+	ctor_wtuner = (*e)->GetMethodID(e, input_class, "<init>", "(Ljava/lang/String;[ILau/edu/jcu/v4l4j/TunerInfo;I)V");
+	if(ctor_wtuner == NULL){
+		dprint(LOG_V4L4J, "[V4L4J] Error looking up the constructor of InputInfo class\n");
+		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up the constructor of InputInfo class");
+		return;
+	}
+
+	for(i = 0; i< vd->info->nb_inputs; i++){
+		vi = &vd->info->inputs[i];
 		//build the input object
 
 		//create the short[] with the supported standards
@@ -117,27 +131,19 @@ static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct
 		(*e)->SetIntArrayRegion(e, stds, 0, vi->nb_stds,  vi->supported_stds);
 
 		//create the input object
-		if(vd->inputs[i].tuner==NULL) {
-			ctor = (*e)->GetMethodID(e, input_class, "<init>", "(Ljava/lang/String;[I)V");
-			if(ctor == NULL){
-				dprint(LOG_V4L4J, "[V4L4J] Error looking up the constructor of Input class\n");
-				THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up the constructor of Input  class");
-				return;
-			}
-			dprint(LOG_V4L4J, "[V4L4J] Creating input object (wo tuner): name '%s' - supported standards (%d): %p\n", vi->name,vi->nb_stds, vi->supported_stds);
-			obj = (*e)->NewObject(e, input_class, ctor, (*e)->NewStringUTF(e, (const char *)vi->name), stds, t);
+		if(vd->info->inputs[i].tuner==NULL) {
+
+			dprint(LOG_V4L4J, "[V4L4J] Creating input object (wo tuner): name '%s' - supported standards (%d): %p - index: %d\n",
+					vi->name,vi->nb_stds, vi->supported_stds, vi->index);
+			obj = (*e)->NewObject(e, input_class, ctor_wotuner, (*e)->NewStringUTF(e, (const char *)vi->name), stds, vi->index);
 
 		} else {
-			ctor = (*e)->GetMethodID(e, input_class, "<init>", "(Ljava/lang/String;[ILau/edu/jcu/v4l4j/Tuner;)V");
-			if(ctor == NULL){
-				dprint(LOG_V4L4J, "[V4L4J] Error looking up the constructor of Input class\n");
-				THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up the constructor of Input  class");
-				return;
-			}
-			dprint(LOG_V4L4J, "[V4L4J] Creating input object (with tuner): name '%s' - supported standards(%d): %p\n", vi->name, vi->nb_stds, vi->supported_stds);
-			obj = (*e)->NewObject(e, input_class, ctor,
+
+			dprint(LOG_V4L4J, "[V4L4J] Creating input object (with tuner): name '%s' - supported standards(%d): %p - index: %d\n",
+					vi->name, vi->nb_stds, vi->supported_stds, vi->index);
+			obj = (*e)->NewObject(e, input_class, ctor_wtuner,
 					(*e)->NewStringUTF(e, (const char *)vi->name), stds,
-					create_tuner_object(e, t, this_class, vi->tuner), t);
+					create_tuner_object(e, t, this_class, vi->tuner), vi->index);
 		}
 
 		//store it in the list
@@ -203,12 +209,12 @@ static void create_formats_object(JNIEnv *e, jobject t, jclass this_class, struc
 		return;
 	}
 
-	for(i=0; i<vd->nb_palettes; i++){
+	for(i=0; i<vd->info->nb_palettes; i++){
 		dprint(LOG_V4L4J, "[V4L4J] Creating ImageFormat object: name %s - id: %d\n",
-				libv4l_palettes[vd->palettes[i]].name, vd->palettes[i]);
+				libv4l_palettes[vd->info->palettes[i]].name, vd->info->palettes[i]);
 		obj = (*e)->NewObject(e, format_class, ctor,
-				(*e)->NewStringUTF(e, (const char *) libv4l_palettes[vd->palettes[i]].name ),
-				vd->palettes[i]);
+				(*e)->NewStringUTF(e, (const char *) libv4l_palettes[vd->info->palettes[i]].name ),
+				vd->info->palettes[i]);
 		(*e)->CallVoidMethod(e, format_list_object, add_method, obj);
 	}
 }
@@ -216,14 +222,16 @@ static void create_formats_object(JNIEnv *e, jobject t, jclass this_class, struc
 /*
  * Get info about a v4l device given its device file
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobject t, jstring f){
-	jfieldID name_field, formats_field;
+//JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobject t, jlong v4l4j_device){
+void Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobject t, jlong v4l4j_device){
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) v4l4j_device;
+	jfieldID name_field;
 	jclass this_class;
-	struct video_device *vd;
-	const char * device_file = (*e)->GetStringUTFChars(e, f, 0);
-	vd = query_device(device_file);
-	(*e)->ReleaseStringUTFChars(e, f,device_file);
+	struct video_device *vd = d->vdev;
 
+	dprint(LOG_CALLS, "[V4L4J] Gathering JAVA object handles\n");
+	//get handle on need java objects
 	this_class = (*e)->GetObjectClass(e,t);
 	if(this_class == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the DeviceInfo class\n");
@@ -239,16 +247,12 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobje
 	}
 
 
-	formats_field = (*e)->GetFieldID(e, this_class, "formats", "Ljava/util/List;");
-	if(name_field == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the formats attribute\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up the formats attribute");
-		return;
-	}
-
-	if(vd!=NULL){
+	dprint(LOG_CALLS, "[LIBV4L] call to get_device_info\n");
+	//get data from libv4l
+	if(get_device_info(vd)!=NULL){
+		//fill in values in DeviceInfo object
 		/* set the name field */
-		(*e)->SetObjectField(e, t, name_field, (*e)->NewStringUTF(e, vd->name));
+		(*e)->SetObjectField(e, t, name_field, (*e)->NewStringUTF(e, vd->info->name));
 
 		/* set the inputs field */
 		create_inputs_object(e, t, this_class, vd);
@@ -256,6 +260,8 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobje
 		/* set the formats field */
 		create_formats_object(e, t, this_class, vd);
 
-		free_video_device(vd);
-	}
+		release_device_info(vd);
+	} else
+		THROW_EXCEPTION(e, GENERIC_EXCP, "Error getting information from video device");
+
 }

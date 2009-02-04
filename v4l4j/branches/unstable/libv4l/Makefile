@@ -4,17 +4,40 @@
 #
 # edit anything below at your own risk
 #
+
+
+# LOG_LEVEL_INFO            1
+# LOG_LEVEL_DEBUG           2
+# LOG_LEVEL_DEBUG1          4
+# LOG_LEVEL_DEBUG2          8
+# LOG_LEVEL_ERR             16
+# LOG_LEVEL_ALL             31			
+LOG_LEVEL=31
+
+# LOG_SOURCE_V4L            1
+# LOG_SOURCE_V4L1           2
+# LOG_SOURCE_V4L2           4
+# LOG_SOURCE_MEMALLOC       8
+# LOG_SOURCE_CONTROL        16
+# LOG_SOURCE_CTRL_PROBE     32
+# LOG_SOURCE_ALL            63
+LOG_SOURCE=8
+
+ifneq ($(DEBUG),)
+DBG=$(DEBUG) -DLIBV4L_LOG_LEVEL=$(LOG_LEVEL) -DLIBV4L_LOG_SOURCE=$(LOG_SOURCE)
+endif
+
 VERSION_MAJOR=0
-VERSION_MINOR=5
-VERSION_RELEASE=7
+VERSION_MINOR=6
+VERSION_RELEASE=0
 
 LIB=libv4l.a
-TESTOBJ=test.o list-caps.o test-list-caps.o
-OBJ=v4l2-input.o v4l-control.o v4l1-input.o libv4l.o pwc-probe.o gspca-probe.o qc-probe.o fps-param-probe.o v4l1-query.o v4l2-query.o
+TESTOBJ=test.o list-caps.o
+OBJ=v4l2-input.o v4l1-input.o libv4l.o pwc-probe.o gspca-probe.o qc-probe.o fps-param-probe.o v4l1-query.o v4l2-query.o
 
 CC=gcc
 OPTIMISATION=-O3
-CFLAGS=$(DEBUG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) -DVER_REL=$(VERSION_RELEASE) $(OPTIMISATION) -fPIC
+CFLAGS=$(DBG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) -DVER_REL=$(VERSION_RELEASE) $(OPTIMISATION) -fPIC
 
 LD=gcc
 LDFLAGS=
@@ -27,7 +50,6 @@ $(LIB): $(OBJ)
 test: $(TESTOBJ) $(OBJ)
 	$(LD) $(LDFLAGS) test.o $(OBJ) -o test-capture
 	$(LD) $(LDFLAGS) list-caps.o $(OBJ) -o list-caps
-	$(LD) $(LDFLAGS) test-list-caps.o $(OBJ) -o test-list-caps
 
 clean:
 	rm -f $(OBJ) $(BIN) $(LIB) $(TESTOBJ) list-caps test-capture test-list-caps ./*~

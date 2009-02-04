@@ -39,16 +39,16 @@
 int check_v4l2(int fd, struct v4l2_capability *);
 
 //Check whether the device is V4L2 and has capture and mmap capabilities
-int check_capture_capabilities_v4l2(struct capture_device *);
+int check_capture_capabilities_v4l2(int, char *);
 
 // set the capture parameters (hardcoded to require YUV420 for now
-int set_cap_param_v4l2(struct capture_device *, int *, int);
+int set_cap_param_v4l2(struct video_device *, int *, int);
 
 //initialise streaming, request V4L2 buffers and create mmap'ed buffers
-int init_capture_v4l2(struct capture_device *);
+int init_capture_v4l2(struct video_device *);
 
 //tell V4L2 to start the capture
-int start_capture_v4l2(struct capture_device *);
+int start_capture_v4l2(struct video_device *);
 
 
 /*
@@ -57,10 +57,10 @@ int start_capture_v4l2(struct capture_device *);
  */
 
 //dequeue the next buffer with available frame
-void *dequeue_buffer_v4l2(struct capture_device *, int *);
+void *dequeue_buffer_v4l2(struct video_device *, int *);
 
 //enqueue the buffer when done using the frame
-void enqueue_buffer_v4l2(struct capture_device *);
+void enqueue_buffer_v4l2(struct video_device *);
 
 
 /*
@@ -71,37 +71,36 @@ void enqueue_buffer_v4l2(struct capture_device *);
  */
 
 //counterpart of start_capture, must be called it start_capture was successful
-int stop_capture_v4l2(struct capture_device *);
+int stop_capture_v4l2(struct video_device *);
 
 //counterpart of init_capture, must be called it init_capture was successful
-void free_capture_v4l2(struct capture_device *);
+void free_capture_v4l2(struct video_device *);
 
 //counterpart of init_capture_device, must be called it init_capture_device was successful
-void free_capture_device2(struct capture_device *);
+void free_capture_device2(struct video_device *);
 
 
 /*
  * Control related functions
  */
  //returns the number of controls (standard and private V4L2 controls only)
-int count_v4l2_controls(struct capture_device *);
+int count_v4l2_controls(struct video_device *);
 //Populate the control_list with reported V4L2 controls
 //and returns how many controls were created
-int create_v4l2_controls(struct capture_device *, struct control_list *);
+int create_v4l2_controls(struct video_device *, struct control_list *);
 //returns the value of a control
-int get_control_value_v4l2(struct capture_device *, struct v4l2_queryctrl *, int *);
+int get_control_value_v4l2(struct video_device *, struct v4l2_queryctrl *, int *);
 //sets the value of a control
-int set_control_value_v4l2(struct capture_device *, struct v4l2_queryctrl *, int);
+int set_control_value_v4l2(struct video_device *, struct v4l2_queryctrl *, int);
 
 
 /*
  * Query and list methods (printf to stdout, use to debug)
- * these methods can be called after init_capture_device2 and before free_capture_device2
+ * Must be called after init_capture_device2 and before free_capture_device2
  */
-void list_cap_v4l2(struct capture_device *);			//prints results from query methods listed below
-void enum_image_fmt_v4l2(struct capture_device *);		//lists all supported image formats
-void query_frame_sizes_v4l2(struct capture_device *);		// not implemented
-void query_capture_intf_v4l2(struct capture_device *);		//prints capabilities
-void query_current_image_fmt_v4l2(struct capture_device *);	//useless...
+void list_cap_v4l2(int);	//lists all supported image formats
+							//prints capabilities
+							//print current settings for v4l2
+
 
 #endif
