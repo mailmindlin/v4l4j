@@ -43,7 +43,7 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
 	private long start = 0;
 	private int n;
 	private FrameGrabber fg;
-	Hashtable<String,Control> controls; 
+	private Hashtable<String,Control> controls; 
 	private Thread captureThread;
 	private boolean stop;
 	private VideoDevice vd;

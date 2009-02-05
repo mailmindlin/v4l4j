@@ -38,18 +38,18 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_Control_doGetValue(JNIEnv *e, jobje
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 	int val = 0, ret;
 
-	dprint(LOG_LIBV4L, "[LIBV4L] Calling get_control_value(dev: %s, ctrl name:%s)\n", d->vdev->file,d->vdev->controls->ctrl[id].name);
-	ret = get_control_value(d->vdev,&(d->vdev->controls->ctrl[id]), &val);
+	dprint(LOG_LIBV4L, "[LIBV4L] Calling get_control_value(dev: %s, ctrl name:%s)\n", d->vdev->file,d->vdev->control->controls[id].v4l2_ctrl->name);
+	ret = get_control_value(d->vdev,d->vdev->control->controls[id].v4l2_ctrl, &val);
 
 	if(ret != 0) {
 		if(ret == LIBV4L_ERR_STREAMING)
-			THROW_EXCEPTION(e, CTRL_EXCP, "Can not get value for control '%s' while streaming", d->vdev->controls->ctrl[id].name);
+			THROW_EXCEPTION(e, CTRL_EXCP, "Can not get value for control '%s' while streaming", d->vdev->control->controls[id].v4l2_ctrl->name);
 		else
-			THROW_EXCEPTION(e, CTRL_EXCP, "Error getting current value for control '%s'", d->vdev->controls->ctrl[id].name);
+			THROW_EXCEPTION(e, CTRL_EXCP, "Error getting current value for control '%s'", d->vdev->control->controls[id].v4l2_ctrl->name);
 		return -1;
 	}
 
-	dprint(LOG_LIBV4L, "[LIBV4L] get_control_value(dev: %s, ctrl name:%s) = %d\n", d->vdev->file,d->vdev->controls->ctrl[id].name, val);
+	dprint(LOG_LIBV4L, "[LIBV4L] get_control_value(dev: %s, ctrl name:%s) = %d\n", d->vdev->file,d->vdev->control->controls[id].v4l2_ctrl->name, val);
 	return val;
 }
 
@@ -62,13 +62,13 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_Control_doSetValue(JNIEnv *e, jobje
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
-	dprint(LOG_LIBV4L, "[LIBV4L] Calling set_control_value(dev: %s, ctrl name:%s, val: %d)\n", d->vdev->file,d->vdev->controls->ctrl[id].name,value);
-	ret = set_control_value(d->vdev, &(d->vdev->controls->ctrl[id]), value);
+	dprint(LOG_LIBV4L, "[LIBV4L] Calling set_control_value(dev: %s, ctrl name:%s, val: %d)\n", d->vdev->file,d->vdev->control->controls[id].v4l2_ctrl->name,value);
+	ret = set_control_value(d->vdev, d->vdev->control->controls[id].v4l2_ctrl, value);
 	if(ret != 0) {
 		if(ret == LIBV4L_ERR_OUT_OF_RANGE)
-			THROW_EXCEPTION(e, CTRL_EXCP, "Error: value %d for control '%s' out of range", value, d->vdev->controls->ctrl[id].name);
+			THROW_EXCEPTION(e, CTRL_EXCP, "Error: value %d for control '%s' out of range", value, d->vdev->control->controls[id].v4l2_ctrl->name);
 		else
-			THROW_EXCEPTION(e, CTRL_EXCP, "Error setting current value for control '%s'", d->vdev->controls->ctrl[id].name);
+			THROW_EXCEPTION(e, CTRL_EXCP, "Error setting current value for control '%s'", d->vdev->control->controls[id].v4l2_ctrl->name);
 	}
 }
 

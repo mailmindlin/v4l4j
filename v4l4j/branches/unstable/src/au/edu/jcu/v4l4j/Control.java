@@ -24,6 +24,9 @@
 
 package au.edu.jcu.v4l4j;
 
+import java.util.List;
+import java.util.Vector;
+
 import au.edu.jcu.v4l4j.exceptions.ControlException;
 
 /**
@@ -182,6 +185,26 @@ public class Control {
 		return type;
 	}
 	
+	
+	public List<Integer> getDiscreteValues() throws ControlException{
+		if(type!=V4l4JConstants.DISCRETE)
+			throw new ControlException("This control does not have discrete values");
+		Vector<Integer> v = new Vector<Integer>();
+		for(int i: values)
+			v.add(new Integer(i));
+		return v;
+			
+	}
+	
+	public List<String> getDiscreteValueNames() throws ControlException{
+		if(type!=V4l4JConstants.DISCRETE)
+			throw new ControlException("This control does not have discrete values");
+		Vector<String> v = new Vector<String>();
+		for(String s: names)
+			v.add(s);
+		return v;
+			
+	}
 	/**
 	 * This method validates the given value, ie it checks that it is between
 	 * the allowed minimum & maximum. If it is, the given value is returned.
