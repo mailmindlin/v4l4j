@@ -87,7 +87,7 @@ void free_capture_device2(struct video_device *);
 int count_v4l2_controls(struct video_device *);
 //Populate the control_list with reported V4L2 controls
 //and returns how many controls were created
-int create_v4l2_controls(struct video_device *, struct control_list *);
+int create_v4l2_controls(struct video_device *, struct control *, int);
 //returns the value of a control
 int get_control_value_v4l2(struct video_device *, struct v4l2_queryctrl *, int *);
 //sets the value of a control
@@ -101,6 +101,7 @@ int set_control_value_v4l2(struct video_device *, struct v4l2_queryctrl *, int);
 void list_cap_v4l2(int);	//lists all supported image formats
 							//prints capabilities
 							//print current settings for v4l2
+							//print controls
 
 
 #endif

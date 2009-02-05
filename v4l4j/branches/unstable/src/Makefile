@@ -4,7 +4,7 @@ JDK_HOME=/usr/lib/jvm/java-6-sun
 #JDK_HOME=/usr/lib/j2sdk1.6-sun
 
 #uncomment the following line to enable debug output from the JNI libv4l4j
-#DEBUG=-DDEBUG -Wall
+DEBUG=-DDEBUG -Wall
 
 
 #
@@ -18,7 +18,7 @@ JDK_HOME=/usr/lib/jvm/java-6-sun
 # LOG_JPEG          8
 # LOG_V4L4J         16
 # LOG_ALL           31
-LOG_SOURCE=4
+LOG_SOURCE=31
 
 ifneq ($(DEBUG),)
 DBG=$(DEBUG) -DLOG_SOURCE=$(LOG_SOURCE)

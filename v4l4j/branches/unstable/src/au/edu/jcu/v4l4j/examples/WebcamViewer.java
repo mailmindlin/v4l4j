@@ -2,6 +2,7 @@ package au.edu.jcu.v4l4j.examples;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -19,6 +20,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
 import au.edu.jcu.v4l4j.Control;
 import au.edu.jcu.v4l4j.FrameGrabber;
@@ -33,9 +35,11 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  *
  */
 public class WebcamViewer extends WindowAdapter implements Runnable {
-	private JLabel l;
+	private JLabel video, fps;
 	private JFrame f;
 	private JPanel controlPanel;
+	private JScrollPane controlScrollPane;
+	private JPanel videoPanel;
 	private long start = 0;
 	private int n;
 	private FrameGrabber fg;
@@ -59,7 +63,7 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
         initGUI();
         stop = false;
         captureThread = new Thread(this, "Capture Thread");
-        captureThread.start();
+        //captureThread.start();
     }
     
     /** 
@@ -69,19 +73,32 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
         f = new JFrame();
         f.setLayout(new BoxLayout(f.getContentPane(),BoxLayout.LINE_AXIS));
         
-        l = new JLabel();
-        l.setMinimumSize(new Dimension(fg.getWidth(), fg.getHeight()));
+        videoPanel = new JPanel();
+        videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.PAGE_AXIS));
+        
+        video = new JLabel();
+        video.setPreferredSize(new Dimension(fg.getWidth(), fg.getHeight()));
+        video.setAlignmentX(Component.CENTER_ALIGNMENT);
+        videoPanel.add(video);
+        
+        fps = new JLabel("FPS: 0.0");
+        fps.setAlignmentX(Component.CENTER_ALIGNMENT);
+        videoPanel.add(fps);
+        
         controlPanel = new JPanel();
+        controlScrollPane = new JScrollPane(controlPanel);
+        controlScrollPane.getVerticalScrollBar().setBlockIncrement(40);
+        controlScrollPane.getVerticalScrollBar().setUnitIncrement(25);
+        controlScrollPane.setPreferredSize(new Dimension(300, fg.getHeight()));
         controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.PAGE_AXIS));
         
-        f.getContentPane().add(l);
-        f.getContentPane().add(controlPanel);
+        f.getContentPane().add(videoPanel);
+        f.getContentPane().add(controlScrollPane);
         
         initControlPane();
 
         f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         f.addWindowListener(this);
-        f.setMinimumSize(new Dimension(fg.getWidth(), fg.getHeight()));
         f.pack();
         f.setVisible(true);
     }
@@ -114,13 +131,14 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
      * @param b
      */
     public void setImage(byte[] b) {
-    	l.setIcon(new ImageIcon(b));
+    	video.setIcon(new ImageIcon(b));
     	
     	// Computes the frame rate
     	if(start==0)
     		start = System.currentTimeMillis();
     	else if(System.currentTimeMillis()>start+10000) {
-			System.out.println("FPS: "+ (((float) 1000*n/(System.currentTimeMillis()-start))  ));
+			//System.out.println("FPS: "+ (((float) 1000*n/(System.currentTimeMillis()-start))  ));
+    		fps.setText("FPS: "+(float) 1000*n/(System.currentTimeMillis()-start));
 			start = System.currentTimeMillis();
 			n = 0;
 		} else
@@ -238,6 +256,8 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
     		contentPanel.setBorder(BorderFactory.createEmptyBorder(1, 0, 1, 0));
 			
 			up = new JButton("+");
+			up.setFont(new Font("Serif", Font.PLAIN, 8));
+
 			up.setAlignmentX(Component.CENTER_ALIGNMENT);
 			down = new JButton("-");
 			down.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -259,24 +279,23 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
 			down.addMouseListener(this);
 		}
 		
-		public void mouseClicked(MouseEvent e) {
+		public void mousePressed(MouseEvent e) {
 			JButton b = (JButton) e.getComponent() ;
 			//JOptionPane.showMessageDialog(null, b.getText()+ " for "+ ctrl.getName());
 			if(b.getText().equals("-"))
 				try {
-					ctrl.decreaseValue();
+						ctrl.decreaseValue();
 				} catch (ControlException e1) {
 					JOptionPane.showMessageDialog(contentPanel, "The value can not be decreased\n"+e1.getMessage());
 				}
 			else
 				try {
-					ctrl.increaseValue();
+						ctrl.increaseValue();
 				} catch (ControlException e1) {
 					JOptionPane.showMessageDialog(contentPanel, "The value can not be increased\n"+e1.getMessage());
-				}
-			
-			updateValue();
-				
+				} 
+
+			updateValue();	
 		}
 		
 		public void updateValue(){
