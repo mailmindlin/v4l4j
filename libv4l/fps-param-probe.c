@@ -92,7 +92,7 @@ int fps_param_probe(struct video_device *vdev, void **data){
 
 	*data = (void *) param;
 
-	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "FPS-PARAM: FPS adujstable !\n");
+	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "FPS-PARAM: FPS adujstable  (%d control)!\n", NB_PRIV_IOCTL);
 	return NB_PRIV_IOCTL;
 
 end:
@@ -137,7 +137,7 @@ int fps_param_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int 
 	return 0;
 }
 
-int fps_param_list_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d){
+int fps_param_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 	struct v4l2_streamparm *param = (struct v4l2_streamparm *) d;
 	if(param != NULL) {
 		CLEAR(*param);
@@ -147,15 +147,15 @@ int fps_param_list_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, voi
 
 		//Set FPS
 		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "FPS-PARAM: Found FPS adjust ioctl\n");
-		q[0].id=0;
-		q[0].type = V4L2_CTRL_TYPE_INTEGER;
-		strcpy((char *) q[0].name,"Frame rate");
-		q[0].minimum = 0;
-		q[0].maximum = 255;
-		q[0].step = 0;
-		q[0].default_value = param->parm.capture.timeperframe.denominator;
-		q[0].reserved[0]=V4L2_PRIV_IOCTL;
-		q[0].reserved[1]=FPS_PARAM_PROBE_INDEX;
+		c[0].v4l2_ctrl->id=0;
+		c[0].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
+		strcpy((char *) c[0].v4l2_ctrl->name,"Frame rate");
+		c[0].v4l2_ctrl->minimum = 0;
+		c[0].v4l2_ctrl->maximum = 255;
+		c[0].v4l2_ctrl->step = 0;
+		c[0].v4l2_ctrl->default_value = param->parm.capture.timeperframe.denominator;
+		c[0].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
+		c[0].v4l2_ctrl->reserved[1]=FPS_PARAM_PROBE_INDEX;
 	}
 	return NB_PRIV_IOCTL;
 }

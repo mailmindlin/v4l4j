@@ -44,5 +44,27 @@ public class V4l4JConstants {
 	 * This value represents the minimum value of the JPEG quality setting
 	 */
 	public static int MIN_JPEG_QUALITY = 0;
+	/**
+	 * If this control has a type equal to BUTTON, it has a value of 0,
+	 * and pressing it is done by setting any value using <code>setValue()</code> 
+	 */
+	public final static int BUTTON=0;
+	/**
+	 * If this control has a type equal to SLIDER, it accepts a range of value between a minimum (as returned by <code>Control.getMin()</code>) and
+	 * a maximum (as returned by <code>Control.getMax()</code>) in increments (as returned by <code>Control.getStep()</code>)
+	 */
+	public final static int SLIDER=1;
+	/**
+	 * If this control has a type equal to SWITCH, it accepts two different values: 0 (as returned by <code>Control.getMin()</code>) and
+	 *  1 (as returned by <code>getMax()</code>
+	 */
+	public final static int SWITCH=2;
+	
+	/**
+	 * If this control has a type equal to DISCRETE, it accepts discrete values as returned by <code>Control.getDiscreteValues()</code>.
+	 * These discrete values may be have a string description (returned by <code>Control.getDescriptions()</code>)are in the range 
+	 * <code>Control.getMin()</code> and	<code>Control.getMax()</code>. The step value as returned by <code>Control.getStep()</code> is not applicable.
+	 */
+	public final static int DISCRETE=3;
 
 }

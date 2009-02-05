@@ -517,7 +517,7 @@ static int has_id(node *list, int id){
 int count_v4l2_controls(struct video_device *vdev) {
 	struct v4l2_queryctrl qctrl;
 	node *list=NULL;
-	int i, count = 0;
+	int i, count = 0, current = 0;
 
 	CLEAR(qctrl);
 
@@ -525,16 +525,19 @@ int count_v4l2_controls(struct video_device *vdev) {
 	//std ctrls
 	for( i = V4L2_CID_BASE; i< V4L2_CID_LASTP1; i++) {
 		qctrl.id = i;
-		if((ioctl(vdev->fd, VIDIOC_QUERYCTRL, &qctrl) == 0) && ( ! (qctrl.flags & V4L2_CTRL_FLAG_DISABLED))) {
+		if(ioctl(vdev->fd, VIDIOC_QUERYCTRL, &qctrl) == 0) {
+			if (qctrl.flags & V4L2_CTRL_FLAG_DISABLED || qctrl.type == V4L2_CTRL_TYPE_CTRL_CLASS)
+				continue;
 			count++;
 			add_node(&list, i);
 		}
 	}
+	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: found %d std ctrls\n", count);
 
 	//priv ctrls
 	for (qctrl.id = V4L2_CID_PRIVATE_BASE;; qctrl.id++) {
 		if (0 == ioctl (vdev->fd, VIDIOC_QUERYCTRL, &qctrl)) {
-			if (qctrl.flags & V4L2_CTRL_FLAG_DISABLED)
+			if (qctrl.flags & V4L2_CTRL_FLAG_DISABLED || qctrl.type == V4L2_CTRL_TYPE_CTRL_CLASS)
 				continue;
 			count++;
 			add_node(&list, qctrl.id);
@@ -545,52 +548,127 @@ int count_v4l2_controls(struct video_device *vdev) {
 			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_ERR, "V4L2: we shouldnt be here...\n");
 		}
 	}
+	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: found %d std/priv ctrls\n", count);
 
 	//checking extended controls
 	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
 	while (0 == ioctl (vdev->fd, VIDIOC_QUERYCTRL, &qctrl)) {
-		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: Control class id:0x%x - type: %d - %s\n", qctrl.id, qctrl.type,  qctrl.name);
-		if(!has_id(list,qctrl.id )){
+		if(!has_id(list,qctrl.id) && !(qctrl.flags & V4L2_CTRL_FLAG_DISABLED) && qctrl.type!=V4L2_CTRL_TYPE_CTRL_CLASS){
 			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: found unique ext ctrl\n");
 			count++;
 		} else {
 			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: found duplicate ext ctrl\n");
 		}
+		if(qctrl.id<=current){
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_ERR, "V4L2: found buggy driver\n");
+			qctrl.id++;
+		}
+		current = qctrl.id & ~V4L2_CTRL_FLAG_NEXT_CTRL;
     	qctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
 	}
 
 	empty_list(list);
+	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: found %d std/priv/ext controls\n", count);
 	return count;
 }
 
-//Populate the control_list with reported V4L2 controls
-//and returns how many controls were created
-int create_v4l2_controls(struct video_device *vdev, struct control_list *l){
-	struct v4l2_queryctrl qctrl;
-	node *list=NULL;
-	int count = 0, i;
+static void set_query_menu(struct video_device *vd, struct control *c){
+	int i, count = 0, idx = 0;
+	struct v4l2_querymenu qm, *q;
+	CLEAR(qm);
+	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG1,"Setting menu for control %#x\n", c->v4l2_ctrl->id);
 
-	//create standard V4L controls
-	for( i = V4L2_CID_BASE; i< V4L2_CID_LASTP1 && count < l->count; i++) {
-		CLEAR(l->ctrl[count]);
-		l->ctrl[count].id = i;
-		if((ioctl(vdev->fd, VIDIOC_QUERYCTRL, &l->ctrl[count]) == 0) && ( ! (l->ctrl[count].flags & V4L2_CTRL_FLAG_DISABLED))) {
-			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: found control(id: 0x%x - name: %s - min: %d -max: %d)\n", \
-					l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum);
+	//count how many menus there are
+	qm.id = c->v4l2_ctrl->id;
+	for(i = c->v4l2_ctrl->minimum; i==c->v4l2_ctrl->maximum; i++){
+		qm.index = i;
+		if(ioctl(vd->fd, VIDIOC_QUERYMENU, &qm) == 0){
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG1, "V4L2: found menu item %s - %d\n", qm.name, qm.index);
 			count++;
-			add_node(&list, i);
 		}
 	}
 
+	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG1, "V4L2: found %d menus\n", count);
+
+	if(count>0){
+		//populate struct control->v4l2_querymenu
+		XMALLOC(q, struct v4l2_querymenu *, count * sizeof(struct v4l2_querymenu));
+
+		q[idx].id = c->v4l2_ctrl->id;
+		for(i = c->v4l2_ctrl->minimum; i==c->v4l2_ctrl->maximum; i++){
+			q[idx].index = i;
+			if(ioctl(vd->fd, VIDIOC_QUERYMENU, &q[idx]) == 0)
+				idx++;
+		}
+	} else {
+		//sometimes, nothing is returned by the ioctl(VIDIOC_QUERYMENU), but the menu still exist and is
+		//made of contiguous values between minimum and maximum.
+		count = (c->v4l2_ctrl->maximum - c->v4l2_ctrl->minimum)/c->v4l2_ctrl->step + 1;
+		dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG1, "V4L2: creating %d menus\n", count);
+		XMALLOC(q, struct v4l2_querymenu *, count * sizeof(struct v4l2_querymenu));
+		for(i = c->v4l2_ctrl->minimum; i<=c->v4l2_ctrl->maximum; i+=c->v4l2_ctrl->step){
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG1, "V4L2: menu %d - val: %d\n", idx, i);
+			q[idx].id = c->v4l2_ctrl->id;
+			q[idx++].index = i;
+		}
+	}
+	c->count_menu = count;
+	c->v4l2_menu = q;
+}
+
+#define dprint_control(qc) do { \
+								dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG1, \
+										"V4L2: control: id: 0x%x - name: %s - min: %d -max: %d - step: %d - type: %d(%s) - flags: %d (%s%s%s%s%s%s)\n", \
+										qc->id, (char *) &qc->name, qc->minimum, qc->maximum, qc->step, qc->type, \
+										qc->type == V4L2_CTRL_TYPE_INTEGER ? "Integer" :  \
+										qc->type == V4L2_CTRL_TYPE_BOOLEAN ? "Boolean" :  \
+										qc->type == V4L2_CTRL_TYPE_MENU ? "Menu" :  \
+										qc->type == V4L2_CTRL_TYPE_BUTTON ? "Button" : \
+										qc->type == V4L2_CTRL_TYPE_INTEGER64 ? "Integer64" :  \
+										qc->type == V4L2_CTRL_TYPE_CTRL_CLASS ? "Class" : "", \
+										qc->flags, \
+										qc->flags & V4L2_CTRL_FLAG_DISABLED ? "Disabled " : "", \
+										qc->flags & V4L2_CTRL_FLAG_GRABBED ? "Grabbed " : "", \
+										qc->flags & V4L2_CTRL_FLAG_READ_ONLY ? "ReadOnly " : "", \
+										qc->flags & V4L2_CTRL_FLAG_UPDATE ? "Update " : "", \
+										qc->flags & V4L2_CTRL_FLAG_INACTIVE ? "Inactive " : "", \
+										qc->flags & V4L2_CTRL_FLAG_SLIDER ? "slider " : ""); \
+							} while(0);
+
+//Populate the control_list with reported V4L2 controls
+//and returns how many controls were created
+int create_v4l2_controls(struct video_device *vdev, struct control *controls, int max){
+	struct v4l2_queryctrl qctrl;
+	node *list=NULL;
+	int count = 0, i, current = 0;
+
+	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: Creating std controls\n");
+	//create standard V4L controls
+	for( i = V4L2_CID_BASE; i< V4L2_CID_LASTP1 && count < max; i++) {
+		controls[count].v4l2_ctrl->id = i;
+		if(ioctl(vdev->fd, VIDIOC_QUERYCTRL, controls[count].v4l2_ctrl) == 0) {
+			dprint_control(controls[count].v4l2_ctrl);
+			if ( ! (controls[count].v4l2_ctrl->flags & V4L2_CTRL_FLAG_DISABLED) && controls[count].v4l2_ctrl->type!=V4L2_CTRL_TYPE_CTRL_CLASS) {
+				if(controls[count].v4l2_ctrl->type == V4L2_CTRL_TYPE_MENU)
+					set_query_menu(vdev, &controls[count]);
+				count++;
+				add_node(&list, i);
+			}
+		}
+	}
+
+	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: Creating priv controls (found %d std ctrl)\n", count);
 	//create device-specific private V4L2 controls
-	for (i = V4L2_CID_PRIVATE_BASE;count < l->count; i++) {
-		CLEAR(l->ctrl[count]);
-		l->ctrl[count].id = i;
-		if ((0 == ioctl (vdev->fd, VIDIOC_QUERYCTRL, &l->ctrl[count])) && ( ! (l->ctrl[count].flags & V4L2_CTRL_FLAG_DISABLED))) {
-			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: found control(id: %d - name: %s - min: %d -max: %d)\n"\
-					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum);
-            count++;
-            add_node(&list, i);
+	for (i = V4L2_CID_PRIVATE_BASE;count < max; i++) {
+		controls[count].v4l2_ctrl->id = i;
+		if (0 == ioctl (vdev->fd, VIDIOC_QUERYCTRL, controls[count].v4l2_ctrl)) {
+			dprint_control(controls[count].v4l2_ctrl);
+			if( ! (controls[count].v4l2_ctrl->flags & V4L2_CTRL_FLAG_DISABLED) && controls[count].v4l2_ctrl->type!=V4L2_CTRL_TYPE_CTRL_CLASS) {
+				if(controls[count].v4l2_ctrl->type == V4L2_CTRL_TYPE_MENU)
+					set_query_menu(vdev, &controls[count]);
+				count++;
+				add_node(&list, i);
+			}
     	} else {
             if (errno == EINVAL)
             	break;
@@ -599,6 +677,7 @@ int create_v4l2_controls(struct video_device *vdev, struct control_list *l){
     	}
 	}
 
+	dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: Creating ext controls (created %d std/priv ctrl so far)\n", count);
 	//create ext ctrls
 	//TODO Add support for group-changes of extended controls. For now, reported ext ctrl can only be changed one at a time.
 	//TODO add an extra method that list ext (so move the following to the new method) so apps are aware of which ctrls are
@@ -607,16 +686,23 @@ int create_v4l2_controls(struct video_device *vdev, struct control_list *l){
 	CLEAR(qctrl);
 	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
 	while (0 == ioctl (vdev->fd, VIDIOC_QUERYCTRL, &qctrl)) {
-		if(!has_id(list,qctrl.id )){
-			CLEAR(l->ctrl[count]);
-			memcpy(&l->ctrl[count], &qctrl, sizeof(l->ctrl[count]));
-			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG, "V4L2: found ext control(id: %d - name: %s - min: %d -max: %d )\n"\
-					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum);
+		if(!has_id(list,qctrl.id ) && !(qctrl.flags & V4L2_CTRL_FLAG_DISABLED) && qctrl.type!=V4L2_CTRL_TYPE_CTRL_CLASS ){
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: found unique ext ctrl\n");
+			dprint_control((&qctrl));
+			CLEAR(*controls[count].v4l2_ctrl);
+			memcpy(controls[count].v4l2_ctrl, &qctrl, sizeof(struct v4l2_queryctrl));
+			if(controls[count].v4l2_ctrl->type == V4L2_CTRL_TYPE_MENU)
+				set_query_menu(vdev, &controls[count]);
 			count++;
 		} else {
 			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: found duplicate ext ctrl\n");
 		}
-    	qctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
+		if(qctrl.id<=current){
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: found buggy driver\n");
+			qctrl.id++;
+		}
+		current = qctrl.id & ~V4L2_CTRL_FLAG_NEXT_CTRL;
+		qctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
 	}
 
 	empty_list(list);
@@ -785,6 +871,58 @@ static void query_frame_sizes_v4l2(int fd){
 
 }
 
+static void print_control_details(struct v4l2_queryctrl *qctrl){
+	printf("Control %d: %s - type: %d(",qctrl->id, qctrl->name, qctrl->type);
+	if (qctrl->type == V4L2_CTRL_TYPE_INTEGER) printf("Integer");
+	else if (qctrl->type == V4L2_CTRL_TYPE_BOOLEAN) printf("Boolean");
+	else if (qctrl->type == V4L2_CTRL_TYPE_MENU) printf("Menu");
+	else if (qctrl->type == V4L2_CTRL_TYPE_BUTTON) printf("Button");
+	else if (qctrl->type == V4L2_CTRL_TYPE_INTEGER64) printf("Integer64");
+	else if (qctrl->type == V4L2_CTRL_TYPE_CTRL_CLASS) printf("Class");
+	printf(") - min: %d - max: %d - step: %d - flags: %d (", qctrl->minimum, qctrl->maximum, qctrl->step, qctrl->flags);
+	if (qctrl->flags & V4L2_CTRL_FLAG_DISABLED) printf("Disabled ");
+	if (qctrl->flags & V4L2_CTRL_FLAG_GRABBED) printf("Grabbed ");
+	if (qctrl->flags & V4L2_CTRL_FLAG_READ_ONLY) printf("ReadOnly ");
+	if (qctrl->flags & V4L2_CTRL_FLAG_UPDATE) printf("Update ");
+	if (qctrl->flags & V4L2_CTRL_FLAG_INACTIVE) printf("Inactive ");
+	if (qctrl->flags & V4L2_CTRL_FLAG_SLIDER) printf("slider ");
+	printf(")\n");
+}
+
+static void query_controls_v4l2(int fd) {
+	int i;
+	struct v4l2_queryctrl qctrl;
+	CLEAR(qctrl);
+	printf("============================================\nQuerying standard controls\n\n");
+	//std ctrls
+	for( i = V4L2_CID_BASE; i< V4L2_CID_LASTP1; i++) {
+		qctrl.id = i;
+		if((ioctl(fd, VIDIOC_QUERYCTRL, &qctrl) == 0))
+			print_control_details(&qctrl);
+	}
+
+	printf("============================================\nQuerying private controls\n\n");
+	//priv ctrls
+	for (qctrl.id = V4L2_CID_PRIVATE_BASE;; qctrl.id++) {
+		if (0 == ioctl (fd, VIDIOC_QUERYCTRL, &qctrl)) {
+			print_control_details(&qctrl);
+		} else {
+			if (errno == EINVAL)
+				break;
+
+			printf( "we shouldnt be here...\n");
+		}
+	}
+
+	printf("============================================\nQuerying extended controls\n\n");
+	//checking extended controls
+	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
+	while (0 == ioctl (fd, VIDIOC_QUERYCTRL, &qctrl)) {
+		print_control_details(&qctrl);
+		qctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
+	}
+}
+
 void list_cap_v4l2(int fd) {
 	struct v4l2_capability cap;
 
@@ -834,5 +972,6 @@ void list_cap_v4l2(int fd) {
 		enum_image_fmt_v4l2(fd);
 		query_current_image_fmt_v4l2(fd);
 		query_frame_sizes_v4l2(fd);
+		query_controls_v4l2(fd);
 	}
 }

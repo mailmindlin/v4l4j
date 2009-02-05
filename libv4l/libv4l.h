@@ -191,10 +191,16 @@ struct device_info {
  */
 
 //struct used to represent a driver probe. Used and populated in v4l-control.c
+struct control {
+	struct v4l2_queryctrl *v4l2_ctrl;
+	struct v4l2_querymenu *v4l2_menu;//array of 'count_menu' v4l2_menus
+	int count_menu;
+};
+
 struct video_device;
 struct v4l_driver_probe {
 	int (*probe) (struct video_device *, void **);
-	int (*list_ctrl)(struct video_device *, struct v4l2_queryctrl *, void *);
+	int (*list_ctrl)(struct video_device *, struct control *, void *);
 	int (*get_ctrl)(struct video_device *, struct v4l2_queryctrl *, void *, int *);
 	int (*set_ctrl)(struct video_device *,  struct v4l2_queryctrl *, int, void *);
 	void *priv;
@@ -205,13 +211,15 @@ struct v4l_driver_probe {
 typedef struct struct_elem {
 	struct v4l_driver_probe *probe;
  	struct struct_elem *next;
- } driver_probe;
+} driver_probe;
+
 
 struct control_list {
 	int count;						//how many controls are available
-	struct v4l2_queryctrl *ctrl;	//array of 'count' v4l2_queryctrl' controls
+	struct control *controls;		//array of 'count' struct control's
 	driver_probe *probes; 			//linked list of driver probes, allocated in libv4l.c:get_control_list()
 };
+
 
 
 /*

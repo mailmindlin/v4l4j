@@ -124,7 +124,7 @@ int gspca_driver_probe(struct video_device *vdev, void **data){
 						if(ioctl(vdev->fd, SPCAGVIDIOPARAM, &p)!=0)
 							goto end;
 						if(p.light_freq==0) {
-							dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: found GSPCA driver\n");
+							dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: found GSPCA driver (%d controls)\n", NB_PRIV_IOCTL);
 							XMALLOC(priv, struct gspca_probe_private *, sizeof(struct gspca_probe_private ));
 							*data = (void *)priv;
 							priv->ok = 1;
@@ -199,58 +199,69 @@ int gspca_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int val,
 	return 0;
 }
 
-int gspca_list_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d){
+int gspca_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 	int i=0;
 	struct gspca_probe_private *priv = (struct gspca_probe_private *) d;
 	if(priv->ok==1) {
 
 		//
 		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: Found gspca private ioctl Auto-Brightness\n");
-		q[i].id=i;
-		q[i].type = V4L2_CTRL_TYPE_INTEGER;
-		strcpy((char *) q[i].name,"Auto-Brightness");
-		q[i].minimum =0;
-		q[i].maximum = 1;
-		q[i].step = 0;
-		q[i].default_value = 0;
-		q[i].reserved[0]=V4L2_PRIV_IOCTL;
-		q[i].reserved[1]=GSPCA_PROBE_INDEX;
+		c[i].v4l2_ctrl->id=i;
+		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_BOOLEAN;
+		strcpy((char *) c[i].v4l2_ctrl->name,"Auto-Brightness");
+		c[i].v4l2_ctrl->minimum =0;
+		c[i].v4l2_ctrl->maximum = 1;
+		c[i].v4l2_ctrl->step = 0;
+		c[i].v4l2_ctrl->default_value = 0;
+		c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
+		c[i].v4l2_ctrl->reserved[1]=GSPCA_PROBE_INDEX;
 		i++;
 
 		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: Found gspca private ioctl Quality\n");
-		q[i].id=i;
-		q[i].type = V4L2_CTRL_TYPE_INTEGER;
-		strcpy((char *) q[i].name,"Quality");
-		q[i].minimum =0;
-		q[i].maximum = 6;
-		q[i].step = 0;
-		q[i].default_value = 0;
-		q[i].reserved[0]=V4L2_PRIV_IOCTL;
-		q[i].reserved[1]=GSPCA_PROBE_INDEX;
+		c[i].v4l2_ctrl->id=i;
+		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
+		strcpy((char *) c[i].v4l2_ctrl->name,"Quality");
+		c[i].v4l2_ctrl->minimum =0;
+		c[i].v4l2_ctrl->maximum = 6;
+		c[i].v4l2_ctrl->step = 0;
+		c[i].v4l2_ctrl->default_value = 0;
+		c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
+		c[i].v4l2_ctrl->reserved[1]=GSPCA_PROBE_INDEX;
 		i++;
 
 		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: Found gspca private ioctl Frame Interval\n");
-		q[i].id=i;
-		q[i].type = V4L2_CTRL_TYPE_INTEGER;
-		strcpy((char *) q[i].name,"Frame Interval");
-		q[i].minimum =0;
-		q[i].maximum = 1000;
-		q[i].step = 0;
-		q[i].default_value = 0;
-		q[i].reserved[0]=V4L2_PRIV_IOCTL;
-		q[i].reserved[1]=GSPCA_PROBE_INDEX;
+		c[i].v4l2_ctrl->id=i;
+		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
+		strcpy((char *) c[i].v4l2_ctrl->name,"Frame Interval");
+		c[i].v4l2_ctrl->minimum =0;
+		c[i].v4l2_ctrl->maximum = 1000;
+		c[i].v4l2_ctrl->step = 0;
+		c[i].v4l2_ctrl->default_value = 0;
+		c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
+		c[i].v4l2_ctrl->reserved[1]=GSPCA_PROBE_INDEX;
 		i++;
 
 		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: Found gspca private ioctl Light Frequency\n");
-		q[i].id=i;
-		q[i].type = V4L2_CTRL_TYPE_INTEGER;
-		strcpy((char *) q[i].name,"Light Frequency");
-		q[i].minimum =0;
-		q[i].maximum = 60;
-		q[i].step = 0;
-		q[i].default_value = 0;
-		q[i].reserved[0]=V4L2_PRIV_IOCTL;
-		q[i].reserved[1]=GSPCA_PROBE_INDEX;
+		c[i].v4l2_ctrl->id=i;
+		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_MENU;
+		strcpy((char *) c[i].v4l2_ctrl->name,"Light Frequency");
+		c[i].v4l2_ctrl->minimum =0;
+		c[i].v4l2_ctrl->maximum = 60;
+		c[i].v4l2_ctrl->step = 0;
+		c[i].v4l2_ctrl->default_value = 0;
+		c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
+		c[i].v4l2_ctrl->reserved[1]=GSPCA_PROBE_INDEX;
+		c[i].count_menu = 3;
+		XMALLOC(c[i].v4l2_menu, struct v4l2_querymenu *, 3 * sizeof(struct v4l2_querymenu));
+		c[i].v4l2_menu[0].id=i;
+		c[i].v4l2_menu[0].index = 0;
+		strcpy((char *) c[i].v4l2_menu[0].name,"Disable light frequency filter");
+		c[i].v4l2_menu[1].id=i;
+		c[i].v4l2_menu[1].index = 50;
+		strcpy((char *) c[i].v4l2_menu[1].name,"50 Hz light frequency filter");
+		c[i].v4l2_menu[2].id=i;
+		c[i].v4l2_menu[2].index = 60;
+		strcpy((char *) c[2].v4l2_menu[1].name,"60 Hz light frequency filter");
 		i++;
 	} else{
 			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: GSPCA not found\n");

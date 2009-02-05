@@ -100,7 +100,7 @@ void free_capture_device1(struct video_device *);
 int count_v4l1_controls(struct video_device *);
 //Populate the control_list with fake V4L2 controls matching V4L1 video
 //controls and returns how many fake controls were created
-int create_v4l1_controls(struct video_device *, struct control_list *);
+int create_v4l1_controls(struct video_device *, struct control *, int);
 //returns the value of a control
 int get_control_value_v4l1(struct video_device *c, struct v4l2_queryctrl *ctrl, int *);
 //sets the value of a control
