@@ -254,7 +254,7 @@ void main_loop(int serv_sockfd, struct video_device *d) {
  */
 void list_cap_param(int newsockfd,struct video_device *d) {
 	char *page, *ptr;
-	struct control_list *l;
+	struct control_list *l = get_control_list(d);
 	int i, v;
 
 	XMALLOC(page, char *, PARAM_PAGE_SIZE);
@@ -263,27 +263,38 @@ void list_cap_param(int newsockfd,struct video_device *d) {
 
 	//outputs JPEG quality control setting
 	ptr += sprintf(ptr,"<form method=\"get\"><h4>JPEG quality</h4>Value: %d (min: 0, max: 100, step: 1)<br>\n", jpeg_quality);
-	ptr += sprintf(ptr,"<input type=\"text\" name=\"val\" value=\"%d\" size=\"5\"> &nbsp; <input type=\"submit\" name=\"-1\" value=\"update\"></form>", jpeg_quality);
+	ptr += sprintf(ptr,"<input type=\"text\" name=\"val\" value=\"%d\" size=\"5\"> &nbsp; <input type=\"submit\" name=\"-1\" value=\"update\"></form>\n", jpeg_quality);
 	write(newsockfd, page, strlen(page));
 	ptr = page;
 	memset(page, 0, PARAM_PAGE_SIZE);
 
 	//outputs frame rate control setting
 	ptr += sprintf(ptr,"<form method=\"get\"><h4>Frame rate</h4>Value: %d (min: 1, max: 25, step: 1)<br>\n", requested_fps);
-	ptr += sprintf(ptr,"<input type=\"text\" name=\"val\" value=\"%d\" size=\"3\"> &nbsp; <input type=\"submit\" name=\"-2\" value=\"update\"></form>", requested_fps);
+	ptr += sprintf(ptr,"<input type=\"text\" name=\"val\" value=\"%d\" size=\"3\"> &nbsp; <input type=\"submit\" name=\"-2\" value=\"update\"></form>\n", requested_fps);
 	write(newsockfd, page, strlen(page));
 	ptr = page;
 	memset(page, 0, PARAM_PAGE_SIZE);
 
 	//outputs controls
-	l = d->controls;
+	l = d->control;
 	for(i = 0; i< l->count; i++) {
-		if(get_control_value(d, &l->ctrl[i], &v) != 0) {
-			info(LOG_ERR, "Error getting value for control %s\n", l->ctrl[i].name);
+		if(get_control_value(d, l->controls[i].v4l2_ctrl, &v) != 0) {
+			info(LOG_ERR, "Error getting value for control %s\n", l->controls[i].v4l2_ctrl->name);
 			v = 0;
 		}
-		ptr += sprintf(ptr,"<form method=\"get\"><h4>%s</h4>Value: %d (min: %d, max: %d, step: %d)<br>\n", l->ctrl[i].name, v, l->ctrl[i].minimum, l->ctrl[i].maximum, l->ctrl[i].step);
-		ptr += sprintf(ptr,"<input type=\"text\" name=\"val\" value=\"%d\" size=\"5\"> &nbsp; <input type=\"submit\" name=\"%d\" value=\"update\"></form>", v, i);
+		ptr += sprintf(ptr,"<form method=\"get\"><h4>%s</h4>Value: %d (min: %d, max: %d", l->controls[i].v4l2_ctrl->name, v, l->controls[i].v4l2_ctrl->minimum, l->controls[i].v4l2_ctrl->maximum);
+		if(l->controls[i].count_menu!=0) {
+			int j;
+			ptr += sprintf(ptr,"\n)<select name=\"val\">\n");
+			for(j=0; j<l->controls[i].count_menu; j++){
+				ptr += sprintf(ptr, "<option value=\"%d\"%s>%d</option>\n",l->controls[i].v4l2_menu[j].index, v == l->controls[i].v4l2_menu[j].index ? " selected" : "", l->controls[i].v4l2_menu[j].index);
+			}
+			ptr += sprintf(ptr, "</select>\n");
+		} else {
+			ptr += sprintf(ptr,", step: %d)<br>\n", l->controls[i].v4l2_ctrl->step);
+			ptr += sprintf(ptr,"<input type=\"text\" name=\"val\" value=\"%d\" size=\"5\"> ", v);
+		}
+		ptr += sprintf(ptr, "&nbsp; <input type=\"submit\" name=\"%d\" value=\"update\"></form>\n", i);
 		write(newsockfd, page, strlen(page));
 		ptr = page;
 		memset(page, 0, PARAM_PAGE_SIZE);
@@ -293,6 +304,7 @@ void list_cap_param(int newsockfd,struct video_device *d) {
 	ptr += sprintf(ptr,"</body></html>\n");
 	write(newsockfd, page, strlen(page));
 	XFREE(page);
+	release_control_list(d);
 }
 /* Reads the first few bytes of "sock" socket and decides what to do (send webcam stream or list of controls)
  * In the latter case (list of controls), more bytes are parsed to see whether we should also set a new value to one
@@ -301,7 +313,7 @@ void list_cap_param(int newsockfd,struct video_device *d) {
 int get_action(int sock, struct video_device *d) {
 	int c, ctrl_index = 0, value = 0, ret = ACTION_CAPTURE;
 	char *buf, *sptr, *fptr;
-	struct control_list *l;
+	struct control_list *l = get_control_list(d);
 
 	XMALLOC(buf, char *, INPUT_BLOCK_SIZE);
 	c = read(sock, buf, INPUT_BLOCK_SIZE - 1);
@@ -329,16 +341,16 @@ int get_action(int sock, struct video_device *d) {
 						requested_fps = value; set_fps(requested_fps);
 					} else info(LOG_ERR, "Invalid frame rate %d\n", value);
 				} else {
-					l = d->controls;
 					assert(ctrl_index < l->count);
-					info(LOG_INFO, "Setting %s to %d\n", l->ctrl[ctrl_index].name, value);
-					set_control_value(d, &l->ctrl[ctrl_index], value);
+					info(LOG_INFO, "Setting %s to %d\n", l->controls[ctrl_index].v4l2_ctrl->name, value);
+					set_control_value(d, l->controls[ctrl_index].v4l2_ctrl, value);
 				}
 			} else
 				info(LOG_ERR, "Error parsing URL. Unable to set new value\n");
 		}
 	}
 	XFREE(buf);
+	release_control_list(d);
 	return ret;
 }
 

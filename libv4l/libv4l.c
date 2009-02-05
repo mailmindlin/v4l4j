@@ -105,7 +105,7 @@ int close_device(struct video_device *vdev) {
 		dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_ERR, "V4L: Cant close device file %s - capture interface not released\n", vdev->file);
 		return LIBV4L_ERR_CAPTURE_IN_USE;
 	}
-	if(vdev->controls) {
+	if(vdev->control) {
 		dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_ERR, "V4L: Cant close device file %s - control interface not released\n", vdev->file);
 		return LIBV4L_ERR_CONTROL_IN_USE;
 	}
@@ -290,8 +290,8 @@ struct control_list *get_control_list(struct video_device *vdev){
 
 	dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: Listing controls\n");
 
-	XMALLOC(vdev->controls, struct control_list *, sizeof(struct control_list));
-	l = vdev->controls;
+	XMALLOC(vdev->control, struct control_list *, sizeof(struct control_list));
+	l = vdev->control;
 
 	CLEAR(ctrl);
 
@@ -409,25 +409,25 @@ void release_control_list(struct video_device *vdev){
 	driver_probe *e;
 	int i;
 	//free each individual v4l2_menu and v4l2_ctrl within a struct control
-	for(i=0; i<vdev->controls->count; i++){
-		XFREE(vdev->controls->controls[i].v4l2_ctrl);
-		if(vdev->controls->controls[i].v4l2_menu)
-			XFREE(vdev->controls->controls[i].v4l2_menu);
+	for(i=0; i<vdev->control->count; i++){
+		XFREE(vdev->control->controls[i].v4l2_ctrl);
+		if(vdev->control->controls[i].v4l2_menu)
+			XFREE(vdev->control->controls[i].v4l2_menu);
 	}
 
 	//free all struct control
-	if (vdev->controls->controls)
-		XFREE(vdev->controls->controls);
+	if (vdev->control->controls)
+		XFREE(vdev->control->controls);
 
 	//free all driver probe private data
-	for(e = vdev->controls->probes; e; e = e->next)
+	for(e = vdev->control->probes; e; e = e->next)
 		if (e->probe->priv)
 			XFREE(e->probe->priv);
 
 	//empty driver probe linked list
-	empty_list(vdev->controls->probes);
+	empty_list(vdev->control->probes);
 
 	//free control_list
-	if (vdev->controls)
-		XFREE(vdev->controls);
+	if (vdev->control)
+		XFREE(vdev->control);
 }
