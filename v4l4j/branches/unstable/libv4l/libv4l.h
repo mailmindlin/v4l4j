@@ -238,7 +238,7 @@ struct video_device {
 	char file[FILENAME_LENGTH];
 	struct device_info *info;
 	struct capture_device *capture;
-	struct control_list *controls;
+	struct control_list *control;
 };
 
 

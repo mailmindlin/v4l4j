@@ -102,6 +102,49 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doCheckJPEGSupport(JNIE
 	return 0;
 }
 
+static jintArray get_values(JNIEnv *e, struct control *l){
+	int i,values[l->count_menu];
+	jintArray values_array = (*e)->NewIntArray(e, l->count_menu);
+	
+	if(values_array == NULL){
+		dprint(LOG_V4L4J, "[V4L4J] Error creating the values array\n");
+		THROW_EXCEPTION(e, GENERIC_EXCP, "Error creating the values array");
+		return NULL;
+	}
+	
+	for(i=0;i<l->count_menu;i++)
+		values[i] = l->v4l2_menu[i].index;
+		
+	(*e)->SetIntArrayRegion(e, values_array, 0, l->count_menu, values);
+
+	return values_array;
+}
+
+
+static jobjectArray get_names(JNIEnv *e, struct control *l){
+	int i;
+	jclass string_class = (*e)->FindClass(e,"java/lang/String");
+	if(string_class == NULL){
+		dprint(LOG_V4L4J, "[V4L4J] Error looking up string class\n");
+		THROW_EXCEPTION(e, GENERIC_EXCP, "Error up string class");
+		return NULL;
+	}
+	
+	jobjectArray names_array = (*e)->NewObjectArray(e, l->count_menu, string_class ,NULL);
+	
+	if(names_array == NULL){
+		dprint(LOG_V4L4J, "[V4L4J] Error creating the names array\n");
+		THROW_EXCEPTION(e, GENERIC_EXCP, "Error creating the name array");
+		return NULL;
+	}
+	
+	for(i=0;i<l->count_menu;i++)
+		(*e)->SetObjectArrayElement(e, names_array, i, (*e)->NewStringUTF(e, (const char *) l->v4l2_menu[i].name));
+
+	return names_array;
+}
+
+
 
 /*
  * Init the control interface - Creates a list of controls
@@ -112,7 +155,8 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doGetControlLis
 	struct control_list *l;
 	jclass v4l2ControlClass;
 	jmethodID ctor;
-	jobjectArray ctrls;
+	jobjectArray ctrls, names_array;
+	jintArray values_array;
 	jobject element;
 	int i;
 
@@ -128,7 +172,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doGetControlLis
 		return 0;
 	}
 
-	ctor = (*e)->GetMethodID(e, v4l2ControlClass, "<init>", "(ILjava/lang/String;IIIJ)V");
+	ctor = (*e)->GetMethodID(e, v4l2ControlClass, "<init>", "(ILjava/lang/String;IIII[Ljava/lang/String;[IJ)V");
 	if(ctor == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the Control class constructor\n");
 		release_control_list(d->vdev);
@@ -147,12 +191,30 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doGetControlLis
 
 	//Construct a V4L2Control Java object for each V4L2control in l
 	for(i = 0; i< l->count; i++) {
-		dprint(LOG_V4L4J, "[V4L4J] Creating Control %d - name: %s\n", i, l->ctrl[i].name);
-		element = (*e)->NewObject(e, v4l2ControlClass, ctor, i, (*e)->NewStringUTF(e, (const char *)l->ctrl[i].name), l->ctrl[i].minimum, l->ctrl[i].maximum, l->ctrl[i].step, object);
+		dprint(LOG_V4L4J, "[V4L4J] Creating Control %d - name: %s\n", i, l->controls[i].v4l2_ctrl->name);
+		if(l->controls[i].count_menu==0) {
+			values_array = NULL;
+			names_array = NULL;			
+		} else {
+			//create the values and names arrays
+			if((values_array = get_values(e,&l->controls[i])) == NULL) {
+				release_control_list(d->vdev);
+				return 0;
+			}
+			
+			if((names_array = get_names(e,&l->controls[i])) ==NULL){
+				release_control_list(d->vdev);
+				return 0;
+			}
+		}
+		element = (*e)->NewObject(e, v4l2ControlClass, ctor, i,\
+			(*e)->NewStringUTF(e, (const char *)l->controls[i].v4l2_ctrl->name),\
+			l->controls[i].v4l2_ctrl->minimum, l->controls[i].v4l2_ctrl->maximum, \
+			l->controls[i].v4l2_ctrl->step, l->controls[i].v4l2_ctrl->type, names_array, values_array, object);
 		if(element == NULL){
-			dprint(LOG_V4L4J, "[V4L4J] Error creating the control '%s'\n", l->ctrl[i].name);
+			dprint(LOG_V4L4J, "[V4L4J] Error creating the control '%s'\n", l->controls[i].v4l2_ctrl->name);
 			release_control_list(d->vdev);
-			THROW_EXCEPTION(e, GENERIC_EXCP, "Error creating the control '%s'", l->ctrl[i].name);
+			THROW_EXCEPTION(e, GENERIC_EXCP, "Error creating the control '%s'", l->controls[i].v4l2_ctrl->name);
 			return 0;
 		}
 		(*e)->SetObjectArrayElement(e, ctrls, i, element);
