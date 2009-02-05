@@ -284,7 +284,7 @@ static void empty_list(driver_probe *list){
 // ****************************************
 struct control_list *get_control_list(struct video_device *vdev){
 	struct v4l2_control ctrl;
-	int probe_id = 0, count = 0, priv_ctrl_count = 0, nb=0;
+	int probe_id = 0,  v4l_count = 0, priv_ctrl_count = 0, nb=0;
 	driver_probe *e = NULL;
 	struct control_list *l;
 
@@ -297,10 +297,10 @@ struct control_list *get_control_list(struct video_device *vdev){
 
 	//dry run to see how many control we have
 	if(vdev->v4l_version==V4L2_VERSION)
-		count = count_v4l2_controls(vdev);
+		v4l_count = count_v4l2_controls(vdev);
 	else if(vdev->v4l_version==V4L1_VERSION)
 		//4 basic controls in V4L1
-		count = count_v4l1_controls(vdev);
+		v4l_count = count_v4l1_controls(vdev);
 	else {
 		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: Weird V4L version (%d)...\n", vdev->v4l_version);
 		l->count=0;
@@ -328,26 +328,29 @@ struct control_list *get_control_list(struct video_device *vdev){
 	}
 
 
-	count += priv_ctrl_count;
+	dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: Got %d v4l controls and %d driver probe controls \n", v4l_count, priv_ctrl_count);
 
-	l->count = count;
-	if(count>0) {
-		XMALLOC( l->ctrl , struct v4l2_queryctrl *, (l->count * sizeof(struct v4l2_queryctrl)) );
+	l->count = v4l_count + priv_ctrl_count;
+	if(l->count>0) {
+		XMALLOC(l->controls, struct control *, l->count * sizeof(struct control));
+		for(nb = 0; nb<l->count; nb++)
+			XMALLOC( l->controls[nb].v4l2_ctrl , struct v4l2_queryctrl *, sizeof(struct v4l2_queryctrl) );
 
-		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: listing controls (found %d)...\n", count);
+		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: Creating v4l controls (found %d)...\n", v4l_count);
 
 		//fill in controls
 		if(vdev->v4l_version==V4L2_VERSION)
-			count = create_v4l2_controls(vdev, l);
+			v4l_count = create_v4l2_controls(vdev, l->controls, l->count);
 		else if(vdev->v4l_version==V4L1_VERSION)
-			count = create_v4l1_controls(vdev, l);
+			v4l_count = create_v4l1_controls(vdev, l->controls, l->count);
+
+		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: (got %d)\n", v4l_count);
 
 		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: listing private controls (found %d)...\n", priv_ctrl_count);
-		//probe the driver for private ioctl and turn them into fake V4L2 controls
-		//if(priv_ctrl_count>0)
-
+		//Get the driver probes to turn for private ioctl into fake V4L2 controls
 		for(e = l->probes;e;e=e->next)
-		 		e->probe->list_ctrl(vdev, &l->ctrl[count], e->probe->priv);
+		 		e->probe->list_ctrl(vdev, &l->controls[v4l_count], e->probe->priv);
+
 		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: done listing controls\n");
 
 	} else {
@@ -404,15 +407,27 @@ int set_control_value(struct video_device *vdev, struct v4l2_queryctrl *ctrl, in
 void release_control_list(struct video_device *vdev){
 	dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: Freeing controls \n");
 	driver_probe *e;
-	if (vdev->controls->ctrl)
-		XFREE(vdev->controls->ctrl);
+	int i;
+	//free each individual v4l2_menu and v4l2_ctrl within a struct control
+	for(i=0; i<vdev->controls->count; i++){
+		XFREE(vdev->controls->controls[i].v4l2_ctrl);
+		if(vdev->controls->controls[i].v4l2_menu)
+			XFREE(vdev->controls->controls[i].v4l2_menu);
+	}
 
+	//free all struct control
+	if (vdev->controls->controls)
+		XFREE(vdev->controls->controls);
+
+	//free all driver probe private data
 	for(e = vdev->controls->probes; e; e = e->next)
 		if (e->probe->priv)
 			XFREE(e->probe->priv);
 
+	//empty driver probe linked list
 	empty_list(vdev->controls->probes);
 
+	//free control_list
 	if (vdev->controls)
 		XFREE(vdev->controls);
 }

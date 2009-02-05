@@ -394,69 +394,70 @@ void free_capture_v4l1(struct video_device *vdev) {
  //returns the number of controls (standard and private V4L1 controls only)
 int count_v4l1_controls(struct video_device *vdev) {
 	//4 basic controls in V4L1
+	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: found 4 controls\n");
 	return 4;
 }
 
 //Populate the control_list with fake V4L2 controls matching V4L1 video
 //controls and returns how many fake controls were created
-int create_v4l1_controls(struct video_device *vdev, struct control_list *l){
+int create_v4l1_controls(struct video_device *vdev, struct control *controls, int max){
 	int count = 0;
 
 	//list standard V4L controls
 	//brightness
-	CLEAR(l->ctrl[count]);
-	l->ctrl[count].id = V4L2_CID_BRIGHTNESS;
-	l->ctrl[count].type = V4L2_CTRL_TYPE_INTEGER;
-	strcpy((char *)l->ctrl[count].name, "Brightness\0");
-	l->ctrl[count].minimum = 0;
-	l->ctrl[count].maximum = 65535;
-	l->ctrl[count].step = 1;
-	l->ctrl[count].default_value = 32768;
-	l->ctrl[count].flags = 0;
-	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: found control(id: %d - name: %s - min: %d -max: %d)\n"\
-					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum);
+	CLEAR(controls[count]);
+	controls[count].v4l2_ctrl->id = V4L2_CID_BRIGHTNESS;
+	controls[count].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
+	strcpy((char *)controls[count].v4l2_ctrl->name, "Brightness\0");
+	controls[count].v4l2_ctrl->minimum = 0;
+	controls[count].v4l2_ctrl->maximum = 65535;
+	controls[count].v4l2_ctrl->step = 1;
+	controls[count].v4l2_ctrl->default_value = 32768;
+	controls[count].v4l2_ctrl->flags = 0;
+	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: found control(id: %d - name: %s - min: %d -max: %d - step: %d)\n"\
+					,controls[count].v4l2_ctrl->id, (char *) &controls[count].v4l2_ctrl->name, controls[count].v4l2_ctrl->minimum, controls[count].v4l2_ctrl->maximum, controls[count].v4l2_ctrl->step);
 	count++;
 
 	//hue
-	CLEAR(l->ctrl[count]);
-	l->ctrl[count].id = V4L2_CID_HUE;
-	l->ctrl[count].type = V4L2_CTRL_TYPE_INTEGER;
-	strcpy((char *)l->ctrl[count].name, "Hue\0");
-	l->ctrl[count].minimum = 0;
-	l->ctrl[count].maximum = 65535;
-	l->ctrl[count].step = 1;
-	l->ctrl[count].default_value = 32768;
-	l->ctrl[count].flags = 0;
-	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: found control(id: %d - name: %s - min: %d -max: %d)\n"\
-					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum);
+	CLEAR(controls[count]);
+	controls[count].v4l2_ctrl->id = V4L2_CID_HUE;
+	controls[count].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
+	strcpy((char *)controls[count].v4l2_ctrl->name, "Hue\0");
+	controls[count].v4l2_ctrl->minimum = 0;
+	controls[count].v4l2_ctrl->maximum = 65535;
+	controls[count].v4l2_ctrl->step = 1;
+	controls[count].v4l2_ctrl->default_value = 32768;
+	controls[count].v4l2_ctrl->flags = 0;
+	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: found control(id: %d - name: %s - min: %d -max: %d - step: %d)\n"\
+					,controls[count].v4l2_ctrl->id, (char *) &controls[count].v4l2_ctrl->name, controls[count].v4l2_ctrl->minimum, controls[count].v4l2_ctrl->maximum, controls[count].v4l2_ctrl->step);
 	count++;
 
 	//color
-	CLEAR(l->ctrl[count]);
-	l->ctrl[count].id = V4L2_CID_SATURATION;
-	l->ctrl[count].type = V4L2_CTRL_TYPE_INTEGER;
-	strcpy((char *)l->ctrl[count].name, "Saturation\0");
-	l->ctrl[count].minimum = 0;
-	l->ctrl[count].maximum = 65535;
-	l->ctrl[count].step = 1;
-	l->ctrl[count].default_value = 32768;
-	l->ctrl[count].flags = 0;
-	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: found control(id: %d - name: %s - min: %d -max: %d)\n"\
-					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum);
+	CLEAR(controls[count]);
+	controls[count].v4l2_ctrl->id = V4L2_CID_SATURATION;
+	controls[count].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
+	strcpy((char *)controls[count].v4l2_ctrl->name, "Saturation\0");
+	controls[count].v4l2_ctrl->minimum = 0;
+	controls[count].v4l2_ctrl->maximum = 65535;
+	controls[count].v4l2_ctrl->step = 1;
+	controls[count].v4l2_ctrl->default_value = 32768;
+	controls[count].v4l2_ctrl->flags = 0;
+	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: found control(id: %d - name: %s - min: %d -max: %d - step: %d)\n"\
+					,controls[count].v4l2_ctrl->id, (char *) &controls[count].v4l2_ctrl->name, controls[count].v4l2_ctrl->minimum, controls[count].v4l2_ctrl->maximum, controls[count].v4l2_ctrl->step);
 	count++;
 
 	//contrast
-	CLEAR(l->ctrl[count]);
-	l->ctrl[count].id = V4L2_CID_CONTRAST;
-	l->ctrl[count].type = V4L2_CTRL_TYPE_INTEGER;
-	strcpy((char *)l->ctrl[count].name, "Contrast\0");
-	l->ctrl[count].minimum = 0;
-	l->ctrl[count].maximum = 65535;
-	l->ctrl[count].step = 1;
-	l->ctrl[count].default_value = 32768;
-	l->ctrl[count].flags = 0;
-	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: found control(id: %d - name: %s - min: %d -max: %d)\n"\
-					,l->ctrl[count].id, (char *) &l->ctrl[count].name, l->ctrl[count].minimum, l->ctrl[count].maximum);
+	CLEAR(controls[count]);
+	controls[count].v4l2_ctrl->id = V4L2_CID_CONTRAST;
+	controls[count].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
+	strcpy((char *)controls[count].v4l2_ctrl->name, "Contrast\0");
+	controls[count].v4l2_ctrl->minimum = 0;
+	controls[count].v4l2_ctrl->maximum = 65535;
+	controls[count].v4l2_ctrl->step = 1;
+	controls[count].v4l2_ctrl->default_value = 32768;
+	controls[count].v4l2_ctrl->flags = 0;
+	dprint(LIBV4L_LOG_SOURCE_V4L1, LIBV4L_LOG_LEVEL_DEBUG, "V4L1: found control(id: %d - name: %s - min: %d -max: %d - step: %d)\n"\
+					,controls[count].v4l2_ctrl->id, (char *) &controls[count].v4l2_ctrl->name, controls[count].v4l2_ctrl->minimum, controls[count].v4l2_ctrl->maximum, controls[count].v4l2_ctrl->step);
 	count++;
 
 	return count;

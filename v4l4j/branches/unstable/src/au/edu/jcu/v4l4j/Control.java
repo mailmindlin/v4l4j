@@ -55,23 +55,14 @@ public class Control {
 	private native void doSetValue(long o, int id, int v)  throws ControlException;
 	
 	
-	/**
-	 * If this control has a type equal to BUTTON, it has a value of 0,
-	 * and pressing it is done by setting any value using <code>setValue()</code> 
-	 */
-	public final static int BUTTON=0;
-	/**
-	 * If this control has a type equal to SLIDER, it accepts a range of value between a minimum (as returned by <code>getMin()</code>) and
-	 * a maximum (as returned by <code>getMax()</code>) in increments (as returned by <code>getStep()</code>)
-	 */
-	public final static int SLIDER=1;
-	
 	private int id;
 	private String name;
 	private int max;
 	private int min;
 	private int step;
 	private int type;
+	private String[] names;
+	private int[] values;
 	private long v4l4jObject;
 	
 	/**
@@ -81,15 +72,20 @@ public class Control {
 	 * @param min the minimum value it will accept
 	 * @param max the maximum value it will accept
 	 * @param step the increments
+	 * @param type the type of this control
+	 * @param names the names of the discrete values (if any), otherwise null
+	 * @param values the discrete values if any. Otherwise null
 	 * @param o A C pointer to a struct v4l4j_device
 	 */
-	Control(int id, String name, int min, int max, int step, long o) {
+	Control(int id, String name, int min, int max, int step, int type, String[] names, int[] values, long o) {
 		this.id = id;
 		this.name = new String(name);
 		this.min=min;
 		this.max=max;
 		this.step=step;
-		this.type= min==max ? BUTTON : SLIDER;
+		this.type= type;
+		this.names = names;
+		this.values = values;
 		v4l4jObject = o;
 	}
 
@@ -99,7 +95,7 @@ public class Control {
 	 * @throws ControlException if the value cant be retrieved
 	 */
 	public int getValue() throws ControlException{
-		if(type==BUTTON) return 0;
+		if(type==V4l4JConstants.BUTTON) return 0;
 		return doGetValue(v4l4jObject, id);
 	}
 
@@ -118,7 +114,14 @@ public class Control {
 	 * @throws ControlException if the value can not be increased
 	 */
 	public void increaseValue() throws ControlException {
-		doSetValue(v4l4jObject,id, validateValue(doGetValue(v4l4jObject,id)+step));
+		int old = 0;
+		/**
+		 * the following try statement is here so that write-only 
+		 * controls (Relative Pan for instance) that return a ControlException
+		 * when read can still have their value increase()d.
+		 */
+		try { old = doGetValue(v4l4jObject,id);} catch (ControlException e) {}
+		doSetValue(v4l4jObject,id, validateValue(old+step));
 	}
 	
 	/**
@@ -127,7 +130,14 @@ public class Control {
 	 * @throws ControlException if the value can not be increased
 	 */
 	public void decreaseValue() throws ControlException {
-		doSetValue(v4l4jObject,id, validateValue(doGetValue(v4l4jObject,id)-step));
+		int old = 0;
+		/**
+		 * the following try statement is here so that write-only 
+		 * controls (Relative Pan for instance) that return a ControlException
+		 * when read can still have their value decrease()d
+		 */
+		try { old = doGetValue(v4l4jObject,id);} catch (ControlException e) {}
+		doSetValue(v4l4jObject,id, validateValue(old-step));
 	}
 
 	/**
