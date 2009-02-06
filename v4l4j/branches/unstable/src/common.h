@@ -57,6 +57,7 @@ struct v4l4j_device {
 #define V4L4J_PACKAGE			"au/edu/jcu/v4l4j/"
 #define FRAMEGRABBER_CLASS		V4L4J_PACKAGE "FrameGrabber"
 #define CONTROL_CLASS			V4L4J_PACKAGE "Control"
+#define CONSTANTS_CLASS			V4L4J_PACKAGE "V4L4JConstants"
 #define EXCEPTION_PACKAGE		V4L4J_PACKAGE "exceptions/"
 #define GENERIC_EXCP			EXCEPTION_PACKAGE "V4L4JException"
 #define INIT_EXCP				EXCEPTION_PACKAGE "InitialisationException"
@@ -66,6 +67,8 @@ struct v4l4j_device {
 #define STD_EXCP				EXCEPTION_PACKAGE "VideoStandardException"
 #define CTRL_EXCP				EXCEPTION_PACKAGE "ControlException"
 #define RELEASE_EXCP			EXCEPTION_PACKAGE "ReleaseException"
+#define INVALID_VAL_EXCP		EXCEPTION_PACKAGE "InvalidValue"
+#define JNI_EXCP				EXCEPTION_PACKAGE "JNIException"
 
 
 /* Exception throwing helper */

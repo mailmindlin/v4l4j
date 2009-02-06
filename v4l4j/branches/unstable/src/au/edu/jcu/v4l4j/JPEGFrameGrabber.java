@@ -15,8 +15,8 @@ public class JPEGFrameGrabber extends FrameGrabber {
 	 */
 	JPEGFrameGrabber(long o, int w, int h, int ch, int std, int q){
 		super(o,w,h,ch,std,
-				q<V4l4JConstants.MIN_JPEG_QUALITY? V4l4JConstants.MIN_JPEG_QUALITY: 
-					(q>V4l4JConstants.MAX_JPEG_QUALITY ? V4l4JConstants.MAX_JPEG_QUALITY : q) );
+				q<V4L4JConstants.MIN_JPEG_QUALITY? V4L4JConstants.MIN_JPEG_QUALITY: 
+					(q>V4L4JConstants.MAX_JPEG_QUALITY ? V4L4JConstants.MAX_JPEG_QUALITY : q) );
 	}
 	
 	/**
@@ -26,10 +26,10 @@ public class JPEGFrameGrabber extends FrameGrabber {
 	 * the chosen image format
 	 */
 	public void setJPGQuality(int q){
-		if(q<V4l4JConstants.MIN_JPEG_QUALITY)
-			q =V4l4JConstants.MIN_JPEG_QUALITY; 
-		if(q>V4l4JConstants.MAX_JPEG_QUALITY)
-			q = V4l4JConstants.MAX_JPEG_QUALITY;
+		if(q<V4L4JConstants.MIN_JPEG_QUALITY)
+			q =V4L4JConstants.MIN_JPEG_QUALITY; 
+		if(q>V4L4JConstants.MAX_JPEG_QUALITY)
+			q = V4L4JConstants.MAX_JPEG_QUALITY;
 		
 		setQuality(object, q);
 		quality = q;

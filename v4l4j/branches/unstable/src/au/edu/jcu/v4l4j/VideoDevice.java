@@ -7,6 +7,7 @@ import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
 import au.edu.jcu.v4l4j.exceptions.ImageFormatException;
 import au.edu.jcu.v4l4j.exceptions.InUseException;
 import au.edu.jcu.v4l4j.exceptions.InitialistationException;
+import au.edu.jcu.v4l4j.exceptions.JNIException;
 import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
@@ -50,16 +51,18 @@ public class VideoDevice {
 	 * @param o A C pointer to a struct vl4j_device
 	 * @param fmts an array of image formats supported by this <code>VideoDevice</code>
 	 * @return 1 if JPEG-encoding is supported, 0 otherwise
+	 * @throws JNIException if there is an error in the JNI code
 	 */
-	private native int doCheckJPEGSupport(long o, int[] fmts);
+	private native int doCheckJPEGSupport(long o, int[] fmts) throws JNIException;
 	
 	/**
 	 * This JNI method initialises the control interface and 
 	 * returns an array of <code>Control</code>s.
 	 * @param o A C pointer to a struct v4l4j_device
 	 * @return an array of <code>Control</code>s.
+	 * @throws JNIException if there is an error in the JNI code
 	 */
-	private native Control[] doGetControlList(long o);
+	private native Control[] doGetControlList(long o) throws JNIException;
 
 	/**
 	 * This JNI method releases the control interface
@@ -477,21 +480,21 @@ public class VideoDevice {
 		System.out.println("Inputs:");
 		for(InputInfo i: d.getInputs()){
 			System.out.println("\tName: "+i.getName());
-			System.out.println("\tType: "+i.getType()+"("+(i.getType() == V4l4JConstants.CAMERA ? "Camera" : "Tuner")+")");
+			System.out.println("\tType: "+i.getType()+"("+(i.getType() == V4L4JConstants.CAMERA ? "Camera" : "Tuner")+")");
 			System.out.println("\tIndex: "+i.getIndex());
 			System.out.println("\tSupported standards:");
 			for(Integer s: i.getSupportedStandards()){
 				System.out.print("\t\t"+s);
-				if(s==V4l4JConstants.PAL)
+				if(s==V4L4JConstants.PAL)
 					System.out.println("(PAL)");
-				else if(s==V4l4JConstants.NTSC)
+				else if(s==V4L4JConstants.NTSC)
 					System.out.println("(NTSC)");
-				else if(s==V4l4JConstants.SECAM)
+				else if(s==V4L4JConstants.SECAM)
 					System.out.println("(SECAM)");
 				else
 					System.out.println("(None/Webcam)");
 			}
-			if(i.getType() == V4l4JConstants.TUNER) {
+			if(i.getType() == V4L4JConstants.TUNER) {
 				TunerInfo t = i.getTuner();
 				System.out.println("\tTuner");
 				System.out.println("\t\tname: "+t.getName());

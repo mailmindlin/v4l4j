@@ -616,6 +616,47 @@ static void set_query_menu(struct video_device *vd, struct control *c){
 	c->v4l2_menu = q;
 }
 
+static void fix_quirky_struct(struct v4l2_queryctrl *v){
+	if(v->type==V4L2_CTRL_TYPE_INTEGER) {
+		if(v->step==0){
+			v->step = 1;
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_INFO, "V4L2: QUIRK: adjusted step value for INTEGER control '%s' from 0 to 1\n", v->name);
+		}
+	} else if(v->type==V4L2_CTRL_TYPE_MENU) {
+		//Not sure about this one...
+		if(v->step==0){
+			v->step = 1;
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_INFO, "V4L2: QUIRK: adjusted step value for MENU control '%s' from 0 to 1\n", v->name);
+		}
+	} else if(v->type==V4L2_CTRL_TYPE_BOOLEAN) {
+		if(v->step!=1){
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_INFO, "V4L2: QUIRK: adjusted step value for BOOLEAN control '%s' from %d to 1\n", v->name, v->step);
+			v->step = 1;
+		}
+		if(v->minimum!=0){
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_INFO, "V4L2: QUIRK: adjusted minimum value for BOOLEAN control '%s' from %d to 0\n", v->name, v->minimum);
+			v->minimum = 0;
+		}
+		if(v->maximum!=1){
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_INFO, "V4L2: QUIRK: adjusted maximum value for BOOLEAN control '%s' from %d to 1\n", v->name, v->maximum);
+			v->maximum = 1;
+		}
+	} else if(v->type==V4L2_CTRL_TYPE_BUTTON) {
+		if(v->step!=0){
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_INFO, "V4L2: QUIRK: adjusted step value for BUTTON control '%s' from %d to 0\n", v->name, v->step);
+			v->step = 1;
+		}
+		if(v->minimum!=0){
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_INFO, "V4L2: QUIRK: adjusted minimum value for BUTTON control '%s' from %d to 0\n", v->name, v->minimum);
+			v->minimum = 0;
+		}
+		if(v->maximum!=0){
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_INFO, "V4L2: QUIRK: adjusted maximum value for BUTTON control '%s' from %d to 0\n", v->name, v->maximum);
+			v->maximum = 0;
+		}
+	}
+}
+
 #define dprint_control(qc) do { \
 								dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG1, \
 										"V4L2: control: id: 0x%x - name: %s - min: %d -max: %d - step: %d - type: %d(%s) - flags: %d (%s%s%s%s%s%s)\n", \
@@ -649,6 +690,7 @@ int create_v4l2_controls(struct video_device *vdev, struct control *controls, in
 		if(ioctl(vdev->fd, VIDIOC_QUERYCTRL, controls[count].v4l2_ctrl) == 0) {
 			dprint_control(controls[count].v4l2_ctrl);
 			if ( ! (controls[count].v4l2_ctrl->flags & V4L2_CTRL_FLAG_DISABLED) && controls[count].v4l2_ctrl->type!=V4L2_CTRL_TYPE_CTRL_CLASS) {
+				fix_quirky_struct(controls[count].v4l2_ctrl);
 				if(controls[count].v4l2_ctrl->type == V4L2_CTRL_TYPE_MENU)
 					set_query_menu(vdev, &controls[count]);
 				count++;
@@ -664,6 +706,7 @@ int create_v4l2_controls(struct video_device *vdev, struct control *controls, in
 		if (0 == ioctl (vdev->fd, VIDIOC_QUERYCTRL, controls[count].v4l2_ctrl)) {
 			dprint_control(controls[count].v4l2_ctrl);
 			if( ! (controls[count].v4l2_ctrl->flags & V4L2_CTRL_FLAG_DISABLED) && controls[count].v4l2_ctrl->type!=V4L2_CTRL_TYPE_CTRL_CLASS) {
+				fix_quirky_struct(controls[count].v4l2_ctrl);
 				if(controls[count].v4l2_ctrl->type == V4L2_CTRL_TYPE_MENU)
 					set_query_menu(vdev, &controls[count]);
 				count++;
@@ -687,15 +730,15 @@ int create_v4l2_controls(struct video_device *vdev, struct control *controls, in
 	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
 	while (0 == ioctl (vdev->fd, VIDIOC_QUERYCTRL, &qctrl)) {
 		if(!has_id(list,qctrl.id ) && !(qctrl.flags & V4L2_CTRL_FLAG_DISABLED) && qctrl.type!=V4L2_CTRL_TYPE_CTRL_CLASS ){
-			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: found unique ext ctrl\n");
 			dprint_control((&qctrl));
 			CLEAR(*controls[count].v4l2_ctrl);
 			memcpy(controls[count].v4l2_ctrl, &qctrl, sizeof(struct v4l2_queryctrl));
+			fix_quirky_struct(controls[count].v4l2_ctrl);
 			if(controls[count].v4l2_ctrl->type == V4L2_CTRL_TYPE_MENU)
 				set_query_menu(vdev, &controls[count]);
 			count++;
 		} else {
-			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: found duplicate ext ctrl\n");
+			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: duplicate ext ctrl\n");
 		}
 		if(qctrl.id<=current){
 			dprint(LIBV4L_LOG_SOURCE_V4L2, LIBV4L_LOG_LEVEL_DEBUG2, "V4L2: found buggy driver\n");
@@ -708,7 +751,17 @@ int create_v4l2_controls(struct video_device *vdev, struct control *controls, in
 	empty_list(list);
 	return count;
 }
+static int fix_quirky_values(struct v4l2_queryctrl *qc, int v){
+	if(v < qc->minimum) {
+		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_INFO, "V4L2: fixed quirky control value %d below minimum %d\n",v,qc->minimum);
+		return qc->minimum;
+	} else if (v>qc->maximum) {
+		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_INFO, "V4L2: fixed quirky control value %d above maximum %d\n",v,qc->maximum);
+		return qc->maximum;
+	}
+	return v;
 
+}
 //returns the value of a control
 int get_control_value_v4l2(struct video_device *vdev, struct v4l2_queryctrl *ctrl, int *val){
 	struct v4l2_control vc;
@@ -716,7 +769,7 @@ int get_control_value_v4l2(struct video_device *vdev, struct v4l2_queryctrl *ctr
 	CLEAR(vc);
 	vc.id = ctrl->id;
 	if( ioctl(vdev->fd, VIDIOC_G_CTRL, &vc) == 0 ) {
-		*val = vc.value;
+		*val = fix_quirky_values(ctrl, vc.value);
 		ret = 0;
 	} else
 		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: Error getting current value (%d)\n", errno);

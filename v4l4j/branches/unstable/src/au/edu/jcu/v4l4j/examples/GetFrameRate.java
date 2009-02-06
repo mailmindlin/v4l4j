@@ -6,7 +6,7 @@ import java.util.Vector;
 
 import au.edu.jcu.v4l4j.Control;
 import au.edu.jcu.v4l4j.FrameGrabber;
-import au.edu.jcu.v4l4j.V4l4JConstants;
+import au.edu.jcu.v4l4j.V4L4JConstants;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.exceptions.ControlException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
@@ -26,12 +26,12 @@ public class GetFrameRate {
 		try {
 			w = Integer.parseInt(args[1]);
 		} catch (Exception e){
-			w = V4l4JConstants.MAX_WIDTH;
+			w = V4L4JConstants.MAX_WIDTH;
 		}
 		try{			
 			h = Integer.parseInt(args[2]);
 		} catch  (Exception e) {
-			h = V4l4JConstants.MAX_HEIGHT;
+			h = V4L4JConstants.MAX_HEIGHT;
 		}
 		try {
 			std = Integer.parseInt(args[3]);
