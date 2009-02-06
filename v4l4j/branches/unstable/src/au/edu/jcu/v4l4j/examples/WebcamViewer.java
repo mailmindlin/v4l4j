@@ -2,9 +2,11 @@ package au.edu.jcu.v4l4j.examples;
 
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
@@ -16,15 +18,22 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSlider;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import au.edu.jcu.v4l4j.Control;
 import au.edu.jcu.v4l4j.FrameGrabber;
-import au.edu.jcu.v4l4j.V4l4JConstants;
+import au.edu.jcu.v4l4j.V4L4JConstants;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.exceptions.ControlException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
@@ -59,11 +68,13 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
 	 * @throws V4L4JException if any parameter if invalid
 	 */
     public WebcamViewer(String dev, int w, int h, int std, int channel, int qty) throws V4L4JException{
-        initFrameGrabber(dev, w, h, std, channel, qty);
+    	vd = new VideoDevice(dev);
+        initFrameGrabber(w, h, std, channel, qty);
+    	controls = vd.getControlList();
         initGUI();
         stop = false;
         captureThread = new Thread(this, "Capture Thread");
-        //captureThread.start();
+        captureThread.start();
     }
     
     /** 
@@ -104,14 +115,29 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
     }
     
     private void initControlPane(){
-    	controls = vd.getControlList();
-    	for(Control c: controls.values())
-    		controlPanel.add(new ControlPanel(c).getPanel());
+    	ControlGUI gui;
+    	for(Control c: controls.values()) {
+    		gui = getControlGUI(c);
+    		if(gui!=null)
+    			controlPanel.add(gui.getPanel());
+    	}
+    }
+    
+    private ControlGUI getControlGUI(Control c){
+    	ControlGUI ctrl = null;
+    	if(c.getType() == V4L4JConstants.SLIDER)
+    		ctrl = new SliderControl(c);
+    	else if (c.getType() == V4L4JConstants.BUTTON)
+    		ctrl = new ButtonControl(c);
+    	else if (c.getType() == V4L4JConstants.SWITCH)
+    		ctrl = new SwitchControl(c);
+    	else if (c.getType() == V4L4JConstants.DISCRETE)
+    		ctrl = new MenuControl(c);
+    	return ctrl;
     }
     
     /**
      * Initialises the FrameGrabber object with the given parameters
-	 * @param dev the video device file to capture from
 	 * @param w the desired capture width
 	 * @param h the desired capture height
 	 * @param std the capture standard
@@ -119,8 +145,7 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
 	 * @param qty the JPEG compression quality
 	 * @throws V4L4JException if any parameter if invalid
      */
-    private void initFrameGrabber(String dev, int w, int h, int std, int channel, int qty) throws V4L4JException{
-    	vd = new VideoDevice(dev);
+    private void initFrameGrabber(int w, int h, int std, int channel, int qty) throws V4L4JException{
 		fg= vd.getJPEGFrameGrabber(w, h, channel, std, qty);
 		fg.startCapture();
 		System.out.println("Starting capture at "+fg.getWidth()+"x"+fg.getHeight());	    	
@@ -206,12 +231,12 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
 		try {
 			w = Integer.parseInt(args[1]);
 		} catch (Exception e){
-			w = V4l4JConstants.MAX_WIDTH;
+			w = V4L4JConstants.MAX_WIDTH;
 		}
 		try{			
 			h = Integer.parseInt(args[2]);
 		} catch  (Exception e) {
-			h = V4l4JConstants.MAX_HEIGHT;
+			h = V4L4JConstants.MAX_HEIGHT;
 		}
 		try {
 			std = Integer.parseInt(args[3]);
@@ -232,89 +257,180 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
 		new WebcamViewer(dev,w,h,std,channel,qty);
 	}
 	
-	public static class ControlPanel extends MouseAdapter{
-		private JPanel contentPanel, buttonPanel, labelPanel;
-		private JButton up, down;
-		private JLabel value, name;
-		private Control ctrl;
+	public interface ControlGUI{
+		public JPanel getPanel();
+	}
+	
+	public abstract class ControlModelGUI implements ControlGUI{
+		protected JPanel contentPanel;
+		private JLabel value;
+		protected Control ctrl;
 		
-		public ControlPanel(Control c){
+		public ControlModelGUI(Control c){
 			ctrl = c;
 			initControlGUI();
-			updateValue();
 		}
 		
 		private void initControlGUI(){
 			contentPanel = new JPanel();
-			contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.LINE_AXIS));
-			buttonPanel = new JPanel();
-			buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.PAGE_AXIS));
-			labelPanel = new JPanel();
-			labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.PAGE_AXIS));
-			
-    		contentPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    		contentPanel.setBorder(BorderFactory.createEmptyBorder(1, 0, 1, 0));
-			
-			up = new JButton("+");
-			up.setFont(new Font("Serif", Font.PLAIN, 8));
+			contentPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-			up.setAlignmentX(Component.CENTER_ALIGNMENT);
-			down = new JButton("-");
-			down.setAlignmentX(Component.CENTER_ALIGNMENT);
+			TitledBorder b = BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), ctrl.getName());
+			b.setTitleJustification(TitledBorder.LEFT);
+			contentPanel.setBorder(b);
+  
 			
-			value = new JLabel("Value: ",JLabel.CENTER);
-			name = new JLabel(ctrl.getName(), JLabel.CENTER);
-			
-			buttonPanel.add(up);
-			buttonPanel.add(down);
-			
-			labelPanel.add(name);
-			labelPanel.add(Box.createRigidArea(new Dimension(0, 3)));
-			labelPanel.add(value);
-			
-			contentPanel.add(buttonPanel);
-			contentPanel.add(labelPanel);
-			
-			up.addMouseListener(this);
-			down.addMouseListener(this);
-		}
-		
-		public void mousePressed(MouseEvent e) {
-			JButton b = (JButton) e.getComponent() ;
-			//JOptionPane.showMessageDialog(null, b.getText()+ " for "+ ctrl.getName());
-			if(b.getText().equals("-"))
-				try {
-						ctrl.decreaseValue();
-				} catch (ControlException e1) {
-					JOptionPane.showMessageDialog(contentPanel, "The value can not be decreased\n"+e1.getMessage());
-				}
-			else
-				try {
-						ctrl.increaseValue();
-				} catch (ControlException e1) {
-					JOptionPane.showMessageDialog(contentPanel, "The value can not be increased\n"+e1.getMessage());
-				} 
+			if(ctrl.getType()!=V4L4JConstants.BUTTON && ctrl.getType()!=V4L4JConstants.SWITCH) {
+				contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.PAGE_AXIS));
+				value = new JLabel("Value: ");
+				contentPanel.add(value);			
+				contentPanel.add(Box.createRigidArea(new Dimension(5, 0)));
+			} else {
+				contentPanel.setLayout(new GridLayout());
+				value = null;
+			}
 
-			updateValue();	
 		}
 		
-		public void updateValue(){
-			try {
-				setValue(ctrl.getValue());
-			} catch (ControlException e1) {}
+		public final void updateValue(int v){
+			if(value!=null)
+				value.setText("Value: "+ String.valueOf(v));
 		}
 		
-		public void setValue(String v){
-			value.setText("Value: "+v);
-		}
-		
-		public void setValue(int v){
-			value.setText("Value: "+v);
-		}
-		
-		public JPanel getPanel(){
+		public final JPanel getPanel(){
 			return contentPanel;
+		}	 
+	}
+	
+	public class SliderControl extends ControlModelGUI implements ChangeListener{
+		private JSlider slider;
+		
+		public SliderControl(Control c){
+			super(c);
+			int v = c.getMiddleValue();
+			try {v = c.getValue();} catch (ControlException e) {}
+			slider = new JSlider(JSlider.HORIZONTAL, c.getMin(), c.getMax(), v);
+
+			setSlider();
+			contentPanel.add(slider);
+			updateValue(v);
 		}
-		 
+		
+		private void setSlider(){
+			Hashtable<Integer, JLabel> labels = new Hashtable<Integer, JLabel>();
+			int length = (ctrl.getMax() - ctrl.getMin()) / ctrl.getStep() + 1;
+			int middle = (ctrl.getMax() - ctrl.getMin()) / 2;
+			
+			slider.setSnapToTicks(true);
+			slider.setPaintTicks(false);
+			slider.setMinorTickSpacing(ctrl.getStep());
+			labels.put(ctrl.getMin(), new JLabel(String.valueOf(ctrl.getMin())));
+			labels.put(ctrl.getMax(), new JLabel(String.valueOf(ctrl.getMax())));
+			labels.put(middle, new JLabel(String.valueOf(middle)));
+			
+			if(length < 100 && length >10) {
+				slider.setMajorTickSpacing(middle/2);
+				slider.setPaintTicks(true);
+			} else  if (length < 10){
+				slider.setMajorTickSpacing(middle);
+				slider.setPaintTicks(true);
+			}
+			slider.setLabelTable(labels);
+			slider.setPaintLabels(true);
+			
+			slider.addChangeListener(this);
+		}
+		
+		@Override
+		public void stateChanged(ChangeEvent e) {
+			 JSlider source = (JSlider)e.getSource();
+			 if (!source.getValueIsAdjusting()) {
+				 try {
+					ctrl.setValue(source.getValue());
+					updateValue(source.getValue());
+				} catch (ControlException e1) {
+					JOptionPane.showMessageDialog(null, "Error setting value.\n"+e1.getMessage());
+				}
+			 }			
+		}
+
+	}
+	
+	public class ButtonControl extends ControlModelGUI implements ActionListener{
+		private JButton button;
+		
+		public ButtonControl(Control c){
+			super(c);
+			button = new JButton("Activate");
+			button.setAlignmentX(Component.CENTER_ALIGNMENT);
+			button.addActionListener(this);
+			contentPanel.add(button);
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			try {
+				ctrl.setValue(0);
+			} catch (ControlException e1) {
+				JOptionPane.showMessageDialog(null, "Error setting value.\n"+e1.getMessage());
+			}			
+		}
+	}
+	
+	public class SwitchControl extends ControlModelGUI implements ItemListener{
+		private JCheckBox box;
+		
+		public SwitchControl(Control c){
+			super(c);
+			int v = c.getMiddleValue();
+			box = new JCheckBox();
+			box.setAlignmentX(Component.CENTER_ALIGNMENT);
+			try {v = c.getValue();} catch (ControlException e){}
+			box.setSelected(v == 1);				
+			box.addItemListener(this);
+			contentPanel.add(box);
+		}
+		
+		@Override
+		public void itemStateChanged(ItemEvent e) {
+			try {
+				if(e.getStateChange() == ItemEvent.DESELECTED)
+					ctrl.setValue(0);
+				else
+					ctrl.setValue(1);
+			} catch (ControlException e1) {
+				JOptionPane.showMessageDialog(null, "Error setting value.\n"+e1.getMessage());
+			}		
+		}
+	}
+	
+	public class MenuControl extends ControlModelGUI implements ActionListener{
+		private JComboBox box;
+		
+		public MenuControl(Control c){
+			super(c);
+
+			int v = c.getMiddleValue();
+			box = new JComboBox(ctrl.getDiscreteValueNames());
+			try {v = c.getValue();} catch (ControlException e){}
+			box.setSelectedIndex(ctrl.getDiscreteValueIndex(v));				
+			initPanel();
+		}
+		
+		
+		private void initPanel(){
+			box.addActionListener(this);
+			contentPanel.add(box);
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			try {
+				ctrl.setValue(ctrl.getDiscreteValues().elementAt(box.getSelectedIndex()));
+			} catch (ControlException e1) {
+				JOptionPane.showMessageDialog(null, "Error setting value.\n"+e1.getMessage());
+			}
+			
+		}
 	}
 }

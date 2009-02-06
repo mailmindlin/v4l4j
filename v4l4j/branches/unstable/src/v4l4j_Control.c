@@ -42,10 +42,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_Control_doGetValue(JNIEnv *e, jobje
 	ret = get_control_value(d->vdev,d->vdev->control->controls[id].v4l2_ctrl, &val);
 
 	if(ret != 0) {
-		if(ret == LIBV4L_ERR_STREAMING)
-			THROW_EXCEPTION(e, CTRL_EXCP, "Can not get value for control '%s' while streaming", d->vdev->control->controls[id].v4l2_ctrl->name);
-		else
-			THROW_EXCEPTION(e, CTRL_EXCP, "Error getting current value for control '%s'", d->vdev->control->controls[id].v4l2_ctrl->name);
+		THROW_EXCEPTION(e, CTRL_EXCP, "Error getting current value for control '%s'", d->vdev->control->controls[id].v4l2_ctrl->name);
 		return -1;
 	}
 
@@ -66,7 +63,9 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_Control_doSetValue(JNIEnv *e, jobje
 	ret = set_control_value(d->vdev, d->vdev->control->controls[id].v4l2_ctrl, value);
 	if(ret != 0) {
 		if(ret == LIBV4L_ERR_OUT_OF_RANGE)
-			THROW_EXCEPTION(e, CTRL_EXCP, "Error: value %d for control '%s' out of range", value, d->vdev->control->controls[id].v4l2_ctrl->name);
+			THROW_EXCEPTION(e, INVALID_VAL_EXCP, "Invalid value %d for control '%s': value out of range", value, d->vdev->control->controls[id].v4l2_ctrl->name);
+		else if(ret == LIBV4L_ERR_STREAMING)
+			THROW_EXCEPTION(e, CTRL_EXCP, "Cannot set value for control '%s' while streaming", d->vdev->control->controls[id].v4l2_ctrl->name);
 		else
 			THROW_EXCEPTION(e, CTRL_EXCP, "Error setting current value for control '%s'", d->vdev->control->controls[id].v4l2_ctrl->name);
 	}
