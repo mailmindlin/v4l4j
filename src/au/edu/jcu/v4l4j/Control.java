@@ -24,10 +24,10 @@
 
 package au.edu.jcu.v4l4j;
 
-import java.util.List;
 import java.util.Vector;
 
 import au.edu.jcu.v4l4j.exceptions.ControlException;
+import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
 
 /**
  * Objects of this class represent video source controls of any nature. <code>Control</code>s are not directly
@@ -38,7 +38,7 @@ import au.edu.jcu.v4l4j.exceptions.ControlException;
  *
  */
 public class Control {
-	
+
 	/**
 	 * This JNI method returns the value of a control given its id
 	 * @param o a C pointer to a struct v4l4j_device
@@ -64,9 +64,10 @@ public class Control {
 	private int min;
 	private int step;
 	private int type;
-	private String[] names;
+	private Vector<String> names;
 	private int[] values;
 	private long v4l4jObject;
+	private int middleValue;
 	
 	/**
 	 * Builds a V4L2 control associated with a frame grabber 
@@ -87,18 +88,29 @@ public class Control {
 		this.max=max;
 		this.step=step;
 		this.type= type;
-		this.names = names;
+		if(names!=null) {
+			int i = 0;
+			this.names = new Vector<String>();
+			for(String s: names) {
+				if(s.length() == 0)
+					this.names.add(String.valueOf(values[i]));
+				else
+					this.names.add(s);
+				i++;
+			}
+		}
 		this.values = values;
+		this.middleValue = (int) Math.round((max - min) / 2.0);
 		v4l4jObject = o;
 	}
-
+	
 	/**
 	 * retrieves the current value of this control
 	 * @return the value (0 if it is a button)
 	 * @throws ControlException if the value cant be retrieved
 	 */
 	public int getValue() throws ControlException{
-		if(type==V4l4JConstants.BUTTON) return 0;
+		if(type==V4L4JConstants.BUTTON) return 0;
 		return doGetValue(v4l4jObject, id);
 	}
 
@@ -185,10 +197,18 @@ public class Control {
 		return type;
 	}
 	
+	public int getMiddleValue(){
+		return middleValue;
+	}
 	
-	public List<Integer> getDiscreteValues() throws ControlException{
-		if(type!=V4l4JConstants.DISCRETE)
-			throw new ControlException("This control does not have discrete values");
+	/**
+	 * 
+	 * @return
+	 * @throws UnsupportedMethod
+	 */
+	public Vector<Integer> getDiscreteValues(){
+		if(type!=V4L4JConstants.DISCRETE && values!=null)
+			throw new UnsupportedMethod("This control does not have discrete values");
 		Vector<Integer> v = new Vector<Integer>();
 		for(int i: values)
 			v.add(new Integer(i));
@@ -196,14 +216,57 @@ public class Control {
 			
 	}
 	
-	public List<String> getDiscreteValueNames() throws ControlException{
-		if(type!=V4l4JConstants.DISCRETE)
-			throw new ControlException("This control does not have discrete values");
-		Vector<String> v = new Vector<String>();
-		for(String s: names)
-			v.add(s);
-		return v;
+	/**
+	 * 
+	 * @return
+	 * @throws UnsupportedMethod
+	 */
+	public Vector<String> getDiscreteValueNames(){
+		if(type!=V4L4JConstants.DISCRETE && names!=null)
+			throw new UnsupportedMethod("This control does not have discrete values");
+
+		return new Vector<String>(names);
 			
+	}
+	
+	/**
+	 * 
+	 * @param v
+	 * @return
+	 * @throws UnsupportedMethod
+	 */
+	public int getDiscreteValueIndex(int v){
+		if(type!=V4L4JConstants.DISCRETE && values!=null)
+			throw new UnsupportedMethod("This control does not have discrete values");
+		for(int i=0; i<values.length;i++)
+			if(values[i]==v)
+				return i;
+		
+		return -1;
+	}
+	
+	/**
+	 * 
+	 * @param v
+	 * @return
+	 * @throws UnsupportedMethod
+	 */
+	public int getDiscreteNameIndex(String n){
+		if(type!=V4L4JConstants.DISCRETE && names!=null)
+			throw new UnsupportedMethod("This control does not have discrete values");
+		return names.indexOf(n);
+	}
+	
+	/**
+	 * 
+	 * @param v
+	 * @return
+	 * @throws UnsupportedMethod
+	 */
+	public int getDiscreteValueFromName(String n){
+		if(type!=V4L4JConstants.DISCRETE && values!=null)
+			throw new UnsupportedMethod("This control does not have discrete values");
+		return values[getDiscreteNameIndex(n)];
 	}
 	/**
 	 * This method validates the given value, ie it checks that it is between

@@ -4,7 +4,7 @@ JDK_HOME=/usr/lib/jvm/java-6-sun
 #JDK_HOME=/usr/lib/j2sdk1.6-sun
 
 #uncomment the following line to enable debug output from the JNI libv4l4j
-DEBUG=-DDEBUG -Wall
+#DEBUG=-DDEBUG -Wall
 
 
 #

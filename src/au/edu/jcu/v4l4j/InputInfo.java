@@ -72,7 +72,7 @@ public class InputInfo {
 	 * @param tun the tuner associated with this input
 	 */
 	InputInfo(String n, int[] stds, TunerInfo tun, int id){
-		this(n, stds, V4l4JConstants.TUNER, tun, id);
+		this(n, stds, V4L4JConstants.TUNER, tun, id);
 	}
 	
 	/**
@@ -82,7 +82,7 @@ public class InputInfo {
 	 * @param stds the supported standards
 	 */
 	InputInfo(String n, int[] stds, int id){
-		this(n,stds,V4l4JConstants.CAMERA ,null, id);
+		this(n,stds,V4L4JConstants.CAMERA ,null, id);
 	}
 
 	/**
