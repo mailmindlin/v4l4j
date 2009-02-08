@@ -55,7 +55,7 @@ public class Control {
 	 * @param v the new value
 	 * @throws ControlException if the value cant be set
 	 */
-	private native void doSetValue(long o, int id, int v)  throws ControlException;
+	private native int doSetValue(long o, int id, int v)  throws ControlException;
 	
 	
 	private int id;
@@ -89,18 +89,12 @@ public class Control {
 		this.step=step;
 		this.type= type;
 		if(names!=null) {
-			int i = 0;
 			this.names = new Vector<String>();
-			for(String s: names) {
-				if(s.length() == 0)
-					this.names.add(String.valueOf(values[i]));
-				else
+			for(String s: names)
 					this.names.add(s);
-				i++;
-			}
 		}
 		this.values = values;
-		this.middleValue = (int) Math.round((max - min) / 2.0);
+		this.middleValue = (int) Math.round((max - min) / 2.0) + min;
 		v4l4jObject = o;
 	}
 	
@@ -159,7 +153,7 @@ public class Control {
 	 * retrieves the maximum value this control will accept 
 	 * @return the maximum value
 	 */
-	public int getMax() {
+	public int getMaxValue() {
 		return max;
 	}
 
@@ -167,7 +161,7 @@ public class Control {
 	 * retrieves the minimum value this control will accept
 	 * @return the minimum value
 	 */
-	public int getMin() {
+	public int getMinValue() {
 		return min;
 	}
 
@@ -185,7 +179,7 @@ public class Control {
 	 * or equal to <code>getMax()</code>
 	 * @return the increment
 	 */
-	public int getStep() {
+	public int getStepValue() {
 		return step;
 	}
 

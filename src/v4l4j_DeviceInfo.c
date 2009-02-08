@@ -29,7 +29,7 @@
 #include "common.h"
 #include "debug.h"
 
-static jobject create_tuner_object(JNIEnv *e, jobject t, jclass this_class, struct tuner *tuner) {
+static jobject create_tuner_object(JNIEnv *e, jobject t, jclass this_class, struct tuner_info *tuner) {
 	jclass tuner_class;
 	jmethodID ctor;
 
@@ -63,7 +63,7 @@ static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct
 	jobject obj, input_list_object;
 
 	int i;
-	struct video_input *vi;
+	struct video_input_info *vi;
 
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 

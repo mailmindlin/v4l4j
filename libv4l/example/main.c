@@ -343,7 +343,8 @@ int get_action(int sock, struct video_device *d) {
 				} else {
 					assert(ctrl_index < l->count);
 					info(LOG_INFO, "Setting %s to %d\n", l->controls[ctrl_index].v4l2_ctrl->name, value);
-					set_control_value(d, l->controls[ctrl_index].v4l2_ctrl, value);
+					set_control_value(d, l->controls[ctrl_index].v4l2_ctrl, &value);
+					info(LOG_INFO, "New value: %d\n", value);
 				}
 			} else
 				info(LOG_ERR, "Error parsing URL. Unable to set new value\n");

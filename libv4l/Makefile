@@ -1,5 +1,5 @@
 #Uncomment the following line to enable debug output in libv4l2
-#DEBUG=-DDEBUG -ggdb -Wall
+DEBUG=-DDEBUG -ggdb -Wall
 
 #
 # edit anything below at your own risk
@@ -14,14 +14,14 @@
 # LOG_LEVEL_ALL             31			
 LOG_LEVEL=31
 
-# LOG_SOURCE_V4L            1
-# LOG_SOURCE_V4L1           2
-# LOG_SOURCE_V4L2           4
-# LOG_SOURCE_MEMALLOC       8
-# LOG_SOURCE_CONTROL        16
+# LOG_SOURCE_VIDEO_DEVICE   1
+# LOG_SOURCE_QUERY          2
+# LOG_SOURCE_CAPTURE        4
+# LOG_SOURCE_CONTROL        8
+# LOG_SOURCE_MEMALLOC       16
 # LOG_SOURCE_CTRL_PROBE     32
 # LOG_SOURCE_ALL            63
-LOG_SOURCE=63
+LOG_SOURCE=43
 
 ifneq ($(DEBUG),)
 DBG=$(DEBUG) -DLIBV4L_LOG_LEVEL=$(LOG_LEVEL) -DLIBV4L_LOG_SOURCE=$(LOG_SOURCE)

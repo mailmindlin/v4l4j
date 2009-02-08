@@ -167,24 +167,24 @@ int gspca_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d,
 	return ret;
 }
 
-int gspca_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int val, void *d){
+int gspca_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val, void *d){
 	struct video_param p;
 	switch (q->id) {
 		case 0:
 			p.chg_para = CHGABRIGHT;
-			p.autobright = (val==0) ? 0 : 1;
+			p.autobright = *val;
 			break;
 		case 1:
 			p.chg_para = CHGQUALITY;
-			p.quality = (val>16 || val<0) ? 16 : val;
+			p.quality = *val;
 			break;
 		case 2:
 			p.chg_para = CHGTINTER;
-			p.time_interval = (val>1000 || val<0) ? 0 : val;
+			p.time_interval = *val;
 			break;
 		case 3:
 			p.chg_para = CHGLIGHTFREQ;
-			p.light_freq = (val==60) ? 60 : ( (val==50) ? 50 : 0 );
+			p.light_freq = *val;
 			break;
 		default:
 			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "GSPCA: Cant identify control %d\n",q->id);
@@ -192,7 +192,7 @@ int gspca_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int val,
 	}
 
 	if(ioctl(vdev->fd, SPCASVIDIOPARAM, &p)<0) {
-		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "GSPCA: Cant set control %s to value %d\n",q->name, val);
+		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "GSPCA: Cant set control %s to value %d\n",q->name, *val);
 		return LIBV4L_ERR_IOCTL;
 	}
 
