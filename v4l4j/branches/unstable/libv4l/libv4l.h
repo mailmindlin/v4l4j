@@ -150,7 +150,7 @@ struct capture_device {
  */
 #define NAME_FIELD_LENGTH 			32 + 1
 
-struct tuner {
+struct tuner_info {
 #define RADIO_TYPE					1
 #define TV_TYPE						2
 	int type;
@@ -164,20 +164,20 @@ struct tuner {
 	int index;
 };
 
-struct video_input {
+struct video_input_info {
 #define INPUT_TYPE_TUNER			1
 #define INPUT_TYPE_CAMERA			2
 	int type;
 	int nb_stds;
 	int *supported_stds;
-	struct tuner *tuner;
+	struct tuner_info *tuner;
 	char name[NAME_FIELD_LENGTH];
 	int index;
 };
 
 struct device_info {
 	int nb_inputs;
-	struct video_input *inputs;
+	struct video_input_info *inputs;
 	int nb_palettes;
 	int *palettes;
 	char name[NAME_FIELD_LENGTH];
@@ -202,7 +202,7 @@ struct v4l_driver_probe {
 	int (*probe) (struct video_device *, void **);
 	int (*list_ctrl)(struct video_device *, struct control *, void *);
 	int (*get_ctrl)(struct video_device *, struct v4l2_queryctrl *, void *, int *);
-	int (*set_ctrl)(struct video_device *,  struct v4l2_queryctrl *, int, void *);
+	int (*set_ctrl)(struct video_device *,  struct v4l2_queryctrl *, int *, void *);
 	void *priv;
 };
 /*
@@ -352,7 +352,7 @@ struct control_list *get_control_list(struct video_device *);
 //returns 0, LIBV4L_ERR_WRONG_VERSION, LIBV4L_ERR_IOCTL
 int get_control_value(struct video_device *, struct v4l2_queryctrl *, int *);
 //returns 0, LIBV4L_ERR_WRONG_VERSION, LIBV4L_ERR_IOCTL or LIBV4L_ERR_STREAMING
-int set_control_value(struct video_device *, struct v4l2_queryctrl *,  int);
+int set_control_value(struct video_device *, struct v4l2_queryctrl *,  int *);
 void release_control_list(struct video_device *);
 
 

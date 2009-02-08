@@ -80,7 +80,7 @@ public class GetFrameRate {
 		System.out.println("Found "+ctrls.size()+" controls");
 		for (Control c: ctrls) {
 			try {
-				System.out.println("control name: "+c.getName()+" - min: "+c.getMin()+" - max: "+c.getMax()+" - step: "+c.getStep()+" - value: "+c.getValue());
+				System.out.println("control name: "+c.getName()+" - min: "+c.getMinValue()+" - max: "+c.getMaxValue()+" - step: "+c.getStepValue()+" - value: "+c.getValue());
 			} catch (ControlException e) {
 				e.printStackTrace();
 				System.out.println("Failed to get value for control "+c.getName());

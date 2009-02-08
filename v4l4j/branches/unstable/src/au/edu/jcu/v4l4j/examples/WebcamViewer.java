@@ -7,6 +7,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
@@ -43,19 +45,21 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * @author gilles
  *
  */
-public class WebcamViewer extends WindowAdapter implements Runnable {
+public class WebcamViewer extends WindowAdapter implements Runnable{
 	private JLabel video, fps;
 	private JFrame f;
-	private JPanel controlPanel;
+	private JPanel controlPanel, captureButtons;
 	private JScrollPane controlScrollPane;
 	private JPanel videoPanel;
+	private JButton startCap, stopCap;
 	private long start = 0;
-	private int n;
+	private int n, width, height, qty, std, channel;
 	private FrameGrabber fg;
 	private Hashtable<String,Control> controls; 
 	private Thread captureThread;
 	private boolean stop;
 	private VideoDevice vd;
+	private static int FPS_REFRESH = 1000; //in  msecs
 	
 	/**
 	 * Builds a WebcamViewer object
@@ -67,14 +71,19 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
 	 * @param qty the JPEG compression quality
 	 * @throws V4L4JException if any parameter if invalid
 	 */
-    public WebcamViewer(String dev, int w, int h, int std, int channel, int qty) throws V4L4JException{
+    public WebcamViewer(String dev, int w, int h, int s, int c, int q) throws V4L4JException{
     	vd = new VideoDevice(dev);
-        initFrameGrabber(w, h, std, channel, qty);
+		fg = null;
+		width = w;
+		height = h;
+		std = s;
+		channel = c;
+		qty = q;
     	controls = vd.getControlList();
         initGUI();
         stop = false;
-        captureThread = new Thread(this, "Capture Thread");
-        captureThread.start();
+        captureThread = null;
+        
     }
     
     /** 
@@ -88,19 +97,45 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
         videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.PAGE_AXIS));
         
         video = new JLabel();
-        video.setPreferredSize(new Dimension(fg.getWidth(), fg.getHeight()));
+        video.setPreferredSize(new Dimension(width, height));
         video.setAlignmentX(Component.CENTER_ALIGNMENT);
         videoPanel.add(video);
         
+        captureButtons = new JPanel();
+        captureButtons.setLayout(new  BoxLayout(captureButtons, BoxLayout.LINE_AXIS));
+        startCap = new JButton("Start");
+        startCap.setAlignmentX(Component.CENTER_ALIGNMENT);
+        stopCap = new JButton("Stop");
+        stopCap.setAlignmentX(Component.CENTER_ALIGNMENT);
         fps = new JLabel("FPS: 0.0");
         fps.setAlignmentX(Component.CENTER_ALIGNMENT);
-        videoPanel.add(fps);
+        captureButtons.add(Box.createGlue());
+        captureButtons.add(stopCap);
+        captureButtons.add(Box.createGlue());
+        captureButtons.add(fps);
+        captureButtons.add(Box.createGlue());
+        captureButtons.add(startCap);
+        captureButtons.add(Box.createGlue());
+        startCap.addMouseListener(new MouseAdapter() {
+        	public void mouseClicked(MouseEvent e) {
+        		if (e.getComponent() == startCap)
+        			startCapture();
+        	}
+        });
+        stopCap.addMouseListener(new MouseAdapter() {
+        	public void mouseClicked(MouseEvent e) {
+        		if (e.getComponent() == stopCap)
+        			stopCapture();
+        	}
+        });
+        videoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        videoPanel.add(captureButtons);
         
         controlPanel = new JPanel();
         controlScrollPane = new JScrollPane(controlPanel);
         controlScrollPane.getVerticalScrollBar().setBlockIncrement(40);
         controlScrollPane.getVerticalScrollBar().setUnitIncrement(25);
-        controlScrollPane.setPreferredSize(new Dimension(300, fg.getHeight()));
+        controlScrollPane.setPreferredSize(new Dimension(300, height));
         controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.PAGE_AXIS));
         
         f.getContentPane().add(videoPanel);
@@ -135,22 +170,7 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
     		ctrl = new MenuControl(c);
     	return ctrl;
     }
-    
-    /**
-     * Initialises the FrameGrabber object with the given parameters
-	 * @param w the desired capture width
-	 * @param h the desired capture height
-	 * @param std the capture standard
-	 * @param channel the capture channel
-	 * @param qty the JPEG compression quality
-	 * @throws V4L4JException if any parameter if invalid
-     */
-    private void initFrameGrabber(int w, int h, int std, int channel, int qty) throws V4L4JException{
-		fg= vd.getJPEGFrameGrabber(w, h, channel, std, qty);
-		fg.startCapture();
-		System.out.println("Starting capture at "+fg.getWidth()+"x"+fg.getHeight());	    	
-    }
-    
+        
     /**
      * Updates the image shown in the JLabel
      * @param b
@@ -161,7 +181,7 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
     	// Computes the frame rate
     	if(start==0)
     		start = System.currentTimeMillis();
-    	else if(System.currentTimeMillis()>start+10000) {
+    	else if(System.currentTimeMillis()>start+FPS_REFRESH) {
 			//System.out.println("FPS: "+ (((float) 1000*n/(System.currentTimeMillis()-start))  ));
     		fps.setText("FPS: "+(float) 1000*n/(System.currentTimeMillis()-start));
 			start = System.currentTimeMillis();
@@ -189,20 +209,44 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
 		}
     }
     
+    private void startCapture(){
+    	if(captureThread == null){
+    		try {
+    			fg = vd.getJPEGFrameGrabber(width, height, channel, std, qty);
+    			video.setPreferredSize(new Dimension(fg.getWidth(), fg.getHeight()));
+    			controlScrollPane.setPreferredSize(new Dimension(300, fg.getHeight()));
+    			f.pack();
+				fg.startCapture();
+			} catch (V4L4JException e) {
+				System.out.println("Failed to start capture");
+				e.printStackTrace();
+				return;
+			}
+			stop = false;
+	    	captureThread = new Thread(this, "Capture Thread");
+	        captureThread.start();
+    	}
+    }
+    
+    private void stopCapture(){
+    	if(captureThread != null && captureThread.isAlive()){
+    		stop = true;
+    		try {
+				captureThread.join();
+			} catch (InterruptedException e1) {}
+			captureThread = null;
+			fg.stopCapture();
+			vd.releaseFrameGrabber();
+    	}
+    }
+    
     /**
      * Catch window closing event so we can free up resources before exiting
      * @param e
      */
 	public void windowClosing(WindowEvent e) {
-		if(captureThread.isAlive()){
-    		stop = true;
-    		try {
-				captureThread.join();
-			} catch (InterruptedException e1) {}
-    	}
-		
+		stopCapture();		
 		try {
-			fg.stopCapture();
 			vd.releaseFrameGrabber();
 			vd.releaseControlList();
 			vd.release();
@@ -261,7 +305,7 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
 		public JPanel getPanel();
 	}
 	
-	public abstract class ControlModelGUI implements ControlGUI{
+	public class ControlModelGUI implements ControlGUI{
 		protected JPanel contentPanel;
 		private JLabel value;
 		protected Control ctrl;
@@ -309,7 +353,7 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
 			super(c);
 			int v = c.getMiddleValue();
 			try {v = c.getValue();} catch (ControlException e) {}
-			slider = new JSlider(JSlider.HORIZONTAL, c.getMin(), c.getMax(), v);
+			slider = new JSlider(JSlider.HORIZONTAL, c.getMinValue(), c.getMaxValue(), v);
 
 			setSlider();
 			contentPanel.add(slider);
@@ -318,14 +362,14 @@ public class WebcamViewer extends WindowAdapter implements Runnable {
 		
 		private void setSlider(){
 			Hashtable<Integer, JLabel> labels = new Hashtable<Integer, JLabel>();
-			int length = (ctrl.getMax() - ctrl.getMin()) / ctrl.getStep() + 1;
-			int middle = (ctrl.getMax() - ctrl.getMin()) / 2;
+			int length = (ctrl.getMaxValue() - ctrl.getMinValue()) / ctrl.getStepValue() + 1;
+			int middle = ctrl.getMiddleValue();
 			
 			slider.setSnapToTicks(true);
 			slider.setPaintTicks(false);
-			slider.setMinorTickSpacing(ctrl.getStep());
-			labels.put(ctrl.getMin(), new JLabel(String.valueOf(ctrl.getMin())));
-			labels.put(ctrl.getMax(), new JLabel(String.valueOf(ctrl.getMax())));
+			slider.setMinorTickSpacing(ctrl.getStepValue());
+			labels.put(ctrl.getMinValue(), new JLabel(String.valueOf(ctrl.getMinValue())));
+			labels.put(ctrl.getMaxValue(), new JLabel(String.valueOf(ctrl.getMaxValue())));
 			labels.put(middle, new JLabel(String.valueOf(middle)));
 			
 			if(length < 100 && length >10) {

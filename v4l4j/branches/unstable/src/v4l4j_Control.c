@@ -54,13 +54,13 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_Control_doGetValue(JNIEnv *e, jobje
 /*
  * Set a new value on a v4l2 control
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_Control_doSetValue(JNIEnv *e, jobject t, jlong object, jint id, jint value){
-	int ret;
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_Control_doSetValue(JNIEnv *e, jobject t, jlong object, jint id, jint value){
+	int ret, v = value;
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
 	dprint(LOG_LIBV4L, "[LIBV4L] Calling set_control_value(dev: %s, ctrl name:%s, val: %d)\n", d->vdev->file,d->vdev->control->controls[id].v4l2_ctrl->name,value);
-	ret = set_control_value(d->vdev, d->vdev->control->controls[id].v4l2_ctrl, value);
+	ret = set_control_value(d->vdev, d->vdev->control->controls[id].v4l2_ctrl, &v);
 	if(ret != 0) {
 		if(ret == LIBV4L_ERR_OUT_OF_RANGE)
 			THROW_EXCEPTION(e, INVALID_VAL_EXCP, "Invalid value %d for control '%s': value out of range", value, d->vdev->control->controls[id].v4l2_ctrl->name);
@@ -68,7 +68,9 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_Control_doSetValue(JNIEnv *e, jobje
 			THROW_EXCEPTION(e, CTRL_EXCP, "Cannot set value for control '%s' while streaming", d->vdev->control->controls[id].v4l2_ctrl->name);
 		else
 			THROW_EXCEPTION(e, CTRL_EXCP, "Error setting current value for control '%s'", d->vdev->control->controls[id].v4l2_ctrl->name);
+		return 0;
 	}
+	return v;
 }
 
 

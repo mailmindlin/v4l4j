@@ -57,10 +57,10 @@ struct video_device *open_device(char *file) {
 	int fd = -1;
 	char version[10];
 
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_INFO, "Using libv4l version %s\n", get_libv4l_version(version));
+	dprint(LIBV4L_LOG_SOURCE_VIDEO_DEVICE, LIBV4L_LOG_LEVEL_ALL, "Using libv4l version %s\n", get_libv4l_version(version));
 
 	//open device
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Opening device file %s.\n", file);
+	dprint(LIBV4L_LOG_SOURCE_VIDEO_DEVICE, LIBV4L_LOG_LEVEL_DEBUG, "VD: Opening device file %s.\n", file);
 	if ((strlen(file) == 0) || ((fd = open(file,O_RDWR )) < 0)) {
 		info("V4L: unable to open device file %s. Check the name and permissions\n", file);
 		fd = -1;
@@ -69,12 +69,12 @@ struct video_device *open_device(char *file) {
 	XMALLOC(vdev, struct video_device *, sizeof(struct video_device));
 
 	//Check v4l version (V4L2 first)
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Checking V4L version on device %s\n", file);
+	dprint(LIBV4L_LOG_SOURCE_VIDEO_DEVICE, LIBV4L_LOG_LEVEL_DEBUG, "VD: Checking V4L version on device %s\n", file);
 	if(check_capture_capabilities_v4l2(fd, file)==0) {
-		dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: device %s is V4L2\n", file);
+		dprint(LIBV4L_LOG_SOURCE_VIDEO_DEVICE, LIBV4L_LOG_LEVEL_INFO, "VD: device %s is V4L2\n", file);
 		vdev->v4l_version=V4L2_VERSION;
 	} else if(check_capture_capabilities_v4l1(fd, file)==0){
-		dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: device %s is V4L1\n", file);
+		dprint(LIBV4L_LOG_SOURCE_VIDEO_DEVICE, LIBV4L_LOG_LEVEL_INFO, "VD: device %s is V4L1\n", file);
 		vdev->v4l_version=V4L1_VERSION;
 	} else {
 		info("libv4l was unable to detect the version of V4L used by device %s\n", file);
@@ -93,20 +93,20 @@ struct video_device *open_device(char *file) {
 
 int close_device(struct video_device *vdev) {
 	//Close device file
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: closing device file %s.\n", vdev->file);
+	dprint(LIBV4L_LOG_SOURCE_VIDEO_DEVICE, LIBV4L_LOG_LEVEL_DEBUG, "VD: closing device file %s.\n", vdev->file);
 
 	//TODO: try and release info, capture and controls instead of failing
 	//check that we have released the info, capture and controls stuff
 	if(vdev->info) {
-		dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_ERR, "V4L: Cant close device file %s - device info data not released\n", vdev->file);
+		dprint(LIBV4L_LOG_SOURCE_VIDEO_DEVICE, LIBV4L_LOG_LEVEL_ERR, "VD: Cant close device file %s - device info data not released\n", vdev->file);
 		return LIBV4L_ERR_INFO_IN_USE;
 	}
 	if(vdev->capture) {
-		dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_ERR, "V4L: Cant close device file %s - capture interface not released\n", vdev->file);
+		dprint(LIBV4L_LOG_SOURCE_VIDEO_DEVICE, LIBV4L_LOG_LEVEL_ERR, "VD: Cant close device file %s - capture interface not released\n", vdev->file);
 		return LIBV4L_ERR_CAPTURE_IN_USE;
 	}
 	if(vdev->control) {
-		dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_ERR, "V4L: Cant close device file %s - control interface not released\n", vdev->file);
+		dprint(LIBV4L_LOG_SOURCE_VIDEO_DEVICE, LIBV4L_LOG_LEVEL_ERR, "VD: Cant close device file %s - control interface not released\n", vdev->file);
 		return LIBV4L_ERR_CONTROL_IN_USE;
 	}
 
@@ -150,7 +150,7 @@ static void setup_capture_actions(struct video_device *vdev) {
 //device file, width, height, channel, std, nb_buf
 struct capture_device *init_capture_device(struct video_device *vdev, int w, int h, int ch, int s, int nb_buf){
 	//create capture device
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Initialising capture interface\n");
+	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "CAP: Initialising capture interface\n");
 	XMALLOC(vdev->capture, struct capture_device *,sizeof(struct capture_device));
 	XMALLOC(vdev->capture->mmap, struct mmap *, sizeof(struct mmap));
 
@@ -168,7 +168,7 @@ struct capture_device *init_capture_device(struct video_device *vdev, int w, int
 
 //counterpart of init_capture_device, must be called it init_capture_device was successful
 void free_capture_device(struct video_device *vdev){
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Freeing libv4l on device %s.\n", vdev->file);
+	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "CAP: Freeing libv4l on device %s.\n", vdev->file);
 	XFREE(vdev->capture->actions);
 	XFREE(vdev->capture->mmap);
 	XFREE(vdev->capture);
@@ -180,7 +180,7 @@ void free_capture_device(struct video_device *vdev){
  *
  */
 struct device_info *get_device_info(struct video_device *vdev){
-	dprint(LIBV4L_LOG_SOURCE_V4L, LIBV4L_LOG_LEVEL_DEBUG2, "V4L: Querying device %s.\n", vdev->file);
+	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: Querying device %s.\n", vdev->file);
 
 	XMALLOC(vdev->info, struct device_info *, sizeof(struct device_info));
 
@@ -201,6 +201,7 @@ struct device_info *get_device_info(struct video_device *vdev){
 }
 
 void release_device_info(struct video_device *vdev){
+	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: Releasing device info for device %s.\n", vdev->file);
 	if(vdev->v4l_version == V4L2_VERSION) {
 		//v4l2 device
 		free_video_device_v4l2(vdev);
@@ -379,10 +380,10 @@ int get_control_value(struct video_device *vdev, struct v4l2_queryctrl *ctrl, in
 	return ret;
 }
 
-int set_control_value(struct video_device *vdev, struct v4l2_queryctrl *ctrl, int i){
+int set_control_value(struct video_device *vdev, struct v4l2_queryctrl *ctrl, int *i){
 	int ret = 0;
-	dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: setting value (%d) for control %s\n",i, ctrl->name);
-	if(i<ctrl->minimum || i > ctrl->maximum){
+	dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG, "CTRL: setting value (%d) for control %s\n",*i, ctrl->name);
+	if(*i<ctrl->minimum || *i > ctrl->maximum){
 		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: control value out of range\n");
 		return LIBV4L_ERR_OUT_OF_RANGE;
 	}

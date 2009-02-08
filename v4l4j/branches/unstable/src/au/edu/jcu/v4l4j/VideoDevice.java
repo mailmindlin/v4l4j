@@ -508,7 +508,7 @@ public class VideoDevice {
 		
 		Hashtable<String,Control> ctrls = vd.getControlList();
 		for(Control c: ctrls.values()){
-			System.out.print("Control: "+c.getName()+" - min: "+c.getMin()+" - max: "+c.getMax()+" - step: "+c.getStep());
+			System.out.print("Control: "+c.getName()+" - min: "+c.getMinValue()+" - max: "+c.getMaxValue()+" - step: "+c.getStepValue());
 			try {
 				System.out.println(" - value: "+c.getValue());
 			} catch (V4L4JException ve){

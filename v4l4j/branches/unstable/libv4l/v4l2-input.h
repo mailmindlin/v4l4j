@@ -91,7 +91,7 @@ int create_v4l2_controls(struct video_device *, struct control *, int);
 //returns the value of a control
 int get_control_value_v4l2(struct video_device *, struct v4l2_queryctrl *, int *);
 //sets the value of a control
-int set_control_value_v4l2(struct video_device *, struct v4l2_queryctrl *, int);
+int set_control_value_v4l2(struct video_device *, struct v4l2_queryctrl *, int *);
 
 
 /*
