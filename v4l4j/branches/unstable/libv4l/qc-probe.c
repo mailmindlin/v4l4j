@@ -140,35 +140,49 @@ int qc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, in
 	return ret;
 }
 
-int qc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int val, void *d){
+int qc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val, void *d){
+	int prev = 0, ret = LIBV4L_ERR_IOCTL;
 	switch (q->id) {
 		case 0:
-			if(ioctl(vdev->fd, VIDIOCQCSSETTLE, &val)==0)
-				return val;
+			ioctl(vdev->fd, VIDIOCQCGSETTLE, &prev);
+			if(ioctl(vdev->fd, VIDIOCQCSSETTLE, val)==0)
+				ret = 0;
+			else
+				*val = prev;
 			break;
 		case 1:
-			if(ioctl(vdev->fd, VIDIOCQCSCOMPRESS, &val)==0)
-				return val;
+			ioctl(vdev->fd, VIDIOCQCGCOMPRESS, &prev);
+			if(ioctl(vdev->fd, VIDIOCQCSCOMPRESS, val)==0)
+				ret = 0;
+			else
+				*val = prev;
 			break;
 		case 2:
-			if(ioctl(vdev->fd, VIDIOCQCSQUALITY, &val)==0)
-				return val;
+			ioctl(vdev->fd, VIDIOCQCGQUALITY, &prev);
+			if(ioctl(vdev->fd, VIDIOCQCSQUALITY, val)==0)
+				ret = 0;
+			else
+				*val = prev;
 			break;
 		case 3:
-			if(ioctl(vdev->fd, VIDIOCQCSADAPTIVE, &val)==0)
-				return val;
+			ioctl(vdev->fd, VIDIOCQCGADAPTIVE, &prev);
+			if(ioctl(vdev->fd, VIDIOCQCSADAPTIVE, val)==0)
+				ret = 0;
+			else
+				*val = prev;
 			break;
 		case 4:
-			if(ioctl(vdev->fd, VIDIOCQCSEQUALIZE, &val)==0)
-				return val;
+			ioctl(vdev->fd, VIDIOCQCGEQUALIZE, &prev);
+			if(ioctl(vdev->fd, VIDIOCQCSEQUALIZE, val)==0)
+				ret = 0;
+			else
+				*val = prev;
 			break;
 		default:
 			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "QC: Cant identify control %d\n",q->id);
-			return LIBV4L_ERR_IOCTL;
 	}
 
-	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "QC: Cant set value of control %s\n",q->name);
-	return LIBV4L_ERR_IOCTL;
+	return ret;
 }
 
 int qc_list_ctrl(struct video_device *vdev, struct control *c, void *d){

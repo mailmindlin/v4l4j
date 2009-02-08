@@ -41,21 +41,21 @@
 #ifdef DEBUG
 
 #define LIBV4L_LOG_LEVEL_INFO 			1
-#define LIBV4L_LOG_LEVEL_DEBUG 			2
-#define LIBV4L_LOG_LEVEL_DEBUG1 		4
-#define LIBV4L_LOG_LEVEL_DEBUG2 		8
-#define LIBV4L_LOG_LEVEL_ERR 			16
+#define LIBV4L_LOG_LEVEL_DEBUG 			2	//once / twice per call
+#define LIBV4L_LOG_LEVEL_DEBUG1 		4	//for / while loops
+#define LIBV4L_LOG_LEVEL_DEBUG2 		8	//many times per seconds
+#define LIBV4L_LOG_LEVEL_ERR 			16  //error / quirks
 #define LIBV4L_LOG_LEVEL_ALL			(LIBV4L_LOG_LEVEL_INFO | LIBV4L_LOG_LEVEL_DEBUG\
 										 | LIBV4L_LOG_LEVEL_DEBUG1 | LIBV4L_LOG_LEVEL_DEBUG2 | LIBV4L_LOG_LEVEL_ERR)
 
-#define LIBV4L_LOG_SOURCE_V4L			1
-#define LIBV4L_LOG_SOURCE_V4L1			2
-#define LIBV4L_LOG_SOURCE_V4L2			4
-#define LIBV4L_LOG_SOURCE_MEMALLOC		8
-#define LIBV4L_LOG_SOURCE_CONTROL		16
+#define LIBV4L_LOG_SOURCE_VIDEO_DEVICE	1
+#define LIBV4L_LOG_SOURCE_QUERY			2
+#define LIBV4L_LOG_SOURCE_CAPTURE		4
+#define LIBV4L_LOG_SOURCE_CONTROL		8
+#define LIBV4L_LOG_SOURCE_MEMALLOC		16
 #define LIBV4L_LOG_SOURCE_CTRL_PROBE	32
-#define LIBV4L_LOG_SOURCE_ALL 			(LIBV4L_LOG_SOURCE_V4L | LIBV4L_LOG_SOURCE_V4L1 | LIBV4L_LOG_SOURCE_V4L2 |\
-							 			 LIBV4L_LOG_SOURCE_MEMALLOC | LIBV4L_LOG_SOURCE_CONTROL | LIBV4L_LOG_SOURCE_CTRL_PROBE)
+#define LIBV4L_LOG_SOURCE_ALL 			(LIBV4L_LOG_SOURCE_VIDEO_DEVICE | LIBV4L_LOG_SOURCE_QUERY | LIBV4L_LOG_SOURCE_CAPTURE |\
+							 			 LIBV4L_LOG_SOURCE_CONTROL | LIBV4L_LOG_SOURCE_MEMALLOC | LIBV4L_LOG_SOURCE_CTRL_PROBE)
 
 
 
@@ -77,6 +77,25 @@
 #else  //if not DEBUG
 #define dprint(source, level, format, ...)
 #endif // if DEBUG
+
+#define dprint_v4l2_control(qc) do { \
+								dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_DEBUG1, \
+										"CTRL: control id: 0x%x - name: %s - min: %d - max: %d - step: %d - type: %d(%s) - flags: %d (%s%s%s%s%s%s)\n", \
+										qc->id, (char *) &qc->name, qc->minimum, qc->maximum, qc->step, qc->type, \
+										qc->type == V4L2_CTRL_TYPE_INTEGER ? "Integer" :  \
+										qc->type == V4L2_CTRL_TYPE_BOOLEAN ? "Boolean" :  \
+										qc->type == V4L2_CTRL_TYPE_MENU ? "Menu" :  \
+										qc->type == V4L2_CTRL_TYPE_BUTTON ? "Button" : \
+										qc->type == V4L2_CTRL_TYPE_INTEGER64 ? "Integer64" :  \
+										qc->type == V4L2_CTRL_TYPE_CTRL_CLASS ? "Class" : "", \
+										qc->flags, \
+										qc->flags & V4L2_CTRL_FLAG_DISABLED ? "Disabled " : "", \
+										qc->flags & V4L2_CTRL_FLAG_GRABBED ? "Grabbed " : "", \
+										qc->flags & V4L2_CTRL_FLAG_READ_ONLY ? "ReadOnly " : "", \
+										qc->flags & V4L2_CTRL_FLAG_UPDATE ? "Update " : "", \
+										qc->flags & V4L2_CTRL_FLAG_INACTIVE ? "Inactive " : "", \
+										qc->flags & V4L2_CTRL_FLAG_SLIDER ? "slider " : ""); \
+							} while(0);
 
 #define XMALLOC(var, type, size)	\
 		do { \

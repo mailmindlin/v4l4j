@@ -113,9 +113,9 @@ int pwc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, i
 	return ret;
 }
 
-int pwc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int val, void *d){
+int pwc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val, void *d){
 	struct pwc_mpt_angles angles;
-	int ret = LIBV4L_ERR_IOCTL;
+	int ret = LIBV4L_ERR_IOCTL, prev = 0;
 
 	if(q->id==0) {
 
@@ -128,7 +128,7 @@ int pwc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int val, v
 		} else {
 			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "PWC: Error resetting pan/tilt\n");
 		}
-
+		*val=0;
 	} else if(q->id==1) {
 
 		//Pan control
@@ -137,15 +137,17 @@ int pwc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int val, v
 		//finds the previous values for pan and tilt
 		if(ioctl(vdev->fd, VIDIOCPWCMPTGANGLE, &angles)!=0){
 			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "PWC: Error probing pan/tilt angle\n");
-		}
+		} else
+			prev = angles.pan;
 
-		angles.pan=val;
+		angles.pan=*val;
 		angles.absolute=1;
 
 		if(ioctl(vdev->fd, VIDIOCPWCMPTSANGLE, &angles)==0){
 			ret = 0;
 		} else {
 			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "PWC: Error setting pan angle\n");
+			*val = prev;
 		}
 
 	} else if(q->id==2) {
@@ -156,15 +158,17 @@ int pwc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int val, v
 		//finds the previous values for pan and tilt
 		if(ioctl(vdev->fd, VIDIOCPWCMPTGANGLE, &angles)!=0){
 			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "PWC: Error probing pan/tilt angle\n");
-		}
+		} else
+			prev = angles.tilt;
 
-		angles.tilt=val;
+		angles.tilt=*val;
 		angles.absolute=1;
 
 		if(ioctl(vdev->fd, VIDIOCPWCMPTSANGLE, &angles)==0){
 			ret = 0;
 		} else {
 			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "PWC: Error setting tilt angle\n");
+			*val = prev;
 		}
 
 	} else {

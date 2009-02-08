@@ -32,6 +32,6 @@
 int gspca_driver_probe(struct video_device *, void **);
 int gspca_list_ctrl(struct video_device *, struct control *, void *);
 int gspca_get_ctrl(struct video_device *,  struct v4l2_queryctrl *, void *, int *);
-int gspca_set_ctrl(struct video_device *, struct v4l2_queryctrl *, int, void *);
+int gspca_set_ctrl(struct video_device *, struct v4l2_queryctrl *, int *, void *);
 
 #endif /*H_GSPCA_PROBE*/
