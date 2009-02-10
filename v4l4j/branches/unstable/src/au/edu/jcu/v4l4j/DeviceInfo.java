@@ -1,3 +1,26 @@
+/*
+* Copyright (C) 2007-2008 Gilles Gigan (gilles.gigan@gmail.com)
+* eResearch Centre, James Cook University (eresearch.jcu.edu.au)
+*
+* This program was developed as part of the ARCHER project
+* (Australian Research Enabling Environment) funded by a   
+* Systemic Infrastructure Initiative (SII) grant and supported by the Australian
+* Department of Innovation, Industry, Science and Research
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public  License as published by the
+* Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+* or FITNESS FOR A PARTICULAR PURPOSE.  
+* See the GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+*/
 package au.edu.jcu.v4l4j;
 
 import java.util.List;
@@ -6,14 +29,16 @@ import java.util.Vector;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 /**
- * Objects of this class encapsulate the following information about a video device:
+ * Objects of this class encapsulate the following information about a video 
+ * device:
  * <ul>
- * <li>Its device file,</li>
- * <li>The name of the video device,</li>
- * <li>A list of <code>InputInfo</code> object providing information about each video input,</li>
- * <li>and a list of image formats used by the video device.
+ * <li>its device file,</li>
+ * <li>the name of the video device,</li>
+ * <li>a list of {@link InputInfo} object providing information about each 
+ * video input,</li>
+ * <li>and a list of {@link ImageFormat}s used by the video device.
  * </ul>
- * To retrieve information about a video device, call <code>getDeviceInfo()</code> on its 
+ * To retrieve information about a video device, call {@link VideoDevice#getDeviceInfo()} on its 
  * <code>VideoDevice</code> object, and retrieve parameters of interest.
  * Example:<br>
  * <code>
@@ -53,6 +78,7 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * &nbsp;&nbsp;}<br>
  * }<br>
  * vd.release();<br>
+ * </code>
  * 
  * @author gilles
  *
@@ -104,7 +130,7 @@ public class DeviceInfo {
 	}
 
 	/**
-	 * This method returns the device file associated with the video device
+	 * This method returns the device file associated with the video device.
 	 * @return the device file
 	 */
 	public String getDeviceFile() {
@@ -113,9 +139,10 @@ public class DeviceInfo {
 
 
 	/**
-	 * This method returns a list of <code>InputInfo</code> objects which provide
+	 * This method returns a list of {@link InputInfo} objects which provide
 	 * information about each video input supported by the video device.
 	 * @return a list of <code>InputInfo</code> objects
+	 * @see InputInfo
 	 */
 	public List<InputInfo> getInputs() {
 		return new Vector<InputInfo>(inputs);
@@ -123,9 +150,10 @@ public class DeviceInfo {
 
 
 	/**
-	 * This method returns a list of <code>ImageFormat</code> objects detailing
+	 * This method returns a list of {@link ImageFormat} objects detailing
 	 * the various image format the video device supports.
-	 * @return a list of <code>ImageFormat</code> objects 
+	 * @return a list of <code>ImageFormat</code> objects
+	 * @see ImageFormat 
 	 */
 	public List<ImageFormat> getFormats() {
 		return new Vector<ImageFormat>(formats);
@@ -133,10 +161,11 @@ public class DeviceInfo {
 
 
 	/**
-	 * This constructor build a DeviceInfo object containing information about the 
-	 * given V4L device
+	 * This constructor build a DeviceInfo object containing information about 
+	 * the given V4L device.
 	 * @param object the JNI C pointer to struct v4l4j_device
-	 * @throws V4L4JException if there is an error retrieving information from the vide device
+	 * @throws V4L4JException if there is an error retrieving information from
+	 * the video device.
 	 */	
 	DeviceInfo(long object, String dev) throws V4L4JException{
 		inputs = new Vector<InputInfo>();

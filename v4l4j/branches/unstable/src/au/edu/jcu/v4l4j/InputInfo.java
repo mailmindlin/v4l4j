@@ -1,3 +1,26 @@
+/*
+* Copyright (C) 2007-2008 Gilles Gigan (gilles.gigan@gmail.com)
+* eResearch Centre, James Cook University (eresearch.jcu.edu.au)
+*
+* This program was developed as part of the ARCHER project
+* (Australian Research Enabling Environment) funded by a   
+* Systemic Infrastructure Initiative (SII) grant and supported by the Australian
+* Department of Innovation, Industry, Science and Research
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public  License as published by the
+* Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+* or FITNESS FOR A PARTICULAR PURPOSE.  
+* See the GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+*/
 package au.edu.jcu.v4l4j;
 
 import java.util.HashSet;
@@ -9,13 +32,16 @@ import au.edu.jcu.v4l4j.exceptions.NoTunerException;
  * Objects of this class encapsulate information about a video input:<br>
  * <ul>
  * <li>The name of this input</li>
- * <li>The supported standards (<code>FrameGrabber.PAL</code>, <code>FrameGrabber.SECAM</code>,
- * <code>FrameGrabber.NTSC</code> and <code>FrameGrabber.WEBCAM</code>)</li>
- * <li>The input type (<code>InputInfo.TUNER</code> or <code>InputInfo.CAMERA</code>)</li>
- * <li>The <code>TunerInfo</code> object associated with this input if it is connected to a tuner.</li>
+ * <li>The supported standards ({@link V4L4JConstants#PAL}, {@link V4L4JConstants#SECAM},
+ * {@link V4L4JConstants#NTSC} or {@link V4L4JConstants#WEBCAM})</li>
+ * <li>The input type ({@link V4L4JConstants#TUNER} or
+ * {@link V4L4JConstants#CAMERA})</li>
+ * <li>The {@link TunerInfo} object associated with this input if it is
+ * connected to a tuner.</li>
  * </ul>
- * You do not directly instantiate <code>InputInfo</code> objects. Instead, they are created by
- * the corresponding <code>VideoDevice</code> object through its <code>getDeviceInfo()</code> method.
+ * You do not directly instantiate <code>InputInfo</code> objects. Instead, they
+ * are created by the corresponding {@link VideoDevice} object through its 
+ * {@link VideoDevice#getDeviceInfo()} method.
  * @author gilles
  *
  */
@@ -31,8 +57,8 @@ public class InputInfo {
 	private short type;
 	
 	/**
-	 * A set of the supported standards (<code>V4L4JConstants.PAL</code>, <code>V4L4JConstants.SECAM</code>
-	 * <code>V4L4JConstants.NTSC</code>, <code>V4L4JConstants.WEBCAM</code>)
+	 * A set of the supported standards ({@link V4L4JConstants#PAL}, {@link V4L4JConstants#SECAM},
+ * {@link V4L4JConstants#NTSC} or {@link V4L4JConstants#WEBCAM})
 	 */
 	private Set<Integer> supportedStandards;
 	
@@ -93,8 +119,9 @@ public class InputInfo {
 	}
 
 	/**
-	 * This method returns the type of this input (Input.TUNER or Input.CAMERA)
-	 * @return the type
+	 * This method returns the type of this input 
+	 * ({@link V4L4JConstants#TUNER} or {@link V4L4JConstants#CAMERA})
+	 * @return the type of this input
 	 */
 	public short getType() {
 		return type;
@@ -102,6 +129,8 @@ public class InputInfo {
 
 	/**
 	 * This method returns the standards supported by this input
+	 * ({@link V4L4JConstants#PAL}, {@link V4L4JConstants#SECAM},
+	 *  {@link V4L4JConstants#NTSC} or {@link V4L4JConstants#WEBCAM})
 	 * @return the supportedStandards
 	 */
 	public Set<Integer> getSupportedStandards() {
@@ -111,8 +140,8 @@ public class InputInfo {
 	/**
 	 * This method returns the tuner associated with this input, if any.
 	 * @return the tuner
-	 * @throws NoTunerException if this input is of type Input.CAMERA, and is not
-	 * a tuner
+	 * @throws NoTunerException if this input is of type 
+	 * {@link V4L4JConstants#CAMERA}, and is not a tuner.
 	 */
 	public TunerInfo getTuner() throws NoTunerException{
 		if(tuner==null)

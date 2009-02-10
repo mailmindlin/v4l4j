@@ -1,4 +1,3 @@
-
 /*
 * Copyright (C) 2007-2008 Gilles Gigan (gilles.gigan@gmail.com)
 * eResearch Centre, James Cook University (eresearch.jcu.edu.au)
@@ -42,13 +41,15 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
 
 
 /**
- * This class provides methods to capture raw frames from a Video4Linux source. Raw means that the image
- * format will be left untouched and passed on straight away to the caller.
- * <code>FrameGrabber</code> objects 
- * are not instantiated directly. Instead, the <code>getRawFrameGrabber()</code> method
- * must be called on the associated <code>VideoDevice</code>. Requested height and width may be adjusted
- * to the closest supported values. The adjusted width and height can be retreived by calling <code>getWidth()</code>
- * and <code>getHeight()</code>.<br>
+ * This class provides methods to capture raw frames from a {@link VideoDevice}.
+ * Raw means that the image format will be left untouched and passed on straight
+ * away to the caller. <code>FrameGrabber</code> objects are not instantiated
+ * directly. Instead, the 
+ * {@link VideoDevice#getRawFrameGrabber(int, int, int, int) getRawFrameGrabber()}
+ * method must be called on the associated {@link VideoDevice}. Requested height
+ * and width may be adjusted to the closest supported values. The adjusted width 
+ * and height can be retrieved by calling {@link #getWidth()} and 
+ * {@link #getHeight()}.<br>
  * A typical <code>FrameGrabber</code> use is as follows:<br><br>
  * <code>//create a new video device<br>
  * VideoDevice vd = new VideoDevice("/dev/video0");<br>
@@ -72,10 +73,12 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * <br>vd.release();
  * </code><br><br>
  * 
- * Once the frame grabber is released with <code>vd.releaseFrameGrabber()</code>, it can be
- * re-initialised again with <code>vd.getXXXFrameGrabber()</code>. Similarly, when the capture is stopped
- * with <code>FrameGrabber.stopCapture()</code>, it can be started again with <code>FrameGrabber.stopCapture()</code>
- * without having to create a new <code>FrameGrabber</code>.
+ * Once the frame grabber is released with 
+ * {@link VideoDevice#releaseFrameGrabber()}, it can be re-initialised again 
+ * with one of the <code>getXXFrameGrabber()</code> method again. Similarly,
+ * when the capture is stopped with {@link #stopCapture()}, it can be started 
+ * again with {@link #stopCapture()} without having to create a new 
+ * <code>FrameGrabber</code>.
  * 
  * @author gilles
  *
@@ -195,14 +198,15 @@ public class FrameGrabber {
 	}
 	
 	/**
-	 * This method returns a <code>Tuner</code> object associated with this <code>FrameGrabber</code>, or
-	 * throws a <code>NoTunerException</code> if there is none. The <code>Tuner</code> object must be
-	 * released with <code>releaseTuner()</code> when finished, otherwise this <code>FrameGrabber</code>
+	 * This method returns a {@link Tuner} object associated with this 
+	 * <code>FrameGrabber</code>, or throws a {@link NoTunerException} if there
+	 * is none. The {@link Tuner} object must be released with 
+	 * {@link #releaseTuner()} when finished, otherwise this <code>FrameGrabber</code>
 	 * can not be released.
-	 * @return a <code>Tuner</code> object
+	 * @return a {@link Tuner} object
 	 * @throws NoTunerException if the selected input does not have a tuner
-	 * @throws StateException if this <code>FrameGrabber</code> has been already released, and therefore must
-	 * not be used anymore
+	 * @throws StateException if this <code>FrameGrabber</code> has been already
+	 * released, and therefore must not be used anymore
 	 */
 	public Tuner getTuner() throws NoTunerException{
 		if(hasTuner(object)==1){
@@ -218,11 +222,12 @@ public class FrameGrabber {
 	}
 	
 	/**
-	 * This method releases the <code>Tuner</code> object associated with this <code>FrameGrabber</code>.
-	 * It does nothing if this <code>FrameGrabber</code> does not have a tuner, or if a reference to it
-	 * has not been retrieved before (with a call to <code>getTuner()</code>).
-	 * @throws StateException if this <code>FrameGrabber</code> has been already released, and therefore must
-	 * not be used anymore
+	 * This method releases the {@link Tuner} object associated with this
+	 * <code>FrameGrabber</code>. It does nothing if this 
+	 * <code>FrameGrabber</code> does not have a tuner, or if a reference to it
+	 * has not been retrieved before (with a call to {@link #getTuner()}).
+	 * @throws StateException if this <code>FrameGrabber</code> has been already
+	 * released, and therefore must not be used anymore
 	 */
 	public void releaseTuner(){
 		if(hasTuner(object)==1){
@@ -237,10 +242,11 @@ public class FrameGrabber {
 	}
 	
 	/**
-	 * This method starts the capture. After this call, frames can be retrieved with <code>getFrame()</code>.
+	 * This method starts the capture. After this call, frames can be retrieved
+	 * with {@link #getFrame()}.
 	 * @throws V4L4JException if the capture cant be started
-	 * @throws StateException if this <code>FrameGrabber</code> has been already released, and therefore must
-	 * not be used anymore
+	 * @throws StateException if this <code>FrameGrabber</code> has been already
+	 * released, and therefore must not be used anymore
 	 */
 	public void startCapture() throws V4L4JException {
 		state.start();
@@ -249,13 +255,15 @@ public class FrameGrabber {
 	}
 	
 	/**
-	 * This method retrieves one frame from the video source. The ByteBuffer <code>limit()</code> is
-	 * set to the size of the captured frame. Note that the returned ByteBuffer is not backed by an array.
+	 * This method retrieves one frame from the video source. The ByteBuffer 
+	 * {@link ByteBuffer#limit() limit()} is set to the size of the captured
+	 * frame. Note that the returned ByteBuffer is not backed by an array.
 	 * This is a JNI limitation (not v4l4j).
-	 * @return a ByteBuffer containing frame data
-	 * @throws V4L4JException if there is an error capturing from the source
-	 * @throws StateException if the capture has not been started or if this <code>FrameGrabber</code> has
-	 * been already released, and therefore must not be used anymore.
+	 * @return a ByteBuffer containing frame data.
+	 * @throws V4L4JException if there is an error capturing from the source.
+	 * @throws StateException if the capture has not been started or if this 
+	 * <code>FrameGrabber</code> has been already released, and therefore must 
+	 * not be used anymore.
 	 */
 	public ByteBuffer getFrame() throws V4L4JException {
 		//we need the synchronized statement to serialise calls to getBuffer
@@ -271,8 +279,9 @@ public class FrameGrabber {
 	
 	/**
 	 * This method stops the capture.
-	 * @throws StateException if the capture has not been started or if this <code>FrameGrabber</code> has
-	 * been already released, and therefore must not be used anymore.
+	 * @throws StateException if the capture has not been started or if this 
+	 * <code>FrameGrabber</code> has been already released, and therefore must
+	 * not be used anymore.
 	 */
 	public void stopCapture(){
 		state.stop();		
