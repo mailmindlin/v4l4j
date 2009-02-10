@@ -31,22 +31,28 @@ import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
 
 /**
- * Objects of this class represent a video source control of any nature. <code>Control</code> objects are not directly
- * instantiated. Instead a list of <code>Control</code>s associated with a <code>VideoDevice</code> can be obtained
- * by calling <code>VideoDevice.getControlList()</code>. Once the controls are no longer used, they must be released
- * by calling <code>VideoDevice.releaseControlList()</code>. Any attempt to use a control after it has been released
- * will result in a <code>StateException</code>.<br>
- * A control can be either of the following types:<br>
+ * Objects of this class represent a video source control of any nature.
+ * <code>Control</code> objects are not directly instantiated. Instead a
+ * list of <code>Control</code>s associated with a <code>VideoDevice</code>
+ * can be obtained by calling {@link VideoDevice#getControlList() getControlList()}.
+ * Once the controls are no longer used, they must be released by calling 
+ * {@link VideoDevice#releaseControlList() releaseControlList()}. Any attempt 
+ * to use a control after it has been released will result in a 
+ * {@link StateException}.<br> A control can be either of the following types:<br>
  * <ul>
- * <li><code>V4L4JConstants.BUTTON</code>: Such controls take only 2 different values: 0 and 1</li>
- * <li><code>V4L4JConstants.SLIDER</code>: Controls of this type take a range of values between a minimum value 
- * (returned by <code>getMin()</code>) and a maximum value (returned by <code>getMax()</code>) with an increment
- * value (returned by <code>getStep()</code>)</li>
- * <li><code>V4L4JConstants.SWITCH</code>: Switch controls do not take any specific value, and attempting to read its current values
- * will always return 0. Setting any value will activate the switch.</li>
- * <li><code>V4L4JConstants.DISCRETE</code>: These controls accept only specific discrete values, which can be retrieved using
- * <code>getDiscreteValues()</code>. Each discrete value may be accompanied by a description, which is returned by
- * <code>getDiscreteValueNames()</code>.</li>
+ * <li><code>V4L4JConstants.BUTTON</code>: Such controls take only 2 different
+ * values: 0 and 1</li>
+ * <li><code>V4L4JConstants.SLIDER</code>: Controls of this type take a range
+ * of values between a minimum value (returned by {@link #getMinValue()}) and a
+ * maximum value (returned by {@link #getMaxValue()}) with an increment value 
+ * (returned by {@link #getStepValue()})</li>
+ * <li><code>V4L4JConstants.SWITCH</code>: Switch controls do not take any
+ * specific value, and attempting to read its current value will always return 
+ * 0. Setting any value will activate the switch.</li>
+ * <li><code>V4L4JConstants.DISCRETE</code>: These controls accept only specific
+ * discrete values, which can be retrieved using {@link #getDiscreteValues()}.
+ * Each discrete value may be accompanied by a description, which is returned by
+ * {@link #getDiscreteValueNames()}.</li>
  * </ul>
  * @author gilles
  *
@@ -116,10 +122,13 @@ public class Control {
 	}
 	
 	/**
-	 * This method retrieves the current value of this control.
-	 * @return the current value of this control(0 if it is a button)
-	 * @throws ControlException if the value cant be retrieved
-	 * @throws StateException if this control has been released and must no be used anymore.
+	 * This method retrieves the current value of this control. Some controls
+	 * (for example relative values like pan or tilt) are read-only and getting
+	 * their value does not make sense. Invoking this method on this kind of
+	 * controls will trigger a ControlException.   
+	 * @return the current value of this control (0 if it is a button)
+	 * @throws ControlException if the value cannot be retrieved
+	 * @throws StateException if this control has been released and must not be used anymore.
 	 */
 	public int getValue() throws ControlException{
 		int v = 0;
@@ -138,7 +147,7 @@ public class Control {
 	 * This method sets a new value for this control.
 	 * @param value the new value
 	 * @throws ControlException if the value can not be set
-	 * @throws StateException if this control has been released and must no be used anymore.
+	 * @throws StateException if this control has been released and must not be used anymore.
 	 */
 	public void setValue(int value) throws ControlException {
 		state.get();
@@ -152,9 +161,9 @@ public class Control {
 	
 	/**
 	 * This method increases this control's current value by its step (as returned
-	 * by <code>getStep()</code>. 
-	 * @throws ControlException if the value can not be increased
-	 * @throws StateException if this control has been released and must no be used anymore.
+	 * by {@link #getStepValue()})</code>.
+	 * @throws ControlException if the value cannot be increased
+	 * @throws StateException if this control has been released and must not be used anymore.
 	 */
 	public void increaseValue() throws ControlException {
 		int old = 0;
@@ -175,9 +184,9 @@ public class Control {
 	
 	/**
 	 * This method decreases this control's current value by its step (as returned
-	 * by <code>getStep()</code>. 
+	 * by {@link #getStepValue()}. 
 	 * @throws ControlException if the value can not be increased
-	 * @throws StateException if this control has been released and must no be used anymore.
+	 * @throws StateException if this control has been released and must not be used anymore.
 	 */
 	public void decreaseValue() throws ControlException {
 		int old = 0;
@@ -199,87 +208,88 @@ public class Control {
 	/**
 	 * This method retrieves the maximum value this control will accept.
 	 * @return the maximum value
-	 * @throws StateException if this control has been released and must no be used anymore.
+	 * @throws StateException if this control has been released and must not be used anymore.
 	 */
 	public int getMaxValue() {
 		synchronized(state){
 			if(state.isNotReleased())
 				return max;
 			else
-				throw new StateException("This control as been released and must not be used");
+				throw new StateException("This control has been released and must not be used");
 		}
 	}
 
 	/**
 	 * This method retrieves the minimum value this control will accept.
 	 * @return the minimum value
-	 * @throws StateException if this control has been released and must no be used anymore.
+	 * @throws StateException if this control has been released and must not be used anymore.
 	 */
 	public int getMinValue() {
 		synchronized(state){
 			if(state.isNotReleased())
 				return min;
 			else
-				throw new StateException("This control as been released and must not be used");
+				throw new StateException("This control has been released and must not be used");
 		}
 	}
 
 	/**
 	 * This method retrieves the name of this control.
 	 * @return the name of this control
-	 * @throws StateException if this control has been released and must no be used anymore.
+	 * @throws StateException if this control has been released and must not be used anymore.
 	 */
 	public String getName() {
 		synchronized(state){
 			if(state.isNotReleased())
 				return name;
 			else
-				throw new StateException("This control as been released and must not be used");
+				throw new StateException("This control has been released and must not be used");
 		}
 	}
 
 	/**
-	 * This method retrieves the increment to be used when setting a new value for this control.
-	 * New values must be equal to <code>getMin() + K*getStep()</code> where K is an integer, and the result is less
-	 * or equal to <code>getMax()</code>.
+	 * This method retrieves the increment to be used when setting a new value
+	 * for this control. New values must be equal to <code>getMin() + K*getStep()</code>
+	 * where K is an integer, and the result is less or equal to {@link #getMaxValue()}.
 	 * @return the increment
-	 * @throws StateException if this control has been released and must no be used anymore.
+	 * @throws StateException if this control has been released and must not be used anymore.
 	 */
 	public int getStepValue() {
 		synchronized(state){
 			if(state.isNotReleased())
 				return step;
 			else
-				throw new StateException("This control as been released and must not be used");
+				throw new StateException("This control has been released and must not be used");
 		}
 	}
 
 	/**
-	 * This method retrieves the type of this control. Values are <code>V4L4JConstants.BUTTON</code>,
-	 * <code>V4L4JConstants.SLIDER</code>, <code>V4L4JConstants.SWITCH</code> and <code>V4L4JConstants.DISCRETE</code>.
-	 * @return the type
-	 * @throws StateException if this control has been released and must no be used anymore.
+	 * This method retrieves the type of this control. Values are
+	 * <code>V4L4JConstants.BUTTON</code>, <code>V4L4JConstants.SLIDER</code>,
+	 * <code>V4L4JConstants.SWITCH</code> and <code>V4L4JConstants.DISCRETE</code>.
+	 * @return the type of this controls
+	 * @throws StateException if this control has been released and must not be used anymore.
 	 */
 	public int getType() {
 		synchronized(state){
 			if(state.isNotReleased())
 				return type;
 			else
-				throw new StateException("This control as been released and must not be used");
+				throw new StateException("This control has been released and must not be used");
 		}
 	}
 	
 	/**
 	 * This method returns the default value for this control
 	 * @return the default value for this control
-	 * @throws StateException if this control has been released and must no be used anymore
+	 * @throws StateException if this control has been released and must not be used anymore
 	 */
 	public int getDefaultValue(){
 		synchronized(state){
 			if(state.isNotReleased())
 				return defaultValue;
 			else
-				throw new StateException("This control as been released and must not be used");
+				throw new StateException("This control has been released and must not be used");
 		}
 	}
 	
@@ -287,13 +297,13 @@ public class Control {
 	 * This method returns a list of the discrete values accepted by this control
 	 * @return a list of the discrete values accepted by this control
 	 * @throws UnsupportedMethod if this control does not support discrete values. Instead,
-	 * any values between <code>getMin()</code> and <code>getMax()</code> with a step of
-	 * <code>/getStep()</code> may be used.
-	 * @throws StateException if this control has been released and must no be used anymore
+	 * any values between {@link #getMinValue()} and {@link #getMaxValue()} with a step of
+	 * {@link #getStepValue()} may be used.
+	 * @throws StateException if this control has been released and must not be used anymore
 	 */
 	public Vector<Integer> getDiscreteValues(){
 		if(type!=V4L4JConstants.DISCRETE && values!=null)
-			throw new UnsupportedMethod("This control does not have discrete values");
+			throw new UnsupportedMethod("This control does not accept discrete values");
 		state.get();
 		Vector<Integer> v = new Vector<Integer>();
 		for(int i: values)
@@ -307,9 +317,9 @@ public class Control {
 	 * This method returns a description for each of the supported discrete values.
 	 * @return a description for each of the supported discrete values.
 	 * @throws UnsupportedMethod if this control does not support discrete values. Instead,
-	 * any values between <code>getMin()</code> and <code>getMax()</code> with a step of
-	 * <code>/getStep()</code> may be used.
-	 * @throws StateException if this control has been released and must no be used anymore
+	 * any values between {@link #getMinValue()} and {@link #getMaxValue()} with a step of
+	 * {@link #getStepValue()} may be used.
+	 * @throws StateException if this control has been released and must not be used anymore
 	 */
 	public Vector<String> getDiscreteValueNames(){
 		if(type!=V4L4JConstants.DISCRETE && names!=null)
@@ -323,11 +333,11 @@ public class Control {
 	
 	/**
 	 * This method returns the index of a given discrete value in the list of discrete values,
-	 * as returned by <code>getDiscreteValues()</code>
+	 * as returned by {@link #getDiscreteValues()}.
 	 * @param v the discrete value whose index is needed
 	 * @return the index of a given discrete value, or -1 if the given value is not found
 	 * @throws UnsupportedMethod if this control doesnt support discrete values
-	 * @throws StateException if this control has been released and must no be used anymore
+	 * @throws StateException if this control has been released and must not be used anymore
 	 */
 	public int getDiscreteValueIndex(int v){
 		if(type!=V4L4JConstants.DISCRETE && values!=null)
@@ -346,7 +356,7 @@ public class Control {
 	
 	/**
 	 * This method returns the index of a given discrete value's description in the list of discrete values,
-	 * as returned by <code>getDiscreteValues()</code>
+	 * as returned by {@link #getDiscreteValues()}.
 	 * @param n the discrete value's description whose index is needed
 	 * @return the index of a given discrete value, or -1 if the given value is not found
 	 * @throws UnsupportedMethod if this control doesnt support discrete values
@@ -368,7 +378,7 @@ public class Control {
 	 * @return the value matching the description
 	 * @throws UnsupportedMethod if this control doesnt support discrete values
 	 * @throws IndexOutOfBoundsException if the given description doesnt match anything
-	 * @throws StateException if this control has been released and must no be used anymore
+	 * @throws StateException if this control has been released and must not be used anymore
 	 */
 	public int getDiscreteValueFromName(String n){
 		if(type!=V4L4JConstants.DISCRETE && values!=null)
