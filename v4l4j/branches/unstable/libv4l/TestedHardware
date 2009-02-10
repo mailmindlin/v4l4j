@@ -3,6 +3,7 @@ libv4l has been compiled and tested succesfully on the following platforms:
 - Ubuntu 8.04 - i386
 - Debian Etch - i386
 - Debian Lenny - Neo FreeRunner
+- Gentoo 2008.0 - x86_64
 
 Tested video devices and drivers:
 - 046d:08b2 Logitech, Inc. QuickCam Pro 4000 (pwc driver)
