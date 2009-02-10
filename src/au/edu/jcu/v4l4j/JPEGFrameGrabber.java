@@ -2,6 +2,42 @@ package au.edu.jcu.v4l4j;
 
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
+/**
+ * Objects of this class are used to retrieve JPEG-encoded frames from a <code>VideoDevice</code>. <code>JPEGFrameGrabber</code> objects 
+ * are not instantiated directly. Instead, the <code>getJPEGFrameGrabber()</code> method
+ * must be called on the associated <code>VideoDevice</code>. Requested height and width may be adjusted
+ * to the closest supported values. The adjusted width and height can be retreived by calling <code>getWidth()</code>
+ * and <code>getHeight()</code>.<br>
+ * A typical <code>JPEGFrameGrabber</code> use is as follows:<br><br>
+ * <code>//create a new video device<br>
+ * VideoDevice vd = new VideoDevice("/dev/video0");<br>
+ * <br>//Create an instance of FrameGrabber
+ * <br>FrameGrabber f = vd.getRawFrameGrabber(320, 240, 0, 0, 80);
+ * <br> //the framegrabber will use the first image format supported by the device, as returned by
+ * <br> //<code>vd.getDeviceInfo().getFormats().get(0)</code>
+ * <br>
+ * <br> //Start the frame capture 
+ * <br>f.startCapture();
+ * <br>while (!stop) {
+ * <br>&nbsp;&nbsp; ByteBuffer b= f.getFrame(); //Get a frame
+ * <br>&nbsp;&nbsp; //frame size is b.limit()
+ * <br>&nbsp;&nbsp; //do something useful with b
+ * <br>}<br>
+ * <br>//Stop the capture
+ * <br>f.stopCapture();<br>
+ * <br>//Free capture resources and release the FrameGrabber
+ * <br>vd.releaseFrameGrabber();<br>
+ * <br>//release VideoDevice
+ * <br>vd.release();
+ * </code><br><br>
+ * 
+ * Once the frame grabber is released with <code>vd.releaseFrameGrabber()</code>, it can be
+ * re-initialised again with <code>vd.getXXXFrameGrabber()</code>. Similarly, when the capture is stopped
+ * with <code>FrameGrabber.stopCapture()</code>, it can be started again with <code>FrameGrabber.stopCapture()</code>
+ * without having to create a new <code>FrameGrabber</code>.
+ * @author gilles
+ *
+ */
 public class JPEGFrameGrabber extends FrameGrabber {
 	
 	/**

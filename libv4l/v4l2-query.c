@@ -87,7 +87,7 @@ static int query_tuner(struct video_input_info *vi, int fd, int index){
 	CLEAR(t);
 	t.index = index;
 
-	if (ioctl (fd, VIDIOC_G_TUNER, &t) > 0)
+	if (ioctl (fd, VIDIOC_G_TUNER, &t) != 0)
 		return -1;
 
 	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG,
@@ -105,7 +105,7 @@ static int query_tuner(struct video_input_info *vi, int fd, int index){
 	vi->tuner->rangelow = t.rangelow;
 
 	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG,
-				"QRY: Tuner: %s - low: %ld - high: %ld - unit: %d\n",
+				"QRY: Tuner: %s - low: %lu - high: %lu - unit: %d\n",
 				vi->tuner->name, vi->tuner->rangelow, vi->tuner->rangehigh,
 				vi->tuner->unit);
 

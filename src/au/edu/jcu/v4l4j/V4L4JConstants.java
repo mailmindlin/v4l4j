@@ -65,5 +65,21 @@ public class V4L4JConstants {
 	 * <code>Control.getMin()</code> and	<code>Control.getMax()</code>. The step value as returned by <code>Control.getStep()</code> is not applicable.
 	 */
 	public final static int DISCRETE=3;
+	/**
+	 * Radio tuner
+	 */
+	public static int RADIO = 1;
+	/**
+	 * TV tuner
+	 */
+	public static int TV = 2;
+	/**
+	 * Frequencies in KHz
+	 */
+	public static int KHZ = 1;
+	/**
+	 * Frequencies in MHz
+	 */
+	public static int MHZ = 2;
 
 }

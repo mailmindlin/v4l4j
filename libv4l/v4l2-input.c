@@ -73,6 +73,51 @@ int check_capture_capabilities_v4l2(int fd, char *file) {
 	return 0;
 }
 
+static int set_tuner_freq_v4l2(struct video_device *vdev, unsigned int f){
+	struct v4l2_frequency freq;
+	CLEAR(freq);
+
+	freq.tuner = vdev->capture->tuner_nb;
+	if(-1 == ioctl(vdev->fd, VIDIOC_G_FREQUENCY, &freq)){
+		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "Failed to get tuner frequency on device %s\n", vdev->file);
+		return LIBV4L_ERR_IOCTL;
+	}
+	freq.frequency = f;
+	if(-1 == ioctl(vdev->fd, VIDIOC_S_FREQUENCY, &freq)){
+		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "Failed to set tuner frequency on device %s\n", vdev->file);
+		return LIBV4L_ERR_IOCTL;
+	}
+	return 0;
+}
+
+static int get_tuner_freq_v4l2(struct video_device *vdev, unsigned int *f){
+	struct v4l2_frequency freq;
+	CLEAR(freq);
+
+	freq.tuner = vdev->capture->tuner_nb;
+	if(-1 == ioctl(vdev->fd, VIDIOC_G_FREQUENCY, &freq)){
+		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "Failed to get tuner frequency on device %s\n", vdev->file);
+		return LIBV4L_ERR_IOCTL;
+	}
+	*f = freq.frequency;
+	return 0;
+}
+
+static int get_rssi_afc_v4l2(struct video_device *vdev, int *r, int *a){
+	struct v4l2_tuner t;
+	CLEAR(t);
+	t.index = vdev->capture->tuner_nb;
+
+	if(-1 == ioctl (vdev->fd, VIDIOC_G_TUNER, &t)){
+		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "Failed to get tuner info on device %s\n", vdev->file);
+		return LIBV4L_ERR_IOCTL;
+	}
+	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "Got RSSI %d & AFC %d on device %s\n", t.signal, t.afc, vdev->file);
+	*r = t.signal;
+	*a = t.afc;
+	return 0;
+}
+
 static int set_std(struct capture_device *c, int fd){
 	v4l2_std_id std;
 	int found=1, i=0;
@@ -150,14 +195,26 @@ static int set_std(struct capture_device *c, int fd){
 }
 
 static int set_input(struct capture_device *c, int fd){
+	struct v4l2_input vi;
 	//Linux UVC doesnt like to be ioctl'ed (VIDIOC_S_INPUT)
 	//so we only execute them if std!="webcam"
 
 	//TODO: Add autodetection here so if the given input channel is invalid
 	//a valid one is selected
-	if (c->std!=WEBCAM && -1 == ioctl(fd, VIDIOC_S_INPUT, &(c->channel))) {
+	if (c->std!=WEBCAM) {
+		if(-1 == ioctl(fd, VIDIOC_S_INPUT, &(c->channel))) {
 			info("The desired input (%d) cannot be selected.\n", c->channel);
 			return -1;
+		}
+		vi.index = c->channel;
+		if (-1 == ioctl(fd, VIDIOC_ENUMINPUT, &vi)) {
+			dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "Failed to get details of input %d\n", c->channel);
+			return -1;
+		}
+		c->tuner_nb = vi.tuner;
+		c->actions->get_tuner_freq = get_tuner_freq_v4l2;
+		c->actions->set_tuner_freq = set_tuner_freq_v4l2;
+		c->actions->get_rssi_afc = get_rssi_afc_v4l2;
 	}
 	return 0;
 }
