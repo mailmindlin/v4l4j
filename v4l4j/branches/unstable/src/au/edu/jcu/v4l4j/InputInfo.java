@@ -6,17 +6,16 @@ import java.util.Set;
 import au.edu.jcu.v4l4j.exceptions.NoTunerException;
 
 /**
- * Objects of this class encapsulate information about a video device:<br>
+ * Objects of this class encapsulate information about a video input:<br>
  * <ul>
  * <li>The name of this input</li>
  * <li>The supported standards (<code>FrameGrabber.PAL</code>, <code>FrameGrabber.SECAM</code>,
  * <code>FrameGrabber.NTSC</code> and <code>FrameGrabber.WEBCAM</code>)</li>
- * <li>The input type (<code>InputInfo.TUNER</code> or <code>InputInfo.CAMERA</code></li>
+ * <li>The input type (<code>InputInfo.TUNER</code> or <code>InputInfo.CAMERA</code>)</li>
  * <li>The <code>TunerInfo</code> object associated with this input if it is connected to a tuner.</li>
  * </ul>
  * You do not directly instantiate <code>InputInfo</code> objects. Instead, they are created by
- * the corresponding <code>VideoDevice</code> object through its <code>getDeviceInfo()</code> method. 
- * 
+ * the corresponding <code>VideoDevice</code> object through its <code>getDeviceInfo()</code> method.
  * @author gilles
  *
  */

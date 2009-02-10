@@ -126,6 +126,7 @@ struct mmap {
 #define 	YUV411					42
 
 
+
 //all the fields in the following structure are read only
 struct capture_device {
 	struct mmap *mmap;				//do not touch
@@ -135,6 +136,7 @@ struct capture_device {
 	int std;						//v4l standard - see #define enum above
 	int channel;					//channel number (for video capture cards, not webcams)
 	int imagesize;					//in bytes
+	int tuner_nb;					//tuner number associated with this input (-1 if not a tuner input)
 	struct capture_actions *actions;	//see def below
 	int real_v4l1_palette;			//v4l1 weirdness: v4l1 defines 2 distinct palettes YUV420 and YUV420P
 									//but they are the same (same goes for YUYV and YUV422). In this field
@@ -154,8 +156,8 @@ struct tuner_info {
 #define RADIO_TYPE					1
 #define TV_TYPE						2
 	int type;
-	long rangelow;
-	long rangehigh;
+	unsigned long rangelow;
+	unsigned long rangehigh;
 #define KHZ_UNIT					1
 #define MHZ_UNIT					2
 	int unit;
@@ -317,6 +319,13 @@ struct capture_actions {
 
 //counterpart of init_capture, must be called it init_capture was successful
 	void (*free_capture)(struct video_device *);
+
+//methods to get/set the associated tuner frequency. Initialised after calling (init_capture).
+//set to NULL if no tuner is associated (check struct capture_device->tuner_nb)
+//returns 0 if OK, LIBV4L_ERR-IOCTL otherwise
+	int (*set_tuner_freq)(struct video_device *, unsigned int);
+	int (*get_tuner_freq)(struct video_device *, unsigned int *);
+	int (*get_rssi_afc)(struct video_device *, int *, int *);
 
 
 /*

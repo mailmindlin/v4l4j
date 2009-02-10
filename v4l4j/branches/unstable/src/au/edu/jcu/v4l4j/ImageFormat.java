@@ -4,7 +4,7 @@ import java.util.List;
 
 /**
  * Objects of this class represent an image format. <code>ImageFormat</code> are not directly
- * instanciated. Instead, they can be enumerated by instantiating a <code>VideoDevice</code>, and 
+ * Instantiated. Instead, they can be enumerated by instantiating a <code>VideoDevice</code>, and 
  * checking the <code>DeviceInfo</code> object associated with it:
  * <br><code>
  * <br>VideoDevice vd = new VideoDevice("/dev/video0");
@@ -36,7 +36,7 @@ public class ImageFormat {
 	private int libv4lID;
 	
 	/**
-	 * List of image formats supported by libv4l
+	 * this is a static list of image formats supported by libv4l
 	 */
 	public static List<ImageFormat> formats;
 	
@@ -57,15 +57,15 @@ public class ImageFormat {
 	}
 
 	/**
-	 * This method returns the name of this image format
-	 * @return the name
+	 * This method returns the name of this image format.
+	 * @return the name of this format
 	 */
 	public String getName() {
 		return name;
 	}
 
 	/**
-	 * this method returns the index for this format  
+	 * This method returns the index for this format.  
 	 * @return the index of this format
 	 */
 	public int getIndex() {

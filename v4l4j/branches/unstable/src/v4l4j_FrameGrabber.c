@@ -191,6 +191,18 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_setQuality(JNIEnv *e, 
 	d->jpeg_quality = q;
 }
 
+/*
+ * returns 1 if this input has a tuner, 0 otherwise
+ */
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_hasTuner(JNIEnv *e, jobject t, jlong object){
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
+	if(d->vdev->capture->tuner_nb!=-1)
+		return 1;
+	else
+		return 0;
+}
+
 
 /*
  * get a new JPEG-compressed frame from the device
