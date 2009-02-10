@@ -66,9 +66,9 @@ public class WebcamViewer extends WindowAdapter implements Runnable{
 	 * @param dev the video device file to capture from
 	 * @param w the desired capture width
 	 * @param h the desired capture height
-	 * @param std the capture standard
-	 * @param channel the capture channel
-	 * @param qty the JPEG compression quality
+	 * @param s the capture standard
+	 * @param c the capture channel
+	 * @param q the JPEG compression quality
 	 * @throws V4L4JException if any parameter if invalid
 	 */
     public WebcamViewer(String dev, int w, int h, int s, int c, int q) throws V4L4JException{
@@ -79,7 +79,7 @@ public class WebcamViewer extends WindowAdapter implements Runnable{
 		std = s;
 		channel = c;
 		qty = q;
-    	controls = vd.getControlList();
+    	controls = vd.getControlList().getList();
         initGUI();
         stop = false;
         captureThread = null;
@@ -219,6 +219,7 @@ public class WebcamViewer extends WindowAdapter implements Runnable{
 				fg.startCapture();
 			} catch (V4L4JException e) {
 				System.out.println("Failed to start capture");
+				JOptionPane.showMessageDialog(null, "Failed to start capture:\n"+e.getMessage());
 				e.printStackTrace();
 				return;
 			}
@@ -351,7 +352,7 @@ public class WebcamViewer extends WindowAdapter implements Runnable{
 		
 		public SliderControl(Control c){
 			super(c);
-			int v = c.getMiddleValue();
+			int v = c.getDefaultValue();
 			try {v = c.getValue();} catch (ControlException e) {}
 			slider = new JSlider(JSlider.HORIZONTAL, c.getMinValue(), c.getMaxValue(), v);
 
@@ -363,7 +364,7 @@ public class WebcamViewer extends WindowAdapter implements Runnable{
 		private void setSlider(){
 			Hashtable<Integer, JLabel> labels = new Hashtable<Integer, JLabel>();
 			int length = (ctrl.getMaxValue() - ctrl.getMinValue()) / ctrl.getStepValue() + 1;
-			int middle = ctrl.getMiddleValue();
+			int middle = ctrl.getDefaultValue();
 			
 			slider.setSnapToTicks(true);
 			slider.setPaintTicks(false);
@@ -426,7 +427,7 @@ public class WebcamViewer extends WindowAdapter implements Runnable{
 		
 		public SwitchControl(Control c){
 			super(c);
-			int v = c.getMiddleValue();
+			int v = c.getDefaultValue();
 			box = new JCheckBox();
 			box.setAlignmentX(Component.CENTER_ALIGNMENT);
 			try {v = c.getValue();} catch (ControlException e){}
@@ -454,7 +455,7 @@ public class WebcamViewer extends WindowAdapter implements Runnable{
 		public MenuControl(Control c){
 			super(c);
 
-			int v = c.getMiddleValue();
+			int v = c.getDefaultValue();
 			box = new JComboBox(ctrl.getDiscreteValueNames());
 			try {v = c.getValue();} catch (ControlException e){}
 			box.setSelectedIndex(ctrl.getDiscreteValueIndex(v));				

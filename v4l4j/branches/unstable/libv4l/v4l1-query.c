@@ -185,7 +185,7 @@ static int query_tuner(struct video_input_info *vi, int fd){
 	CLEAR(t);
 	t.tuner = 0;
 
-	if (ioctl (fd, VIDIOCGTUNER, &t) > 0)
+	if (ioctl (fd, VIDIOCGTUNER, &t) != 0)
 		return -1;
 
 	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: Tuner: %s - low: %lu - high: %lu - unit: %s"

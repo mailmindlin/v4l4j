@@ -124,6 +124,9 @@ int close_device(struct video_device *vdev) {
 static void setup_capture_actions(struct video_device *vdev) {
 	struct capture_device *c = vdev->capture;
 	XMALLOC(c->actions, struct capture_actions *, sizeof(struct capture_actions) );
+	c->actions->set_tuner_freq = NULL;
+	c->actions->get_tuner_freq = NULL;
+	c->actions->get_rssi_afc = NULL;
 	if(vdev->v4l_version == V4L1_VERSION) {
 		c->actions->set_cap_param = set_cap_param_v4l1;
 		c->actions->init_capture = init_capture_v4l1;
@@ -133,7 +136,6 @@ static void setup_capture_actions(struct video_device *vdev) {
 		c->actions->stop_capture = stop_capture_v4l1;
 		c->actions->free_capture = free_capture_v4l1;
 		c->actions->list_cap = list_cap_v4l1;
-
 	} else {
 		c->actions->set_cap_param = set_cap_param_v4l2;
 		c->actions->init_capture = init_capture_v4l2;

@@ -1,29 +1,23 @@
 package au.edu.jcu.v4l4j;
 
+/**
+ * Object of this class encapsulate information about a tuner:
+ * <ul>
+ * <li>its type: V4L4JConstants.RADIO or V4L4JConstants.TV,</li>
+ * <li>the frequency unit: V4L4JConstants.KHZ or V4L4JConstants.MHZ,</li>
+ * <li>the name of the tuner,</li>
+ * <li>the index of the tuner,</li>
+ * <li>and the lowest and highest tunable frequencies.</li>  
+ * </ul>
+ * @author gilles
+ *
+ */
 public class TunerInfo {
-	/**
-	 * Radio tuner
-	 */
-	public static int RADIO = 1;
-	
-	/**
-	 * TV tuner
-	 */
-	public static int TV = 2;
 	/**
 	 * The type of this tuner (RADIO or TV)
 	 */
 	private int type;
 	
-	/**
-	 * Frequencies in KHz
-	 */
-	public static int KHZ = 1;
-	
-	/**
-	 * Frequencies in MHz
-	 */
-	public static int MHZ = 2;
 	/**
 	 * Frequency unit (MHZ or KHZ)
 	 */
@@ -56,7 +50,7 @@ public class TunerInfo {
 	}
 
 	/**
-	 * This method returns the type of this tuner (Tuner.RADIO or Tuner.TV)
+	 * This method returns the type of this tuner (V4L4JConstants.RADIO or V4L4JConstants.TV)
 	 * @return the type
 	 */
 	public int getType() {
@@ -64,7 +58,7 @@ public class TunerInfo {
 	}
 
 	/**
-	 * This method returns the unit used by this tuner (Tuner.MHZ or Tuner.KHZ)
+	 * This method returns the unit used by this tuner (V4L4JConstants.MHZ or V4L4JConstants.KHZ)
 	 * @return the unit
 	 */
 	public int getUnit() {
