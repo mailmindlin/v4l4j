@@ -133,7 +133,11 @@ public class Control {
 	public int getValue() throws ControlException{
 		int v = 0;
 		state.get();
-		if(type==V4L4JConstants.BUTTON) return 0;
+		if(type==V4L4JConstants.BUTTON) {
+			state.put();
+			return 0;
+		}
+		
 		try {v = doGetValue(v4l4jObject, id);}
 		catch (ControlException ce){
 			state.put();
@@ -417,7 +421,7 @@ public class Control {
 		return val;
 	}
 	
-	private static class State {
+	private class State {
 
 		private int state;
 		private int temp;
@@ -437,15 +441,16 @@ public class Control {
 				users++;
 			else
 				throw new StateException("This Control has been released and must not be used");
+			//System.out.println("GET "+(users-1)+"->"+users);
 		}
 		
 		public synchronized void put(){
 			if(state==INIT) {
-				System.out.println("PUT("+users+"->"+(users-1)+")");
 				if(--users==0  && temp==RELEASED)
 					notify();
 			} else
 				throw new StateException("This Control has been released and must not be used");
+			//System.out.println("PUT "+(users+1)+"->"+users);
 		}
 		
 		/**
@@ -460,6 +465,7 @@ public class Control {
 		public synchronized void release(){
 			if(state==INIT && temp!=RELEASED) {
 				temp=RELEASED;
+				//System.out.println("RELEASE "+name+" - "+users);
 				while(users!=0)
 					try {
 						wait();

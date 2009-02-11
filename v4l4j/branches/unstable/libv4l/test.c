@@ -68,30 +68,35 @@ int main(int argc, char** argv) {
 	struct video_device *v;
 	void *d;
 	struct timeval start, now;
-	int size, count=0, std=0, channel=0, width=0, height=0;
+	int size, count=0, std=0, channel=0, width=0, height=0, cap_length = 0;
 
-	if(argc!=2 && argc!=4 && argc!=6) {
+	if(argc!=2 && argc!= 3 && argc!=5 && argc!=7) {
+		printf("Usage: %s <video_device_file> [ capture_length [standard channel [ width height ] ] ]\n", argv[0]);
 		printf("This program requires the path to the video device file to be tested.\n");
-		printf("The optional second and third arguments are a video standard and channel.\n");
-		printf("Usage: %s <video_device_file> [standard channel [ width height ] ]\n", argv[0]);
+		printf("The optional second argument is the length (in seconds) of the capture (use 0 to capture a single frame), default is %d\n", CAPTURE_LENGTH);
+		printf("The optional third and fourth arguments are a video standard and channel.\n");
 		printf("Video standards: webcam:0 - PAL:1 - SECAM:2 - NTSC:3\n");
+		printf("Arguments must be in the specified order !!!\n");
 		return -1;
 	}
 
-    printf("This program will try capturing frames from %s for"\
-	       " %d seconds and will print the FPS\n", argv[1], CAPTURE_LENGTH);
+	if(argc >= 3)
+		cap_length = atoi(argv[2]);
+	else
+		cap_length = CAPTURE_LENGTH;
 
+	printf("This program will capture frames from %s for %d seconds\n", argv[1], cap_length);
 
-	if (argc==4 || argc==6){
-		std = atoi(argv[2]);
-		channel = atoi(argv[3]);
+	if (argc>=5){
+		std = atoi(argv[3]);
+		channel = atoi(argv[4]);
 		printf("Using standard %d, channel %d\n",std, channel);
 	}
 
-	if (argc==6) {
-		width = atoi(argv[4]);
-		height = atoi(argv[5]);
-		printf("Trying to capture at %dx%d\n", width, height);
+	if (argc==7) {
+		width = atoi(argv[5]);
+		height = atoi(argv[6]);
+		printf("Requested resolution: %dx%d\n", width, height);
 	}
 
 	printf("Make sure your video source is connected, and press <Enter>, or Ctrl-C to abort now.");
@@ -106,6 +111,7 @@ int main(int argc, char** argv) {
 
 	if(c==NULL) {
 		printf("Error initialising device.\n");
+		close_device(v);
 		return -1;
 	}
 
@@ -136,7 +142,7 @@ int main(int argc, char** argv) {
 
 	gettimeofday(&start, NULL);
 	gettimeofday(&now, NULL);
-	while(now.tv_sec<start.tv_sec+CAPTURE_LENGTH) {
+	while(now.tv_sec<=start.tv_sec+cap_length) {
 
 		//get frame from v4l2
 		if((d = (*c->actions->dequeue_buffer)(v, &size)) != NULL) {
@@ -144,12 +150,8 @@ int main(int argc, char** argv) {
 			//to a file
 			//write_frame(d, size);
 			count++;
-				//Put frame
-			if(d != NULL)
-				//return buffer to v4l2
-				(*c->actions->enqueue_buffer)(v);
-			else
-				printf("Cant put buffer back");
+			//Put frame
+			(*c->actions->enqueue_buffer)(v);
 		} else {
 			printf("Cant get buffer ");
 			break;

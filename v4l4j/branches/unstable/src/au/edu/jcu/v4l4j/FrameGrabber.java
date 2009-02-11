@@ -33,7 +33,7 @@ import java.nio.ByteBuffer;
 
 import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
 import au.edu.jcu.v4l4j.exceptions.ImageFormatException;
-import au.edu.jcu.v4l4j.exceptions.InitialistationException;
+import au.edu.jcu.v4l4j.exceptions.InitialisationException;
 import au.edu.jcu.v4l4j.exceptions.NoTunerException;
 import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
@@ -184,7 +184,7 @@ public class FrameGrabber {
 	 * @throws ImageFormatException if the selected video device uses an unsupported image format (let the author know, see README file)
 	 * @throws CaptureChannelException if the given channel number value is not valid
 	 * @throws ImageDimensionException if the given image dimensions are not supported
-	 * @throws InitialistationException if the video device file cant be initialised 
+	 * @throws InitialisationException if the video device file cant be initialised 
 	 * @throws StateException if the framegrabber is already initialised
 	 * @throws V4L4JException if there is an error applying capture parameters
 	 */
@@ -213,7 +213,7 @@ public class FrameGrabber {
 			synchronized(this){
 				if(tuner==null){
 					state.get();
-					tuner = new Tuner(object);
+					tuner = new Tuner(object, channel);
 				}
 				return tuner;
 			}

@@ -52,6 +52,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
@@ -59,9 +61,12 @@ import javax.swing.event.ChangeListener;
 
 import au.edu.jcu.v4l4j.Control;
 import au.edu.jcu.v4l4j.FrameGrabber;
+import au.edu.jcu.v4l4j.Tuner;
+import au.edu.jcu.v4l4j.TunerInfo;
 import au.edu.jcu.v4l4j.V4L4JConstants;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.exceptions.ControlException;
+import au.edu.jcu.v4l4j.exceptions.NoTunerException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 /**
@@ -70,12 +75,15 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  *
  */
 public class WebcamViewer extends WindowAdapter implements Runnable{
-	private JLabel video, fps;
+	private JLabel video, fps, freq;
 	private JFrame f;
 	private JPanel controlPanel, captureButtons;
 	private JScrollPane controlScrollPane;
 	private JPanel videoPanel;
 	private JButton startCap, stopCap;
+	private JSpinner freqSpinner;
+	private Tuner tuner;
+	private TunerInfo tinfo;
 	private long start = 0;
 	private int n, width, height, qty, std, channel;
 	private FrameGrabber fg;
@@ -133,12 +141,30 @@ public class WebcamViewer extends WindowAdapter implements Runnable{
         stopCap.setAlignmentX(Component.CENTER_ALIGNMENT);
         fps = new JLabel("FPS: 0.0");
         fps.setAlignmentX(Component.CENTER_ALIGNMENT);
+        freq = new JLabel("Frequency");
+        freq.setAlignmentX(Component.CENTER_ALIGNMENT);
+        freq.setVisible(false);
+        freqSpinner = new JSpinner();
+        freqSpinner.setAlignmentX(Component.CENTER_ALIGNMENT);
+        freqSpinner.setVisible(false);
+        freqSpinner.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				tuner.setFrequency(
+						((SpinnerNumberModel) freqSpinner.getModel()).getNumber().longValue()
+						);
+			}
+        	
+        });
         captureButtons.add(Box.createGlue());
         captureButtons.add(stopCap);
         captureButtons.add(Box.createGlue());
         captureButtons.add(fps);
         captureButtons.add(Box.createGlue());
         captureButtons.add(startCap);
+        captureButtons.add(Box.createGlue());
+        captureButtons.add(freq);
+        captureButtons.add(Box.createGlue());
+        captureButtons.add(freqSpinner);
         captureButtons.add(Box.createGlue());
         startCap.addMouseListener(new MouseAdapter() {
         	public void mouseClicked(MouseEvent e) {
@@ -169,6 +195,7 @@ public class WebcamViewer extends WindowAdapter implements Runnable{
 
         f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         f.addWindowListener(this);
+        f.setTitle("Capture from "+vd.getDeviceInfo().getName());
         f.pack();
         f.setVisible(true);
     }
@@ -239,6 +266,17 @@ public class WebcamViewer extends WindowAdapter implements Runnable{
     			fg = vd.getJPEGFrameGrabber(width, height, channel, std, qty);
     			video.setPreferredSize(new Dimension(fg.getWidth(), fg.getHeight()));
     			controlScrollPane.setPreferredSize(new Dimension(300, fg.getHeight()));
+    			try {
+    				tuner = fg.getTuner();
+    				tinfo = vd.getDeviceInfo().getInputs().get(channel).getTuner();
+    				freqSpinner.setModel(new SpinnerNumberModel(
+    						new Long(tuner.getFrequency()), 
+    						new Long(tinfo.getRangeLow()),
+    						new Long(tinfo.getRangeHigh()),
+    						new Long(1)));
+    				freq.setVisible(true);
+    				freqSpinner.setVisible(true);
+    			} catch (NoTunerException nte){}
     			f.pack();
 				fg.startCapture();
 			} catch (V4L4JException e) {
@@ -260,6 +298,11 @@ public class WebcamViewer extends WindowAdapter implements Runnable{
 				captureThread.join();
 			} catch (InterruptedException e1) {}
 			captureThread = null;
+			if(tuner!=null){
+				fg.releaseTuner();
+			}
+			freq.setVisible(false);
+			freqSpinner.setVisible(false);
 			fg.stopCapture();
 			vd.releaseFrameGrabber();
     	}
