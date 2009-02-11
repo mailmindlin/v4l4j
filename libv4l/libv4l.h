@@ -66,7 +66,7 @@ struct mmap {
 #define		NTSC					3
 
 #define UNSUPPORTED_PALETTE			-1
-#define NB_SUPPORTED_PALETTE		40
+#define NB_SUPPORTED_PALETTE		47
 //palette formats
 //YUV420 is the same as YUV420P - YUYV is the same as YUV422
 //YUV411 is the same as YUV411P
@@ -112,18 +112,26 @@ struct mmap {
 #define		PWC1					37
 #define		PWC2					38
 #define		ET61X251				39
+#define		SPCA501					40
+#define		SPCA505					41
+#define		SPCA508					42
+#define		SPCA561					43
+#define		PAC207					44
+#define		PJPG					45
+#define		YVYU					46
 
 //the default order in which palettes are tried if "set_cap_param(c, NULL, 0)" is used
 #define		DEFAULT_PALETTE_ORDER	{JPEG, YUV420, MJPEG, RGB24, RGB32, YUYV, RGB555, RGB565, GREY, \
 									MPEG, HI240, UYVY, YUV422P, YUV411P, YUV410P, RGB332, RGB444, \
 									RGB555X, RGB565X, BGR24, BGR32, Y16, PAL8, YVU410, YVU420, \
 									Y41P, YUV444, YUV555, YUV565, YUV32, NV12, NV21, YYUV, HM12, SBGGR8, \
-									SBGGR16, SN9C10X, PWC1, PWC2, ET61X251 }
+									SBGGR16, SN9C10X, PWC1, PWC2, ET61X251, SPCA501, SPCA505, SPCA508, \
+									SPCA561, PAC207, PJPG, YVYU}
 //Dont use the following three, use YUV420, YUYV or YUV411P instead !!
 #define		IDENTICAL_FORMATS		3
-#define 	YUV420P					40
-#define 	YUV422					41
-#define 	YUV411					42
+#define 	YUV420P					47
+#define 	YUV422					48
+#define 	YUV411					49
 
 
 

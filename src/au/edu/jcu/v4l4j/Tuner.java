@@ -50,7 +50,7 @@ public class Tuner {
 	
 	private boolean released;
 	
-	Tuner(long o){
+	Tuner(long o, int i){
 		v4l4j_object = o;
 		released = false;
 	}

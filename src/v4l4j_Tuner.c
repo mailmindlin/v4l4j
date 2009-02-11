@@ -29,6 +29,7 @@
 
 JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_Tuner_getFreq(JNIEnv *e, jobject t, jlong object){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 	unsigned int f;
 	if((*d->vdev->capture->actions->get_tuner_freq)(d->vdev, &f)!=0){
@@ -36,7 +37,7 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_Tuner_getFreq(JNIEnv *e, jobject t
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error getting tuner frequency");
 		return 0;
 	}
-
+	dprint(LOG_CALLS, "[V4L4J] got freq: %ud\n", f);
 	return (jlong) (f & 0xffffffff);
 }
 
@@ -44,6 +45,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_Tuner_setFreq(JNIEnv *e, jobject t,
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
+	dprint(LOG_CALLS, "[V4L4J] setting freq to %lld - %u\n", (long long) f, (unsigned int) (f&0xffffffff));
 	if((*d->vdev->capture->actions->set_tuner_freq)(d->vdev, (unsigned int) (f & 0xffffffff))!= 0){
 		dprint(LOG_V4L4J, "[V4L4J] failed setting tuner frequency\n");
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error setting tuner frequency");

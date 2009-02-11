@@ -33,19 +33,19 @@ package au.edu.jcu.v4l4j.exceptions;
  * fails, an InitialistationException is thrown.
  * @author gilles
  */
-public class InitialistationException extends V4L4JException {
+public class InitialisationException extends V4L4JException {
 
 	private static final long serialVersionUID = -3338859321078232443L;
 
-	public InitialistationException(String message) {
+	public InitialisationException(String message) {
 		super(message);
 	}
 
-	public InitialistationException(String message, Throwable throwable) {
+	public InitialisationException(String message, Throwable throwable) {
 		super(message, throwable);
 	}
 
-	public InitialistationException(Throwable throwable) {
+	public InitialisationException(Throwable throwable) {
 		super(throwable);
 	}
 }
