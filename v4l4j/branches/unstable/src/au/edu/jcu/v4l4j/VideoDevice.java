@@ -30,7 +30,7 @@ import java.util.Hashtable;
 import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
 import au.edu.jcu.v4l4j.exceptions.ImageFormatException;
 import au.edu.jcu.v4l4j.exceptions.InUseException;
-import au.edu.jcu.v4l4j.exceptions.InitialistationException;
+import au.edu.jcu.v4l4j.exceptions.InitialisationException;
 import au.edu.jcu.v4l4j.exceptions.JNIException;
 import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
@@ -327,7 +327,7 @@ public class VideoDevice {
 	 * encounter such device, please let the author know about it. See README file in v4l4j/ on how to report this issue. 
 	 * @throws CaptureChannelException if the given channel number value is not valid
 	 * @throws ImageDimensionException if the given image dimensions are not supported
-	 * @throws InitialistationException if the video device file cant be initialised 
+	 * @throws InitialisationException if the video device file cant be initialised 
 	 * @throws V4L4JException if there is an error applying capture parameters
 	 * @throws StateException if a {@link FrameGrabber} already exists and must be released before a JPEGFrameGrabber
 	 * can be allocated, or the <code>VideoDevice</code> is being released.
@@ -379,7 +379,7 @@ public class VideoDevice {
 	 * @throws ImageFormatException if the selected video device uses an unsupported image format (let the author know, see README file)
 	 * @throws CaptureChannelException if the given channel number value is not valid
 	 * @throws ImageDimensionsException if the given image dimensions are not supported
-	 * @throws InitialistationException if the video device file cant be initialised 
+	 * @throws InitialisationException if the video device file cant be initialised 
 	 * @throws V4L4JException if there is an error applying capture parameters
 	 * @throws StateException if a <code>FrameGrabber</code> already exists or the <code>VideoDevice</code> is being released
 	 */
@@ -425,7 +425,7 @@ public class VideoDevice {
 	 * @throws ImageFormatException if the selected video device uses an unsupported image format (let the author know, see README file)
 	 * @throws CaptureChannelException if the given channel number value is not valid
 	 * @throws ImageDimensionException if the given image dimensions are not supported
-	 * @throws InitialistationException if the video device file cant be initialised 
+	 * @throws InitialisationException if the video device file cant be initialised 
 	 * @throws V4L4JException if there is an error applying capture parameters
 	 * @throws StateException if a <code>FrameGrabber</code> already exists or the <code>VideoDevice</code> is being released.
 	 */
@@ -533,7 +533,6 @@ public class VideoDevice {
 
 	public static void main(String args[]) throws V4L4JException{
 		VideoDevice vd = new VideoDevice(args[0]);
-		vd.init();
 		DeviceInfo d = vd.getDeviceInfo(); 
 		System.out.println("name: "+d.getName());
 		System.out.println("Device file: "+d.getDeviceFile());
@@ -577,6 +576,7 @@ public class VideoDevice {
 			try {
 				System.out.println(" - value: "+c.getValue());
 			} catch (V4L4JException ve){
+				ve.printStackTrace();
 				System.out.println();
 			}
 		}

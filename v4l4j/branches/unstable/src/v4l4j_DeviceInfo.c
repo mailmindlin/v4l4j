@@ -29,21 +29,21 @@
 #include "common.h"
 #include "debug.h"
 
-static jobject create_tuner_object(JNIEnv *e, jobject t, jclass this_class, struct tuner_info *tuner) {
+static jobject create_tuner_object(JNIEnv *e, jobject t, struct tuner_info *tuner) {
 	jclass tuner_class;
 	jmethodID ctor;
 
 	tuner_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/TunerInfo");
 	if(tuner_class == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the tuner class\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up tuner class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up tuner class");
 		return 0;
 	}
 
 	ctor = (*e)->GetMethodID(e, tuner_class, "<init>", "(Ljava/lang/String;IIIJJ)V");
 	if(ctor == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the constructor of tuner class\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up constructor of tuner class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up constructor of tuner class");
 		return 0;
 	}
 
@@ -70,49 +70,49 @@ static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct
 	input_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/InputInfo");
 	if(input_class == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the InputInfo class\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up InputInfo class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up InputInfo class");
 		return;
 	}
 
 	vector_class = (*e)->FindClass(e, "java/util/Vector");
 	if(vector_class == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the Vector class\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up Vector java objects");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up Vector java objects");
 		return;
 	}
 
 	add_method = (*e)->GetMethodID(e, vector_class, "addElement", "(Ljava/lang/Object;)V");
 	if(add_method == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the add method of Vector class\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up the add method of Vector objects");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the add method of Vector objects");
 		return;
 	}
 
 	inputs_field = (*e)->GetFieldID(e, this_class, "inputs", "Ljava/util/List;");
 	if(inputs_field == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the inputs attribute ID\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up the inputs attribute ID");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the inputs attribute ID");
 		return;
 	}
 
 	input_list_object = (*e)->GetObjectField(e, t, inputs_field);
 	if(input_list_object == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the inputs attribute\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up the inputs attribute");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the inputs attribute");
 		return;
 	}
 
 	ctor_wotuner = (*e)->GetMethodID(e, input_class, "<init>", "(Ljava/lang/String;[II)V");
 	if(ctor_wotuner == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the constructor of Input class\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up the constructor of Input  class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of Input  class");
 		return;
 	}
 
 	ctor_wtuner = (*e)->GetMethodID(e, input_class, "<init>", "(Ljava/lang/String;[ILau/edu/jcu/v4l4j/TunerInfo;I)V");
 	if(ctor_wtuner == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the constructor of InputInfo class\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up the constructor of InputInfo class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of InputInfo class");
 		return;
 	}
 
@@ -124,7 +124,7 @@ static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct
 		stds= (*e)->NewIntArray(e, vi->nb_stds);
 		if(stds == NULL){
 			dprint(LOG_V4L4J, "[V4L4J] Error creating array\n");
-			THROW_EXCEPTION(e, GENERIC_EXCP, "Error creating array");
+			THROW_EXCEPTION(e, JNI_EXCP, "Error creating array");
 			return;
 		}
 		dprint(LOG_V4L4J, "[V4L4J] Setting new stds array with array[%d] @ %p\n",vi->nb_stds, vi->supported_stds);
@@ -143,13 +143,13 @@ static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct
 					vi->name, vi->nb_stds, vi->supported_stds, vi->index);
 			obj = (*e)->NewObject(e, input_class, ctor_wtuner,
 					(*e)->NewStringUTF(e, (const char *)vi->name), stds,
-					create_tuner_object(e, t, this_class, vi->tuner), vi->index);
+					create_tuner_object(e, t, vi->tuner), vi->index);
 		}
 
 		//store it in the list
 		if(obj == NULL){
 			dprint(LOG_V4L4J, "[V4L4J] Error creating input object\n");
-			THROW_EXCEPTION(e, GENERIC_EXCP, "Error creating input object");
+			THROW_EXCEPTION(e, JNI_EXCP, "Error creating input object");
 			return;
 		}
 		(*e)->CallVoidMethod(e, input_list_object, add_method, obj);
@@ -170,21 +170,21 @@ static void create_formats_object(JNIEnv *e, jobject t, jclass this_class, struc
 	format_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/ImageFormat");
 	if(format_class == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the format class\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up format class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up format class");
 		return;
 	}
 
 	vector_class = (*e)->FindClass(e, "java/util/Vector");
 	if(vector_class == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the Vector class\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up Vector java objects");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up Vector java objects");
 		return;
 	}
 
 	add_method = (*e)->GetMethodID(e, vector_class, "addElement", "(Ljava/lang/Object;)V");
 	if(add_method == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the add method of Vector class\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up the add method of Vector objects");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the add method of Vector objects");
 		return;
 	}
 
@@ -198,14 +198,14 @@ static void create_formats_object(JNIEnv *e, jobject t, jclass this_class, struc
 	format_list_object = (*e)->GetObjectField(e, t, formats_field);
 	if(format_list_object == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the formats attribute\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up the formats attribute");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the formats attribute");
 		return;
 	}
 
 	ctor = (*e)->GetMethodID(e, format_class, "<init>", "(Ljava/lang/String;I)V");
 	if(ctor == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the constructor of ImageFormat class\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up the constructor of ImageFormat class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of ImageFormat class");
 		return;
 	}
 
@@ -235,14 +235,14 @@ void Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobject t, jlong v4l4j_
 	this_class = (*e)->GetObjectClass(e,t);
 	if(this_class == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the DeviceInfo class\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up the DeviceInfo class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the DeviceInfo class");
 		return;
 	}
 
 	name_field = (*e)->GetFieldID(e, this_class, "name", "Ljava/lang/String;");
 	if(name_field == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the name attribute\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up the name attribute");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the name attribute");
 		return;
 	}
 

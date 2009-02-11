@@ -77,9 +77,11 @@ static int set_tuner_freq_v4l2(struct video_device *vdev, unsigned int f){
 	struct v4l2_frequency freq;
 	CLEAR(freq);
 
+	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "Setting frequency to %ud\n", f);
+
 	freq.tuner = vdev->capture->tuner_nb;
 	if(-1 == ioctl(vdev->fd, VIDIOC_G_FREQUENCY, &freq)){
-		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "Failed to get tuner frequency on device %s\n", vdev->file);
+		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "Failed to set tuner frequency on device %s\n", vdev->file);
 		return LIBV4L_ERR_IOCTL;
 	}
 	freq.frequency = f;
@@ -100,6 +102,7 @@ static int get_tuner_freq_v4l2(struct video_device *vdev, unsigned int *f){
 		return LIBV4L_ERR_IOCTL;
 	}
 	*f = freq.frequency;
+	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "Got frequency %ud\n", *f);
 	return 0;
 }
 
@@ -118,79 +121,116 @@ static int get_rssi_afc_v4l2(struct video_device *vdev, int *r, int *a){
 	return 0;
 }
 
-static int set_std(struct capture_device *c, int fd){
+static int try_std(int fd, int s){
 	v4l2_std_id std;
-	int found=1, i=0;
-	switch (c->std) {
-		case WEBCAM:
-			std = 0;
+	CLEAR(std);
+
+	switch (s) {
+		case 0:
+			std = V4L2_STD_UNKNOWN;
 			break;
-		case PAL:
+		case 1:
 			std = V4L2_STD_PAL;
 			break;
-		case NTSC:
+		case 2:
 			std = V4L2_STD_NTSC;
 			break;
-		case SECAM:
+		case 3:
 			std = V4L2_STD_SECAM;
 			break;
-		default:
-			info("The specified standard (%d) is invalid.\n", c->std);
-			return -1;
 	}
+	return ioctl(fd, VIDIOC_S_STD, &std);
+}
+
+static int detect_standard(struct capture_device *c, int fd){
+	int found=0, i=0;
+
+	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "Trying to autodetect standard\n");
+
+	while(found==0 && i<4) {
+		if (try_std(fd, i)==0){
+			found=1;
+			if(i==WEBCAM) {
+				dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "WEBCAM standard autodetected\n");
+				c->std = WEBCAM;
+			} else if (i==PAL) {
+				dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "PAL standard autodetected\n");
+				c->std = PAL;
+			} else if (i==NTSC) {
+				dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "NTSC standard autodetected\n");
+				c->std = NTSC;
+			} else  {
+				dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "SECAM standard autodetected\n");
+				c->std = SECAM;
+			}
+		}
+		i++;
+	}
+	return found==0 ? -1 : 0;
+}
+
+static int set_std(struct capture_device *c, int fd){
+	struct v4l2_standard s;
+	CLEAR(s);
+
 
 	//Linux UVC doesnt like to be ioctl'ed(VIDIOC_S_STD) even though v4l2 specs say nothing
-	//about usb cam drivers returning EINVAL
-	//so we only execute them if std!="webcam"
-	if (c->std !=WEBCAM && -1 == ioctl(fd, VIDIOC_S_STD, &std)) {
-		info("The specified standard (%d) cannot be selected\n", c->std);
-		found=0;
-		while(found==0 && i<4) {
-			CLEAR(std);
-			switch (i) {
-				case 0:
-					std = 0;
-					break;
-				case 1:
-					std = V4L2_STD_PAL;
-					break;
-				case 2:
-					std = V4L2_STD_NTSC;
-					break;
-				case 3:
-					std = V4L2_STD_SECAM;
-					break;
-			}
-			if (0 == ioctl(fd, VIDIOC_S_STD, &std)){
-				info("The standard has been autodetected and set to\n");
-				found=1;
-				if(std==0) {
-					info("webcam\n");
-					c->std = WEBCAM;
-				} else if (std==V4L2_STD_PAL) {
-					info("PAL\n");
-					c->std = PAL;
-				} else if (std==V4L2_STD_NTSC) {
-					info("NTSC\n");
-					c->std = NTSC;
-				} else if (std==V4L2_STD_SECAM) {
-					info("SECAM\n");
-					c->std = SECAM;
-				} else {
-					found = 0;
-					info("Unknown autodetected standard (%d)\n", (int) std);
-					info("This is a bug in v4l4j. Please let the author know about this error.\n");
-					info("See the ISSUES section in the libv4l README file.\n");
+	//about usb cam drivers returning EINVAL...
+	//so we first try VIDIOC_ENUMSTD. if it returns EINVAL, then we assume it is a webcam
+	//otherwise, we need to set a standard
+	if(-1 != ioctl(fd, VIDIOC_ENUMSTD, &s)){
+		//driver says "I use standards" - check if it is the UNKNOWN one, only used by webcams
+		if(s.id != V4L2_STD_UNKNOWN) {
+			//driver says "not webcam", check what we want...
+			if(c->std == WEBCAM){
+				//we want webcam... try to autodetect
+				info("The specified standard (%d) is invalid.\n", c->std);
+				if(detect_standard(c, fd)!=0) {
+					//autodetect failed, so do we
+					dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR,"CAP: Couldnt autodetect a standard for this input.\n");
+					return -1;
+				}
+				//autodetect suceeded keep going
+			} else {
+				//we want !WEBCAM, so try that standard
+				dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG,"Trying standard (%d).\n", c->std);
+				if (-1 == try_std(fd, c->std)) {
+					//failed, try autodetect
+					info("The specified standard (%d) cannot be selected\n", c->std);
+					if(detect_standard(c, fd)!=0) {
+						//failed, exit
+						dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR,"CAP: Couldnt autodetect a standard for this input.\n");
+						return -1;
+					}
+					//autodetect succeeded, keep going
 				}
 			}
-			i++;
+		} else {
+			//driver says webcam, check what we want
+			if(c->std != WEBCAM){
+				//we want !WEBCAM, so try that standard
+				if (-1 == try_std(fd, c->std)) {
+					//failed, try autodetect
+					info("The specified standard (%d) cannot be selected\n", c->std);
+					if(detect_standard(c, fd)!=0) {
+						//failed, exit
+						dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR,"CAP: Couldnt autodetect a standard for this input.\n");
+						return -1;
+					}
+					//autodetect succeeded, keep going
+				}
+			} else {
+				//driver sais WEBCAM, so did we, keep going
+			}
+		}
+	} else {
+		//driver doesnt use standards - most likely a webcam
+		if(c->std!=WEBCAM){
+			info("The standard has been autodetected and set to WEBCAM \n");
+			c->std = WEBCAM;
 		}
 	}
 
-	if(found!=1) {
-		info("The specified standard (%d) cannot be selected, and the automated detection failed\n", c->std);
-		return -1;
-	}
 	return 0;
 }
 
@@ -202,19 +242,23 @@ static int set_input(struct capture_device *c, int fd){
 	//TODO: Add autodetection here so if the given input channel is invalid
 	//a valid one is selected
 	if (c->std!=WEBCAM) {
+		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "CAP: Setting input.\n");
 		if(-1 == ioctl(fd, VIDIOC_S_INPUT, &(c->channel))) {
 			info("The desired input (%d) cannot be selected.\n", c->channel);
 			return -1;
 		}
 		vi.index = c->channel;
 		if (-1 == ioctl(fd, VIDIOC_ENUMINPUT, &vi)) {
-			dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "Failed to get details of input %d\n", c->channel);
+			dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "CAP: Failed to get details of input %d\n", c->channel);
 			return -1;
 		}
-		c->tuner_nb = vi.tuner;
-		c->actions->get_tuner_freq = get_tuner_freq_v4l2;
-		c->actions->set_tuner_freq = set_tuner_freq_v4l2;
-		c->actions->get_rssi_afc = get_rssi_afc_v4l2;
+		if(vi.type == V4L2_INPUT_TYPE_TUNER) {
+			dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "CAP: Setting tuner functions\n");
+			c->tuner_nb = vi.tuner;
+			c->actions->get_tuner_freq = get_tuner_freq_v4l2;
+			c->actions->set_tuner_freq = set_tuner_freq_v4l2;
+			c->actions->get_rssi_afc = get_rssi_afc_v4l2;
+		}
 	}
 	return 0;
 }
@@ -232,12 +276,12 @@ static int try_image_format(struct v4l2_format *fmt, int width, int height, int 
 	fmt->fmt.pix.field = V4L2_FIELD_ANY;
 	fmt->fmt.pix.pixelformat = palette;
 
-	if (0 == ioctl(fd, VIDIOC_S_FMT, fmt)) {
-		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_INFO, "CAP: palette accepted\n");
+	if (0 == ioctl(fd, VIDIOC_S_FMT, fmt) && fmt->fmt.pix.pixelformat == palette) {
+		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_INFO, "CAP: palette %#x  - accepted at %dx%d\n", palette, fmt->fmt.pix.width, fmt->fmt.pix.height);
 		return 0;
 	}
 
-	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "CAP: palette rejected\n");
+	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "CAP: palette %#x rejected\n", palette);
 	return -1;
 }
 
@@ -255,8 +299,8 @@ static int set_image_format(struct capture_device *c, int *palettes, int nb, int
 
 	//we try all the supplied palettes and find the best one that give us a resolution closes to the desired one
 	for(i=0; i<nb; i++) {
-		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG1, "CAP: trying width: %d - height: %d - palette %s (%d)...\n",\
-			c->width, c->height,libv4l_palettes[palettes[i]].name, libv4l_palettes[palettes[i]].v4l2_palette);
+		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG1, "CAP: trying palette %#x (%s) %dx%d - ...\n",\
+			libv4l_palettes[palettes[i]].v4l2_palette, libv4l_palettes[palettes[i]].name, c->width, c->height);
 
 		if( (try_image_format(&fmt, c->width, c->height, fd, libv4l_palettes[palettes[i]].v4l2_palette)==0) && ((best_palette == -1) || \
 			 (abs(c->width*c->height - fmt.fmt.pix.width*fmt.fmt.pix.height) < abs(c->width*c->height - best_width*best_height))) ){
@@ -1070,5 +1114,6 @@ void list_cap_v4l2(int fd) {
 		query_current_image_fmt_v4l2(fd);
 		query_frame_sizes_v4l2(fd);
 		query_controls_v4l2(fd);
+
 	}
 }
