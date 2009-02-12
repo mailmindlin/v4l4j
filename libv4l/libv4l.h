@@ -144,7 +144,7 @@ struct capture_device {
 	int std;						//v4l standard - see #define enum above
 	int channel;					//channel number (for video capture cards, not webcams)
 	int imagesize;					//in bytes
-	int tuner_nb;					//tuner number associated with this input (-1 if not a tuner input)
+	int tuner_nb;					//the index of the tuner associated with this capture_device, -1 if not tuner input
 	struct capture_actions *actions;	//see def below
 	int real_v4l1_palette;			//v4l1 weirdness: v4l1 defines 2 distinct palettes YUV420 and YUV420P
 									//but they are the same (same goes for YUYV and YUV422). In this field
@@ -230,7 +230,17 @@ struct control_list {
 	driver_probe *probes; 			//linked list of driver probes, allocated in libv4l.c:get_control_list()
 };
 
-
+/*
+ *
+ *  T U N E R   I N T E R F A C E
+ *
+ */
+struct tuner_actions{
+	//returns 0 if OK, LIBV4L_ERR-IOCTL otherwise
+	int (*set_tuner_freq)(struct video_device *, int, unsigned int);
+	int (*get_tuner_freq)(struct video_device *, int, unsigned int *);
+	int (*get_rssi_afc)(struct video_device *, int, int *, int *);
+};
 
 /*
  *
@@ -249,7 +259,10 @@ struct video_device {
 	struct device_info *info;
 	struct capture_device *capture;
 	struct control_list *control;
+	struct tuner_actions *tuner_action;
 };
+
+
 
 
 /*
@@ -328,14 +341,6 @@ struct capture_actions {
 //counterpart of init_capture, must be called it init_capture was successful
 	void (*free_capture)(struct video_device *);
 
-//methods to get/set the associated tuner frequency. Initialised after calling (init_capture).
-//set to NULL if no tuner is associated (check struct capture_device->tuner_nb)
-//returns 0 if OK, LIBV4L_ERR-IOCTL otherwise
-	int (*set_tuner_freq)(struct video_device *, unsigned int);
-	int (*get_tuner_freq)(struct video_device *, unsigned int *);
-	int (*get_rssi_afc)(struct video_device *, int *, int *);
-
-
 /*
  * Dump to stdout methods
  * Must be called after init_capture_device and before free_capture_device
@@ -371,6 +376,14 @@ int get_control_value(struct video_device *, struct v4l2_queryctrl *, int *);
 //returns 0, LIBV4L_ERR_WRONG_VERSION, LIBV4L_ERR_IOCTL or LIBV4L_ERR_STREAMING
 int set_control_value(struct video_device *, struct v4l2_queryctrl *,  int *);
 void release_control_list(struct video_device *);
+
+/*
+ *
+ * TUNER INTERFACE
+ *
+ */
+struct tuner_actions *get_tuner_actions(struct video_device *);
+void release_tuner_actions(struct video_device *);
 
 
 #endif

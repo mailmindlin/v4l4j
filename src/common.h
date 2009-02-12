@@ -51,7 +51,7 @@ struct v4l4j_device {
 };
 
 #define JPEG_SUPPORTED_FORMATS		{JPEG, MJPEG, YUV420, YUYV, RGB24, YVYU}
-#define NB_JPEG_SUPPORTED_FORMATS	5
+#define NB_JPEG_SUPPORTED_FORMATS	6
 
 #define BYTEBUFER_CLASS			"java/nio/ByteBuffer"
 #define V4L4J_PACKAGE			"au/edu/jcu/v4l4j/"

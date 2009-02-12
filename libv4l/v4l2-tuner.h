@@ -3,7 +3,7 @@
 * eResearch Centre, James Cook University (eresearch.jcu.edu.au)
 *
 * This program was developed as part of the ARCHER project
-* (Australian Research Enabling Environment) funded by a   
+* (Australian Research Enabling Environment) funded by a
 * Systemic Infrastructure Initiative (SII) grant and supported by the Australian
 * Department of Innovation, Industry, Science and Research
 *
@@ -14,7 +14,7 @@
 *
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  
+* or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU General Public License for more details.
 *
 * You should have received a copy of the GNU General Public License
@@ -22,25 +22,11 @@
 *
 */
 
-package au.edu.jcu.v4l4j.exceptions;
+#ifndef V4L2TUNER_H_
+#define V4L2TUNER_H_
 
-/**
- * This class of exception is thrown when the specified capture channel is invalid.
- * @author gilles
- */
-public class CaptureChannelException extends V4L4JException {
+int set_tuner_freq_v4l2(struct video_device *, int, unsigned int);
+int get_tuner_freq_v4l2(struct video_device *, int, unsigned int *);
+int get_rssi_afc_v4l2(struct video_device *, int, int *, int *);
 
-	private static final long serialVersionUID = -3338859321078232443L;
-
-	public CaptureChannelException(String message) {
-		super(message);
-	}
-
-	public CaptureChannelException(String message, Throwable throwable) {
-		super(message, throwable);
-	}
-
-	public CaptureChannelException(Throwable throwable) {
-		super(throwable);
-	}
-}
+#endif /* V4L2TUNER_H_ */

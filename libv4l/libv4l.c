@@ -37,8 +37,10 @@
 #include "qc-probe.h"
 #include "v4l1-input.h"
 #include "v4l1-query.h"
+#include "v4l1-tuner.h"
 #include "v4l2-input.h"
 #include "v4l2-query.h"
+#include "v4l2-tuner.h"
 #include "videodev_additions.h"
 
 
@@ -109,6 +111,10 @@ int close_device(struct video_device *vdev) {
 		dprint(LIBV4L_LOG_SOURCE_VIDEO_DEVICE, LIBV4L_LOG_LEVEL_ERR, "VD: Cant close device file %s - control interface not released\n", vdev->file);
 		return LIBV4L_ERR_CONTROL_IN_USE;
 	}
+	if(vdev->tuner_action) {
+		dprint(LIBV4L_LOG_SOURCE_VIDEO_DEVICE, LIBV4L_LOG_LEVEL_ERR, "VD: Cant close device file %s - tuner action not released\n", vdev->file);
+		return LIBV4L_ERR_TUNER_IN_USE;
+	}
 
 	close(vdev->fd);
 	XFREE(vdev);
@@ -124,9 +130,7 @@ int close_device(struct video_device *vdev) {
 static void setup_capture_actions(struct video_device *vdev) {
 	struct capture_device *c = vdev->capture;
 	XMALLOC(c->actions, struct capture_actions *, sizeof(struct capture_actions) );
-	c->actions->set_tuner_freq = NULL;
-	c->actions->get_tuner_freq = NULL;
-	c->actions->get_rssi_afc = NULL;
+
 	if(vdev->v4l_version == V4L1_VERSION) {
 		c->actions->set_cap_param = set_cap_param_v4l1;
 		c->actions->init_capture = init_capture_v4l1;
@@ -170,7 +174,7 @@ struct capture_device *init_capture_device(struct video_device *vdev, int w, int
 
 //counterpart of init_capture_device, must be called it init_capture_device was successful
 void free_capture_device(struct video_device *vdev){
-	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "CAP: Freeing libv4l on device %s.\n", vdev->file);
+	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "CAP: Freeing capture device on %s.\n", vdev->file);
 	XFREE(vdev->capture->actions);
 	XFREE(vdev->capture->mmap);
 	XFREE(vdev->capture);
@@ -433,4 +437,32 @@ void release_control_list(struct video_device *vdev){
 	//free control_list
 	if (vdev->control)
 		XFREE(vdev->control);
+}
+
+/*
+ *
+ * TUNER INTERFACE
+ *
+ */
+struct tuner_actions *get_tuner_actions(struct video_device *vdev) {
+	dprint(LIBV4L_LOG_SOURCE_TUNER, LIBV4L_LOG_LEVEL_DEBUG, "TUN: Getting struct tuner actions\n");
+
+	XMALLOC(vdev->tuner_action, struct tuner_actions *, sizeof(struct tuner_actions *));
+	if(vdev->v4l_version==V4L2_VERSION){
+		vdev->tuner_action->get_rssi_afc = get_rssi_afc_v4l2;
+		vdev->tuner_action->get_tuner_freq = get_tuner_freq_v4l2;
+		vdev->tuner_action->set_tuner_freq = set_tuner_freq_v4l2;
+	} else {
+		vdev->tuner_action->get_rssi_afc = get_rssi_afc_v4l1;
+		vdev->tuner_action->get_tuner_freq = get_tuner_freq_v4l1;
+		vdev->tuner_action->set_tuner_freq = set_tuner_freq_v4l1;
+	}
+
+	return vdev->tuner_action;
+}
+
+
+void release_tuner_actions(struct video_device *vdev){
+	dprint(LIBV4L_LOG_SOURCE_TUNER, LIBV4L_LOG_LEVEL_DEBUG, "TUN: Releasing struct tuner actions\n");
+	XFREE(vdev->tuner_action);
 }

@@ -44,27 +44,27 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormat_listFormats(JNIEnv *e, 
 	vector_class = (*e)->FindClass(e, "java/util/Vector");
 	if(vector_class == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the Vector class\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up Vector java objects");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up Vector java objects");
 		return;
 	}
 
 	ctor = (*e)->GetMethodID(e, vector_class, "<init>", "()V");
 	if(ctor == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the constructor of Vector class\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up the constructor of Vector objects");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of Vector objects");
 		return;
 	}
 	add_method = (*e)->GetMethodID(e, vector_class, "addElement", "(Ljava/lang/Object;)V");
 	if(add_method == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the add method of Vector class\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up the add method of Vector objects");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the add method of Vector objects");
 		return;
 	}
 
 	field = (*e)->GetStaticFieldID(e, this_class, "formats", "Ljava/util/List;");
 	if(field == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the formats attribute\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up the formats attribute");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the formats attribute");
 		return;
 	}
 
@@ -78,7 +78,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormat_listFormats(JNIEnv *e, 
 	ctor = (*e)->GetMethodID(e, this_class, "<init>", "(Ljava/lang/String;I)V");
 	if(ctor == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the constructor of ImageFormat class\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up the constructor of ImageFormat objects");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of ImageFormat objects");
 		return;
 	}
 

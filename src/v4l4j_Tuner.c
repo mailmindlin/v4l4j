@@ -27,12 +27,12 @@
 #include "common.h"
 #include "debug.h"
 
-JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_Tuner_getFreq(JNIEnv *e, jobject t, jlong object){
+JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_Tuner_getFreq(JNIEnv *e, jobject t, jlong object, jint index){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 	unsigned int f;
-	if((*d->vdev->capture->actions->get_tuner_freq)(d->vdev, &f)!=0){
+	if((*d->vdev->tuner_action->get_tuner_freq)(d->vdev,index, &f)!=0){
 		dprint(LOG_V4L4J, "[V4L4J] failed getting tuner frequency\n");
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error getting tuner frequency");
 		return 0;
@@ -41,23 +41,23 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_Tuner_getFreq(JNIEnv *e, jobject t
 	return (jlong) (f & 0xffffffff);
 }
 
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_Tuner_setFreq(JNIEnv *e, jobject t, jlong object, jlong f){
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_Tuner_setFreq(JNIEnv *e, jobject t, jlong object, jint index, jlong f){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
 	dprint(LOG_CALLS, "[V4L4J] setting freq to %lld - %u\n", (long long) f, (unsigned int) (f&0xffffffff));
-	if((*d->vdev->capture->actions->set_tuner_freq)(d->vdev, (unsigned int) (f & 0xffffffff))!= 0){
+	if((*d->vdev->tuner_action->set_tuner_freq)(d->vdev, index, (unsigned int) (f & 0xffffffff))!= 0){
 		dprint(LOG_V4L4J, "[V4L4J] failed setting tuner frequency\n");
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error setting tuner frequency");
 	}
 }
 
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_Tuner_getAfc(JNIEnv *e, jobject t, jlong object){
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_Tuner_getAfc(JNIEnv *e, jobject t, jlong object, jint index){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 	int r,a;
 
-	if((*d->vdev->capture->actions->get_rssi_afc)(d->vdev, &r, &a)!= 0){
+	if((*d->vdev->tuner_action->get_rssi_afc)(d->vdev, index, &r, &a)!= 0){
 		dprint(LOG_V4L4J, "[V4L4J] failed getting AFC\n");
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error getting AFC");
 		return 0;
@@ -65,12 +65,12 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_Tuner_getAfc(JNIEnv *e, jobject t, 
 	return a;
 }
 
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_Tuner_getRssi(JNIEnv *e, jobject t, jlong object){
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_Tuner_getRssi(JNIEnv *e, jobject t, jlong object, jint index){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 	int r,a;
 
-	if((*d->vdev->capture->actions->get_rssi_afc)(d->vdev, &r, &a)!= 0){
+	if((*d->vdev->tuner_action->get_rssi_afc)(d->vdev, index, &r, &a)!= 0){
 		dprint(LOG_V4L4J, "[V4L4J] failed getting RSSI\n");
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error getting RSSI");
 		return 0;

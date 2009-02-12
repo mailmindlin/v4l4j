@@ -62,37 +62,6 @@ int check_capture_capabilities_v4l1(int fd, char *file) {
 	return 0;
 }
 
-
-static int set_tuner_freq_v4l1(struct video_device *vdev, unsigned int f){
-	if(-1 == ioctl(vdev->fd, VIDIOCSFREQ, &f)){
-		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "Failed to set tuner frequency on device %s\n", vdev->file);
-		return LIBV4L_ERR_IOCTL;
-	}
-	return 0;
-}
-
-static int get_tuner_freq_v4l1(struct video_device *vdev, unsigned int *f){
-	if(-1 == ioctl(vdev->fd, VIDIOCGFREQ, f)){
-		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "Failed to get tuner frequency on device %s\n", vdev->file);
-		return LIBV4L_ERR_IOCTL;
-	}
-	return 0;
-}
-
-static int get_rssi_afc_v4l1(struct video_device *vdev, int *r, int *a){
-	struct video_tuner t;
-	CLEAR(t);
-	t.tuner = 0;
-	if(-1 == ioctl (vdev->fd, VIDIOCGTUNER, &t)){
-		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "Failed to get tuner info on device %s\n", vdev->file);
-		return LIBV4L_ERR_IOCTL;
-	}
-	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "Got RSSI %d & AFC 0 on device %s\n", t.signal, vdev->file);
-	*r = t.signal;
-	*a = 0;
-	return 0;
-}
-
 // set the capture parameters
 // set video channel 	VIDIOCSCHAN -
 // set picture format 	VIDIOCSPICT -
@@ -170,13 +139,14 @@ int set_cap_param_v4l1(struct video_device *vdev, int *palettes, int nb) {
 		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "CAP: cannot get the current channel info\n");
 		return LIBV4L_ERR_CHANNEL_SETUP;
 	}
-	if(chan.tuners == 1){
-		c->tuner_nb = 1;
-		c->actions->set_tuner_freq = set_tuner_freq_v4l1;
-		c->actions->get_tuner_freq = get_tuner_freq_v4l1;
-		c->actions->get_rssi_afc = get_rssi_afc_v4l1;
-	}
-
+	if(chan.tuners > 1){
+		//v4l1 weirdness
+		//support only 1 tuner per input
+		c->tuner_nb = -1;
+	} else if(chan.tuners == 1)
+		c->tuner_nb = 0;
+	else
+		c->tuner_nb = -1;
 
 
 

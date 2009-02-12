@@ -73,70 +73,22 @@ int check_capture_capabilities_v4l2(int fd, char *file) {
 	return 0;
 }
 
-static int set_tuner_freq_v4l2(struct video_device *vdev, unsigned int f){
-	struct v4l2_frequency freq;
-	CLEAR(freq);
-
-	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "Setting frequency to %ud\n", f);
-
-	freq.tuner = vdev->capture->tuner_nb;
-	if(-1 == ioctl(vdev->fd, VIDIOC_G_FREQUENCY, &freq)){
-		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "Failed to set tuner frequency on device %s\n", vdev->file);
-		return LIBV4L_ERR_IOCTL;
-	}
-	freq.frequency = f;
-	if(-1 == ioctl(vdev->fd, VIDIOC_S_FREQUENCY, &freq)){
-		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "Failed to set tuner frequency on device %s\n", vdev->file);
-		return LIBV4L_ERR_IOCTL;
-	}
-	return 0;
-}
-
-static int get_tuner_freq_v4l2(struct video_device *vdev, unsigned int *f){
-	struct v4l2_frequency freq;
-	CLEAR(freq);
-
-	freq.tuner = vdev->capture->tuner_nb;
-	if(-1 == ioctl(vdev->fd, VIDIOC_G_FREQUENCY, &freq)){
-		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "Failed to get tuner frequency on device %s\n", vdev->file);
-		return LIBV4L_ERR_IOCTL;
-	}
-	*f = freq.frequency;
-	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "Got frequency %ud\n", *f);
-	return 0;
-}
-
-static int get_rssi_afc_v4l2(struct video_device *vdev, int *r, int *a){
-	struct v4l2_tuner t;
-	CLEAR(t);
-	t.index = vdev->capture->tuner_nb;
-
-	if(-1 == ioctl (vdev->fd, VIDIOC_G_TUNER, &t)){
-		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "Failed to get tuner info on device %s\n", vdev->file);
-		return LIBV4L_ERR_IOCTL;
-	}
-	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "Got RSSI %d & AFC %d on device %s\n", t.signal, t.afc, vdev->file);
-	*r = t.signal;
-	*a = t.afc;
-	return 0;
-}
-
 static int try_std(int fd, int s){
 	v4l2_std_id std;
 	CLEAR(std);
 
 	switch (s) {
-		case 0:
+		case WEBCAM:
 			std = V4L2_STD_UNKNOWN;
 			break;
-		case 1:
+		case PAL:
 			std = V4L2_STD_PAL;
 			break;
-		case 2:
-			std = V4L2_STD_NTSC;
-			break;
-		case 3:
+		case SECAM:
 			std = V4L2_STD_SECAM;
+			break;
+		case NTSC:
+			std = V4L2_STD_NTSC;
 			break;
 	}
 	return ioctl(fd, VIDIOC_S_STD, &std);
@@ -204,6 +156,7 @@ static int set_std(struct capture_device *c, int fd){
 					}
 					//autodetect succeeded, keep going
 				}
+				//given standard succeeded, keep going
 			}
 		} else {
 			//driver says webcam, check what we want
@@ -252,13 +205,10 @@ static int set_input(struct capture_device *c, int fd){
 			dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "CAP: Failed to get details of input %d\n", c->channel);
 			return -1;
 		}
-		if(vi.type == V4L2_INPUT_TYPE_TUNER) {
-			dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "CAP: Setting tuner functions\n");
+		if(vi.type == V4L2_INPUT_TYPE_TUNER)
 			c->tuner_nb = vi.tuner;
-			c->actions->get_tuner_freq = get_tuner_freq_v4l2;
-			c->actions->set_tuner_freq = set_tuner_freq_v4l2;
-			c->actions->get_rssi_afc = get_rssi_afc_v4l2;
-		}
+		else
+			c->tuner_nb = -1;
 	}
 	return 0;
 }
@@ -836,10 +786,10 @@ int create_v4l2_controls(struct video_device *vdev, struct control *controls, in
 }
 static int fix_quirky_values(struct v4l2_queryctrl *qc, int v){
 	if(v < qc->minimum) {
-		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: fixed quirky control value %d below minimum %d\n",v,qc->minimum);
+		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: QUIRK: fixed quirky control value %d below minimum %d\n",v,qc->minimum);
 		return qc->minimum;
 	} else if (v>qc->maximum) {
-		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: fixed quirky control value %d above maximum %d\n",v,qc->maximum);
+		dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: QUIRK: fixed quirky control value %d above maximum %d\n",v,qc->maximum);
 		return qc->maximum;
 	}
 	return v;
@@ -851,7 +801,7 @@ int get_control_value_v4l2(struct video_device *vdev, struct v4l2_queryctrl *ctr
 	int ret = LIBV4L_ERR_IOCTL;
 	CLEAR(vc);
 	vc.id = ctrl->id;
-	if( ioctl(vdev->fd, VIDIOC_G_CTRL, &vc) == 0 ) {
+	if( (ret = ioctl(vdev->fd, VIDIOC_G_CTRL, &vc)) == 0 ) {
 		*val = fix_quirky_values(ctrl, vc.value);
 		ret = 0;
 	} else
