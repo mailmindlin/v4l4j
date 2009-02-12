@@ -44,13 +44,27 @@ static void update_width_height(JNIEnv *e, jobject this, int w, int h){
 	jfieldID field;
 
 	//Updates the FrameCapture class width and height fields with the values returned by V4L2
-	dprint(LOG_V4L4J, "[V4L4J] Updating width(%d) in the FrameGrabber class\n", w);
 	this_class = (*e)->GetObjectClass(e,this);
+	if(this_class==NULL) {
+		dprint(LOG_V4L4J, "[V4L4J] error looking up FrameGrabber class\n");
+		THROW_EXCEPTION(e, JNI_EXCP, "error looking up FrameGrabber class");
+		return;
+	}
+
 	field = (*e)->GetFieldID(e, this_class, "width", "I");
+	if(field==NULL) {
+		dprint(LOG_V4L4J, "[V4L4J] error looking up width field in FrameGrabber class\n");
+		THROW_EXCEPTION(e, JNI_EXCP, "error looking up width field in FrameGrabber class");
+		return;
+	}
 	(*e)->SetIntField(e, this, field, w);
 
-	dprint(LOG_V4L4J, "[V4L4J] Updating height(%d) in the FrameGrabber class\n", h);
 	field = (*e)->GetFieldID(e, this_class, "height", "I");
+	if(field==NULL) {
+		dprint(LOG_V4L4J, "[V4L4J] error looking up height field in FrameGrabber class\n");
+		THROW_EXCEPTION(e, JNI_EXCP, "error looking up height field in FrameGrabber class");
+		return;
+	}
 	(*e)->SetIntField(e, this, field, h);
 }
 
@@ -82,8 +96,6 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(JNIEnv 
 	/*
 	 * i n i t _ c a p t u r e _ d e v i c e ( )
 	 */
-	dprint(LOG_LIBV4L, "[LIBV4L] Calling 'init_capture_device(dev:%s, w:%d,h:%d,"
-			"ch:%d, std:%d, nb_buf:%d, qty: %d, fmt: %d)'\n",d->vdev->file,w,h,ch,std,n, q, fmt);
 	c = init_capture_device(d->vdev, w,h,ch,std,n);
 
 	if(c==NULL) {
@@ -136,7 +148,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(JNIEnv 
 		return 0;
 	}
 
-	dprint(LOG_LIBV4L, "[LIBV4L] Calling 'update_width_height()'\n");
+	//update width and height in FrameGrabber class
 	update_width_height(e, t, w, h);
 
 	//The length of the buffers which will hold the last captured frame
@@ -145,6 +157,12 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(JNIEnv 
 	//Create the ByteBuffer array
 	dprint(LOG_V4L4J, "[V4L4J] Creating the ByteBuffer array[%d]\n",c->mmap->buffer_nr);
 	arr = (*e)->NewObjectArray(e, c->mmap->buffer_nr, (*e)->FindClass(e, BYTEBUFER_CLASS), NULL);
+	if(arr==NULL) {
+		dprint(LOG_V4L4J, "[V4L4J] error creating byte buffer array\n");
+		free_capture_device(d->vdev);
+		THROW_EXCEPTION(e, JNI_EXCP, "error creating byte buffer array");
+		return 0;
+	}
 	XMALLOC(d->bufs, unsigned char **, c->mmap->buffer_nr * sizeof(void *));
 
 	for(i=0; i<c->mmap->buffer_nr;i++) {
@@ -152,6 +170,12 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(JNIEnv 
 		dprint(LOG_V4L4J, "[V4L4J] Creating ByteBuffer %d - length: %d\n", i, buf_len);
 		XMALLOC(d->bufs[i], unsigned char *, (size_t) buf_len);
 		element = (*e)->NewDirectByteBuffer(e, d->bufs[i], (jlong) buf_len);
+		if(element==NULL) {
+			dprint(LOG_V4L4J, "[V4L4J] error creating byte buffer\n");
+			free_capture_device(d->vdev);
+			THROW_EXCEPTION(e, JNI_EXCP, "error creating byte buffer");
+			return 0;
+		}
 		(*e)->SetObjectArrayElement(e, arr, i, element);
 	}
 
@@ -161,6 +185,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(JNIEnv 
 		(*c->actions->free_capture)(d->vdev);
 		free_capture_device(d->vdev);
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error initialising the JPEG compressor");
+		return 0;
 	}
 	d->buf_id = -1;
 	return arr;
@@ -172,7 +197,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(JNIEnv 
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_start(JNIEnv *e, jobject t, jlong object){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
-	dprint(LOG_LIBV4L, "[LIBV4L] Calling start_capture(dev: %s)\n", d->vdev->file);
+
 	if((*d->vdev->capture->actions->start_capture)(d->vdev)<0){
 		dprint(LOG_V4L4J, "[V4L4J] start_capture failed\n");
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error starting the capture");
@@ -191,18 +216,6 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_setQuality(JNIEnv *e, 
 	d->jpeg_quality = q;
 }
 
-/*
- * returns 1 if this input has a tuner, 0 otherwise
- */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_hasTuner(JNIEnv *e, jobject t, jlong object){
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
-	if(d->vdev->capture->tuner_nb!=-1)
-		return 1;
-	else
-		return 0;
-}
-
 
 /*
  * get a new JPEG-compressed frame from the device
@@ -214,16 +227,14 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getBuffer(JNIEnv *e, j
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
 	//get frame from v4l2
-	dprint(LOG_LIBV4L, "[LIBV4L] Calling dequeue_buffer(dev: %s)\n", d->vdev->file);
 	if((frame = (*d->vdev->capture->actions->dequeue_buffer)(d->vdev, &d->capture_len)) != NULL) {
 		i = d->buf_id = (d->buf_id == (d->vdev->capture->mmap->buffer_nr-1)) ? 0 : d->buf_id+1;
-		dprint(LOG_LIBV4L, "[LIBV4L] i=%d\n", i);
+		dprint(LOG_V4L4J, "[V4L4J] got frame in buffer %d\n", i);
 		(*d->j->jpeg_encode)(d, frame, d->bufs[i]);
-		dprint(LOG_LIBV4L, "[LIBV4L] Calling enqueue_buffer(dev: %s)\n", d->vdev->file);
 		(*d->vdev->capture->actions->enqueue_buffer)(d->vdev);
 		return i;
 	}
-	dprint(LOG_V4L4J, "Error dequeuing buffer for capture\n");
+	dprint(LOG_V4L4J, "[V4L4J] Error dequeuing buffer for capture\n");
 	THROW_EXCEPTION(e, GENERIC_EXCP, "Error dequeuing buffer for capture");
 	return -1;
 }
@@ -270,10 +281,8 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doRelease(JNIEnv *e, j
 		XFREE(d->bufs[i]);
 	XFREE(d->bufs);
 
-	dprint(LOG_LIBV4L, "[LIBV4L] Calling free_capture(dev: %s)\n", d->vdev->file);
 	(*d->vdev->capture->actions->free_capture)(d->vdev);
 
-	dprint(LOG_LIBV4L, "[LIBV4L] Calling free_capture_device(dev: %s)\n", d->vdev->file);
 	free_capture_device(d->vdev);
 }
 

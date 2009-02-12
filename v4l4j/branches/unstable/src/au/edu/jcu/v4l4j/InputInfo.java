@@ -151,6 +151,15 @@ public class InputInfo {
 	}
 	
 	/**
+	 * This method returns a boolean depending on whether this input
+	 * has a tuner or not.
+	 * @return true if this input has a tuner, false otherwise
+	 */
+	public boolean hasTuner() {
+		return tuner == null ? false : true;
+	}
+	
+	/**
 	 * This method returns the (V4L) index of this input
 	 * @return the (V4L) index of this input
 	 */

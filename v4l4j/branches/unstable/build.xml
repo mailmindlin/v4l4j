@@ -86,7 +86,7 @@
 	<target name="jar" depends="compile">
 		<jar jarfile="${project.dir}/${project.name}.jar">
 			<manifest>
-				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.WebcamViewer"/>
+				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.VideoViewer"/>
 			</manifest>
 			<fileset dir="${project.classes}">
 				<include name="**"/>

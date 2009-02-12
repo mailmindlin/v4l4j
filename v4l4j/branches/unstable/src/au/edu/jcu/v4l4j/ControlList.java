@@ -31,7 +31,7 @@ import au.edu.jcu.v4l4j.exceptions.StateException;
  * Objects of this class encapsulate a list of video source {@link Control}. This class
  * can not be directly instantiated. Instead, to retrieve a list of controls 
  * from a {@link VideoDevice}, use its 
- * {@link VideoDevice#getControlList() getControlList()} method instead. Once
+ * {@link VideoDevice#getControlList() getControlList()} method. Once
  * the control list and associated controls are no longer needed, they must be 
  * released by calling {@link VideoDevice#releaseControlList() releaseControlList()}.
  * After that, neither the list nor the controls themselves must be used. If 

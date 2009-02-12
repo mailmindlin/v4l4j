@@ -34,7 +34,7 @@
 #define info(format, ...) do { fprintf (stderr, "[ %s:%d ] " format, __FILE__, __LINE__, ## __VA_ARGS__);\
 								 fflush(stderr); } while(0)
 
-#define CLEAR_ARR(x,s) memset(&x, 0x0, s);
+#define CLEAR_ARR(x,s) memset(&(x), 0x0, (s));
 
 
 //debug stuff
@@ -54,8 +54,10 @@
 #define LIBV4L_LOG_SOURCE_CONTROL		8
 #define LIBV4L_LOG_SOURCE_MEMALLOC		16
 #define LIBV4L_LOG_SOURCE_CTRL_PROBE	32
+#define LIBV4L_LOG_SOURCE_TUNER			64
 #define LIBV4L_LOG_SOURCE_ALL 			(LIBV4L_LOG_SOURCE_VIDEO_DEVICE | LIBV4L_LOG_SOURCE_QUERY | LIBV4L_LOG_SOURCE_CAPTURE |\
-							 			 LIBV4L_LOG_SOURCE_CONTROL | LIBV4L_LOG_SOURCE_MEMALLOC | LIBV4L_LOG_SOURCE_CTRL_PROBE)
+							 			 LIBV4L_LOG_SOURCE_CONTROL | LIBV4L_LOG_SOURCE_MEMALLOC | LIBV4L_LOG_SOURCE_CTRL_PROBE | \
+										LIBV4L_LOG_SOURCE_TUNER)
 
 
 
@@ -99,31 +101,31 @@
 
 #define XMALLOC(var, type, size)	\
 		do { \
-			var = (type) malloc(size); \
-			if (!var) {fprintf(stderr, "[%s:%d %s] MEMALLOC: OUT OF MEMORY. Cant allocate %lu bytes.\n",\
-					__FILE__, __LINE__, __PRETTY_FUNCTION__, (long unsigned int) size); fflush(stderr);}\
-			else { CLEAR_ARR(*var, size); \
-				dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "MEMALLOC: allocating %lu bytes of type %s for var %s (%p).\n", (long unsigned int) size, #type, #var, var); } \
+			(var) = (type) malloc((size)); \
+			if (!(var)) {fprintf(stderr, "[%s:%d %s] MEMALLOC: OUT OF MEMORY. Cant allocate %lu bytes.\n",\
+					__FILE__, __LINE__, __PRETTY_FUNCTION__, (long unsigned int) (size)); fflush(stderr);}\
+			else { CLEAR_ARR((*var), (size)); \
+				dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "MEMALLOC: allocating %lu bytes of type %s for var %s (%p).\n", (long unsigned int) (size), #type, #var, (var)); } \
 		} while (0)
 
 #define XREALLOC(var, type, size)	\
 		do { \
 			int should_clear = var == NULL ? 1 : 0;\
-			var = (type) realloc(var, size); \
+			var = (type) realloc(var, (size)); \
 			if (!var) {fprintf(stderr, "[%s:%d %s] REALLOC: OUT OF MEMORY. Cant reallocate %lu bytes.\n",\
-					__FILE__, __LINE__, __PRETTY_FUNCTION__,(long unsigned int)  size); fflush(stderr);}\
+					__FILE__, __LINE__, __PRETTY_FUNCTION__,(long unsigned int)  (size)); fflush(stderr);}\
 			else { \
 					if (should_clear) {\
-						CLEAR_ARR(*var, size);; \
-						dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "REALLOC: Allocating %lu bytes of type %s for var %s (%p).\n", (long unsigned int) size, #type, #var, var); \
+						CLEAR_ARR((*var), (size)); \
+						dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "REALLOC: Allocating %lu bytes of type %s for var %s (%p).\n", (long unsigned int) (size), #type, #var, (var)); \
 					} else \
-						{dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "REALLOC: re-allocating %lu bytes of type %s for var %s (%p).\n", (long unsigned int) size, #type, #var, var);} \
+						{dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "REALLOC: re-allocating %lu bytes of type %s for var %s (%p).\n", (long unsigned int) (size), #type, #var, (var));} \
 			}\
 		} while (0)
 
 #define XFREE(var)					\
-		do { dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "MEMALLOC: freeing memory for var %s (%p).\n", #var, var); \
-			if (var) { free(var); } \
+		do { dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "MEMALLOC: freeing memory for var %s (%p).\n", #var, (var)); \
+			if ((var)) { free((var)); } \
 			else { dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "MEMALLOC: Trying to free a NULL pointer.\n");} \
 			var = NULL;\
 		} while (0)
