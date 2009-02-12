@@ -82,5 +82,8 @@
 //control in use (libv4.c)
 #define LIBV4L_ERR_CONTROL_IN_USE			-19
 
+//tuner action in use (libv4.c)
+#define LIBV4L_ERR_TUNER_IN_USE				-20
+
 #endif
 

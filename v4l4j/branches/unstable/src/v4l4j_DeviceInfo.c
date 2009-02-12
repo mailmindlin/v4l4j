@@ -191,7 +191,7 @@ static void create_formats_object(JNIEnv *e, jobject t, jclass this_class, struc
 	formats_field = (*e)->GetFieldID(e, this_class, "formats", "Ljava/util/List;");
 	if(formats_field == NULL){
 		dprint(LOG_V4L4J, "[V4L4J] Error looking up the formats attribute ID\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error looking up the formats attribute ID");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the formats attribute ID");
 		return;
 	}
 

@@ -70,11 +70,14 @@ import au.edu.jcu.v4l4j.exceptions.NoTunerException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 /**
- * Objects of this class capture frames from a video device and display it in a JFrame
+ * Objects of this class create a graphical interface to capture frames 
+ * from a video device and display it. The interface also gives access to the 
+ * video controls.
+ * 
  * @author gilles
  *
  */
-public class WebcamViewer extends WindowAdapter implements Runnable{
+public class VideoViewer extends WindowAdapter implements Runnable{
 	private JLabel video, fps, freq;
 	private JFrame f;
 	private JPanel controlPanel, captureButtons;
@@ -103,7 +106,7 @@ public class WebcamViewer extends WindowAdapter implements Runnable{
 	 * @param q the JPEG compression quality
 	 * @throws V4L4JException if any parameter if invalid
 	 */
-    public WebcamViewer(String dev, int w, int h, int s, int c, int q) throws V4L4JException{
+    public VideoViewer(String dev, int w, int h, int s, int c, int q) throws V4L4JException{
     	vd = new VideoDevice(dev);
 		fg = null;
 		width = w;
@@ -298,9 +301,6 @@ public class WebcamViewer extends WindowAdapter implements Runnable{
 				captureThread.join();
 			} catch (InterruptedException e1) {}
 			captureThread = null;
-			if(tuner!=null){
-				fg.releaseTuner();
-			}
 			freq.setVisible(false);
 			freqSpinner.setVisible(false);
 			fg.stopCapture();
@@ -314,15 +314,9 @@ public class WebcamViewer extends WindowAdapter implements Runnable{
      */
 	public void windowClosing(WindowEvent e) {
 		stopCapture();		
-		try {
-			vd.releaseFrameGrabber();
-			vd.releaseControlList();
-			vd.release();
-		} catch (V4L4JException e1) {
-			e1.printStackTrace();
-			System.out.println("Failed to stop capture");
-		}
-		
+		vd.releaseFrameGrabber();
+		vd.releaseControlList();
+		vd.release();			
     	f.dispose();		
 	}
 	
@@ -366,7 +360,7 @@ public class WebcamViewer extends WindowAdapter implements Runnable{
 			qty = 80;
 		}
 		
-		new WebcamViewer(dev,w,h,std,channel,qty);
+		new VideoViewer(dev,w,h,std,channel,qty);
 	}
 	
 	public interface ControlGUI{
@@ -458,14 +452,16 @@ public class WebcamViewer extends WindowAdapter implements Runnable{
 			 JSlider source = (JSlider)e.getSource();
 			 if (!source.getValueIsAdjusting()) {
 				 try {
-					ctrl.setValue(source.getValue());
-					updateValue(source.getValue());
+					int v = ctrl.setValue(source.getValue());
+					updateValue(v);
+					source.removeChangeListener(this);
+					source.setValue(v);
+					source.addChangeListener(this);
 				} catch (ControlException e1) {
 					JOptionPane.showMessageDialog(null, "Error setting value.\n"+e1.getMessage());
 				}
 			 }			
 		}
-
 	}
 	
 	public class ButtonControl extends ControlModelGUI implements ActionListener{

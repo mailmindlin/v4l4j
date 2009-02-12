@@ -42,15 +42,17 @@ import au.edu.jcu.v4l4j.exceptions.StateException;
  */
 public class Tuner {
 	private long v4l4j_object;
+	private int index;
 
-	private native long getFreq(long o);
-	private native void setFreq(long o, long f);
-	private native int getAfc(long o);
-	private native int getRssi(long o);
+	private native long getFreq(long o, int i);
+	private native void setFreq(long o, int i, long f);
+	private native int getAfc(long o, int i);
+	private native int getRssi(long o, int i);
 	
 	private boolean released;
 	
 	Tuner(long o, int i){
+		index = i;
 		v4l4j_object = o;
 		released = false;
 	}
@@ -61,7 +63,7 @@ public class Tuner {
 	 */
 	public synchronized long getFrequency(){
 		checkRelease();
-		return getFreq(v4l4j_object);
+		return getFreq(v4l4j_object, index);
 	}
 	
 	/**
@@ -70,7 +72,7 @@ public class Tuner {
 	 */
 	public synchronized void setFrequency(long f){
 		checkRelease();
-		setFreq(v4l4j_object, f);
+		setFreq(v4l4j_object, index, f);
 	}
 	
 	/**
@@ -80,7 +82,7 @@ public class Tuner {
 	 */
 	public synchronized int getAFC() {
 		checkRelease();
-		return getAfc(v4l4j_object);
+		return getAfc(v4l4j_object, index);
 	}
 	
 	/**
@@ -89,7 +91,16 @@ public class Tuner {
 	 */
 	public synchronized int getRSSI(){
 		checkRelease();
-		return getRssi(v4l4j_object);
+		return getRssi(v4l4j_object, index);
+	}
+	
+	/**
+	 * This method returns the index of this tuner.
+	 * @return the index of this tuner
+	 */
+	public synchronized int getIndex(){
+		checkRelease();
+		return index;
 	}
 	
 	/**

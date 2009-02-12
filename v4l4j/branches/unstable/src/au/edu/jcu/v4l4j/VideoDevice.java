@@ -26,12 +26,15 @@ package au.edu.jcu.v4l4j;
 
 import java.io.File;
 import java.util.Hashtable;
+import java.util.Vector;
 
 import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
+import au.edu.jcu.v4l4j.exceptions.ImageDimensionsException;
 import au.edu.jcu.v4l4j.exceptions.ImageFormatException;
-import au.edu.jcu.v4l4j.exceptions.InUseException;
 import au.edu.jcu.v4l4j.exceptions.InitialisationException;
 import au.edu.jcu.v4l4j.exceptions.JNIException;
+import au.edu.jcu.v4l4j.exceptions.NoTunerException;
+import au.edu.jcu.v4l4j.exceptions.ReleaseException;
 import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
@@ -74,7 +77,7 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * {@link DeviceInfo} objects. Captured frames are handed out straight away to the caller, without any other form of processing.</li>
  * <li>{@link #getJPEGFrameGrabber(int, int, int, int, int) getJPEGFrameGrabber} creates a <code>JPEGFrameGrabber</code> object capable of capturing frames
  * and JPEG-encoding them before handing them out. This frame grabber cannot be used with all video sources. It requires
- * images from the video source to be in some pre-defined formats (namely JPEG, MJPEG, YUV420, YUYV or RGB24) in order 
+ * images from the video source to be in some pre-defined formats (namely JPEG, MJPEG, YUV420, YUYV, YVYU and RGB24) in order 
  * to be encoded in JPEG format. If the video source is not capable of handing out images in either of these
  * formats, then no <code>JPEGFrameGrabber</code> can be created.</li>
  * </ul>
@@ -117,9 +120,9 @@ public class VideoDevice {
 	 * This JNI method releases resources used by libv4l's struct video_device,
 	 * as allocated by <code>doInit()</code>
 	 * @param o A C pointer to a struct vl4j_device
-	 * @throws V4L4JException if there is an error releasing the resources.
+	 * @throws ReleaseException if the device is still in use.
 	 */
-	private native void doRelease(long o) throws V4L4JException;
+	private native void doRelease(long o);
 	
 	/**
 	 * This JNI method releases resources used by libv4l's struct video_device,
@@ -129,7 +132,7 @@ public class VideoDevice {
 	 * @return 1 if JPEG-encoding is supported, 0 otherwise
 	 * @throws JNIException if there is an error in the JNI code
 	 */
-	private native int doCheckJPEGSupport(long o, int[] fmts) throws JNIException;
+	private native int doCheckJPEGSupport(long o, int[] fmts);
 	
 	/**
 	 * This JNI method initialises the control interface and 
@@ -138,13 +141,28 @@ public class VideoDevice {
 	 * @return an array of <code>Control</code>s.
 	 * @throws JNIException if there is an error in the JNI code
 	 */
-	private native Control[] doGetControlList(long o) throws JNIException;
+	private native Control[] doGetControlList(long o);
 
 	/**
 	 * This JNI method releases the control interface
 	 * @param o A C pointer to a struct v4l4j_device
+	 * @throws ReleaseException if this device is sill in use, and has not been released.
 	 */
 	private native void doReleaseControlList(long o);
+	
+	/**
+	 * This JNI method gets the tuner interface 
+	 * @param o A C pointer to a struct v4l4j_device
+	 * @throws JNIException if there is an error in the JNI code
+	 */
+	private native void doGetTunerActions(long o);
+
+	/**
+	 * This JNI method releases the tuner interface
+	 * @param o A C pointer to a struct v4l4j_device
+	 * @throws ReleaseException if this device is sill in use, and has not been released.
+	 */
+	private native void doReleaseTunerActions(long o);
 	
 	/**
 	 * The FrameGrabber interface associated with this video device
@@ -160,6 +178,11 @@ public class VideoDevice {
 	 * The control list associated with this video device
 	 */
 	private ControlList controls;
+	
+	/**
+	 * The tuner list associated with this video device
+	 */
+	private TunerList tuners;
 	
 	/**
 	 * The name of the device file for this video device
@@ -204,17 +227,28 @@ public class VideoDevice {
 	 */
 	private void init() throws V4L4JException{		
 		v4l4jObject = doInit(deviceFile);
+		//initialise deviceInfo
 		deviceInfo = new DeviceInfo(v4l4jObject, deviceFile);
 		
+		//initialise supportJPEG
 		int[] fmts = new int[deviceInfo.getFormats().size()];
-		int j=0;
-		
+		int j=0;		
 		for(ImageFormat i: deviceInfo.getFormats())
-			fmts[j++] = i.getIndex();
-		
+			fmts[j++] = i.getIndex();		
 		supportJPEG = doCheckJPEGSupport(v4l4jObject, fmts) == 1 ? true:false;
 		
-		state.commit();
+		//initialise TunerList
+		Vector<Tuner> v= new Vector<Tuner>();
+		doGetTunerActions(v4l4jObject);
+		for(InputInfo i:deviceInfo.getInputs()){
+			try {
+				v.add(new Tuner(v4l4jObject,i.getTuner().getIndex()));
+			} catch (NoTunerException e) {	//no tuner for this input
+			}
+		}
+
+		if(v.size()!=0)
+			tuners = new TunerList(v);
 	}
 	
 	/**
@@ -223,9 +257,9 @@ public class VideoDevice {
 	 * {@link #releaseFrameGrabber()} or/and {@link #releaseControlList()} have been called. 
 	 * @throws StateException if a call to <code>release()</code> is already in progress.
 	 */
-	public void release() throws V4L4JException{
+	public void release(){
 		state.release();
-		//TODO: check that capture is not in progress !
+		doReleaseTunerActions(v4l4jObject);
 		doRelease(v4l4jObject);
 		state.commit();
 	}	
@@ -241,21 +275,22 @@ public class VideoDevice {
 	 * resources
 	 * @param wait whether or not this method should block and wait until {@link #releaseFrameGrabber()}
 	 * or/and {@link #releaseControlList()} have been called 
-	 * @throws StateException if a call to <code>release()</code> is already in progress.
-	 * @throws InUseException if there either the {@link #releaseFrameGrabber()} or the
+	 * @throws StateException if this video device has already been released, or is being released.
+	 * @throws ReleaseException if there either the {@link #releaseFrameGrabber()} or the
 	 * {@link #releaseControlList()} have not been called, and we asked to not wait 
 	 * (argument <code>wait</code> is false)
 	 */
-	public void release(boolean wait) throws V4L4JException{
+	public void release(boolean wait){
 		state.release(wait);
-		//TODO: check that capture is not in progress !
 		doRelease(v4l4jObject);
 		state.commit();
 	}	
 	
 	/**
 	 * This method creates a <code>DeviceInfo</code> object which contains information about
-	 * this video device.
+	 * this video device. This method (as well as {@link #getTunerList()} does not have
+	 * an equivalent release method. In other word, the returned {@link DeviceInfo}
+	 * object does not need to be released before releasing the {@link VideoDevice}.
 	 * @return a <code>DeviceInfo</code> object describing this video device.
 	 * @see DeviceInfo
 	 */
@@ -265,6 +300,8 @@ public class VideoDevice {
 	
 	/**
 	 * This method returns a list of {@link Control}s associated with this video device.
+	 * The {@link ControlList} must be released when no longer used by calling
+	 * {@link VideoDevice#releaseControlList()}.
 	 * @return a list of available {@link Control}s 
 	 * @throws StateException if the <code>VideoDevice</code> has been released. 
 	 */
@@ -284,7 +321,7 @@ public class VideoDevice {
 	 * resources can be freed. This method does nothing if a list of {@link Control}s has never been
 	 * allocated in the first place.
 	 */
-	public void releaseControlList() throws StateException{
+	public void releaseControlList(){
 		synchronized(this){
 			if(controls!=null){
 				controls.release();
@@ -309,11 +346,25 @@ public class VideoDevice {
 		return supportJPEG;
 	}
 	
+	private Tuner findTuner(int input){
+		for(InputInfo i: deviceInfo.getInputs())
+			if(i.getIndex() == input && i.hasTuner())
+				try {
+					return tuners.getTuner(i.getTuner().getIndex());
+				} catch (NoTunerException e) {
+					//weird, shoudlnt be here
+				}
+		
+		return null;
+
+	}
+	
 	/**
 	 * This method returns the <code>FrameGrabber</code> associated with this video device. Captured frames will be JPEG-encoded
-	 * before being handed out. The video device must support appropriate image formats. If it doesnt, this method will throw 
+	 * before being handed out. The video device must support appropriate image formats. If it does not, this method will throw 
 	 * an {@link ImageFormatException}. To check if JPEG-encoding is supported by this <code>VideoDevice</code>, call
-	 * {@link #canJPEGEncode()}.
+	 * {@link #canJPEGEncode()}. The returned {@link JPEGFrameGrabber} must be released when no longer used by calling
+	 * {@link #releaseFrameGrabber()}.
 	 * @param w the desired frame width 
 	 * @param h the desired frame height
 	 * @param input the input index, as returned by {@link InputInfo#getIndex()}
@@ -327,7 +378,7 @@ public class VideoDevice {
 	 * encounter such device, please let the author know about it. See README file in v4l4j/ on how to report this issue. 
 	 * @throws CaptureChannelException if the given channel number value is not valid
 	 * @throws ImageDimensionException if the given image dimensions are not supported
-	 * @throws InitialisationException if the video device file cant be initialised 
+	 * @throws InitialisationException if the video device file can not be initialised 
 	 * @throws V4L4JException if there is an error applying capture parameters
 	 * @throws StateException if a {@link FrameGrabber} already exists and must be released before a JPEGFrameGrabber
 	 * can be allocated, or the <code>VideoDevice</code> is being released.
@@ -339,7 +390,7 @@ public class VideoDevice {
 		synchronized(this){
 			if(fg==null) {
 				state.get();
-				fg = new JPEGFrameGrabber(v4l4jObject, w, h, input, std, q);
+				fg = new JPEGFrameGrabber(v4l4jObject, w, h, input, std, q, findTuner(input));
 				try {
 					fg.init();
 				} catch (V4L4JException ve){
@@ -366,7 +417,8 @@ public class VideoDevice {
 	/**
 	 * This method returns the <code>FrameGrabber</code> associated with this video device. Captured frames will be handed out in the same
 	 * format as received from the driver. The image format can be chosen amongst the ones supported by the vide device, which can be 
-	 * enumerated by calling {@link DeviceInfo#getFormats()}.
+	 * enumerated by calling {@link DeviceInfo#getFormats()}.The returned {@link FrameGrabber} must be released when no longer used by calling
+	 * {@link #releaseFrameGrabber()}.
 	 * @param w the desired frame width 
 	 * @param h the desired frame height
 	 * @param input the input index, as returned by {@link InputInfo#getIndex()}.
@@ -379,7 +431,7 @@ public class VideoDevice {
 	 * @throws ImageFormatException if the selected video device uses an unsupported image format (let the author know, see README file)
 	 * @throws CaptureChannelException if the given channel number value is not valid
 	 * @throws ImageDimensionsException if the given image dimensions are not supported
-	 * @throws InitialisationException if the video device file cant be initialised 
+	 * @throws InitialisationException if the video device file can not be initialised 
 	 * @throws V4L4JException if there is an error applying capture parameters
 	 * @throws StateException if a <code>FrameGrabber</code> already exists or the <code>VideoDevice</code> is being released
 	 */
@@ -387,7 +439,7 @@ public class VideoDevice {
 		synchronized(this){
 			if(fg==null) {
 				state.get();
-				fg = new FrameGrabber(v4l4jObject, w, h, input, std, format);
+				fg = new FrameGrabber(v4l4jObject, w, h, input, std, format, findTuner(input));
 				try {
 					fg.init();
 				} catch (V4L4JException ve){
@@ -414,7 +466,8 @@ public class VideoDevice {
 	/**
 	 * This method returns the <code>FrameGrabber</code> associated with this video device. Captured frames will be handed out in the same
 	 * format as received from the driver. The chosen format is the first one in the list returned by
-	 * <code>getDeviceInfo().getFormats()</code>.
+	 * <code>getDeviceInfo().getFormats()</code>. The returned {@link FrameGrabber} must be released when no longer used by calling
+	 * {@link #releaseFrameGrabber()}.
 	 * @param w the desired frame width 
 	 * @param h the desired frame height
 	 * @param input the input index, as returned by {@link InputInfo#getIndex()}.
@@ -441,7 +494,7 @@ public class VideoDevice {
 	 * allocated in the first place.
 	 * @throws StateException if the <code>VideoDevice</code> has not been initialised
 	 */
-	public void releaseFrameGrabber() throws StateException{
+	public void releaseFrameGrabber() {
 		synchronized(this){
 			if(fg!=null){
 				try {fg.release();}
@@ -455,6 +508,24 @@ public class VideoDevice {
 			}
 		}	
 	}
+
+	/**
+	 * This method returns the {@link TunerList} of {@link Tuner}s available on this
+	 * {@link VideoDevice}. {@link Tuner}s in this list can be used to control 
+	 * individual physical tuners on the video device and get signal information form them.
+	 * Check the documentation of the {@link Tuner} class for more information.
+	 * This method (as well as {@link #getDeviceInfo()} does not have
+	 * an equivalent release method. In other word, the returned {@link TunerList}
+	 * object does not need to be released before releasing the {@link VideoDevice}.
+	 * @return a {@link TunerList} 
+	 * @throws NoTunerException if this video device does not have any tuners.
+	 */
+	public TunerList getTunerList() throws NoTunerException{
+		if(tuners==null)
+			throw new NoTunerException("This video device does not have any tuners");
+		return tuners;
+	}
+
 	
 	private static class State {
 
@@ -501,9 +572,9 @@ public class VideoDevice {
 		 * will block until all users are finished. If we dont (wait = false), this method will throw a
 		 * V4L4JException if there are users
 		 * @return whether we can switch to the released state or not
-		 * @throws InUseException if there are still some users and we have chosen not to wait
+		 * @throws ReleaseException if there are still some users and we have chosen not to wait
 		 */
-		public synchronized void release(boolean wait) throws InUseException{
+		public synchronized void release(boolean wait){
 			int t = temp;
 			if(state==INIT && temp!=RELEASED) {
 				temp=RELEASED;
@@ -513,7 +584,7 @@ public class VideoDevice {
 							wait();
 						else {
 							temp = t;
-							throw new InUseException("Still in use");	
+							throw new ReleaseException("Still in use");	
 						}
 					} catch (InterruptedException e) {
 						temp = t;

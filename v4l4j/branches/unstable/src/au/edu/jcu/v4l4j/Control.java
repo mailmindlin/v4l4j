@@ -115,7 +115,7 @@ public class Control {
 					this.names.add(s);
 		}
 		this.values = values;
-		//this.middleValue = (int) Math.round((max - min) / 2.0) + min;
+		//this.defaultValue = (int) Math.round((max - min) / 2.0) + min;
 		this.defaultValue = 0;
 		v4l4jObject = o;
 		state = new State();
@@ -123,7 +123,7 @@ public class Control {
 	
 	/**
 	 * This method retrieves the current value of this control. Some controls
-	 * (for example relative values like pan or tilt) are read-only and getting
+	 * (for example relative values like pan or tilt) are write-only and getting
 	 * their value does not make sense. Invoking this method on this kind of
 	 * controls will trigger a ControlException.   
 	 * @return the current value of this control (0 if it is a button)
@@ -148,29 +148,46 @@ public class Control {
 	}
 
 	/**
-	 * This method sets a new value for this control.
+	 * This method sets a new value for this control. The returned value is the new value
+	 * of the control, which for normal controls will be identical to the one set. However, 
+	 * some controls (for example relative values like pan or tilt) are write-only and getting
+	 * their value does not make sense. The return value in this case is the 
+	 * control's default value (as returned by {@link #getDefaultValue()}).
 	 * @param value the new value
-	 * @throws ControlException if the value can not be set
+	 * @return the new value of the control after setting it, or the control's default
+	 * value
+	 * @throws ControlException if the value can not be set.
 	 * @throws StateException if this control has been released and must not be used anymore.
 	 */
-	public void setValue(int value) throws ControlException {
+	public int setValue(int value) throws ControlException {
+		int v = defaultValue;
 		state.get();
 		try { doSetValue(v4l4jObject,id, validateValue(value));}
 		catch (ControlException ce){
 			state.put();
 			throw ce;
 		}
+		try {v = getValue();} catch (ControlException ce){}
 		state.put();
+		return v;
 	}
 	
 	/**
 	 * This method increases this control's current value by its step (as returned
-	 * by {@link #getStepValue()})</code>.
+	 * by {@link #getStepValue()})</code>. The returned value is the new value
+	 * of the control, which for normal controls will be identical to the old one plus
+	 * the step value. However, some controls (for example relative values like pan
+	 * or tilt) are write-only and getting their value does not make sense. In this case,
+	 * this method sets the new value to the default one plus the step value.
+	 * Note that, the return value in this case is still the control's default value 
+	 * (as returned by {@link #getDefaultValue()}), not the default one plus the step value.
+	 * @return the new value of the control after increasing its old value, or the control's default
+	 * value
 	 * @throws ControlException if the value cannot be increased
 	 * @throws StateException if this control has been released and must not be used anymore.
 	 */
-	public void increaseValue() throws ControlException {
-		int old = 0;
+	public int increaseValue() throws ControlException {
+		int old = defaultValue;
 		/**
 		 * the following try statement is here so that write-only 
 		 * controls (Relative Pan for instance) that return a ControlException
@@ -178,21 +195,29 @@ public class Control {
 		 */
 		state.get();
 		try { old = doGetValue(v4l4jObject,id);} catch (ControlException e) {}
-		try {doSetValue(v4l4jObject,id, validateValue(old+step));}
+		try {old = doSetValue(v4l4jObject,id, validateValue(old+step));}
 		catch (ControlException ce){
 			state.put();
 			throw ce;
 		}
 		state.put();
+		return old;
 	}
 	
 	/**
 	 * This method decreases this control's current value by its step (as returned
-	 * by {@link #getStepValue()}. 
+	 * by {@link #getStepValue()}. The returned value is the new value
+	 * of the control, which for normal controls will be identical to the old one minus
+	 * the step value. However, some controls (for example relative values like pan
+	 * or tilt) are write-only and getting their value does not make sense. In this case,
+	 * this method sets the new value to the default one minus the step value.
+	 * Note that, the return value in this case is still the control's default value 
+	 * (as returned by {@link #getDefaultValue()}), not the default one plus the step value.
+	 * @return the new value of the control after decreasing it.
 	 * @throws ControlException if the value can not be increased
 	 * @throws StateException if this control has been released and must not be used anymore.
 	 */
-	public void decreaseValue() throws ControlException {
+	public int decreaseValue() throws ControlException {
 		int old = 0;
 		/**
 		 * the following try statement is here so that write-only 
@@ -201,12 +226,13 @@ public class Control {
 		 */
 		state.get();
 		try { old = doGetValue(v4l4jObject,id);} catch (ControlException e) {}
-		try {doSetValue(v4l4jObject,id, validateValue(old-step));}
+		try {old = doSetValue(v4l4jObject,id, validateValue(old-step));}
 		catch (ControlException ce){
 			state.put();
 			throw ce;
 		}
 		state.put();
+		return old;
 	}
 
 	/**
@@ -340,7 +366,7 @@ public class Control {
 	 * as returned by {@link #getDiscreteValues()}.
 	 * @param v the discrete value whose index is needed
 	 * @return the index of a given discrete value, or -1 if the given value is not found
-	 * @throws UnsupportedMethod if this control doesnt support discrete values
+	 * @throws UnsupportedMethod if this control does not support discrete values
 	 * @throws StateException if this control has been released and must not be used anymore
 	 */
 	public int getDiscreteValueIndex(int v){
@@ -363,7 +389,7 @@ public class Control {
 	 * as returned by {@link #getDiscreteValues()}.
 	 * @param n the discrete value's description whose index is needed
 	 * @return the index of a given discrete value, or -1 if the given value is not found
-	 * @throws UnsupportedMethod if this control doesnt support discrete values
+	 * @throws UnsupportedMethod if this control does not support discrete values
 	 * @throws StateException if this control has been released and must no be used anymore
 	 */
 	public int getDiscreteNameIndex(String n){
@@ -380,8 +406,8 @@ public class Control {
 	 * This method returns the discrete value matching a given description.
 	 * @param n the description whose value is to be looked up
 	 * @return the value matching the description
-	 * @throws UnsupportedMethod if this control doesnt support discrete values
-	 * @throws IndexOutOfBoundsException if the given description doesnt match anything
+	 * @throws UnsupportedMethod if this control does not support discrete values
+	 * @throws IndexOutOfBoundsException if the given description does not match anything
 	 * @throws StateException if this control has been released and must not be used anymore
 	 */
 	public int getDiscreteValueFromName(String n){
@@ -474,8 +500,10 @@ public class Control {
 						e.printStackTrace();
 						throw new StateException("There are remaining users of this Control and it can not be stopped");
 					}
-			} else
-				throw new StateException("This Control has been released");
+			} 
+			//commented out so we can release() a control multiple times
+//			else
+//				throw new StateException("This Control has been released");
 		}
 		
 		public synchronized void commit(){

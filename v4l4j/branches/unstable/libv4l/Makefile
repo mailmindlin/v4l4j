@@ -20,7 +20,8 @@ LOG_LEVEL=23
 # LOG_SOURCE_CONTROL        8
 # LOG_SOURCE_MEMALLOC       16
 # LOG_SOURCE_CTRL_PROBE     32
-# LOG_SOURCE_ALL            63
+# LOG_SOURCE_TUNER          64
+# LOG_SOURCE_ALL            127
 LOG_SOURCE=63
 
 ifneq ($(DEBUG),)
@@ -33,7 +34,7 @@ VERSION_RELEASE=0
 
 LIB=libv4l.a
 TESTOBJ=test.o list-caps.o
-OBJ=v4l2-input.o v4l1-input.o libv4l.o pwc-probe.o gspca-probe.o qc-probe.o fps-param-probe.o v4l1-query.o v4l2-query.o
+OBJ=v4l2-input.o v4l1-input.o libv4l.o pwc-probe.o gspca-probe.o qc-probe.o fps-param-probe.o v4l1-query.o v4l2-query.o v4l1-tuner.o v4l2-tuner.o
 
 CC=gcc
 OPTIMISATION=-O3

@@ -37,17 +37,13 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doInit(JNIEnv *e, jobj
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d;
 	XMALLOC(d, struct v4l4j_device *, sizeof(struct v4l4j_device));
-	if(d==NULL) {
-		THROW_EXCEPTION(e, INIT_EXCP, "Error creating new v4l4j object - out of memory");
-		return 0;
-	}
 
 	const char * device_file = (*e)->GetStringUTFChars(e, dev, 0);
 	d->vdev = open_device((char *)device_file);
 	(*e)->ReleaseStringUTFChars(e, dev,device_file);
 
 	if(d->vdev ==NULL) {
-		THROW_EXCEPTION(e, INIT_EXCP, "Error creating new VideoDevice object");
+		THROW_EXCEPTION(e, GENERIC_EXCP, "Error creating new VideoDevice object");
 		return 0;
 	}
 
@@ -281,4 +277,19 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doReleaseControlList(JN
 
 	release_control_list(d->vdev);
 }
+
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doGetTunerActions(JNIEnv *e, jobject t, jlong o){
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
+
+	get_tuner_actions(d->vdev);
+}
+
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doReleaseTunerActions(JNIEnv *e, jobject t, jlong o){
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
+
+	release_tuner_actions(d->vdev);
+}
+
 

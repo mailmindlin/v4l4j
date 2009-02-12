@@ -43,7 +43,9 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
 /**
  * This class provides methods to capture raw frames from a {@link VideoDevice}.
  * Raw means that the image format will be left untouched and passed on straight
- * away to the caller. <code>FrameGrabber</code> objects are not instantiated
+ * away to the caller. v4l4j also provides a {@link JPEGFrameGrabber} class which
+ * JPEG-encodes frames before handing them out.
+ * <code>FrameGrabber</code> objects are not instantiated
  * directly. Instead, the 
  * {@link VideoDevice#getRawFrameGrabber(int, int, int, int) getRawFrameGrabber()}
  * method must be called on the associated {@link VideoDevice}. Requested height
@@ -80,6 +82,7 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * again with {@link #stopCapture()} without having to create a new 
  * <code>FrameGrabber</code>.
  * 
+ * @see JPEGFrameGrabber
  * @author gilles
  *
  */
@@ -124,8 +127,7 @@ public class FrameGrabber {
 	private native int getBuffer(long o) throws V4L4JException;
 	private native int getBufferLength(long o);
 	private native void stop(long o);
-	private native void doRelease(long o) throws V4L4JException;
-	private native int hasTuner(long o);
+	private native void doRelease(long o);
 
 	
 	/**
@@ -137,7 +139,7 @@ public class FrameGrabber {
 	 * (see V4L4JConstants)
 	 * @param q the JPEG image quality (the higher, the better the quality)
 	 */
-	protected FrameGrabber(long o, int w, int h, int ch, int std, int q){
+	protected FrameGrabber(long o, int w, int h, int ch, int std, int q, Tuner t){
 		quality = q;			
 
 		state= new State();
@@ -148,7 +150,7 @@ public class FrameGrabber {
 		channel = ch;
 		standard= std;
 		format = null;
-		tuner = null;
+		tuner = t;
 	}
 	
 	/**
@@ -162,7 +164,7 @@ public class FrameGrabber {
 	 * (see V4L4JConstants)
 	 * @param fmts an array of image format indexes
 	 */
-	protected  FrameGrabber(long o, int w, int h, int ch, int std, ImageFormat fmt){
+	protected  FrameGrabber(long o, int w, int h, int ch, int std, ImageFormat fmt, Tuner t){
 		state= new State();
 		
 		object = o;
@@ -172,7 +174,7 @@ public class FrameGrabber {
 		standard= std;
 		quality = 0;
 		format = fmt;
-		tuner = null;
+		tuner = t;
 	}
 	
 	/**
@@ -184,8 +186,8 @@ public class FrameGrabber {
 	 * @throws ImageFormatException if the selected video device uses an unsupported image format (let the author know, see README file)
 	 * @throws CaptureChannelException if the given channel number value is not valid
 	 * @throws ImageDimensionException if the given image dimensions are not supported
-	 * @throws InitialisationException if the video device file cant be initialised 
-	 * @throws StateException if the framegrabber is already initialised
+	 * @throws InitialisationException if the video device file can not be initialised 
+	 * @throws StateException if the frame grabber is already initialised
 	 * @throws V4L4JException if there is an error applying capture parameters
 	 */
 	void init() throws V4L4JException{
@@ -198,47 +200,19 @@ public class FrameGrabber {
 	}
 	
 	/**
-	 * This method returns a {@link Tuner} object associated with this 
+	 * This method returns the {@link Tuner{ associated with the input of this 
 	 * <code>FrameGrabber</code>, or throws a {@link NoTunerException} if there
-	 * is none. The {@link Tuner} object must be released with 
-	 * {@link #releaseTuner()} when finished, otherwise this <code>FrameGrabber</code>
-	 * can not be released.
-	 * @return a {@link Tuner} object
+	 * is none.   
+	 * @return the {@link Tuner} object associated with the chosen input.
 	 * @throws NoTunerException if the selected input does not have a tuner
 	 * @throws StateException if this <code>FrameGrabber</code> has been already
 	 * released, and therefore must not be used anymore
 	 */
 	public Tuner getTuner() throws NoTunerException{
-		if(hasTuner(object)==1){
-			synchronized(this){
-				if(tuner==null){
-					state.get();
-					tuner = new Tuner(object, channel);
-				}
-				return tuner;
-			}
-		} else
+		if(tuner==null)
 			throw new NoTunerException("This input does not have a tuner");
-	}
-	
-	/**
-	 * This method releases the {@link Tuner} object associated with this
-	 * <code>FrameGrabber</code>. It does nothing if this 
-	 * <code>FrameGrabber</code> does not have a tuner, or if a reference to it
-	 * has not been retrieved before (with a call to {@link #getTuner()}).
-	 * @throws StateException if this <code>FrameGrabber</code> has been already
-	 * released, and therefore must not be used anymore
-	 */
-	public void releaseTuner(){
-		if(hasTuner(object)==1){
-			synchronized(this){
-				if(tuner!=null){
-					tuner.release();
-					tuner=null;
-					state.put();
-				}
-			}
-		}
+		
+		return tuner;
 	}
 	
 	/**
@@ -282,6 +256,9 @@ public class FrameGrabber {
 	 * @throws StateException if the capture has not been started or if this 
 	 * <code>FrameGrabber</code> has been already released, and therefore must
 	 * not be used anymore.
+	 * @throws StateException if the capture has not been started, or if this 
+	 * <code>FrameGrabber</code> has been already released, and therefore must 
+	 * not be used anymore.
 	 */
 	public void stopCapture(){
 		state.stop();		
@@ -291,12 +268,15 @@ public class FrameGrabber {
 	
 	/**
 	 * This method releases resources used by the FrameCapture object.
-	 * @throws V4L4JException if there is a problem freeing resources
+	 * @throws StateException if if this 
+	 * <code>FrameGrabber</code> has been already released, and therefore must 
+	 * not be used anymore.
 	 */
-	void release() throws V4L4JException {
-		releaseTuner();
+	void release(){
 		try {stopCapture();}
-		catch (StateException se) {}
+		catch (StateException se) {
+			//capture already stopped 
+		}
 		
 		state.remove();		
 		doRelease(object);

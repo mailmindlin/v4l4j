@@ -26,7 +26,9 @@ package au.edu.jcu.v4l4j;
 
 /**
  * Objects of this class are used to retrieve JPEG-encoded frames from a 
- * {@link VideoDevice}. <code>JPEGFrameGrabber</code> objects are not 
+ * {@link VideoDevice}. v4l4j also provide {@link FrameGrabber} objects to
+ * retrieve images in a native format. 
+ * <code>JPEGFrameGrabber</code> objects are not 
  * instantiated directly. Instead, the 
  * {@link VideoDevice#getJPEGFrameGrabber(int, int, int, int, int) getJPEGFrameGrabber()}
  * method must be called on the associated {@link VideoDevice}. Requested height
@@ -37,9 +39,7 @@ package au.edu.jcu.v4l4j;
  * <code>//create a new video device<br>
  * VideoDevice vd = new VideoDevice("/dev/video0");<br>
  * <br>//Create an instance of FrameGrabber
- * <br>FrameGrabber f = vd.getRawFrameGrabber(320, 240, 0, 0, 80);
- * <br> //the framegrabber will use the first image format supported by the device, as returned by
- * <br> //<code>vd.getDeviceInfo().getFormats().get(0)</code>
+ * <br>FrameGrabber f = vd.getJPEGFrameGrabber(320, 240, 0, 0, 80);
  * <br>
  * <br> //Start the frame capture 
  * <br>f.startCapture();
@@ -62,6 +62,7 @@ package au.edu.jcu.v4l4j;
  * Similarly, when the capture is stopped with {@link #stopCapture()}, it can be
  * started again with {@link #stopCapture()} without having to create a new 
  * <code>FrameGrabber</code>.
+ * @see FrameGrabber
  * @author gilles
  *
  */
@@ -76,10 +77,10 @@ public class JPEGFrameGrabber extends FrameGrabber {
 	 * (see V4L4JConstants)
 	 * @param q the JPEG image quality (the higher, the better the quality)
 	 */
-	JPEGFrameGrabber(long o, int w, int h, int ch, int std, int q){
+	JPEGFrameGrabber(long o, int w, int h, int ch, int std, int q, Tuner t){
 		super(o,w,h,ch,std,
 				q<V4L4JConstants.MIN_JPEG_QUALITY? V4L4JConstants.MIN_JPEG_QUALITY: 
-					(q>V4L4JConstants.MAX_JPEG_QUALITY ? V4L4JConstants.MAX_JPEG_QUALITY : q) );
+					(q>V4L4JConstants.MAX_JPEG_QUALITY ? V4L4JConstants.MAX_JPEG_QUALITY : q), t );
 	}
 	
 	/**

@@ -140,15 +140,10 @@ public class GetFrameRate {
 		System.out.println("\tFrames captured :"+n);
 		System.out.println("\tFPS: "+((float) n/(now/1000-start/1000)));
 		System.out.println(" =====  END  RESULTS  =====");
-		try {
-			f.stopCapture();
-			vd.releaseFrameGrabber();
-			vd.releaseControlList();
-			vd.release();
-		} catch (V4L4JException e) {
-			e.printStackTrace();
-			System.out.println("Failed to stop capture");
-			throw e;
-		}
+
+		f.stopCapture();
+		vd.releaseFrameGrabber();
+		vd.releaseControlList();
+		vd.release();
 	}
 }
