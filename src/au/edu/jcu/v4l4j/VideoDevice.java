@@ -25,7 +25,7 @@
 package au.edu.jcu.v4l4j;
 
 import java.io.File;
-import java.util.Hashtable;
+import java.util.List;
 import java.util.Vector;
 
 import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
@@ -641,8 +641,8 @@ public class VideoDevice {
 			}
 		}
 		
-		Hashtable<String,Control> ctrls = vd.getControlList().getList();
-		for(Control c: ctrls.values()){
+		List<Control> ctrls = vd.getControlList().getList();
+		for(Control c: ctrls){
 			System.out.print("Control: "+c.getName()+" - min: "+c.getMinValue()+" - max: "+c.getMaxValue()+" - step: "+c.getStepValue());
 			try {
 				System.out.println(" - value: "+c.getValue());

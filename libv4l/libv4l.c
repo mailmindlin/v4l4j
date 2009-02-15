@@ -252,17 +252,16 @@ static struct v4l_driver_probe known_driver_probes[] = {
 		.set_ctrl	= qc_set_ctrl,
 		.priv = NULL,
 	},
-	{
-		.probe 		= fps_param_probe,
-		.list_ctrl 	= fps_param_list_ctrl,
-		.get_ctrl	= fps_param_get_ctrl,
-		.set_ctrl	= fps_param_set_ctrl,
-		.priv = NULL,
-	},
+	{NULL, NULL, NULL, NULL, NULL}
+	//commented out until fixed
+//	{
+//		.probe 		= fps_param_probe,
+//		.list_ctrl 	= fps_param_list_ctrl,
+//		.get_ctrl	= fps_param_get_ctrl,
+//		.set_ctrl	= fps_param_set_ctrl,
+//		.priv = NULL,
+//	},
 };
-
-#define PROBE_NB 4
-
 
 static void add_node(driver_probe **list, struct v4l_driver_probe *probe) {
 	driver_probe *t;
@@ -325,7 +324,7 @@ struct control_list *get_control_list(struct video_device *vdev){
 	 * drivers make their private ioctl available through a control (or control class like the camera control class added to 2.6.25))
 	 */
 	//go through all probes
-	while ( probe_id<PROBE_NB ){
+	while ( known_driver_probes[probe_id].probe!=NULL ){
 		if ( (nb = known_driver_probes[probe_id].probe(vdev, &known_driver_probes[probe_id].priv)) != -1) {
 			//if the probe is successful, add the nb of private controls detected to the grand total
 			priv_ctrl_count += nb;

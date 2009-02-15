@@ -13,6 +13,11 @@ Tested video devices and drivers:
 - 046d:0992 Logitech, Inc. Quickcam Communicate Deluxe (linux uvc driver)
 - BT848 4-channel PCI capture card (bttv driver)
 - 046d:0990 Logitech Quickcam Pro 9000 (bcdDevice 0.08 -Linux UVC)
+  (This webcam comes in several different versions, see [1]. The one
+  tested suffers from a bug reported on the v4l4j mailing list, see [2].
+  This bug has been fixed in kernel 2.6.28. In the meanwhile, switching
+  between YUV and MJPEG will cause the next capture to hang.)
+
 
 Currently, libv4l will probe and detect the following drivers:
 - PWC 		v10.0.13
@@ -41,8 +46,6 @@ Currently, libv4l will probe and detect the following drivers:
     VIDIOCQCSADAPTIVE / VIDIOCQCGADAPTIVE (autobrightness)
     VIDIOCQCSEQUALIZE / VIDIOCQCGEQUALIZE (equalise image)
 
-- v4l2 VIDIOC_G_PARM ioctl
-  If ioctl VIDIOC_G_PARM is supported by the driver, libv4l will create two
-  controls to get/set the frame rate:
-    VIDIOC_G_PARM / VIDIOC_S_PARM (adjust FPS) 
-
+ [1] http://www.quickcamteam.net/documentation/faq/how-many-versions-of-the-quickcam-pro-9000-are-there
+ [2] http://groups.google.com/group/v4l4j/browse_thread/thread/f1d0c175ffb34a4b
+ 
