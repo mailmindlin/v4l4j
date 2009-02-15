@@ -36,6 +36,11 @@
 
 #define NB_PRIV_IOCTL 1
 
+//the frame interval depends on an image format
+//if the control interface is created before the capture one
+//then controls created by this probe may be invalid because
+//capture may use a different image format.
+
 /**
  * Credit to Laurent Pinchart &&  Michel Xhaard for the float_to_fraction
  * & float_to_fraction_recursive code taken from luvcview

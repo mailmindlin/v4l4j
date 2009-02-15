@@ -114,7 +114,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 		std = s;
 		channel = c;
 		qty = q;
-    	controls = vd.getControlList().getList();
+    	controls = vd.getControlList().getTable();
         initGUI();
         stop = false;
         captureThread = null;
@@ -159,15 +159,15 @@ public class VideoViewer extends WindowAdapter implements Runnable{
         	
         });
         captureButtons.add(Box.createGlue());
-        captureButtons.add(stopCap);
-        captureButtons.add(Box.createGlue());
-        captureButtons.add(fps);
-        captureButtons.add(Box.createGlue());
         captureButtons.add(startCap);
         captureButtons.add(Box.createGlue());
         captureButtons.add(freq);
         captureButtons.add(Box.createGlue());
+        captureButtons.add(stopCap);
+        captureButtons.add(Box.createGlue());
         captureButtons.add(freqSpinner);
+        captureButtons.add(Box.createGlue());
+        captureButtons.add(fps);
         captureButtons.add(Box.createGlue());
         startCap.addMouseListener(new MouseAdapter() {
         	public void mouseClicked(MouseEvent e) {
@@ -236,8 +236,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
     	if(start==0)
     		start = System.currentTimeMillis();
     	else if(System.currentTimeMillis()>start+FPS_REFRESH) {
-			//System.out.println("FPS: "+ (((float) 1000*n/(System.currentTimeMillis()-start))  ));
-    		fps.setText("FPS: "+(float) 1000*n/(System.currentTimeMillis()-start));
+    		fps.setText(String.format("FPS: %5.2f", (float) 1000*n/(System.currentTimeMillis()-start)));
 			start = System.currentTimeMillis();
 			n = 0;
 		} else
@@ -451,14 +450,17 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 		public void stateChanged(ChangeEvent e) {
 			 JSlider source = (JSlider)e.getSource();
 			 if (!source.getValueIsAdjusting()) {
+				 int v = 0;
 				 try {
-					int v = ctrl.setValue(source.getValue());
+					v = ctrl.setValue(source.getValue());
+				} catch (ControlException e1) {
+					JOptionPane.showMessageDialog(null, "Error setting value.\n"+e1.getMessage());
+					try {v = ctrl.getValue();} catch (ControlException ce) {v = ctrl.getDefaultValue();}
+				} finally{
 					updateValue(v);
 					source.removeChangeListener(this);
 					source.setValue(v);
 					source.addChangeListener(this);
-				} catch (ControlException e1) {
-					JOptionPane.showMessageDialog(null, "Error setting value.\n"+e1.getMessage());
 				}
 			 }			
 		}

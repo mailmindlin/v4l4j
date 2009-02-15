@@ -99,7 +99,7 @@ public class GetFrameRate {
 			throw e;
 		}
 		
-		ctrls = new Vector<Control>(vd.getControlList().getList().values());
+		ctrls = new Vector<Control>(vd.getControlList().getList());
 
 		System.out.println("Found "+ctrls.size()+" controls");
 		for (Control c: ctrls) {

@@ -25,6 +25,23 @@
 #include "libv4l-err.h"
 #include "log.h"
 
+static void fix_quirky_values(struct video_device *vdev, int idx, unsigned int *f){
+	struct v4l2_tuner t;
+	CLEAR(t);
+	t.index = idx;
+	if (ioctl (vdev->fd, VIDIOC_G_TUNER, &t) != 0)
+		return;
+	if(*f<t.rangelow) {
+		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "TUN: QUIRKS: Tuner frequency %u for tuner %d on device %s BELOW min %u\n", *f, idx, vdev->file, t.rangelow);
+		*f = t.rangelow;
+		return;
+	} else if(*f>t.rangehigh) {
+		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "TUN: QUIRKS: Tuner frequency %u for tuner %d on device %s ABOVE max %u\n", *f, idx, vdev->file, t.rangehigh);
+		*f = t.rangehigh;
+		return;
+	}
+}
+
 int set_tuner_freq_v4l2(struct video_device *vdev, int idx, unsigned int f){
 	struct v4l2_frequency freq;
 	CLEAR(freq);
@@ -53,6 +70,7 @@ int get_tuner_freq_v4l2(struct video_device *vdev, int idx, unsigned int *f){
 		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "TUN: Failed to get tuner frequency for tuner %d on device %s\n", idx, vdev->file);
 		return LIBV4L_ERR_IOCTL;
 	}
+	fix_quirky_values(vdev,idx,f);
 	*f = freq.frequency;
 	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "TUN: Got frequency %u for tuner %d on device %s\n", *f, idx, vdev->file);
 	return 0;
