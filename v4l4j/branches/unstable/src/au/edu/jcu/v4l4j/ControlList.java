@@ -24,6 +24,8 @@
 package au.edu.jcu.v4l4j;
 
 import java.util.Hashtable;
+import java.util.List;
+import java.util.Vector;
 
 import au.edu.jcu.v4l4j.exceptions.StateException;
 
@@ -65,13 +67,23 @@ public class ControlList {
 	}
 	
 	/**
-	 * This method returns a copy of the control list.
-	 * @return a copy of the control list.
+	 * This method returns a map of control names and controls
+	 * @return a map of control names and controls
 	 * @throws StateException if this control list has been released and must not be used anymore
 	 */
-	public synchronized Hashtable<String,Control> getList(){
+	public synchronized Hashtable<String,Control> getTable(){
 		checkReleased();
 		return new Hashtable<String,Control>(controls);
+	}
+	
+	/**
+	 * This method returns a list of {@link Control}s
+	 * @return a list of {@link Control}s
+	 * @throws StateException if this control list has been released and must not be used anymore
+	 */
+	public synchronized List<Control> getList(){
+		checkReleased();
+		return new Vector<Control>(controls.values());
 	}
 	
 	/**
