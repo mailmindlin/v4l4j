@@ -47,7 +47,7 @@ static jobject create_tuner_object(JNIEnv *e, jobject t, struct tuner_info *tune
 		return 0;
 	}
 
-	dprint(LOG_V4L4J, "[V4L4J] Creating tuner object: index: %d - name '%s' - low: %lu - high: %lu - unit: %d - type: %d\n",
+	dprint(LOG_V4L4J, "[V4L4J] Creating tunerInfo object: index: %d - name '%s' - low: %lu - high: %lu - unit: %d - type: %d\n",
 			tuner->index, tuner->name, tuner->rangelow, tuner->rangehigh, tuner->unit, tuner->type);
 
 	return (*e)->NewObject(e, tuner_class, ctor,

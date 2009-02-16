@@ -139,7 +139,7 @@ static int set_std(struct capture_device *c, int fd){
 				info("The specified standard (%d) is invalid.\n", c->std);
 				if(detect_standard(c, fd)!=0) {
 					//autodetect failed, so do we
-					dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR,"CAP: Couldnt autodetect a standard for this input.\n");
+					info("libv4l could not autodetect a standard for this input.\n");
 					return -1;
 				}
 				//autodetect suceeded keep going
@@ -151,7 +151,7 @@ static int set_std(struct capture_device *c, int fd){
 					info("The specified standard (%d) cannot be selected\n", c->std);
 					if(detect_standard(c, fd)!=0) {
 						//failed, exit
-						dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR,"CAP: Couldnt autodetect a standard for this input.\n");
+						info("libv4l couldnt autodetect a standard for this input.\n");
 						return -1;
 					}
 					//autodetect succeeded, keep going
