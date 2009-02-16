@@ -22,15 +22,11 @@
 *
 */
 
-#ifndef H_V4LCONTROL
-#define H_V4LCONTROL
+#ifndef V4L1TUNER_H_
+#define V4L1TUNER_H_
 
-#include "libv4l.h"
+int set_tuner_freq_v4l1(struct video_device *, int, unsigned int);
+int get_tuner_freq_v4l1(struct video_device *, int, unsigned int *);
+int get_rssi_afc_v4l1(struct video_device *, int, int *, int *);
 
-struct control_list *list_control(struct capture_device *);
-int get_control_value(struct capture_device *, struct v4l2_queryctrl *);
-void set_control_value(struct capture_device *, struct v4l2_queryctrl *,  int);
-void free_control_list(struct capture_device *);
-void query_control(struct capture_device *);
-
-#endif
+#endif /* V4L1TUNER_H_ */

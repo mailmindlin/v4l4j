@@ -1,10 +1,38 @@
+/*
+* Copyright (C) 2007-2008 Gilles Gigan (gilles.gigan@gmail.com)
+* eResearch Centre, James Cook University (eresearch.jcu.edu.au)
+*
+* This program was developed as part of the ARCHER project
+* (Australian Research Enabling Environment) funded by a   
+* Systemic Infrastructure Initiative (SII) grant and supported by the Australian
+* Department of Innovation, Industry, Science and Research
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public  License as published by the
+* Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+* or FITNESS FOR A PARTICULAR PURPOSE.  
+* See the GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+*/
+
 package au.edu.jcu.v4l4j.examples;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Vector;
 
 import au.edu.jcu.v4l4j.Control;
 import au.edu.jcu.v4l4j.FrameGrabber;
+import au.edu.jcu.v4l4j.V4L4JConstants;
+import au.edu.jcu.v4l4j.VideoDevice;
+import au.edu.jcu.v4l4j.exceptions.ControlException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 public class GetFrameRate {
@@ -22,12 +50,12 @@ public class GetFrameRate {
 		try {
 			w = Integer.parseInt(args[1]);
 		} catch (Exception e){
-			w = FrameGrabber.MAX_WIDTH;
+			w = V4L4JConstants.MAX_WIDTH;
 		}
 		try{			
 			h = Integer.parseInt(args[2]);
 		} catch  (Exception e) {
-			h = FrameGrabber.MAX_HEIGHT;
+			h = V4L4JConstants.MAX_HEIGHT;
 		}
 		try {
 			std = Integer.parseInt(args[3]);
@@ -49,6 +77,7 @@ public class GetFrameRate {
 		long start=0, now=0;
 		int n=0;
 		FrameGrabber f = null;
+		VideoDevice vd = null;
 
 		System.out.println("This program will open "+dev+", list the available control, capture frames for "
 					+ captureLength+ " seconds and print the FPS");
@@ -56,29 +85,30 @@ public class GetFrameRate {
 		System.in.read();
 
 		try {
-			f= new FrameGrabber(dev, w, h, channel, std, qty);
+			vd = new VideoDevice(dev);
+			if(vd.canJPEGEncode()) {
+				f= vd.getJPEGFrameGrabber(w, h, channel, std, qty);
+				System.out.println("Frames from this device can be JPEG-encoded");
+			} else {
+				f= vd.getRawFrameGrabber(w, h, channel, std);
+				System.out.println("Frames from this device can *NOT* be JPEG-encoded");
+			}
 		} catch (V4L4JException e) {
 			e.printStackTrace();
 			System.out.println("Failed to instanciate the FrameGrabber ("+dev+")");
 			throw e;
 		}
+		
+		ctrls = new Vector<Control>(vd.getControlList().getList());
 
-		try {
-			f.init();
-		} catch (V4L4JException e) {
-			e.printStackTrace();
-			System.out.println("Failed to initialise the device "+dev+"");
-			throw e;
-		}
-		ctrls = f.getControls();
 		System.out.println("Found "+ctrls.size()+" controls");
-		try {
-			for (Control c: ctrls)
-				System.out.println("control name: "+c.getName()+" - min: "+c.getMin()+" - max: "+c.getMax()+" - step: "+c.getStep()+" - value: "+c.getValue());
-		} catch (V4L4JException e) {
-			e.printStackTrace();
-			System.out.println("Failed to list associated controls");
-			throw e;
+		for (Control c: ctrls) {
+			try {
+				System.out.println("control name: "+c.getName()+" - min: "+c.getMinValue()+" - max: "+c.getMaxValue()+" - step: "+c.getStepValue()+" - value: "+c.getValue());
+			} catch (ControlException e) {
+				e.printStackTrace();
+				System.out.println("Failed to get value for control "+c.getName());
+			}
 		}
 
 		try {
@@ -110,13 +140,10 @@ public class GetFrameRate {
 		System.out.println("\tFrames captured :"+n);
 		System.out.println("\tFPS: "+((float) n/(now/1000-start/1000)));
 		System.out.println(" =====  END  RESULTS  =====");
-		try {
-			f.stopCapture();
-			f.remove();
-		} catch (V4L4JException e) {
-			e.printStackTrace();
-			System.out.println("Failed to stop capture");
-			throw e;
-		}
+
+		f.stopCapture();
+		vd.releaseFrameGrabber();
+		vd.releaseControlList();
+		vd.release();
 	}
 }

@@ -33,7 +33,10 @@
 
 int main(int argc, char** argv) {
 	struct capture_device *c;
-	int std=0, channel=0;
+	struct control_list *l;
+	struct v4l2_queryctrl *qc;
+	struct video_device *v;
+	int std=0, channel=0, i, j;
 
 	if(argc!=2 && argc!=4) {
 		printf("This program requires the path to the video device file to be tested.\n");
@@ -50,15 +53,50 @@ int main(int argc, char** argv) {
 		printf("Using standard %d, channel %d\n",std, channel);
 	}
 
-	c = init_libv4l(argv[1], MAX_WIDTH, MAX_HEIGHT ,std ,channel ,2);
+	v = open_device(argv[1]);
+	if(v==NULL){
+		printf("Error opening device\n");
+		return -1;
+	}
+	c = init_capture_device(v, MAX_WIDTH, MAX_HEIGHT ,std ,channel ,2);
 
 	if(c==NULL) {
 		printf("Error initialising device.");
 		return -1;
 	}
-	c->capture->list_cap(c);
+	c->actions->list_cap(v->fd);
+	l = get_control_list(v);
+	printf("Listing available controls (%d)\n", l->count);
+	for(i=0;i<l->count; i++){
+		qc = l->controls[i].v4l2_ctrl;
+		printf("Control: id: 0x%x - name: %s - min: %d -max: %d - step: %d - type: %d(%s) - flags: %d (%s%s%s%s%s%s)\n", \
+				qc->id, (char *) &qc->name, qc->minimum, qc->maximum, qc->step, qc->type, \
+				qc->type == V4L2_CTRL_TYPE_INTEGER ? "Integer" :  \
+				qc->type == V4L2_CTRL_TYPE_BOOLEAN ? "Boolean" :  \
+				qc->type == V4L2_CTRL_TYPE_MENU ? "Menu" :  \
+				qc->type == V4L2_CTRL_TYPE_BUTTON ? "Button" : \
+				qc->type == V4L2_CTRL_TYPE_INTEGER64 ? "Integer64" :  \
+				qc->type == V4L2_CTRL_TYPE_CTRL_CLASS ? "Class" : "", \
+				qc->flags, \
+				qc->flags & V4L2_CTRL_FLAG_DISABLED ? "Disabled " : "", \
+				qc->flags & V4L2_CTRL_FLAG_GRABBED ? "Grabbed " : "", \
+				qc->flags & V4L2_CTRL_FLAG_READ_ONLY ? "ReadOnly " : "", \
+				qc->flags & V4L2_CTRL_FLAG_UPDATE ? "Update " : "", \
+				qc->flags & V4L2_CTRL_FLAG_INACTIVE ? "Inactive " : "", \
+				qc->flags & V4L2_CTRL_FLAG_SLIDER ? "slider " : "");
 
-	del_libv4l(c);
+		if(l->controls[i].count_menu!=0){
+			printf("Menu items (%d) %s\n", l->controls[i].count_menu, l->controls[i].v4l2_ctrl->step==1?"contiguous":"non-contiguous");
+			for(j=0; j<l->controls[i].count_menu; j++)
+				printf("\tMenu item: %s - %d\n", l->controls[i].v4l2_menu[j].name, l->controls[i].v4l2_menu[j].index);
+
+		}
+	}
+
+	release_control_list(v);
+
+	free_capture_device(v);
+	close_device(v);
 
 	return 0;
 }
