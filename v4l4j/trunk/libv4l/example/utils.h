@@ -1,6 +1,6 @@
 /*
 	copyright 2006 Gilles GIGAN (gilles.gigan@gmail.com)
-			
+
 	This file is part of light_cap.
 
    	light_cap is free software; you can redistribute it and/or modify
@@ -77,7 +77,7 @@ struct jpeg {
 
 struct thread_data {
 	int sock;
-	struct capture_device *cdev;
+	struct video_device	*vdev;
 };
 
 
@@ -85,14 +85,14 @@ struct thread_data {
 void set_fps(int);
 void incr_nanosleep();
 void decr_nanosleep();
-void list_cap_param(int,struct capture_device *);
-int get_action(int, struct capture_device *);
+void list_cap_param(int,struct video_device *);
+int get_action(int, struct video_device *);
 int send_frame(int , void *, int);
-void start_thread_client(int, struct capture_device *);
+void start_thread_client(int, struct video_device *);
 int send_mjpeg_header(int);
 void *send_stream_to(void *);
 int setup_tcp_server_sock(int );
-void main_loop(int , struct capture_device *);
+void main_loop(int , struct video_device *);
 void print_usage();
 
 #endif

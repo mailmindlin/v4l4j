@@ -1,6 +1,6 @@
 	/*
 	copyright 2006 Gilles GIGAN (gilles.gigan@gmail.com)
-			
+
 	This file is part of light_cap.
 
    	light_cap is free software; you can redistribute it and/or modify
@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>			//for atoi and friends
 #include <time.h>			//for nanosleep
-#include <sys/types.h> 
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h> 		//gettimeofday
 #include <netinet/in.h>
@@ -38,7 +38,6 @@
 
 #include "libv4l.h"
 #include "palettes.h"
-#include "v4l-control.h"
 #include "utils.h"
 #include "jpeg.h"
 #include "log.h"
@@ -65,10 +64,10 @@ volatile sig_atomic_t client_nr = 0, jpeg_quality, requested_fps, max_fps = 0, k
 //What to print on terminal
 int verbosity = LOG_ALL;
 
-/* fps adjustment variables: 
- * fps_nanosleep and fps_secsleep: specify the amount of time(in nanosec and sec resp.) to sleep before 
- * 			capturing a frame. This allows control over the frame rate, between 
- * 			max_fps (fps_secsleep = fps_nanosecsleep = 0) and 1 (frame/sec) 
+/* fps adjustment variables:
+ * fps_nanosleep and fps_secsleep: specify the amount of time(in nanosec and sec resp.) to sleep before
+ * 			capturing a frame. This allows control over the frame rate, between
+ * 			max_fps (fps_secsleep = fps_nanosecsleep = 0) and 1 (frame/sec)
  * fps_nanosleepstep: specifies an amount of nanosecs used to adjust fps_nanosleep in order to achieve
  * 			requested_fps. fps_nanosleepstep is calculated during the calibration period and is set
  * 			to the time (in ns) required to capture, jpeg-encode and send 1 frame.
@@ -89,11 +88,12 @@ int main(int argc, char **argv) {
 	1: V4L2 dev name, 2: height, 3: width, 4: channel
 	5: standard, 6: jpeg_quality, 7: verbosity, 8: log source, 9: log_level
 	*/
+	struct video_device *d;
 	struct capture_device *cdev;
 	int sockfd, port;
 	jpeg_quality = JPEG_QUALITY;
 	int fmts[NB_SUPPORTED_FORMATS] = SUPPORTED_FORMATS;
-	
+
 	//catch ctrl-c
 	signal (SIGINT, catch_int);
 	signal (SIGPIPE, SIG_IGN );
@@ -114,77 +114,88 @@ int main(int argc, char **argv) {
 	log_level = atoi(argv[11]);
 #endif
 
-	//init libv4l2 and create cdev struct
-	cdev = init_libv4l(argv[1], atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), 5);
+	d = open_device(argv[1]);
+	if(d==NULL){
+		info(LOG_ERR, "Cant open device %s",argv[1]);
+		exit(1);
+	}
+
+	//create capture device
+	cdev = init_capture_device(d, atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), 5);
 	if(cdev==NULL) {
 		info(LOG_ERR, "Failed to initialise video device\n");
 		info(LOG_ERR, "Recompile libv4l with debugging enabled (see README)\n");
 		info(LOG_ERR, "to see why/where the initialisation fails.\n");
 		exit(1);
 	}
-	
+
 	//Set capture param (image format, color, size, crop...)
-	if ((*cdev->capture->set_cap_param)(cdev, fmts , NB_SUPPORTED_FORMATS)!=0) {
+	if ((*cdev->actions->set_cap_param)(d, fmts , NB_SUPPORTED_FORMATS)!=0) {
 		info(LOG_ERR, "Unable to set capture parameters. It could be due to:\n");
 		info(LOG_ERR, " - the chosen width and height,\n - the driver not supporting the image formats libv4l tried\n");
 		info(LOG_ERR, "Recompile libv4l with debugging enabled (see README)\n");
 		info(LOG_ERR, "to see why/where the setup fails.\n");
-		del_libv4l(cdev);
+		free_capture_device(d);
+		close_device(d);
 		exit(1);
 	}
-	
+
 	info(LOG_INFO, "Capturing at %dx%d\n", cdev->width, cdev->height);
 
 	//Prepare capture:Allocates v4l2 buffers, mmap buffers, enqueue buffers
-	if ((*cdev->capture->init_capture)(cdev)) {
+	if ((*cdev->actions->init_capture)(d)) {
 		info(LOG_ERR, "Failed to setup capture\n");
-		del_libv4l(cdev);
+		free_capture_device(d);
+		close_device(d);
 		exit(1);
 	}
-	
+
 	info(LOG_INFO, "Using palette %s\n", libv4l_palettes[cdev->palette].name);
-	
+
 	//init tcp server
 	sockfd = setup_tcp_server_sock(port);
-		
+
 	//main loop
-	main_loop(sockfd, cdev);
+	main_loop(sockfd, d);
 
 	//close tcp socket
 	close(sockfd);
 
 	//Deallocates V4l2 buffers
-	(*cdev->capture->free_capture)(cdev);
-	
+	(*cdev->actions->free_capture)(d);
+
 	//delete cdev
-	del_libv4l(cdev);
-	
+	free_capture_device(d);
+
+	//close device
+	close_device(d);
+
 	return 0;
 }
 /* Sets up a listening (server) socket on port "port"
  * returns the socket descriptor
- */ 
+ */
 int setup_tcp_server_sock(int port) {
 	int sockfd, oldflags;
 	struct sockaddr_in serv_addr;
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	
+
 	if (sockfd < 0) {
     	info(LOG_ERR, "Cant open a socket\n");
 		keep_going = 0;
 	}
-    
+
     oldflags = 1;
-    setsockopt( sockfd, SOL_SOCKET, SO_REUSEADDR, &oldflags, sizeof( oldflags ) ); 
-    
+    setsockopt( sockfd, SOL_SOCKET, SO_REUSEADDR, &oldflags, sizeof( oldflags ) );
+
     //oldflags = fcntl (sockfd, F_GETFL, 0);
 	//fcntl(sockfd, F_SETFL, oldflags | O_NONBLOCK);
-        	     
+
 	memset(&serv_addr, 0, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
 	serv_addr.sin_port = htons(port);
-	if (bind(sockfd, (struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) { 
+	if (bind(sockfd, (struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) {
 		info(LOG_ERR,  "Cant bind to if/port\n");
 		keep_going = 0;
 	}
@@ -196,28 +207,28 @@ int setup_tcp_server_sock(int port) {
 /* main loop: waits for incoming TCP connections on "serv_sockfd", and service them
  * cdev is the initialised V4L2 device
  */
-void main_loop(int serv_sockfd, struct capture_device *cdev) {
+void main_loop(int serv_sockfd, struct video_device *d) {
 	int clilen, newsockfd;
 	struct sockaddr_in cli_addr;
 	fd_set rfds;
-	
+
 	clilen = sizeof(cli_addr);
 	info(LOG_INFO, "Waiting for incoming connections...\n");
 	while(keep_going) {
 		FD_ZERO(&rfds);
 		FD_SET(serv_sockfd, &rfds);
-		
+
 		//select is used so we can sleep and be interrupted while we wait (accept) for an incoming cx
 		//using non blocking socket was not good because the while loop would use 100% CPU while accept'ing
 		if (select(serv_sockfd+1, &rfds, NULL, NULL, NULL)>0) {
 			newsockfd = accept(serv_sockfd, (struct sockaddr *) &cli_addr, (unsigned int *) &clilen);
-			info(LOG_INFO, "New connection from %s:%d on socket %d\n", inet_ntoa(cli_addr.sin_addr), cli_addr.sin_port, newsockfd );
+			//info(LOG_INFO, "New connection from %s:%d on socket %d\n", inet_ntoa(cli_addr.sin_addr), cli_addr.sin_port, newsockfd );
 			if(newsockfd > 0) {
-				switch(get_action(newsockfd, cdev)){
+				switch(get_action(newsockfd, d)){
 					case ACTION_CAPTURE:
 						if(client_nr < MAX_CLIENTS) {
 			    	 		//send stream
-			     			start_thread_client(newsockfd, cdev);
+			     			start_thread_client(newsockfd, d);
 						}
 			 			else {
 							info(LOG_ERR, "Cant accept anymore clients.try increasing MAX_CLIENT in utils.h and recompile\n");
@@ -226,7 +237,7 @@ void main_loop(int serv_sockfd, struct capture_device *cdev) {
 						break;
 					case ACTION_LIST:
 						//output current capture params
-						list_cap_param(newsockfd, cdev);
+						list_cap_param(newsockfd, d);
 						info(LOG_INFO, "closing connection on socket %d\n", newsockfd );
 						close(newsockfd);
 						break;
@@ -240,11 +251,11 @@ void main_loop(int serv_sockfd, struct capture_device *cdev) {
 
 /* send an HTMl page over the "newsockfd" socket with a list of V4L2 controls (brightness, contrast, ...)
  * as well as JPEG and fps controls
- */ 
-void list_cap_param(int newsockfd,struct capture_device *cdev) {
+ */
+void list_cap_param(int newsockfd,struct video_device *d) {
 	char *page, *ptr;
-	struct control_list *l;
-	int i;
+	struct control_list *l = get_control_list(d);
+	int i, v;
 
 	XMALLOC(page, char *, PARAM_PAGE_SIZE);
 	ptr = page;
@@ -252,46 +263,62 @@ void list_cap_param(int newsockfd,struct capture_device *cdev) {
 
 	//outputs JPEG quality control setting
 	ptr += sprintf(ptr,"<form method=\"get\"><h4>JPEG quality</h4>Value: %d (min: 0, max: 100, step: 1)<br>\n", jpeg_quality);
-	ptr += sprintf(ptr,"<input type=\"text\" name=\"val\" value=\"%d\" size=\"5\"> &nbsp; <input type=\"submit\" name=\"-1\" value=\"update\"></form>", jpeg_quality);
+	ptr += sprintf(ptr,"<input type=\"text\" name=\"val\" value=\"%d\" size=\"5\"> &nbsp; <input type=\"submit\" name=\"-1\" value=\"update\"></form>\n", jpeg_quality);
 	write(newsockfd, page, strlen(page));
 	ptr = page;
 	memset(page, 0, PARAM_PAGE_SIZE);
 
 	//outputs frame rate control setting
 	ptr += sprintf(ptr,"<form method=\"get\"><h4>Frame rate</h4>Value: %d (min: 1, max: 25, step: 1)<br>\n", requested_fps);
-	ptr += sprintf(ptr,"<input type=\"text\" name=\"val\" value=\"%d\" size=\"3\"> &nbsp; <input type=\"submit\" name=\"-2\" value=\"update\"></form>", requested_fps);
+	ptr += sprintf(ptr,"<input type=\"text\" name=\"val\" value=\"%d\" size=\"3\"> &nbsp; <input type=\"submit\" name=\"-2\" value=\"update\"></form>\n", requested_fps);
 	write(newsockfd, page, strlen(page));
 	ptr = page;
 	memset(page, 0, PARAM_PAGE_SIZE);
 
 	//outputs controls
-	l = cdev->ctrls;
+	l = d->control;
 	for(i = 0; i< l->count; i++) {
-		ptr += sprintf(ptr,"<form method=\"get\"><h4>%s</h4>Value: %d (min: %d, max: %d, step: %d)<br>\n", l->ctrl[i].name, get_control_value(cdev, &l->ctrl[i]) , l->ctrl[i].minimum, l->ctrl[i].maximum, l->ctrl[i].step);
-		ptr += sprintf(ptr,"<input type=\"text\" name=\"val\" value=\"%d\" size=\"5\"> &nbsp; <input type=\"submit\" name=\"%d\" value=\"update\"></form>", get_control_value(cdev, &l->ctrl[i]), i);
+		if(get_control_value(d, l->controls[i].v4l2_ctrl, &v) != 0) {
+			info(LOG_ERR, "Error getting value for control %s\n", l->controls[i].v4l2_ctrl->name);
+			v = 0;
+		}
+		ptr += sprintf(ptr,"<form method=\"get\"><h4>%s</h4>Value: %d (min: %d, max: %d", l->controls[i].v4l2_ctrl->name, v, l->controls[i].v4l2_ctrl->minimum, l->controls[i].v4l2_ctrl->maximum);
+		if(l->controls[i].count_menu!=0) {
+			int j;
+			ptr += sprintf(ptr,"\n)<select name=\"val\">\n");
+			for(j=0; j<l->controls[i].count_menu; j++){
+				ptr += sprintf(ptr, "<option value=\"%d\"%s>%d</option>\n",l->controls[i].v4l2_menu[j].index, v == l->controls[i].v4l2_menu[j].index ? " selected" : "", l->controls[i].v4l2_menu[j].index);
+			}
+			ptr += sprintf(ptr, "</select>\n");
+		} else {
+			ptr += sprintf(ptr,", step: %d)<br>\n", l->controls[i].v4l2_ctrl->step);
+			ptr += sprintf(ptr,"<input type=\"text\" name=\"val\" value=\"%d\" size=\"5\"> ", v);
+		}
+		ptr += sprintf(ptr, "&nbsp; <input type=\"submit\" name=\"%d\" value=\"update\"></form>\n", i);
 		write(newsockfd, page, strlen(page));
 		ptr = page;
-		memset(page, 0, PARAM_PAGE_SIZE);		
+		memset(page, 0, PARAM_PAGE_SIZE);
 	}
-	
+
 	//output end of HTML body
 	ptr += sprintf(ptr,"</body></html>\n");
 	write(newsockfd, page, strlen(page));
 	XFREE(page);
+	release_control_list(d);
 }
 /* Reads the first few bytes of "sock" socket and decides what to do (send webcam stream or list of controls)
  * In the latter case (list of controls), more bytes are parsed to see whether we should also set a new value to one
  * of the controls
  */
-int get_action(int sock, struct capture_device *cdev) {
+int get_action(int sock, struct video_device *d) {
 	int c, ctrl_index = 0, value = 0, ret = ACTION_CAPTURE;
 	char *buf, *sptr, *fptr;
-	struct control_list *l;
-	
+	struct control_list *l = get_control_list(d);
+
 	XMALLOC(buf, char *, INPUT_BLOCK_SIZE);
 	c = read(sock, buf, INPUT_BLOCK_SIZE - 1);
 	buf[c] = '\0';
-	
+
 	if(strstr(buf, "webcam") != NULL) {
 		ret = ACTION_CAPTURE;
 		info(LOG_INFO, "going for capture\n");
@@ -310,34 +337,35 @@ int get_action(int sock, struct capture_device *cdev) {
 				} else if(ctrl_index==-2) {
 				//catch the frame ratio control
 					info(LOG_INFO, "Setting frame ratio to %d\n", value);
-					if((1 <= value) && (value <= 25)) { 
+					if((1 <= value) && (value <= 25)) {
 						requested_fps = value; set_fps(requested_fps);
 					} else info(LOG_ERR, "Invalid frame rate %d\n", value);
 				} else {
-					l = cdev->ctrls;
 					assert(ctrl_index < l->count);
-					info(LOG_INFO, "Setting %s to %d\n", l->ctrl[ctrl_index].name, value);
-					set_control_value(cdev, &l->ctrl[ctrl_index], value);
+					info(LOG_INFO, "Setting %s to %d\n", l->controls[ctrl_index].v4l2_ctrl->name, value);
+					set_control_value(d, l->controls[ctrl_index].v4l2_ctrl, &value);
+					info(LOG_INFO, "New value: %d\n", value);
 				}
 			} else
 				info(LOG_ERR, "Error parsing URL. Unable to set new value\n");
 		}
 	}
 	XFREE(buf);
+	release_control_list(d);
 	return ret;
 }
 
 /* Starts a thread to handle a webcam connection on "sock" socket
  */
-void start_thread_client(int sock, struct capture_device *cdev) {
+void start_thread_client(int sock, struct video_device *d) {
 	pthread_attr_t attr;
 	pthread_t tid;
 	struct thread_data *td;
-	
-	XMALLOC(td, struct thread_data *, sizeof(struct thread_data)); 
+
+	XMALLOC(td, struct thread_data *, sizeof(struct thread_data));
 	if (td != NULL) {
 		td->sock = sock;
-		td->cdev = cdev;
+		td->vdev = d;
 		pthread_attr_init(&attr);
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
@@ -345,7 +373,7 @@ void start_thread_client(int sock, struct capture_device *cdev) {
 		if(client_nr==0) {
 			//Start capture
 			dprint(LOG_SOURCE_HTTP, LOG_LEVEL_DEBUG2, "First client, starting capture \n");
-			if ((*cdev->capture->start_capture)(cdev) !=0 ) {
+			if ((*d->capture->actions->start_capture)(d) !=0 ) {
 				info(LOG_ERR, "Cant initiate capture...\n");
 				keep_going = 0;
 				XFREE(td);
@@ -357,7 +385,7 @@ void start_thread_client(int sock, struct capture_device *cdev) {
 			dprint(LOG_SOURCE_HTTP, LOG_LEVEL_DEBUG2, "Created new thread \n");
 		}
 		else {
-			(*cdev->capture->stop_capture)(cdev);
+			(*d->capture->actions->stop_capture)(d);
 			info(LOG_ERR, "Cant create a thread to handle the connection...\n");
 		}
 
@@ -368,21 +396,23 @@ void start_thread_client(int sock, struct capture_device *cdev) {
 }
 
 /* Webcam stream thread: v is a ptr to a struct thread_data which packages a socket and a cdev
- * this function is meant to run as a separate thread and handles a webcam stream connection 
+ * this function is meant to run as a separate thread and handles a webcam stream connection
  * on "sock" socket: It sends and HTTP header and then continuously captures a frame from cdev,
- * jpeg-encodes it and sends it. The loop is terminated when keep_going is false or when the 
- * socket is closed from the other end 
+ * jpeg-encodes it and sends it. The loop is terminated when keep_going is false or when the
+ * socket is closed from the other end
  */
 void *send_stream_to(void *v) {
 	struct timeval start, now;
 	struct timespec sleep_length, sleep_rem;
 	struct jpeg j;
 	struct thread_data *td = (struct thread_data *)v;
-	struct capture_device *cdev = td->cdev;
+	struct video_device *d = td->vdev;
+	struct capture_device *cdev = d->capture;
 	int jpeg_len, yuv_len, f_nr = 0, retval = 0, sock = td->sock; //, calibrated = 1;
 	void *yuv_data, *jpeg_data;
 	float ts, last_fps;
-	
+
+	CLEAR(j);
 	XMALLOC(jpeg_data, void *, (cdev->width * cdev->height * 3));
 	dprint(LOG_SOURCE_HTTP, LOG_LEVEL_DEBUG2, "New thread starting sock: %d, jpeg_quality: %d\n", sock, jpeg_quality);
 
@@ -391,24 +421,24 @@ void *send_stream_to(void *v) {
 		info(LOG_ERR, "Error setting the JPEG encoder\n");
 		goto end;
 	}
-		
+
 
 	//send mjpeg header
 	if (send_mjpeg_header(sock) != 0 )
 		goto end;
-	
+
 	gettimeofday(&start, NULL);
 	sleep_rem.tv_sec = sleep_rem.tv_nsec = 0;
-		
+
 	while((retval>=0) && keep_going) {
-		
+
 		gettimeofday(&now, NULL);
 		if((now.tv_sec>=start.tv_sec + SHOW_FPS_INTERVAL)) {
 			ts = (now.tv_sec - start.tv_sec) + ((float) (now.tv_usec - start.tv_usec)/1000000);
 			last_fps = (f_nr / ts);
 			//fprintf(stderr, "%d frames in %.3f sec (fps=%.1f, req_fps = %d)\n",f_nr, ts, last_fps, requested_fps);
 			info(LOG_INFO, "%d frames in %.3f sec (fps=%.1f)\n",f_nr, ts, last_fps);
-			
+
 			//check whether the calibration was done
 			if(fps_nanosleep_step == 0) {
 				//no it wasnt, compute fps_nanosleep_step, the time it takes to capture,
@@ -420,41 +450,41 @@ void *send_stream_to(void *v) {
 			} else {
 				//calibration already completed
 				//is current_fps = req_fps +- 0.5 ?
-				if(last_fps<(requested_fps - 0.5 )) 
+				if(last_fps<(requested_fps - 0.5 ))
 					decr_nanosleep();
 				else if (last_fps >(requested_fps + 0.5 ))
 				 	incr_nanosleep();
 				else
 					dprint(LOG_SOURCE_HTTP, LOG_LEVEL_DEBUG1,"Current fps_nanosleep (%ld.%09ld) achieves the desired framerate\n", fps_secsleep, fps_nanosleep);
 			}
-			
+
 			f_nr = 0;
 			gettimeofday(&start, NULL);
 		}
-		
+
 		//sleep to adjust the fps to correct value
-		if(((fps_nanosleep != 0) || (fps_secsleep != 0))) { 
+		if(((fps_nanosleep != 0) || (fps_secsleep != 0))) {
 			sleep_length.tv_nsec = fps_nanosleep;
 			sleep_length.tv_sec = fps_secsleep;
 			nanosleep(&sleep_length, &sleep_rem);
 		}
-	
-		//get frame from v4l2 
-		if((yuv_data = (*cdev->capture->dequeue_buffer)(cdev, &yuv_len)) != NULL) {
-			
+
+		//get frame from v4l2
+		if((yuv_data = (*cdev->actions->dequeue_buffer)(d, &yuv_len)) != NULL) {
+
 			//encode in JPEG
 			jpeg_len = (*j.jpeg_encode)(yuv_data,yuv_len, cdev, &j, jpeg_data);
 
 			//return buffer to v4l2
-			(*cdev->capture->enqueue_buffer)(cdev);
-			
-			//send in multipart_jpeg stream	
+			(*cdev->actions->enqueue_buffer)(d);
+
+			//send in multipart_jpeg stream
 			retval = send_frame(sock, jpeg_data, jpeg_len);
-				
+
 			f_nr++;
 		}
 	}
-	
+
 	end:
 
 	XFREE(jpeg_data);
@@ -466,13 +496,13 @@ void *send_stream_to(void *v) {
 	if(--client_nr==0) {
 		dprint(LOG_SOURCE_HTTP, LOG_LEVEL_DEBUG2, "Last client, stopping capture \n");
 		//Stop capture
-		(*cdev->capture->stop_capture)(cdev);
+		(*cdev->actions->stop_capture)(d);
 	}
-	
+
 	//close socket
 	info(LOG_INFO, "closing connection on socket %d\n", sock );
 	close(sock);
-	
+
 	XFREE(v);
 
 	return NULL;
@@ -483,13 +513,13 @@ void *send_stream_to(void *v) {
 int send_frame(int sock, void *d, int len) {
 	int  bs = 0, retval = 0;
 	char c[14];
-	
-	//send the header	
+
+	//send the header
 	if(write(sock, MP_JPEG_FRAME_HEADER, strlen(MP_JPEG_FRAME_HEADER)) < 0) {
 		dprint(LOG_SOURCE_HTTP, LOG_LEVEL_DEBUG1, "Error sending the MJPEG frame header\n");
 		retval = -1;
 		goto end;
-	}	
+	}
 
 	sprintf(c, "%d\r\n\r\n",len);
 
@@ -498,7 +528,7 @@ int send_frame(int sock, void *d, int len) {
 		retval = -1;
 		goto end;
 	}
-	
+
 	//sends the frame itself
 	while(len > 0) {
 		bs = (len < OUTPUT_BLOCK_SIZE) ? len : OUTPUT_BLOCK_SIZE;
@@ -508,9 +538,9 @@ int send_frame(int sock, void *d, int len) {
 			break;
 		}
 		len -= bs;
-		d += bs; 
+		d += bs;
 	}
-	
+
 	end:
 	return retval;
 }

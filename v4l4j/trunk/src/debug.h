@@ -3,7 +3,7 @@
 * eResearch Centre, James Cook University (eresearch.jcu.edu.au)
 *
 * This program was developed as part of the ARCHER project
-* (Australian Research Enabling Environment) funded by a   
+* (Australian Research Enabling Environment) funded by a
 * Systemic Infrastructure Initiative (SII) grant and supported by the Australian
 * Department of Innovation, Industry, Science and Research
 *
@@ -14,7 +14,7 @@
 *
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  
+* or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU General Public License for more details.
 *
 * You should have received a copy of the GNU General Public License
@@ -37,25 +37,25 @@
 
 #ifndef LOG_SOURCE
 #define LOG_SOURCE			LOG_ALL
-#endif 
+#endif
 
 #include <string.h>
 #include <stdlib.h>
 
 
-#ifdef DEBUG 
+#ifdef DEBUG
 #define dprint(source, format, ...) do {if(((source) & (LOG_SOURCE))) {\
 		fprintf (stderr, "[%s:%d] " format, __FILE__, __LINE__, ## __VA_ARGS__); fflush(stderr);} } while(0)
 //		fprintf (stderr, "[%s:%d %s] " format, __FILE__, __LINE__, __PRETTY_FUNCTION__, ## __VA_ARGS__); fflush(stderr);} } while(0)
-		 
+
 #define XMALLOC(var, type, size)	\
 		do { \
 			var = (type) malloc(size); \
-			if (!var) {dprint(LOG_MEMALLOC, "[MEMALLOC]: Cant allocate %lu bytes.\n", size);} \
+			if (!var) {dprint(LOG_MEMALLOC, "[MEMALLOC]: Cant allocate %lu bytes.\n", (long unsigned int) size);} \
 			else { CLEAR(*var); \
-				dprint(LOG_MEMALLOC, "[MEMALLOC]: allocated %lu bytes of type %s for var %s (%p).\n", size, #type, #var, var);}\
+				dprint(LOG_MEMALLOC, "[MEMALLOC]: allocated %lu bytes of type %s for var %s (%p).\n", (long unsigned int)size, #type, #var, var);}\
 		} while (0)
-		
+
 #define XFREE(var)					\
 		do { dprint(LOG_MEMALLOC, "[MEMALLOC]: freeing memory for var %s (%p).\n", #var, var);\
 			if (var) { free(var); } \
@@ -68,7 +68,7 @@
 #define XMALLOC(var, type, size)	\
 		do { \
 			var = (type) malloc(size); \
-			if (!var) {fprintf(stderr,"[%s:%d %s] MEMALLOC: OUT OF MEMORY !!! Cant allocate %d bytes.\n", __FILE__, __LINE__, __PRETTY_FUNCTION__, size); fflush(stderr);} \
+			if (!var) {fprintf(stderr,"[%s:%d %s] MEMALLOC: OUT OF MEMORY !!! Cant allocate %lu bytes.\n", __FILE__, __LINE__, __PRETTY_FUNCTION__, (long unsigned int) size); fflush(stderr);} \
 			else { CLEAR(*var);}\
 		} while (0)
 

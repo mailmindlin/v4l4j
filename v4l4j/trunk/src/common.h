@@ -3,7 +3,7 @@
 * eResearch Centre, James Cook University (eresearch.jcu.edu.au)
 *
 * This program was developed as part of the ARCHER project
-* (Australian Research Enabling Environment) funded by a   
+* (Australian Research Enabling Environment) funded by a
 * Systemic Infrastructure Initiative (SII) grant and supported by the Australian
 * Department of Innovation, Industry, Science and Research
 *
@@ -14,7 +14,7 @@
 *
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  
+* or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU General Public License for more details.
 *
 * You should have received a copy of the GNU General Public License
@@ -28,6 +28,8 @@
 #include <stdio.h>
 #include <jpeglib.h>
 
+#include "libv4l.h"
+
 struct v4l4j_device;
 
 struct jpeg {
@@ -39,14 +41,46 @@ struct jpeg {
 };
 
 struct v4l4j_device {
-	struct capture_device *c;	//the V4L2 struct
+	struct video_device *vdev;	//the libv4l struct
 	struct jpeg *j;				//the jpeg compressor
 	unsigned char **bufs;		//the buffers holding the last JPEG compressed frame
-	int jpeg_quality;			//the jpeg quality
+	int jpeg_quality;			//the jpeg quality, set to -1 if disable
 	int capture_len;			//the size of the last captured frame returned by libv4l
 	int len;					//the size of the last JPEG compressed frame
 	int buf_id;					//the index of the buffer where the next frame goes
-}; 
+};
+
+#define JPEG_SUPPORTED_FORMATS		{JPEG, MJPEG, YUV420, YUYV, RGB24, YVYU}
+#define NB_JPEG_SUPPORTED_FORMATS	6
+
+#define BYTEBUFER_CLASS			"java/nio/ByteBuffer"
+#define V4L4J_PACKAGE			"au/edu/jcu/v4l4j/"
+#define FRAMEGRABBER_CLASS		V4L4J_PACKAGE "FrameGrabber"
+#define CONTROL_CLASS			V4L4J_PACKAGE "Control"
+#define CONSTANTS_CLASS			V4L4J_PACKAGE "V4L4JConstants"
+#define EXCEPTION_PACKAGE		V4L4J_PACKAGE "exceptions/"
+#define GENERIC_EXCP			EXCEPTION_PACKAGE "V4L4JException"
+#define INIT_EXCP				EXCEPTION_PACKAGE "InitialisationException"
+#define DIM_EXCP				EXCEPTION_PACKAGE "ImageDimensionException"
+#define CHANNEL_EXCP			EXCEPTION_PACKAGE "CaptureChannelException"
+#define FORMAT_EXCP				EXCEPTION_PACKAGE "ImageFormatException"
+#define STD_EXCP				EXCEPTION_PACKAGE "VideoStandardException"
+#define CTRL_EXCP				EXCEPTION_PACKAGE "ControlException"
+#define RELEASE_EXCP			EXCEPTION_PACKAGE "ReleaseException"
+#define INVALID_VAL_EXCP		EXCEPTION_PACKAGE "InvalidValue"
+#define JNI_EXCP				EXCEPTION_PACKAGE "JNIException"
+
+
+/* Exception throwing helper */
+#define EXCEPTION_MSG_LENGTH	100
+#define THROW_EXCEPTION(e, c, format, ...)\
+								do {\
+									char msg[EXCEPTION_MSG_LENGTH+1];\
+									jclass JV4L4JException = (*e)->FindClass(e,c);\
+									snprintf(msg, EXCEPTION_MSG_LENGTH, format, ## __VA_ARGS__);\
+									if(JV4L4JException!=0) (*e)->ThrowNew(e, JV4L4JException, msg);\
+								} while(0)
+
 
 
 #endif /*H_COMMON_*/
