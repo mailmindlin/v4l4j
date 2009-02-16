@@ -278,7 +278,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
     						new Long(1)));
     				freq.setVisible(true);
     				freqSpinner.setVisible(true);
-    			} catch (NoTunerException nte){}
+    			} catch (NoTunerException nte){System.out.println("No tuner for input "+channel);}
     			f.pack();
 				fg.startCapture();
 			} catch (V4L4JException e) {
