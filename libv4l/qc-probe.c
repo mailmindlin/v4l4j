@@ -34,6 +34,7 @@
  */
 #include "quickcam.h"
 #include "log.h"
+#include "libv4l-err.h"
 
 #define NB_PRIV_IOCTL 5
 
@@ -42,7 +43,7 @@ struct qc_probe_private {
 };
 
 
-int qc_driver_probe(struct capture_device *c, void **data){
+int qc_driver_probe(struct video_device *vdev, void **data){
 	struct qc_probe_private *priv;
 	int i=-1;
 	struct qc_userlut default_ulut, our_ulut, check_ulut;
@@ -61,7 +62,7 @@ int qc_driver_probe(struct capture_device *c, void **data){
 	//get the default ulut
 	default_ulut.flags |= QC_USERLUT_VALUES;
 	default_ulut.flags |= QC_USERLUT_DEFAULT;
-	if(ioctl(c->fd, VIDIOCQCGUSERLUT, &default_ulut)!=0)
+	if(ioctl(vdev->fd, VIDIOCQCGUSERLUT, &default_ulut)!=0)
 		goto end;
 	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "..\n");
 
@@ -75,14 +76,14 @@ int qc_driver_probe(struct capture_device *c, void **data){
 	//send it to QC driver
 	our_ulut.flags |= QC_USERLUT_VALUES;
 	our_ulut.flags |= QC_USERLUT_DEFAULT;
-	if(ioctl(c->fd, VIDIOCQCSUSERLUT, &our_ulut)!=0)
+	if(ioctl(vdev->fd, VIDIOCQCSUSERLUT, &our_ulut)!=0)
 		goto end;
 	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, ".. ..\n");
 
 	//read it back and check it
 	check_ulut.flags |= QC_USERLUT_VALUES;
 	check_ulut.flags |= QC_USERLUT_DEFAULT;
-	if(ioctl(c->fd, VIDIOCQCGUSERLUT, &check_ulut)!=0)
+	if(ioctl(vdev->fd, VIDIOCQCGUSERLUT, &check_ulut)!=0)
 		goto end;
 	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, ".. .. ..\n");
 
@@ -95,11 +96,11 @@ int qc_driver_probe(struct capture_device *c, void **data){
 	//put default back
 	default_ulut.flags |= QC_USERLUT_VALUES;
 	default_ulut.flags |= QC_USERLUT_DEFAULT;
-	if(ioctl(c->fd, VIDIOCQCSUSERLUT, &default_ulut)!=0)
+	if(ioctl(vdev->fd, VIDIOCQCSUSERLUT, &default_ulut)!=0)
 		goto end;
 
 	//do we need more checks ?
-	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: found QC driver\n");
+	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: found QC driver (%d controls)\n", NB_PRIV_IOCTL);
 	XMALLOC(priv, struct qc_probe_private *, sizeof(struct qc_probe_private ));
 	*data = (void *)priv;
 	priv->ok = 1;
@@ -110,133 +111,144 @@ end:
 	return -1;
 }
 
-int qc_get_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, void *d){
-	int val;
+int qc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, int *val){
+	int ret = LIBV4L_ERR_IOCTL;
 	switch (q->id) {
 		case 0:
-			if(ioctl(c->fd, VIDIOCQCGSETTLE, &val)==0)
-				return val;
+			if(ioctl(vdev->fd, VIDIOCQCGSETTLE, val)==0)
+				ret = 0;
 			break;
 		case 1:
-			if(ioctl(c->fd, VIDIOCQCGCOMPRESS, &val)==0)
-				return val;
+			if(ioctl(vdev->fd, VIDIOCQCGCOMPRESS, val)==0)
+				ret = 0;
 			break;
 		case 2:
-			if(ioctl(c->fd, VIDIOCQCGQUALITY, &val)==0)
-				return val;
+			if(ioctl(vdev->fd, VIDIOCQCGQUALITY, val)==0)
+				ret = 0;
 			break;
 		case 3:
-			if(ioctl(c->fd, VIDIOCQCGADAPTIVE, &val)==0)
-				return val;
+			if(ioctl(vdev->fd, VIDIOCQCGADAPTIVE, val)==0)
+				ret = 0;
 			break;
 		case 4:
-			if(ioctl(c->fd, VIDIOCQCGEQUALIZE, &val)==0)
-				return val;
+			if(ioctl(vdev->fd, VIDIOCQCGEQUALIZE, val)==0)
+				ret = 0;
 			break;
 		default:
 			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "QC: Cant identify control %d\n",q->id);
-			return -1;
 	}
-
-	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "QC: Cant get value of control %s\n",q->name);
-	return -1;
+	return ret;
 }
 
-int qc_set_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, int val, void *d){
+int qc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val, void *d){
+	int prev = 0, ret = LIBV4L_ERR_IOCTL;
 	switch (q->id) {
 		case 0:
-			if(ioctl(c->fd, VIDIOCQCSSETTLE, &val)==0)
-				return val;
+			ioctl(vdev->fd, VIDIOCQCGSETTLE, &prev);
+			if(ioctl(vdev->fd, VIDIOCQCSSETTLE, val)==0)
+				ret = 0;
+			else
+				*val = prev;
 			break;
 		case 1:
-			if(ioctl(c->fd, VIDIOCQCSCOMPRESS, &val)==0)
-				return val;
+			ioctl(vdev->fd, VIDIOCQCGCOMPRESS, &prev);
+			if(ioctl(vdev->fd, VIDIOCQCSCOMPRESS, val)==0)
+				ret = 0;
+			else
+				*val = prev;
 			break;
 		case 2:
-			if(ioctl(c->fd, VIDIOCQCSQUALITY, &val)==0)
-				return val;
+			ioctl(vdev->fd, VIDIOCQCGQUALITY, &prev);
+			if(ioctl(vdev->fd, VIDIOCQCSQUALITY, val)==0)
+				ret = 0;
+			else
+				*val = prev;
 			break;
 		case 3:
-			if(ioctl(c->fd, VIDIOCQCSADAPTIVE, &val)==0)
-				return val;
+			ioctl(vdev->fd, VIDIOCQCGADAPTIVE, &prev);
+			if(ioctl(vdev->fd, VIDIOCQCSADAPTIVE, val)==0)
+				ret = 0;
+			else
+				*val = prev;
 			break;
 		case 4:
-			if(ioctl(c->fd, VIDIOCQCSEQUALIZE, &val)==0)
-				return val;
+			ioctl(vdev->fd, VIDIOCQCGEQUALIZE, &prev);
+			if(ioctl(vdev->fd, VIDIOCQCSEQUALIZE, val)==0)
+				ret = 0;
+			else
+				*val = prev;
 			break;
 		default:
 			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "QC: Cant identify control %d\n",q->id);
-			return 0;
 	}
 
-	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "QC: Cant set value of control %s\n",q->name);
-	return 0;
+	return ret;
 }
 
-int qc_list_ctrl(struct capture_device *c, struct v4l2_queryctrl *q, void *d){
+int qc_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 	int i=0;
  	struct qc_probe_private *priv = (struct qc_probe_private *) d;
 	if(priv->ok==1) {
 
 		//
 		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: Found quickcam private ioctl Brightness Settle\n");
-		q[i].id=i;
-		q[i].type = V4L2_CTRL_TYPE_INTEGER;
-		strcpy((char *) q[i].name,"Brightness Settle");
-		q[i].minimum =0;
-		q[i].maximum = 1;
-		q[i].step = 0;
-		q[i].default_value = 0;
-		q[i].reserved[0]=V4L2_PRIV_IOCTL;
-		q[i].reserved[1]=QC_PROBE_INDEX;
+		c[i].v4l2_ctrl->id=i;
+		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
+		strcpy((char *) c[i].v4l2_ctrl->name,"Brightness Settle");
+		c[i].v4l2_ctrl->minimum =0;
+		c[i].v4l2_ctrl->maximum = 1;
+		c[i].v4l2_ctrl->step = 0;
+		c[i].v4l2_ctrl->default_value = 0;
+		c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
+		c[i].v4l2_ctrl->reserved[1]=QC_PROBE_INDEX;
 		i++;
 
 		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: Found quickcam private ioctl Compression mode\n");
-		q[i].id=i;
-		q[i].type = V4L2_CTRL_TYPE_INTEGER;
-		strcpy((char *) q[i].name,"Compression");
-		q[i].minimum =0;
-		q[i].maximum = 1;
-		q[i].step = 0;
-		q[i].default_value = 0;
-		q[i].reserved[0]=V4L2_PRIV_IOCTL;
-		q[i].reserved[1]=QC_PROBE_INDEX;
+		c[i].v4l2_ctrl->id=i;
+		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
+		strcpy((char *) c[i].v4l2_ctrl->name,"Compression");
+		c[i].v4l2_ctrl->minimum =0;
+		c[i].v4l2_ctrl->maximum = 1;
+		c[i].v4l2_ctrl->step = 0;
+		c[i].v4l2_ctrl->default_value = 0;
+		c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
+		c[i].v4l2_ctrl->reserved[1]=QC_PROBE_INDEX;
 		i++;
 
 		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: Found quickcam private ioctl Interpolation\n");
-		q[i].id=i;
-		q[i].type = V4L2_CTRL_TYPE_INTEGER;
-		strcpy((char *) q[i].name,"Interpolation");
-		q[i].minimum =0;
-		q[i].maximum = 5;
-		q[i].step = 0;
-		q[i].default_value = 0;
-		q[i].reserved[0]=V4L2_PRIV_IOCTL;
-		q[i].reserved[1]=QC_PROBE_INDEX;
+		c[i].v4l2_ctrl->id=i;
+		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
+		strcpy((char *) c[i].v4l2_ctrl->name,"Interpolation");
+		c[i].v4l2_ctrl->minimum =0;
+		c[i].v4l2_ctrl->maximum = 5;
+		c[i].v4l2_ctrl->step = 0;
+		c[i].v4l2_ctrl->default_value = 0;
+		c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
+		c[i].v4l2_ctrl->reserved[1]=QC_PROBE_INDEX;
 		i++;
 
 		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: Found quickcam private ioctl Auto Brightness\n");
-		q[i].id=i;
-		q[i].type = V4L2_CTRL_TYPE_INTEGER;
-		strcpy((char *) q[i].name,"Auto Brightness");
-		q[i].minimum =0;
-		q[i].maximum = 1;
-		q[i].step = 0;
-		q[i].default_value = 0;
-		q[i].reserved[0]=V4L2_PRIV_IOCTL;
-		q[i].reserved[1]=QC_PROBE_INDEX;
+		c[i].v4l2_ctrl->id=i;
+		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
+		strcpy((char *) c[i].v4l2_ctrl->name,"Auto Brightness");
+		c[i].v4l2_ctrl->minimum =0;
+		c[i].v4l2_ctrl->maximum = 1;
+		c[i].v4l2_ctrl->step = 0;
+		c[i].v4l2_ctrl->default_value = 0;
+		c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
+		c[i].v4l2_ctrl->reserved[1]=QC_PROBE_INDEX;
 		i++;
 
 		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: Found quickcam private ioctl Equalise image\n");
-		q[i].id=i;
-		q[i].type = V4L2_CTRL_TYPE_INTEGER;
-		strcpy((char *) q[i].name,"Equalise image");
-		q[i].minimum =0;
-		q[i].maximum = 1;
-		q[i].step = 0;
-		q[i].default_value = 0;
-		q[i].reserved[0]=V4L2_PRIV_IOCTL;
-		q[i].reserved[1]=QC_PROBE_INDEX;
+		c[i].v4l2_ctrl->id=i;
+		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
+		strcpy((char *) c[i].v4l2_ctrl->name,"Equalise image");
+		c[i].v4l2_ctrl->minimum =0;
+		c[i].v4l2_ctrl->maximum = 1;
+		c[i].v4l2_ctrl->step = 0;
+		c[i].v4l2_ctrl->default_value = 0;
+		c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
+		c[i].v4l2_ctrl->reserved[1]=QC_PROBE_INDEX;
 		i++;
 	} else{
 			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: QC not found\n");

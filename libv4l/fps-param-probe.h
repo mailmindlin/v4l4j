@@ -29,9 +29,9 @@
 
 //index of the fps-param probe in the struct v4l_driver_probe known_driver_probes[] in v4l-control.c
 #define FPS_PARAM_PROBE_INDEX	3
-int fps_param_probe(struct capture_device *, void **);
-int fps_param_list_ctrl(struct capture_device *, struct v4l2_queryctrl *, void *);
-int fps_param_get_ctrl(struct capture_device *,  struct v4l2_queryctrl *, void *);
-int fps_param_set_ctrl(struct capture_device *, struct v4l2_queryctrl *, int, void *);
+int fps_param_probe(struct video_device *, void **);
+int fps_param_list_ctrl(struct video_device *, struct control *, void *);
+int fps_param_get_ctrl(struct video_device *,  struct v4l2_queryctrl *, void *, int *);
+int fps_param_set_ctrl(struct video_device *, struct v4l2_queryctrl *, int *, void *);
 
 #endif /*H_FPS_PARAM_PROBE*/

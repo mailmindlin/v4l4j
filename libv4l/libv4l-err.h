@@ -34,16 +34,16 @@
 //Cant set standard (set_cap_param_v4l1)
 #define LIBV4L_ERR_CHANNEL_SETUP			-3
 
-//cant get capabilities (set_cap_param_v4l1)
+//cant get capabilities (set_cap_param_v4l1, query_device_v4l1)
 #define LIBV4L_ERR_NOCAPS					-4
 
-//
-//AVAILABLE									-5
+//wrong version of v4l in struct capture device
+#define LIBV4L_ERR_WRONG_VERSION			-5
 
 //wrong height (set_cap_param_v4l1)
 #define LIBV4L_ERR_DIMENSIONS				-6
 
-//generic IOCTL error
+//generic IOCTL error (check_inputs_v4l1)
 #define LIBV4L_ERR_IOCTL					-7
 
 //cant set the image format, palette, width, height, ... (set_cap_param_v4l1 & 2)
@@ -66,6 +66,24 @@
 
 //Wrong palette stored in struct capture_device, most likely changed by user (start_cap_param_v4l1)
 #define LIBV4L_ERR_PALETTE					-14
+
+//Trying to use a control while streaming (fps-param-probe.c)
+#define LIBV4L_ERR_STREAMING				-15
+
+//control value out of range (v4l2-input.c)
+#define LIBV4L_ERR_OUT_OF_RANGE				-16
+
+//device_info in use (libv4.c)
+#define LIBV4L_ERR_INFO_IN_USE				-17
+
+//capture in use (libv4.c)
+#define LIBV4L_ERR_CAPTURE_IN_USE			-18
+
+//control in use (libv4.c)
+#define LIBV4L_ERR_CONTROL_IN_USE			-19
+
+//tuner action in use (libv4.c)
+#define LIBV4L_ERR_TUNER_IN_USE				-20
 
 #endif
 

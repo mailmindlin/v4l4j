@@ -3,7 +3,7 @@
 * eResearch Centre, James Cook University (eresearch.jcu.edu.au)
 *
 * This program was developed as part of the ARCHER project
-* (Australian Research Enabling Environment) funded by a   
+* (Australian Research Enabling Environment) funded by a
 * Systemic Infrastructure Initiative (SII) grant and supported by the Australian
 * Department of Innovation, Industry, Science and Research
 *
@@ -14,7 +14,7 @@
 *
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  
+* or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU General Public License for more details.
 *
 * You should have received a copy of the GNU General Public License
@@ -36,24 +36,27 @@
  */
 
 
+//Check whether the supplied device file is a v4l1 device
+int check_v4l1(int fd, struct video_capability *);
+
 //Check whether the device is V4L1 and has capture and mmap capabilities
 // get capabilities VIDIOCGCAP - check max height and width
-int check_capture_capabilities_v4l1(struct capture_device *);
+int check_capture_capabilities_v4l1(int, char *);
 
 // set the capture parameters trying the nb(last arg) palettes(second arg) in order
-int set_cap_param_v4l1(struct capture_device *, int *, int);
-// set video channel 	VIDIOCSCHAN - 
-// set picture format 	VIDIOCSPICT - 
-// set window 		VIDIOCSWIN  
+int set_cap_param_v4l1(struct video_device *, int *, int);
+// set video channel 	VIDIOCSCHAN -
+// set picture format 	VIDIOCSPICT -
+// set window 		VIDIOCSWIN
 // get window format	VIDIOCGWIN  (to double check)
 
 
 //initialise streaming, request V4L2 buffers and create mmap'ed buffers
-int init_capture_v4l1(struct capture_device *);
+int init_capture_v4l1(struct video_device *);
 // get streaming cap details VIDIOCGMBUF
 
 //tell V4L2 to start the capture
-int start_capture_v4l1(struct capture_device *);
+int start_capture_v4l1(struct video_device *);
 // start the capture of first buffer VIDIOCMCAPTURE(0)
 
 
@@ -63,14 +66,14 @@ int start_capture_v4l1(struct capture_device *);
  */
 
 //dequeue the next buffer with available frame
-void *dequeue_buffer_v4l1(struct capture_device *, int *);
+void *dequeue_buffer_v4l1(struct video_device *, int *);
 // start the capture of next buffer VIDIOCMCAPTURE(x)
 // wait till the previous buffer is available VIDIOCSYNC(x-1)
 
 
 //enqueue the buffer when done using the frame
-void enqueue_buffer_v4l1(struct capture_device *);
- 
+void enqueue_buffer_v4l1(struct video_device *);
+
 
 /*
  * Freeing resources
@@ -80,13 +83,13 @@ void enqueue_buffer_v4l1(struct capture_device *);
  */
 
 //counterpart of start_capture, must be called it start_capture was successful
-int stop_capture_v4l1(struct capture_device *);
+int stop_capture_v4l1(struct video_device *);
 
 //counterpart of init_capture, must be called it init_capture was successful
-void free_capture_v4l1(struct capture_device *);
+void free_capture_v4l1(struct video_device *);
 
-//counterpart of init_libv4l1, must be called it init_libv4l2 was successful
-void del_libv4l1(struct capture_device *);
+//counterpart of init_capture_device, must be called it init_capture_device was successful
+void free_capture_device1(struct video_device *);
 
 
 
@@ -94,24 +97,23 @@ void del_libv4l1(struct capture_device *);
  * Control related functions
  */
  //returns the number of controls (standard and private V4L2 controls only)
-int count_v4l1_controls(struct capture_device *);
+int count_v4l1_controls(struct video_device *);
 //Populate the control_list with fake V4L2 controls matching V4L1 video
 //controls and returns how many fake controls were created
-int create_v4l1_controls(struct capture_device *, struct control_list *);
+int create_v4l1_controls(struct video_device *, struct control *, int);
 //returns the value of a control
-int get_control_value_v4l1(struct capture_device *c, struct v4l2_queryctrl *ctrl);
+int get_control_value_v4l1(struct video_device *c, struct v4l2_queryctrl *ctrl, int *);
 //sets the value of a control
-void set_control_value_v4l1(struct capture_device *, struct v4l2_queryctrl *, int);
+int set_control_value_v4l1(struct video_device *, struct v4l2_queryctrl *, int *);
 
 
 /*
  * Query and list methods (printf to stdout, use to debug)
- * these methods can be called after init_libv4l2 and before del_libv4l2
+ * these methods can be called after init_capture_device and before free_capture_device1
  */
-void list_cap_v4l1(struct capture_device *);			//prints results from query methods listed below
-void enum_image_fmt_v4l1(struct capture_device *);		//lists all supported image formats
-void query_frame_sizes_v4l1(struct capture_device *);		//lists min and max frame sizes
-void query_capture_intf_v4l1(struct capture_device *);		//prints capabilities
-void query_current_image_fmt_v4l1(struct capture_device *);	//
+void list_cap_v4l1(int);			//lists all supported image formats
+									//prints capabilities
+									//print max width max height for v4l1 and current settings for v4l2
+
 
 #endif

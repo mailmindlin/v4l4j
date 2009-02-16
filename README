@@ -1,11 +1,12 @@
 Video4Linux4Java (v4l4j) is a GPL'd java package providing a simple interface
-to capture JPEG-encoded frames  from Video4Linux devices. It consists of:
+to capture frames  from Video4Linux devices. It consists of:
 - a v4l library (libv4l), which is a C wrapper library around the V4L API,
 - a set of java classes that provide access to the libv4l API, and
 - a JNI stub, which fills in the gap between JAVA and libv4l.
 
 FEATURES:
-- Captured frames handed out as JPEG images in a Bytebuffer object
+- Captured frames handed out in a Bytebuffer object. Frames are given either
+  in raw format or as JPEG images, if supported.
 - Single frame or stream capture
 - Access to all V4L video source controls, even those accessible
   only through private ioctls, which are exposed as (pseudo-) controls.
@@ -15,8 +16,11 @@ FEATURES:
 REQUIREMENTS:
 v4l4j requires the following:
 - a supported V4L video source (webcam, capture card, tuner card). In addition,
-  v4l4j only supports JPEG, MJPEG, YUV420, YUYV and RGB24 palette formats.
-- Sun JAVA JDK 1.6 (it wont compile with earlier versions)
+  JPEG compression is only supported for JPEG, MJPEG, YUV420, YUYV and RGB24
+  capable video sources.
+- Sun JAVA JDK 1.6 (it wont compile with earlier versions). Some users have
+  successfully used v4l4j with OpenJDK, although it has not officially been
+  tested.
 - the development files of libjpeg, as well as libjpeg itself
 - Apache Ant
 
@@ -34,7 +38,9 @@ FIRST, make sure JNI library libv4l4j.so can be loaded by the JVM. This is done
 by EITHER:
 - installing libv4l4j.so in the JRE lib directory. This is achieved by running
   "ant install-jnilib" as root in the top-level directory. It can be
-  uninstalled with "ant uninstall-jnilib" as root later on.
+  uninstalled with "ant uninstall-jnilib" as root later on. If you are on a
+  64-bit platform, use "ant install-jnilib64" and "ant uninstall-jnilib64"
+  instead 
 OR
 - setting the shell variable LD_LIBRARY_PATH to point to the directory where
   libv4l4j.so resides before running your program. By default, libv4l4j.so
@@ -49,9 +55,11 @@ TESTING:
 Two example applications are shipped with v4l4j:
 - The first one simply captures frames for 10 seconds and print the frame rate.
   Run it with ant test-fps
-- The second one displays the video stream in a window. Run it with ant test-gui 
+- The second one displays the video stream in a window. Run it with ant test-gui
+- The last one displays information about the video device. Run it with 
+  ant deviceInfo  
 
-By default, both tests will capture frames from /dev/video0, at the maximum
+By default, tests will capture frames from /dev/video0, at the maximum
 resolution and the device is assumed to be a webcam. You can change any of these
 settings by editing the values at the end of the "build.properties" file, or
 provide those values on the ant command line (-Dtest.device=..., to change the 
