@@ -1,71 +1,104 @@
+#summary Examples of video capture using v4l4j.
 #labels Featured
-#Simple examples of video capture using v4l4j.
 
-This page shows a few examples in Java on how to use v4l4j. It assumes you have successfully compiled and installed v4l4j (see GettingStarted page for detailled instructions). Here, video source refers to any video-capture device supported by the Linux kernel, and accessible through the Video4Linux API using the associated device file. Typical capture devices include USB webcams and capture cards (with S-Video, composite or TV tuner inputs)
+This page shows a few examples in Java on how to use v4l4j. It assumes you have successfully compiled and installed v4l4j (see GettingStarted page for detailed instructions). Here, video source refers to any video-capture device supported by the Linux kernel, and accessible through the Video4Linux API using the associated device file. Typical capture devices include USB webcams and capture cards (with S-Video, composite or TV tuner inputs).
  * *Initialising the video device*: Creating a java object to interact with a video device.
  * *Dealing with controls*: List the controls associated with a video device and get / set their values.
+ * *Capturing frames*: Getting a `FrameGrabber` object to capture images from the video device.
  * *Display video in a GUI (JFrame)*: Create a graphical interface (JFrame) to display the captured video stream.
 Suggestions for more examples are welcome.
 
 = Initialising the video device =
-All interactions with a video device are done using a `FrameGrabber` object. How to instantiate a `FrameGrabber` depends on the type of video device. The most extended form of the constructor needs 6 arguments:
- * the full path to the corresponding device file, usually `/dev/videoXX`
+All interactions with a video device are done using a `VideoDevice` object. To instantiate one, you simply needs its device file:
+{{{
+String dev = "/dev/video0";
+VideoDevice vd = new VideoDevice(dev);
+}}}
+The VideoDevice object allows you to:
+  * get textual information about the video device itself, such as its name, the supported image formats, and the type of video inputs,
+  * capture frames through a `FrameGrabber` object,
+  * control tuners the device may have, through the `TunerList` object,
+  * access video control, such as brightness, contrast, and gain, through the `ControlList` object.
+
+*Once the `VideoDevice` is no longer needed, you must release resources and free data structures by calling the `release()` method:*
+{{{
+vd.release();
+}}}
+
+= Capturing frames =
+A `FrameGrabber` object gives you access to the frame capture facility. There a two types of frame grabbers: raw and jpeg. Raw frame grabbers will capture a frame and hand it in straight away in its raw format. Jpeg frame grabbers will capture a frame and jpeg-encode it before hading it in. JPEG frame grabbers can only be used with video devices supporting pre-defined image formats that can be jpeg-encoded. In its current release, jpeg encoding is possible only with video sources supporting one of JPEG, MJPEG, YUV420, YUYV, YVYU or RGB24 formats. You can check whether a video device supports JPEG-encoding by calling:
+{{{
+VideoDevice vd = new VideoDevice("/dev/video0");
+if(!vd.canJPEGEncode()){
+  vd.release();
+  throw new Exception("The video device does not support JPEG encoding");
+}
+}}}
+Frame grabber constructors need at least 4 arguments:
  * the desired capture resolution in pixels - width and height. Setting them to `FrameGrabber.MAX_WIDTH` and `FrameGrabber.MAX_HEIGHT` will request the best supported resolution.
  * the input channel, this depends on the hardware, webcams have only 1 input (0), capture cards can have many,
  * the video standard (`FrameGrabber.WEBCAM`, `FrameGrabber.PAL`, `FrameGrabber.SECAM`, `FrameGrabber.NTSC`)
- * the JPEG compression quality, from 0 (lowest qualtiy - smallest frame size) to 100 (highest qualtiy - largest frame size)
 
+Before instantiating a raw frame grabber, you must check what image formats are supported, and pass the desired one to the constructor:
 {{{
-String dev = "/dev/video0";
-int quality = 80, width = 640, height = 480, input = 1, std = FrameGrabber.PAL, comp = 80;
-FrameGrabber f = new FrameGrabber(dev, width, height, input, std, comp);
+FrameGrabber fg;
+int width = 640, height = 480, input = 0, standard = V4L4JConstants.PAL;
+for(ImageFormat imf: vd.getDeviceInfo().getFormats()){
+  if(imf.getName().equals("YUYV")
+    fg = vd.getRawFrameGrabber(width, height, input, channel, imf);
+}
+if(fg == null)
+  throw new Exception("YUYV format not supported");
+
+...
+
+vd.releaseFrameGrabber();
 }}}
-The above code creates a `FrameGrabber` object using the video device at `/dev/video0`. The requested capture resolution is 640x480, from input 1 using PAL video standard and a JPEG compression factor of 80.
-If the video device is a webcam, simpler constructors are available:
+Alternatively, you can use:
 {{{
-String dev = "/dev/video0";
-int quality = 80;
-FrameGrabber f = new FrameGrabber(dev, quality);
+fg = vd.getRawFrameGrabber(width, height, input, channel);
 }}}
-and
+This will use the first supported image format, as returned by:
 {{{
-String dev = "/dev/video0";
-int width = 640, height = 480;
-FrameGrabber f = new FrameGrabber(dev, width, height);
-}}}
-Lastly, to capture frames at the maximum supported resolution, use:
-{{{
-String dev = "/dev/video0";
-int quality = 80, input = 1, std = FrameGrabber.PAL, comp = 80;
-FrameGrabber f = new FrameGrabber(dev, input, std, comp);
+vd.getDeviceInfo.getFormats().get(0);
 }}}
 
-Once the `FrameGrabber` object is instanciated, before it can be used, it must be initialised using:
+A JPEG frame grabber is instantiated by calling:
 {{{
-f.init();
-}}}
+FrameGrabber fg;
+int width = 640, height = 480, input = 1, standard = V4L4JConstants.PAL, quality = 80;
+fg = vd.getJPEGFrameGrabber(width, height, input, channel, quality);
 
-It is important to note that the requested capture resolution given in the constructor is simply an indication and can be adjusted by V4L to the closest resolution supported by the video device. Once the `FrameGrabber` has been initialised with a call to `init()`, the actual width and height that will be used can be retrieved using:
+...
+
+vd.releaseFrameGrabber();
+}}}
+The `quality` argument is the JPEG compression parameter (between 0 and 100 inclusive), the lower the value, the lower the picture quality. The previous code creates a jpeg `FrameGrabber` object. The requested capture resolution is 640x480, from input 1 using PAL video standard and a JPEG compression factor of 80.
+
+Note that the requested capture resolution given in the constructor is simply an indication and can be adjusted by V4L to the closest resolution supported by the video device. The actual width and height that will be used can be retrieved using:
 {{{
 int actualWidth = f.getwidth();
 int actualHeight = f.getHeight();
 }}}
 
-After a successful call to `init()`, if the `FrameGrabber` is no longer used, resources must be released by calling `remove().
+When the `FrameGrabber` is no longer used, resources must be released by calling
+{{{
+vd.releaseFrameGrabber();
+}}}
 
 = Dealing with controls =
-Once the `FrameGrabber` is intialised, a call to `getControls()` will return a `List<Control>` object. The following loops over all controls and prints their name, range of acceptable values, and current value.
+Once the `VideoDevice` is intialised, a call to `getControlList()` will return a `ControlList` object. This object encapsulates (among other things) a `List<Control>` accessible through the `getList()` method. The following code loops over all controls and prints their name, range of acceptable values, and current value.
 {{{
-List<Control> controls = f.getControls();
+List<Control> controls = vd.getControlsList().getList();
 for(Control c: controls)
  System.out.println("control name: "+c.getName()+" - min: "+c.getMin()+" - max: "+c.getMax()+" - step: "+c.getStep()+" - value: "+c.getValue());
+vd.releaseControlList();
 }}}
 Resetting the Pan angle on a Logitech Quickcam Sphere can be done using:
 {{{
-for(Control c: controls)
- if(c.getName().equals("Pan Reset"))
-  c.setValue(1);
+vd.getControlList().getControl("Pan Reset").setValue(1);
 }}}
+*Once again, when the `ControlList` is no longer needed, it MUST be released by calling `releaseControlList()` on the `VideoDevice`.*
 
 = Display video in a GUI (JFrame) =
 Assuming the `FrameGrabber` object `f` has been successfully initialised, to start capturing JPEG-encoded frames, do the following:
@@ -100,6 +133,7 @@ import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 public class Viewer extends WindowAdapter implements Runnable {
+	private VideoDevice vd;
 	private JLabel l;
 	private JFrame f;
 	private long start = 0;
@@ -150,8 +184,8 @@ public class Viewer extends WindowAdapter implements Runnable {
 	 * @throws V4L4JException if any parameter if invalid
      */
     private void initFrameGrabber(String dev, int w, int h, int std, int channel, int qty) throws V4L4JException{
-	fg= new FrameGrabber(dev, w, h, channel, std, qty);
-	fg.init();
+	vd = new VideoDevice(dev)
+	fg = vd.getJPEGFrameGrabber(w, h, channel, std, qty);
 	fg.startCapture();
 	System.out.println("Starting capture at "+fg.getWidth()+"x"+fg.getHeight());	    	
     }
@@ -182,7 +216,7 @@ public class Viewer extends WindowAdapter implements Runnable {
 		System.out.println("Failed to capture image");
 	}
     }
-    
+
     /**
      * Catch window closing event so we can free up resources before exiting
      * @param e
@@ -195,13 +229,8 @@ public class Viewer extends WindowAdapter implements Runnable {
 			} catch (InterruptedException e1) {}
     		}
 		
-		try {
-			fg.stopCapture();
-			fg.remove();
-		} catch (V4L4JException e1) {
-			e1.printStackTrace();
-			System.out.println("Failed to stop capture");
-		}
+		fg.stopCapture();
+		vd.releaseFrameGrabber();
 		
     		f.dispose();		
 	}
