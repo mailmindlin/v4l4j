@@ -68,38 +68,46 @@ int main(int argc, char** argv) {
 	struct video_device *v;
 	void *d;
 	struct timeval start, now;
-	int size, count=0, std=0, channel=0, width=0, height=0, cap_length = 0;
+	int size, count=0, std=0, channel=0, width=0, height=0, cap_length = 0, fmt=-1;
 
-	if(argc!=2 && argc!= 3 && argc!=5 && argc!=7) {
-		printf("Usage: %s <video_device_file> [ capture_length [standard channel [ width height ] ] ]\n", argv[0]);
-		printf("This program requires the path to the video device file to be tested.\n");
-		printf("The optional second argument is the length (in seconds) of the capture (use 0 to capture a single frame), default is %d\n", CAPTURE_LENGTH);
-		printf("The optional third and fourth arguments are a video standard and channel.\n");
+	if(argc!=7 && argc!=8) {
+		printf("Usage: %s <video_device_file> <single_frame> <standard> <input> <width> <height> [ format ]\n", argv[0]);
+		printf("This program requires the following arguments in this order:\n");
+		printf("The video device file to be tested.\n");
+		printf("Single frame capture (1), or 10 second capture (0)\n");
+		printf("The length (in seconds) of the capture (use 0 to capture a single frame)\n");
+		printf("The video standard and input number.\n");
 		printf("Video standards: webcam:0 - PAL:1 - SECAM:2 - NTSC:3\n");
+		printf("The capture resolution (width and height)\n");
+		printf("The last optional argument is an image format index. A list of known"
+				" formats can be found in libv4l.h . To see what formats are supported"
+				" by a video device, run './list-caps /dev/videoXX' and check the "
+				"'Printing device info' section at the bottom.\n");
 		printf("Arguments must be in the specified order !!!\n");
 		return -1;
 	}
 
-	if(argc >= 3)
-		cap_length = atoi(argv[2]);
-	else
+	if(atoi(argv[2])>=1){
+			cap_length = 0;
+			printf("This program will capture a single frame from %s\n", argv[1]);
+	} else {
 		cap_length = CAPTURE_LENGTH;
-
-	printf("This program will capture frames from %s for %d seconds\n", argv[1], cap_length);
-
-	if (argc>=5){
-		std = atoi(argv[3]);
-		channel = atoi(argv[4]);
-		printf("Using standard %d, channel %d\n",std, channel);
+		printf("This program will capture frames from %s for %d seconds\n", argv[1], cap_length);
 	}
 
-	if (argc==7) {
-		width = atoi(argv[5]);
-		height = atoi(argv[6]);
-		printf("Requested resolution: %dx%d\n", width, height);
+	std = atoi(argv[3]);
+	channel = atoi(argv[4]);
+	width = atoi(argv[5]);
+	height = atoi(argv[6]);
+	printf("Trying %dx%d standard %d, channel %d\n",width,height,std, channel);
+
+	if(argc==8){
+		fmt = atoi(argv[7]);
+		printf("Trying image format %s (%d)\n",libv4l_palettes[fmt].name, fmt);
 	}
 
 	printf("Make sure your video source is connected, and press <Enter>, or Ctrl-C to abort now.");
+
 	getchar();
 
 	v = open_device(argv[1]);
@@ -115,12 +123,22 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 
-	if((*c->actions->set_cap_param)(v, NULL, 0)){
-		free_capture_device(v);
-		close_device(v);
-		printf("Cant set capture parameters\n");
-		return -1;
+	if(fmt!=-1){
+		if((*c->actions->set_cap_param)(v, &fmt, 1)){
+			free_capture_device(v);
+			close_device(v);
+			printf("Cant set capture parameters\n");
+			return -1;
+		}
+	}else {
+		if((*c->actions->set_cap_param)(v, NULL, 0)){
+			free_capture_device(v);
+			close_device(v);
+			printf("Cant set capture parameters\n");
+			return -1;
+		}
 	}
+
 
 	printf("Capturing from %s at %dx%d.\n", argv[1], c->width,c->height);
 	printf("Image format %s, size: %d\n", libv4l_palettes[c->palette].name, c->imagesize);

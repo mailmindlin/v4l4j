@@ -33,6 +33,7 @@
 #include "libv4l.h"
 #include "libv4l-err.h"
 #include "log.h"
+#include "palettes.h"
 #include "pwc-probe.h"
 #include "qc-probe.h"
 #include "v4l1-input.h"
@@ -59,7 +60,7 @@ struct video_device *open_device(char *file) {
 	int fd = -1;
 	char version[10];
 
-	dprint(LIBV4L_LOG_SOURCE_VIDEO_DEVICE, LIBV4L_LOG_LEVEL_ALL, "Using libv4l version %s\n", get_libv4l_version(version));
+	printf("Using libv4l version %s\n", get_libv4l_version(version));
 
 	//open device
 	dprint(LIBV4L_LOG_SOURCE_VIDEO_DEVICE, LIBV4L_LOG_LEVEL_DEBUG, "VD: Opening device file %s.\n", file);
@@ -155,6 +156,8 @@ static void setup_capture_actions(struct video_device *vdev) {
 
 //device file, width, height, channel, std, nb_buf
 struct capture_device *init_capture_device(struct video_device *vdev, int w, int h, int ch, int s, int nb_buf){
+	if(vdev->capture!=NULL)
+		return vdev->capture;
 	//create capture device
 	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "CAP: Initialising capture interface\n");
 	XMALLOC(vdev->capture, struct capture_device *,sizeof(struct capture_device));
@@ -178,6 +181,44 @@ void free_capture_device(struct video_device *vdev){
 	XFREE(vdev->capture->actions);
 	XFREE(vdev->capture->mmap);
 	XFREE(vdev->capture);
+}
+
+void print_device_info(struct video_device *v){
+	int j,k;
+	struct device_info *i = v->info;
+	printf("============================================\n\n");
+	printf("Printing device info\n\n");
+	printf("Device name: %s\n",i->name);
+	printf("Device file: %s\n",v->file);
+	printf("Supported image formats (Name - Index):\n");
+	for(j=0; j<i->nb_palettes; j++)
+		printf("\t%s - %d\n", libv4l_palettes[i->palettes[j]].name, i->palettes[j]);
+
+	printf("Inputs:\n");
+	for(j=0; j<i->nb_inputs; j++){
+		printf("\tName: %s\n", i->inputs[j].name);
+		printf("\tNumber: %d\n", i->inputs[j].index);
+		printf("\tType: %d (%s)\n", i->inputs[j].type,
+				i->inputs[j].type==INPUT_TYPE_TUNER ? "Tuner" : "Camera");
+		printf("\tSupported standards:\n");
+		for(k=0; k<i->inputs[j].nb_stds; k++)
+			printf("\t\t%d (%s)\n",i->inputs[j].supported_stds[k],
+					i->inputs[j].supported_stds[k]==WEBCAM?"Webcam":
+					i->inputs[j].supported_stds[k]==PAL?"PAL":
+					i->inputs[j].supported_stds[k]==SECAM?"SECAM":"NTSC");
+		if(i->inputs[j].tuner!=NULL){
+			printf("\tTuner\n");
+			printf("\t\tName: %s\n",i->inputs[j].tuner->name);
+			printf("\t\tIndex: %d\n", i->inputs[j].tuner->index);
+			printf("\t\tRange low: %lu\n", i->inputs[j].tuner->rangelow);
+			printf("\t\tRange high: %lu\n", i->inputs[j].tuner->rangehigh);
+			printf("\t\tUnit: %d (%s)\n", i->inputs[j].tuner->unit,
+					i->inputs[j].tuner->unit==KHZ_UNIT?"KHz":"MHz");
+			printf("\t\tType: %d (%s)\n", i->inputs[j].tuner->type,
+					i->inputs[j].tuner->type==RADIO_TYPE?"Radio":"TV");
+
+		}
+	}
 }
 
 /*

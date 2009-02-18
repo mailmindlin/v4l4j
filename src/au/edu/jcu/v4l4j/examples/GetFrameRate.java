@@ -30,6 +30,7 @@ import java.util.Vector;
 
 import au.edu.jcu.v4l4j.Control;
 import au.edu.jcu.v4l4j.FrameGrabber;
+import au.edu.jcu.v4l4j.ImageFormat;
 import au.edu.jcu.v4l4j.V4L4JConstants;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.exceptions.ControlException;
@@ -39,7 +40,7 @@ public class GetFrameRate {
 	public static void main(String[] args) throws V4L4JException, IOException {
 		List<Control> ctrls;
 		String dev;
-		int w, h, std, channel, qty, captureLength = 10;
+		int w, h, std, channel, qty, fmt, captureLength = 10;
 		//Check if we have the required args
 		//otherwise put sensible values in
 		try {
@@ -73,6 +74,12 @@ public class GetFrameRate {
 			qty = 80;
 		}
 		
+		try {
+			fmt = Integer.parseInt(args[6]);
+		} catch (Exception e){
+			fmt = -1;
+		}
+		
 
 		long start=0, now=0;
 		int n=0;
@@ -86,12 +93,32 @@ public class GetFrameRate {
 
 		try {
 			vd = new VideoDevice(dev);
-			if(vd.canJPEGEncode()) {
+			if(vd.canJPEGEncode() && qty!=-1 && fmt==-1) {
 				f= vd.getJPEGFrameGrabber(w, h, channel, std, qty);
 				System.out.println("Frames from this device can be JPEG-encoded");
+				System.out.println("Image format: JPEG");
+				
 			} else {
-				f= vd.getRawFrameGrabber(w, h, channel, std);
-				System.out.println("Frames from this device can *NOT* be JPEG-encoded");
+				if(vd.canJPEGEncode())
+					System.out.println("Frames from this device can be JPEG-encoded but disabled from command line (quality = "+qty+", format = "+fmt+")");
+				else
+					System.out.println("Frames from this device can *NOT* be JPEG-encoded");
+				
+				if(fmt==-1){
+					f= vd.getRawFrameGrabber(w, h, channel, std);
+					System.out.println("Image format: "+vd.getDeviceInfo().getFormats().get(0).getName());
+				} else {
+					for(ImageFormat im: vd.getDeviceInfo().getFormats())
+						if(im.getIndex()==fmt)
+							f= vd.getRawFrameGrabber(w, h, channel, std,im);
+					
+					if(f==null) {
+						vd.release();
+						throw new V4L4JException("Image format "+fmt+" not supported by this device");
+					} else
+						System.out.println("Image format: "+f.getImageFormat().getName());
+					
+				}
 			}
 		} catch (V4L4JException e) {
 			e.printStackTrace();
@@ -110,12 +137,15 @@ public class GetFrameRate {
 				System.out.println("Failed to get value for control "+c.getName());
 			}
 		}
+		vd.releaseControlList();
 
 		try {
 			f.startCapture();
 		} catch (V4L4JException e) {
 			e.printStackTrace();
 			System.out.println("Failed to start capture");
+			vd.releaseFrameGrabber();
+			vd.release();
 			throw e;
 		}
 
@@ -133,6 +163,9 @@ public class GetFrameRate {
 		} catch (V4L4JException e) {
 			e.printStackTrace();
 			System.out.println("Failed to perform test capture");
+			f.stopCapture();
+			vd.releaseFrameGrabber();
+			vd.release();
 			throw e;
 		}
 
@@ -143,7 +176,6 @@ public class GetFrameRate {
 
 		f.stopCapture();
 		vd.releaseFrameGrabber();
-		vd.releaseControlList();
 		vd.release();
 	}
 }

@@ -46,7 +46,7 @@ struct v4l4j_device {
 	unsigned char **bufs;		//the buffers holding the last JPEG compressed frame
 	int jpeg_quality;			//the jpeg quality, set to -1 if disable
 	int capture_len;			//the size of the last captured frame returned by libv4l
-	int len;					//the size of the last JPEG compressed frame
+	int len;					//the size of the frame after JPEG compression
 	int buf_id;					//the index of the buffer where the next frame goes
 };
 
