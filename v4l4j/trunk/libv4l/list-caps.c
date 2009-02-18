@@ -58,13 +58,9 @@ int main(int argc, char** argv) {
 		printf("Error opening device\n");
 		return -1;
 	}
-	c = init_capture_device(v, MAX_WIDTH, MAX_HEIGHT ,std ,channel ,2);
-
-	if(c==NULL) {
-		printf("Error initialising device.");
-		return -1;
-	}
+	c = init_capture_device(v,MAX_WIDTH,MAX_HEIGHT,channel,std,3);
 	c->actions->list_cap(v->fd);
+	free_capture_device(v);
 	l = get_control_list(v);
 	printf("Listing available controls (%d)\n", l->count);
 	for(i=0;i<l->count; i++){
@@ -93,9 +89,12 @@ int main(int argc, char** argv) {
 		}
 	}
 
+	get_device_info(v);
+	print_device_info(v);
+	release_device_info(v);
+
 	release_control_list(v);
 
-	free_capture_device(v);
 	close_device(v);
 
 	return 0;

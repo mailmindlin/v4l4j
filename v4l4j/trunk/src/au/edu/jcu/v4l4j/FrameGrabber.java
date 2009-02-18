@@ -200,6 +200,15 @@ public class FrameGrabber {
 	}
 	
 	/**
+	 * This method returns the {@link ImageFormat} used by this FrameGrabber, or <code>null</code>
+	 * if this is a JPEGFrameGrabber.
+	 * @return {@link ImageFormat} used by this FrameGrabber or <code>null</code>
+	 */
+	public ImageFormat getImageFormat(){
+		return format;
+	}
+	
+	/**
 	 * This method returns the {@link Tuner{ associated with the input of this 
 	 * <code>FrameGrabber</code>, or throws a {@link NoTunerException} if there
 	 * is none.   

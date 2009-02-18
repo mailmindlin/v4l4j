@@ -141,6 +141,7 @@ static void jpeg_encode_jpeg(struct v4l4j_device *d, void *src, void *dst){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	memcpy(dst, src, d->capture_len);
 	dprint(LOG_JPEG, "[JPEG] Finished compression (%d bytes)\n", d->capture_len);
+	d->len = d->capture_len;
 }
 
 static void jpeg_encode_mjpeg(struct v4l4j_device *d, void *src, void *dst){
@@ -380,8 +381,8 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 
 void destroy_jpeg_compressor(struct v4l4j_device *d){
 	dprint(LOG_JPEG, "[JPEG] Destroying JPEG compressor\n");
-	if(d->vdev->capture->palette == YUV420 || d->vdev->capture->palette == YUYV ||
-			d->vdev->capture->palette == YVYU || d->vdev->capture->palette == RGB24) {
+	if(d->jpeg_quality!=-1 && (d->vdev->capture->palette == YUV420 || d->vdev->capture->palette == YUYV ||
+			d->vdev->capture->palette == YVYU || d->vdev->capture->palette == RGB24)) {
 		jpeg_destroy_compress(d->j->cinfo);
 		XFREE(d->j->cinfo);
 		XFREE(d->j->jerr);
