@@ -127,6 +127,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
     private void initGUI(){
         f = new JFrame();
         f.setLayout(new BoxLayout(f.getContentPane(),BoxLayout.LINE_AXIS));
+        f.setIconImage(new ImageIcon("v4l4j.gif").getImage());
         
         videoPanel = new JPanel();
         videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.PAGE_AXIS));

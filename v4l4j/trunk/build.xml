@@ -143,6 +143,7 @@
 			<arg value="${test.standard}" /> <!-- standard -->
 			<arg value="${test.channel}" /> <!-- channel -->
 			<arg value="${test.qty}" /> <!-- JPEG quality factor -->
+			<arg value="${test.format}" /> <!-- Image format -->
 		</java>
 	</target>
 	
