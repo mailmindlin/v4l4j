@@ -175,6 +175,8 @@ int main(int argc, char** argv) {
 			break;
 		}
 		gettimeofday(&now, NULL);
+		if(cap_length==0)
+			break;
 	}
 	printf("fps: %.1f\n", (count/((now.tv_sec - start.tv_sec) + ((float) (now.tv_usec - start.tv_usec)/1000000))));
 
