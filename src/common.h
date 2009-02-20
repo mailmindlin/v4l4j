@@ -50,8 +50,10 @@ struct v4l4j_device {
 	int buf_id;					//the index of the buffer where the next frame goes
 };
 
-#define JPEG_SUPPORTED_FORMATS		{JPEG, MJPEG, YUV420, YUYV, RGB24, YVYU}
-#define NB_JPEG_SUPPORTED_FORMATS	6
+//#define JPEG_SUPPORTED_FORMATS		{JPEG, MJPEG, YUV420, YUYV, RGB24, RGB32, BGR24, YVYU}
+//#define NB_JPEG_SUPPORTED_FORMATS	8
+#define JPEG_SUPPORTED_FORMATS		{RGB32}
+#define NB_JPEG_SUPPORTED_FORMATS	1
 
 #define BYTEBUFER_CLASS			"java/nio/ByteBuffer"
 #define V4L4J_PACKAGE			"au/edu/jcu/v4l4j/"
