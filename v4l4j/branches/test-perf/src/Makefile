@@ -28,7 +28,7 @@ LIBV4L_PATH=../libv4l
 LIBV4L_NAME=libv4l.a
 
 LIB=libv4l4j.so
-OBJ=v4l4j_FrameGrabber.o jpeg.o v4l4j_ImageFormat.o v4l4j_DeviceInfo.o v4l4j_VideoDevice.o v4l4j_Control.o v4l4j_Tuner.o
+OBJ=v4l4j_FrameGrabber.o jpeg.o v4l4j_ImageFormatList.o v4l4j_DeviceInfo.o v4l4j_VideoDevice.o v4l4j_Control.o v4l4j_Tuner.o
 
 CC=gcc
 INCLUDES=-I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ -I$(LIBV4L_PATH) -I.

@@ -450,7 +450,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 		@Override
 		public void stateChanged(ChangeEvent e) {
 			 JSlider source = (JSlider)e.getSource();
-			 if (!source.getValueIsAdjusting()) {
+			 //if (!source.getValueIsAdjusting()) {
 				 int v = 0;
 				 try {
 					v = ctrl.setValue(source.getValue());
@@ -463,7 +463,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 					source.setValue(v);
 					source.addChangeListener(this);
 				}
-			 }			
+			 //}			
 		}
 	}
 	

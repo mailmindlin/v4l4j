@@ -106,9 +106,9 @@ public class GetFrameRate {
 				
 				if(fmt==-1){
 					f= vd.getRawFrameGrabber(w, h, channel, std);
-					System.out.println("Image format: "+vd.getDeviceInfo().getFormats().get(0).getName());
+					System.out.println("Image format: "+vd.getDeviceInfo().getFormatList().getList().get(0).getName());
 				} else {
-					for(ImageFormat im: vd.getDeviceInfo().getFormats())
+					for(ImageFormat im: vd.getDeviceInfo().getFormatList().getList())
 						if(im.getIndex()==fmt)
 							f= vd.getRawFrameGrabber(w, h, channel, std,im);
 					
