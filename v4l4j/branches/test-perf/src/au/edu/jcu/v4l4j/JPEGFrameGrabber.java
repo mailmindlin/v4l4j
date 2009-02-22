@@ -23,6 +23,8 @@
 */
 package au.edu.jcu.v4l4j;
 
+import au.edu.jcu.v4l4j.exceptions.V4L4JException;
+
 
 /**
  * Objects of this class are used to retrieve JPEG-encoded frames from a 
@@ -68,6 +70,8 @@ package au.edu.jcu.v4l4j;
  */
 public class JPEGFrameGrabber extends FrameGrabber {
 	
+	private int quality;
+	
 	/**
 	 * This constructor builds a FrameGrabber object used to capture JPEG frames from a video source
 	 * @param w the requested frame width 
@@ -76,11 +80,12 @@ public class JPEGFrameGrabber extends FrameGrabber {
 	 * @param std the video standard, as returned by <code>InputInfo.getSupportedStandards()</code>
 	 * (see V4L4JConstants)
 	 * @param q the JPEG image quality (the higher, the better the quality)
+	 * @param imf the image format frame should be captured in or null to let v4l4j choose
+	 * an appropriate format. 
 	 */
-	JPEGFrameGrabber(long o, int w, int h, int ch, int std, int q, Tuner t){
-		super(o,w,h,ch,std,
-				q<V4L4JConstants.MIN_JPEG_QUALITY? V4L4JConstants.MIN_JPEG_QUALITY: 
-					(q>V4L4JConstants.MAX_JPEG_QUALITY ? V4L4JConstants.MAX_JPEG_QUALITY : q), t );
+	JPEGFrameGrabber(long o, int w, int h, int ch, int std, int q, Tuner t, ImageFormat imf) throws V4L4JException{
+		super(o,w,h,ch,std, t , imf, JPEG_GRABBER);		
+		setJPGQuality(q);
 	}
 	
 	/**
