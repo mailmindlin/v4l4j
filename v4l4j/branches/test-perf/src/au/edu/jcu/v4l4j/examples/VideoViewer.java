@@ -88,7 +88,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 	private Tuner tuner;
 	private TunerInfo tinfo;
 	private long start = 0;
-	private int n, width, height, qty, std, channel;
+	private int n, width, height, qty, std, channel, infmt;
 	private FrameGrabber fg;
 	private Hashtable<String,Control> controls; 
 	private Thread captureThread;
@@ -106,7 +106,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 	 * @param q the JPEG compression quality
 	 * @throws V4L4JException if any parameter if invalid
 	 */
-    public VideoViewer(String dev, int w, int h, int s, int c, int q) throws V4L4JException{
+    public VideoViewer(String dev, int w, int h, int s, int c, int q, int inFmt) throws V4L4JException{
     	vd = new VideoDevice(dev);
 		fg = null;
 		width = w;
@@ -118,6 +118,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
         initGUI();
         stop = false;
         captureThread = null;
+        infmt=inFmt;
         
     }
     
@@ -260,13 +261,15 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 		} catch (V4L4JException e) {
 			e.printStackTrace();
 			System.out.println("Failed to capture image");
+			vd.releaseFrameGrabber();
 		}
     }
     
     private void startCapture(){
     	if(captureThread == null){
     		try {
-    			fg = vd.getJPEGFrameGrabber(width, height, channel, std, qty);
+    			fg = vd.getJPEGFrameGrabber(width, height, channel, std, qty, 
+    					vd.getDeviceInfo().getFormatList().getFormat(infmt));
     			video.setPreferredSize(new Dimension(fg.getWidth(), fg.getHeight()));
     			controlScrollPane.setPreferredSize(new Dimension(300, fg.getHeight()));
     			try {
@@ -284,13 +287,14 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 				fg.startCapture();
 			} catch (V4L4JException e) {
 				System.out.println("Failed to start capture");
-				JOptionPane.showMessageDialog(null, "Failed to start capture:\n"+e.getMessage());
+				JOptionPane.showMessageDialog(f, "Failed to start capture:\n"+e.getMessage());
 				e.printStackTrace();
 				return;
 			}
 			stop = false;
 	    	captureThread = new Thread(this, "Capture Thread");
 	        captureThread.start();
+	        System.out.println("Image format: "+fg.getImageFormat().getName());
     	}
     }
     
@@ -325,7 +329,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 	public static void main(String[] args) throws V4L4JException, IOException {
 
 		String dev;
-		int w, h, std, channel, qty;
+		int w, h, std, channel, inFmt;
 
 		//Check if we have the required args
 		//otherwise put sensible values in
@@ -354,13 +358,14 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 		} catch (Exception e){
 			channel = 0;
 		}
+		
 		try {
-			qty = Integer.parseInt(args[5]);
+			inFmt = Integer.parseInt(args[5]);
 		} catch (Exception e){
-			qty = 80;
+			inFmt = -1;
 		}
 		
-		new VideoViewer(dev,w,h,std,channel,qty);
+		new VideoViewer(dev,w,h,std,channel,80, inFmt);
 	}
 	
 	public interface ControlGUI{
@@ -450,7 +455,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 		@Override
 		public void stateChanged(ChangeEvent e) {
 			 JSlider source = (JSlider)e.getSource();
-			 //if (!source.getValueIsAdjusting()) {
+			 if (!source.getValueIsAdjusting()) {
 				 int v = 0;
 				 try {
 					v = ctrl.setValue(source.getValue());
@@ -463,7 +468,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 					source.setValue(v);
 					source.addChangeListener(this);
 				}
-			 //}			
+			}			
 		}
 	}
 	

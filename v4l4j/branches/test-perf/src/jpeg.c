@@ -82,6 +82,7 @@ static void jpeg_encode_yuv420(struct v4l4j_device *d, void *src, void *dst) {
 	JSAMPROW y[16],cb[16],cr[16];
 	JSAMPARRAY data[3];
 	int i, line, rgb_size, width, height;
+	struct jpeg_compress_struct *cinfo = d->j->cinfo;
 	width = d->vdev->capture->width;
 	height = d->vdev->capture->height ;
 
@@ -93,10 +94,10 @@ static void jpeg_encode_yuv420(struct v4l4j_device *d, void *src, void *dst) {
 	rgb_size = width * height * 3;
 	d->j->destmgr->next_output_byte = dst;
 	d->j->destmgr->free_in_buffer = rgb_size;
-	jpeg_set_quality(d->j->cinfo,d->j->jpeg_quality,TRUE);
+	jpeg_set_quality(cinfo,d->j->jpeg_quality,TRUE);
 
 	dprint(LOG_JPEG, "[JPEG] Starting compression (%d bytes)\n", d->vdev->capture->imagesize);
-	jpeg_start_compress( d->j->cinfo, TRUE );
+	jpeg_start_compress(cinfo, TRUE );
 	for (line=0; line<height; line+=16) {
 		for (i=0; i<16; i++) {
 			y[i] = (unsigned char *)src + width*(i+line);
@@ -105,10 +106,10 @@ static void jpeg_encode_yuv420(struct v4l4j_device *d, void *src, void *dst) {
 				cr[i/2] = (unsigned char *)src + width*height + width*height/4 + width/2*((i+line)/2);
 			}
 		}
-		jpeg_write_raw_data(d->j->cinfo, data, 16);
+		jpeg_write_raw_data(cinfo, data, 16);
 	}
-	jpeg_finish_compress(d->j->cinfo);
-	d->len = rgb_size - d->j->cinfo->dest->free_in_buffer;
+	jpeg_finish_compress(cinfo);
+	d->len = rgb_size - cinfo->dest->free_in_buffer;
 	dprint(LOG_JPEG, "[JPEG] Finished compression (%d bytes)\n", d->len);
 }
 
@@ -304,6 +305,62 @@ static void jpeg_encode_yvyu(struct v4l4j_device *d, void *source, void *dest){
 	dprint(LOG_JPEG, "[JPEG] Finished compression (%d bytes)\n", d->len);
 }
 
+/* Encodes a UYVY frame of width "width and height "height" at "src" straight
+ * into a JPEG frame at "dst" (must be allocated y caller). "len" is set to the
+ * length of the compressed JPEG frame. "j" contains the JPEG compressor and
+ * must be initialised correctly by the caller
+ */
+static void jpeg_encode_uyvy(struct v4l4j_device *d, void *source, void *dest){
+	struct jpeg_compress_struct *cinfo = d->j->cinfo;
+	JSAMPROW row[1] = {temp_buf};
+	int a=0, width = d->vdev->capture->width, height = d->vdev->capture->height, x, rgb_size;
+	unsigned char *src = source, *ptr, *dst = dest;
+
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+
+	//init JPEG dest mgr
+	rgb_size = width * height * 3;
+	d->j->destmgr->next_output_byte = dst;
+	d->j->destmgr->free_in_buffer = rgb_size;
+	jpeg_set_quality(cinfo, d->j->jpeg_quality,TRUE);
+
+	jpeg_start_compress(cinfo, TRUE );
+	dprint(LOG_JPEG, "[JPEG] Starting compression (%d bytes)\n", d->vdev->capture->imagesize);
+	while (cinfo->next_scanline < height) {
+		ptr = temp_buf;
+
+		for (x = 0; x < width; x++) {
+			int r, g, b;
+			int y, u, v;
+
+			if (!a)
+				y = src[1] << 8;
+			else
+				y = src[3] << 8;
+			u = src[0] - 128;
+			v = src[2] - 128;
+
+			r = (y + (359 * v)) >> 8;
+			g = (y - (88 * u) - (183 * v)) >> 8;
+			b = (y + (454 * u)) >> 8;
+
+			*(ptr++) = (r > 255) ? 255 : ((r < 0) ? 0 : r);
+			*(ptr++) = (g > 255) ? 255 : ((g < 0) ? 0 : g);
+			*(ptr++) = (b > 255) ? 255 : ((b < 0) ? 0 : b);
+
+			if (a++) {
+				a = 0;
+				src += 4;
+			}
+		}
+		jpeg_write_scanlines (cinfo, row, 1);
+	}
+
+	jpeg_finish_compress (cinfo);
+	d->len =  rgb_size - cinfo->dest->free_in_buffer;
+	dprint(LOG_JPEG, "[JPEG] Finished compression (%d bytes)\n", d->len);
+}
+
 /* Encodes a RGB32 frame of width "width and height "height" at "src" straight
  * into a JPEG frame at "dst" (must be allocated y caller). "len" is set to the
  * length of the compressed JPEG frame. "j" contains the JPEG compressor and
@@ -378,6 +435,43 @@ static void jpeg_encode_bgr24(struct v4l4j_device *d, void *source, void *dest){
 	dprint(LOG_JPEG, "[JPEG] Finished compression (%d bytes)\n", d->len);
 }
 
+/* Encodes a BGR32 frame of width "width and height "height" at "src" straight
+ * into a JPEG frame at "dst" (must be allocated y caller). "len" is set to the
+ * length of the compressed JPEG frame. "j" contains the JPEG compressor and
+ * must be initialised correctly by the caller
+ */
+static void jpeg_encode_bgr32(struct v4l4j_device *d, void *source, void *dest){
+	struct jpeg_compress_struct *cinfo = d->j->cinfo;
+	int width = d->vdev->capture->width, height = d->vdev->capture->height, x, rgb_size;
+	JSAMPROW row[1] = {temp_buf};
+	unsigned char *src = source, *ptr, *dst = dest;
+
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+
+	//init JPEG dest mgr
+	rgb_size = width * height * 3;
+	d->j->destmgr->next_output_byte = dst;
+	d->j->destmgr->free_in_buffer = rgb_size;
+	jpeg_set_quality(cinfo, d->j->jpeg_quality,TRUE);
+
+	jpeg_start_compress(cinfo, TRUE );
+	dprint(LOG_JPEG, "[JPEG] Starting compression (%d bytes)\n", d->vdev->capture->imagesize);
+	while (cinfo->next_scanline < height) {
+		ptr = temp_buf;
+			for (x = 0; x < width; x++) {
+				*(ptr++) = src[2];
+				*(ptr++) = src[1];
+				*(ptr++) = src[0];
+				src += 4;
+			}
+		jpeg_write_scanlines (cinfo, row, 1);
+	}
+
+	jpeg_finish_compress (cinfo);
+	d->len =  rgb_size - cinfo->dest->free_in_buffer;
+	dprint(LOG_JPEG, "[JPEG] Finished compression (%d bytes)\n", d->len);
+}
+
 
 int init_jpeg_compressor(struct v4l4j_device *d, int q){
 	dprint(LOG_JPEG, "[JPEG] Initialising the JPEG compressor\n");
@@ -385,8 +479,9 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 
 	if(d->vdev->capture->palette == YUV420 || d->vdev->capture->palette == YUYV ||
 			d->vdev->capture->palette == YVYU || d->vdev->capture->palette == RGB24 ||
-			d->vdev->capture->palette == RGB32 || d->vdev->capture->palette == BGR24) {
-		//JPEG param common to YUV420, YUYV, YVYU, RGB24, RGB32 and BGR24
+			d->vdev->capture->palette == RGB32 || d->vdev->capture->palette == BGR24 ||
+			d->vdev->capture->palette == UYVY || d->vdev->capture->palette == BGR32) {
+		//JPEG param common to YUV420, YUYV, YVYU, RGB24, RGB32, BGR24, UYVY & BGR32
 		XMALLOC(d->j->cinfo, struct jpeg_compress_struct *, sizeof(struct jpeg_compress_struct));
 		XMALLOC(d->j->jerr, struct jpeg_error_mgr *, sizeof(struct jpeg_error_mgr));
 		XMALLOC(d->j->destmgr, struct jpeg_destination_mgr *, sizeof(struct jpeg_destination_mgr));
@@ -439,6 +534,14 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 				XMALLOC(temp_buf, unsigned char *, (d->vdev->capture->width*3));
 				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for BGR24\n");
 				d->convert = jpeg_encode_bgr24;
+			} else if (d->vdev->capture->palette == UYVY) {
+				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for UYVY\n");
+				d->convert = jpeg_encode_uyvy;
+				XMALLOC(temp_buf, unsigned char *, (d->vdev->capture->width*3));
+			} else if (d->vdev->capture->palette == BGR32){
+				XMALLOC(temp_buf, unsigned char *, (d->vdev->capture->width*3));
+				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for BGR32\n");
+				d->convert = jpeg_encode_bgr32;
 			}
 		}
 		jpeg_set_quality(d->j->cinfo, d->j->jpeg_quality,TRUE);
@@ -449,7 +552,7 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 		dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for JPEG\n");
 		d->convert = jpeg_encode_jpeg;
 	} else {
-		dprint(LOG_JPEG, "[JPEG] Palette not supported %d\n", d->vdev->capture->palette);
+		dprint(LOG_JPEG, "[JPEG] Image format %d cannot be JPEG encoded\n", d->vdev->capture->palette);
 		return -1;
 	}
 	return 0;
@@ -459,13 +562,15 @@ void destroy_jpeg_compressor(struct v4l4j_device *d){
 	dprint(LOG_JPEG, "[JPEG] Destroying JPEG compressor\n");
 	if(d->vdev->capture->palette == YUV420 || d->vdev->capture->palette == YUYV ||
 			d->vdev->capture->palette == YVYU || d->vdev->capture->palette == RGB24 ||
-			d->vdev->capture->palette == RGB32 || d->vdev->capture->palette == BGR24) {
+			d->vdev->capture->palette == RGB32 || d->vdev->capture->palette == BGR24 ||
+			d->vdev->capture->palette == UYVY || d->vdev->capture->palette == BGR32) {
 		jpeg_destroy_compress(d->j->cinfo);
 		XFREE(d->j->cinfo);
 		XFREE(d->j->jerr);
 		XFREE(d->j->destmgr);
 		if(d->vdev->capture->palette == YUYV || d->vdev->capture->palette == YVYU ||
-				d->vdev->capture->palette == RGB32 || d->vdev->capture->palette == BGR24)
+				d->vdev->capture->palette == RGB32 || d->vdev->capture->palette == BGR24 ||
+				d->vdev->capture->palette == UYVY || d->vdev->capture->palette == BGR32)
 				XFREE(temp_buf);
 	}
 	XFREE(d->j);

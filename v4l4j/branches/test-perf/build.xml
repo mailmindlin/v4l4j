@@ -142,8 +142,8 @@
 			<arg value="${test.height}" /> <!-- height -->
 			<arg value="${test.standard}" /> <!-- standard -->
 			<arg value="${test.channel}" /> <!-- channel -->
-			<arg value="${test.qty}" /> <!-- JPEG quality factor -->
-			<arg value="${test.format}" /> <!-- Image format -->
+			<arg value="${test.inFormat}" /> <!-- capture image format -->
+			<arg value="${test.outFormat}" /> <!-- output image format -->
 		</java>
 	</target>
 	
@@ -155,7 +155,7 @@
 			<arg value="${test.height}" /> <!-- height -->
 			<arg value="${test.standard}" /> <!-- standard -->
 			<arg value="${test.channel}" /> <!-- channel -->
-			<arg value="${test.qty}" /> <!-- JPEG quality factor -->
+                        <arg value="${test.inFormat}" /> <!-- capture image format -->
 		</java>
 	</target>
 	
@@ -177,7 +177,6 @@
 			<jvmarg value="-Dtest.height=${test.height}" /> 
 			<jvmarg value="-Dtest.standard=${test.standard}" /> 
 			<jvmarg value="-Dtest.channel=${test.channel}" />
-			<jvmarg value="-Dtest.qty=${test.qty}" />
 			<test name="${test.class.name.single}" />
 			<formatter type="plain" usefile="false" />
 			<classpath refid="test.classpath" />
