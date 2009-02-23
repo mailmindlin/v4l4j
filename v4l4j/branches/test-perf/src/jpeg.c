@@ -630,17 +630,17 @@ void destroy_jpeg_compressor(struct v4l4j_device *d){
 //	struct timeval start, now;
 //	d.vdev=&v;
 //	v.capture = &c;
-//	c.palette = RGB32;
+//	c.palette = RGB24;
 //	c.width = 640;
 //	c.height = 480;
-//	c.imagesize = 640*480*4;
+//	c.imagesize = 640*480*3;
 //	init_jpeg_compressor( &d, 80);
 //	jpeg = (void *) malloc(c.imagesize);
 //	data = (void *) malloc(c.imagesize);
 //	gettimeofday(&start, NULL);
 //	while(nb++<(argc-1)){
 //		read_frame(data, c.imagesize, argv[nb]);
-//		jpeg_encode_rgb32(&d, data, jpeg);
+//		jpeg_encode_rgb24(&d, data, jpeg);
 //		write_frame(jpeg, d.len, argv[nb]);
 //	}
 //	gettimeofday(&now, NULL);

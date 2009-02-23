@@ -87,11 +87,10 @@ public class RGBFrameGrabber extends FrameGrabber {
 	 * @param ch the input index, as returned by <code>InputInfo.getIndex()</code>
 	 * @param std the video standard, as returned by <code>InputInfo.getSupportedStandards()</code>
 	 * (see V4L4JConstants)
-	 * @param q the JPEG image quality (the higher, the better the quality)
 	 * @param imf the image format frame should be captured in or null to let v4l4j choose
 	 * an appropriate format. 
 	 */
-	RGBFrameGrabber(long o, int w, int h, int ch, int std, int q, Tuner t, ImageFormat imf) throws V4L4JException{
+	RGBFrameGrabber(long o, int w, int h, int ch, int std, Tuner t, ImageFormat imf) throws V4L4JException{
 		super(o,w,h,ch,std, t , imf, RGB24_GRABBER);	
 	}
 	
