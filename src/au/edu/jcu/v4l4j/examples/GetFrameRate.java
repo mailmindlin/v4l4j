@@ -24,6 +24,7 @@
 
 package au.edu.jcu.v4l4j.examples;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Vector;
@@ -39,7 +40,7 @@ public class GetFrameRate {
 	public static void main(String[] args) throws V4L4JException, IOException {
 		List<Control> ctrls;
 		String dev;
-		int w, h, std, channel, inFmt, outFmt, captureLength = 10;
+		int w, h, std, channel, inFmt, outFmt, captureLength = 1;
 		//Check if we have the required args
 		//otherwise put sensible values in
 		try {
@@ -107,7 +108,7 @@ public class GetFrameRate {
 				else 
 					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getFormat(inFmt).getName());
 				
-				f= vd.getRGBFrameGrabber(w, h, channel, std, 80,vd.getDeviceInfo().getFormatList().getFormat(inFmt));
+				f= vd.getRGBFrameGrabber(w, h, channel, std,vd.getDeviceInfo().getFormatList().getFormat(inFmt));
 				System.out.println("Output image format: RGB");
 			} else {
 				if(inFmt==-1){
@@ -158,10 +159,10 @@ public class GetFrameRate {
 			System.out.println("Starting test capture at "+f.getWidth()+"x"+f.getHeight()+" for "+captureLength+" seconds");
 			now=start=System.currentTimeMillis();
 			while(now<start+(captureLength*1000)){
-				f.getFrame();
+				System.out.println("Frame size "+ f.getFrame().limit());
 				//Uncomment the following to dump the captured frame to a jpeg file
 				//also import java.io.FileOutputStream 
-				//new FileOutputStream("file"+n+".jpg").getChannel().write(f.getFrame());
+				new FileOutputStream("file"+n+".raw").getChannel().write(f.getFrame());
 				n++;
 				now=System.currentTimeMillis();
 			}

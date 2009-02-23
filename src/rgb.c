@@ -292,9 +292,9 @@ void destroy_rgb_converter(struct v4l4j_device *d){
 
 
 //
-//gcc -I ../libv4l rgb.c -ggdb -DDEBUG -ljpeg -o rgb
+//gcc -I ../libv4l -c jidctflt.c  -ggdb -DDEBUG &&  gcc -I ../libv4l -c rgb.c -ggdb -DDEBUG && gcc -I ../libv4l -c tinyjpeg.c -ggdb -DDEBUG && gcc rgb.o tinyjpeg.o  jidctflt.o -o rgb
 //
-//Usage: ./jpeg *.raw
+//Usage: ./rgb *.raw
 
 
 //#include <unistd.h>
@@ -309,7 +309,9 @@ void destroy_rgb_converter(struct v4l4j_device *d){
 //		return NULL;
 //	}
 //
-//	while((l += read(f, (d+l), 65536))<s);
+//	while((l += read(f, (d+l), 65536))<s){
+//		printf("Read %d\n",l);
+//	}
 //
 //
 //	close(f);
@@ -347,24 +349,24 @@ void destroy_rgb_converter(struct v4l4j_device *d){
 //	struct timeval start, now;
 //	d.vdev=&v;
 //	v.capture = &c;
-//	c.palette = RGB32;
+//	c.palette = YUYV;
 //	c.width = 640;
 //	c.height = 480;
-//	c.imagesize = 640*480*4;
-//	init_jpeg_compressor( &d, 80);
-//	jpeg = (void *) malloc(c.imagesize);
+//	c.imagesize = 640*480*2;
+//	init_rgb_converter( &d);
+//	jpeg = (void *) malloc(640*480*3);
 //	data = (void *) malloc(c.imagesize);
 //	gettimeofday(&start, NULL);
 //	while(nb++<(argc-1)){
 //		read_frame(data, c.imagesize, argv[nb]);
-//		jpeg_encode_rgb32(&d, data, jpeg);
+//		rgb24_encode_yuyv(&d, data, jpeg);
 //		write_frame(jpeg, d.len, argv[nb]);
 //	}
 //	gettimeofday(&now, NULL);
 //	printf("fps: %.1f\n", (nb/((now.tv_sec - start.tv_sec) + ((float) (now.tv_usec - start.tv_usec)/1000000))));
 //	free(data);
 //	free(jpeg);
-//	destroy_jpeg_compressor(&d);
+//	destroy_rgb_converter(&d);
 //	return 0;
 //}
 
