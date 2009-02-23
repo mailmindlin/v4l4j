@@ -524,7 +524,7 @@ public class VideoDevice {
 	 * author know about it so RGB24-encoding can be added. See the README file
 	 * on how to submit reports.</b>  
 	 */
-	public RGBFrameGrabber getRGBFrameGrabber(int w, int h, int input, int std, int q, ImageFormat imf) throws V4L4JException{
+	public RGBFrameGrabber getRGBFrameGrabber(int w, int h, int input, int std, ImageFormat imf) throws V4L4JException{
 		if(!supportRGB24)
 			throw new ImageFormatException("This video device does not support RGB-encoding of its frames.");
 		
@@ -540,7 +540,7 @@ public class VideoDevice {
 		synchronized(this){
 			if(fg==null) {
 				state.get();
-				fg = new RGBFrameGrabber(v4l4jObject, w, h, input, std, q, findTuner(input), imf);
+				fg = new RGBFrameGrabber(v4l4jObject, w, h, input, std,findTuner(input), imf);
 				try {
 					fg.init();
 				} catch (V4L4JException ve){
@@ -607,7 +607,7 @@ public class VideoDevice {
 	 * on how to submit reports.</b>  
 	 */
 	public RGBFrameGrabber getRGBFrameGrabber(int w, int h, int input, int std, int q) throws V4L4JException{
-		return getRGBFrameGrabber(w, h, input, std, q, null);
+		return getRGBFrameGrabber(w, h, input, std, null);
 	}
 	
 	/**

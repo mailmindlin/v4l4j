@@ -1,32 +1,11 @@
-/*
-* Copyright (C) 2007-2008 Gilles Gigan (gilles.gigan@gmail.com)
-* eResearch Centre, James Cook University (eresearch.jcu.edu.au)
-*
-* This program was developed as part of the ARCHER project
-* (Australian Research Enabling Environment) funded by a   
-* Systemic Infrastructure Initiative (SII) grant and supported by the Australian
-* Department of Innovation, Industry, Science and Research
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public  License as published by the
-* Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  
-* See the GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
-
 package au.edu.jcu.v4l4j.examples;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.GridLayout;
+import java.awt.Transparency;
+import java.awt.color.ColorSpace;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -35,6 +14,13 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.ComponentColorModel;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferByte;
+import java.awt.image.Raster;
+import java.awt.image.WritableRaster;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Hashtable;
@@ -69,15 +55,7 @@ import au.edu.jcu.v4l4j.exceptions.ControlException;
 import au.edu.jcu.v4l4j.exceptions.NoTunerException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
-/**
- * Objects of this class create a graphical interface to capture frames 
- * from a video device and display it. The interface also gives access to the 
- * video controls.
- * 
- * @author gilles
- *
- */
-public class VideoViewer extends WindowAdapter implements Runnable{
+public class RGBVideoViewer  extends WindowAdapter implements Runnable{
 	private JLabel video, fps, freq;
 	private JFrame f;
 	private JPanel controlPanel, captureButtons;
@@ -88,7 +66,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 	private Tuner tuner;
 	private TunerInfo tinfo;
 	private long start = 0;
-	private int n, width, height, qty, std, channel, infmt;
+	private int n, width, height, std, channel, infmt;
 	private FrameGrabber fg;
 	private Hashtable<String,Control> controls; 
 	private Thread captureThread;
@@ -106,14 +84,13 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 	 * @param q the JPEG compression quality
 	 * @throws V4L4JException if any parameter if invalid
 	 */
-    public VideoViewer(String dev, int w, int h, int s, int c, int q, int inFmt) throws V4L4JException{
+    public RGBVideoViewer(String dev, int w, int h, int s, int c, int inFmt) throws V4L4JException{
     	vd = new VideoDevice(dev);
 		fg = null;
 		width = w;
 		height = h;
 		std = s;
 		channel = c;
-		qty = q;
     	controls = vd.getControlList().getTable();
         initGUI();
         stop = false;
@@ -232,7 +209,17 @@ public class VideoViewer extends WindowAdapter implements Runnable{
      * @param b
      */
     public void setImage(byte[] b) {
-    	video.setIcon(new ImageIcon(b));
+    	//video.setIcon(new ImageIcon(b));
+    	DataBuffer db = new DataBufferByte(b,b.length);
+        WritableRaster raster = Raster.createInterleavedRaster(db, width,
+        		height, 3 * width, 3, new int[]{0, 1, 2},null);
+        ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+        ColorModel cm = new ComponentColorModel(cs,false,false,Transparency.OPAQUE,
+ DataBuffer.TYPE_BYTE);
+        BufferedImage bi = new BufferedImage(cm,raster,false,null);
+
+        Graphics g = video.getGraphics();
+        g.drawImage(bi, 0, 0, width, height, null);
     	
     	// Computes the frame rate
     	if(start==0)
@@ -267,8 +254,16 @@ public class VideoViewer extends WindowAdapter implements Runnable{
     
     private void startCapture(){
     	if(captureThread == null){
+    		if(!vd.supportRGBConversion()){
+    			JOptionPane.showMessageDialog(f, "Image from this video device "
+    					+ "cannot be converted to RGB24. Please let the author"
+    					+ " about this, so support for your device can be added"
+    					+ " to v4l4j.");
+    			return;
+    		}
+    			
     		try {
-    			fg = vd.getJPEGFrameGrabber(width, height, channel, std, qty, 
+    			fg = vd.getRGBFrameGrabber(width, height, channel,std, 
     					vd.getDeviceInfo().getFormatList().getFormat(infmt));
     			video.setPreferredSize(new Dimension(fg.getWidth(), fg.getHeight()));
     			controlScrollPane.setPreferredSize(new Dimension(300, fg.getHeight()));
@@ -365,7 +360,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 			inFmt = -1;
 		}
 		
-		new VideoViewer(dev,w,h,std,channel,80, inFmt);
+		new RGBVideoViewer(dev,w,h,std,channel,inFmt);
 	}
 	
 	public interface ControlGUI{
