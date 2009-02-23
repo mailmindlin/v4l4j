@@ -73,9 +73,9 @@ public class GetFrameRate {
 			inFmt = -1;
 		}
 		
-		//RAW: 0 , JPEG:1
+		//RAW: 0 , JPEG:1, 2: RGB
 		try {
-			outFmt = Integer.parseInt(args[6])>=1?1:0;
+			outFmt = Integer.parseInt(args[6]);
 		} catch (Exception e){
 			outFmt = 0;
 		}
@@ -93,7 +93,7 @@ public class GetFrameRate {
 
 		try {
 			vd = new VideoDevice(dev);
-			if(vd.canJPEGEncode() && outFmt==1) {
+			if(outFmt==1 && vd.supportJPEGConversion()) {
 				if(vd.getDeviceInfo().getFormatList().getFormat(inFmt)==null)
 					System.out.println("Capture format "+inFmt+" doesnt exist, trying to find a suitable one");
 				else 
@@ -101,6 +101,14 @@ public class GetFrameRate {
 				
 				f= vd.getJPEGFrameGrabber(w, h, channel, std, 80,vd.getDeviceInfo().getFormatList().getFormat(inFmt));
 				System.out.println("Output image format: JPEG");
+			} else if(outFmt==2 && vd.supportRGBConversion()) {
+				if(vd.getDeviceInfo().getFormatList().getFormat(inFmt)==null)
+					System.out.println("Capture format "+inFmt+" doesnt exist, trying to find a suitable one");
+				else 
+					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getFormat(inFmt).getName());
+				
+				f= vd.getRGBFrameGrabber(w, h, channel, std, 80,vd.getDeviceInfo().getFormatList().getFormat(inFmt));
+				System.out.println("Output image format: RGB");
 			} else {
 				if(inFmt==-1){
 					System.out.println("No capture format specified, v4l4j will pick the first one");
