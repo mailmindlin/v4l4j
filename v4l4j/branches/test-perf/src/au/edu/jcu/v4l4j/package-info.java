@@ -79,7 +79,7 @@
  * <ul>
  * <li>JPEG format capture availability depends on what native formats are available.
  * Most (but not all) native formats can be JPEG-encoded. Calling 
- * {@link au.edu.jcu.v4l4j.VideoDevice#canJPEGEncode()} will tell whether it is
+ * {@link au.edu.jcu.v4l4j.VideoDevice#supportJPEGConversion()} will tell whether it is
  * available or not. 
  * <li>Native format capture is always available regardless of the video device. 
  * The set of supported {@link au.edu.jcu.v4l4j.ImageFormat}s can be obtained through 

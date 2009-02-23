@@ -35,6 +35,12 @@ public class ImageFormatList {
 	 */
 	private static List<ImageFormat> knownJPEGEncFormats;
 	
+	/**
+	 * this is a static list of image formats supported by v4l4j
+	 * that CAN be converted to RGB24
+	 */
+	private static List<ImageFormat> knownRGBConvFormats;
+	
 	static {
 		try {
 			System.loadLibrary("v4l4j");
@@ -56,15 +62,24 @@ public class ImageFormatList {
 	private List<ImageFormat> JPEGformats;
 	
 	/**
+	 * The image formats in this list that can be converted to rgb24
+	 */
+	private List<ImageFormat> RGBformats;
+	
+	/**
 	 * This method builds a list of {@link ImageFormat}s.
 	 * @param l a list of <code>ImageFormat</code>s.
 	 */
 	ImageFormatList(List<ImageFormat> l){
 		formats = new Vector<ImageFormat>(l);
 		JPEGformats = new Vector<ImageFormat>();
-		for(ImageFormat f:formats)
+		RGBformats = new Vector<ImageFormat>();
+		for(ImageFormat f:formats){
 			if(knownJPEGEncFormats.contains(f))
 				JPEGformats.add(f);
+			if(knownRGBConvFormats.contains(f))
+				RGBformats.add(f);
+		}
 	}
 	
 	/**
@@ -112,13 +127,23 @@ public class ImageFormatList {
 	 */
 	public List<ImageFormat> getJPEGEncodableFormats(){
 		return new Vector<ImageFormat>(JPEGformats);
+	}
+	
+	/**
+	 * This method returns a list of {@link ImageFormat}s contained
+	 * in this object, that can be converted to RGB24 by v4l4j.
+	 * @return a list of {@link ImageFormat}s contained
+	 * in this object, that can be converted to RGB by v4l4j.
+	 */
+	public List<ImageFormat> getRGBEncodableFormats(){
+		return new Vector<ImageFormat>(RGBformats);
 	}	
 	
 	/**
 	 * This methods return a list of all the <code>ImageFormat</code>
 	 * known to v4l4j that can be JPEG-encoded.
 	 * @return a list of all the <code>ImageFormat</code> known to v4l4j
-	 * that can be JPEg-encoded
+	 * that can be JPEG-encoded
 	 */
 	public static List<ImageFormat> getKnownJPEGEncodableFormats(){
 		return new Vector<ImageFormat>(knownJPEGEncFormats);
@@ -131,6 +156,16 @@ public class ImageFormatList {
 	 */
 	public static List<ImageFormat> getKnownFormats(){
 		return new Vector<ImageFormat>(knownFormats);
+	}
+	
+	/**
+	 * This methods return a list of all the <code>ImageFormat</code>
+	 * known to v4l4j that can be converted to RGB24.
+	 * @return a list of all the <code>ImageFormat</code> known to v4l4j
+	 * that can be converted to RGB24.
+	 */
+	public static List<ImageFormat> getKnownRGBEncodableFormats(){
+		return new Vector<ImageFormat>(knownRGBConvFormats);
 	}
 }
 

@@ -29,6 +29,7 @@
 #include <jpeglib.h>
 
 #include "libv4l.h"
+#include "tinyjpeg.h"
 
 struct v4l4j_device;
 
@@ -40,7 +41,8 @@ struct jpeg_data {
 };
 
 struct rgb_data {
-
+	struct jdec_private * jdec;
+	int nb_pixel;
 };
 
 enum output_format {
@@ -51,7 +53,7 @@ enum output_format {
 
 
 struct v4l4j_device {
-	void (*convert) (struct v4l4j_device *, void *, void *);
+	void (*convert) (struct v4l4j_device *, unsigned char *, unsigned char *);
 	struct video_device *vdev;	//the libv4l struct
 	union {
 		struct jpeg_data *j;	//the converter's data
@@ -66,8 +68,9 @@ struct v4l4j_device {
 
 #define JPEG_SUPPORTED_FORMATS		{JPEG, MJPEG, YUV420, YUYV, RGB24, RGB32, BGR24, YVYU, UYVY, BGR32}
 #define NB_JPEG_SUPPORTED_FORMATS	10
-//#define JPEG_SUPPORTED_FORMATS		{RGB32}
-//#define NB_JPEG_SUPPORTED_FORMATS	1
+
+#define RGB24_SUPPORTED_FORMATS		{RGB24, BGR24, BGR32, RGB32, YUYV, UYVY, YVYU, YUV420, JPEG, MJPEG}
+#define NB_RGB24_SUPPORTED_FORMATS	10
 
 #define BYTEBUFER_CLASS			"java/nio/ByteBuffer"
 #define V4L4J_PACKAGE			"au/edu/jcu/v4l4j/"

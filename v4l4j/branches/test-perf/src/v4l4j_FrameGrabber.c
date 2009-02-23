@@ -33,6 +33,7 @@
 #include "libv4l-err.h"
 #include "jpeg.h"
 #include "palettes.h"
+#include "rgb.h"
 
 
 #define INCR_BUF_ID(i, max)		do { (i) = ((i) >= (max)) ? 0 : ((i) + 1); } while(0)
@@ -103,13 +104,21 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 /*
  * returns an appropriate size for the ByteBuffers holding captured frames
  */
-static int get_buffer_length(int width, int height, int driver_size, int palette){
-	//shall we trust what the driver says ?
-	dprint(LOG_V4L4J, "[V4L4J] Using ByteBuffer of size %d\n", driver_size );
-	return driver_size;
+static int get_buffer_length(struct v4l4j_device *d){
+	if(d->output_fmt==OUTPUT_RAW || d->output_fmt==OUTPUT_JPG) {
+		//shall we trust what the driver says ?
+		dprint(LOG_V4L4J, "[V4L4J] OUTPUT: RAW / JPEG - Using ByteBuffer of size %d\n", d->vdev->capture->imagesize );
+		return d->vdev->capture->imagesize;
+	} else if(d->output_fmt==OUTPUT_RGB24) {
+		//RGB24 means w * h * 3
+		dprint(LOG_V4L4J, "[V4L4J] OUTPUT: RGB24 - Using ByteBuffer of size %d\n", d->vdev->capture->width * d->vdev->capture->height * 3);
+		return d->vdev->capture->width * d->vdev->capture->height * 3;
+	}
+	return 0;
 }
 
-static inline void raw_copy(struct v4l4j_device *d, void *s, void *dst){
+
+static inline void raw_copy(struct v4l4j_device *d, unsigned char *s, unsigned char *dst){
 	memcpy(dst, s, d->capture_len);
 }
 
@@ -123,6 +132,11 @@ static int init_format_converter(struct v4l4j_device *d){
 		dprint(LOG_V4L4J, "[V4L4J] Initialising the converter to RAW\n");
 		d->len = d->capture_len;
 		d->convert = raw_copy;
+	} else if(d->output_fmt==OUTPUT_RGB24){
+		dprint(LOG_V4L4J, "[V4L4J] Initialising the converter to RGB\n");
+		ret = init_rgb_converter(d);
+		if(ret!=0)
+			dprint(LOG_V4L4J, "[V4L4J] Error initialising the RGB converter\n");
 	} else {
 		dprint(LOG_V4L4J, "[V4L4J] unknown output format\n");
 		ret = -1;
@@ -131,9 +145,10 @@ static int init_format_converter(struct v4l4j_device *d){
 }
 
 static void release_format_converter(struct v4l4j_device *d){
-	if(d->output_fmt==OUTPUT_JPG){
+	if(d->output_fmt==OUTPUT_JPG)
 		destroy_jpeg_compressor(d);
-	}
+	else if(d->output_fmt == OUTPUT_RGB24)
+		destroy_rgb_converter(d);
 }
 
 /*
@@ -151,6 +166,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(JNIEnv 
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 	struct capture_device *c;
 	int jpeg_fmts[NB_JPEG_SUPPORTED_FORMATS] = JPEG_SUPPORTED_FORMATS;
+	int rgb_fmts[NB_RGB24_SUPPORTED_FORMATS] = RGB24_SUPPORTED_FORMATS;
 	int *fmts, nb_fmts, copy_fmt = fmt;
 
 	/*
@@ -183,10 +199,21 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(JNIEnv 
 			nb_fmts = 1;
 		}
 	} else if(output==OUTPUT_RAW) {
-		dprint(LOG_LIBV4L, "[V4L4J] Setting output to RAW  - Format: %d)'\n",fmt);
+		dprint(LOG_LIBV4L, "[V4L4J] Setting output to RAW  - Format: %d\n",fmt);
 		fmts = &copy_fmt;
 		nb_fmts = 1;
-	} else {
+	} else if(output==OUTPUT_RGB24) {
+		dprint(LOG_LIBV4L, "[V4L4J] Setting output to RGB\n");
+		if(fmt==-1){
+			dprint(LOG_LIBV4L, "[V4L4J] Pick first image format that can be RGB encoded\n");
+			fmts = rgb_fmts;
+			nb_fmts = NB_RGB24_SUPPORTED_FORMATS;
+		} else {
+			dprint(LOG_LIBV4L, "[V4L4J] Will try given image format: %d\n", fmt);
+			fmts = &copy_fmt;
+			nb_fmts = 1;
+		}
+	}else {
 		dprint(LOG_V4L4J, "[V4L4J] unknown output type\n");
 		THROW_EXCEPTION(e, INIT_EXCP, "Unknown output type %d", output);
 		return 0;
@@ -223,7 +250,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(JNIEnv 
 	}
 
 	//The length of the buffers which will hold the last captured frame
-	buf_len = get_buffer_length(c->width, c->height, c->imagesize, c->palette);
+	buf_len = get_buffer_length(d);
 
 	//Create the ByteBuffer array
 	dprint(LOG_V4L4J, "[V4L4J] Creating the ByteBuffer array[%d]\n",c->mmap->buffer_nr);

@@ -81,7 +81,7 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * to be encoded in JPEG format. If the video source is not capable of handing out images in either of these
  * formats, then no <code>JPEGFrameGrabber</code> can be created.</li>
  * </ul>
- * To check whether JPEG-encoding is supported by a <code>VideoSource</code> object, call its {@link #canJPEGEncode()} method.
+ * To check whether JPEG-encoding is supported by a <code>VideoSource</code> object, call its {@link #supportJPEGConversion()} method.
  * <b>Similarly to <code>VideoDevice</code> objects, once the frame grabber is no longer used, its resources must be released.</b>
  * This is achieved by calling the {@link #releaseFrameGrabber()} method on the <code>VideoDevice</code> to which 
  * the frame grabber belongs. See the {@link FrameGrabber} class for more information on how to capture frames.
@@ -187,7 +187,7 @@ public class VideoDevice {
 	/**
 	 * Whether or not frames captured from this video device can be JPEG-encoded 
 	 */
-	private boolean supportJPEG;
+	private boolean supportJPEG, supportRGB24;
 	
 	/**
 	 * JNI returns a long (which is really a pointer) when a device is allocated for use
@@ -221,6 +221,7 @@ public class VideoDevice {
 		deviceInfo = new DeviceInfo(v4l4jObject, deviceFile);
 		
 		supportJPEG = deviceInfo.getFormatList().getJPEGEncodableFormats().size()==0?false:true;
+		supportRGB24 = deviceInfo.getFormatList().getRGBEncodableFormats().size()==0?false:true;
 		
 		//initialise TunerList
 		Vector<Tuner> v= new Vector<Tuner>();
@@ -323,8 +324,8 @@ public class VideoDevice {
 	 * in JPEG, then this method returns true, and calls to
 	 * {@link #getJPEGFrameGrabber(int, int, int, int, int)} and 
 	 * {@link #getJPEGFrameGrabber(int, int, int, int, int, ImageFormat))} will succeed.
-	 * If this method returns false,no <code>JPEGFrameGrabber</code>s can be instantiated and  
-	 * the only alternative is to use a raw frame grabber, 
+	 * If this method returns false,no <code>JPEGFrameGrabber</code>s can be instantiated.  
+	 * One alternative is to use a raw frame grabber, 
 	 * returned by {@link #getRawFrameGrabber(int, int, int, int)} or
 	 * {@link #getRawFrameGrabber(int, int, int, int, ImageFormat)}.<br>
 	 * <b>If JPEGFrameGrabbers cannot be created for your video device, please let the
@@ -332,8 +333,27 @@ public class VideoDevice {
 	 * on how to submit reports.</b>  
 	 * @return whether or not frames captured by this video device can be JPEG-encoded.
 	 */
-	public boolean canJPEGEncode(){
+	public boolean supportJPEGConversion(){
 		return supportJPEG;
+	}
+	
+	/**
+	 * This method specifies whether frames captured from this video device can be converted to RGB24 before
+	 * being handed out. If this video device can capture frames in a native format that can be converted
+	 * to RGB24, then this method returns true, and calls to
+	 * {@link #getRGBFrameGrabber(int, int, int, int, int)} and 
+	 * {@link #getRGBFrameGrabber(int, int, int, int, int, ImageFormat))} will succeed.
+	 * If this method returns false,no <code>RGBFrameGrabber</code>s can be instantiated.  
+	 * One alternative is to use a raw frame grabber, 
+	 * returned by {@link #getRawFrameGrabber(int, int, int, int)} or
+	 * {@link #getRawFrameGrabber(int, int, int, int, ImageFormat)}.<br>
+	 * <b>If RGBFrameGrabbers cannot be created for your video device, please let the
+	 * author know about it so RGB24-encoding can be added. See the README file
+	 * on how to submit reports.</b>  
+	 * @return whether or not frames captured by this video device can be JPEG-encoded.
+	 */
+	public boolean supportRGBConversion(){
+		return supportRGB24;
 	}
 
 	/**
@@ -341,7 +361,7 @@ public class VideoDevice {
 	 * Captured frames will be JPEG-encoded before being handed out. The video device 
 	 * must support an appropriate image format that v4l4j can convert to JPEG. If it does 
 	 * not, this method will throw an {@link ImageFormatException}. To check if 
-	 * JPEG-encoding is possible, call {@link #canJPEGEncode()}. The returned 
+	 * JPEG-encoding is possible, call {@link #supportJPEGConversion()}. The returned 
 	 * {@link JPEGFrameGrabber} must be released when no longer used by calling
 	 * {@link #releaseFrameGrabber()}.
 	 * @param w the desired frame width. This value may be adjusted to the closest
@@ -415,7 +435,7 @@ public class VideoDevice {
 					return (JPEGFrameGrabber) fg;
 				else {
 					state.put();
-					throw new StateException("A RawFrameGrabber object already exists");
+					throw new StateException("A FrameGrabber object already exists");
 				}
 			}
 		}
@@ -426,7 +446,7 @@ public class VideoDevice {
 	 * Captured frames will be JPEG-encoded before being handed out. The video device 
 	 * must support an appropriate image format that v4l4j can convert to JPEG. If it does 
 	 * not, this method will throw an {@link ImageFormatException}. To check if 
-	 * JPEG-encoding is possible, call {@link #canJPEGEncode()}. Among all the image
+	 * JPEG-encoding is possible, call {@link #supportJPEGConversion()}. Among all the image
 	 * formats the video device supports, v4l4j will choose the first one that can be
 	 * JPEG encoded. If you prefer to specify which image format is to be used, call
 	 * {@link #getJPEGFrameGrabber(int, int, int, int, int, ImageFormat)} instead. This is 
@@ -463,6 +483,131 @@ public class VideoDevice {
 	 */
 	public JPEGFrameGrabber getJPEGFrameGrabber(int w, int h, int input, int std, int q) throws V4L4JException{
 		return getJPEGFrameGrabber(w, h, input, std, q, null);
+	}
+	
+	/**
+	 * This method returns a <code>FrameGrabber</code> associated with this video device.
+	 * Captured frames will be converted to RGB24 before being handed out. The video device 
+	 * must support an appropriate image format that v4l4j can convert to RGB24. If it does 
+	 * not, this method will throw an {@link ImageFormatException}. To check if 
+	 * RGB24 conversion is possible, call {@link #supportRGBConversion()}. The returned 
+	 * {@link RGBFrameGrabber} must be released when no longer used by calling
+	 * {@link #releaseFrameGrabber()}.
+	 * @param w the desired frame width. This value may be adjusted to the closest
+	 * supported by hardware. 
+	 * @param h the desired frame height. This value may be adjusted to the closest
+	 * supported by hardware. 
+	 * @param input the input index, as returned by {@link InputInfo#getIndex()}
+	 * @param std the video standard, as returned by {@link InputInfo#getSupportedStandards()}
+	 * (see {@link V4L4JConstants})
+	 * @param imf the {@link ImageFormat} the frames should be captured in before
+	 * being converted to RGB24. This image format must be one that v4l4j knows how to convert
+	 * to RGB24, ie it must be in the list returned by this video device's 
+	 * {@link ImageFormatList#getRGBEncodableFormats()}. You can get this video
+	 * device's {@link ImageFormatList} by calling <code>getDeviceInfo().getFormatList()</code>.
+	 * Also, {@link ImageFormatList#getKnownRGBEncodableFormats()} returns
+	 * a list of all formats that can be RGB24-encoded by v4l4j. If this argument is 
+	 * <code>null</code>, v4l4j will pick the first image format it know how to RGB24-encode. 
+	 * @return a {@link RGBFrameGrabber} associated with this video device, if supported.
+	 * @throws VideoStandardException if the chosen video standard is not supported
+	 * @throws ImageFormatException if the video device uses an unsupported image format
+	 * which can not be RGB24-encoded. If you encounter such device, please let the 
+	 * author know about it. See README file in v4l4j/ on how to report this issue. 
+	 * @throws CaptureChannelException if the given channel number value is not valid
+	 * @throws ImageDimensionException if the given image dimensions are not supported
+	 * @throws InitialisationException if the video device file can not be initialised 
+	 * @throws V4L4JException if there is an error applying capture parameters
+	 * @throws StateException if a {@link FrameGrabber} already exists and must be released 
+	 * before another FrameGrabber can be allocated, or if the <code>VideoDevice</code>
+	 * has been released.
+	 * <b>If RGBFrameGrabbers cannot be created for your video device, please let the
+	 * author know about it so RGB24-encoding can be added. See the README file
+	 * on how to submit reports.</b>  
+	 */
+	public RGBFrameGrabber getRGBFrameGrabber(int w, int h, int input, int std, int q, ImageFormat imf) throws V4L4JException{
+		if(!supportRGB24)
+			throw new ImageFormatException("This video device does not support RGB-encoding of its frames.");
+		
+		if(imf!=null && !deviceInfo.getFormatList().getRGBEncodableFormats().contains(imf)){
+			String msg = "The image format "+imf.getName()+" cannot be converted to RGB24.\n"
+						+ "Please let the author know about this, so that support\n"
+						+ "for this image format can be added to v4l4j. See \nREADME file "
+						+ "on how to submit v4l4j reports.";
+			System.err.println(msg);
+			throw new ImageFormatException(msg);
+		}
+		
+		synchronized(this){
+			if(fg==null) {
+				state.get();
+				fg = new RGBFrameGrabber(v4l4jObject, w, h, input, std, q, findTuner(input), imf);
+				try {
+					fg.init();
+				} catch (V4L4JException ve){
+					fg = null;
+					state.put();
+					throw ve;
+				}  catch (StateException se){
+					fg = null;
+					state.put();
+					throw se;
+				}  catch (Throwable t){
+					fg = null;
+					state.put();
+					throw new V4L4JException("Error", t);
+				}
+				return (RGBFrameGrabber) fg;
+			} else {
+				if(fg.getClass().isInstance(RGBFrameGrabber.class))
+					return (RGBFrameGrabber) fg;
+				else {
+					state.put();
+					throw new StateException("A FrameGrabber object already exists");
+				}
+			}
+		}
+	}
+	
+	/**
+	 * This method returns a <code>FrameGrabber</code> associated with this video device.
+	 * Captured frames will be RGB24-encoded before being handed out. The video device 
+	 * must support an appropriate image format that v4l4j can convert to RGB24. If it does 
+	 * not, this method will throw an {@link ImageFormatException}. To check if 
+	 * RGB24-encoding is possible, call {@link #supportRGBConversion()}. Among all the image
+	 * formats the video device supports, v4l4j will choose the first one that can be
+	 * RGB24 encoded. If you prefer to specify which image format is to be used, call
+	 * {@link #getRGBFrameGrabber(int, int, int, int, int, ImageFormat)} instead. This is 
+	 * sometimes required because some video device have a lower frame rate with some
+	 * image formats, and a higher one with others. So far, testing is the only way to 
+	 * find out.
+	 * The returned 
+	 * {@link RGBFrameGrabber} must be released when no longer used by calling
+	 * {@link #releaseFrameGrabber()}.
+	 * @param w the desired frame width. This value may be adjusted to the closest
+	 * supported by hardware. 
+	 * @param h the desired frame height. This value may be adjusted to the closest
+	 * supported by hardware. 
+	 * @param input the input index, as returned by {@link InputInfo#getIndex()}
+	 * @param std the video standard, as returned by {@link InputInfo#getSupportedStandards()}
+	 * (see {@link V4L4JConstants}).
+	 * @return a {@link RGBFrameGrabber} associated with this video device, if supported.
+	 * @throws VideoStandardException if the chosen video standard is not supported
+	 * @throws ImageFormatException if the video device uses an unsupported image format
+	 * which can not be RGB24-encoded. If you encounter such device, please let the 
+	 * author know about it. See README file in v4l4j/ on how to report this issue. 
+	 * @throws CaptureChannelException if the given channel number value is not valid
+	 * @throws ImageDimensionException if the given image dimensions are not supported
+	 * @throws InitialisationException if the video device file can not be initialised 
+	 * @throws V4L4JException if there is an error applying capture parameters
+	 * @throws StateException if a {@link FrameGrabber} already exists and must be released 
+	 * before a RGBFrameGrabber can be allocated, or if the <code>VideoDevice</code>
+	 * has been released.
+	 * <b>If RGBFrameGrabbers cannot be created for your video device, please let the
+	 * author know about it so RGB24-encoding can be added. See the README file
+	 * on how to submit reports.</b>  
+	 */
+	public RGBFrameGrabber getRGBFrameGrabber(int w, int h, int input, int std, int q) throws V4L4JException{
+		return getRGBFrameGrabber(w, h, input, std, q, null);
 	}
 	
 	/**
@@ -696,10 +841,18 @@ public class VideoDevice {
 			System.out.println("\t"+f.getName()+" - "+f.getIndex());
 		
 		System.out.println("Some formats can be JPEG-encoded? "
-				+(vd.canJPEGEncode()?"Yes":"No"));
-		if(vd.canJPEGEncode()){
+				+(vd.supportJPEGConversion()?"Yes":"No"));
+		if(vd.supportJPEGConversion()){
 			System.out.println("List of Formats that can be JPEG-encoded:");
 			for(ImageFormat f: d.getFormatList().getJPEGEncodableFormats())
+				System.out.println("\t"+f.getName()+" - "+f.getIndex());
+		}
+		
+		System.out.println("Some formats can be RGB-converted? "
+				+(vd.supportRGBConversion()?"Yes":"No"));
+		if(vd.supportRGBConversion()){
+			System.out.println("List of Formats that can be converted to RGB:");
+			for(ImageFormat f: d.getFormatList().getRGBEncodableFormats())
 				System.out.println("\t"+f.getName()+" - "+f.getIndex());
 		}
 		

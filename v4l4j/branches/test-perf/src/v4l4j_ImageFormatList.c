@@ -119,5 +119,28 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(JNIEnv 
 				(*e)->NewStringUTF(e, (const char *)libv4l_palettes[jpeg_fmts[i]].name), jpeg_fmts[i]);
 		(*e)->CallVoidMethod(e, vector, add_method, obj);
 	}
+
+	/* populates the RGBEncFormats field */
+	field = (*e)->GetStaticFieldID(e, this_class, "knownRGBConvFormats", "Ljava/util/List;");
+	if(field == NULL){
+		dprint(LOG_V4L4J, "[V4L4J] Error looking up the knownRGBConvFormats attribute\n");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the knownRGBConvFormats attribute");
+		return;
+	}
+
+	/* creates the list object and assign it to the formats attribute*/
+	dprint(LOG_V4L4J, "[V4L4J] Creating new knownRGBConvFormats vector object\n");
+	vector = (*e)->NewObject(e, vector_class, ctor);
+	dprint(LOG_V4L4J, "[V4L4J] Setting new vector object\n");
+	(*e)->SetStaticObjectField(e, this_class, field, vector);
+
+	/* Populates the list object*/
+	int rgb_fmts[NB_RGB24_SUPPORTED_FORMATS] = RGB24_SUPPORTED_FORMATS;
+	for(i=0; i<NB_RGB24_SUPPORTED_FORMATS; i++){
+		//dprint(LOG_V4L4J, "[V4L4J] Adding ImageFormat %s - %d\n",libv4l_palettes[jpeg_fmts[i]].name, jpeg_fmts[i]);
+		obj = (*e)->NewObject(e, format_class, format_ctor,
+				(*e)->NewStringUTF(e, (const char *)libv4l_palettes[rgb_fmts[i]].name), rgb_fmts[i]);
+		(*e)->CallVoidMethod(e, vector, add_method, obj);
+	}
 }
 

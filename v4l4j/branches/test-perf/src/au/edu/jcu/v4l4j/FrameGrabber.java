@@ -89,6 +89,7 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
 public class FrameGrabber {
 	protected static int RAW_GRABBER = 0;
 	protected static int JPEG_GRABBER = 1;
+	protected static int RGB24_GRABBER = 2;
 	
 	private int width;
 	private int height;
