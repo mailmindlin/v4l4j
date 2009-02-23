@@ -321,29 +321,21 @@ public class VideoDevice {
 	 * This method specifies whether frames captured from this video device can be JPEG-encoded before
 	 * being handed out. If this video device can capture frames in a native format that can be encoded
 	 * in JPEG, then this method returns true, and calls to
-	 * {@link #getJPEGFrameGrabber(int, int, int, int, int) getJPEGFrameGrabber()} will succeed.
-	 * If this method returns false, calls to {@link #getJPEGFrameGrabber(int, int, int, int, int) getJPEGFrameGrabber()} 
-	 * will definitely fail, and the only alternative is to use a raw frame grabber, 
-	 * returned by {@link #getRawFrameGrabber(int, int, int, int) getRawFrameGrabber()}. 
+	 * {@link #getJPEGFrameGrabber(int, int, int, int, int)} and 
+	 * {@link #getJPEGFrameGrabber(int, int, int, int, int, ImageFormat))} will succeed.
+	 * If this method returns false,no <code>JPEGFrameGrabber</code>s can be instantiated and  
+	 * the only alternative is to use a raw frame grabber, 
+	 * returned by {@link #getRawFrameGrabber(int, int, int, int)} or
+	 * {@link #getRawFrameGrabber(int, int, int, int, ImageFormat)}.<br>
+	 * <b>If JPEGFrameGrabbers cannot be created for your video device, please let the
+	 * author know about it so JPEG-encoding can be added. See the README file
+	 * on how to submit reports.</b>  
 	 * @return whether or not frames captured by this video device can be JPEG-encoded.
 	 */
 	public boolean canJPEGEncode(){
 		return supportJPEG;
 	}
-	
-	private Tuner findTuner(int input){
-		for(InputInfo i: deviceInfo.getInputs())
-			if(i.getIndex() == input && i.hasTuner())
-				try {
-					return tuners.getTuner(i.getTuner().getIndex());
-				} catch (NoTunerException e) {
-					//weird, shoudlnt be here
-				}
-		
-		return null;
 
-	}
-	
 	/**
 	 * This method returns a <code>FrameGrabber</code> associated with this video device.
 	 * Captured frames will be JPEG-encoded before being handed out. The video device 
@@ -367,7 +359,8 @@ public class VideoDevice {
 	 * {@link ImageFormatList#getJPEGEncodableFormats()}. You can get this video
 	 * device's {@link ImageFormatList} by calling <code>getDeviceInfo().getFormatList()</code>.
 	 * Also, {@link ImageFormatList#getKnownJPEGEncodableFormats()} returns
-	 * a list of all formats that can be JPEG-encoded by v4l4j.  
+	 * a list of all formats that can be JPEG-encoded by v4l4j. If this argument is 
+	 * <code>null</code>, v4l4j will pick the first image format it know how to JPEG-encode. 
 	 * @return a {@link JPEGFrameGrabber} associated with this video device, if supported.
 	 * @throws VideoStandardException if the chosen video standard is not supported
 	 * @throws ImageFormatException if the video device uses an unsupported image format
@@ -380,10 +373,22 @@ public class VideoDevice {
 	 * @throws StateException if a {@link FrameGrabber} already exists and must be released 
 	 * before a JPEGFrameGrabber can be allocated, or if the <code>VideoDevice</code>
 	 * has been released.
+	 * <b>If JPEGFrameGrabbers cannot be created for your video device, please let the
+	 * author know about it so JPEG-encoding can be added. See the README file
+	 * on how to submit reports.</b>  
 	 */
 	public JPEGFrameGrabber getJPEGFrameGrabber(int w, int h, int input, int std, int q, ImageFormat imf) throws V4L4JException{
 		if(!supportJPEG)
 			throw new ImageFormatException("This video device does not support JPEG-encoding of its frames.");
+		
+		if(imf!=null && !deviceInfo.getFormatList().getJPEGEncodableFormats().contains(imf)){
+			String msg = "The image format "+imf.getName()+" cannot be JPEG encoded.\n"
+						+ "Please let the author know about this, so that support\n"
+						+ "for this image format can be added to v4l4j. See \nREADME file "
+						+ "on how to submit v4l4j reports.";
+			System.err.println(msg);
+			throw new ImageFormatException(msg);
+		}
 		
 		synchronized(this){
 			if(fg==null) {
@@ -399,6 +404,10 @@ public class VideoDevice {
 					fg = null;
 					state.put();
 					throw se;
+				}  catch (Throwable t){
+					fg = null;
+					state.put();
+					throw new V4L4JException("Error", t);
 				}
 				return (JPEGFrameGrabber) fg;
 			} else {
@@ -417,7 +426,14 @@ public class VideoDevice {
 	 * Captured frames will be JPEG-encoded before being handed out. The video device 
 	 * must support an appropriate image format that v4l4j can convert to JPEG. If it does 
 	 * not, this method will throw an {@link ImageFormatException}. To check if 
-	 * JPEG-encoding is possible, call {@link #canJPEGEncode()}. The returned 
+	 * JPEG-encoding is possible, call {@link #canJPEGEncode()}. Among all the image
+	 * formats the video device supports, v4l4j will choose the first one that can be
+	 * JPEG encoded. If you prefer to specify which image format is to be used, call
+	 * {@link #getJPEGFrameGrabber(int, int, int, int, int, ImageFormat)} instead. This is 
+	 * sometimes required because some video device have a lower frame rate with some
+	 * image formats, and a higher one with others. So far, testing is the only way to 
+	 * find out.
+	 * The returned 
 	 * {@link JPEGFrameGrabber} must be released when no longer used by calling
 	 * {@link #releaseFrameGrabber()}.
 	 * @param w the desired frame width. This value may be adjusted to the closest
@@ -441,6 +457,9 @@ public class VideoDevice {
 	 * @throws StateException if a {@link FrameGrabber} already exists and must be released 
 	 * before a JPEGFrameGrabber can be allocated, or if the <code>VideoDevice</code>
 	 * has been released.
+	 * <b>If JPEGFrameGrabbers cannot be created for your video device, please let the
+	 * author know about it so JPEG-encoding can be added. See the README file
+	 * on how to submit reports.</b>  
 	 */
 	public JPEGFrameGrabber getJPEGFrameGrabber(int w, int h, int input, int std, int q) throws V4L4JException{
 		return getJPEGFrameGrabber(w, h, input, std, q, null);
@@ -462,7 +481,8 @@ public class VideoDevice {
 	 * @param std the video standard, as returned by {@link InputInfo#getSupportedStandards()}.
 	 * (see {@link V4L4JConstants})
 	 * @param format the desired image format. A list of supported {@link ImageFormat}s 
-	 * can be obtained by calling <code>getDeviceInfo().getFormats()</code>.
+	 * can be obtained by calling <code>getDeviceInfo().getFormats()</code>. If this argument
+	 * is <code>null</code>, an @{link {@link ImageFormatException} is thrown. 
 	 * @return the <code>FrameGrabber</code> associated with this video device
 	 * @throws VideoStandardException if the chosen video standard is not supported
 	 * @throws ImageFormatException if the selected video device uses an unsupported 
@@ -475,6 +495,9 @@ public class VideoDevice {
 	 * <code>VideoDevice</code> has been released.
 	 */
 	public FrameGrabber getRawFrameGrabber(int w, int h, int input, int std, ImageFormat format) throws V4L4JException{
+		if(format==null)
+			throw new ImageFormatException("The image format can not be null");
+		
 		synchronized(this){
 			if(fg==null) {
 				state.get();
@@ -489,6 +512,10 @@ public class VideoDevice {
 					fg = null;
 					state.put();
 					throw se;
+				} catch (Throwable t){
+					fg = null;
+					state.put();
+					throw new V4L4JException("Error", t);
 				}
 				return fg;
 			} else {
@@ -542,9 +569,9 @@ public class VideoDevice {
 		synchronized(this){
 			if(fg!=null){
 				try {fg.release();}
-				catch (Exception e){
-					e.printStackTrace();
-					throw new StateException("Cant release resources used by framegrabber", e);
+				catch (Throwable t){
+					t.printStackTrace();
+					throw new StateException("Cant release resources used by framegrabber", t);
 				}
 				fg = null;
 				state.put();
@@ -569,7 +596,20 @@ public class VideoDevice {
 			throw new NoTunerException("This video device does not have any tuners");
 		return tuners;
 	}
+	
+	
+	private Tuner findTuner(int input){
+		for(InputInfo i: deviceInfo.getInputs())
+			if(i.getIndex() == input && i.hasTuner())
+				try {
+					return tuners.getTuner(i.getTuner().getIndex());
+				} catch (NoTunerException e) {
+					//weird, shoudlnt be here
+				}
+		
+		return null;
 
+	}
 	
 	private static class State {
 

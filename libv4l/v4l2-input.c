@@ -103,16 +103,16 @@ static int detect_standard(struct capture_device *c, int fd){
 		if (try_std(fd, i)==0){
 			found=1;
 			if(i==WEBCAM) {
-				dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "WEBCAM standard autodetected\n");
+				info("Adjusted standard to WEBCAM\n");
 				c->std = WEBCAM;
 			} else if (i==PAL) {
-				dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "PAL standard autodetected\n");
+				info("Adjusted standard to PAL\n");
 				c->std = PAL;
 			} else if (i==NTSC) {
-				dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "NTSC standard autodetected\n");
+				info("Adjusted standard to NTSC\n");
 				c->std = NTSC;
 			} else  {
-				dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "SECAM standard autodetected\n");
+				info("Adjusted standard to SECAM\n");
 				c->std = SECAM;
 			}
 		}

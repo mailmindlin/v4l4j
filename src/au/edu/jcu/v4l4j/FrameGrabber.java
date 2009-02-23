@@ -97,7 +97,7 @@ public class FrameGrabber {
 	private int nbV4LBuffers = 4;
 	private ByteBuffer[] bufs;
 	private State state;
-	private ImageFormat format;
+	protected ImageFormat format;
 	private Tuner tuner;
 	private int type;
 	
@@ -184,8 +184,10 @@ public class FrameGrabber {
 	 * or reject them altogether. If the values were adjusted, they can be retrieved 
 	 * after calling init() using getWidth() and getHeight()
 	 * @throws VideoStandardException if the chosen video standard is not supported
-	 * @throws ImageFormatException if the selected video device uses an 
-	 * unsupported image format (let the author know, see README file)
+	 * @throws ImageFormatException for a raw frame grabber, this exception is thrown if 
+	 * the chosen Image format is unsupported. For a JPEG frame grabber, this exception
+	 * is thrown if the video device does not have any image formats that can be jpeg encoded
+	 * (let the author know, see README file)
 	 * @throws CaptureChannelException if the given channel number value is not valid
 	 * @throws ImageDimensionException if the given image dimensions are not supported
 	 * @throws InitialisationException if the video device file can not be initialised 
@@ -199,9 +201,9 @@ public class FrameGrabber {
 	}
 	
 	/**
-	 * This method returns the {@link ImageFormat} used by this FrameGrabber, or <code>null</code>
-	 * if this is a JPEGFrameGrabber.
-	 * @return {@link ImageFormat} used by this FrameGrabber or <code>null</code>
+	 * This method returns the {@link ImageFormat} used by this FrameGrabber. The returned
+	 * format applies to images captured from the video device.
+	 * @return {@link ImageFormat} used by this FrameGrabber.
 	 */
 	public ImageFormat getImageFormat(){
 		return format;

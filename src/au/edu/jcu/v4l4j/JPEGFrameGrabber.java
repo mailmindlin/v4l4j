@@ -23,16 +23,26 @@
 */
 package au.edu.jcu.v4l4j;
 
+import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
+import au.edu.jcu.v4l4j.exceptions.ImageFormatException;
+import au.edu.jcu.v4l4j.exceptions.InitialisationException;
+import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
+import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
 
 
 /**
  * Objects of this class are used to retrieve JPEG-encoded frames from a 
  * {@link VideoDevice}. v4l4j also provide {@link FrameGrabber} objects to
- * retrieve images in a native format. 
+ * retrieve images in a native format. A JPEG frame grabber can only be created 
+ * if the associated video device can produce images in a format v4l4j
+ * knows how to encode in JPEG. The {@link VideoDevice#canJPEGEncode()} method
+ * can be used to find out whether a video device can have its images JPEG-encoded 
+ * by v4l4j, ie if a JPEG frame grabber can be instantiated.
  * <code>JPEGFrameGrabber</code> objects are not 
  * instantiated directly. Instead, the 
- * {@link VideoDevice#getJPEGFrameGrabber(int, int, int, int, int) getJPEGFrameGrabber()}
+ * {@link VideoDevice#getJPEGFrameGrabber(int, int, int, int, int)}
+ * or {@link VideoDevice#getJPEGFrameGrabber(int, int, int, int, int, ImageFormat)}
  * method must be called on the associated {@link VideoDevice}. Requested height
  * and width may be adjusted to the closest supported values. The adjusted
  * width and height can be retrieved by calling {@link #getWidth()} and 
@@ -59,9 +69,9 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * </code><br><br>
  * 
  * Once the frame grabber is released with 
- * {@link VideoDevice#releaseFrameGrabber()}, it can be re-initialised again 
- * with {@link VideoDevice#getJPEGFrameGrabber(int, int, int, int, int) getJPEGFrameGrabber()}.
- * Similarly, when the capture is stopped with {@link #stopCapture()}, it can be
+ * {@link VideoDevice#releaseFrameGrabber()}, it can NOT be re-initialised again, and
+ * a new one must be obtained. 
+ * However, when the capture is stopped with {@link #stopCapture()}, it can be
  * started again with {@link #stopCapture()} without having to create a new 
  * <code>FrameGrabber</code>.
  * @see FrameGrabber
@@ -84,8 +94,39 @@ public class JPEGFrameGrabber extends FrameGrabber {
 	 * an appropriate format. 
 	 */
 	JPEGFrameGrabber(long o, int w, int h, int ch, int std, int q, Tuner t, ImageFormat imf) throws V4L4JException{
-		super(o,w,h,ch,std, t , imf, JPEG_GRABBER);		
+		super(o,w,h,ch,std, t , imf, JPEG_GRABBER);	
 		setJPGQuality(q);
+	}
+	
+	/**
+	 * This method initialises the capture, and apply the capture parameters.
+	 * V4L may either adjust the height and width parameters to the closest valid values
+	 * or reject them altogether. If the values were adjusted, they can be retrieved 
+	 * after calling init() using getWidth() and getHeight()
+	 * @throws VideoStandardException if the chosen video standard is not supported
+	 * @throws ImageFormatException for a raw frame grabber, this exception is thrown if 
+	 * the chosen Image format is unsupported. For a JPEG frame grabber, this exception
+	 * is thrown if the video device does not have any image formats that can be jpeg encoded
+	 * (let the author know, see README file)
+	 * @throws CaptureChannelException if the given channel number value is not valid
+	 * @throws ImageDimensionException if the given image dimensions are not supported
+	 * @throws InitialisationException if the video device file can not be initialised 
+	 * @throws StateException if the frame grabber is already initialised
+	 * @throws V4L4JException if there is an error applying capture parameters
+	 */
+	void init() throws V4L4JException{
+		try {
+			super.init();
+		} catch (ImageFormatException ife){
+			if(format == null)
+				ife = new ImageFormatException("v4l4j was unable to find image format supported by the \n"
+						+ "video device and that can be encoded in JPEG.\n"
+						+ "Please let the author know about this, so that support\n"
+						+ "for this video device can be improved. See \nREADME file "
+						+ "on how to submit v4l4j reports.");
+			
+			throw ife;
+		}
 	}
 	
 	/**

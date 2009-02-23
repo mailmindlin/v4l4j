@@ -43,29 +43,29 @@ struct rgb_data {
 
 };
 
-typedef enum {
+enum output_format {
 	OUTPUT_RAW,
 	OUTPUT_JPG,
 	OUTPUT_RGB24
-} output_format;
+} ;
 
 
 struct v4l4j_device {
 	void (*convert) (struct v4l4j_device *, void *, void *);
 	struct video_device *vdev;	//the libv4l struct
 	union {
-		struct jpeg_data *j;			//the converter's data
+		struct jpeg_data *j;	//the converter's data
 		struct rgb_data *r;
 	};
-	int output_fmt;				//the output format (see enum above)
+	enum output_format output_fmt;	//the output format (see enum above)
 	unsigned char **bufs;		//the buffers holding the last JPEG compressed frame
 	int capture_len;			//the size of the last captured frame returned by libv4l
 	int len;					//the size of the frame after conversion
 	int buf_id;					//the index of the buffer where the next frame goes
 };
 
-#define JPEG_SUPPORTED_FORMATS		{JPEG, MJPEG, YUV420, YUYV, RGB24, RGB32, BGR24, YVYU}
-#define NB_JPEG_SUPPORTED_FORMATS	8
+#define JPEG_SUPPORTED_FORMATS		{JPEG, MJPEG, YUV420, YUYV, RGB24, RGB32, BGR24, YVYU, UYVY, BGR32}
+#define NB_JPEG_SUPPORTED_FORMATS	10
 //#define JPEG_SUPPORTED_FORMATS		{RGB32}
 //#define NB_JPEG_SUPPORTED_FORMATS	1
 

@@ -27,20 +27,24 @@
 #include <jpeglib.h>
 #include <stdint.h>
 
-#include "libv4l.h"
 #include "common.h"
-#include "jpeg.h"
 #include "debug.h"
+#include "libv4l.h"
 #include "libv4l-err.h"
+#include "jpeg.h"
+#include "palettes.h"
+
 
 #define INCR_BUF_ID(i, max)		do { (i) = ((i) >= (max)) ? 0 : ((i) + 1); } while(0)
 
 /*
  * Updates the width and height fields in a framegrabber object
  */
-static void update_width_height(JNIEnv *e, jobject this, int w, int h){
+static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	jclass this_class;
+	jclass this_class, format_class;
+	jobject obj;
+	jmethodID format_ctor;
 	jfieldID field;
 
 	//Updates the FrameCapture class width and height fields with the values returned by V4L2
@@ -57,7 +61,7 @@ static void update_width_height(JNIEnv *e, jobject this, int w, int h){
 		THROW_EXCEPTION(e, JNI_EXCP, "error looking up width field in FrameGrabber class");
 		return;
 	}
-	(*e)->SetIntField(e, this, field, w);
+	(*e)->SetIntField(e, this, field, d->vdev->capture->width);
 
 	field = (*e)->GetFieldID(e, this_class, "height", "I");
 	if(field==NULL) {
@@ -65,7 +69,35 @@ static void update_width_height(JNIEnv *e, jobject this, int w, int h){
 		THROW_EXCEPTION(e, JNI_EXCP, "error looking up height field in FrameGrabber class");
 		return;
 	}
-	(*e)->SetIntField(e, this, field, h);
+	(*e)->SetIntField(e, this, field, d->vdev->capture->height);
+
+	if(d->output_fmt!=OUTPUT_RAW){
+		field = (*e)->GetFieldID(e, this_class, "format", "Lau/edu/jcu/v4l4j/ImageFormat;");
+		if(field==NULL) {
+			dprint(LOG_V4L4J, "[V4L4J] error looking up format field in FrameGrabber class\n");
+			THROW_EXCEPTION(e, JNI_EXCP, "error looking up format field in FrameGrabber class");
+			return;
+		}
+
+		format_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/ImageFormat");
+		if(format_class == NULL){
+			dprint(LOG_V4L4J, "[V4L4J] Error looking up the ImageFormat class\n");
+			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up ImageFormat class");
+			return;
+		}
+
+		format_ctor = (*e)->GetMethodID(e, format_class, "<init>", "(Ljava/lang/String;I)V");
+		if(format_ctor == NULL){
+			dprint(LOG_V4L4J, "[V4L4J] Error looking up the constructor of ImageFormat class\n");
+			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of ImageFormat class");
+			return;
+		}
+
+		obj = (*e)->NewObject(e, format_class, format_ctor,
+						(*e)->NewStringUTF(e, (const char *) libv4l_palettes[d->vdev->capture->palette].name ),
+						d->vdev->capture->palette);
+		(*e)->SetObjectField(e, this, field, obj);
+	}
 }
 
 /*
@@ -142,7 +174,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(JNIEnv 
 	if(output==OUTPUT_JPG){
 		dprint(LOG_LIBV4L, "[V4L4J] Setting output to JPEG)'\n");
 		if(fmt==-1){
-			dprint(LOG_LIBV4L, "[V4L4J] Autodetect best image format for JPEG compression\n");
+			dprint(LOG_LIBV4L, "[V4L4J] Pick first image format that can be JPEG encoded\n");
 			fmts = jpeg_fmts;
 			nb_fmts = NB_JPEG_SUPPORTED_FORMATS;
 		} else {
@@ -190,9 +222,6 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(JNIEnv 
 		return 0;
 	}
 
-	//update width and height in FrameGrabber class
-	update_width_height(e, t, w, h);
-
 	//The length of the buffers which will hold the last captured frame
 	buf_len = get_buffer_length(c->width, c->height, c->imagesize, c->palette);
 
@@ -229,6 +258,10 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(JNIEnv 
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error initialising the format converter");
 		return 0;
 	}
+
+
+	//update width, height and image format in FrameGrabber class
+	update_width_height(e, t, d);
 	d->buf_id = -1;
 	return arr;
 }
