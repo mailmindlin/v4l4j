@@ -138,12 +138,12 @@ public class InputInfo {
 	}
 
 	/**
-	 * This method returns the tuner associated with this input, if any.
+	 * This method returns the {@link TunerInfo} associated with this input, if any.
 	 * @return the tuner
 	 * @throws NoTunerException if this input is of type 
 	 * {@link V4L4JConstants#CAMERA}, and is not a tuner.
 	 */
-	public TunerInfo getTuner() throws NoTunerException{
+	public TunerInfo getTunerInfo() throws NoTunerException{
 		if(tuner==null)
 			throw new NoTunerException("No tuner connected to this input");
 		
