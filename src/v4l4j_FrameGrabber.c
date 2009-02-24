@@ -120,6 +120,7 @@ static int get_buffer_length(struct v4l4j_device *d){
 
 static inline void raw_copy(struct v4l4j_device *d, unsigned char *s, unsigned char *dst){
 	memcpy(dst, s, d->capture_len);
+	d->len = d->capture_len;
 }
 
 static int init_format_converter(struct v4l4j_device *d){
@@ -130,13 +131,14 @@ static int init_format_converter(struct v4l4j_device *d){
 			dprint(LOG_V4L4J, "[V4L4J] Error initialising the JPEG compressor\n");
 	} else if(d->output_fmt==OUTPUT_RAW){
 		dprint(LOG_V4L4J, "[V4L4J] Initialising the converter to RAW\n");
-		d->len = d->capture_len;
+		d->len = get_buffer_length(d);
 		d->convert = raw_copy;
 	} else if(d->output_fmt==OUTPUT_RGB24){
 		dprint(LOG_V4L4J, "[V4L4J] Initialising the converter to RGB\n");
 		ret = init_rgb_converter(d);
 		if(ret!=0)
 			dprint(LOG_V4L4J, "[V4L4J] Error initialising the RGB converter\n");
+		d->len = get_buffer_length(d);
 	} else {
 		dprint(LOG_V4L4J, "[V4L4J] unknown output format\n");
 		ret = -1;

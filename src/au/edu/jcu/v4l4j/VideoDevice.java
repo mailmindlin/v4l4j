@@ -228,7 +228,7 @@ public class VideoDevice {
 		doGetTunerActions(v4l4jObject);
 		for(InputInfo i:deviceInfo.getInputs()){
 			try {
-				v.add(new Tuner(v4l4jObject,i.getTuner().getIndex()));
+				v.add(new Tuner(v4l4jObject,i.getTunerInfo().getIndex()));
 			} catch (NoTunerException e) {	//no tuner for this input
 			}
 		}
@@ -747,7 +747,7 @@ public class VideoDevice {
 		for(InputInfo i: deviceInfo.getInputs())
 			if(i.getIndex() == input && i.hasTuner())
 				try {
-					return tuners.getTuner(i.getTuner().getIndex());
+					return tuners.getTuner(i.getTunerInfo().getIndex());
 				} catch (NoTunerException e) {
 					//weird, shoudlnt be here
 				}
@@ -874,7 +874,7 @@ public class VideoDevice {
 					System.out.println("(None/Webcam)");
 			}
 			if(i.getType() == V4L4JConstants.TUNER) {
-				TunerInfo t = i.getTuner();
+				TunerInfo t = i.getTunerInfo();
 				System.out.println("\tTuner");
 				System.out.println("\t\tname: "+t.getName());
 				System.out.println("\t\tIndex: "+t.getIndex());

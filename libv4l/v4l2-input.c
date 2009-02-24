@@ -202,7 +202,7 @@ static int set_input(struct capture_device *c, int fd){
 		}
 		vi.index = c->channel;
 		if (-1 == ioctl(fd, VIDIOC_ENUMINPUT, &vi)) {
-			dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "CAP: Failed to get details of input %d\n", c->channel);
+			dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "CAP: Failed to get details of input %d, errno(%d)\n", c->channel, errno);
 			return -1;
 		}
 		if(vi.type == V4L2_INPUT_TYPE_TUNER)

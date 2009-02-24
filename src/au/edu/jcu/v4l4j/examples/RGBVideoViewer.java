@@ -1,8 +1,31 @@
+/*
+* Copyright (C) 2007-2008 Gilles Gigan (gilles.gigan@gmail.com)
+* eResearch Centre, James Cook University (eresearch.jcu.edu.au)
+*
+* This program was developed as part of the ARCHER project
+* (Australian Research Enabling Environment) funded by a   
+* Systemic Infrastructure Initiative (SII) grant and supported by the Australian
+* Department of Innovation, Industry, Science and Research
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public  License as published by the
+* Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+* or FITNESS FOR A PARTICULAR PURPOSE.  
+* See the GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+*/
+
 package au.edu.jcu.v4l4j.examples;
 
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Transparency;
 import java.awt.color.ColorSpace;
@@ -47,6 +70,7 @@ import javax.swing.event.ChangeListener;
 
 import au.edu.jcu.v4l4j.Control;
 import au.edu.jcu.v4l4j.FrameGrabber;
+import au.edu.jcu.v4l4j.ImageFormat;
 import au.edu.jcu.v4l4j.Tuner;
 import au.edu.jcu.v4l4j.TunerInfo;
 import au.edu.jcu.v4l4j.V4L4JConstants;
@@ -57,6 +81,9 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 public class RGBVideoViewer  extends WindowAdapter implements Runnable{
 	private JLabel video, fps, freq;
+	private BufferedImage img;
+	private WritableRaster raster;
+	private JComboBox formats;
 	private JFrame f;
 	private JPanel controlPanel, captureButtons;
 	private JScrollPane controlScrollPane;
@@ -66,7 +93,7 @@ public class RGBVideoViewer  extends WindowAdapter implements Runnable{
 	private Tuner tuner;
 	private TunerInfo tinfo;
 	private long start = 0;
-	private int n, width, height, std, channel, infmt;
+	private int n, width, height, std, channel;
 	private FrameGrabber fg;
 	private Hashtable<String,Control> controls; 
 	private Thread captureThread;
@@ -82,10 +109,21 @@ public class RGBVideoViewer  extends WindowAdapter implements Runnable{
 	 * @param s the capture standard
 	 * @param c the capture channel
 	 * @param q the JPEG compression quality
-	 * @throws V4L4JException if any parameter if invalid
+	 * @throws V4L4JException if the device file is not readable, or does 
+	 * not support an image format that can be converted to RGB24
 	 */
-    public RGBVideoViewer(String dev, int w, int h, int s, int c, int inFmt) throws V4L4JException{
+    public RGBVideoViewer(String dev, int w, int h, int s, int c)
+    	throws V4L4JException{
+    	
     	vd = new VideoDevice(dev);
+		if(!vd.supportRGBConversion()){
+			String msg = "Image from this video device "
+				+ "cannot be converted to RGB24. Please let the author know"
+				+ " about this, so support for your device can be added"
+				+ " to v4l4j.";
+			JOptionPane.showMessageDialog(f, msg);
+			throw new V4L4JException(msg);
+		}
 		fg = null;
 		width = w;
 		height = h;
@@ -94,9 +132,7 @@ public class RGBVideoViewer  extends WindowAdapter implements Runnable{
     	controls = vd.getControlList().getTable();
         initGUI();
         stop = false;
-        captureThread = null;
-        infmt=inFmt;
-        
+        captureThread = null;        
     }
     
     /** 
@@ -113,10 +149,13 @@ public class RGBVideoViewer  extends WindowAdapter implements Runnable{
         video = new JLabel();
         video.setPreferredSize(new Dimension(width, height));
         video.setAlignmentX(Component.CENTER_ALIGNMENT);
+        video.setAlignmentY(Component.CENTER_ALIGNMENT);
         videoPanel.add(video);
         
         captureButtons = new JPanel();
         captureButtons.setLayout(new  BoxLayout(captureButtons, BoxLayout.LINE_AXIS));
+        formats = new JComboBox(vd.getDeviceInfo().getFormatList().getRGBEncodableFormats().toArray());
+        formats.setAlignmentX(Component.CENTER_ALIGNMENT);
         startCap = new JButton("Start");
         startCap.setAlignmentX(Component.CENTER_ALIGNMENT);
         stopCap = new JButton("Stop");
@@ -137,6 +176,8 @@ public class RGBVideoViewer  extends WindowAdapter implements Runnable{
 			}
         	
         });
+        captureButtons.add(Box.createGlue());
+        captureButtons.add(formats);
         captureButtons.add(Box.createGlue());
         captureButtons.add(startCap);
         captureButtons.add(Box.createGlue());
@@ -177,7 +218,7 @@ public class RGBVideoViewer  extends WindowAdapter implements Runnable{
 
         f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         f.addWindowListener(this);
-        f.setTitle("Capture from "+vd.getDeviceInfo().getName());
+        f.setTitle("RGB Capture from "+vd.getDeviceInfo().getName());
         f.pack();
         f.setVisible(true);
     }
@@ -209,23 +250,18 @@ public class RGBVideoViewer  extends WindowAdapter implements Runnable{
      * @param b
      */
     public void setImage(byte[] b) {
-    	//video.setIcon(new ImageIcon(b));
-    	DataBuffer db = new DataBufferByte(b,b.length);
-        WritableRaster raster = Raster.createInterleavedRaster(db, width,
-        		height, 3 * width, 3, new int[]{0, 1, 2},null);
-        ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
-        ColorModel cm = new ComponentColorModel(cs,false,false,Transparency.OPAQUE,
- DataBuffer.TYPE_BYTE);
-        BufferedImage bi = new BufferedImage(cm,raster,false,null);
-
-        Graphics g = video.getGraphics();
-        g.drawImage(bi, 0, 0, width, height, null);
-    	
+		//Thanks to Sergio Blanco for sharing the BufferedImage related code 
+		//below and in StatCapture()
+    	raster.setDataElements(0, 0, width, height, b);
+        video.getGraphics().drawImage(img, 0, 0, width, height, null);
+       
+   
     	// Computes the frame rate
     	if(start==0)
     		start = System.currentTimeMillis();
     	else if(System.currentTimeMillis()>start+FPS_REFRESH) {
-    		fps.setText(String.format("FPS: %5.2f", (float) 1000*n/(System.currentTimeMillis()-start)));
+    		fps.setText(String.format("FPS: %5.2f", 
+    				(float) 1000*n/(System.currentTimeMillis()-start)));
 			start = System.currentTimeMillis();
 			n = 0;
 		} else
@@ -237,7 +273,7 @@ public class RGBVideoViewer  extends WindowAdapter implements Runnable{
      */
     public void run(){
 		ByteBuffer bb;
-		byte[] b;
+		byte[] b = null;
 		try {			
 			while(!stop){
 				bb = fg.getFrame();
@@ -248,37 +284,20 @@ public class RGBVideoViewer  extends WindowAdapter implements Runnable{
 		} catch (V4L4JException e) {
 			e.printStackTrace();
 			System.out.println("Failed to capture image");
-			vd.releaseFrameGrabber();
+			JOptionPane.showMessageDialog(f, "Failed to capture image:\n"+e.getMessage());
+		} catch(Throwable t){
+			t.printStackTrace();
+			System.out.println("Failed to capture image");
+			JOptionPane.showMessageDialog(f, "Failed to capture image:\n"+t.getMessage());
 		}
     }
-    
+      
     private void startCapture(){
     	if(captureThread == null){
-    		if(!vd.supportRGBConversion()){
-    			JOptionPane.showMessageDialog(f, "Image from this video device "
-    					+ "cannot be converted to RGB24. Please let the author"
-    					+ " about this, so support for your device can be added"
-    					+ " to v4l4j.");
-    			return;
-    		}
-    			
     		try {
+    			//Get the frame grabber
     			fg = vd.getRGBFrameGrabber(width, height, channel,std, 
-    					vd.getDeviceInfo().getFormatList().getFormat(infmt));
-    			video.setPreferredSize(new Dimension(fg.getWidth(), fg.getHeight()));
-    			controlScrollPane.setPreferredSize(new Dimension(300, fg.getHeight()));
-    			try {
-    				tuner = fg.getTuner();
-    				tinfo = vd.getDeviceInfo().getInputs().get(channel).getTuner();
-    				freqSpinner.setModel(new SpinnerNumberModel(
-    						new Long(tuner.getFrequency()), 
-    						new Long(tinfo.getRangeLow()),
-    						new Long(tinfo.getRangeHigh()),
-    						new Long(1)));
-    				freq.setVisible(true);
-    				freqSpinner.setVisible(true);
-    			} catch (NoTunerException nte){System.out.println("No tuner for input "+channel);}
-    			f.pack();
+    					(ImageFormat) formats.getSelectedItem());
 				fg.startCapture();
 			} catch (V4L4JException e) {
 				System.out.println("Failed to start capture");
@@ -286,24 +305,73 @@ public class RGBVideoViewer  extends WindowAdapter implements Runnable{
 				e.printStackTrace();
 				return;
 			}
+			//update width and height
+			width = fg.getWidth();
+			height = fg.getHeight();
+			
+			//Update GUI:
+			
+			//set the size of the video label & control pane
+			video.setMaximumSize(new Dimension(width, height));
+			video.setSize(new Dimension(width, height));			
+			controlScrollPane.setPreferredSize(new Dimension(300, fg.getHeight()));
+			formats.setEnabled(false);
+			
+			//show tuner frequency adjust if there s a tuner
+			try {
+				tuner = fg.getTuner();
+				tinfo = vd.getDeviceInfo().getInputs().get(channel).getTunerInfo();
+				freqSpinner.setModel(new SpinnerNumberModel(
+						new Long(tuner.getFrequency()), 
+						new Long(tinfo.getRangeLow()),
+						new Long(tinfo.getRangeHigh()),
+						new Long(1)));
+				freq.setVisible(true);
+				freqSpinner.setVisible(true);
+			} catch (NoTunerException nte){}//No tuner for this input
+			f.pack();
+
+			//Create the BufferedImage
+			//Thanks to Sergio Blanco for sharing the BufferedImage related code 
+			//below and in SetImage()
+	        raster = Raster.createInterleavedRaster(
+	        		new DataBufferByte(new byte[width*height*3] ,width*height*3) ,
+	        		width,
+	        		height,
+	        		3 * width,
+	        		3, new int[]{0, 1, 2},null);
+	        
+	        ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+	        ColorModel cm = new ComponentColorModel(cs,
+	        		false,
+	        		false,
+	        		Transparency.OPAQUE,
+	        		DataBuffer.TYPE_BYTE);
+	        img = new BufferedImage(cm,raster,false,null);
+			
+			//create and start streaming thread
 			stop = false;
 	    	captureThread = new Thread(this, "Capture Thread");
 	        captureThread.start();
-	        System.out.println("Image format: "+fg.getImageFormat().getName());
+	        System.out.println("Capture image format: "+fg.getImageFormat().getName());
     	}
     }
     
     private void stopCapture(){
-    	if(captureThread != null && captureThread.isAlive()){
-    		stop = true;
-    		try {
-				captureThread.join();
-			} catch (InterruptedException e1) {}
-			captureThread = null;
-			freq.setVisible(false);
-			freqSpinner.setVisible(false);
+    	if(captureThread != null){
+    		if(captureThread.isAlive()){
+    			stop = true;
+    			try {
+    				captureThread.join();
+    			} catch (InterruptedException e1) {}
+
+    		}
 			fg.stopCapture();
 			vd.releaseFrameGrabber();
+			captureThread = null;
+			formats.setEnabled(true);
+			freq.setVisible(false);
+			freqSpinner.setVisible(false);
     	}
     }
     
@@ -324,7 +392,7 @@ public class RGBVideoViewer  extends WindowAdapter implements Runnable{
 	public static void main(String[] args) throws V4L4JException, IOException {
 
 		String dev;
-		int w, h, std, channel, inFmt;
+		int w, h, std, channel;
 
 		//Check if we have the required args
 		//otherwise put sensible values in
@@ -354,13 +422,7 @@ public class RGBVideoViewer  extends WindowAdapter implements Runnable{
 			channel = 0;
 		}
 		
-		try {
-			inFmt = Integer.parseInt(args[5]);
-		} catch (Exception e){
-			inFmt = -1;
-		}
-		
-		new RGBVideoViewer(dev,w,h,std,channel,inFmt);
+		new RGBVideoViewer(dev,w,h,std,channel);
 	}
 	
 	public interface ControlGUI{

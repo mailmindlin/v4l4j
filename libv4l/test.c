@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <signal.h>
 #include <sys/time.h>
 #include <fcntl.h>
@@ -141,6 +142,8 @@ int main(int argc, char** argv) {
 
 
 	printf("Capturing from %s at %dx%d.\n", argv[1], c->width,c->height);
+	width = c->width;
+	height = c->height;
 	printf("Image format %s, size: %d\n", libv4l_palettes[c->palette].name, c->imagesize);
 
 	if((*c->actions->init_capture)(v)<0){

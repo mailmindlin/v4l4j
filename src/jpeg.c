@@ -579,78 +579,78 @@ void destroy_jpeg_compressor(struct v4l4j_device *d){
 //
 //Usage: ./jpeg *.raw
 
+#ifdef MAKETEST
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/time.h>
+void *read_frame(void * d, int s, char *file){
+	int f, l=0;
 
-//#include <unistd.h>
-//#include <fcntl.h>
-//#include <sys/time.h>
-//void *read_frame(void * d, int s, char *file){
-//	int f, l=0;
-//
-//	//open file
-//	if ((f = open(file, O_RDONLY)) < 0) {
-//		printf( "FILE: can't open file\n");
-//		return NULL;
-//	}
-//
-//	while((l += read(f, (d+l), 65536))<s);
-//
-//
-//	close(f);
-//	return d;
-//}
-//
-//void write_frame(void *d, int size, char *file) {
-//	int outfile, len = 0;
-//	char filename[50];
-//	struct timeval tv;
-//
-//
-//	//Construct the filename
-//	gettimeofday(&tv, NULL);
-//	sprintf(filename,"%s.jpg", file);
-//
-//
-//	//open file
-//	if ((outfile = open(filename, O_WRONLY | O_TRUNC | O_CREAT, 0644)) < 0) {
-//		printf( "FILE: can't open %s\n", filename);
-//		return;
-//	}
-//
-//	while((len+=write(outfile, (d+len), (size-len)))<size);
-//
-//	close(outfile);
-//}
-//
-//int main(int argc, char **argv){
-//	int s, nb = 0;
-//	void *data, *jpeg;
-//	struct v4l4j_device d;
-//	struct video_device v;
-//	struct capture_device c;
-//	struct timeval start, now;
-//	d.vdev=&v;
-//	v.capture = &c;
-//	c.palette = RGB24;
-//	c.width = 640;
-//	c.height = 480;
-//	c.imagesize = 640*480*3;
-//	init_jpeg_compressor( &d, 80);
-//	jpeg = (void *) malloc(c.imagesize);
-//	data = (void *) malloc(c.imagesize);
-//	gettimeofday(&start, NULL);
-//	while(nb++<(argc-1)){
-//		read_frame(data, c.imagesize, argv[nb]);
-//		jpeg_encode_rgb24(&d, data, jpeg);
-//		write_frame(jpeg, d.len, argv[nb]);
-//	}
-//	gettimeofday(&now, NULL);
-//	printf("fps: %.1f\n", (nb/((now.tv_sec - start.tv_sec) + ((float) (now.tv_usec - start.tv_usec)/1000000))));
-//	free(data);
-//	free(jpeg);
-//	destroy_jpeg_compressor(&d);
-//	return 0;
-//}
+	//open file
+	if ((f = open(file, O_RDONLY)) < 0) {
+		printf( "FILE: can't open file\n");
+		return NULL;
+	}
 
+	while((l += read(f, (d+l), 65536))<s);
+
+
+	close(f);
+	return d;
+}
+
+void write_frame(void *d, int size, char *file) {
+	int outfile, len = 0;
+	char filename[50];
+	struct timeval tv;
+
+
+	//Construct the filename
+	gettimeofday(&tv, NULL);
+	sprintf(filename,"%s.jpg", file);
+
+
+	//open file
+	if ((outfile = open(filename, O_WRONLY | O_TRUNC | O_CREAT, 0644)) < 0) {
+		printf( "FILE: can't open %s\n", filename);
+		return;
+	}
+
+	while((len+=write(outfile, (d+len), (size-len)))<size);
+
+	close(outfile);
+}
+
+int main(int argc, char **argv){
+	int nb = 0;
+	void *data, *jpeg;
+	struct v4l4j_device d;
+	struct video_device v;
+	struct capture_device c;
+	struct timeval start, now;
+	d.vdev=&v;
+	v.capture = &c;
+	c.palette = RGB24;
+	c.width = 640;
+	c.height = 480;
+	c.imagesize = 640*480*3;
+	init_jpeg_compressor( &d, 80);
+	jpeg = (void *) malloc(c.imagesize);
+	data = (void *) malloc(c.imagesize);
+	gettimeofday(&start, NULL);
+	while(nb++<(argc-1)){
+		read_frame(data, c.imagesize, argv[nb]);
+		jpeg_encode_rgb24(&d, data, jpeg);
+		write_frame(jpeg, d.len, argv[nb]);
+	}
+	gettimeofday(&now, NULL);
+	printf("fps: %.1f\n", (nb/((now.tv_sec - start.tv_sec) + ((float) (now.tv_usec - start.tv_usec)/1000000))));
+	free(data);
+	free(jpeg);
+	destroy_jpeg_compressor(&d);
+	return 0;
+}
+#endif
 
 
 
