@@ -1,5 +1,5 @@
 #Uncomment the following line to enable debug output in libv4l2
-DEBUG=-DDEBUG -ggdb -Wall
+#DEBUG=-DDEBUG -ggdb -Wall
 
 #
 # edit anything below at your own risk

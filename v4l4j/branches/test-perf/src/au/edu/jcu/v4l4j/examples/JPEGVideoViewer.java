@@ -61,6 +61,7 @@ import javax.swing.event.ChangeListener;
 
 import au.edu.jcu.v4l4j.Control;
 import au.edu.jcu.v4l4j.FrameGrabber;
+import au.edu.jcu.v4l4j.ImageFormat;
 import au.edu.jcu.v4l4j.Tuner;
 import au.edu.jcu.v4l4j.TunerInfo;
 import au.edu.jcu.v4l4j.V4L4JConstants;
@@ -72,7 +73,9 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 /**
  * Objects of this class create a graphical interface to capture frames 
  * from a video device and display it. The interface also gives access to the 
- * video controls.
+ * video controls. Frames are captured from a video device in a format that
+ * v4l4j can encode in JPEG. If the given video device does not support
+ * such format, 
  * 
  * @author gilles
  *
@@ -80,6 +83,7 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 public class JPEGVideoViewer extends WindowAdapter implements Runnable{
 	private JLabel video, fps, freq;
 	private JFrame f;
+	private JComboBox formats;
 	private JPanel controlPanel, captureButtons;
 	private JScrollPane controlScrollPane;
 	private JPanel videoPanel;
@@ -88,7 +92,7 @@ public class JPEGVideoViewer extends WindowAdapter implements Runnable{
 	private Tuner tuner;
 	private TunerInfo tinfo;
 	private long start = 0;
-	private int n, width, height, qty, std, channel, infmt;
+	private int n, width, height, qty, std, channel;
 	private FrameGrabber fg;
 	private Hashtable<String,Control> controls; 
 	private Thread captureThread;
@@ -104,10 +108,20 @@ public class JPEGVideoViewer extends WindowAdapter implements Runnable{
 	 * @param s the capture standard
 	 * @param c the capture channel
 	 * @param q the JPEG compression quality
-	 * @throws V4L4JException if any parameter if invalid
+	 * @throws V4L4JException if any parameter if invalid,  or if the video device 
+	 * does not support an image format that can be converted to JPEG
 	 */
-    public JPEGVideoViewer(String dev, int w, int h, int s, int c, int q, int inFmt) throws V4L4JException{
+    public JPEGVideoViewer(String dev, int w, int h, int s, int c, int q) throws V4L4JException{
     	vd = new VideoDevice(dev);
+		if(!vd.supportJPEGConversion()){
+			String msg = "Image from this video device "
+				+ "cannot be converted to JPEG. Please let the author know"
+				+ " about this, so support for your device can be added"
+				+ " to v4l4j.";
+			JOptionPane.showMessageDialog(f, msg);
+			throw new V4L4JException(msg);
+		}
+    	
 		fg = null;
 		width = w;
 		height = h;
@@ -117,9 +131,7 @@ public class JPEGVideoViewer extends WindowAdapter implements Runnable{
     	controls = vd.getControlList().getTable();
         initGUI();
         stop = false;
-        captureThread = null;
-        infmt=inFmt;
-        
+        captureThread = null;      
     }
     
     /** 
@@ -136,10 +148,13 @@ public class JPEGVideoViewer extends WindowAdapter implements Runnable{
         video = new JLabel();
         video.setPreferredSize(new Dimension(width, height));
         video.setAlignmentX(Component.CENTER_ALIGNMENT);
+        video.setAlignmentY(Component.CENTER_ALIGNMENT);
         videoPanel.add(video);
         
         captureButtons = new JPanel();
         captureButtons.setLayout(new  BoxLayout(captureButtons, BoxLayout.LINE_AXIS));
+        formats = new JComboBox(vd.getDeviceInfo().getFormatList().getRGBEncodableFormats().toArray());
+        formats.setAlignmentX(Component.CENTER_ALIGNMENT);
         startCap = new JButton("Start");
         startCap.setAlignmentX(Component.CENTER_ALIGNMENT);
         stopCap = new JButton("Stop");
@@ -160,6 +175,8 @@ public class JPEGVideoViewer extends WindowAdapter implements Runnable{
 			}
         	
         });
+        captureButtons.add(Box.createGlue());
+        captureButtons.add(formats);
         captureButtons.add(Box.createGlue());
         captureButtons.add(startCap);
         captureButtons.add(Box.createGlue());
@@ -200,7 +217,7 @@ public class JPEGVideoViewer extends WindowAdapter implements Runnable{
 
         f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         f.addWindowListener(this);
-        f.setTitle("Capture from "+vd.getDeviceInfo().getName());
+        f.setTitle("JPEG Capture from "+vd.getDeviceInfo().getName());
         f.pack();
         f.setVisible(true);
     }
@@ -261,7 +278,11 @@ public class JPEGVideoViewer extends WindowAdapter implements Runnable{
 		} catch (V4L4JException e) {
 			e.printStackTrace();
 			System.out.println("Failed to capture image");
-			vd.releaseFrameGrabber();
+			JOptionPane.showMessageDialog(f, "Failed to capture image:\n"+e.getMessage());
+		} catch(Throwable t){
+			t.printStackTrace();
+			System.out.println("Failed to capture image");
+			JOptionPane.showMessageDialog(f, "Failed to capture image:\n"+t.getMessage());
 		}
     }
     
@@ -269,21 +290,7 @@ public class JPEGVideoViewer extends WindowAdapter implements Runnable{
     	if(captureThread == null){
     		try {
     			fg = vd.getJPEGFrameGrabber(width, height, channel, std, qty, 
-    					vd.getDeviceInfo().getFormatList().getFormat(infmt));
-    			video.setPreferredSize(new Dimension(fg.getWidth(), fg.getHeight()));
-    			controlScrollPane.setPreferredSize(new Dimension(300, fg.getHeight()));
-    			try {
-    				tuner = fg.getTuner();
-    				tinfo = vd.getDeviceInfo().getInputs().get(channel).getTuner();
-    				freqSpinner.setModel(new SpinnerNumberModel(
-    						new Long(tuner.getFrequency()), 
-    						new Long(tinfo.getRangeLow()),
-    						new Long(tinfo.getRangeHigh()),
-    						new Long(1)));
-    				freq.setVisible(true);
-    				freqSpinner.setVisible(true);
-    			} catch (NoTunerException nte){System.out.println("No tuner for input "+channel);}
-    			f.pack();
+    					(ImageFormat) formats.getSelectedItem());
 				fg.startCapture();
 			} catch (V4L4JException e) {
 				System.out.println("Failed to start capture");
@@ -291,24 +298,54 @@ public class JPEGVideoViewer extends WindowAdapter implements Runnable{
 				e.printStackTrace();
 				return;
 			}
+			//update width and height
+			width = fg.getWidth();
+			height = fg.getHeight();
+	
+			//Update GUI:
+			
+			//set the size of the video label & control pane
+			video.setMaximumSize(new Dimension(width, height));
+			video.setSize(new Dimension(width, height));			
+			controlScrollPane.setPreferredSize(new Dimension(300, fg.getHeight()));
+			formats.setEnabled(false);			
+			
+			//show tuner frequency adjust if there s a tuner			
+			try {
+				tuner = fg.getTuner();
+				tinfo = vd.getDeviceInfo().getInputs().get(channel).getTunerInfo();
+				freqSpinner.setModel(new SpinnerNumberModel(
+						new Long(tuner.getFrequency()), 
+						new Long(tinfo.getRangeLow()),
+						new Long(tinfo.getRangeHigh()),
+						new Long(1)));
+				freq.setVisible(true);
+				freqSpinner.setVisible(true);
+			} catch (NoTunerException nte){}//No tuner for input			
+			f.pack();
+			
 			stop = false;
 	    	captureThread = new Thread(this, "Capture Thread");
 	        captureThread.start();
 	        System.out.println("Image format: "+fg.getImageFormat().getName());
+	        
     	}
     }
     
     private void stopCapture(){
-    	if(captureThread != null && captureThread.isAlive()){
-    		stop = true;
-    		try {
-				captureThread.join();
-			} catch (InterruptedException e1) {}
-			captureThread = null;
-			freq.setVisible(false);
-			freqSpinner.setVisible(false);
+    	if(captureThread != null) {
+    		if(captureThread.isAlive()){
+    			stop = true;
+    			try {
+    				captureThread.join();
+    			} catch (InterruptedException e1) {}
+    		}
 			fg.stopCapture();
 			vd.releaseFrameGrabber();
+			captureThread = null;
+			formats.setEnabled(true);
+			freq.setVisible(false);
+			freqSpinner.setVisible(false);
     	}
     }
     
@@ -329,7 +366,7 @@ public class JPEGVideoViewer extends WindowAdapter implements Runnable{
 	public static void main(String[] args) throws V4L4JException, IOException {
 
 		String dev;
-		int w, h, std, channel, inFmt;
+		int w, h, std, channel;
 
 		//Check if we have the required args
 		//otherwise put sensible values in
@@ -359,13 +396,7 @@ public class JPEGVideoViewer extends WindowAdapter implements Runnable{
 			channel = 0;
 		}
 		
-		try {
-			inFmt = Integer.parseInt(args[5]);
-		} catch (Exception e){
-			inFmt = -1;
-		}
-		
-		new JPEGVideoViewer(dev,w,h,std,channel,80, inFmt);
+		new JPEGVideoViewer(dev,w,h,std,channel,80);
 	}
 	
 	public interface ControlGUI{
