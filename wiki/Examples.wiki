@@ -1,8 +1,10 @@
 #summary Examples of video capture using v4l4j.
 #labels Featured
 
-This page shows a few examples in Java on how to use v4l4j. It assumes you have successfully compiled and installed v4l4j (see GettingStarted page for detailed instructions). Here, video source refers to any video-capture device supported by the Linux kernel, and accessible through the Video4Linux API using the associated device file. Typical capture devices include USB webcams and capture cards (with S-Video, composite or TV tuner inputs).
+This page shows a few examples in Java on how to use v4l4j. It assumes you have successfully compiled and installed v4l4j (see GettingStarted page for detailed instructions). Here, video source refers to any video-capture device supported by the Linux kernel, and accessible through the Video4Linux API using the associated device file. The v4l4j API has many more methods and classes than presented here. Be sure to check the Java documentation for a more complete reference.
+Below, you will find the following examples:
  * *Initialising the video device*: Creating a java object to interact with a video device.
+ * *Gathering information about the device*: finding out the number of inputs, tuners, supported image formats, and lots more.
  * *Dealing with controls*: List the controls associated with a video device and get / set their values.
  * *Capturing frames*: Getting a `FrameGrabber` object to capture images from the video device.
  * *Display video in a GUI (JFrame)*: Create a graphical interface (JFrame) to display the captured video stream.
@@ -16,7 +18,7 @@ VideoDevice vd = new VideoDevice(dev);
 }}}
 The VideoDevice object allows you to:
   * get textual information about the video device itself, such as its name, the supported image formats, and the type of video inputs,
-  * capture frames through a `FrameGrabber` object,
+  * capture frames through a `FrameGrabber` object (or one of its subclasses),
   * control tuners the device may have, through the `TunerList` object,
   * access video control, such as brightness, contrast, and gain, through the `ControlList` object.
 
@@ -25,43 +27,103 @@ The VideoDevice object allows you to:
 vd.release();
 }}}
 
+= Gathering information about the device =
+The `DeviceInfo` class contains lots of information about a video device. To get the `DeviceInfo` object, use:
+{{{
+DeviceInfo di = vd.getDeviceInfo();
+}}}
+
+`DeviceInfo` objects contain:
+    * the device file,
+    * the name of the video device,
+    * a list of `InputInfo` object providing information about each video input,
+    * and ImageFormatList object providing information about the supported image formats.
+
+Each `InputInfo` object contains:
+    * The textual name of the input,
+    * The supported standards (`V4L4JConstants.PAL`, `V4L4JConstants.SECAM`, `V4L4JConstants.NTSC` or `V4L4JConstants.WEBCAM`)
+    * The input type (`V4L4JConstants.TUNER` or `V4L4JConstants.CAMERA`)
+    * The `TunerInfo` object associated with this input if it is connected to a tuner.
+
+`TunerInfo` objects contain:
+    * the tuner type: `V4L4JConstants.RADIO` or `V4L4JConstants.TV`,
+    * the frequency unit: `V4L4JConstants.KHZ` or `V4L4JConstants.MHZ`,
+    * the name of the tuner,
+    * the index of the tuner,
+    * and the lowest and highest tunable frequencies.
+
+Lastly, the `ImageFormatList` object details the image formats supported by the video device. This object can also be used to
+  * find out whether v4l4j can convert images to JPEG or RGB24 and
+  * find out which image formats specifically can be converted to JPEG / RGB24
+{{{
+//get the ImageFormatList object
+ImageFormatList l = vd.getDeviceInfo().getFormatList();
+
+
+//List all supported image formats
+for(ImageFormat f : l.getList())
+System.out.println("\t"+f.getName()+" - "+f.getIndex());
+
+
+//List all supported image formats that can be JPEG-encoded
+System.out.println("Some formats can be JPEG-encoded? "+(vd.supportJPEGConversion()?"Yes":"No"));
+if(vd.supportJPEGConversion()){
+  System.out.println("List of Formats that can be JPEG-encoded:");
+  for(ImageFormat f: d.getFormatList().getJPEGEncodableFormats())
+    System.out.println("\t"+f.getName()+" - "+f.getIndex());
+}
+
+
+//List all supported image formats that can be RGB24-converted
+System.out.println("Some formats can be RGB-converted? "+(vd.supportRGBConversion()?"Yes":"No"));
+if(vd.supportRGBConversion()){
+  System.out.println("List of Formats that can be converted to RGB:");
+  for(ImageFormat f: d.getFormatList().getRGBEncodableFormats())
+    System.out.println("\t"+f.getName()+" - "+f.getIndex());
+}
+}}}
+
+
+
 = Capturing frames =
-A `FrameGrabber` object gives you access to the frame capture facility. There a two types of frame grabbers: raw and jpeg. Raw frame grabbers will capture a frame and hand it in straight away in its raw format. Jpeg frame grabbers will capture a frame and jpeg-encode it before hading it in. JPEG frame grabbers can only be used with video devices supporting pre-defined image formats that can be jpeg-encoded. In its current release, jpeg encoding is possible only with video sources supporting one of JPEG, MJPEG, YUV420, YUYV, YVYU or RGB24 formats. You can check whether a video device supports JPEG-encoding by calling:
+A `FrameGrabber` object (or one of its subclasses) gives you access to the frame capture facility. There are three types of frame grabbers: raw, JPEG and RGB. Raw frame grabbers will capture a frame and hand it in straight away in its raw format. JPEG and RGB frame grabbers will capture a frame and JPEG/RGB-convert it before handing it in. JPEG and RGB frame grabbers can only be used with video devices supporting pre-defined image formats v4l4j can convert. In its current release, JPEG & RGB encoding is possible only with video sources supporting one of JPEG, MJPEG, YUV420, YUYV, RGB24, RGB32, BGR24, YVYU, UYVY and BGR32 formats. Patches to convert more formats are welcome. You can check whether a video device supports JPEG/RGB -encoding by calling:
 {{{
 VideoDevice vd = new VideoDevice("/dev/video0");
-if(!vd.canJPEGEncode()){
+if(!vd.supportJPEGConversion()){ // use vd.supportRGBConversion() for RGB
   vd.release();
   throw new Exception("The video device does not support JPEG encoding");
 }
 }}}
 Frame grabber constructors need at least 4 arguments:
- * the desired capture resolution in pixels - width and height. Setting them to `FrameGrabber.MAX_WIDTH` and `FrameGrabber.MAX_HEIGHT` will request the best supported resolution.
+ * the desired capture resolution in pixels - width and height. Setting them to `V4L4JConstants.MAX_WIDTH` and `V4L4JConstants.MAX_HEIGHT` will request the highest supported resolution.
  * the input channel, this depends on the hardware, webcams have only 1 input (0), capture cards can have many,
  * the video standard (`FrameGrabber.WEBCAM`, `FrameGrabber.PAL`, `FrameGrabber.SECAM`, `FrameGrabber.NTSC`)
 
-Before instantiating a raw frame grabber, you must check what image formats are supported, and pass the desired one to the constructor:
 {{{
 FrameGrabber fg;
 int width = 640, height = 480, input = 0, standard = V4L4JConstants.PAL;
-for(ImageFormat imf: vd.getDeviceInfo().getFormats()){
-  if(imf.getName().equals("YUYV")
-    fg = vd.getRawFrameGrabber(width, height, input, channel, imf);
-}
-if(fg == null)
-  throw new Exception("YUYV format not supported");
+fg = vd.getRawFrameGrabber(width, height, input, channel);
 
 ...
 
 vd.releaseFrameGrabber();
 }}}
-Alternatively, you can use:
+The above code will create a frame grabber object capturing frames in the first image format supported by the device, as returned by:
 {{{
-fg = vd.getRawFrameGrabber(width, height, input, channel);
+vd.getDeviceInfo().getFormatList().getList().get(0);
 }}}
-This will use the first supported image format, as returned by:
+Alternatively, you can use specify the desired image format: 
 {{{
-vd.getDeviceInfo.getFormats().get(0);
+ImageFormat imf = null;
+for(ImageFormat i: vd.getDeviceInfo().getFormats().getList())
+  if(i.getName().equals("YUYV")
+    imf = i;
+if(img==null)
+  throw new Exception("YUYV format not supported");
+
+fg = vd.getRawFrameGrabber(width, height, input, channel, imf);
 }}}
+
 
 A JPEG frame grabber is instantiated by calling:
 {{{
@@ -73,9 +135,39 @@ fg = vd.getJPEGFrameGrabber(width, height, input, channel, quality);
 
 vd.releaseFrameGrabber();
 }}}
-The `quality` argument is the JPEG compression parameter (between 0 and 100 inclusive), the lower the value, the lower the picture quality. The previous code creates a jpeg `FrameGrabber` object. The requested capture resolution is 640x480, from input 1 using PAL video standard and a JPEG compression factor of 80.
+The `quality` argument is the JPEG compression parameter (between 0 and 100 inclusive), the lower the value, the lower the picture quality. The previous code creates a jpeg `FrameGrabber` object. The requested capture resolution is 640x480, from input 1 using PAL video standard and a JPEG compression factor of 80. As with raw frame grabbers, you can also specify the capture image format (ie the format images should be captured in before being JPEG-encoded) with:
+{{{
+ImageFormat imf = vd.getDeviceInfo().getFormatList().getJPEGEncodableFormats().get(0);
+fg = vd.getJPEGFrameGrabber(width, height, input, channel, quality, imf);
 
-Note that the requested capture resolution given in the constructor is simply an indication and can be adjusted by V4L to the closest resolution supported by the video device. The actual width and height that will be used can be retrieved using:
+...
+
+vd.releaseFrameGrabber();
+}}}
+
+An RGB frame grabber is instantiated by calling:
+{{{
+FrameGrabber fg;
+int width = 640, height = 480, input = 1, standard = V4L4JConstants.NTSC;
+fg = vd.getRGBFrameGrabber(width, height, input, channel,);
+
+...
+
+vd.releaseFrameGrabber();
+}}}
+Here again,  you can also specify the capture image format (ie the format images should be captured in before being converted to RGB24) with:
+{{{
+ImageFormat imf = vd.getDeviceInfo().getFormatList().getRGBEncodableFormats().get(0);
+fg = vd.getRGBFrameGrabber(width, height, input, channel, quality, imf);
+
+...
+
+vd.releaseFrameGrabber();
+}}}
+
+
+
+Regardless of the kind of frame grabber, the requested capture resolution given in the constructor is simply an indication and can be adjusted by V4L to the closest resolution supported by the video device. The actual width and height that will be used can be retrieved using:
 {{{
 int actualWidth = f.getwidth();
 int actualHeight = f.getHeight();
@@ -101,7 +193,7 @@ vd.getControlList().getControl("Pan Reset").setValue(1);
 *Once again, when the `ControlList` is no longer needed, it MUST be released by calling `releaseControlList()` on the `VideoDevice`.*
 
 = Display video in a GUI (JFrame) =
-Assuming the `FrameGrabber` object `f` has been successfully initialised, to start capturing JPEG-encoded frames, do the following:
+Assuming the `FrameGrabber` object `f` has been successfully initialised, to start capturing frames, do the following:
 {{{
 ByteBuffer b;
 int stop=0;
@@ -116,7 +208,7 @@ f.stopCapture()
 }
 }}}
 
-The following example shows you how to capture JPEG-encoded frames from your video device and display them in a JFrame object.
+The following example shows you how to capture JPEG-encoded frames from your video device and display them in a JFrame object. Note that this approach uses a JLabel and its `setIcon()` method to display the images of the video stream, which is not optimal. A better way would be to create a `BufferedImage`, update its raster and draw it onto the component instead. Refer to the `RGBVideoViewer` class in the au.edu.jcu.v4l4j.examples package where this technique is used.
 {{{
 package v4l4jTest;
 
@@ -240,8 +332,7 @@ public class Viewer extends WindowAdapter implements Runnable {
 	public static void main(String[] args) throws V4L4JException, IOException {
 
 		String dev = "/dev/video0";
-		int w=FrameGrabber.MAX_WIDTH, h=FrameGrabber.MAX_HEIGHT, std=FrameGrabber.WEBCAM, channel = 0, qty = 60;
-
+		int w=640, h=480, std=FrameGrabber.WEBCAM, channel = 0, qty = 60;
 		new Viewer(dev,w,h,std,channel,qty);
 	}
 }
