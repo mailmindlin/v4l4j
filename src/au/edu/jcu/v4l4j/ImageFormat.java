@@ -24,10 +24,11 @@
 
 package au.edu.jcu.v4l4j;
 
-import java.util.List;
 
 /**
- * Objects of this class represent an image format. <code>ImageFormat</code>
+ * Objects of this class represent an image format (YUV, RGB, GREY, BGR, ...).
+ * <code>ImageFormat</code> objects have two members: a name and a unique index.
+ * <code>ImageFormat</code>s
  * are not directly instantiated. Instead, they can be enumerated by instantiating
  * a {@link VideoDevice}, and checking the {@link DeviceInfo} object associated
  * with it:
@@ -46,34 +47,14 @@ import java.util.List;
 public class ImageFormat {
 	
 	/**
-	 * Native method used to populate the formats attribute
-	 */
-	private static native void listFormats();
-	
-	/**
 	 * The name of this format
 	 */
 	private String name;
-	
+
 	/**
 	 * the libv4l Id for this format
 	 */
 	private int libv4lID;
-	
-	/**
-	 * this is a static list of image formats supported by libv4l
-	 */
-	public static List<ImageFormat> formats;
-	
-	static {
-		try {
-			System.loadLibrary("v4l4j");
-		} catch (UnsatisfiedLinkError e) {
-			System.err.println("Cant load v4l4j JNI library");
-			throw e;
-		}
-		listFormats();		
-	}
 	
 	
 	ImageFormat(String n, int i) {
@@ -95,5 +76,38 @@ public class ImageFormat {
 	 */
 	public int getIndex() {
 		return libv4lID;
+	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + libv4lID;
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof ImageFormat))
+			return false;
+		ImageFormat other = (ImageFormat) obj;
+		if (libv4lID != other.libv4lID)
+			return false;
+		if (name == null) {
+			if (other.name != null)
+				return false;
+		} else if (!name.equals(other.name))
+			return false;
+		return true;
+	}
+	
+	@Override
+	public String toString(){
+		return name;
 	}
 }

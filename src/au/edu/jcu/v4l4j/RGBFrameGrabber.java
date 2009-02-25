@@ -32,11 +32,11 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
 
 
 /**
- * Objects of this class are used to retrieve JPEG-encoded frames from a 
+ * Objects of this class are used to retrieve RGB frames from a 
  * {@link VideoDevice}. v4l4j also provide {@link FrameGrabber} objects to
- * retrieve images in a native format. A JPEG frame grabber can only be created 
+ * retrieve images in a native format. An RGB frame grabber can only be created 
  * if the associated video device can produce images in a format v4l4j
- * knows how to encode in JPEG. The {@link VideoDevice#supportJPEGConversion()} method
+ * knows how to convert to RGB24. The {@link VideoDevice#supportJPEGConversion()} method
  * can be used to find out whether a video device can have its images JPEG-encoded 
  * by v4l4j, ie if a JPEG frame grabber can be instantiated.
  * <code>JPEGFrameGrabber</code> objects are not 
@@ -78,9 +78,7 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * @author gilles
  *
  */
-public class JPEGFrameGrabber extends FrameGrabber {
-	
-	private int quality;
+public class RGBFrameGrabber extends FrameGrabber {
 	
 	/**
 	 * This constructor builds a FrameGrabber object used to capture JPEG frames from a video source
@@ -89,13 +87,11 @@ public class JPEGFrameGrabber extends FrameGrabber {
 	 * @param ch the input index, as returned by <code>InputInfo.getIndex()</code>
 	 * @param std the video standard, as returned by <code>InputInfo.getSupportedStandards()</code>
 	 * (see V4L4JConstants)
-	 * @param q the JPEG image quality (the higher, the better the quality)
 	 * @param imf the image format frame should be captured in or null to let v4l4j choose
 	 * an appropriate format. 
 	 */
-	JPEGFrameGrabber(long o, int w, int h, int ch, int std, int q, Tuner t, ImageFormat imf) throws V4L4JException{
-		super(o,w,h,ch,std, t , imf, JPEG_GRABBER);	
-		setJPGQuality(q);
+	RGBFrameGrabber(long o, int w, int h, int ch, int std, Tuner t, ImageFormat imf) throws V4L4JException{
+		super(o,w,h,ch,std, t , imf, RGB24_GRABBER);	
 	}
 	
 	/**
@@ -105,9 +101,9 @@ public class JPEGFrameGrabber extends FrameGrabber {
 	 * after calling init() using getWidth() and getHeight()
 	 * @throws VideoStandardException if the chosen video standard is not supported
 	 * @throws ImageFormatException for a raw frame grabber, this exception is thrown if 
-	 * the chosen Image format is unsupported. For a JPEG frame grabber, this exception
-	 * is thrown if the video device does not have any image formats that can be jpeg encoded
-	 * (let the author know, see README file)
+	 * the chosen Image format is unsupported. For an RGB frame grabber, this exception
+	 * is thrown if the video device does not have any image formats that can be converted
+	 * to RGB24 (let the author know if you get this exception, see README file)
 	 * @throws CaptureChannelException if the given channel number value is not valid
 	 * @throws ImageDimensionException if the given image dimensions are not supported
 	 * @throws InitialisationException if the video device file can not be initialised 
@@ -120,36 +116,12 @@ public class JPEGFrameGrabber extends FrameGrabber {
 		} catch (ImageFormatException ife){
 			if(format == null)
 				ife = new ImageFormatException("v4l4j was unable to find image format supported by the \n"
-						+ "video device and that can be encoded in JPEG.\n"
+						+ "video device and that can be converted to RGB24.\n"
 						+ "Please let the author know about this, so that support\n"
 						+ "for this video device can be improved. See \nREADME file "
 						+ "on how to submit v4l4j reports.");
 			
 			throw ife;
 		}
-	}
-	
-	/**
-	 * This method sets the desired JPEG quality.
-	 * @param q the quality (between 
-	 * {@link V4L4JConstants#MIN_JPEG_QUALITY} and 
-	 * {@link V4L4JConstants#MAX_JPEG_QUALITY} inclusive)
-	 */
-	public void setJPGQuality(int q){
-		if(q<V4L4JConstants.MIN_JPEG_QUALITY)
-			q =V4L4JConstants.MIN_JPEG_QUALITY; 
-		if(q>V4L4JConstants.MAX_JPEG_QUALITY)
-			q = V4L4JConstants.MAX_JPEG_QUALITY;
-		
-		setQuality(object, q);
-		quality = q;
-	}
-	
-	/**
-	 * This method returns the current JPEG quality.
-	 * @return the JPEG quality
-	 */
-	public int getJPGQuality(){
-		return quality;
 	}
 }

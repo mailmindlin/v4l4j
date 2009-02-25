@@ -29,11 +29,11 @@ DBG=$(DEBUG) -DLIBV4L_LOG_LEVEL=$(LOG_LEVEL) -DLIBV4L_LOG_SOURCE=$(LOG_SOURCE)
 endif
 
 VERSION_MAJOR=0
-VERSION_MINOR=7
-VERSION_RELEASE=1
+VERSION_MINOR=8
+VERSION_RELEASE=0
 
 LIB=libv4l.a
-TESTOBJ=test.o list-caps.o
+TESTOBJ=test-capture.o dump-capture.o list-caps.o
 OBJ=v4l2-input.o v4l1-input.o libv4l.o pwc-probe.o gspca-probe.o qc-probe.o fps-param-probe.o v4l1-query.o v4l2-query.o v4l1-tuner.o v4l2-tuner.o
 
 CC=gcc
@@ -49,8 +49,9 @@ $(LIB): $(OBJ)
 	ar rc $(LIB) $(OBJ) ; ranlib $(LIB)
 
 test: $(TESTOBJ) $(OBJ)
-	$(LD) $(LDFLAGS) test.o $(OBJ) -o test-capture
+	$(LD) $(LDFLAGS) test-capture.o $(OBJ) -o test-capture
 	$(LD) $(LDFLAGS) list-caps.o $(OBJ) -o list-caps
+	$(LD) $(LDFLAGS) dump-capture.o $(OBJ) -o dump-capture
 
 clean:
 	rm -f $(OBJ) $(BIN) $(LIB) $(TESTOBJ) list-caps test-capture test-list-caps ./*~
