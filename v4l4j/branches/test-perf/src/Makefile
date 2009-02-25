@@ -29,7 +29,7 @@ LIBV4L_PATH=../libv4l
 LIBV4L_NAME=libv4l.a
 
 LIB=libv4l4j.so
-OBJ=v4l4j_FrameGrabber.o jpeg.o rgb.o tinyjpeg.o jidctflt.o v4l4j_ImageFormatList.o v4l4j_DeviceInfo.o v4l4j_VideoDevice.o v4l4j_Control.o v4l4j_Tuner.o
+OBJ=jpeg.o rgb.o v4l4j_FrameGrabber.o v4l4j_ImageFormatList.o v4l4j_DeviceInfo.o v4l4j_VideoDevice.o v4l4j_Control.o v4l4j_Tuner.o
 
 CC=gcc
 INCLUDES=-I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ -I$(LIBV4L_PATH) -I.
@@ -44,10 +44,10 @@ all: $(LIB)
 $(LIB): $(OBJ)
 	$(LD) $(LDFLAGS) $(OBJ) $(LIBV4L_PATH)/$(LIBV4L_NAME) -o $(LIB)
 
-test: $(OBJ)
-	$(CC) $(CFLAGS) -DMAKETEST -c rgb.c
-	$(CC) $(CFLAGS) -DMAKETEST -c jpeg.c
-	$(LD) rgb.o tinyjpeg.o jidctflt.o -o rgb
+test:
+	$(CC) $(INCLUDES) -DDEBUG -Wall -ggdb -DMAKETEST -c rgb.c
+	$(CC) $(CFLAGS) -DDEBUG -Wall -ggdb -DMAKETEST -c jpeg.c
+	$(LD) rgb.o -ljpeg -o rgb
 	$(LD) jpeg.o -ljpeg -o jpeg
 
 clean:

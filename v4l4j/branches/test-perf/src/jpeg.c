@@ -389,7 +389,6 @@ static void jpeg_encode_rgb32(struct v4l4j_device *d, unsigned char *src, unsign
 			}
 		jpeg_write_scanlines (cinfo, row, 1);
 	}
-
 	jpeg_finish_compress (cinfo);
 	d->len =  rgb_size - cinfo->dest->free_in_buffer;
 	dprint(LOG_JPEG, "[JPEG] Finished compression (%d bytes)\n", d->len);
@@ -630,17 +629,23 @@ int main(int argc, char **argv){
 	struct timeval start, now;
 	d.vdev=&v;
 	v.capture = &c;
-	c.palette = RGB24;
+	//Image format
+	c.palette = RGB32;
 	c.width = 640;
 	c.height = 480;
-	c.imagesize = 640*480*3;
+	//size of v4l buffer
+	c.imagesize = 1228800;
+	//actual size of frame
+	d.capture_len = c.imagesize;
 	init_jpeg_compressor( &d, 80);
-	jpeg = (void *) malloc(c.imagesize);
-	data = (void *) malloc(c.imagesize);
+	//size of dest buffer (JPEG)
+	jpeg = (void *) malloc(640*480*3);
+	//size of source buffer - ADJUST ACCORDING TO FORMAT
+	data = (void *) malloc(640*480*4);
 	gettimeofday(&start, NULL);
 	while(nb++<(argc-1)){
 		read_frame(data, c.imagesize, argv[nb]);
-		jpeg_encode_rgb24(&d, data, jpeg);
+		d.convert(&d, data, jpeg);
 		write_frame(jpeg, d.len, argv[nb]);
 	}
 	gettimeofday(&now, NULL);
