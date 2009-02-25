@@ -26,45 +26,105 @@
 
 #define CLIP(x) (unsigned char) ((x) > 255) ? 255 : (((x) < 0) ? 0 : (x));
 
-static unsigned char *temp_buf;
+static int ac_count[2][16] = {
+			{0, 0x2, 0x1, 0x3, 0x3, 0x2, 0x4, 0x3, 0x5, 0x5, 0x4, 0x4, 0, 0, 0x1, 0x7d},
+			{0, 0x2, 0x1, 0x2, 0x4, 0x4, 0x3, 0x4, 0x7, 0x5, 0x4, 0x4, 0, 0x1, 0x2, 0x77}
+		};
+static int ac_symbol[2][256] = {
+			{0x1, 0x2, 0x3, 0, 0x4, 0x11, 0x5, 0x12, 0x21, 0x31, 0x41, 0x6,
+					0x13, 0x51, 0x61, 0x7, 0x22, 0x71, 0x14, 0x32, 0x81,
+					0x91, 0xa1, 0x8, 0x23, 0x42, 0xb1, 0xc1, 0x15, 0x52,
+					0xd1, 0xf0, 0x24, 0x33, 0x62, 0x72, 0x82, 0x9, 0xa,
+					0x16, 0x17, 0x18, 0x19, 0x1a, 0x25, 0x26, 0x27, 0x28,
+					0x29, 0x2a, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a,
+					0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x53,
+					0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, 0x63, 0x64,
+					0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x73, 0x74, 0x75,
+					0x76, 0x77, 0x78, 0x79, 0x7a, 0x83, 0x84, 0x85, 0x86,
+					0x87, 0x88, 0x89, 0x8a, 0x92, 0x93, 0x94, 0x95, 0x96,
+					0x97, 0x98, 0x99, 0x9a, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6,
+					0xa7, 0xa8, 0xa9, 0xaa, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6,
+					0xb7, 0xb8, 0xb9, 0xba, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6,
+					0xc7, 0xc8, 0xc9, 0xca, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6,
+					0xd7, 0xd8, 0xd9, 0xda, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5,
+					0xe6, 0xe7, 0xe8, 0xe9, 0xea, 0xf1, 0xf2, 0xf3, 0xf4,
+					0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 
-#define DHT_SIZE		420
-static unsigned char huffman_table[] =
-	{0xFF,0xC4,0x01,0xA2,0x00,0x00,0x01,0x05,0x01,0x01,0x01,0x01
-        ,0x01,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x02
-        ,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x01,0x00,0x03
-        ,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x00,0x00,0x00
-        ,0x00,0x00,0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09
-        ,0x0A,0x0B,0x10,0x00,0x02,0x01,0x03,0x03,0x02,0x04,0x03,0x05
-        ,0x05,0x04,0x04,0x00,0x00,0x01,0x7D,0x01,0x02,0x03,0x00,0x04
-        ,0x11,0x05,0x12,0x21,0x31,0x41,0x06,0x13,0x51,0x61,0x07,0x22
-        ,0x71,0x14,0x32,0x81,0x91,0xA1,0x08,0x23,0x42,0xB1,0xC1,0x15
-        ,0x52,0xD1,0xF0,0x24,0x33,0x62,0x72,0x82,0x09,0x0A,0x16,0x17
-        ,0x18,0x19,0x1A,0x25,0x26,0x27,0x28,0x29,0x2A,0x34,0x35,0x36
-        ,0x37,0x38,0x39,0x3A,0x43,0x44,0x45,0x46,0x47,0x48,0x49,0x4A
-        ,0x53,0x54,0x55,0x56,0x57,0x58,0x59,0x5A,0x63,0x64,0x65,0x66
-        ,0x67,0x68,0x69,0x6A,0x73,0x74,0x75,0x76,0x77,0x78,0x79,0x7A
-        ,0x83,0x84,0x85,0x86,0x87,0x88,0x89,0x8A,0x92,0x93,0x94,0x95
-        ,0x96,0x97,0x98,0x99,0x9A,0xA2,0xA3,0xA4,0xA5,0xA6,0xA7,0xA8
-        ,0xA9,0xAA,0xB2,0xB3,0xB4,0xB5,0xB6,0xB7,0xB8,0xB9,0xBA,0xC2
-        ,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8,0xC9,0xCA,0xD2,0xD3,0xD4,0xD5
-        ,0xD6,0xD7,0xD8,0xD9,0xDA,0xE1,0xE2,0xE3,0xE4,0xE5,0xE6,0xE7
-        ,0xE8,0xE9,0xEA,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9
-        ,0xFA,0x11,0x00,0x02,0x01,0x02,0x04,0x04,0x03,0x04,0x07,0x05
-        ,0x04,0x04,0x00,0x01,0x02,0x77,0x00,0x01,0x02,0x03,0x11,0x04
-        ,0x05,0x21,0x31,0x06,0x12,0x41,0x51,0x07,0x61,0x71,0x13,0x22
-        ,0x32,0x81,0x08,0x14,0x42,0x91,0xA1,0xB1,0xC1,0x09,0x23,0x33
-        ,0x52,0xF0,0x15,0x62,0x72,0xD1,0x0A,0x16,0x24,0x34,0xE1,0x25
-        ,0xF1,0x17,0x18,0x19,0x1A,0x26,0x27,0x28,0x29,0x2A,0x35,0x36
-        ,0x37,0x38,0x39,0x3A,0x43,0x44,0x45,0x46,0x47,0x48,0x49,0x4A
-        ,0x53,0x54,0x55,0x56,0x57,0x58,0x59,0x5A,0x63,0x64,0x65,0x66
-        ,0x67,0x68,0x69,0x6A,0x73,0x74,0x75,0x76,0x77,0x78,0x79,0x7A
-        ,0x82,0x83,0x84,0x85,0x86,0x87,0x88,0x89,0x8A,0x92,0x93,0x94
-        ,0x95,0x96,0x97,0x98,0x99,0x9A,0xA2,0xA3,0xA4,0xA5,0xA6,0xA7
-        ,0xA8,0xA9,0xAA,0xB2,0xB3,0xB4,0xB5,0xB6,0xB7,0xB8,0xB9,0xBA
-        ,0xC2,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8,0xC9,0xCA,0xD2,0xD3,0xD4
-        ,0xD5,0xD6,0xD7,0xD8,0xD9,0xDA,0xE2,0xE3,0xE4,0xE5,0xE6,0xE7
-        ,0xE8,0xE9,0xEA,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA};
+			{0, 0x1, 0x2, 0x3, 0x11, 0x4, 0x5, 0x21, 0x31, 0x6, 0x12, 0x41,
+					0x51, 0x7, 0x61, 0x71, 0x13, 0x22, 0x32, 0x81, 0x8,
+					0x14, 0x42, 0x91, 0xa1, 0xb1, 0xc1, 0x9, 0x23, 0x33,
+					0x52, 0xf0, 0x15, 0x62, 0x72, 0xd1, 0xa, 0x16, 0x24,
+					0x34, 0xe1, 0x25, 0xf1, 0x17, 0x18, 0x19, 0x1a, 0x26,
+					0x27, 0x28, 0x29, 0x2a, 0x35, 0x36, 0x37, 0x38, 0x39,
+					0x3a, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a,
+					0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, 0x63,
+					0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x73, 0x74,
+					0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x82, 0x83, 0x84,
+					0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x92, 0x93, 0x94,
+					0x95, 0x96, 0x97, 0x98, 0x99, 0x9a, 0xa2, 0xa3, 0xa4,
+					0xa5, 0xa6, 0xa7, 0xa8, 0xa9, 0xaa, 0xb2, 0xb3, 0xb4,
+					0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0xba, 0xc2, 0xc3, 0xc4,
+					0xc5, 0xc6, 0xc7, 0xc8, 0xc9, 0xca, 0xd2, 0xd3, 0xd4,
+					0xd5, 0xd6, 0xd7, 0xd8, 0xd9, 0xda, 0xe2, 0xe3, 0xe4,
+					0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea, 0xf2, 0xf3, 0xf4,
+					0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+		};
+
+static int dc_count[2][16] = {
+		{0, 0x1, 0x5, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0x3, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0, 0, 0, 0, 0}
+};
+static int dc_symbol[2][256] = {
+			{0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0},
+
+			{0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0}
+		};
+
+/* Dummy JPEG methods */
+static void init_source( j_decompress_ptr cinfo ){}
+static boolean fill_intput_buffer( j_decompress_ptr cinfo ){return TRUE;}
+static void skip_input_data (j_decompress_ptr cinfo, long num_bytes) {}
+static void term_source( j_decompress_ptr cinfo ){}
+static void emit_msg(j_common_ptr cinfo, int msg_level){}
+
 
 static void rgb24_encode_rgb24(struct v4l4j_device *d, unsigned char *src, unsigned char *dst){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
@@ -96,9 +156,9 @@ static void rgb24_encode_rgb32(struct v4l4j_device *d, unsigned char *src, unsig
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 
 	while(i++<size){
-		*(dst++) = src[0];
 		*(dst++) = src[1];
 		*(dst++) = src[2];
+		*(dst++) = src[3];
 		src += 4;
 	}
 }
@@ -262,69 +322,66 @@ static void rgb24_encode_yuv420(struct v4l4j_device *d, unsigned char *src, unsi
 
 /* Converts a JPEG planar frame of width "d->c->width and height "d->c->height" at "src" straight
  * into a RGB24 frame at "dst" (must be allocated y caller).
- * The following uses the tinyjpeg library written by Luc Saillard (See CREDITS)
- */
+  */
 static void rgb24_encode_jpeg(struct v4l4j_device *d, unsigned char *src, unsigned char *dst) {
-	struct jdec_private *jdec = d->r->jdec;
-	int res;
-	if (tinyjpeg_parse_header(jdec, src, d->capture_len)) {
-		info("Error parsing JPEG header: %s\n",	tinyjpeg_get_errorstring(jdec));
-		return;
+	struct jpeg_decompress_struct *c = d->r->cinfo;
+	int line_size;
+	JSAMPROW row[4] = {dst};
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	d->r->srcmgr->next_input_byte = src;
+	d->r->srcmgr->bytes_in_buffer = d->capture_len;
+	jpeg_read_header(c, TRUE);
+	d->r->cinfo->dct_method = JDCT_FASTEST;
+	d->r->cinfo->do_fancy_upsampling = FALSE;
+	d->r->cinfo->out_color_space = JCS_RGB;
+
+	dprint(LOG_RGB, "[RGB] JPEG image %dx%d\n", c->image_width, c->image_height);
+	//set decomp param
+
+	jpeg_start_decompress(c);
+	line_size = c->output_width * c->out_color_components * sizeof(JSAMPLE);
+	dprint(LOG_RGB, "[RGB] output image %dx%d\n", c->output_width, c->output_height);
+	dprint(LOG_RGB, "[RGB] output image out_color_comp %d, output_comp %d\n",
+			c->out_color_components, c->output_components);
+	dprint(LOG_RGB, "[RGB] output image recomm. buffer height %d\n", c->rec_outbuf_height);
+	dprint(LOG_RGB, "[RGB] output image scan line size %d\n", line_size);
+
+	while (c->output_scanline < c->output_height) {
+		jpeg_read_scanlines(c, row, 1);
+		row[0] += line_size;
 	}
-	tinyjpeg_set_components(jdec, &src, 1);
-	res = tinyjpeg_decode(jdec, TINYJPEG_FMT_RGB24);
-	if(res){
-		info("Error decoding JPEG header: %s\n",	tinyjpeg_get_errorstring(jdec));
-		return;
-	}
+	jpeg_finish_decompress(c);
+
+	dprint(LOG_RGB, "[RGB] Done\n");
 }
 
-/* Converts a MJPEG planar frame of width "d->c->width and height "d->c->height" at "src" straight
- * into a RGB24 frame at "dst" (must be allocated y caller).
- * The following uses the tinyjpeg library written by Luc Saillard (See CREDITS)
- */
-static void rgb24_encode_mjpeg(struct v4l4j_device *d, unsigned char *src, unsigned char *dst) {
-	int has_dht=0, ptr=0, size;
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+static void add_huffman_tables(struct v4l4j_device *d){
+	int j, i;
+	JHUFF_TBL *huff_ptr;
+	for(j=0; j<2;j++){
+		if (d->r->cinfo->ac_huff_tbl_ptrs[j] == NULL) {
+			d->r->cinfo->ac_huff_tbl_ptrs[j] = jpeg_alloc_huff_table((j_common_ptr) d->r->cinfo);
+			huff_ptr = d->r->cinfo->ac_huff_tbl_ptrs[j];
+			for (i = 1; i <= 16; i++)
+				huff_ptr->bits[i] = ac_count[j][(i-1)];
 
-	if(src[0]!=0xff && src[1]!=0xD8) {
-		dprint(LOG_JPEG, "[JPEG] Invalid JPEG frame\n");
-		return;
-	}
-
-	dprint(LOG_JPEG, "[JPEG] Adding Huffman tables\n");
-	memcpy(temp_buf,src,2);
-	ptr += 2;
-
-	while(!has_dht) {
-		if(src[ptr]!=0xFF) {
-			dprint(LOG_JPEG, "[JPEG] Invalid JPEG frame\n");
-			return;
+			for (i = 0; i < 256; i++)
+				huff_ptr->huffval[i] = ac_symbol[j][i];
 		}
-
-		if(src[ptr+1] == 0xC4)
-			has_dht=1;
-		else if (src[ptr+1] == 0xDA)
-			break;
-
-		size = (src[ptr+2] << 8) + src[ptr+3];
-		memcpy((temp_buf+ptr), (src+ptr), 2+size);
-		ptr += (2+size);
 	}
 
-	if(!has_dht) {
-		dprint(LOG_JPEG, "[JPEG] doesnt have DHT\n");
-		memcpy((temp_buf+ptr), huffman_table, DHT_SIZE);
-		memcpy((temp_buf+ptr+DHT_SIZE), (src+ptr), (d->capture_len-ptr));
-		ptr += (DHT_SIZE+d->capture_len-ptr);
-	} else {
-		dprint(LOG_JPEG, "[JPEG] Has DHT\n");
-		memcpy((temp_buf+ptr), (src+ptr), (d->capture_len-ptr));
-		ptr += (d->capture_len-ptr);
+	for(j=0; j<2;j++){
+		if (d->r->cinfo->dc_huff_tbl_ptrs[j] == NULL){
+			d->r->cinfo->dc_huff_tbl_ptrs[j] = jpeg_alloc_huff_table((j_common_ptr) d->r->cinfo);
+			huff_ptr = d->r->cinfo->dc_huff_tbl_ptrs[j];
+			for (i = 1; i <= 16; i++)
+				huff_ptr->bits[i] = dc_count[j][(i-1)];
+
+			for (i = 0; i < 256; i++)
+				huff_ptr->huffval[i] = dc_symbol[j][i];
+		}
 	}
 
-	dprint(LOG_JPEG, "[JPEG] Frame now has %d bytes\n", ptr);
-	rgb24_encode_jpeg(d, temp_buf,dst);
 }
 
 int init_rgb_converter(struct v4l4j_device *d){
@@ -355,17 +412,31 @@ int init_rgb_converter(struct v4l4j_device *d){
 	} else if(d->vdev->capture->palette == YUV420){
 		dprint(LOG_RGB, "[RGB] Setting RGB24 conversion for YUV420\n");
 		d->convert = rgb24_encode_yuv420;
-	} else if(d->vdev->capture->palette == JPEG ){
-		dprint(LOG_RGB, "[RGB] Setting RGB24 conversion for JPEG\n");
+	} else if(d->vdev->capture->palette == JPEG || d->vdev->capture->palette == MJPEG){
+
+		//setup JPEG decomp
+		XMALLOC(d->r->jerr, struct jpeg_error_mgr *, sizeof(struct jpeg_error_mgr));
+		XMALLOC(d->r->cinfo, struct jpeg_decompress_struct *, sizeof(struct jpeg_decompress_struct));
+		XMALLOC(d->r->srcmgr, struct jpeg_source_mgr *, sizeof(struct jpeg_source_mgr));
+
+		d->r->cinfo->err = jpeg_std_error(d->r->jerr);
+		d->r->jerr->emit_message = emit_msg;
+		jpeg_create_decompress(d->r->cinfo);
+		d->r->srcmgr->init_source = init_source;
+		d->r->srcmgr->fill_input_buffer = fill_intput_buffer;
+		d->r->srcmgr->skip_input_data = skip_input_data;
+		d->r->srcmgr->resync_to_restart = jpeg_resync_to_restart;
+		d->r->srcmgr->term_source = term_source;
+		d->r->cinfo->src = d->r->srcmgr;
+
+		if(d->vdev->capture->palette == JPEG){
+			dprint(LOG_RGB, "[RGB] Setting RGB24 conversion for JPEG\n");
+		} else {
+			dprint(LOG_RGB, "[RGB] Setting RGB24 conversion for MJPEG\n");
+			add_huffman_tables(d);
+		}
 		d->convert = rgb24_encode_jpeg;
-		d->r->jdec = tinyjpeg_init();
-		//tinyjpeg_set_flags(d->r->jdec, TINYJPEG_FLAGS_MJPEG_TABLE);
-	} else if(d->vdev->capture->palette == MJPEG ){
-		dprint(LOG_RGB, "[RGB] Setting RGB24 conversion for MJPEG\n");
-		XMALLOC(temp_buf, unsigned char *, (d->vdev->capture->imagesize * sizeof(unsigned char)) + DHT_SIZE);
-		d->convert = rgb24_encode_jpeg;
-		d->r->jdec = tinyjpeg_init();
-		tinyjpeg_set_flags(d->r->jdec, TINYJPEG_FLAGS_MJPEG_TABLE);
+
 	} else {
 		info("[RGB] Image format %d cannot be transformed to RGB24\n", d->vdev->capture->palette);
 		XFREE(d->r);
@@ -379,19 +450,18 @@ int init_rgb_converter(struct v4l4j_device *d){
 void destroy_rgb_converter(struct v4l4j_device *d){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	if(d->vdev->capture->palette == JPEG || d->vdev->capture->palette == MJPEG) {
-		unsigned char *c[3] = { NULL, NULL, NULL };
-		tinyjpeg_set_components(d->r->jdec, c, 3);
-		tinyjpeg_free(d->r->jdec);
-		if(temp_buf!=NULL)
-			XFREE(temp_buf);
+//		if(temp_buf!=NULL)
+//			XFREE(temp_buf);
+		jpeg_destroy_decompress(d->r->cinfo);
+		XFREE(d->r->cinfo);
+		XFREE(d->r->jerr);
+		XFREE(d->r->srcmgr);
 	}
 
 	XFREE(d->r);
 }
 
 
-//
-//gcc -I ../libv4l -c jidctflt.c  -ggdb -DDEBUG &&  gcc -I ../libv4l -c rgb.c -ggdb -DDEBUG && gcc -I ../libv4l -c tinyjpeg.c -ggdb -DDEBUG && gcc rgb.o tinyjpeg.o  jidctflt.o -o rgb
 //
 //Usage: ./rgb *.raw
 
@@ -402,8 +472,10 @@ void destroy_rgb_converter(struct v4l4j_device *d){
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/time.h>
-void *read_frame(void * d, int s, char *file){
+
+void *read_frame(void * d, int *size, char *file){
 	int f, l=0;
+	*size=0;
 
 	//open file
 	if ((f = open(file, O_RDONLY)) < 0) {
@@ -411,11 +483,29 @@ void *read_frame(void * d, int s, char *file){
 		return NULL;
 	}
 
-	while((l += read(f, (d+l), 65536))<s);
+	while(( l= read(f, (d+*size), 65536))!=0)
+		*size += l;
+
+	printf("read %d bytes\n", *size);
 
 	close(f);
 	return d;
 }
+
+//void *read_frame(void * d, int s, char *file){
+//	int f, l=0;
+//
+//	//open file
+//	if ((f = open(file, O_RDONLY)) < 0) {
+//		printf( "FILE: can't open file\n");
+//		return NULL;
+//	}
+//
+//	while((l += read(f, (d+l), 65536))<s);
+//
+//	close(f);
+//	return d;
+//}
 
 void write_frame(void *d, int size, char *file) {
 	int outfile, len = 0;
@@ -438,7 +528,7 @@ void write_frame(void *d, int size, char *file) {
 
 	close(outfile);
 }
-#define PPM_HEADER			"P3 %d %d 255 \n"
+#define PPM_HEADER			"P6 %d %d 255 \n"
 
 void write_frame_ppm(unsigned char *d, char *file, int size, int w, int h){
 	int len = 0, i=0;
@@ -472,24 +562,29 @@ void write_frame_ppm(unsigned char *d, char *file, int size, int w, int h){
 
 int main(int argc, char **argv){
 	int nb = 0;
-	void *data, *rgb;
+	unsigned char *data, *rgb;
 	struct v4l4j_device d;
 	struct video_device v;
 	struct capture_device c;
 	struct timeval start, now;
 	d.vdev=&v;
 	v.capture = &c;
+	//Image format
 	c.palette = MJPEG;
 	c.width = 640;
 	c.height = 480;
+	//size of v4l buffer
 	c.imagesize = 204800;
+	//actual size of frame
+	d.capture_len = 27417;
 	init_rgb_converter( &d);
-	d.capture_len = c.imagesize;
-	rgb = (void *) malloc(640*480*3);
-	data = (void *) malloc(d.capture_len);
+	//size of dest buffer (RGB24)
+	XMALLOC(rgb, void *, 640*480*3);
+	//size of source buffer - ADJUST ACCORDING TO FORMAT
+	XMALLOC(data, void *, d.capture_len);
 	gettimeofday(&start, NULL);
 	while(nb++<(argc-1)){
-		read_frame(data, d.capture_len, argv[nb]);
+		read_frame(data, &d.capture_len, argv[nb]);
 		d.convert(&d, data, rgb);
 		write_frame_ppm(rgb, argv[nb], 640*480*3, 640, 480);
 	}

@@ -332,7 +332,7 @@ static int set_param(struct capture_device *c, int fd) {
 	CLEAR(param);
 	param.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	param.parm.capture.timeperframe.numerator = 1;
-	param.parm.capture.timeperframe.denominator = 25;
+	param.parm.capture.timeperframe.denominator = 30;
 	ioctl(fd, VIDIOC_S_PARM, &param);
 
 	return 0;
