@@ -29,19 +29,20 @@
 #include <jpeglib.h>
 
 #include "libv4l.h"
-#include "tinyjpeg.h"
 
 struct v4l4j_device;
 
 struct jpeg_data {
 	struct jpeg_compress_struct *cinfo;
-	struct jpeg_error_mgr *jerr;
 	struct jpeg_destination_mgr *destmgr;
+	struct jpeg_error_mgr *jerr;
 	int jpeg_quality;			//the jpeg quality, set to -1 if disable
 };
 
 struct rgb_data {
-	struct jdec_private * jdec;
+	struct jpeg_decompress_struct *cinfo;
+	struct jpeg_source_mgr *srcmgr;
+	struct jpeg_error_mgr *jerr;
 	int nb_pixel;
 };
 
