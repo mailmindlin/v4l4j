@@ -83,8 +83,7 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * @author gilles
  *
  */
-public class DeviceInfo {
-	
+public class DeviceInfo {	
 	/**
 	 * Native method interacting with libv4l to get info on device f
 	 * @param f the full path to the V4L device file
@@ -118,7 +117,7 @@ public class DeviceInfo {
 	/**
 	 * A list of supported image formats
 	 */
-	private List<ImageFormat> formats;	
+	private ImageFormatList formats;	
 	
 	
 	/**
@@ -150,13 +149,13 @@ public class DeviceInfo {
 
 
 	/**
-	 * This method returns a list of {@link ImageFormat} objects detailing
-	 * the various image format the video device supports.
-	 * @return a list of <code>ImageFormat</code> objects
-	 * @see ImageFormat 
+	 * This method returns an {@link ImageFormatList} object containing
+	 * the various image formats the video device supports.
+	 * @return an<code>ImageFormatList</code> object
+	 * @see ImageFormatList
 	 */
-	public List<ImageFormat> getFormats() {
-		return new Vector<ImageFormat>(formats);
+	public ImageFormatList getFormatList() {
+		return formats;
 	}
 
 
@@ -169,10 +168,7 @@ public class DeviceInfo {
 	 */	
 	DeviceInfo(long object, String dev) throws V4L4JException{
 		inputs = new Vector<InputInfo>();
-		formats = new Vector<ImageFormat>();
-		deviceFile = dev;
-	
+		deviceFile = dev;	
 		getInfo(object);
 	}
-
 }

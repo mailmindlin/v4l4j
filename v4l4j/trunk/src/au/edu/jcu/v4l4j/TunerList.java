@@ -32,10 +32,7 @@ import au.edu.jcu.v4l4j.exceptions.StateException;
  * Objects of this class encapsulate a list of tuner {@link Tuner}. This class
  * can not be directly instantiated. Instead, to retrieve a list of tuners
  * from a {@link VideoDevice}, use its 
- * {@link VideoDevice#getTunerList() getTunerList()} method. Once
- * the tuner list and associated tuners are no longer needed, they must be 
- * released by calling {@link VideoDevice#releaseTunerList() releaseTunerList()}.
- * After that, neither the list nor the tuners themselves must be used. If 
+ * {@link VideoDevice#getTunerList() getTunerList()} method.  
  * any attempt to use them is made, a {@link StateException} will be raised.
  * @author gilles
  *

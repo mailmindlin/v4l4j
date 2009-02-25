@@ -103,16 +103,16 @@ static int detect_standard(struct capture_device *c, int fd){
 		if (try_std(fd, i)==0){
 			found=1;
 			if(i==WEBCAM) {
-				dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "WEBCAM standard autodetected\n");
+				info("Adjusted standard to WEBCAM\n");
 				c->std = WEBCAM;
 			} else if (i==PAL) {
-				dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "PAL standard autodetected\n");
+				info("Adjusted standard to PAL\n");
 				c->std = PAL;
 			} else if (i==NTSC) {
-				dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "NTSC standard autodetected\n");
+				info("Adjusted standard to NTSC\n");
 				c->std = NTSC;
 			} else  {
-				dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "SECAM standard autodetected\n");
+				info("Adjusted standard to SECAM\n");
 				c->std = SECAM;
 			}
 		}
@@ -202,7 +202,7 @@ static int set_input(struct capture_device *c, int fd){
 		}
 		vi.index = c->channel;
 		if (-1 == ioctl(fd, VIDIOC_ENUMINPUT, &vi)) {
-			dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "CAP: Failed to get details of input %d\n", c->channel);
+			dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "CAP: Failed to get details of input %d, errno(%d)\n", c->channel, errno);
 			return -1;
 		}
 		if(vi.type == V4L2_INPUT_TYPE_TUNER)
@@ -332,7 +332,7 @@ static int set_param(struct capture_device *c, int fd) {
 	CLEAR(param);
 	param.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	param.parm.capture.timeperframe.numerator = 1;
-	param.parm.capture.timeperframe.denominator = 25;
+	param.parm.capture.timeperframe.denominator = 30;
 	ioctl(fd, VIDIOC_S_PARM, &param);
 
 	return 0;
