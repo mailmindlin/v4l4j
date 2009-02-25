@@ -12,13 +12,14 @@ JDK_HOME=/usr/lib/jvm/java-6-sun
 #
 
 
-# LOG_CALLS         1
-# LOG_LIBV4L        2
-# LOG_MEMALLOC      4
-# LOG_JPEG          8
-# LOG_V4L4J         16
-# LOG_ALL           31
-LOG_SOURCE=31
+#LOG_CALLS         1
+#LOG_LIBV4L        2
+#LOG_MEMALLOC      4
+#LOG_JPEG          8
+#LOG_RGB           16
+#LOG_V4L4J         32
+#LOG_ALL           63
+LOG_SOURCE=63
 
 ifneq ($(DEBUG),)
 DBG=$(DEBUG) -DLOG_SOURCE=$(LOG_SOURCE)
@@ -28,7 +29,7 @@ LIBV4L_PATH=../libv4l
 LIBV4L_NAME=libv4l.a
 
 LIB=libv4l4j.so
-OBJ=v4l4j_FrameGrabber.o jpeg.o v4l4j_ImageFormat.o v4l4j_DeviceInfo.o v4l4j_VideoDevice.o v4l4j_Control.o v4l4j_Tuner.o
+OBJ=jpeg.o rgb.o v4l4j_FrameGrabber.o v4l4j_ImageFormatList.o v4l4j_DeviceInfo.o v4l4j_VideoDevice.o v4l4j_Control.o v4l4j_Tuner.o
 
 CC=gcc
 INCLUDES=-I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ -I$(LIBV4L_PATH) -I.
@@ -43,5 +44,11 @@ all: $(LIB)
 $(LIB): $(OBJ)
 	$(LD) $(LDFLAGS) $(OBJ) $(LIBV4L_PATH)/$(LIBV4L_NAME) -o $(LIB)
 
+test:
+	$(CC) $(INCLUDES) -DDEBUG -Wall -ggdb -DMAKETEST -c rgb.c
+	$(CC) $(CFLAGS) -DDEBUG -Wall -ggdb -DMAKETEST -c jpeg.c
+	$(LD) rgb.o -ljpeg -o rgb
+	$(LD) jpeg.o -ljpeg -o jpeg
+
 clean:
-	rm -f $(OBJ) $(LIB) ./*~
+	rm -f $(OBJ) $(LIB) ./*~ jpeg rgb

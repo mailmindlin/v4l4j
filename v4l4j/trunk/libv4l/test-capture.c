@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <signal.h>
 #include <sys/time.h>
 #include <fcntl.h>
@@ -75,13 +76,13 @@ int main(int argc, char** argv) {
 		printf("This program requires the following arguments in this order:\n");
 		printf("The video device file to be tested.\n");
 		printf("Single frame capture (1), or 10 second capture (0)\n");
-		printf("The length (in seconds) of the capture (use 0 to capture a single frame)\n");
 		printf("The video standard and input number.\n");
 		printf("Video standards: webcam:0 - PAL:1 - SECAM:2 - NTSC:3\n");
 		printf("The capture resolution (width and height)\n");
-		printf("The last optional argument is an image format index. A list of known"
-				" formats can be found in libv4l.h . To see what formats are supported"
-				" by a video device, run './list-caps /dev/videoXX' and check the "
+		printf("The last argument is optional and is an image format index. "
+				"A list of known formats can be found in libv4l.h . To see "
+				"what formats are supported by a video device, run "
+				"'./list-caps /dev/videoXX' and check the "
 				"'Printing device info' section at the bottom.\n");
 		printf("Arguments must be in the specified order !!!\n");
 		return -1;
@@ -141,6 +142,8 @@ int main(int argc, char** argv) {
 
 
 	printf("Capturing from %s at %dx%d.\n", argv[1], c->width,c->height);
+	width = c->width;
+	height = c->height;
 	printf("Image format %s, size: %d\n", libv4l_palettes[c->palette].name, c->imagesize);
 
 	if((*c->actions->init_capture)(v)<0){
@@ -175,6 +178,8 @@ int main(int argc, char** argv) {
 			break;
 		}
 		gettimeofday(&now, NULL);
+		if(cap_length==0)
+			break;
 	}
 	printf("fps: %.1f\n", (count/((now.tv_sec - start.tv_sec) + ((float) (now.tv_usec - start.tv_usec)/1000000))));
 

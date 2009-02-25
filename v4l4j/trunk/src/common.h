@@ -32,26 +32,46 @@
 
 struct v4l4j_device;
 
-struct jpeg {
+struct jpeg_data {
 	struct jpeg_compress_struct *cinfo;
-	struct jpeg_error_mgr *jerr;
 	struct jpeg_destination_mgr *destmgr;
-	//struct v4l4j_device, void *src, void *dst
-	void (*jpeg_encode) (struct v4l4j_device *, void *, void *);
+	struct jpeg_error_mgr *jerr;
+	int jpeg_quality;			//the jpeg quality, set to -1 if disable
 };
 
+struct rgb_data {
+	struct jpeg_decompress_struct *cinfo;
+	struct jpeg_source_mgr *srcmgr;
+	struct jpeg_error_mgr *jerr;
+	int nb_pixel;
+};
+
+enum output_format {
+	OUTPUT_RAW,
+	OUTPUT_JPG,
+	OUTPUT_RGB24
+} ;
+
+
 struct v4l4j_device {
+	void (*convert) (struct v4l4j_device *, unsigned char *, unsigned char *);
 	struct video_device *vdev;	//the libv4l struct
-	struct jpeg *j;				//the jpeg compressor
+	union {
+		struct jpeg_data *j;	//the converter's data
+		struct rgb_data *r;
+	};
+	enum output_format output_fmt;	//the output format (see enum above)
 	unsigned char **bufs;		//the buffers holding the last JPEG compressed frame
-	int jpeg_quality;			//the jpeg quality, set to -1 if disable
 	int capture_len;			//the size of the last captured frame returned by libv4l
-	int len;					//the size of the frame after JPEG compression
+	int len;					//the size of the frame after conversion
 	int buf_id;					//the index of the buffer where the next frame goes
 };
 
-#define JPEG_SUPPORTED_FORMATS		{JPEG, MJPEG, YUV420, YUYV, RGB24, YVYU}
-#define NB_JPEG_SUPPORTED_FORMATS	6
+#define JPEG_SUPPORTED_FORMATS		{JPEG, MJPEG, YUV420, YUYV, RGB24, RGB32, BGR24, YVYU, UYVY, BGR32}
+#define NB_JPEG_SUPPORTED_FORMATS	10
+
+#define RGB24_SUPPORTED_FORMATS		{RGB24, BGR24, BGR32, RGB32, YUYV, UYVY, YVYU, YUV420, JPEG, MJPEG}
+#define NB_RGB24_SUPPORTED_FORMATS	10
 
 #define BYTEBUFER_CLASS			"java/nio/ByteBuffer"
 #define V4L4J_PACKAGE			"au/edu/jcu/v4l4j/"

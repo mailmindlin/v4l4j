@@ -31,9 +31,12 @@
 #define LOG_LIBV4L			2
 #define LOG_MEMALLOC		4
 #define LOG_JPEG			8
-#define LOG_V4L4J			16
+#define LOG_RGB				16
+#define LOG_V4L4J			32
 
-#define LOG_ALL 			( LOG_CALLS | LOG_LIBV4L | LOG_MEMALLOC | LOG_JPEG | LOG_V4L4J)
+#define LOG_ALL 			( LOG_CALLS | LOG_LIBV4L |\
+								LOG_MEMALLOC | LOG_JPEG |\
+								LOG_RGB | LOG_V4L4J)
 
 #ifndef LOG_SOURCE
 #define LOG_SOURCE			LOG_ALL
@@ -41,6 +44,9 @@
 
 #include <string.h>
 #include <stdlib.h>
+
+#define info(format, ...) do { fprintf (stderr, "[ %s:%d ] " format, __FILE__, __LINE__, ## __VA_ARGS__);\
+								 fflush(stderr); } while(0)
 
 
 #ifdef DEBUG

@@ -1,0 +1,4 @@
+The YUV420 to RGB24 conversion routine in src/jpeg.c is taken from libv4l,
+written by Hans de Goede (j.w.r.degoede <aT> hhs.nl). libv4l can be downloaded
+from the Video4Linux Mercurial repository at http://linuxtv.org/hg/v4l-dvb
+More information and instructions can be found at http://www.linuxtv.org/repo/
