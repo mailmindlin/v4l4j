@@ -1,6 +1,17 @@
 #summary a step-by-step guide to downloading & installing v4l4j
 #labels Featured
 
+=Quick Start=
+For the impatient, here are a few instructions that will get you started, assuming you are using Ubuntu or Debian:
+{{{
+svn co http://v4l4j.googlecode.com/svn/v4l4j/trunk v4l4j
+sudo apt-get install sun-java6-jdk libjpeg-dev build-essential ant
+cd v4l4j
+ant test-gui
+}}}
+This will download v4l4j and its dependencies, compile the package and run a test application that displays a video stream from /dev/video0 by default. To use another video device, add `-Dtest.device=/dev/videoXX` to the last line.
+If things go wrong, then read on. Otherwise, you can generate the Java documentation with `ant javadoc`, and write your own application using v4l4j.
+
 =Download=
 The latest snapshot of v4l4j can be downloaded using:
 {{{
@@ -10,7 +21,7 @@ svn co http://v4l4j.googlecode.com/svn/v4l4j/trunk v4l4j
 
 =Requirements=
 v4l4j requires the following:
- * a supported V4L video source (webcam, capture card, tuner card). If you want v4l4j to JPEG-encode frames for you, your video device must support either JPEG, MJPEG, YUV420, YUYV or RGB24 image formats.
+ * a supported V4L video source (webcam, capture card, tuner card). If you want v4l4j to convert images to either JPEG or RGB24 for you, your video device must support either JPEG, MJPEG, YUV420, YUYV, RGB24, RGB32, BGR24, YVYU, UYVY or BGR32 image formats. (Patches to support other image formats are welcome !).
  * Sun JAVA JDK 1.6 (it wont compile with earlier versions and it *must* be a JDK !!!). Download it from [http://java.sun.com here], install it somewhere and note the location. In Ubuntu/Debian, this can be done with:
 {{{
 sudo apt-get install sun-java6-jdk
@@ -49,19 +60,24 @@ You can generate the Java documentation for this package by running `ant javadoc
 =Testing=
 Three example applications are shipped with v4l4j:
  * The first one simply captures frames for 10 seconds and print the frame rate. Run it with `ant test-fps`
- * The second one displays the video stream in a window. Run it with `ant test-gui`
+ * The second one displays the video stream in a window. Run it with `ant test-gui`. For this application to work, your video device must use a image format that can be converted to RGB24 (see Requirements section above).
  * The third one prints information about the video device itself. Run it with `ant deviceInfo`
 
-By default, these tests will use /dev/video0 as the video device (assumed to be a webcam), and capture at the maximum resolution. You can change any of these settings by editing the values at the end of the "build.properties" file, or provide those values on the ant command line:
+By default, these tests will use /dev/video0 as the video device (assumed to be a webcam), and the capture resolution is set to 640x480 . You can change any of these settings by editing the values at the end of the "build.properties" file, or provide those values on the ant command line:
   * `-Dtest.device=` changes the video device,
   * `-Dtest.width=` changes the width of captured frames,
   * `-Dtest.height=` changes the height of captured frames,
   * `-Dtest.channel=` changes the input used for capture (0 for webcams),
   * `-Dtest.standard=` changes the video standard used during capture (0 for webcams, 1 for PAL, 2 for SECAM and 3 for NTSC).
+  * `-Dtest.inFormat=` changes the capture image format, ie the format images are captured in from Video4Linux (used only by `ant test-fps`). The value must be an image format supported by your video device, as listed in `ant deviceInfo`.
+  * `-Dtest.outFormat=` changes the output image format, ie the format image will be in when handed out by v4l4j (used only by `ant test-fps`). Acceptable values are:
+    * 0: raw format - v4l4j will not do any format conversion and images will be handed out in their original capture format.
+    * 1: JPEG format - v4l4j will convert images to JPEG. The video device must use one of the image formats v4l4j can convert to JPEG (see Requirements section above for a list of formats that can be JPEG-encoded).
+    * 2: RGB24 format - v4l4j will convert images to RGB24. The video device must use one of the image formats v4l4j can convert to RGB24 (see Requirements section above for a list of formats that can be converted to RGB24).
 
 =Debugging=
-You can compile both the wrapper library libv4l and v4l4j with extra debug output: uncomment the #DEBUG line in libv4l/Makefile, in src/Makefile and recompile. In addition, troubleshooting can be done using the test programs in libv4l/. Check the the [libv4l libv4l page].
+You can compile both the wrapper library libv4l and v4l4j with extra debug output: uncomment the #DEBUG line in libv4l/Makefile, in src/Makefile and recompile. In addition, troubleshooting can be done using the test utilities in libv4l/. Check the the [libv4l libv4l page].
 
 =Issues=
 Feedback is is greatly appreciated, specially because v4l4j has only been tested with a very limited number of webcams and capture cards.
-Issues and queries can be emailed to the [http://groups.google.com/group/v4l4j v4l4j mailing list] along with a description of what went wrong (or right) and what hardware you run v4l4j on. Also, to facilitate troubleshooting, see the Issues section on the [libv4l libv4l page] and attach the two files with your query.
+Issues and queries can be emailed to the [http://groups.google.com/group/v4l4j v4l4j mailing list] along with a description of what went wrong (or right) and what hardware you run v4l4j on. Also, to facilitate troubleshooting, see the Issues section on the [libv4l libv4l page] and attach the capture files with your query.
