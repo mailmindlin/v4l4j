@@ -3,9 +3,6 @@
 JDK_HOME=/usr/lib/jvm/java-6-sun
 #JDK_HOME=/usr/lib/j2sdk1.6-sun
 
-#uncomment the following line to enable debug output from the JNI libv4l4j
-#DEBUG=-DDEBUG -Wall
-
 
 #
 # edit anything below at your own risk
@@ -22,7 +19,9 @@ JDK_HOME=/usr/lib/jvm/java-6-sun
 LOG_SOURCE=63
 
 ifneq ($(DEBUG),)
-DBG=$(DEBUG) -DLOG_SOURCE=$(LOG_SOURCE)
+DBG=-DDEBUG -Wall -DLOG_SOURCE=$(LOG_SOURCE)
+else
+OPTIMISATION=-O3
 endif
 
 LIBV4L_PATH=../libv4l
@@ -33,7 +32,6 @@ OBJ=jpeg.o rgb.o v4l4j_FrameGrabber.o v4l4j_ImageFormatList.o v4l4j_DeviceInfo.o
 
 CC=gcc
 INCLUDES=-I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ -I$(LIBV4L_PATH) -I.
-OPTIMISATION=-O3
 CFLAGS=$(INCLUDES) $(DBG) $(OPTIMISATION) -fPIC
 
 LD=gcc
