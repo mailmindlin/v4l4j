@@ -33,8 +33,10 @@
 #include "libv4l.h"
 #include "libv4l-err.h"
 #include "log.h"
+#include "palettes.h"
 #include "pwc-probe.h"
 #include "qc-probe.h"
+#include "version.h"
 #include "v4l1-input.h"
 #include "v4l1-query.h"
 #include "v4l1-tuner.h"
@@ -43,9 +45,12 @@
 #include "v4l2-tuner.h"
 #include "videodev_additions.h"
 
-
+/*
+ * Copies the version info in the given char *
+ * It must be allocated by caller. char [40] is enough
+ */
 char *get_libv4l_version(char * c) {
-	sprintf(c, "%d.%d-%d", VER_MAJ, VER_MIN, VER_REL);
+	snprintf(c, 39,"%d.%d-%s_%s", VER_MAJ, VER_MIN, SVN_BRANCH, SVN_REV);
 	return c;
 }
 
@@ -57,9 +62,10 @@ char *get_libv4l_version(char * c) {
 struct video_device *open_device(char *file) {
 	struct video_device *vdev;
 	int fd = -1;
-	char version[10];
+	char version[40];
 
-	dprint(LIBV4L_LOG_SOURCE_VIDEO_DEVICE, LIBV4L_LOG_LEVEL_ALL, "Using libv4l version %s\n", get_libv4l_version(version));
+	printf("Using libv4l version %s\n", get_libv4l_version(version));
+	fflush(stdout);
 
 	//open device
 	dprint(LIBV4L_LOG_SOURCE_VIDEO_DEVICE, LIBV4L_LOG_LEVEL_DEBUG, "VD: Opening device file %s.\n", file);
@@ -89,6 +95,8 @@ struct video_device *open_device(char *file) {
 
 	vdev->fd = fd;
 	strncpy(vdev->file, file, FILENAME_LENGTH -1);
+
+	dprint(LIBV4L_LOG_SOURCE_VIDEO_DEVICE, LIBV4L_LOG_LEVEL_DEBUG, "VD: Returning from %s\n", __PRETTY_FUNCTION__);
 
 	return vdev;
 }
@@ -155,6 +163,8 @@ static void setup_capture_actions(struct video_device *vdev) {
 
 //device file, width, height, channel, std, nb_buf
 struct capture_device *init_capture_device(struct video_device *vdev, int w, int h, int ch, int s, int nb_buf){
+	if(vdev->capture!=NULL)
+		return vdev->capture;
 	//create capture device
 	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "CAP: Initialising capture interface\n");
 	XMALLOC(vdev->capture, struct capture_device *,sizeof(struct capture_device));
@@ -180,12 +190,51 @@ void free_capture_device(struct video_device *vdev){
 	XFREE(vdev->capture);
 }
 
+void print_device_info(struct video_device *v){
+	int j,k;
+	struct device_info *i = v->info;
+	printf("============================================\n\n");
+	printf("Printing device info\n\n");
+	printf("Device name: %s\n",i->name);
+	printf("Device file: %s\n",v->file);
+	printf("Supported image formats (Name - Index):\n");
+	for(j=0; j<i->nb_palettes; j++)
+		printf("\t%s - %d\n", libv4l_palettes[i->palettes[j]].name, i->palettes[j]);
+
+	printf("Inputs:\n");
+	for(j=0; j<i->nb_inputs; j++){
+		printf("\tName: %s\n", i->inputs[j].name);
+		printf("\tNumber: %d\n", i->inputs[j].index);
+		printf("\tType: %d (%s)\n", i->inputs[j].type,
+				i->inputs[j].type==INPUT_TYPE_TUNER ? "Tuner" : "Camera");
+		printf("\tSupported standards:\n");
+		for(k=0; k<i->inputs[j].nb_stds; k++)
+			printf("\t\t%d (%s)\n",i->inputs[j].supported_stds[k],
+					i->inputs[j].supported_stds[k]==WEBCAM?"Webcam":
+					i->inputs[j].supported_stds[k]==PAL?"PAL":
+					i->inputs[j].supported_stds[k]==SECAM?"SECAM":"NTSC");
+		if(i->inputs[j].tuner!=NULL){
+			printf("\tTuner\n");
+			printf("\t\tName: %s\n",i->inputs[j].tuner->name);
+			printf("\t\tIndex: %d\n", i->inputs[j].tuner->index);
+			printf("\t\tRange low: %lu\n", i->inputs[j].tuner->rangelow);
+			printf("\t\tRange high: %lu\n", i->inputs[j].tuner->rangehigh);
+			printf("\t\tUnit: %d (%s)\n", i->inputs[j].tuner->unit,
+					i->inputs[j].tuner->unit==KHZ_UNIT?"KHz":"MHz");
+			printf("\t\tType: %d (%s)\n", i->inputs[j].tuner->type,
+					i->inputs[j].tuner->type==RADIO_TYPE?"Radio":"TV");
+
+		}
+	}
+}
+
 /*
  *
  * QUERY INTERFACE
  *
  */
 struct device_info *get_device_info(struct video_device *vdev){
+	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: %p %p\n", vdev, vdev->file);
 	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: Querying device %s.\n", vdev->file);
 
 	XMALLOC(vdev->info, struct device_info *, sizeof(struct device_info));

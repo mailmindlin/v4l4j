@@ -70,8 +70,8 @@ int get_tuner_freq_v4l2(struct video_device *vdev, int idx, unsigned int *f){
 		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "TUN: Failed to get tuner frequency for tuner %d on device %s\n", idx, vdev->file);
 		return LIBV4L_ERR_IOCTL;
 	}
-	fix_quirky_values(vdev,idx,f);
 	*f = freq.frequency;
+	fix_quirky_values(vdev,idx,f);
 	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "TUN: Got frequency %u for tuner %d on device %s\n", *f, idx, vdev->file);
 	return 0;
 }

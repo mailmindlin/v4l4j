@@ -421,7 +421,6 @@ int create_v4l1_controls(struct video_device *vdev, struct control *controls, in
 
 	//list standard V4L controls
 	//brightness
-	CLEAR(controls[count]);
 	controls[count].v4l2_ctrl->id = V4L2_CID_BRIGHTNESS;
 	controls[count].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
 	strcpy((char *)controls[count].v4l2_ctrl->name, "Brightness\0");
@@ -435,7 +434,6 @@ int create_v4l1_controls(struct video_device *vdev, struct control *controls, in
 	count++;
 
 	//hue
-	CLEAR(controls[count]);
 	controls[count].v4l2_ctrl->id = V4L2_CID_HUE;
 	controls[count].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
 	strcpy((char *)controls[count].v4l2_ctrl->name, "Hue\0");
@@ -449,7 +447,6 @@ int create_v4l1_controls(struct video_device *vdev, struct control *controls, in
 	count++;
 
 	//color
-	CLEAR(controls[count]);
 	controls[count].v4l2_ctrl->id = V4L2_CID_SATURATION;
 	controls[count].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
 	strcpy((char *)controls[count].v4l2_ctrl->name, "Saturation\0");
@@ -463,7 +460,6 @@ int create_v4l1_controls(struct video_device *vdev, struct control *controls, in
 	count++;
 
 	//contrast
-	CLEAR(controls[count]);
 	controls[count].v4l2_ctrl->id = V4L2_CID_CONTRAST;
 	controls[count].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
 	strcpy((char *)controls[count].v4l2_ctrl->name, "Contrast\0");
@@ -491,12 +487,16 @@ int get_control_value_v4l1(struct video_device *vdev, struct v4l2_queryctrl *ctr
 	switch(ctrl->id) {
 		case V4L2_CID_BRIGHTNESS:
 			*val = pict.brightness;
+			break;
 		case V4L2_CID_HUE:
 			*val = pict.hue;
+			break;
 		case V4L2_CID_SATURATION:
 			*val = pict.colour;
+			break;
 		case V4L2_CID_CONTRAST:
 			*val = pict.contrast;
+			break;
 		default:
 			dprint(LIBV4L_LOG_SOURCE_CONTROL, LIBV4L_LOG_LEVEL_ERR, "CTRL: unknown control %s (id: %d)\n", (char *) &ctrl->name, ctrl->id);
 			return LIBV4L_ERR_IOCTL;

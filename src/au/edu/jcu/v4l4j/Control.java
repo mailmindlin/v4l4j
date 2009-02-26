@@ -161,8 +161,14 @@ public class Control {
 	 */
 	public int setValue(int value) throws ControlException {
 		int v = defaultValue;
+		
 		state.get();
-		try { doSetValue(v4l4jObject,id, validateValue(value));}
+		if(type==V4L4JConstants.BUTTON)
+			value = 0;
+		else
+			value = validateValue(value);
+		
+		try { doSetValue(v4l4jObject,id, value);}
 		catch (ControlException ce){
 			state.put();
 			throw ce;

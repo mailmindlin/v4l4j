@@ -25,21 +25,16 @@
 package au.edu.jcu.v4l4j.examples;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Vector;
 
-import au.edu.jcu.v4l4j.Control;
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.V4L4JConstants;
 import au.edu.jcu.v4l4j.VideoDevice;
-import au.edu.jcu.v4l4j.exceptions.ControlException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 public class GetFrameRate {
 	public static void main(String[] args) throws V4L4JException, IOException {
-		List<Control> ctrls;
 		String dev;
-		int w, h, std, channel, qty, captureLength = 10;
+		int w, h, std, channel, inFmt, outFmt, captureLength = 10;
 		//Check if we have the required args
 		//otherwise put sensible values in
 		try {
@@ -68,9 +63,16 @@ public class GetFrameRate {
 			channel = 0;
 		}
 		try {
-			qty = Integer.parseInt(args[5]);
+			inFmt = Integer.parseInt(args[5]);
 		} catch (Exception e){
-			qty = 80;
+			inFmt = -1;
+		}
+		
+		//RAW: 0 , JPEG:1, 2: RGB
+		try {
+			outFmt = Integer.parseInt(args[6]);
+		} catch (Exception e){
+			outFmt = 0;
 		}
 		
 
@@ -79,36 +81,49 @@ public class GetFrameRate {
 		FrameGrabber f = null;
 		VideoDevice vd = null;
 
-		System.out.println("This program will open "+dev+", list the available control, capture frames for "
+		System.out.println("This program will open "+dev+", capture frames for "
 					+ captureLength+ " seconds and print the FPS");
 		System.out.println("Make sure the webcam is connected and press <Enter>, or Ctrl-C to abort now.");
 		System.in.read();
 
 		try {
 			vd = new VideoDevice(dev);
-			if(vd.canJPEGEncode()) {
-				f= vd.getJPEGFrameGrabber(w, h, channel, std, qty);
-				System.out.println("Frames from this device can be JPEG-encoded");
+			if(outFmt==1 && vd.supportJPEGConversion()) {
+				if(vd.getDeviceInfo().getFormatList().getFormat(inFmt)==null)
+					System.out.println("Capture format "+inFmt+" doesnt exist, trying to find a suitable one");
+				else 
+					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getFormat(inFmt).getName());
+				
+				f= vd.getJPEGFrameGrabber(w, h, channel, std, 80,vd.getDeviceInfo().getFormatList().getFormat(inFmt));
+				System.out.println("Output image format: JPEG");
+			} else if(outFmt==2 && vd.supportRGBConversion()) {
+				if(vd.getDeviceInfo().getFormatList().getFormat(inFmt)==null)
+					System.out.println("Capture format "+inFmt+" doesnt exist, trying to find a suitable one");
+				else 
+					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getFormat(inFmt).getName());
+				
+				f= vd.getRGBFrameGrabber(w, h, channel, std,vd.getDeviceInfo().getFormatList().getFormat(inFmt));
+				System.out.println("Output image format: RGB");
 			} else {
-				f= vd.getRawFrameGrabber(w, h, channel, std);
-				System.out.println("Frames from this device can *NOT* be JPEG-encoded");
+				if(inFmt==-1){
+					System.out.println("No capture format specified, v4l4j will pick the first one");
+					f= vd.getRawFrameGrabber(w, h, channel, std);
+				} else {
+					if(vd.getDeviceInfo().getFormatList().getFormat(inFmt)==null){
+						System.out.println("The specified input format does not exist, or is not supported by the video device");
+						throw new V4L4JException("Unsupported image format");
+					}
+					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getFormat(inFmt).getName());
+					f= vd.getRawFrameGrabber(w, h, channel, std,vd.getDeviceInfo().getFormatList().getFormat(inFmt));					
+				}
+				System.out.println("Output image format: RAW  (same as capture format)");
 			}
+			System.out.println("Capture image format: "+f.getImageFormat().getName());
 		} catch (V4L4JException e) {
 			e.printStackTrace();
 			System.out.println("Failed to instanciate the FrameGrabber ("+dev+")");
+			vd.release();
 			throw e;
-		}
-		
-		ctrls = new Vector<Control>(vd.getControlList().getList());
-
-		System.out.println("Found "+ctrls.size()+" controls");
-		for (Control c: ctrls) {
-			try {
-				System.out.println("control name: "+c.getName()+" - min: "+c.getMinValue()+" - max: "+c.getMaxValue()+" - step: "+c.getStepValue()+" - value: "+c.getValue());
-			} catch (ControlException e) {
-				e.printStackTrace();
-				System.out.println("Failed to get value for control "+c.getName());
-			}
 		}
 
 		try {
@@ -116,6 +131,8 @@ public class GetFrameRate {
 		} catch (V4L4JException e) {
 			e.printStackTrace();
 			System.out.println("Failed to start capture");
+			vd.releaseFrameGrabber();
+			vd.release();
 			throw e;
 		}
 
@@ -126,13 +143,16 @@ public class GetFrameRate {
 				f.getFrame();
 				//Uncomment the following to dump the captured frame to a jpeg file
 				//also import java.io.FileOutputStream 
-				//new FileOutputStream("file"+n+".jpg").getChannel().write(f.getFrame());
+				//new FileOutputStream("file"+n+".raw").getChannel().write(f.getFrame());
 				n++;
 				now=System.currentTimeMillis();
 			}
 		} catch (V4L4JException e) {
 			e.printStackTrace();
 			System.out.println("Failed to perform test capture");
+			f.stopCapture();
+			vd.releaseFrameGrabber();
+			vd.release();
 			throw e;
 		}
 
@@ -143,7 +163,6 @@ public class GetFrameRate {
 
 		f.stopCapture();
 		vd.releaseFrameGrabber();
-		vd.releaseControlList();
 		vd.release();
 	}
 }
