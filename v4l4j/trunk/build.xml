@@ -25,10 +25,13 @@
 		<echo message="Available targets :"/>
 		<echo message=""/>
 		<echo message=" all :                       Build the JAR file and JNI library"/>
+                <echo message=" all-debug :                 Build the JAR file and JNI library with debug statments"/>
 		<echo message=" jar :                       Build a JAR file with the v4l4j classes"/>
+                <echo message=" jar-debug :                 Build a JAR file with the v4l4j classes (compiled with debug information)"/>
 		<echo message=" javadoc:                    Build the v4l4j Java documentation"/>
 		<echo message=" jar-src :                   Build a JAR file with the v4l4j classes and sources"/>
 		<echo message=" jnilib :                    Build the JNI library (libv4l4j.so)"/>
+                <echo message=" jnilib-debug :              Build the JNI library with debug output(libv4l4j.so)"/>
 		<echo message=" install-jnilib(64):         Install the JNI lib, append 64 on 64-bit platforms (must be root)"/>
 		<echo message=" uninstall-jnilib(64):       Remove the JNI lib, append 64 on 64-bit platforms (must be root)"/>
 		<echo message=" test-fps :                  Check the FPS of a video source"/>
@@ -47,6 +50,21 @@
 	</target>
 	
 	<target name="all" depends="jnilib,jar"/>
+
+        <target name="all-debug" depends="jnilib-debug,jar-debug"/>
+
+        <target name="jnilib-debug" depends="">
+                <exec executable="make">
+			<env key="DEBUG" value="1"/>
+                        <arg line="-C ${libv4l.dir}" />
+                </exec>
+                <exec executable="make">
+                        <env key="DEBUG" value="1"/>
+                        <arg line="-C ${project.src}" />
+                </exec>
+                <move file="${project.src}/libv4l4j.so" tofile="${project.dir}/libv4l4j.so" />
+        </target>
+
 	
 	<target name="jnilib" depends="">
 		<exec executable="make">
@@ -82,6 +100,14 @@
 			<include name="**/*.java"/>
 		</javac>
 	</target>
+
+        <target name="compile-debug" depends="init">
+                <javac srcdir="${project.src}" destdir="${project.classes}" deprecation="on" source="${source}" debug="on">
+                        <classpath refid="build.classpath"/>
+                        <include name="**/*.java"/>
+                </javac>
+        </target>
+
 	
 	<target name="jar" depends="compile">
 		<jar jarfile="${project.dir}/${project.name}.jar">
@@ -95,6 +121,19 @@
 		</jar>
 	</target>
 	
+        <target name="jar-debug" depends="compile-debug">
+                <jar jarfile="${project.dir}/${project.name}.jar">
+                        <manifest>
+                                <attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.RGBVideoViewer"/>
+                        </manifest>
+                        <fileset dir="${project.classes}">
+                                <include name="**"/>
+                                <exclude name="au/edu/jcu/v4l4j/test/"/>
+                        </fileset>
+                </jar>
+        </target>
+
+
 	<target name="jar-src" depends="compile">
 		<jar jarfile="${project.dir}/${project.name}.jar">
 			<manifest>
