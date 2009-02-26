@@ -197,7 +197,7 @@ int qc_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 		strcpy((char *) c[i].v4l2_ctrl->name,"Brightness Settle");
 		c[i].v4l2_ctrl->minimum =0;
 		c[i].v4l2_ctrl->maximum = 1;
-		c[i].v4l2_ctrl->step = 0;
+		c[i].v4l2_ctrl->step = 1;
 		c[i].v4l2_ctrl->default_value = 0;
 		c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
 		c[i].v4l2_ctrl->reserved[1]=QC_PROBE_INDEX;
@@ -209,7 +209,7 @@ int qc_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 		strcpy((char *) c[i].v4l2_ctrl->name,"Compression");
 		c[i].v4l2_ctrl->minimum =0;
 		c[i].v4l2_ctrl->maximum = 1;
-		c[i].v4l2_ctrl->step = 0;
+		c[i].v4l2_ctrl->step = 1;
 		c[i].v4l2_ctrl->default_value = 0;
 		c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
 		c[i].v4l2_ctrl->reserved[1]=QC_PROBE_INDEX;
@@ -221,7 +221,7 @@ int qc_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 		strcpy((char *) c[i].v4l2_ctrl->name,"Interpolation");
 		c[i].v4l2_ctrl->minimum =0;
 		c[i].v4l2_ctrl->maximum = 5;
-		c[i].v4l2_ctrl->step = 0;
+		c[i].v4l2_ctrl->step = 1;
 		c[i].v4l2_ctrl->default_value = 0;
 		c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
 		c[i].v4l2_ctrl->reserved[1]=QC_PROBE_INDEX;
@@ -233,7 +233,7 @@ int qc_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 		strcpy((char *) c[i].v4l2_ctrl->name,"Auto Brightness");
 		c[i].v4l2_ctrl->minimum =0;
 		c[i].v4l2_ctrl->maximum = 1;
-		c[i].v4l2_ctrl->step = 0;
+		c[i].v4l2_ctrl->step = 1;
 		c[i].v4l2_ctrl->default_value = 0;
 		c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
 		c[i].v4l2_ctrl->reserved[1]=QC_PROBE_INDEX;
@@ -245,7 +245,7 @@ int qc_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 		strcpy((char *) c[i].v4l2_ctrl->name,"Equalise image");
 		c[i].v4l2_ctrl->minimum =0;
 		c[i].v4l2_ctrl->maximum = 1;
-		c[i].v4l2_ctrl->step = 0;
+		c[i].v4l2_ctrl->step = 1;
 		c[i].v4l2_ctrl->default_value = 0;
 		c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
 		c[i].v4l2_ctrl->reserved[1]=QC_PROBE_INDEX;

@@ -62,7 +62,7 @@ public class TunerInfo {
 	private int index;
 	
 	
-	TunerInfo(String n, int u, int t, int id, long low, long high){
+	TunerInfo(String n, int id, int u, int t, long low, long high){
 		type = t;
 		unit = u;
 		rangeLow = low & 0xffffffff;

@@ -363,6 +363,7 @@ void free_capture_device(struct video_device *);
  */
 
 struct device_info * get_device_info(struct video_device *);
+void print_device_info(struct video_device *);
 void release_device_info(struct video_device *);
 
 /*
