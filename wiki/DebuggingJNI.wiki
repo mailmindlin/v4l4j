@@ -1,0 +1,70 @@
+#summary How to debug v4l4j & its JNI code
+#labels Featured
+
+= Introduction =
+
+This page explains how to setup your environment to debug v4l4j and its JNI code. This howto was largely inspired by this [http://www.ibm.com/developerworks/java/library/j-jnidebug/index.html tutorial], so credit to the author of that page. Steps presented here were written for and tested on Ubuntu 8.04.
+
+Before starting, make sure you have `jdb` and `gdb` installed. If not, install them with `sudo apt-get install sun-java6-jdk gdb`.
+Then, download v4l4j with `svn co http://v4l4j.googlecode.com/v4l4j/svn/trunk v4l4j`.
+
+= Starting the debuggers =
+We will debug a test applications that comes with v4l4j which prints information about the video device. This application can be started normally by running `ant clean deviceInfo`. From here on, the given commands are relative to v4l4j/.
+
+==Compile v4l4j with debug symbols==
+First, you need to compile v4l4j with debug symbols and information using
+{{{
+ant clean all-debug
+}}}
+This will make life a lot easier in the debuggers later on.
+
+==Start the JVM in debug mode==
+Then, you need to start the test application (deviceInfo) with the JVM in debug mode:
+{{{
+java -Xdebug -Xnoagent -Djava.compiler=none -Xrunjdwp:transport=dt_socket,server=y,suspend=y -Djava.library.path=. -cp classes/ au.edu.jcu.v4l4j.VideoDevice /dev/video0
+}}}
+Substitute `/dev/video0` with whatever your device file is. Upon startup, the JVM will print a line like `Listening for transport dt_socket at address: 50174` . *Take note of the number, it is a TCP port where the JVM expects debuggers to connect.* We will use it in the next step. Yours will most likely be different.
+
+==Start the Java debugger==
+*In a separate terminal*, run jdb and pass the TCP port number where the JVM is listening:
+{{{
+jdb -attach 50174
+}}}
+
+==Set a breakpoint==
+In jdb, we need to set a breakpoint in the java code. You can use two commands for that: `stop at ` and `stop in`. The first one expects a class name and a line number in the following format: `au.edu.jcu.v4l4j.deviceInfo:172`. The second one expects a class name and a method name in the following format: `au.edu.jcu.v4l4j.deviceInfo:<init>`. 
+We set a breakpoint on line 172 in `au.edu.jcu.v4l4j.deviceInfo`. In the jdb terminal, enter:
+{{{
+stop at au.edu.jcu.v4l4j.DeviceInfo:172
+}}}
+Let the debugger run until it reaches the breakpoint with:
+{{{
+run
+}}}
+When the breakpoint has been reached, you will see something like:
+{{{
+Breakpoint hit: "thread=main", au.edu.jcu.v4l4j.DeviceInfo.<init>(), line=172 bci=20
+
+main[1] 
+}}}
+
+==Start the C debugger==
+*In a separate terminal*, you need to start gdb and attach it to the JVM process. For that, you must first find the PID of the JVM. Use `ps axf | grep java` and look for the line starting with `java -Xdebug -Xnoagent -Djava.compiler=non ... `. The PID is the number in the first column. Here, e assume a PID of 13786. 
+Now start gdb with:
+{{{
+gdb
+}}}
+and enter the following:
+{{{
+attach 13786
+}}}
+Here again, you will set a breakpoint but in the JNI code this time, on the `get_device_info()` function:
+{{{
+break get_device_info
+}}}
+Let the debugger run with
+{{{
+continue
+}}}
+This will not return because the JVM is still blocked at the break point set by jdb.
+Now return to jdb, and type `run`. This will not return because the breakpoint in GDB has been hit. In gdb, you can now step through the C code.
