@@ -36,6 +36,7 @@
 #include "palettes.h"
 #include "pwc-probe.h"
 #include "qc-probe.h"
+#include "version.h"
 #include "v4l1-input.h"
 #include "v4l1-query.h"
 #include "v4l1-tuner.h"
@@ -44,9 +45,12 @@
 #include "v4l2-tuner.h"
 #include "videodev_additions.h"
 
-
+/*
+ * Copies the version info in the given char *
+ * It must be allocated by caller. char [40] is enough
+ */
 char *get_libv4l_version(char * c) {
-	sprintf(c, "%d.%d-%d", VER_MAJ, VER_MIN, VER_REL);
+	snprintf(c, 39,"%d.%d-%s_%s", VER_MAJ, VER_MIN, SVN_BRANCH, SVN_REV);
 	return c;
 }
 
@@ -58,9 +62,10 @@ char *get_libv4l_version(char * c) {
 struct video_device *open_device(char *file) {
 	struct video_device *vdev;
 	int fd = -1;
-	char version[10];
+	char version[40];
 
 	printf("Using libv4l version %s\n", get_libv4l_version(version));
+	fflush(stdout);
 
 	//open device
 	dprint(LIBV4L_LOG_SOURCE_VIDEO_DEVICE, LIBV4L_LOG_LEVEL_DEBUG, "VD: Opening device file %s.\n", file);
