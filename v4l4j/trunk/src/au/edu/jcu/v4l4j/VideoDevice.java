@@ -897,6 +897,7 @@ public class VideoDevice {
 			try {
 				System.out.println(" - value: "+c.getValue());
 			} catch (V4L4JException ve){
+				ve.printStackTrace();
 				System.out.println();
 			}
 		}
