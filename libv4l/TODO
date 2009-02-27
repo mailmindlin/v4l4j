@@ -1,5 +1,4 @@
 TODO List:
-- Add MPEG support
 - Add support for frame metadata (timecode, frame type, ...), as reported by
   struct v4l2_buffer.
 - Improve video standard autodetection by using ioctl(VIDIOC_QUERYSTD)

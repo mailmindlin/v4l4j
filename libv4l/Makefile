@@ -37,14 +37,14 @@ endif
 
 VERSION_MAJOR=0
 VERSION_MINOR=8
-VERSION_RELEASE=0
+
 
 LIB=libv4l.a
 TESTOBJ=test-capture.o dump-capture.o list-caps.o
 OBJ=v4l2-input.o v4l1-input.o libv4l.o pwc-probe.o gspca-probe.o qc-probe.o fps-param-probe.o v4l1-query.o v4l2-query.o v4l1-tuner.o v4l2-tuner.o
 
 CC=gcc
-CFLAGS=$(DBG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) -DVER_REL=$(VERSION_RELEASE) $(OPTIMISATION) -fPIC -I.
+CFLAGS=$(DBG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) $(OPTIMISATION) -fPIC -I.
 
 LD=gcc
 LDFLAGS=
@@ -60,4 +60,4 @@ test: $(TESTOBJ) $(OBJ)
 	$(LD) $(LDFLAGS) dump-capture.o $(OBJ) -o dump-capture
 
 clean:
-	rm -f $(OBJ) $(BIN) $(LIB) $(TESTOBJ) list-caps test-capture test-list-caps ./*~
+	rm -f $(OBJ) $(BIN) $(LIB) $(TESTOBJ) list-caps test-capture dump-capture version.h ./*~

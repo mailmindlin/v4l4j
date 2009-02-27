@@ -47,13 +47,16 @@
 	
 	<target name="init">
 		<mkdir dir="${project.classes}"/>
+                <exec executable="sh">
+                        <arg line="svn-version.sh" />
+                </exec>
 	</target>
 	
 	<target name="all" depends="jnilib,jar"/>
 
         <target name="all-debug" depends="jnilib-debug,jar-debug"/>
 
-        <target name="jnilib-debug" depends="">
+        <target name="jnilib-debug" depends="init">
                 <exec executable="make">
 			<env key="DEBUG" value="1"/>
                         <arg line="-C ${libv4l.dir}" />
@@ -66,7 +69,7 @@
         </target>
 
 	
-	<target name="jnilib" depends="">
+	<target name="jnilib" depends="init">
 		<exec executable="make">
 			<arg line="-C ${libv4l.dir}" />
 		</exec>
