@@ -52,14 +52,13 @@
 #ifdef DEBUG
 #define dprint(source, format, ...) do {if(((source) & (LOG_SOURCE))) {\
 		fprintf (stderr, "[%s:%d] " format, __FILE__, __LINE__, ## __VA_ARGS__); fflush(stderr);} } while(0)
-//		fprintf (stderr, "[%s:%d %s] " format, __FILE__, __LINE__, __PRETTY_FUNCTION__, ## __VA_ARGS__); fflush(stderr);} } while(0)
 
 #define XMALLOC(var, type, size)	\
 		do { \
-			var = (type) malloc(size); \
-			if (!var) {dprint(LOG_MEMALLOC, "[MEMALLOC]: Cant allocate %lu bytes.\n", (long unsigned int) size);} \
+			var = (type) malloc((size)); \
+			if (!var) {dprint(LOG_MEMALLOC, "[MEMALLOC]: Cant allocate %lu bytes.\n", (long unsigned int) (size));} \
 			else { CLEAR(*var); \
-				dprint(LOG_MEMALLOC, "[MEMALLOC]: allocated %lu bytes of type %s for var %s (%p).\n", (long unsigned int)size, #type, #var, var);}\
+				dprint(LOG_MEMALLOC, "[MEMALLOC]: allocated %lu bytes of type %s for var %s (%p).\n", (long unsigned int)size, #type, #var, (var));}\
 		} while (0)
 
 #define XFREE(var)					\

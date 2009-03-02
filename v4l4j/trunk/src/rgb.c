@@ -24,8 +24,6 @@
 #include "common.h"
 #include "debug.h"
 
-#define CLIP(x) (unsigned char) ((x) > 255) ? 255 : (((x) < 0) ? 0 : (x));
-
 static int ac_count[2][16] = {
 			{0, 0x2, 0x1, 0x3, 0x3, 0x2, 0x4, 0x3, 0x5, 0x5, 0x4, 0x4, 0, 0, 0x1, 0x7d},
 			{0, 0x2, 0x1, 0x2, 0x4, 0x4, 0x3, 0x4, 0x7, 0x5, 0x4, 0x4, 0, 0x1, 0x2, 0x77}
@@ -326,8 +324,9 @@ static void rgb24_encode_yuv420(struct v4l4j_device *d, unsigned char *src, unsi
 static void rgb24_encode_jpeg(struct v4l4j_device *d, unsigned char *src, unsigned char *dst) {
 	struct jpeg_decompress_struct *c = d->r->cinfo;
 	int line_size;
-	JSAMPROW row[4] = {dst};
+	JSAMPROW row[1] = {dst};
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+
 	d->r->srcmgr->next_input_byte = src;
 	d->r->srcmgr->bytes_in_buffer = d->capture_len;
 	jpeg_read_header(c, TRUE);
@@ -335,16 +334,11 @@ static void rgb24_encode_jpeg(struct v4l4j_device *d, unsigned char *src, unsign
 	d->r->cinfo->do_fancy_upsampling = FALSE;
 	d->r->cinfo->out_color_space = JCS_RGB;
 
-	dprint(LOG_RGB, "[RGB] JPEG image %dx%d\n", c->image_width, c->image_height);
+	dprint(LOG_RGB, "[RGB] Decompressing JPEG image %d\n", d->capture_len);
 	//set decomp param
 
 	jpeg_start_decompress(c);
 	line_size = c->output_width * c->out_color_components * sizeof(JSAMPLE);
-	dprint(LOG_RGB, "[RGB] output image %dx%d\n", c->output_width, c->output_height);
-	dprint(LOG_RGB, "[RGB] output image out_color_comp %d, output_comp %d\n",
-			c->out_color_components, c->output_components);
-	dprint(LOG_RGB, "[RGB] output image recomm. buffer height %d\n", c->rec_outbuf_height);
-	dprint(LOG_RGB, "[RGB] output image scan line size %d\n", line_size);
 
 	while (c->output_scanline < c->output_height) {
 		jpeg_read_scanlines(c, row, 1);
@@ -352,12 +346,13 @@ static void rgb24_encode_jpeg(struct v4l4j_device *d, unsigned char *src, unsign
 	}
 	jpeg_finish_decompress(c);
 
-	dprint(LOG_RGB, "[RGB] Done\n");
 }
 
 static void add_huffman_tables(struct v4l4j_device *d){
 	int j, i;
 	JHUFF_TBL *huff_ptr;
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+
 	for(j=0; j<2;j++){
 		if (d->r->cinfo->ac_huff_tbl_ptrs[j] == NULL) {
 			d->r->cinfo->ac_huff_tbl_ptrs[j] = jpeg_alloc_huff_table((j_common_ptr) d->r->cinfo);
@@ -450,8 +445,6 @@ int init_rgb_converter(struct v4l4j_device *d){
 void destroy_rgb_converter(struct v4l4j_device *d){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	if(d->vdev->capture->palette == JPEG || d->vdev->capture->palette == MJPEG) {
-//		if(temp_buf!=NULL)
-//			XFREE(temp_buf);
 		jpeg_destroy_decompress(d->r->cinfo);
 		XFREE(d->r->cinfo);
 		XFREE(d->r->jerr);

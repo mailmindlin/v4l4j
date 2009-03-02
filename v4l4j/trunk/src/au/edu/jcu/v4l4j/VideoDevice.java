@@ -234,9 +234,8 @@ public class VideoDevice {
 		doGetTunerActions(v4l4jObject);
 		for(InputInfo i:deviceInfo.getInputs()){
 			try {
-				v.add(new Tuner(v4l4jObject,i.getTunerInfo().getIndex()));
-			} catch (NoTunerException e) {	//no tuner for this input
-			}
+				v.add(new Tuner(v4l4jObject,i.getTunerInfo()));
+			} catch (NoTunerException e) {}	//no tuner for this input
 		}
 
 		if(v.size()!=0)

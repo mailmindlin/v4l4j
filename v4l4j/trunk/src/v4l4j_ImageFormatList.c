@@ -45,41 +45,41 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(JNIEnv 
 	/* Get handles on Java stuff */
 	format_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/ImageFormat");
 	if(format_class == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the ImageFormat class\n");
+		info("[V4L4J] Error looking up the ImageFormat class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up ImageFormat java objects");
 		return;
 	}
 
 	format_ctor = (*e)->GetMethodID(e, format_class, "<init>", "(Ljava/lang/String;I)V");
 	if(format_ctor == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the constructor of ImageFormat class\n");
+		info("[V4L4J] Error looking up the constructor of ImageFormat class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of ImageFormat objects");
 		return;
 	}
 
 	vector_class = (*e)->FindClass(e, "java/util/Vector");
 	if(vector_class == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the Vector class\n");
+		info("[V4L4J] Error looking up the Vector class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up Vector java objects");
 		return;
 	}
 
 	ctor = (*e)->GetMethodID(e, vector_class, "<init>", "()V");
 	if(ctor == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the constructor of Vector class\n");
+		info("[V4L4J] Error looking up the constructor of Vector class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of Vector objects");
 		return;
 	}
 	add_method = (*e)->GetMethodID(e, vector_class, "addElement", "(Ljava/lang/Object;)V");
 	if(add_method == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the add method of Vector class\n");
+		info("[V4L4J] Error looking up the add method of Vector class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the add method of Vector objects");
 		return;
 	}
 
 	field = (*e)->GetStaticFieldID(e, this_class, "knownFormats", "Ljava/util/List;");
 	if(field == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the knownFormats attribute\n");
+		info("[V4L4J] Error looking up the knownFormats attribute\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the knownFormats attribute");
 		return;
 	}
@@ -100,7 +100,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(JNIEnv 
 	/* populates the JPEGEncFormats field */
 	field = (*e)->GetStaticFieldID(e, this_class, "knownJPEGEncFormats", "Ljava/util/List;");
 	if(field == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the knownJPEGEncFormats attribute\n");
+		info("[V4L4J] Error looking up the knownJPEGEncFormats attribute\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the knownJPEGEncFormats attribute");
 		return;
 	}
@@ -123,7 +123,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(JNIEnv 
 	/* populates the RGBEncFormats field */
 	field = (*e)->GetStaticFieldID(e, this_class, "knownRGBConvFormats", "Ljava/util/List;");
 	if(field == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the knownRGBConvFormats attribute\n");
+		info( "[V4L4J] Error looking up the knownRGBConvFormats attribute\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the knownRGBConvFormats attribute");
 		return;
 	}
