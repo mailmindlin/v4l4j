@@ -36,12 +36,15 @@ import au.edu.jcu.v4l4j.exceptions.StateException;
  * Instead, to retrieve the <code>Tuner</code> associated with a 
  * frame grabber, call {@link FrameGrabber#getTuner()} on the associated
  * {@link FrameGrabber} object.
+ * Methods in this class must not be called if the associated {@link FrameGrabber} object
+ * has been released. Otherwise, a {@link StateException} will be thrown.
  * 
  * @author gilles
  *
  */
 public class Tuner {
 	private long v4l4j_object;
+	private TunerInfo info;
 	private int index;
 
 	private native long getFreq(long o, int i);
@@ -51,8 +54,9 @@ public class Tuner {
 	
 	private boolean released;
 	
-	Tuner(long o, int i){
-		index = i;
+	Tuner(long o, TunerInfo ti){
+		info = ti;
+		index = info.getIndex();
 		v4l4j_object = o;
 		released = false;
 	}
@@ -60,25 +64,33 @@ public class Tuner {
 	/**
 	 * This method returns the current frequency of this tuner.
 	 * @return the current frequency 
+	 * @throws StateException if the associated frame grabber has been released and 
+	 * this tuner must not be used anymore.
 	 */
-	public synchronized long getFrequency(){
+	public synchronized double getFrequency(){
 		checkRelease();
-		return getFreq(v4l4j_object, index);
+		return getFreq(v4l4j_object, index)*0.0625;
 	}
 	
 	/**
 	 * This method sets the frequency of this tuner.
 	 * @param f the new frequency
+	 * @throws StateException if the associated frame grabber has been released and 
+	 * this tuner must not be used anymore.
 	 */
-	public synchronized void setFrequency(long f){
+	public synchronized void setFrequency(double f){
 		checkRelease();
-		setFreq(v4l4j_object, index, f);
+		long l = (long) (f/0.0625);
+		setFreq(v4l4j_object, index, l);
 	}
 	
 	/**
-	 * This method returns the current AFC value. When its value is
-	 * negative, the frequency is too low and when positive, it is too high.
+	 * This method returns the current AFC (Automatic Frequency Control) value. 
+	 * When its value is negative, the frequency is too low and when 
+	 * positive, it is too high.
 	 * @return the current AFC value
+	 * @throws StateException if the associated frame grabber has been released and 
+	 * this tuner must not be used anymore.
 	 */
 	public synchronized int getAFC() {
 		checkRelease();
@@ -88,6 +100,8 @@ public class Tuner {
 	/**
 	 * This method returns the current received signal strength.
 	 * @return the current received signal strength
+	 * @throws StateException if the associated frame grabber has been released and 
+	 * this tuner must not be used anymore.
 	 */
 	public synchronized int getRSSI(){
 		checkRelease();
@@ -97,10 +111,23 @@ public class Tuner {
 	/**
 	 * This method returns the index of this tuner.
 	 * @return the index of this tuner
+	 * @throws StateException if the associated frame grabber has been released and 
+	 * this tuner must not be used anymore.
 	 */
 	public synchronized int getIndex(){
 		checkRelease();
 		return index;
+	}
+	
+	/**
+	 * This method returns the {@link TunerInfo} object associated with this tuner.
+	 * @return the {@link TunerInfo} object associated with this tuner.
+	 * @throws StateException if the associated frame grabber has been released and 
+	 * this tuner must not be used anymore.
+	 */
+	public synchronized TunerInfo getInfo(){
+		checkRelease();
+		return info;
 	}
 	
 	/**
@@ -112,6 +139,6 @@ public class Tuner {
 	
 	private void checkRelease(){
 		if(released)
-			throw new StateException("This tuner object has been released already and must not be used anymore");
+			throw new StateException("The frame grabber associated with this tuner has been already released and the tuner must not be used anymore");
 	}
 }

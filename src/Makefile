@@ -8,7 +8,12 @@ JDK_HOME=/usr/lib/jvm/java-6-sun
 # edit anything below at your own risk
 #
 
-
+# THE LOG SOURCE CAN BE CHANGED ON THE COMMAND LINE BY
+# DEFINING THE V4L4J_LOG_SOURCE VARIABLE.
+#
+# for example: 
+# V4L4L_LOG_SOURCE=63 ant clean all 
+#
 #LOG_CALLS         1
 #LOG_LIBV4L        2
 #LOG_MEMALLOC      4
@@ -16,10 +21,14 @@ JDK_HOME=/usr/lib/jvm/java-6-sun
 #LOG_RGB           16
 #LOG_V4L4J         32
 #LOG_ALL           63
-LOG_SOURCE=63
+ifneq ($(V4L4J_LOG_SOURCE),)
+LSRC=$(V4L4J_LOG_SOURCE)
+else
+LSRC=38
+endif
 
 ifneq ($(DEBUG),)
-DBG=-DDEBUG -Wall -DLOG_SOURCE=$(LOG_SOURCE)
+DBG=-DDEBUG -Wall -DLOG_SOURCE=$(LSRC)
 else
 OPTIMISATION=-O3
 endif

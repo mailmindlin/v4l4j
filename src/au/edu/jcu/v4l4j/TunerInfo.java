@@ -74,7 +74,7 @@ public class TunerInfo {
 
 	/**
 	 * This method returns the type of this tuner ({@link V4L4JConstants#RADIO}
-	 *  or {@link V4L4JConstants#TV})
+	 *  or {@link V4L4JConstants#TV}).
 	 * @return the type
 	 */
 	public int getType() {
@@ -83,8 +83,9 @@ public class TunerInfo {
 
 	/**
 	 * This method returns the unit used by this tuner ({@link V4L4JConstants#MHZ}
-	 *  or {@link V4L4JConstants#KHZ})
-	 * @return the unit
+	 *  or {@link V4L4JConstants#KHZ}).
+	 * @return the unit ({@link V4L4JConstants#MHZ}
+	 *  or {@link V4L4JConstants#KHZ}).
 	 */
 	public int getUnit() {
 		return unit;
@@ -92,26 +93,26 @@ public class TunerInfo {
 
 
 	/**
-	 * This method returns the lowest tunable frequency supported by this tuner
-	 * @return the rangeLow
+	 * This method returns the lowest tunable frequency supported by this tuner.
+	 * @return the lowest tunable frequency supported by this tuner.
 	 */
-	public long getRangeLow() {
-		return rangeLow;
+	public double getRangeLow() {
+		return rangeLow*0.0625;
 	}
 
 
 	/**
-	 * This method returns the highest tunable frequency supported by this tuner
-	 * @return the rangeHigh
+	 * This method returns the highest tunable frequency supported by this tuner.
+	 * @return the highest tunable frequency supported by this tuner.
 	 */
-	public long getRangeHigh() {
-		return rangeHigh;
+	public double getRangeHigh() {
+		return rangeHigh*0.0625;
 	}
 
 
 	/**
-	 * This method returns the name of this tuner
-	 * @return the name
+	 * This method returns the name of this tuner.
+	 * @return the name of this tuner.
 	 */
 	public String getName() {
 		return name;

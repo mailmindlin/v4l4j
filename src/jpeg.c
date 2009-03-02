@@ -228,9 +228,9 @@ static void jpeg_encode_yuyv(struct v4l4j_device *d, unsigned char *src, unsigne
 			g = (y - (88 * u) - (183 * v)) >> 8;
 			b = (y + (454 * u)) >> 8;
 
-			*(ptr++) = (r > 255) ? 255 : ((r < 0) ? 0 : r);
-			*(ptr++) = (g > 255) ? 255 : ((g < 0) ? 0 : g);
-			*(ptr++) = (b > 255) ? 255 : ((b < 0) ? 0 : b);
+			*(ptr++) = CLIP(r);
+			*(ptr++) = CLIP(g);
+			*(ptr++) = CLIP(b);
 
 			if (a++) {
 				a = 0;
@@ -286,9 +286,9 @@ static void jpeg_encode_yvyu(struct v4l4j_device *d, unsigned char *src, unsigne
 			g = (y - (88 * u) - (183 * v)) >> 8;
 			b = (y + (454 * u)) >> 8;
 
-			*(ptr++) = (r > 255) ? 255 : ((r < 0) ? 0 : r);
-			*(ptr++) = (g > 255) ? 255 : ((g < 0) ? 0 : g);
-			*(ptr++) = (b > 255) ? 255 : ((b < 0) ? 0 : b);
+			*(ptr++) = CLIP(r);
+			*(ptr++) = CLIP(g);
+			*(ptr++) = CLIP(b);
 
 			if (a++) {
 				a = 0;
@@ -341,9 +341,9 @@ static void jpeg_encode_uyvy(struct v4l4j_device *d, unsigned char *src, unsigne
 			g = (y - (88 * u) - (183 * v)) >> 8;
 			b = (y + (454 * u)) >> 8;
 
-			*(ptr++) = (r > 255) ? 255 : ((r < 0) ? 0 : r);
-			*(ptr++) = (g > 255) ? 255 : ((g < 0) ? 0 : g);
-			*(ptr++) = (b > 255) ? 255 : ((b < 0) ? 0 : b);
+			*(ptr++) = CLIP(r);
+			*(ptr++) = CLIP(g);
+			*(ptr++) = CLIP(b);
 
 			if (a++) {
 				a = 0;
