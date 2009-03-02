@@ -1,13 +1,23 @@
 # change the value of LOG_LEVEL to alter the king of debug statements
 # to be printed
 #
+# THE LOG SOURCE & LEVEL CAN BE CHANGED ON THE COMMAND LINE BY
+# DEFINING THE LIBV4L_LOG_LEVEL OR LIBV4L_LOG_SOURCE VARIABLES.
+#
+# for example: 
+# LIBV4L_LOG_LEVEL=16 LIBV4L_LOG_SOURCE=127 ant clean all 
+#
 # LOG_LEVEL_INFO            1
 # LOG_LEVEL_DEBUG           2
 # LOG_LEVEL_DEBUG1          4
 # LOG_LEVEL_DEBUG2          8
 # LOG_LEVEL_ERR             16
 # LOG_LEVEL_ALL             31
+ifneq ($(LIBV4L_LOG_LEVEL),)
+LOG_LEVEL=$(LIBV4L_LOG_LEVEL)
+else
 LOG_LEVEL=23
+endif
 
 
 # change the value of LOG_SOURCE to control which parts of v4l4j will
@@ -21,7 +31,11 @@ LOG_LEVEL=23
 # LOG_SOURCE_CTRL_PROBE     32
 # LOG_SOURCE_TUNER          64
 # LOG_SOURCE_ALL            127
+ifneq ($(LIBV4L_LOG_SOURCE),)
+LOG_SOURCE=$(LIBV4L_LOG_SOURCE)
+else
 LOG_SOURCE=63
+endif
 
 
 #

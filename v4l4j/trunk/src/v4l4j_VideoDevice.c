@@ -39,6 +39,7 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doInit(JNIEnv *e, jobj
 	XMALLOC(d, struct v4l4j_device *, sizeof(struct v4l4j_device));
 
 	const char * device_file = (*e)->GetStringUTFChars(e, dev, 0);
+	dprint(LOG_LIBV4L, "[LIBV4L] Calling open_device()\n");
 	d->vdev = open_device((char *)device_file);
 	(*e)->ReleaseStringUTFChars(e, dev,device_file);
 
@@ -76,34 +77,12 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doRelease(JNIEnv *e, jo
 	XFREE(d);
 }
 
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doCheckJPEGSupport(JNIEnv *e, jobject t, jlong o, jintArray fmtsArray){
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	jint *fmts = (*e)->GetIntArrayElements(e, fmtsArray, NULL);
-	int jpeg_fmts[NB_JPEG_SUPPORTED_FORMATS]= JPEG_SUPPORTED_FORMATS;
-	int i,j, l = (*e)->GetArrayLength(e, fmtsArray);
-	if(fmts == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error getting the image format array\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error getting the image format array");
-		return 0;
-	}
-
-	for(i=0; i<l; i++)
-		for(j=0;j<NB_JPEG_SUPPORTED_FORMATS;j++)
-			if(fmts[i]==jpeg_fmts[j]){
-				(*e)->ReleaseIntArrayElements(e, fmtsArray, fmts, 0);
-				return 1;
-			}
-
-	(*e)->ReleaseIntArrayElements(e, fmtsArray, fmts, 0);
-	return 0;
-}
-
 static jintArray get_values(JNIEnv *e, struct control *l){
 	int i,values[l->count_menu];
 	jintArray values_array = (*e)->NewIntArray(e, l->count_menu);
 
 	if(values_array == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error creating the values array\n");
+		info("[V4L4J] Error creating the values array\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error creating the values array");
 		return NULL;
 	}
@@ -121,7 +100,7 @@ static jobjectArray get_names(JNIEnv *e, struct control *l){
 	int i;
 	jclass string_class = (*e)->FindClass(e,"java/lang/String");
 	if(string_class == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up string class\n");
+		info("[V4L4J] Error looking up string class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error up string class");
 		return NULL;
 	}
@@ -129,7 +108,7 @@ static jobjectArray get_names(JNIEnv *e, struct control *l){
 	jobjectArray names_array = (*e)->NewObjectArray(e, l->count_menu, string_class ,NULL);
 
 	if(names_array == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error creating the names array\n");
+		info("[V4L4J] Error creating the names array\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error creating the name array");
 		return NULL;
 	}
@@ -145,7 +124,7 @@ static int translate_type(JNIEnv *e, int t){
 	jclass constants = (*e)->FindClass(e,CONSTANTS_CLASS);
 
 	if(constants == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the V4L4JConstants class\n");
+		info("[V4L4J] Error looking up the V4L4JConstants class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the V4L4JConstants class");
 		return -1;
 	}
@@ -153,33 +132,33 @@ static int translate_type(JNIEnv *e, int t){
 	if(t == V4L2_CTRL_TYPE_BUTTON){
 		fid = (*e)->GetStaticFieldID(e, constants, "BUTTON", "I");
 		if(fid == NULL){
-			dprint(LOG_V4L4J, "[V4L4J] Error looking up the BUTTON field in V4L4JConstants class\n");
+			info( "[V4L4J] Error looking up the BUTTON field in V4L4JConstants class\n");
 			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the BUTTON field in V4L4JConstants class");
 			return -1;
 		}
 	} else if(t == V4L2_CTRL_TYPE_BOOLEAN){
 		fid = (*e)->GetStaticFieldID(e, constants, "SWITCH", "I");
 		if(fid == NULL){
-			dprint(LOG_V4L4J, "[V4L4J] Error looking up the SWITCH field in V4L4JConstants class\n");
+			info("[V4L4J] Error looking up the SWITCH field in V4L4JConstants class\n");
 			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the SWITCH field in V4L4JConstants class");
 			return -1;
 		}
 	} else if(t == V4L2_CTRL_TYPE_INTEGER){
 		fid = (*e)->GetStaticFieldID(e, constants, "SLIDER", "I");
 		if(fid == NULL){
-			dprint(LOG_V4L4J, "[V4L4J] Error looking up the SLIDER field in V4L4JConstants class\n");
+			info("[V4L4J] Error looking up the SLIDER field in V4L4JConstants class\n");
 			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the SLIDER field in V4L4JConstants class");
 			return -1;
 		}
 	} else if(t == V4L2_CTRL_TYPE_MENU){
 		fid = (*e)->GetStaticFieldID(e, constants, "DISCRETE", "I");
 		if(fid == NULL){
-			dprint(LOG_V4L4J, "[V4L4J] Error looking up the DISCRETE field in V4L4JConstants class\n");
+			info( "[V4L4J] Error looking up the DISCRETE field in V4L4JConstants class\n");
 			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the DISCRETE field in V4L4JConstants class");
 			return -1;
 		}
 	} else {
-		dprint(LOG_V4L4J, "[V4L4J] Unknown control type: %d\n", t);
+		info("[V4L4J] Unknown control type: %d\n", t);
 		THROW_EXCEPTION(e, JNI_EXCP, "Unknown control type: %d\n", t);
 		return -1;
 	}
@@ -203,13 +182,14 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doGetControlLis
 	jobject element;
 	int i, type;
 
+	dprint(LOG_LIBV4L, "[LIBV4L] Calling get_control_list()\n");
 	l = get_control_list(d->vdev);
 
 	//Creates the java objects matching v4l2 controls
 	dprint(LOG_V4L4J, "[V4L4J] Creating the Control array[%d]\n", l->count);
 	v4l2ControlClass = (*e)->FindClass(e,CONTROL_CLASS);
 	if(v4l2ControlClass == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the Control class\n");
+		info("[V4L4J] Error looking up the Control class\n");
 		release_control_list(d->vdev);
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up Control class");
 		return 0;
@@ -217,7 +197,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doGetControlLis
 
 	ctor = (*e)->GetMethodID(e, v4l2ControlClass, "<init>", "(ILjava/lang/String;IIII[Ljava/lang/String;[IJ)V");
 	if(ctor == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the Control class constructor\n");
+		info("[V4L4J] Error looking up the Control class constructor\n");
 		release_control_list(d->vdev);
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up Control class constructor");
 		return 0;
@@ -226,7 +206,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doGetControlLis
 	//initialise the ctrls field of FrameGrabber object (this)
 	ctrls = (*e)->NewObjectArray(e, l->count, v4l2ControlClass, NULL);
 	if(ctrls == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error creating the control array\n");
+		info("[V4L4J] Error creating the control array\n");
 		release_control_list(d->vdev);
 		THROW_EXCEPTION(e, JNI_EXCP, "Error creating the control array");
 		return 0;
@@ -258,7 +238,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doGetControlLis
 			l->controls[i].v4l2_ctrl->minimum, l->controls[i].v4l2_ctrl->maximum, \
 			l->controls[i].v4l2_ctrl->step, type, names_array, values_array, object);
 		if(element == NULL){
-			dprint(LOG_V4L4J, "[V4L4J] Error creating the control '%s'\n", l->controls[i].v4l2_ctrl->name);
+			info("[V4L4J] Error creating the control '%s'\n", l->controls[i].v4l2_ctrl->name);
 			release_control_list(d->vdev);
 			THROW_EXCEPTION(e, JNI_EXCP, "Error creating the control '%s'", l->controls[i].v4l2_ctrl->name);
 			return 0;
@@ -275,6 +255,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doReleaseControlList(JN
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
 
+	dprint(LOG_LIBV4L, "[LIBV4L] Calling release_control_list()\n");
 	release_control_list(d->vdev);
 }
 
@@ -282,6 +263,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doGetTunerActions(JNIEn
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
 
+	dprint(LOG_LIBV4L, "[LIBV4L] Calling get_tuner_actions()\n");
 	get_tuner_actions(d->vdev);
 }
 
@@ -289,6 +271,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doReleaseTunerActions(J
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
 
+	dprint(LOG_LIBV4L, "[LIBV4L] Calling release_tuner_actions()\n");
 	release_tuner_actions(d->vdev);
 }
 

@@ -170,7 +170,7 @@ public class JPEGVideoViewer extends WindowAdapter implements Runnable{
         freqSpinner.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
 				tuner.setFrequency(
-						((SpinnerNumberModel) freqSpinner.getModel()).getNumber().longValue()
+						((SpinnerNumberModel) freqSpinner.getModel()).getNumber().doubleValue()
 						);
 			}
         	
@@ -315,10 +315,10 @@ public class JPEGVideoViewer extends WindowAdapter implements Runnable{
 				tuner = fg.getTuner();
 				tinfo = vd.getDeviceInfo().getInputs().get(channel).getTunerInfo();
 				freqSpinner.setModel(new SpinnerNumberModel(
-						new Long(tuner.getFrequency()), 
-						new Long(tinfo.getRangeLow()),
-						new Long(tinfo.getRangeHigh()),
-						new Long(1)));
+						new Double(tuner.getFrequency()), 
+						new Double(tinfo.getRangeLow()),
+						new Double(tinfo.getRangeHigh()),
+						new Double(1)));
 				freq.setVisible(true);
 				freqSpinner.setVisible(true);
 			} catch (NoTunerException nte){}//No tuner for input			
