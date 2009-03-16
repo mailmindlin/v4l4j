@@ -17,15 +17,17 @@ libv4l has been compiled and tested successfully on the following platforms:
 
 ==Tested video devices and drivers==
 || *Device IDs* || *Device Name* || *Device Driver* || *Comments* ||
-|| USB - 046d:08b2 || Logitech, Inc. QuickCam Pro 4000 || pwc (linux kernel 2.6.24 & 2.6.26) || ||
+|| USB - 046d:08b2 || Logitech, Inc. QuickCam Pro 4000 || pwc (kernel 2.6.24 & 2.6.26) || ||
 || USB - 046d:0840 || Logitech, Inc. QuickCam Express || qc-usb (v0.6.6) || ||
-|| USB - 046d:08b5 || Logitech, Inc. QuickCam Sphere || pwc (linux kernel 2.6.24 & 2.6.26) || ||
+|| USB - 046d:08b5 || Logitech, Inc. QuickCam Sphere || pwc (kernel 2.6.24 & 2.6.26) || ||
 || USB - 041e:401c || Creative Technology, Ltd WebCam NX [PD1110] || gspca (v01.00.20) || ||
-|| USB - 046d:0992 || Logitech, Inc. Quickcam Communicate Deluxe || linux uvc (SVN r246) || ||
-|| PCI - 109e:036e || BT848 4-channel PCI capture card || bttv (linux kernel 2.6.24 & 2.6.26) || ||
-|| USB - 046d:0990 || Logitech Quickcam Pro 9000 (bcdDevice 0.08)|| Linux UVC (v 0.1.0 - linux kernel 2.6.24) || This webcam comes in several [http://www.quickcamteam.net/documentation/faq/how-many-versions-of-the-quickcam-pro-9000-are-there different versions].<br>The one tested suffers from a bug reported on the [http://groups.google.com/group/v4l4j/browse_thread/thread/f1d0c175ffb34a4b v4l4j mailing list].<br>This bug has been fixed in kernel 2.6.28. In the meanwhile,<br>switching between YUV and MJPEG will cause the next capture to hang.||
+|| USB - 046d:0992 || Logitech, Inc. Quickcam Communicate Deluxe || uvcvideo (kernel 2.6.24) || ||
+|| PCI - 109e:036e || BT848 4-channel PCI capture card || bttv (kernel 2.6.24 & 2.6.26) || ||
+|| USB - 046d:0990 || Logitech Quickcam Pro 9000 (bcdDevice 0.08)|| uvcvideo (kernel 2.6.24) || This webcam comes in several [http://www.quickcamteam.net/documentation/faq/how-many-versions-of-the-quickcam-pro-9000-are-there different versions].<br>The one tested suffers from a bug reported on the [http://groups.google.com/group/v4l4j/browse_thread/thread/f1d0c175ffb34a4b v4l4j mailing list].<br>This bug has been fixed in kernel 2.6.28. In the meanwhile,<br>switching between YUV and MJPEG will cause the next capture to hang.||
 || USB - 0471:0311 || Philips PCVC740K ToUcam Pro || pwc 10.0.13 (openSuSE kernel 2.6.22.9-0.4-default) ||  ||
 || PCI - 0070:9600 || Hauppauge WinTV-HVR-1300 DVB-T || cx88_blackbird and cx88 familly (kernel 2.6.24) || This is a hybrid Analogue TV / DVB-T with  S-Video and composite inputs. The card has an MPEG encoder chip (*NOT* decoder). *As of now, v4l4j only supports the Video4Linux API, not the DVB API.* This means that only analogue signals from this card (Analogue TV, S-Video and Composite signals) can be captured with v4l4j, ie *nothing from DVB-T*.||
+|| USB - 0471:0332 || Philips SPC 1000NC PC Camera || uvcvideo (kernel 2.6.27.2) ||  ||
+|| USB - 046d:0994 || Logitech QuickCam Orbit/Sphere AF (bcdDevice 0.08) || uvcvideo (kernel 2.6.27.2 &  2.6.24) ||  ||
 
 Currently, libv4l will probe and detect the following drivers/features:
  * *PWC (linux kernel v2.6.26)*
