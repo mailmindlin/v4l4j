@@ -64,17 +64,17 @@ struct video_device *open_device(char *file) {
 	int fd = -1;
 	char version[40];
 
-	printf("Using libv4l version %s\n", get_libv4l_version(version));
-	fflush(stdout);
+	info("Using libv4l version %s\n", get_libv4l_version(version));
 
 	//open device
 	dprint(LIBV4L_LOG_SOURCE_VIDEO_DEVICE, LIBV4L_LOG_LEVEL_DEBUG, "VD: Opening device file %s.\n", file);
 	if ((strlen(file) == 0) || ((fd = open(file,O_RDWR )) < 0)) {
 		info("V4L: unable to open device file %s. Check the name and permissions\n", file);
-		fd = -1;
+		return NULL;
 	}
 
 	XMALLOC(vdev, struct video_device *, sizeof(struct video_device));
+	vdev->fd = fd;
 
 	//Check v4l version (V4L2 first)
 	dprint(LIBV4L_LOG_SOURCE_VIDEO_DEVICE, LIBV4L_LOG_LEVEL_DEBUG, "VD: Checking V4L version on device %s\n", file);
@@ -86,14 +86,13 @@ struct video_device *open_device(char *file) {
 		vdev->v4l_version=V4L1_VERSION;
 	} else {
 		info("libv4l was unable to detect the version of V4L used by device %s\n", file);
-		info("Please let the author know about this error.\n");
+		info("If it is a valid V4L device file, let the author know about this error.\n");
 		info("See the ISSUES section in the libv4l README file.\n");
 
 		close_device(vdev);
 		return NULL;
 	}
 
-	vdev->fd = fd;
 	strncpy(vdev->file, file, FILENAME_LENGTH -1);
 
 	return vdev;
