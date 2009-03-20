@@ -130,28 +130,28 @@ static int translate_type(JNIEnv *e, int t){
 	}
 
 	if(t == V4L2_CTRL_TYPE_BUTTON){
-		fid = (*e)->GetStaticFieldID(e, constants, "BUTTON", "I");
+		fid = (*e)->GetStaticFieldID(e, constants, "CTRL_TYPE_BUTTON", "I");
 		if(fid == NULL){
 			info( "[V4L4J] Error looking up the BUTTON field in V4L4JConstants class\n");
 			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the BUTTON field in V4L4JConstants class");
 			return -1;
 		}
 	} else if(t == V4L2_CTRL_TYPE_BOOLEAN){
-		fid = (*e)->GetStaticFieldID(e, constants, "SWITCH", "I");
+		fid = (*e)->GetStaticFieldID(e, constants, "CTRL_TYPE_SWITCH", "I");
 		if(fid == NULL){
 			info("[V4L4J] Error looking up the SWITCH field in V4L4JConstants class\n");
 			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the SWITCH field in V4L4JConstants class");
 			return -1;
 		}
 	} else if(t == V4L2_CTRL_TYPE_INTEGER){
-		fid = (*e)->GetStaticFieldID(e, constants, "SLIDER", "I");
+		fid = (*e)->GetStaticFieldID(e, constants, "CTRL_TYPE_SLIDER", "I");
 		if(fid == NULL){
 			info("[V4L4J] Error looking up the SLIDER field in V4L4JConstants class\n");
 			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the SLIDER field in V4L4JConstants class");
 			return -1;
 		}
 	} else if(t == V4L2_CTRL_TYPE_MENU){
-		fid = (*e)->GetStaticFieldID(e, constants, "DISCRETE", "I");
+		fid = (*e)->GetStaticFieldID(e, constants, "CTRL_TYPE_DISCRETE", "I");
 		if(fid == NULL){
 			info( "[V4L4J] Error looking up the DISCRETE field in V4L4JConstants class\n");
 			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the DISCRETE field in V4L4JConstants class");

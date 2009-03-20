@@ -864,29 +864,29 @@ public class VideoDevice {
 		System.out.println("Inputs:");
 		for(InputInfo i: d.getInputs()){
 			System.out.println("\tName: "+i.getName());
-			System.out.println("\tType: "+i.getType()+"("+(i.getType() == V4L4JConstants.CAMERA ? "Camera" : "Tuner")+")");
+			System.out.println("\tType: "+i.getType()+"("+(i.getType() == V4L4JConstants.INPUT_TYPE_CAMERA ? "Camera" : "Tuner")+")");
 			System.out.println("\tIndex: "+i.getIndex());
 			System.out.println("\tSupported standards:");
 			for(Integer s: i.getSupportedStandards()){
 				System.out.print("\t\t"+s);
-				if(s==V4L4JConstants.PAL)
+				if(s==V4L4JConstants.STANDARD_PAL)
 					System.out.println("(PAL)");
-				else if(s==V4L4JConstants.NTSC)
+				else if(s==V4L4JConstants.STANDARD_NTSC)
 					System.out.println("(NTSC)");
-				else if(s==V4L4JConstants.SECAM)
+				else if(s==V4L4JConstants.STANDARD_SECAM)
 					System.out.println("(SECAM)");
 				else
 					System.out.println("(None/Webcam)");
 			}
-			if(i.getType() == V4L4JConstants.TUNER) {
+			if(i.getType() == V4L4JConstants.INPUT_TYPE_TUNER) {
 				TunerInfo t = i.getTunerInfo();
 				System.out.println("\tTuner");
 				System.out.println("\t\tname: "+t.getName());
 				System.out.println("\t\tIndex: "+t.getIndex());
 				System.out.println("\t\tRange high: "+t.getRangeHigh());
 				System.out.println("\t\tRange low: "+t.getRangeLow());
-				System.out.println("\t\tUnit: "+t.getUnit()+"("+(t.getUnit() == V4L4JConstants.MHZ ? "MHz" : "kHz")+")");
-				System.out.println("\t\tType: "+t.getType()+"("+(t.getType() == V4L4JConstants.RADIO ? "Radio" : "TV")+")");				
+				System.out.println("\t\tUnit: "+t.getUnit()+"("+(t.getUnit() == V4L4JConstants.FREQ_MHZ ? "MHz" : "kHz")+")");
+				System.out.println("\t\tType: "+t.getType()+"("+(t.getType() == V4L4JConstants.TUNER_TYPE_RADIO ? "Radio" : "TV")+")");				
 			}
 		}
 		

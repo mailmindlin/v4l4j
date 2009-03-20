@@ -32,10 +32,10 @@ import au.edu.jcu.v4l4j.exceptions.NoTunerException;
  * Objects of this class encapsulate information about a video input:<br>
  * <ul>
  * <li>The name of this input</li>
- * <li>The supported standards ({@link V4L4JConstants#PAL}, {@link V4L4JConstants#SECAM},
- * {@link V4L4JConstants#NTSC} or {@link V4L4JConstants#WEBCAM})</li>
- * <li>The input type ({@link V4L4JConstants#TUNER} or
- * {@link V4L4JConstants#CAMERA})</li>
+ * <li>The supported standards ({@link V4L4JConstants#STANDARD_PAL}, {@link V4L4JConstants#STANDARD_SECAM},
+ * {@link V4L4JConstants#STANDARD_NTSC} or {@link V4L4JConstants#STANDARD_WEBCAM})</li>
+ * <li>The input type ({@link V4L4JConstants#INPUT_TYPE_TUNER} or
+ * {@link V4L4JConstants#INPUT_TYPE_CAMERA})</li>
  * <li>The {@link TunerInfo} object associated with this input if it is
  * connected to a tuner.</li>
  * </ul>
@@ -57,8 +57,8 @@ public class InputInfo {
 	private short type;
 	
 	/**
-	 * A set of the supported standards ({@link V4L4JConstants#PAL}, {@link V4L4JConstants#SECAM},
- * {@link V4L4JConstants#NTSC} or {@link V4L4JConstants#WEBCAM})
+	 * A set of the supported standards ({@link V4L4JConstants#STANDARD_PAL}, {@link V4L4JConstants#STANDARD_SECAM},
+ * {@link V4L4JConstants#STANDARD_NTSC} or {@link V4L4JConstants#STANDARD_WEBCAM})
 	 */
 	private Set<Integer> supportedStandards;
 	
@@ -97,7 +97,7 @@ public class InputInfo {
 	 * @param tun the tuner associated with this input
 	 */
 	InputInfo(String n, int[] stds, TunerInfo tun, int id){
-		this(n, stds, V4L4JConstants.TUNER, tun, id);
+		this(n, stds, V4L4JConstants.INPUT_TYPE_TUNER, tun, id);
 	}
 	
 	/**
@@ -107,7 +107,7 @@ public class InputInfo {
 	 * @param stds the supported standards
 	 */
 	InputInfo(String n, int[] stds, int id){
-		this(n,stds,V4L4JConstants.CAMERA ,null, id);
+		this(n,stds,V4L4JConstants.INPUT_TYPE_CAMERA ,null, id);
 	}
 
 	/**
@@ -120,7 +120,7 @@ public class InputInfo {
 
 	/**
 	 * This method returns the type of this input 
-	 * ({@link V4L4JConstants#TUNER} or {@link V4L4JConstants#CAMERA})
+	 * ({@link V4L4JConstants#INPUT_TYPE_TUNER} or {@link V4L4JConstants#INPUT_TYPE_CAMERA})
 	 * @return the type of this input
 	 */
 	public short getType() {
@@ -129,8 +129,8 @@ public class InputInfo {
 
 	/**
 	 * This method returns the standards supported by this input
-	 * ({@link V4L4JConstants#PAL}, {@link V4L4JConstants#SECAM},
-	 *  {@link V4L4JConstants#NTSC} or {@link V4L4JConstants#WEBCAM})
+	 * ({@link V4L4JConstants#STANDARD_PAL}, {@link V4L4JConstants#STANDARD_SECAM},
+	 *  {@link V4L4JConstants#STANDARD_NTSC} or {@link V4L4JConstants#STANDARD_WEBCAM})
 	 * @return the supportedStandards
 	 */
 	public Set<Integer> getSupportedStandards() {
@@ -141,7 +141,7 @@ public class InputInfo {
 	 * This method returns the {@link TunerInfo} associated with this input, if any.
 	 * @return the tuner
 	 * @throws NoTunerException if this input is of type 
-	 * {@link V4L4JConstants#CAMERA}, and is not a tuner.
+	 * {@link V4L4JConstants#INPUT_TYPE_CAMERA}, and is not a tuner.
 	 */
 	public TunerInfo getTunerInfo() throws NoTunerException{
 		if(tuner==null)

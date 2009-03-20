@@ -233,13 +233,13 @@ public class JPEGVideoViewer extends WindowAdapter implements Runnable{
     
     private ControlGUI getControlGUI(Control c){
     	ControlGUI ctrl = null;
-    	if(c.getType() == V4L4JConstants.SLIDER)
+    	if(c.getType() == V4L4JConstants.CTRL_TYPE_SLIDER)
     		ctrl = new SliderControl(c);
-    	else if (c.getType() == V4L4JConstants.BUTTON)
+    	else if (c.getType() == V4L4JConstants.CTRL_TYPE_BUTTON)
     		ctrl = new ButtonControl(c);
-    	else if (c.getType() == V4L4JConstants.SWITCH)
+    	else if (c.getType() == V4L4JConstants.CTRL_TYPE_SWITCH)
     		ctrl = new SwitchControl(c);
-    	else if (c.getType() == V4L4JConstants.DISCRETE)
+    	else if (c.getType() == V4L4JConstants.CTRL_TYPE_DISCRETE)
     		ctrl = new MenuControl(c);
     	return ctrl;
     }
@@ -422,7 +422,7 @@ public class JPEGVideoViewer extends WindowAdapter implements Runnable{
 			contentPanel.setBorder(b);
   
 			
-			if(ctrl.getType()!=V4L4JConstants.BUTTON && ctrl.getType()!=V4L4JConstants.SWITCH) {
+			if(ctrl.getType()!=V4L4JConstants.CTRL_TYPE_BUTTON && ctrl.getType()!=V4L4JConstants.CTRL_TYPE_SWITCH) {
 				contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.PAGE_AXIS));
 				value = new JLabel("Value: ");
 				contentPanel.add(value);			
