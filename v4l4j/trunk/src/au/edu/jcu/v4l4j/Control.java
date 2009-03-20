@@ -133,7 +133,7 @@ public class Control {
 	public int getValue() throws ControlException{
 		int v = 0;
 		state.get();
-		if(type==V4L4JConstants.BUTTON) {
+		if(type==V4L4JConstants.CTRL_TYPE_BUTTON) {
 			state.put();
 			return 0;
 		}
@@ -163,7 +163,7 @@ public class Control {
 		int v = defaultValue;
 		
 		state.get();
-		if(type==V4L4JConstants.BUTTON)
+		if(type==V4L4JConstants.CTRL_TYPE_BUTTON)
 			value = 0;
 		else
 			value = validateValue(value);
@@ -338,7 +338,7 @@ public class Control {
 	 * @throws StateException if this control has been released and must not be used anymore
 	 */
 	public Vector<Integer> getDiscreteValues(){
-		if(type!=V4L4JConstants.DISCRETE && values!=null)
+		if(type!=V4L4JConstants.CTRL_TYPE_DISCRETE && values!=null)
 			throw new UnsupportedMethod("This control does not accept discrete values");
 		state.get();
 		Vector<Integer> v = new Vector<Integer>();
@@ -358,7 +358,7 @@ public class Control {
 	 * @throws StateException if this control has been released and must not be used anymore
 	 */
 	public Vector<String> getDiscreteValueNames(){
-		if(type!=V4L4JConstants.DISCRETE && names!=null)
+		if(type!=V4L4JConstants.CTRL_TYPE_DISCRETE && names!=null)
 			throw new UnsupportedMethod("This control does not have discrete values");
 		state.get();
 		Vector<String> v = new Vector<String>(names);
@@ -376,7 +376,7 @@ public class Control {
 	 * @throws StateException if this control has been released and must not be used anymore
 	 */
 	public int getDiscreteValueIndex(int v){
-		if(type!=V4L4JConstants.DISCRETE && values!=null)
+		if(type!=V4L4JConstants.CTRL_TYPE_DISCRETE && values!=null)
 			throw new UnsupportedMethod("This control does not have discrete values");
 		
 		int ret = -1;
@@ -399,7 +399,7 @@ public class Control {
 	 * @throws StateException if this control has been released and must no be used anymore
 	 */
 	public int getDiscreteNameIndex(String n){
-		if(type!=V4L4JConstants.DISCRETE && names!=null)
+		if(type!=V4L4JConstants.CTRL_TYPE_DISCRETE && names!=null)
 			throw new UnsupportedMethod("This control does not have discrete values");
 		
 		state.get();
@@ -417,7 +417,7 @@ public class Control {
 	 * @throws StateException if this control has been released and must not be used anymore
 	 */
 	public int getDiscreteValueFromName(String n){
-		if(type!=V4L4JConstants.DISCRETE && values!=null)
+		if(type!=V4L4JConstants.CTRL_TYPE_DISCRETE && values!=null)
 			throw new UnsupportedMethod("This control does not have discrete values");
 
 		int ret;
