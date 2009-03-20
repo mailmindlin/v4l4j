@@ -69,24 +69,29 @@ public class V4L4JConstants {
 	 */
 	public static final int MIN_JPEG_QUALITY = 0;
 	/**
-	 * If a control has a type equal to BUTTON, its value is always 0,
-	 * and pressing it is done by setting any value using <code>setValue()</code> 
+	 * If a control has a type equal to CTRL_TYPE_BUTTON, its value is always 0,
+	 * and pressing it is done by setting any value using {@link Control#setValue(int)}.
 	 */
 	public final static int CTRL_TYPE_BUTTON=0;
 	/**
-	 * If a control has a type equal to SLIDER, it accepts a range of value between a minimum (as returned by <code>Control.getMin()</code>) and
-	 * a maximum (as returned by <code>Control.getMax()</code>) in increments (as returned by <code>Control.getStep()</code>)
+	 * If a control has a type equal to CTRL_TYPE_SLIDER, it accepts a range of value between a 
+	 * minimum (as returned by {@link Control#getMinValue()}) and
+	 * a maximum (as returned by {@link Control#getMaxValue()}) in increments 
+	 * (as returned by {@link Control#getStepValue()})
 	 */
 	public final static int CTRL_TYPE_SLIDER=1;
 	/**
-	 * If a control has a type equal to SWITCH, it accepts two different values: 0 (as returned by <code>Control.getMin()</code>) and
-	 *  1 (as returned by <code>getMax()</code>
+	 * If a control has a type equal to CTRL_TYPE_SWITCH, it accepts two different values: 
+	 * 0 (as returned by {@link Control#getMinValue()}) and
+	 *  1 (as returned by {@link Control#getMaxValue()}.
 	 */
 	public final static int CTRL_TYPE_SWITCH=2;	
 	/**
-	 * If a control has a type equal to DISCRETE, it accepts discrete values as returned by <code>Control.getDiscreteValues()</code>.
-	 * These discrete values may be have a string description (returned by <code>Control.getDescriptions()</code>)are in the range 
-	 * <code>Control.getMin()</code> and	<code>Control.getMax()</code>. The step value as returned by <code>Control.getStep()</code> is not applicable.
+	 * If a control has a type equal to CTRL_TYPE_DISCRETE, it accepts discrete values as 
+	 * returned by {@link Control#getDiscreteValues()}.
+	 * These discrete values may have string descriptions (returned by 
+	 * {@link Control#getDiscreteValueNames()} )are in the range 
+	 * <code>Control.getMin()</code> and <code>Control.getMax()</code>. The step value as returned by <code>Control.getStep()</code> is not applicable.
 	 */
 	public final static int CTRL_TYPE_DISCRETE=3;
 	
