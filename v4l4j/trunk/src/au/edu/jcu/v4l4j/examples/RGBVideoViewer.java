@@ -583,9 +583,9 @@ public class RGBVideoViewer  extends WindowAdapter implements Runnable{
 			super(c);
 
 			int v = c.getDefaultValue();
-			box = new JComboBox(ctrl.getDiscreteValueNames());
+			box = new JComboBox(ctrl.getDiscreteValues().toArray());
 			try {v = c.getValue();} catch (ControlException e){}
-			box.setSelectedIndex(ctrl.getDiscreteValueIndex(v));				
+			box.setSelectedIndex(ctrl.getDiscreteValues().indexOf(v));				
 			initPanel();
 		}
 		
@@ -598,7 +598,7 @@ public class RGBVideoViewer  extends WindowAdapter implements Runnable{
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			try {
-				ctrl.setValue(ctrl.getDiscreteValues().elementAt(box.getSelectedIndex()));
+				ctrl.setValue(ctrl.getDiscreteValues().get(box.getSelectedIndex()));
 			} catch (ControlException e1) {
 				JOptionPane.showMessageDialog(null, "Error setting value.\n"+e1.getMessage());
 			}
