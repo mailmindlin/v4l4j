@@ -48,9 +48,6 @@
 	
 	<target name="init">
 		<mkdir dir="${project.classes}"/>
-		<exec executable="sh">
-		        <arg line="svn-version.sh" />
-		</exec>
 	</target>
 	
 	<target name="all" depends="jnilib,jar"/>
