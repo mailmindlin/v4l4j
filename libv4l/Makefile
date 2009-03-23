@@ -65,8 +65,11 @@ LDFLAGS=
 
 all: $(LIB)
 
-$(LIB): $(OBJ)
+$(LIB): version.h $(OBJ)
 	ar rc $(LIB) $(OBJ) ; ranlib $(LIB)
+
+version.h:
+	@sh svn-version.sh
 
 test: $(TESTOBJ) $(OBJ)
 	$(LD) $(LDFLAGS) test-capture.o $(OBJ) -o test-capture
