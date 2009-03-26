@@ -117,6 +117,7 @@ public class JPEGFrameGrabber extends FrameGrabber {
 	void init() throws V4L4JException{
 		try {
 			super.init();
+			setQuality(object, quality);
 		} catch (ImageFormatException ife){
 			if(format == null)
 				ife = new ImageFormatException("v4l4j was unable to find image format supported by the \n"

@@ -71,7 +71,7 @@ $(LIB): version.h $(OBJ)
 version.h:
 	@sh svn-version.sh
 
-test: $(TESTOBJ) $(OBJ)
+test: version.h $(TESTOBJ) $(OBJ)
 	$(LD) $(LDFLAGS) test-capture.o $(OBJ) -o test-capture
 	$(LD) $(LDFLAGS) list-caps.o $(OBJ) -o list-caps
 	$(LD) $(LDFLAGS) dump-capture.o $(OBJ) -o dump-capture
