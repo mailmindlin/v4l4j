@@ -24,10 +24,10 @@
 #include <jni.h>
 #include <stdint.h>
 
-#include "libv4l.h"
+#include "libvideo.h"
 #include "common.h"
 #include "debug.h"
-#include "libv4l-err.h"
+#include "libvideo-err.h"
 
 
 /*

@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <jpeglib.h>
 
-#include "libv4l.h"
+#include "libvideo.h"
 
 struct v4l4j_device;
 

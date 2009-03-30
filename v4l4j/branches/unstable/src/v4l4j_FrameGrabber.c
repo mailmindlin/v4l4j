@@ -29,8 +29,8 @@
 
 #include "common.h"
 #include "debug.h"
-#include "libv4l.h"
-#include "libv4l-err.h"
+#include "libvideo.h"
+#include "libvideo-err.h"
 #include "jpeg.h"
 #include "palettes.h"
 #include "rgb.h"
