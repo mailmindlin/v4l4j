@@ -83,8 +83,6 @@ public class GetFrameRate {
 
 		System.out.println("This program will open "+dev+", capture frames for "
 					+ captureLength+ " seconds and print the FPS");
-		System.out.println("Make sure the webcam is connected and press <Enter>, or Ctrl-C to abort now.");
-		System.in.read();
 
 		try {
 			vd = new VideoDevice(dev);

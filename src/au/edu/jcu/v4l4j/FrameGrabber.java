@@ -267,9 +267,6 @@ public class FrameGrabber {
 	 * @throws StateException if the capture has not been started or if this 
 	 * <code>FrameGrabber</code> has been already released, and therefore must
 	 * not be used anymore.
-	 * @throws StateException if the capture has not been started, or if this 
-	 * <code>FrameGrabber</code> has been already released, and therefore must 
-	 * not be used anymore.
 	 */
 	public void stopCapture(){
 		state.stop();		
