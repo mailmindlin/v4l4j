@@ -24,7 +24,7 @@
 #include <jni.h>
 #include <stdint.h>
 
-#include "libv4l.h"
+#include "libvideo.h"
 #include "palettes.h"
 #include "common.h"
 #include "debug.h"

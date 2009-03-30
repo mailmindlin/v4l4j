@@ -23,7 +23,7 @@
 */
 #include "common.h"
 #include "debug.h"
-#include "libv4l.h"
+#include "libvideo.h"
 
 #define DHT_SIZE		420
 static unsigned char huffman_table[] =

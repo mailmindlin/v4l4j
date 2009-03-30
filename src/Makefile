@@ -33,8 +33,8 @@ else
 OPTIMISATION=-O3
 endif
 
-LIBV4L_PATH=../libv4l
-LIBV4L_NAME=libv4l.a
+LIBV4L_PATH=../libvideo
+LIBV4L_NAME=libvideo.a
 
 LIB=libv4l4j.so
 OBJ=jpeg.o rgb.o v4l4j_FrameGrabber.o v4l4j_ImageFormatList.o v4l4j_DeviceInfo.o v4l4j_VideoDevice.o v4l4j_Control.o v4l4j_Tuner.o
