@@ -57,7 +57,7 @@
 	<target name="jnilib-debug" depends="init">
 		<exec executable="make">
 		<env key="DEBUG" value="1"/>
-		        <arg line="-C ${libv4l.dir}" />
+		        <arg line="-C ${libvideo.dir}" />
 		</exec>
 		<exec executable="make">
 		        <env key="DEBUG" value="1"/>
@@ -68,7 +68,7 @@
 	
 	<target name="jnilib" depends="init">
 		<exec executable="make">
-			<arg line="-C ${libv4l.dir}" />
+			<arg line="-C ${libvideo.dir}" />
 		</exec>
 		<exec executable="make">
 			<arg line="-C ${project.src}" />
@@ -237,7 +237,7 @@
 	
 	<target name="clean">
 		<exec executable="make">
-		<arg line="-C ${libv4l.dir} clean" />
+		<arg line="-C ${libvideo.dir} clean" />
 		</exec>
 		<exec executable="make">
 			<arg line="-C ${project.src} clean" />
