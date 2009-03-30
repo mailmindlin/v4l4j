@@ -37,7 +37,7 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_Tuner_getFreq(JNIEnv *e, jobject t
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error getting tuner frequency");
 		return 0;
 	}
-	dprint(LOG_CALLS, "[V4L4J] got freq: %ud\n", f);
+	dprint(LOG_V4L4J, "[V4L4J] got freq: raw: %u long long: %llu %lld\n", f, (unsigned long long)(f & 0xffffffff), (long long)(f & 0xffffffff));
 	return (jlong) (f & 0xffffffff);
 }
 

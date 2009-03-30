@@ -101,6 +101,6 @@ struct v4l4j_device {
 									if(JV4L4JException!=0) (*e)->ThrowNew(e, JV4L4JException, msg);\
 								} while(0)
 
-
+#define CLIP(x) (unsigned char) ((x) > 255) ? 255 : (((x) < 0) ? 0 : (x));
 
 #endif /*H_COMMON_*/

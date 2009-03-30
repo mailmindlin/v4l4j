@@ -24,6 +24,9 @@
 
 package au.edu.jcu.v4l4j;
 
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 import au.edu.jcu.v4l4j.exceptions.ControlException;
@@ -116,7 +119,11 @@ public class Control {
 		}
 		this.values = values;
 		//this.defaultValue = (int) Math.round((max - min) / 2.0) + min;
-		this.defaultValue = 0;
+		
+		if(min<=0 && 0<=max)
+			this.defaultValue = 0;
+		else
+			this.defaultValue = (int) Math.round((max - min) / 2.0) + min;
 		v4l4jObject = o;
 		state = new State();
 	}
@@ -133,7 +140,7 @@ public class Control {
 	public int getValue() throws ControlException{
 		int v = 0;
 		state.get();
-		if(type==V4L4JConstants.BUTTON) {
+		if(type==V4L4JConstants.CTRL_TYPE_BUTTON) {
 			state.put();
 			return 0;
 		}
@@ -163,7 +170,7 @@ public class Control {
 		int v = defaultValue;
 		
 		state.get();
-		if(type==V4L4JConstants.BUTTON)
+		if(type==V4L4JConstants.CTRL_TYPE_BUTTON)
 			value = 0;
 		else
 			value = validateValue(value);
@@ -224,7 +231,7 @@ public class Control {
 	 * @throws StateException if this control has been released and must not be used anymore.
 	 */
 	public int decreaseValue() throws ControlException {
-		int old = 0;
+		int old = defaultValue;
 		/**
 		 * the following try statement is here so that write-only 
 		 * controls (Relative Pan for instance) that return a ControlException
@@ -330,15 +337,18 @@ public class Control {
 	}
 	
 	/**
-	 * This method returns a list of the discrete values accepted by this control
+	 * This method returns a list of the discrete values accepted by this control.
+	 * The list is ordered in the same way as the list returned by {@link #getDiscreteValueNames()}.
+	 * So a value at index 'i' in the list returned by this method, matches the name
+	 * at the same index in the list returned by {@link #getDefaultValueNames()}.
 	 * @return a list of the discrete values accepted by this control
 	 * @throws UnsupportedMethod if this control does not support discrete values. Instead,
 	 * any values between {@link #getMinValue()} and {@link #getMaxValue()} with a step of
 	 * {@link #getStepValue()} may be used.
 	 * @throws StateException if this control has been released and must not be used anymore
 	 */
-	public Vector<Integer> getDiscreteValues(){
-		if(type!=V4L4JConstants.DISCRETE && values!=null)
+	public List<Integer> getDiscreteValues(){
+		if(type!=V4L4JConstants.CTRL_TYPE_DISCRETE && values!=null)
 			throw new UnsupportedMethod("This control does not accept discrete values");
 		state.get();
 		Vector<Integer> v = new Vector<Integer>();
@@ -350,85 +360,43 @@ public class Control {
 	}
 	
 	/**
-	 * This method returns a description for each of the supported discrete values.
-	 * @return a description for each of the supported discrete values.
+	 * This method returns the list of names for each of the supported discrete values.
+	 * The list is ordered in the same way as the list returned by {@link #getDiscreteValues()}.
+	 * So the name at index 'i' in the list returned by this method, matches the value
+	 * at the same index in the list returned by {@link #getDefaultValue()}.
+	 * @return a list of names for each of the supported discrete values.
 	 * @throws UnsupportedMethod if this control does not support discrete values. Instead,
 	 * any values between {@link #getMinValue()} and {@link #getMaxValue()} with a step of
 	 * {@link #getStepValue()} may be used.
 	 * @throws StateException if this control has been released and must not be used anymore
 	 */
-	public Vector<String> getDiscreteValueNames(){
-		if(type!=V4L4JConstants.DISCRETE && names!=null)
+	public List<String> getDiscreteValueNames(){
+		if(type!=V4L4JConstants.CTRL_TYPE_DISCRETE && names!=null)
 			throw new UnsupportedMethod("This control does not have discrete values");
 		state.get();
 		Vector<String> v = new Vector<String>(names);
 		state.put();
-		return v;
-			
+		return v;		
 	}
 	
 	/**
-	 * This method returns the index of a given discrete value in the list of discrete values,
-	 * as returned by {@link #getDiscreteValues()}.
-	 * @param v the discrete value whose index is needed
-	 * @return the index of a given discrete value, or -1 if the given value is not found
-	 * @throws UnsupportedMethod if this control does not support discrete values
+	 * This method returns a map of all discrete value names and their values.
+	 * @return a map of all discrete value names and their values.
+	 * @throws UnsupportedMethod if this control does not support discrete values. Instead,
+	 * any values between {@link #getMinValue()} and {@link #getMaxValue()} with a step of
+	 * {@link #getStepValue()} may be used.
 	 * @throws StateException if this control has been released and must not be used anymore
 	 */
-	public int getDiscreteValueIndex(int v){
-		if(type!=V4L4JConstants.DISCRETE && values!=null)
+	public Map<String, Integer> getDiscreteValuesMap(){
+		if(type!=V4L4JConstants.CTRL_TYPE_DISCRETE && names!=null)
 			throw new UnsupportedMethod("This control does not have discrete values");
-		
-		int ret = -1;
 		state.get();
-		for(int i=0; i<values.length;i++)
-			if(values[i]==v) {
-				ret = i;
-				break;
-			}
-		state.put();
-		return ret;
-	}
-	
-	/**
-	 * This method returns the index of a given discrete value's description in the list of discrete values,
-	 * as returned by {@link #getDiscreteValues()}.
-	 * @param n the discrete value's description whose index is needed
-	 * @return the index of a given discrete value, or -1 if the given value is not found
-	 * @throws UnsupportedMethod if this control does not support discrete values
-	 * @throws StateException if this control has been released and must no be used anymore
-	 */
-	public int getDiscreteNameIndex(String n){
-		if(type!=V4L4JConstants.DISCRETE && names!=null)
-			throw new UnsupportedMethod("This control does not have discrete values");
-		
-		state.get();
-		int ret = names.indexOf(n);
-		state.put();
-		return ret;
-	}
-	
-	/**
-	 * This method returns the discrete value matching a given description.
-	 * @param n the description whose value is to be looked up
-	 * @return the value matching the description
-	 * @throws UnsupportedMethod if this control does not support discrete values
-	 * @throws IndexOutOfBoundsException if the given description does not match anything
-	 * @throws StateException if this control has been released and must not be used anymore
-	 */
-	public int getDiscreteValueFromName(String n){
-		if(type!=V4L4JConstants.DISCRETE && values!=null)
-			throw new UnsupportedMethod("This control does not have discrete values");
+		Hashtable<String,Integer> t = new Hashtable<String,Integer>();
+		for(int i=0;i<names.size(); i++)
+			t.put(names.get(i), values[i]);
 
-		int ret;
-		state.get();
-		try {ret = values[getDiscreteNameIndex(n)];}
-		catch (IndexOutOfBoundsException e){
-			state.put();
-			throw e;
-		}
 		state.put();
-		return ret;
+		return t;		
 	}
 	
 	/**

@@ -164,6 +164,8 @@ struct tuner_info {
 #define RADIO_TYPE					1
 #define TV_TYPE						2
 	int type;
+	//In units of 62.5 Khz if unit==MHZ_UNIT
+	//of 62.5Hz if unit==KHZ_UNIT
 	unsigned long rangelow;
 	unsigned long rangehigh;
 #define KHZ_UNIT					1

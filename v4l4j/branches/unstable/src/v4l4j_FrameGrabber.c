@@ -51,14 +51,14 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 	//Updates the FrameCapture class width and height fields with the values returned by V4L2
 	this_class = (*e)->GetObjectClass(e,this);
 	if(this_class==NULL) {
-		dprint(LOG_V4L4J, "[V4L4J] error looking up FrameGrabber class\n");
+		info("[V4L4J] error looking up FrameGrabber class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "error looking up FrameGrabber class");
 		return;
 	}
 
 	field = (*e)->GetFieldID(e, this_class, "width", "I");
 	if(field==NULL) {
-		dprint(LOG_V4L4J, "[V4L4J] error looking up width field in FrameGrabber class\n");
+		info("[V4L4J] error looking up width field in FrameGrabber class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "error looking up width field in FrameGrabber class");
 		return;
 	}
@@ -66,7 +66,7 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 
 	field = (*e)->GetFieldID(e, this_class, "height", "I");
 	if(field==NULL) {
-		dprint(LOG_V4L4J, "[V4L4J] error looking up height field in FrameGrabber class\n");
+		info("[V4L4J] error looking up height field in FrameGrabber class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "error looking up height field in FrameGrabber class");
 		return;
 	}
@@ -75,25 +75,26 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 	if(d->output_fmt!=OUTPUT_RAW){
 		field = (*e)->GetFieldID(e, this_class, "format", "Lau/edu/jcu/v4l4j/ImageFormat;");
 		if(field==NULL) {
-			dprint(LOG_V4L4J, "[V4L4J] error looking up format field in FrameGrabber class\n");
+			info("[V4L4J] error looking up format field in FrameGrabber class\n");
 			THROW_EXCEPTION(e, JNI_EXCP, "error looking up format field in FrameGrabber class");
 			return;
 		}
 
 		format_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/ImageFormat");
 		if(format_class == NULL){
-			dprint(LOG_V4L4J, "[V4L4J] Error looking up the ImageFormat class\n");
+			info("[V4L4J] Error looking up the ImageFormat class\n");
 			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up ImageFormat class");
 			return;
 		}
 
 		format_ctor = (*e)->GetMethodID(e, format_class, "<init>", "(Ljava/lang/String;I)V");
 		if(format_ctor == NULL){
-			dprint(LOG_V4L4J, "[V4L4J] Error looking up the constructor of ImageFormat class\n");
+			info("[V4L4J] Error looking up the constructor of ImageFormat class\n");
 			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of ImageFormat class");
 			return;
 		}
 
+		dprint(LOG_V4L4J, "[V4L4J] Setting format field to '%s' image format\n", libv4l_palettes[d->vdev->capture->palette].name);
 		obj = (*e)->NewObject(e, format_class, format_ctor,
 						(*e)->NewStringUTF(e, (const char *) libv4l_palettes[d->vdev->capture->palette].name ),
 						d->vdev->capture->palette);
@@ -105,6 +106,8 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
  * returns an appropriate size for the ByteBuffers holding captured frames
  */
 static int get_buffer_length(struct v4l4j_device *d){
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+
 	if(d->output_fmt==OUTPUT_RAW || d->output_fmt==OUTPUT_JPG) {
 		//shall we trust what the driver says ?
 		dprint(LOG_V4L4J, "[V4L4J] OUTPUT: RAW / JPEG - Using ByteBuffer of size %d\n", d->vdev->capture->imagesize );
@@ -117,15 +120,24 @@ static int get_buffer_length(struct v4l4j_device *d){
 	return 0;
 }
 
-
+/*
+ * Copy d->capture_len bytes from s to dst, and sets the size of image in dst accordingly
+ */
 static inline void raw_copy(struct v4l4j_device *d, unsigned char *s, unsigned char *dst){
 	memcpy(dst, s, d->capture_len);
 	d->len = d->capture_len;
 }
 
+/*
+ * Call init routines of RGB, JPEG, or raw depending on requested output
+ * image format
+ */
 static int init_format_converter(struct v4l4j_device *d){
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	int ret = 0;
+
 	if(d->output_fmt==OUTPUT_JPG){
+		dprint(LOG_V4L4J, "[V4L4J] Initialising the converter to JPEG\n");
 		ret = init_jpeg_compressor(d, 80);
 		if(ret!=0)
 			dprint(LOG_V4L4J, "[V4L4J] Error initialising the JPEG compressor\n");
@@ -140,13 +152,14 @@ static int init_format_converter(struct v4l4j_device *d){
 			dprint(LOG_V4L4J, "[V4L4J] Error initialising the RGB converter\n");
 		d->len = get_buffer_length(d);
 	} else {
-		dprint(LOG_V4L4J, "[V4L4J] unknown output format\n");
+		info("[V4L4J] unknown output format (%d)\n", d->output_fmt);
 		ret = -1;
 	}
 	return ret;
 }
 
 static void release_format_converter(struct v4l4j_device *d){
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	if(d->output_fmt==OUTPUT_JPG)
 		destroy_jpeg_compressor(d);
 	else if(d->output_fmt == OUTPUT_RGB24)
@@ -174,6 +187,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(JNIEnv 
 	/*
 	 * i n i t _ c a p t u r e _ d e v i c e ( )
 	 */
+	dprint(LOG_LIBV4L, "[LIBV4L] Calling init_capture_device()\n");
 	c = init_capture_device(d->vdev, w,h,ch,std,n);
 
 	if(c==NULL) {
@@ -221,7 +235,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(JNIEnv 
 		return 0;
 	}
 
-	dprint(LOG_V4L4J, "[V4L4J] calling 'set_cap_param'\n");
+	dprint(LOG_LIBV4L, "[LIBV4L] calling 'set_cap_param'\n");
 	if((i=(*c->actions->set_cap_param)(d->vdev, fmts, nb_fmts))!=0){
 		dprint(LOG_V4L4J, "[V4L4J] set_cap_param failed\n");
 		free_capture_device(d->vdev);
@@ -258,7 +272,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(JNIEnv 
 	dprint(LOG_V4L4J, "[V4L4J] Creating the ByteBuffer array[%d]\n",c->mmap->buffer_nr);
 	arr = (*e)->NewObjectArray(e, c->mmap->buffer_nr, (*e)->FindClass(e, BYTEBUFER_CLASS), NULL);
 	if(arr==NULL) {
-		dprint(LOG_V4L4J, "[V4L4J] error creating byte buffer array\n");
+		info("[V4L4J] error creating byte buffer array\n");
 		free_capture_device(d->vdev);
 		THROW_EXCEPTION(e, JNI_EXCP, "error creating byte buffer array");
 		return 0;
@@ -271,7 +285,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(JNIEnv 
 		XMALLOC(d->bufs[i], unsigned char *, (size_t) buf_len);
 		element = (*e)->NewDirectByteBuffer(e, d->bufs[i], (jlong) buf_len);
 		if(element==NULL) {
-			dprint(LOG_V4L4J, "[V4L4J] error creating byte buffer\n");
+			info("[V4L4J] error creating byte buffer\n");
 			free_capture_device(d->vdev);
 			THROW_EXCEPTION(e, JNI_EXCP, "error creating byte buffer");
 			return 0;
@@ -302,6 +316,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_start(JNIEnv *e, jobje
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
+	dprint(LOG_LIBV4L, "[LIBV4L] Calling 'start_capture(dev: %s)'\n",d->vdev->file);
 	if((*d->vdev->capture->actions->start_capture)(d->vdev)<0){
 		dprint(LOG_V4L4J, "[V4L4J] start_capture failed\n");
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error starting the capture");
@@ -333,7 +348,6 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getBuffer(JNIEnv *e, j
 	//get frame from v4l2
 	if((frame = (*d->vdev->capture->actions->dequeue_buffer)(d->vdev, &d->capture_len)) != NULL) {
 		i = d->buf_id = (d->buf_id == (d->vdev->capture->mmap->buffer_nr-1)) ? 0 : d->buf_id+1;
-		dprint(LOG_V4L4J, "[V4L4J] got frame in buffer %d\n", i);
 		(*d->convert)(d, frame, d->bufs[i]);
 		(*d->vdev->capture->actions->enqueue_buffer)(d->vdev);
 		return i;
@@ -347,9 +361,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getBuffer(JNIEnv *e, j
  * return the length of the last captured frame
  */
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getBufferLength(JNIEnv *e, jobject t, jlong object){
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
-	dprint(LOG_V4L4J, "[V4L4J] Getting last frame length: %d\n", d->len);
 	return d->len;
 }
 

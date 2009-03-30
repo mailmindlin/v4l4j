@@ -170,7 +170,7 @@ public class RGBVideoViewer  extends WindowAdapter implements Runnable{
         freqSpinner.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
 				tuner.setFrequency(
-						((SpinnerNumberModel) freqSpinner.getModel()).getNumber().longValue()
+						((SpinnerNumberModel) freqSpinner.getModel()).getNumber().doubleValue()
 						);
 			}
         	
@@ -233,13 +233,13 @@ public class RGBVideoViewer  extends WindowAdapter implements Runnable{
     
     private ControlGUI getControlGUI(Control c){
     	ControlGUI ctrl = null;
-    	if(c.getType() == V4L4JConstants.SLIDER)
+    	if(c.getType() == V4L4JConstants.CTRL_TYPE_SLIDER)
     		ctrl = new SliderControl(c);
-    	else if (c.getType() == V4L4JConstants.BUTTON)
+    	else if (c.getType() == V4L4JConstants.CTRL_TYPE_BUTTON)
     		ctrl = new ButtonControl(c);
-    	else if (c.getType() == V4L4JConstants.SWITCH)
+    	else if (c.getType() == V4L4JConstants.CTRL_TYPE_SWITCH)
     		ctrl = new SwitchControl(c);
-    	else if (c.getType() == V4L4JConstants.DISCRETE)
+    	else if (c.getType() == V4L4JConstants.CTRL_TYPE_DISCRETE)
     		ctrl = new MenuControl(c);
     	return ctrl;
     }
@@ -321,10 +321,10 @@ public class RGBVideoViewer  extends WindowAdapter implements Runnable{
 				tuner = fg.getTuner();
 				tinfo = vd.getDeviceInfo().getInputs().get(channel).getTunerInfo();
 				freqSpinner.setModel(new SpinnerNumberModel(
-						new Long(tuner.getFrequency()), 
-						new Long(tinfo.getRangeLow()),
-						new Long(tinfo.getRangeHigh()),
-						new Long(1)));
+						new Double(tuner.getFrequency()), 
+						new Double(tinfo.getRangeLow()),
+						new Double(tinfo.getRangeHigh()),
+						new Double(1)));
 				freq.setVisible(true);
 				freqSpinner.setVisible(true);
 			} catch (NoTunerException nte){}//No tuner for this input
@@ -447,7 +447,7 @@ public class RGBVideoViewer  extends WindowAdapter implements Runnable{
 			contentPanel.setBorder(b);
   
 			
-			if(ctrl.getType()!=V4L4JConstants.BUTTON && ctrl.getType()!=V4L4JConstants.SWITCH) {
+			if(ctrl.getType()!=V4L4JConstants.CTRL_TYPE_BUTTON && ctrl.getType()!=V4L4JConstants.CTRL_TYPE_SWITCH) {
 				contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.PAGE_AXIS));
 				value = new JLabel("Value: ");
 				contentPanel.add(value);			
@@ -583,9 +583,9 @@ public class RGBVideoViewer  extends WindowAdapter implements Runnable{
 			super(c);
 
 			int v = c.getDefaultValue();
-			box = new JComboBox(ctrl.getDiscreteValueNames());
+			box = new JComboBox(ctrl.getDiscreteValues().toArray());
 			try {v = c.getValue();} catch (ControlException e){}
-			box.setSelectedIndex(ctrl.getDiscreteValueIndex(v));				
+			box.setSelectedIndex(ctrl.getDiscreteValues().indexOf(v));				
 			initPanel();
 		}
 		
@@ -598,7 +598,7 @@ public class RGBVideoViewer  extends WindowAdapter implements Runnable{
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			try {
-				ctrl.setValue(ctrl.getDiscreteValues().elementAt(box.getSelectedIndex()));
+				ctrl.setValue(ctrl.getDiscreteValues().get(box.getSelectedIndex()));
 			} catch (ControlException e1) {
 				JOptionPane.showMessageDialog(null, "Error setting value.\n"+e1.getMessage());
 			}
