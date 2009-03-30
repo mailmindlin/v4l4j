@@ -33,16 +33,18 @@ static jobject create_tuner_object(JNIEnv *e, jobject t, struct tuner_info *tune
 	jclass tuner_class;
 	jmethodID ctor;
 
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+
 	tuner_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/TunerInfo");
 	if(tuner_class == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the tuner class\n");
+		info("[V4L4J] Error looking up the tuner class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up tuner class");
 		return 0;
 	}
 
 	ctor = (*e)->GetMethodID(e, tuner_class, "<init>", "(Ljava/lang/String;IIIJJ)V");
 	if(ctor == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the constructor of tuner class\n");
+		info("[V4L4J] Error looking up the constructor of tuner class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up constructor of tuner class");
 		return 0;
 	}
@@ -69,21 +71,21 @@ static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct
 
 	input_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/InputInfo");
 	if(input_class == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the InputInfo class\n");
+		info( "[V4L4J] Error looking up the InputInfo class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up InputInfo class");
 		return;
 	}
 
 	vector_class = (*e)->FindClass(e, "java/util/Vector");
 	if(vector_class == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the Vector class\n");
+		info("[V4L4J] Error looking up the Vector class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up Vector java objects");
 		return;
 	}
 
 	add_method = (*e)->GetMethodID(e, vector_class, "addElement", "(Ljava/lang/Object;)V");
 	if(add_method == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the add method of Vector class\n");
+		info("[V4L4J] Error looking up the add method of Vector class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the add method of Vector objects");
 		return;
 	}
@@ -97,7 +99,7 @@ static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct
 
 	input_list_object = (*e)->GetObjectField(e, t, inputs_field);
 	if(input_list_object == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the inputs attribute\n");
+		info("[V4L4J] Error looking up the inputs attribute\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the inputs attribute");
 		return;
 	}
@@ -111,7 +113,7 @@ static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct
 
 	ctor_wtuner = (*e)->GetMethodID(e, input_class, "<init>", "(Ljava/lang/String;[ILau/edu/jcu/v4l4j/TunerInfo;I)V");
 	if(ctor_wtuner == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the constructor of InputInfo class\n");
+		info("[V4L4J] Error looking up the constructor of InputInfo class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of InputInfo class");
 		return;
 	}
@@ -123,7 +125,7 @@ static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct
 		//create the short[] with the supported standards
 		stds= (*e)->NewIntArray(e, vi->nb_stds);
 		if(stds == NULL){
-			dprint(LOG_V4L4J, "[V4L4J] Error creating array\n");
+			info( "[V4L4J] Error creating array\n");
 			THROW_EXCEPTION(e, JNI_EXCP, "Error creating array");
 			return;
 		}
@@ -148,7 +150,7 @@ static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct
 
 		//store it in the list
 		if(obj == NULL){
-			dprint(LOG_V4L4J, "[V4L4J] Error creating input object\n");
+			info("[V4L4J] Error creating input object\n");
 			THROW_EXCEPTION(e, JNI_EXCP, "Error creating input object");
 			return;
 		}
@@ -169,56 +171,56 @@ static void create_formats_object(JNIEnv *e, jobject t, jclass this_class, struc
 
 	format_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/ImageFormat");
 	if(format_class == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the ImageFormat class\n");
+		info( "[V4L4J] Error looking up the ImageFormat class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up ImageFormat class");
 		return;
 	}
 
 	format_ctor = (*e)->GetMethodID(e, format_class, "<init>", "(Ljava/lang/String;I)V");
 	if(format_ctor == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the constructor of ImageFormat class\n");
+		info( "[V4L4J] Error looking up the constructor of ImageFormat class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of ImageFormat class");
 		return;
 	}
 
 	format_list_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/ImageFormatList");
 	if(format_list_class == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the ImageFormatList class\n");
+		info("[V4L4J] Error looking up the ImageFormatList class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up ImageFormatList class");
 		return;
 	}
 
 	format_list_ctor = (*e)->GetMethodID(e, format_list_class, "<init>", "(Ljava/util/List;)V");
 	if(format_list_ctor == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the constructor of ImageFormatList class\n");
+		info("[V4L4J] Error looking up the constructor of ImageFormatList class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of ImageFormatList class");
 		return;
 	}
 
 	vector_class = (*e)->FindClass(e, "java/util/Vector");
 	if(vector_class == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the Vector class\n");
+		info("[V4L4J] Error looking up the Vector class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up Vector java objects");
 		return;
 	}
 
 	vector_ctor = (*e)->GetMethodID(e, vector_class, "<init>", "()V");
 	if(vector_ctor == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the constructor of Vector class\n");
+		info("[V4L4J] Error looking up the constructor of Vector class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of Vector class");
 		return;
 	}
 
 	add_method = (*e)->GetMethodID(e, vector_class, "addElement", "(Ljava/lang/Object;)V");
 	if(add_method == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the add method of Vector class\n");
+		info("[V4L4J] Error looking up the add method of Vector class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the add method of Vector objects");
 		return;
 	}
 
 	formats_field = (*e)->GetFieldID(e, this_class, "formats", "Lau/edu/jcu/v4l4j/ImageFormatList;");
 	if(formats_field == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the formats attribute ID\n");
+		info("[V4L4J] Error looking up the formats attribute ID\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the formats attribute ID");
 		return;
 	}
@@ -251,24 +253,23 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobje
 	jclass this_class;
 	struct video_device *vd = d->vdev;
 
-	dprint(LOG_CALLS, "[V4L4J] Gathering JAVA object handles\n");
 	//get handle on need java objects
 	this_class = (*e)->GetObjectClass(e,t);
 	if(this_class == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the DeviceInfo class\n");
+		info("[V4L4J] Error looking up the DeviceInfo class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the DeviceInfo class");
 		return;
 	}
 
 	name_field = (*e)->GetFieldID(e, this_class, "name", "Ljava/lang/String;");
 	if(name_field == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the name attribute\n");
+		info("[V4L4J] Error looking up the name attribute\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the name attribute");
 		return;
 	}
 
 
-	dprint(LOG_CALLS, "[LIBV4L] call to get_device_info\n");
+	dprint(LOG_LIBV4L, "[LIBV4L] call to get_device_info\n");
 	//get data from libv4l
 	if(get_device_info(vd)!=NULL){
 		//fill in values in DeviceInfo object
@@ -276,11 +277,14 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobje
 		(*e)->SetObjectField(e, t, name_field, (*e)->NewStringUTF(e, vd->info->name));
 
 		/* set the inputs field */
+		dprint(LOG_V4L4J, "[V4L4J] Creating inputInfo objects\n");
 		create_inputs_object(e, t, this_class, vd);
 
 		/* set the formats field */
+		dprint(LOG_V4L4J, "[V4L4J] Creating Format objects\n");
 		create_formats_object(e, t, this_class, vd);
 
+		dprint(LOG_LIBV4L, "[LIBV4L] call to release_device_info\n");
 		release_device_info(vd);
 	} else
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error getting information from video device");
