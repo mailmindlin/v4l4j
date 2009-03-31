@@ -179,8 +179,10 @@ struct capture_device *init_capture_device(struct video_device *vdev, int w, int
 
 	setup_capture_actions(vdev);
 
-	if(vdev->v4l_version == V4L2_VERSION)
-		vdev->capture->convert = v4lconvert_create(vdev->fd);
+	if(vdev->v4l_version == V4L2_VERSION) {
+		XMALLOC(vdev->capture->convert, struct convert_data *, sizeof(struct convert_data));
+		vdev->capture->convert->priv = v4lconvert_create(vdev->fd);
+	}
 
 	return vdev->capture;
 }
@@ -189,8 +191,12 @@ struct capture_device *init_capture_device(struct video_device *vdev, int w, int
 void free_capture_device(struct video_device *vdev){
 	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "CAP: Freeing capture device on %s.\n", vdev->file);
 
-	if(vdev->v4l_version == V4L2_VERSION)
-		v4lconvert_destroy(vdev->capture->convert);
+	if(vdev->v4l_version == V4L2_VERSION){
+		v4lconvert_destroy(vdev->capture->convert->priv);
+		XFREE(vdev->capture->convert->dst_fmt);
+		XFREE(vdev->capture->convert->src_fmt);
+		XFREE(vdev->capture->convert);
+	}
 
 	XFREE(vdev->capture->actions);
 	XFREE(vdev->capture->mmap);
