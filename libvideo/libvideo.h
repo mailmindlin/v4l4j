@@ -134,7 +134,13 @@ struct mmap {
 #define 	YUV422					48
 #define 	YUV411					49
 
-
+struct convert_data {
+	struct v4lconvert_data *priv;//the libv4l convert struct (used only when V4L2)
+	int need_conv;				//whether or not we need conversion (1: yes, 0:no)
+	struct v4l2_format *src_fmt; //the source pixel format (the one the capture is made in)
+	struct v4l2_format *dst_fmt; //the dest format (the one obtained after conversion);
+	int src_palette;			//the source libvideo palette
+};
 
 //all the fields in the following structure are read only
 struct capture_device {
@@ -151,7 +157,7 @@ struct capture_device {
 									//but they are the same (same goes for YUYV and YUV422). In this field
 									//we store the real palette used by v4l1. In the palette field above,
 									//we store what the application should know (YUYV instead of YUV422)
-	struct v4lconvert_data *convert;//the libv4l convert struct (used only when V4L2)
+	struct convert_data* convert;	//libv4lconvert stuff (used only when v4l2)
 };
 
 

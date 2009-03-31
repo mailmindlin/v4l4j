@@ -213,7 +213,7 @@ static int set_input(struct capture_device *c, int fd){
 	return 0;
 }
 
-static int try_image_format(struct v4l2_format *fmt, int fd){
+static int apply_image_format(struct v4l2_format *fmt, int fd){
 	int palette = fmt->fmt.pix.pixelformat;
 	if (0 == ioctl(fd, VIDIOC_S_FMT, fmt) && fmt->fmt.pix.pixelformat == palette) {
 		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_INFO, "CAP: palette %#x  - accepted at %dx%d\n", palette, fmt->fmt.pix.width, fmt->fmt.pix.height);
@@ -234,10 +234,84 @@ static int get_palette_index(int pixelformat){
 	return -1;
 }
 
+//this function takes in 2 struct v4l2_format and a libvideo palette index
+//it will try and see if the chosen palette can be obtained, either straight
+//from the driver or after conversion using libv4lconvert
+//it returns the libvideo palette to use in order to get the requested libvideo palette, or -1
+//upon return, src * dst will contain meaningful values
+static int try_image_format(struct capture_device *c, struct v4l2_format *src, struct v4l2_format *dst,
+		int palette_idx){
+	int index;
+	CLEAR(*src);
+	CLEAR(*dst);
+
+	dst->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	dst->fmt.pix.width = c->width;
+	dst->fmt.pix.height = c->height;
+	dst->fmt.pix.field = V4L2_FIELD_ANY;
+	dst->fmt.pix.pixelformat = libv4l_palettes[palette_idx].v4l2_palette;
+	if(0 == v4lconvert_try_format(c->convert->priv, dst, src)){
+		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG1,
+				"CAP: libv4lconvert said to use palette %#x %dx%d - ...\n",\
+				src->fmt.pix.pixelformat,
+				src->fmt.pix.width,
+				src->fmt.pix.height);
+
+		if((index = get_palette_index(src->fmt.pix.pixelformat))!= -1){
+			dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG1,
+					"CAP: which is libvideo index %d, palette %s\n",\
+					index,
+					libv4l_palettes[index].name);
+
+		} else {
+			dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG1,
+					"CAP: palette returned by libv4lconvert is unknown to libvideo\n");
+			info("The image format returned by libv4l_convert is unknown\n");
+			info("Please, let the author known about this error:\n");
+			info("Destination palette: %#x (%s)\n",\
+						libv4l_palettes[palette_idx].v4l2_palette,
+						libv4l_palettes[palette_idx].name);
+			info("libv4l_convert source palette: %#x", src->fmt.pix.pixelformat);
+			info("See the README file on how to submit bug reports.");
+		}
+	}
+
+	return index;
+}
+
+static int find_best_palette(struct capture_device *c, int *palettes, int nb, int fd){
+	int best_palette=-1, best_width =-1, best_height=-1, i;
+	struct v4l2_format src, dst;
+
+	for(i=0; i<nb; i++) {
+		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG1, "CAP: trying palette %#x (%s) %dx%d - ...\n",\
+			libv4l_palettes[palettes[i]].v4l2_palette, libv4l_palettes[palettes[i]].name, c->width, c->height);
+
+		if(try_image_format(c, &src, &dst, palettes[i])!=-1){
+
+				if( (best_palette == -1) || \
+					 (abs(c->width*c->height - dst.fmt.pix.width*dst.fmt.pix.height) <
+							 abs(c->width*c->height - best_width*best_height)) ){
+					best_palette = palettes[i];
+					best_width = dst.fmt.pix.width;
+					best_height = dst.fmt.pix.height;
+					dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG,
+							"CAP: palette (%s) is best palette so far\n",
+							libv4l_palettes[palettes[i]].name);
+				}
+
+		} //else
+		//palette rejected
+	}
+
+	return best_palette;
+}
+
 
 static int set_image_format(struct capture_device *c, int *palettes, int nb, int fd){
-	int found=0, i, best_palette=-1, best_width =-1, best_height=-1, index;
-	struct v4l2_format fmt, src_fmt;
+	int best_palette = -1, i;
+	XMALLOC(c->convert->src_fmt, struct v4l2_format *, sizeof(struct v4l2_format ));
+	XMALLOC(c->convert->dst_fmt, struct v4l2_format *, sizeof(struct v4l2_format ));
 
 	if(c->width==MAX_WIDTH)
 		c->width=V4L2_MAX_WIDTH;
@@ -247,43 +321,9 @@ static int set_image_format(struct capture_device *c, int *palettes, int nb, int
 	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "CAP: trying palettes (%d to try in total)\n", nb);
 
 	//we try all the supplied palettes and find the best one that give us a resolution closes to the desired one
-	for(i=0; i<nb; i++) {
-		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG1, "CAP: trying palette %#x (%s) %dx%d - ...\n",\
-			libv4l_palettes[palettes[i]].v4l2_palette, libv4l_palettes[palettes[i]].name, c->width, c->height);
+	best_palette = find_best_palette(c, palettes, nb, fd);
 
-		fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		fmt.fmt.pix.width = c->width;
-		fmt.fmt.pix.height = c->height;
-		fmt.fmt.pix.field = V4L2_FIELD_ANY;
-		fmt.fmt.pix.pixelformat = libv4l_palettes[palettes[i]].v4l2_palette;
-		if(0 == v4lconvert_try_format(c->convert, &fmt, &src_fmt)){
-			dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG1,
-					"CAP: libv4lconvert said to use palette %#x %dx%d - ...\n",\
-					src_fmt.fmt.pix.pixelformat,
-					src_fmt.fmt.pix.width,
-					src_fmt.fmt.pix.height);
-
-			if((index = get_palette_index(src_fmt.fmt.pix.pixelformat))!= -1){
-				dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG1,
-						"CAP: which is palette %#x (%s)\n",\
-						libv4l_palettes[palettes[index]].v4l2_palette,
-						libv4l_palettes[palettes[index]].name);
-
-				if( (try_image_format(&src_fmt, fd)==0) && ((best_palette == -1) || \
-					 (abs(c->width*c->height - src_fmt.fmt.pix.width*src_fmt.fmt.pix.height) < abs(c->width*c->height - best_width*best_height))) ){
-					best_palette = index;
-					best_width = src_fmt.fmt.pix.width;
-					best_height = src_fmt.fmt.pix.height;
-					found = 1;
-					dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "CAP: palette (%s) is best palette so far\n", 	libv4l_palettes[palettes[i]].name);
-				}
-			} else {
-				dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG1,
-						"CAP: palette returned by libv4lconvert is unknown to libvideo\n");
-			}
-		}
-	}
-	if(!found) {
+	if(best_palette == -1) {
 		info("libv4l was unable to find a suitable palette. The following palettes have been tried and failed:\n");
 		for(i=0; i<nb;i++)
 			info("%s\n",libv4l_palettes[palettes[i]].name);
@@ -292,39 +332,61 @@ static int set_image_format(struct capture_device *c, int *palettes, int nb, int
 		return -1;
 	} else {
 		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "CAP: Setting to best palette %s...\n",\
-				libv4l_palettes[palettes[best_palette]].name);
-		CLEAR(fmt);
-		fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		fmt.fmt.pix.width = c->width;
-		fmt.fmt.pix.height = c->height;
-		fmt.fmt.pix.field = V4L2_FIELD_ANY;
-		fmt.fmt.pix.pixelformat = libv4l_palettes[palettes[best_palette]].v4l2_palette;
-		if (0 == try_image_format(&fmt, fd)) {
-			dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG1, "CAP: palette (%s) accepted\n", 	libv4l_palettes[palettes[best_palette]].name);
-			c->palette = palettes[best_palette];
+				libv4l_palettes[best_palette].name);
+
+		c->convert->src_palette = try_image_format(
+				c, c->convert->src_fmt, c->convert->dst_fmt, best_palette);
+
+		if (0 == apply_image_format(c->convert->src_fmt, fd)) {
+			dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG1, "CAP: palette (%s) accepted\n",
+					libv4l_palettes[best_palette].name);
+			c->palette = best_palette;
 		} else {
-			info("Unable to set the best detected palette: %s\n", libv4l_palettes[palettes[best_palette]].name);
+			info("Unable to set the best detected palette: %s\n",
+					libv4l_palettes[best_palette].name);
 			info("Please let the author know about this error.\n");
 			info("See the ISSUES section in the libv4l README file.\n");
 			return -1;
 		}
 	}
 
-	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "CAP: Using width: %d, height: %d, bytes/line %d, image size: %d\n", \
-			fmt.fmt.pix.width,fmt.fmt.pix.height, fmt.fmt.pix.bytesperline, fmt.fmt.pix.sizeimage);
+	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "CAP: capturing (src) using width: %d, "\
+			" height: %d, bytes/line %d, image size: %d - palette: %d (%s)\n",
+			c->convert->src_fmt->fmt.pix.width,
+			c->convert->src_fmt->fmt.pix.height,
+			c->convert->src_fmt->fmt.pix.bytesperline,
+			c->convert->src_fmt->fmt.pix.sizeimage,
+			c->palette,
+			libv4l_palettes[c->palette].name
+			);
+	c->convert->need_conv = v4lconvert_needs_conversion(
+			c->convert->priv,c->convert->src_fmt, c->convert->dst_fmt);
+	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "CAP: libv4lconvert required ? %s\n",
+			(c->convert->need_conv==0?"No":"Yes"));
+
+	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "CAP: conv to (dst) width: %d, "
+			"height: %d, bytes/line %d, image size: %d - palette: %d (%s)\n",
+			c->convert->dst_fmt->fmt.pix.width,
+			c->convert->dst_fmt->fmt.pix.height,
+			c->convert->dst_fmt->fmt.pix.bytesperline,
+			c->convert->dst_fmt->fmt.pix.sizeimage,
+			c->convert->src_palette,
+			libv4l_palettes[c->convert->src_palette].name
+	);
 
 	//Store actual width & height
-	c->width = fmt.fmt.pix.width;
-	c->height= fmt.fmt.pix.height;
-	if (COMPRESSED_FORMAT_DEPTH == libv4l_palettes[palettes[best_palette]].depth)
-		c->imagesize = fmt.fmt.pix.sizeimage;
+	c->width = c->convert->dst_fmt->fmt.pix.width;
+	c->height= c->convert->dst_fmt->fmt.pix.height;
+	if (COMPRESSED_FORMAT_DEPTH == libv4l_palettes[c->palette].depth)
+		c->imagesize = c->convert->dst_fmt->fmt.pix.sizeimage;
 	else {
-		c->imagesize  = c->width*c->height*libv4l_palettes[palettes[best_palette]].depth / 8;
-		if(c->imagesize != fmt.fmt.pix.sizeimage) {
-			info("The image size (%d) is not the same as what the driver returned (%d)\n",c->imagesize, fmt.fmt.pix.sizeimage);
+		c->imagesize  = c->width*c->height*libv4l_palettes[c->palette].depth / 8;
+		if(c->imagesize != c->convert->dst_fmt->fmt.pix.sizeimage) {
+			info("The image size (%d) is not the same as what the driver returned (%d)\n",
+					c->imagesize, c->convert->dst_fmt->fmt.pix.sizeimage);
 			info("Please let the author know about this error.\n");
 			info("See the ISSUES section in the libv4l README file.\n");
-			c->imagesize = fmt.fmt.pix.sizeimage;
+			c->imagesize = c->convert->dst_fmt->fmt.pix.sizeimage;
 		}
 	}
 
