@@ -27,13 +27,32 @@
 
 #include "libvideo.h"
 
+#ifndef V4L2_PIX_FMT_SGBRG8
+#define V4L2_PIX_FMT_SGBRG8 v4l2_fourcc('G','B','R','G')
+#endif
+
+#ifndef V4L2_PIX_FMT_SGRBG8
+#define V4L2_PIX_FMT_SGRBG8 v4l2_fourcc('G','R','B','G')
+#endif
+
+#ifndef V4L2_PIX_FMT_SRGGB8
+#define V4L2_PIX_FMT_SRGGB8 v4l2_fourcc('R','G','G','B')
+#endif
+
+#ifndef V4L2_PIX_FMT_SN9C20X_I420
+#define V4L2_PIX_FMT_SN9C20X_I420  v4l2_fourcc('S', '9', '2', '0')
+#endif
+
 struct libv4l_palette{
 	int libv4l_palette;
 	int v4l1_palette;
 	int v4l2_palette;
 	int depth;
-	char name[10];
+	char name[15];
 };
+
+#define VIDEO_PALETTE_UNDEFINED_V4L1	-1
+#define COMPRESSED_FORMAT_DEPTH			-1
 
 static struct libv4l_palette libv4l_palettes[] = {
 	{
@@ -87,10 +106,8 @@ static struct libv4l_palette libv4l_palettes[] = {
 	},
 		{
 		MJPEG,
-#define VIDEO_PALETTE_UNDEFINED_V4L1	-1
 		VIDEO_PALETTE_UNDEFINED_V4L1,
 		V4L2_PIX_FMT_MJPEG,
-#define COMPRESSED_FORMAT_DEPTH			-1
 		COMPRESSED_FORMAT_DEPTH,
 		"MJPEG"
 	},
@@ -284,6 +301,27 @@ static struct libv4l_palette libv4l_palettes[] = {
 		"SBGGR8"
 	},
 	{
+		SGBRG8,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_SGBRG8,
+		8,
+		"SGBRG8"
+	},
+	{
+		SGRBG8,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_SGRBG8,
+		8,
+		"SGRBG8"
+	},
+	{
+		SRGGB8,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_SRGGB8,
+		8,
+		"SRGGB8"
+	},
+	{
 		SBGGR16,
 		VIDEO_PALETTE_UNDEFINED_V4L1,
 		V4L2_PIX_FMT_SBGGR16,
@@ -293,7 +331,7 @@ static struct libv4l_palette libv4l_palettes[] = {
 /*	{
 		DV,
 		VIDEO_PALETTE_UNDEFINED_V4L1,
-		V4L2_PIX_FMT_SBGGR16,
+		V4L2_PIX_FMT_DV,
 		, left out until more info
 		"DV"
 	},
@@ -313,6 +351,13 @@ static struct libv4l_palette libv4l_palettes[] = {
 		V4L2_PIX_FMT_SN9C10X,
 		COMPRESSED_FORMAT_DEPTH,
 		"SN9C10X"
+	},
+	{
+		SN9C20X_I420,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_SN9C20X_I420,
+		COMPRESSED_FORMAT_DEPTH,
+		"SN9C20X_I420"
 	},
 	{
 		PWC1,
@@ -383,6 +428,20 @@ static struct libv4l_palette libv4l_palettes[] = {
 		V4L2_PIX_FMT_YVYU,
 		16,
 		"YVYU"
+	},
+	{
+		MR97310A,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_MR97310A,
+		COMPRESSED_FORMAT_DEPTH,
+		"MR97310A"
+	},
+	{
+		SQ905C,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_SQ905C,
+		COMPRESSED_FORMAT_DEPTH,
+		"SQ905C"
 	},
 
 

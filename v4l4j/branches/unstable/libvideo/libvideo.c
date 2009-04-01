@@ -49,7 +49,7 @@
  * Copies the version info in the given char *
  * It must be allocated by caller. char [40] is enough
  */
-char *get_libv4l_version(char * c) {
+char *get_libvideo_version(char * c) {
 	snprintf(c, 39,"%d.%d-%s_%s", VER_MAJ, VER_MIN, SVN_BRANCH, SVN_REV);
 	return c;
 }
@@ -64,7 +64,7 @@ struct video_device *open_device(char *file) {
 	int fd = -1;
 	char version[40];
 
-	info("Using libv4l version %s\n", get_libv4l_version(version));
+	info("Using libvideo version %s\n", get_libvideo_version(version));
 	fflush(stdout);
 
 	//open device
@@ -86,9 +86,9 @@ struct video_device *open_device(char *file) {
 		dprint(LIBV4L_LOG_SOURCE_VIDEO_DEVICE, LIBV4L_LOG_LEVEL_INFO, "VD: device %s is V4L1\n", file);
 		vdev->v4l_version=V4L1_VERSION;
 	} else {
-		info("libv4l was unable to detect the version of V4L used by device %s\n", file);
+		info("libvideo was unable to detect the version of V4L used by device %s\n", file);
 		info("If it is a valid V4L device file, let the author know about this error.\n");
-		info("See the ISSUES section in the libv4l README file.\n");
+		info("See the ISSUES section in the libvideo README file.\n");
 
 		close_device(vdev);
 		return NULL;
@@ -193,8 +193,6 @@ void free_capture_device(struct video_device *vdev){
 
 	if(vdev->v4l_version == V4L2_VERSION){
 		v4lconvert_destroy(vdev->capture->convert->priv);
-		XFREE(vdev->capture->convert->dst_fmt);
-		XFREE(vdev->capture->convert->src_fmt);
 		XFREE(vdev->capture->convert);
 	}
 
@@ -211,8 +209,18 @@ void print_device_info(struct video_device *v){
 	printf("Device name: %s\n",i->name);
 	printf("Device file: %s\n",v->file);
 	printf("Supported image formats (Name - Index):\n");
-	for(j=0; j<i->nb_palettes; j++)
-		printf("\t%s - %d\n", libv4l_palettes[i->palettes[j]].name, i->palettes[j]);
+	for(j=0; j<i->nb_palettes; j++){
+		printf("\t%s - %d", libv4l_palettes[i->palettes[j].index].name,
+				i->palettes[j].index);
+		if(i->palettes[j].raw_palette!=UNSUPPORTED_PALETTE){
+			printf(" (converted from %s - %d)",
+					libv4l_palettes[i->palettes[j].raw_palette].name,
+					i->palettes[j].raw_palette
+					);
+		}
+		printf("\n");
+
+	}
 
 	printf("Inputs:\n");
 	for(j=0; j<i->nb_inputs; j++){
@@ -247,22 +255,31 @@ void print_device_info(struct video_device *v){
  *
  */
 struct device_info *get_device_info(struct video_device *vdev){
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: %p %p\n", vdev, vdev->file);
+	int ret;
 	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: Querying device %s.\n", vdev->file);
 
 	XMALLOC(vdev->info, struct device_info *, sizeof(struct device_info));
 
 	if(vdev->v4l_version == V4L2_VERSION) {
 		//v4l2 device
-		query_device_v4l2(vdev);
+		ret = query_device_v4l2(vdev);
 	} else if (vdev->v4l_version == V4L1_VERSION) {
 		//v4l1 device
-		query_device_v4l1(vdev);
+		ret = query_device_v4l1(vdev);
 	} else {
-		info("libv4l was unable to detect the version of V4L used by device %s\n", vdev->file);
+		info("libvideo was unable to detect the version of V4L used by device %s\n", vdev->file);
 		info("Please let the author know about this error.\n");
-		info("See the ISSUES section in the libv4l README file.\n");
+		info("See the ISSUES section in libvideo libv4l README file.\n");
 		XFREE(vdev->info);
+		vdev->info = NULL;
+	}
+
+	if(ret!=0){
+		info("libvideo was unable to gather information on device %s\n", vdev->file);
+		info("Please let the author know about this error.\n");
+		info("See the ISSUES section in the libvideo README file.\n");
+		XFREE(vdev->info);
+		vdev->info = NULL;
 	}
 
 	return vdev->info;
@@ -277,9 +294,9 @@ void release_device_info(struct video_device *vdev){
 		//v4l1 device
 		free_video_device_v4l1(vdev);
 	} else {
-		info("libv4l was unable to detect the version of V4L used by device %s\n", vdev->file);
+		info("libvideo was unable to detect the version of V4L used by device %s\n", vdev->file);
 		info("Please let the author know about this error.\n");
-		info("See the ISSUES section in the libv4l README file.\n");
+		info("See the ISSUES section in the libvideo README file.\n");
 		return;
 	}
 

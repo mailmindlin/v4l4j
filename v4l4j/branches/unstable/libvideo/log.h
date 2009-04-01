@@ -34,7 +34,8 @@
 #define info(format, ...) do { fprintf (stderr, "[ %s:%d ] " format, __FILE__, __LINE__, ## __VA_ARGS__);\
 								 fflush(stderr); } while(0)
 
-#define CLEAR_ARR(x,s) memset(&(x), 0x0, (s));
+#define CLEAR_ARR(x,s) memset((x), 0x0, (s));
+#define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
 
 
 //debug stuff
@@ -104,7 +105,7 @@
 			(var) = (type) malloc((size)); \
 			if (!(var)) {fprintf(stderr, "[%s:%d %s] MEMALLOC: OUT OF MEMORY. Cant allocate %lu bytes.\n",\
 					__FILE__, __LINE__, __PRETTY_FUNCTION__, (long unsigned int) (size)); fflush(stderr);}\
-			else { CLEAR_ARR((*var), (size)); \
+			else { CLEAR_ARR((var), (size)); \
 				dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "MEMALLOC: allocating %lu bytes of type %s for var %s (%p).\n", (long unsigned int) (size), #type, #var, (var)); } \
 		} while (0)
 
@@ -116,7 +117,7 @@
 					__FILE__, __LINE__, __PRETTY_FUNCTION__,(long unsigned int)  (size)); fflush(stderr);}\
 			else { \
 					if (should_clear) {\
-						CLEAR_ARR((*var), (size)); \
+						CLEAR_ARR((var), (size)); \
 						dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "REALLOC: Allocating %lu bytes of type %s for var %s (%p).\n", (long unsigned int) (size), #type, #var, (var)); \
 					} else \
 						{dprint(LIBV4L_LOG_SOURCE_MEMALLOC, LIBV4L_LOG_LEVEL_ALL, "REALLOC: re-allocating %lu bytes of type %s for var %s (%p).\n", (long unsigned int) (size), #type, #var, (var));} \

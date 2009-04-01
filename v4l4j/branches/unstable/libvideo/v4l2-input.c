@@ -55,7 +55,7 @@ int check_capture_capabilities_v4l2(int fd, char *file) {
 	if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
 		info("The device %s seems to be a valid V4L2 device but without capture capability.\n", file);
 		info("Please let the author know about this error.\n");
-		info("See the ISSUES section in the libv4l README file.\n");
+		info("See the ISSUES section in the libvideo README file.\n");
 		info("Listing the reported capabilities:\n");
 		list_cap_v4l2(fd);
 		return -1;
@@ -64,7 +64,7 @@ int check_capture_capabilities_v4l2(int fd, char *file) {
 	if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
 		info("The device %s seems to be a valid V4L2 device with capture capability, but\n", file);
 		info("the device does NOT support streaming. Please let the author know about this error.\n");
-		info("See the ISSUES section in the libv4l README file.\n");
+		info("See the ISSUES section in the libvideo README file.\n");
 		info("Listing the reported capabilities:\n");
 		list_cap_v4l2(fd);
 		return -1;
@@ -139,7 +139,7 @@ static int set_std(struct capture_device *c, int fd){
 				info("The specified standard (%d) is invalid.\n", c->std);
 				if(detect_standard(c, fd)!=0) {
 					//autodetect failed, so do we
-					info("libv4l could not autodetect a standard for this input.\n");
+					info("libvideo could not autodetect a standard for this input.\n");
 					return -1;
 				}
 				//autodetect suceeded keep going
@@ -151,7 +151,7 @@ static int set_std(struct capture_device *c, int fd){
 					info("The specified standard (%d) cannot be selected\n", c->std);
 					if(detect_standard(c, fd)!=0) {
 						//failed, exit
-						info("libv4l couldnt autodetect a standard for this input.\n");
+						info("libvideo could not autodetect a standard for this input.\n");
 						return -1;
 					}
 					//autodetect succeeded, keep going
@@ -241,7 +241,7 @@ static int get_palette_index(int pixelformat){
 //upon return, src * dst will contain meaningful values
 static int try_image_format(struct capture_device *c, struct v4l2_format *src, struct v4l2_format *dst,
 		int palette_idx){
-	int index;
+	int index = -1;
 	CLEAR(*src);
 	CLEAR(*dst);
 
@@ -263,10 +263,20 @@ static int try_image_format(struct capture_device *c, struct v4l2_format *src, s
 					index,
 					libv4l_palettes[index].name);
 
+
+			dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG,
+					"CAP: libv4lconvert required ? %s\n",
+					(v4lconvert_needs_conversion(
+							c->convert->priv,
+							src,
+							dst)==0?"No":"Yes"
+					)
+				);
+
 		} else {
 			dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG1,
 					"CAP: palette returned by libv4lconvert is unknown to libvideo\n");
-			info("The image format returned by libv4l_convert is unknown\n");
+			info("The source image format returned by libv4l_convert is unknown\n");
 			info("Please, let the author known about this error:\n");
 			info("Destination palette: %#x (%s)\n",\
 						libv4l_palettes[palette_idx].v4l2_palette,
@@ -324,11 +334,11 @@ static int set_image_format(struct capture_device *c, int *palettes, int nb, int
 	best_palette = find_best_palette(c, palettes, nb, fd);
 
 	if(best_palette == -1) {
-		info("libv4l was unable to find a suitable palette. The following palettes have been tried and failed:\n");
+		info("libvideo was unable to find a suitable palette. The following palettes have been tried and failed:\n");
 		for(i=0; i<nb;i++)
 			info("%s\n",libv4l_palettes[palettes[i]].name);
 		info("Please let the author know about this error.\n");
-		info("See the ISSUES section in the libv4l README file.\n");
+		info("See the ISSUES section in the libvideo README file.\n");
 		return -1;
 	} else {
 		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "CAP: Setting to best palette %s...\n",\
@@ -338,14 +348,14 @@ static int set_image_format(struct capture_device *c, int *palettes, int nb, int
 				c, c->convert->src_fmt, c->convert->dst_fmt, best_palette);
 
 		if (0 == apply_image_format(c->convert->src_fmt, fd)) {
-			dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG1, "CAP: palette (%s) accepted\n",
-					libv4l_palettes[best_palette].name);
+			dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG1, "CAP: setting src palette (%s) accepted\n",
+					libv4l_palettes[c->convert->src_palette].name);
 			c->palette = best_palette;
 		} else {
 			info("Unable to set the best detected palette: %s\n",
 					libv4l_palettes[best_palette].name);
 			info("Please let the author know about this error.\n");
-			info("See the ISSUES section in the libv4l README file.\n");
+			info("See the ISSUES section in the libvideo README file.\n");
 			return -1;
 		}
 	}
@@ -356,8 +366,8 @@ static int set_image_format(struct capture_device *c, int *palettes, int nb, int
 			c->convert->src_fmt->fmt.pix.height,
 			c->convert->src_fmt->fmt.pix.bytesperline,
 			c->convert->src_fmt->fmt.pix.sizeimage,
-			c->palette,
-			libv4l_palettes[c->palette].name
+			c->convert->src_palette,
+			libv4l_palettes[c->convert->src_palette].name
 			);
 	c->convert->need_conv = v4lconvert_needs_conversion(
 			c->convert->priv,c->convert->src_fmt, c->convert->dst_fmt);
@@ -370,24 +380,19 @@ static int set_image_format(struct capture_device *c, int *palettes, int nb, int
 			c->convert->dst_fmt->fmt.pix.height,
 			c->convert->dst_fmt->fmt.pix.bytesperline,
 			c->convert->dst_fmt->fmt.pix.sizeimage,
-			c->convert->src_palette,
-			libv4l_palettes[c->convert->src_palette].name
+			c->palette,
+			libv4l_palettes[c->palette].name
 	);
 
 	//Store actual width & height
 	c->width = c->convert->dst_fmt->fmt.pix.width;
 	c->height= c->convert->dst_fmt->fmt.pix.height;
-	if (COMPRESSED_FORMAT_DEPTH == libv4l_palettes[c->palette].depth)
+	if(c->convert->need_conv==0){
+		//if no need for conversion, libv4lconvert sometimes returns 0 in
+		//sizeimage and bytesperline fields, so get values from src palette
+		c->imagesize = c->convert->src_fmt->fmt.pix.sizeimage;
+	} else {
 		c->imagesize = c->convert->dst_fmt->fmt.pix.sizeimage;
-	else {
-		c->imagesize  = c->width*c->height*libv4l_palettes[c->palette].depth / 8;
-		if(c->imagesize != c->convert->dst_fmt->fmt.pix.sizeimage) {
-			info("The image size (%d) is not the same as what the driver returned (%d)\n",
-					c->imagesize, c->convert->dst_fmt->fmt.pix.sizeimage);
-			info("Please let the author know about this error.\n");
-			info("See the ISSUES section in the libv4l README file.\n");
-			c->imagesize = c->convert->dst_fmt->fmt.pix.sizeimage;
-		}
 	}
 
 	return 0;
@@ -480,6 +485,9 @@ fail:
 	return ret;
 }
 
+//needed because this function adjusts the struct capture_action if
+//libv4l_convert is required.
+void *dequeue_buffer_v4l2_convert(struct video_device *, int *);
 int init_capture_v4l2(struct video_device *vdev) {
 	struct capture_device *c = vdev->capture;
 	struct v4l2_requestbuffers req;
@@ -527,6 +535,14 @@ int init_capture_v4l2(struct video_device *vdev) {
 		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG, "CAP: mmap'ed %d bytes at %p\n",c->mmap->buffers[i].length, c->mmap->buffers[i].start);
 	}
 
+	if(vdev->capture->convert->need_conv!=0){
+		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG,
+				"CAP: need conversion, create temp buffer (%d bytes)\n",
+				vdev->capture->convert->dst_fmt->fmt.pix.sizeimage);
+		XMALLOC(vdev->capture->convert->frame, void *, vdev->capture->convert->dst_fmt->fmt.pix.sizeimage);
+		vdev->capture->actions->dequeue_buffer = dequeue_buffer_v4l2_convert;
+	}
+
 	return 0;
 }
 
@@ -560,6 +576,50 @@ int start_capture_v4l2(struct video_device *vdev) {
 	return 0;
 }
 
+//needed because dequeue may need to re-enqueue if libv4lconvert fails
+void enqueue_buffer_v4l2(struct video_device *);
+void *dequeue_buffer_v4l2_convert(struct video_device *vdev, int *len) {
+	struct convert_data *conv = vdev->capture->convert;
+	struct v4l2_buffer *b = (struct v4l2_buffer *) vdev->capture->mmap->tmp;
+	int try = 2;
+	*len = -1;
+	while(*len==-1){
+		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG2,
+				"CAP: dequeuing buffer on device %s.\n", vdev->file);
+
+		CLEAR(*b);
+
+		b->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		b->memory = V4L2_MEMORY_MMAP;
+
+		if (-1 == ioctl(vdev->fd, VIDIOC_DQBUF, b)) {
+			dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR,
+					"CAP: error dequeuing buffer\n");
+			return NULL;
+		}
+
+		*len=v4lconvert_convert(conv->priv, conv->src_fmt, conv->dst_fmt,
+				vdev->capture->mmap->buffers[b->index].start, b->bytesused,
+				conv->frame, conv->dst_fmt->fmt.pix.sizeimage);
+
+		if(*len==-1){
+			dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR,
+						"CAP: libv4lconvert error: %s\n",
+						v4lconvert_get_error_message(conv->priv));
+			enqueue_buffer_v4l2(vdev);
+			if(try--==0){
+				dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR,
+						"CAP: unable to libv4l_convert frame\n");
+				//give up
+				return NULL;
+			}
+		}
+	}
+	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG2,
+			"CAP: after conversion buffer length: %d\n", *len);
+	return conv->frame;
+}
+
 void *dequeue_buffer_v4l2(struct video_device *vdev, int *len) {
 	struct v4l2_buffer *b = (struct v4l2_buffer *) vdev->capture->mmap->tmp;
 	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG2, "CAP: dequeuing buffer on device %s.\n", vdev->file);
@@ -574,8 +634,8 @@ void *dequeue_buffer_v4l2(struct video_device *vdev, int *len) {
 		return NULL;
 	}
 
-	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG2, "CAP: getting buffer address\n");
 	*len = b->bytesused;
+	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG2, "CAP: buffer length: %d\n", *len);
 	return vdev->capture->mmap->buffers[b->index].start;
 }
 
@@ -611,7 +671,14 @@ void free_capture_v4l2(struct video_device *vdev) {
 		if (-1 == munmap(vdev->capture->mmap->buffers[i].start, (size_t) vdev->capture->mmap->buffers[i].length))
 			dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_ERR, "CAP: error unmapping buffer %d\n",i);
 	}
+
 	XFREE(vdev->capture->mmap->buffers);
+
+	if(vdev->capture->convert->need_conv!=0)
+		XFREE(vdev->capture->convert->frame);
+
+	XFREE(vdev->capture->convert->dst_fmt);
+	XFREE(vdev->capture->convert->src_fmt);
 }
 
 
@@ -930,7 +997,7 @@ static void enum_image_fmt_v4l2(int fd) {
 	fmtd.index = 0;
 
 	while(ioctl(fd, VIDIOC_ENUM_FMT, &fmtd) >= 0) {
-		printf("%d - %s (compressed : %d) (%d) \n", fmtd.index, fmtd.description, fmtd.flags, fmtd.pixelformat);
+		printf("%d - %s (compressed : %d) (%#x) \n", fmtd.index, fmtd.description, fmtd.flags, fmtd.pixelformat);
 		fmtd.index++;
 	}
 
