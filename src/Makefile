@@ -12,7 +12,7 @@ JDK_HOME=/usr/lib/jvm/java-6-sun
 # DEFINING THE V4L4J_LOG_SOURCE VARIABLE.
 #
 # for example: 
-# V4L4L_LOG_SOURCE=63 ant clean all 
+# V4L4J_LOG_SOURCE=63 ant clean all 
 #
 #LOG_CALLS         1
 #LOG_LIBV4L        2
@@ -33,14 +33,18 @@ else
 OPTIMISATION=-O3
 endif
 
-LIBV4L_PATH=../libvideo
-LIBV4L_NAME=libvideo.a
+LIBVIDEO_PATH=../libvideo
+LIBVIDEO_NAME=libvideo.a
+
+LIBV4L_CONV_PATH=../libvideo
+LIBV4L_CONV_NAME=libv4lconvert.a
+
 
 LIB=libv4l4j.so
 OBJ=jpeg.o rgb.o v4l4j_FrameGrabber.o v4l4j_ImageFormatList.o v4l4j_DeviceInfo.o v4l4j_VideoDevice.o v4l4j_Control.o v4l4j_Tuner.o
 
 CC=gcc
-INCLUDES=-I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ -I$(LIBV4L_PATH) -I.
+INCLUDES=-I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ -I$(LIBVIDEO_PATH) -I.
 CFLAGS=$(INCLUDES) $(DBG) $(OPTIMISATION) -fPIC
 
 LD=gcc
@@ -49,7 +53,7 @@ LDFLAGS=-shared  -ljpeg
 all: $(LIB)
 
 $(LIB): $(OBJ)
-	$(LD) $(LDFLAGS) $(OBJ) $(LIBV4L_PATH)/$(LIBV4L_NAME) -o $(LIB)
+	$(LD) $(LDFLAGS) $(OBJ) $(LIBVIDEO_PATH)/$(LIBVIDEO_NAME) $(LIBV4L_CONV_PATH)/$(LIBV4L_CONV_NAME)-o $(LIB)
 
 test:
 	$(CC) $(INCLUDES) -DDEBUG -Wall -ggdb -DMAKETEST -c rgb.c

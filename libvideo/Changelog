@@ -1,3 +1,5 @@
+v0.8:
+- Added libv4l convert code (libv5l v0.5.0) from Hans de Goede (
 v0.5.7:
 - Reorganised V4L control code and driver probe sections.
 - Now, multiple driver probes can be successful (instead of only 1 before),

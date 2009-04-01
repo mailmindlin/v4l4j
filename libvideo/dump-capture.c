@@ -41,7 +41,7 @@
 void write_frame(void *d, int size) {
 	int outfile, len = 0;
 	char filename[50];
-	static n = 1;
+	static int n = 1;
 
 	//Construct the filename
 	sprintf(filename,"raw_frame-%d.raw", n++);
@@ -75,8 +75,7 @@ int main(int argc, char** argv) {
 		printf("Video standards: webcam:0 - PAL:1 - SECAM:2 - NTSC:3\n");
 		printf("The capture resolution (width and height)\n");
 		printf("The last argument is optional and is an image format index. "
-				"A list of known formats can be found in libv4l.h . To see "
-				"what formats are supported by a video device, run "
+				"To see what formats are supported by a video device, run "
 				"'./list-caps /dev/videoXX' and check the "
 				"'Printing device info' section at the bottom.\n");
 		printf("Arguments must be in the specified order !!!\n");

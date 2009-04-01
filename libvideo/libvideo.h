@@ -67,7 +67,7 @@ struct mmap {
 #define		NTSC					3
 
 #define UNSUPPORTED_PALETTE			-1
-#define NB_SUPPORTED_PALETTE		47
+#define NB_SUPPORTED_PALETTE		53
 //palette formats
 //YUV420 is the same as YUV420P - YUYV is the same as YUV422
 //YUV411 is the same as YUV411P
@@ -108,31 +108,38 @@ struct mmap {
 #define		YYUV					32
 #define		HM12					33
 #define		SBGGR8					34
-#define		SBGGR16					35
-#define		SN9C10X					36
-#define		PWC1					37
-#define		PWC2					38
-#define		ET61X251				39
-#define		SPCA501					40
-#define		SPCA505					41
-#define		SPCA508					42
-#define		SPCA561					43
-#define		PAC207					44
-#define		PJPG					45
-#define		YVYU					46
+#define		SGBRG8					35
+#define		SGRBG8					36
+#define		SRGGB8					37
+#define		SBGGR16					38
+#define		SN9C10X					39
+#define 	SN9C20X_I420			40
+#define		PWC1					41
+#define		PWC2					42
+#define		ET61X251				43
+#define		SPCA501					44
+#define		SPCA505					45
+#define		SPCA508					46
+#define		SPCA561					47
+#define		PAC207					48
+#define		PJPG					49
+#define		YVYU					50
+#define		MR97310A				51
+#define		SQ905C					52
 
 //the default order in which palettes are tried if "set_cap_param(c, NULL, 0)" is used
 #define		DEFAULT_PALETTE_ORDER	{JPEG, YUV420, MJPEG, RGB24, RGB32, YUYV, RGB555, RGB565, GREY, \
 									MPEG, HI240, UYVY, YUV422P, YUV411P, YUV410P, RGB332, RGB444, \
 									RGB555X, RGB565X, BGR24, BGR32, Y16, PAL8, YVU410, YVU420, \
 									Y41P, YUV444, YUV555, YUV565, YUV32, NV12, NV21, YYUV, HM12, SBGGR8, \
-									SBGGR16, SN9C10X, PWC1, PWC2, ET61X251, SPCA501, SPCA505, SPCA508, \
-									SPCA561, PAC207, PJPG, YVYU}
+									SGBRG8, SGRBG8, SBGGR16, SN9C10X, SN9C20X_I420, PWC1, PWC2, ET61X251, \
+									SPCA501, SPCA505, SPCA508, SPCA561, PAC207, PJPG, YVYU, \
+									MR97310A, SQ905C}
 //Dont use the following three, use YUV420, YUYV or YUV411P instead !!
 #define		IDENTICAL_FORMATS		3
-#define 	YUV420P					47
-#define 	YUV422					48
-#define 	YUV411					49
+#define 	YUV420P					53
+#define 	YUV422					54
+#define 	YUV411					55
 
 struct convert_data {
 	struct v4lconvert_data *priv;//the libv4l convert struct (used only when V4L2)
@@ -140,6 +147,8 @@ struct convert_data {
 	struct v4l2_format *src_fmt; //the source pixel format (the one the capture is made in)
 	struct v4l2_format *dst_fmt; //the dest format (the one obtained after conversion);
 	int src_palette;			//the source libvideo palette
+	void *frame;				//the last captured frame goes here after conversion
+								//the length of the buffer is set to dst_fmt->fmt.pix.sizeimage
 };
 
 //all the fields in the following structure are read only
@@ -195,11 +204,21 @@ struct video_input_info {
 	int index;
 };
 
+struct palette_info{
+	//this palette's index
+	int index;
+	//raw_palette store the index of the real palette used for capture
+	//and is used for V4L2 only. If this palette is converted,
+	//the converted one is stored here. Otherwise,
+	//raw_palette=UNSUPPORTED_PALETTE
+	int raw_palette;
+};
+
 struct device_info {
 	int nb_inputs;
 	struct video_input_info *inputs;
 	int nb_palettes;
-	int *palettes;
+	struct palette_info *palettes;
 	char name[NAME_FIELD_LENGTH];
 };
 
@@ -371,7 +390,7 @@ void free_capture_device(struct video_device *);
  *
  *
  */
-
+//returns NULL if unable to get device info
 struct device_info * get_device_info(struct video_device *);
 void print_device_info(struct video_device *);
 void release_device_info(struct video_device *);

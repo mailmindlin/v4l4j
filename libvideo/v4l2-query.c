@@ -38,7 +38,7 @@
 static int find_v4l2_palette(int v4l2_fmt){
 	int i = 0;
 
-	while(i<NB_SUPPORTED_PALETTE) {
+	while(i<ARRAY_SIZE(libv4l_palettes)) {
 		if(libv4l_palettes[i].v4l2_palette == v4l2_fmt)
 			return i;
 		i++;
@@ -47,12 +47,54 @@ static int find_v4l2_palette(int v4l2_fmt){
 	return UNSUPPORTED_PALETTE;
 }
 
-static void add_supported_palette(struct device_info *di, int fmt){
+//this function adds the given palette fmt to the list of
+//supported palettes in struct device_info. It also
+//check with libv4l_convert if it is converted from another palette
+//it returns 0 if everything went fine, LIBV4L_ERR_IOCTL otherwise
+static int add_supported_palette(struct device_info *di, int fmt,
+		struct v4lconvert_data *conv){
+	struct v4l2_format dst, src;
+	CLEAR(dst);
+	CLEAR(src);
+
 	di->nb_palettes++;
-	XREALLOC(di->palettes, int *, di->nb_palettes * sizeof(int));
-	di->palettes[(di->nb_palettes - 1)] = fmt;
+	XREALLOC(di->palettes, struct palette_info *,
+			di->nb_palettes * sizeof(struct palette_info));
+
+	di->palettes[(di->nb_palettes - 1)].index = fmt;
+
+
+	//check if this format is the result of a conversion form another format
+	//by libv4l_convert
+	dst.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	dst.fmt.pix.pixelformat = libv4l_palettes[fmt].v4l2_palette;
+	dst.fmt.pix.width=640;
+	dst.fmt.pix.height=480;
+	if(v4lconvert_try_format(conv,&dst,&src)!=0){
+		dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_ERR,
+				"QRY: Error checking palette %s (libv4l convert says: %s)\n",
+				libv4l_palettes[fmt].name,
+				v4lconvert_get_error_message(conv));
+		return LIBV4L_ERR_IOCTL;
+	}
+
+	if(v4lconvert_needs_conversion(conv,&src,&dst)==1){
+		//it is converted form another format
+		di->palettes[(di->nb_palettes - 1)].raw_palette =
+			find_v4l2_palette(src.fmt.pix.pixelformat);
+		dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG,
+				"QRY: converted from %d (%s)\n",
+				di->palettes[(di->nb_palettes - 1)].raw_palette,
+				libv4l_palettes[di->palettes[(di->nb_palettes - 1)].raw_palette].name
+				);
+	} else
+		di->palettes[(di->nb_palettes - 1)].raw_palette = UNSUPPORTED_PALETTE;
+
+	return 0;
 }
 
+//this function checks the supporte palettes
+//it returns how many supported palettes there are, or LIBV4L_ERR_IOCTL
 static int check_palettes_v4l2(struct video_device *vdev){
 	struct v4lconvert_data *convert = v4lconvert_create(vdev->fd);
 	struct v4l2_fmtdesc fmtd;
@@ -77,7 +119,11 @@ static int check_palettes_v4l2(struct video_device *vdev){
 		} else {
 			dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG,
 					"QRY: %s supported (%d)\n", libv4l_palettes[p].name, p);
-			add_supported_palette(di, p);
+			if(add_supported_palette(di, p, convert)!=0){
+				if(di->palettes)
+					XFREE(di->palettes);
+				return LIBV4L_ERR_IOCTL;
+			}
 		}
 		fmtd.index++;
 	}
@@ -216,7 +262,11 @@ int query_device_v4l2(struct video_device *vdev){
 	}
 
 	//fill palettes field
-	vdev->info->nb_palettes = check_palettes_v4l2(vdev);
+	if((vdev->info->nb_palettes = check_palettes_v4l2(vdev))==LIBV4L_ERR_IOCTL){
+		free_video_inputs(vdev->info->inputs, vdev->info->nb_inputs);
+		info("Error checking supported palettes on V4L2 video device %s", vdev->file);
+		ret = LIBV4L_ERR_NOCAPS;
+	}
 
 	end:
 	return ret;
