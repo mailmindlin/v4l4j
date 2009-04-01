@@ -25,158 +25,35 @@
 #include <sys/ioctl.h>		//for ioctl
 
 #include "libvideo.h"
+#include "palettes.h"
 #include "v4l1-input.h"
 #include "libvideo-err.h"
 #include "log.h"
 
+static void set_palette_info(struct palette_info *palettes, int idx, int palette){
+	XREALLOC(palettes, struct palette_info *,(idx+1) * sizeof(struct palette_info));
+	palettes[idx].index = palette;
+	palettes[idx].raw_palette = -1;
+	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: %s supported\n",
+			libv4l_palettes[palette].name);
+}
+
 static int check_palettes_v4l1(struct video_device *vdev){
 	struct video_picture pic;
-	int index = 0;
+	int palette = 0, index=0;
 	struct device_info *di = vdev->info;
 	di->palettes = NULL;
 
 	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: Checking supported palettes.\n");
-
-	CLEAR(pic);
-	pic.palette = VIDEO_PALETTE_GREY;
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1, "QRY: trying GREY\n");
-	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0) {
-		XREALLOC(di->palettes, int *,(index +1) * sizeof(int));
-		di->palettes[index++] = GREY;
-		dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: GREY supported\n");
+	for(palette = 0; palette < ARRAY_SIZE(libv4l_palettes); palette++){
+		if(libv4l_palettes[palette].v4l1_palette!=VIDEO_PALETTE_UNDEFINED_V4L1){
+			dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1,
+					"QRY: trying %s\n", libv4l_palettes[palette].name);
+			CLEAR(pic);
+			if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0)
+				set_palette_info(di->palettes, index++, palette);
+		}
 	}
-
-
-	CLEAR(pic);
-	pic.palette = VIDEO_PALETTE_HI240;
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1, "QRY: trying HI240\n");
-	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0) {
-		XREALLOC(di->palettes, int *,(index +1) * sizeof(int));
-		di->palettes[index++] = HI240;
-		dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: HI240 supported\n");
-	}
-
-	CLEAR(pic);
-	pic.palette = VIDEO_PALETTE_RGB565;
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1, "QRY: trying RGB565\n");
-	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0) {
-		XREALLOC(di->palettes, int *,(index +1) * sizeof(int));
-		di->palettes[index++] = RGB565;
-		dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: RGB565 supported\n");
-	}
-
-	CLEAR(pic);
-	pic.palette = VIDEO_PALETTE_RGB555;
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1, "QRY: trying RGB555\n");
-	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0) {
-		XREALLOC(di->palettes, int *,(index +1) * sizeof(int));
-		di->palettes[index++] = RGB555;
-		dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: RGB555 supported\n");
-	}
-	CLEAR(pic);
-	pic.palette = VIDEO_PALETTE_RGB24;
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1, "QRY: trying RGB24\n");
-	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0) {
-		XREALLOC(di->palettes, int *,(index +1) * sizeof(int));
-		di->palettes[index++] = RGB24;
-		dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: RGB24 supported\n");
-	};
-
-	CLEAR(pic);
-	pic.palette = VIDEO_PALETTE_RGB32;
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1, "QRY: trying RGB32\n");
-	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0) {
-		XREALLOC(di->palettes, int *,(index +1) * sizeof(int));
-		di->palettes[index++] = RGB32;
-		dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: RGB32 supported\n");
-	};
-
-	CLEAR(pic);
-	pic.palette = VIDEO_PALETTE_YUV422;
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1, "QRY: trying YUV422\n");
-	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0) {
-		XREALLOC(di->palettes, int *,(index +1) * sizeof(int));
-		di->palettes[index++] = YUV422;
-		dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: YUV422 supported\n");
-	};
-
-
-	CLEAR(pic);
-	pic.palette = VIDEO_PALETTE_YUYV;
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1, "QRY: trying YUYV\n");
-	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0) {
-		XREALLOC(di->palettes, int *,(index +1) * sizeof(int));
-		di->palettes[index++] = YUYV;
-		dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: YUYV supported\n");
-	};
-
-	CLEAR(pic);
-	pic.palette = VIDEO_PALETTE_UYVY;
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1, "QRY: trying UYVY\n");
-	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0) {
-		XREALLOC(di->palettes, int *,(index +1) * sizeof(int));
-		di->palettes[index++] = UYVY;
-		dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRy: UYVY supported\n");
-	};
-
-	CLEAR(pic);
-	pic.palette = VIDEO_PALETTE_YUV420;
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1, "QRY: trying YUV420\n");
-	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0) {
-		XREALLOC(di->palettes, int *,(index +1) * sizeof(int));
-		di->palettes[index++] = YUV420;
-		dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: YUV420 supported\n");
-	};
-
-	CLEAR(pic);
-	pic.palette = VIDEO_PALETTE_YUV411;
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1, "QRY: trying YUV411\n");
-	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0) {
-		XREALLOC(di->palettes, int *,(index +1) * sizeof(int));
-		di->palettes[index++] = YUV411;
-		dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRy: YUV411 supported\n");
-	};
-
-
-//skipping RAW palette
-//	CLEAR(pic);
-//	pic.palette = VIDEO_PALETTE_RAW;
-
-	CLEAR(pic);
-	pic.palette = VIDEO_PALETTE_YUV422P;
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1, "QRY: trying YUV422P\n");
-	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0) {
-		XREALLOC(di->palettes, int *,(index +1) * sizeof(int));
-		di->palettes[index++] = YUV422P;
-		dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: YUV422P supported\n");
-	};
-
-	CLEAR(pic);
-	pic.palette = VIDEO_PALETTE_YUV411P;
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1, "QRY: trying YUV411P\n");
-	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0) {
-		XREALLOC(di->palettes, int *,(index +1) * sizeof(int));
-		di->palettes[index++] = YUV411P;
-		dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: YUV411P supported\n");
-	};
-
-	CLEAR(pic);
-	pic.palette = VIDEO_PALETTE_YUV420P;
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1, "QRY: trying YUV420P\n");
-	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0) {
-		XREALLOC(di->palettes, int *,(index +1) * sizeof(int));
-		di->palettes[index++] = YUV420P;
-		dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: YUV420P supported\n");
-	};
-
-	CLEAR(pic);
-	pic.palette = VIDEO_PALETTE_YUV410P;
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1, "QRY: trying YUV410P\n");
-	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0) {
-		XREALLOC(di->palettes, int *,(index +1) * sizeof(int));
-		di->palettes[index++] = YUV410P;
-		dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: YUV410P supported\n");
-	};
 
 	return index;
 }
