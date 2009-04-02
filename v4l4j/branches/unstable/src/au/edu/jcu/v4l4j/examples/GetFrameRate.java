@@ -90,60 +90,60 @@ public class GetFrameRate {
 				if(inFmt==-1){
 					System.out.println("no capture format specified, let v4l4j find a suitable one");
 					f= vd.getJPEGFrameGrabber(w, h, channel, std, 80);
-				} else if(vd.getDeviceInfo().getFormatList().getFormat(inFmt)==null) {
+				} else if(vd.getDeviceInfo().getFormatList().getJPEGEncodableFormat(inFmt)==null) {
 					System.out.println("Capture format "+inFmt+" doesnt exist, let v4l4j find a suitable one");
 					f= vd.getJPEGFrameGrabber(w, h, channel, std, 80);
 				}else{ 
-					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getFormat(inFmt).getName());
-					f= vd.getJPEGFrameGrabber(w, h, channel, std, 80, vd.getDeviceInfo().getFormatList().getFormat(inFmt));
+					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getNativeFormat(inFmt).getName());
+					f= vd.getJPEGFrameGrabber(w, h, channel, std, 80, vd.getDeviceInfo().getFormatList().getNativeFormat(inFmt));
 				}				
 				System.out.println("Output image format: JPEG");
 			} else if(outFmt==2 && vd.supportRGBConversion()) {
 				if(inFmt==-1){
 					System.out.println("no capture format specified, let v4l4j find a suitable one");
 					f= vd.getRGBFrameGrabber(w, h, channel, std);
-				} else if(vd.getDeviceInfo().getFormatList().getFormat(inFmt)==null) {
+				} else if(vd.getDeviceInfo().getFormatList().getRGBEncodableFormat(inFmt)==null) {
 					System.out.println("Capture format "+inFmt+" doesnt exist, trying to find a suitable one");
 					f= vd.getRGBFrameGrabber(w, h, channel, std);
 				} else { 
-					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getFormat(inFmt).getName());
-					f= vd.getRGBFrameGrabber(w, h, channel, std,vd.getDeviceInfo().getFormatList().getFormat(inFmt));
+					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getNativeFormat(inFmt).getName());
+					f= vd.getRGBFrameGrabber(w, h, channel, std,vd.getDeviceInfo().getFormatList().getNativeFormat(inFmt));
 				}
 				System.out.println("Output image format: RGB");
 			} else if(outFmt==3 && vd.supportBGRConversion()) {
 				if(inFmt==-1){
 					System.out.println("no capture format specified, let v4l4j find a suitable one");
 					f= vd.getBGRFrameGrabber(w, h, channel, std);
-				} else if(vd.getDeviceInfo().getFormatList().getFormat(inFmt)==null) {
+				} else if(vd.getDeviceInfo().getFormatList().getBGREncodableFormat(inFmt)==null) {
 					System.out.println("Capture format "+inFmt+" doesnt exist, trying to find a suitable one");
 					f= vd.getBGRFrameGrabber(w, h, channel, std);
 				} else { 
-					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getFormat(inFmt).getName());
-					f= vd.getBGRFrameGrabber(w, h, channel, std,vd.getDeviceInfo().getFormatList().getFormat(inFmt));
+					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getNativeFormat(inFmt).getName());
+					f= vd.getBGRFrameGrabber(w, h, channel, std,vd.getDeviceInfo().getFormatList().getNativeFormat(inFmt));
 				}
 				System.out.println("Output image format: BGR");
 			} else if(outFmt==4 && vd.supportYUVConversion()) {
 				if(inFmt==-1){
 					System.out.println("no capture format specified, let v4l4j find a suitable one");
 					f= vd.getYUVFrameGrabber(w, h, channel, std);
-				} else if(vd.getDeviceInfo().getFormatList().getFormat(inFmt)==null) {
+				} else if(vd.getDeviceInfo().getFormatList().getYUVEncodableFormat(inFmt)==null) {
 					System.out.println("Capture format "+inFmt+" doesnt exist, trying to find a suitable one");
 					f= vd.getYUVFrameGrabber(w, h, channel, std);
 				} else { 
-					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getFormat(inFmt).getName());
-					f= vd.getYUVFrameGrabber(w, h, channel, std,vd.getDeviceInfo().getFormatList().getFormat(inFmt));
+					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getNativeFormat(inFmt).getName());
+					f= vd.getYUVFrameGrabber(w, h, channel, std,vd.getDeviceInfo().getFormatList().getNativeFormat(inFmt));
 				}
 				System.out.println("Output image format: YUV");
 			} else if(outFmt==5 && vd.supportYVUConversion()) {
 				if(inFmt==-1){
 					System.out.println("no capture format specified, let v4l4j find a suitable one");
 					f= vd.getYVUFrameGrabber(w, h, channel, std);
-				} else if(vd.getDeviceInfo().getFormatList().getFormat(inFmt)==null) {
+				} else if(vd.getDeviceInfo().getFormatList().getYVUEncodableFormat(inFmt)==null) {
 					System.out.println("Capture format "+inFmt+" doesnt exist, trying to find a suitable one");
 					f= vd.getYVUFrameGrabber(w, h, channel, std);
 				} else { 
-					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getFormat(inFmt).getName());
-					f= vd.getYVUFrameGrabber(w, h, channel, std,vd.getDeviceInfo().getFormatList().getFormat(inFmt));
+					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getNativeFormat(inFmt).getName());
+					f= vd.getYVUFrameGrabber(w, h, channel, std,vd.getDeviceInfo().getFormatList().getNativeFormat(inFmt));
 				}
 				System.out.println("Output image format: YVU");
 			} else {
@@ -151,12 +151,12 @@ public class GetFrameRate {
 					System.out.println("No capture format specified, v4l4j will pick the first one");
 					f= vd.getRawFrameGrabber(w, h, channel, std);
 				} else {
-					if(vd.getDeviceInfo().getFormatList().getFormat(inFmt)==null){
+					if(vd.getDeviceInfo().getFormatList().getNativeFormat(inFmt)==null){
 						System.out.println("The specified input format does not exist, or is not supported by the video device");
 						throw new V4L4JException("Unsupported image format");
 					}
-					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getFormat(inFmt).getName());
-					f= vd.getRawFrameGrabber(w, h, channel, std,vd.getDeviceInfo().getFormatList().getFormat(inFmt));					
+					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getNativeFormat(inFmt).getName());
+					f= vd.getRawFrameGrabber(w, h, channel, std,vd.getDeviceInfo().getFormatList().getNativeFormat(inFmt));					
 				}
 				System.out.println("Output image format: RAW  (same as capture format)");
 			}
