@@ -71,8 +71,11 @@ public class ImageFormat {
 	}
 
 	/**
-	 * This method returns the index for this format.  
+	 * This method returns the index for this format.
+	 * A list of all known format indexes can be found in {@link V4L4JConstants}
+	 * (V4L4JConstants.IMF_*).
 	 * @return the index of this format
+	 * @see V4L4JConstants.IMF_*
 	 */
 	public int getIndex() {
 		return libv4lID;

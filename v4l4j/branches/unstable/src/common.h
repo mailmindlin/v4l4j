@@ -47,9 +47,12 @@ struct rgb_data {
 };
 
 enum output_format {
-	OUTPUT_RAW,
+	OUTPUT_RAW=0,
 	OUTPUT_JPG,
-	OUTPUT_RGB24
+	OUTPUT_RGB24,
+	OUTPUT_BGR24,
+	OUTPUT_YUV420,
+	OUTPUT_YVU420
 } ;
 
 
@@ -65,13 +68,23 @@ struct v4l4j_device {
 	int capture_len;			//the size of the last captured frame returned by libv4l
 	int len;					//the size of the frame after conversion
 	int buf_id;					//the index of the buffer where the next frame goes
+	int need_conv;				//this flag is set by Java_au_edu_jcu_v4l4j_FrameGrabber_doInit
+								//and says whether v4l4j (1) or libvideo (0) does the output
+								//format conversion. 0 can also mean no conversion needed
 };
 
-#define JPEG_SUPPORTED_FORMATS		{JPEG, MJPEG, YUV420, YUYV, RGB24, RGB32, BGR24, YVYU, UYVY, BGR32}
-#define NB_JPEG_SUPPORTED_FORMATS	10
+#define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
 
-#define RGB24_SUPPORTED_FORMATS		{RGB24, BGR24, BGR32, RGB32, YUYV, UYVY, YVYU, YUV420, JPEG, MJPEG}
-#define NB_RGB24_SUPPORTED_FORMATS	10
+#define JPEG_CONVERTIBLE_FORMATS		{JPEG, MJPEG, YUV420, YUYV, RGB24, RGB32, BGR24, YVYU, UYVY, BGR32}
+//#define NB_JPEG_SUPPORTED_FORMATS	10
+
+//#define RGB24_SUPPORTED_FORMATS		{RGB24, BGR24, BGR32, RGB32, YUYV, UYVY, YVYU, YUV420, JPEG, MJPEG}
+//#define NB_RGB24_SUPPORTED_FORMATS	10
+
+//WHEN ADDING NEW CONVERSION ROUTINES,
+//DO NOT CONVERT NATIVE FORMATS THAT CAN ALREADY BE CONVERTED BY LIB4L_CONVERT
+//OR BAD THINGS WILL HAPPEN !!
+#define RGB24_CONVERTIBLE_FORMATS		{BGR32, RGB32}
 
 #define BYTEBUFER_CLASS			"java/nio/ByteBuffer"
 #define V4L4J_PACKAGE			"au/edu/jcu/v4l4j/"

@@ -43,10 +43,9 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
 /**
  * This class provides methods to capture raw frames from a {@link VideoDevice}.
  * Raw means that the image format will be left untouched and passed on straight
- * away to the caller. v4l4j also provides a {@link JPEGFrameGrabber} class which
- * JPEG-encodes frames before handing them out.
- * <code>FrameGrabber</code> objects are not instantiated
- * directly. Instead, the 
+ * away to the caller. v4l4j also provides a {@link JPEGFrameGrabber} class 
+ * which JPEG-encodes frames before handing them out.
+ * <code>FrameGrabber</code> objects are not instantiated directly. Instead, the 
  * {@link VideoDevice#getRawFrameGrabber(int, int, int, int) getRawFrameGrabber()}
  * method must be called on the associated {@link VideoDevice}. Requested height
  * and width may be adjusted to the closest supported values. The adjusted width 
@@ -57,7 +56,8 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * VideoDevice vd = new VideoDevice("/dev/video0");<br>
  * <br>//Create an instance of FrameGrabber
  * <br>FrameGrabber f = vd.getRawFrameGrabber(320, 240, 0, 0, 80);
- * <br> //the framegrabber will use the first image format supported by the device, as returned by
+ * <br> //the framegrabber will use the first image format supported by the 
+ * device, as returned by
  * <br> //<code>vd.getDeviceInfo().getFormatList().getList().get(0)</code>
  * <br>
  * <br> //Start the frame capture 
@@ -90,6 +90,9 @@ public class FrameGrabber {
 	protected static int RAW_GRABBER = 0;
 	protected static int JPEG_GRABBER = 1;
 	protected static int RGB24_GRABBER = 2;
+	protected static int BGR24_GRABBER = 3;
+	protected static int YUV_GRABBER = 4;
+	protected static int YVU_GRABBER = 5;
 	
 	private int width;
 	private int height;
@@ -103,8 +106,8 @@ public class FrameGrabber {
 	private int type;
 	
 	/*
-	 * JNI returns a long (which is really a pointer) when a device is allocated for use
-	 * This field is read-only (!!!) 
+	 * JNI returns a long (which is really a pointer) when a device is allocated
+	 * for use. This field is read-only (!!!) 
 	 */
 	protected long object;
 	
@@ -126,7 +129,8 @@ public class FrameGrabber {
 	 * This method sets a new value for the JPEG quality
 	 * @param o the struct v4l4_device
 	 * @param i the new value
-	 * @throws V4L4JException if the JPEG quality is disabled because if the image format
+	 * @throws V4L4JException if the JPEG quality is disabled because of the
+	 * type of this frame grabber (not {@link #JPEG_GRABBER}).
 	 */
 	protected native void setQuality(long o, int i);
 	private native int getBuffer(long o) throws V4L4JException;
@@ -136,21 +140,28 @@ public class FrameGrabber {
 
 	
 	/**
-	 * This constructor builds a FrameGrabber object used to capture frames from a video source
+	 * This constructor builds a FrameGrabber object used to capture frames from
+	 * a video source.
+	 * @param o a JNI pointer to the v4l4j_device structure
 	 * @param w the requested frame width 
 	 * @param h the requested frame height
-	 * @param ch the input index, as returned by <code>InputInfo.getIndex()</code>
-	 * @param std the video standard, as returned by <code>InputInfo.getSupportedStandards()</code>
-	 * (see V4L4JConstants)
-	 * @param q the JPEG image quality (the higher, the better the quality)
-	 * @param imf the image format frames should be captured in, or <code>null</code> 
-	 * to let v4l4j pick an appropriate format
-	 * @throw {@link ImageFormatException} if the image format is null and type = RAW frame grabber
+	 * @param ch the input index, as returned by 
+	 * <code>InputInfo.getIndex()</code>
+	 * @param std the video standard, as returned by 
+	 * <code>InputInfo.getSupportedStandards()</code> (see V4L4JConstants)
+	 * @param t the {@link Tuner} associated with this frame grabber or
+	 * <code>null</code>.
+	 * @param imf the image format frames should be captured in
+	 * @param ty the output image format, ie the type of this frame grabber:
+	 * {@link #RAW_GRABBER}, {@link #JPEG_GRABBER}, {@link #RGB24_GRABBER}, 
+	 * {@link #BGR24_GRABBER}, {@link #YUV_GRABBER}, {@link #YVU_GRABBER}
+	 * @throw {@link ImageFormatException} if the image format is null and 
+	 * type = {@link #RAW_GRABBER}
 	 */
-	protected FrameGrabber(long o, int w, int h, int ch, int std, Tuner t, ImageFormat imf, int ty)
-			throws ImageFormatException{
-		if(imf==null && ty ==RAW_GRABBER)
-			throw new ImageFormatException("The given image format can not be null for RAW frame grabber");
+	protected FrameGrabber(long o, int w, int h, int ch, int std, Tuner t,
+			ImageFormat imf, int ty) throws ImageFormatException{
+		if(imf==null)
+			throw new ImageFormatException("The image format can not be null");
 		state= new State();	
 		object = o;
 		width = w;
@@ -163,47 +174,56 @@ public class FrameGrabber {
 	}
 	
 	/**
-	 * This constructor builds a raw FrameGrabber object used to raw frames from a video source
+	 * This constructor builds a raw FrameGrabber object used to raw frames 
+	 * from a video source.
+	 * @param o a JNI pointer to the v4l4j_device structure
 	 * @param w the requested frame width 
 	 * @param h the requested frame height
-	 * @param ch the input index, as returned by <code>InputInfo.getIndex()</code>
-	 * @param std the video standard, as returned by <code>InputInfo.getSupportedStandards()</code>
-	 * (see V4L4JConstants)
-	 * @param q the JPEG image quality (the higher, the better the quality)
-	 * @param imf the image format frames should be captured in, or <code>null</code> 
-	 * to let v4l4j pick an appropriate format
-	 * @throws ImageFormatException if the image format is null and a RAW frame grabber is to be created  
+	 * @param ch the input index, as returned by
+	 * <code>InputInfo.getIndex()</code>
+	 * @param std the video standard, as returned by 
+	 * <code>InputInfo.getSupportedStandards()</code> (see V4L4JConstants)
+	 * @param t the {@link Tuner} associated with this frame grabber or
+	 * <code>null</code>.
+	 * @param imf the image format frames should be captured in
+	 * @throws ImageFormatException if the image format is null and a RAW frame 
+	 * grabber is to be created  
 	 */
-	protected FrameGrabber(long o, int w, int h, int ch, int std, Tuner t, ImageFormat imf) throws ImageFormatException{
+	protected FrameGrabber(long o, int w, int h, int ch, int std, Tuner t,
+			ImageFormat imf) throws ImageFormatException{
 		this(o,w,h,ch,std,t,imf, RAW_GRABBER);
 	}
 
 	
 	/**
 	 * This method initialises the capture, and apply the capture parameters.
-	 * V4L may either adjust the height and width parameters to the closest valid values
-	 * or reject them altogether. If the values were adjusted, they can be retrieved 
-	 * after calling init() using getWidth() and getHeight()
-	 * @throws VideoStandardException if the chosen video standard is not supported
-	 * @throws ImageFormatException for a raw frame grabber, this exception is thrown if 
-	 * the chosen Image format is unsupported. For a JPEG frame grabber, this exception
-	 * is thrown if the video device does not have any image formats that can be jpeg encoded
-	 * (let the author know, see README file)
-	 * @throws CaptureChannelException if the given channel number value is not valid
-	 * @throws ImageDimensionException if the given image dimensions are not supported
-	 * @throws InitialisationException if the video device file can not be initialised 
+	 * V4L may either adjust the height and width parameters to the closest 
+	 * valid values or reject them altogether. If the values were adjusted, 
+	 * they can be retrieved after calling {@link #init()} using 
+	 * {@link #getWidth()} and {@link #getHeight()}.
+	 * @throws VideoStandardException if the chosen video standard is not 
+	 * supported
+	 * @throws ImageFormatException for a raw frame grabber, this exception is 
+	 * thrown if the chosen Image format is unsupported.
+	 * @throws CaptureChannelException if the given channel number value is not 
+	 * valid
+	 * @throws ImageDimensionException if the given image dimensions are not 
+	 * supported
+	 * @throws InitialisationException if the video device file can not be 
+	 * initialised 
 	 * @throws StateException if the frame grabber is already initialised
 	 * @throws V4L4JException if there is an error applying capture parameters
 	 */
 	void init() throws V4L4JException{
 		state.init();
-		bufs = doInit(object, width, height, channel, standard, nbV4LBuffers, format!=null?format.getIndex():-1, type);
+		bufs = doInit(object, width, height, channel, standard, nbV4LBuffers,
+				format.getIndex(), type);
 		state.commit();
 	}
 	
 	/**
-	 * This method returns the {@link ImageFormat} used by this FrameGrabber. The returned
-	 * format applies to images captured from the video device.
+	 * This method returns the {@link ImageFormat} used by this FrameGrabber. 
+	 * The returned format applies to images captured from the video device.
 	 * @return {@link ImageFormat} used by this FrameGrabber.
 	 */
 	public ImageFormat getImageFormat(){
@@ -252,7 +272,8 @@ public class FrameGrabber {
 	 */
 	public ByteBuffer getFrame() throws V4L4JException {
 		//we need the synchronized statement to serialise calls to getBuffer
-		//since libv4l is not reentrant
+		//since libv4l is not reentrant. Also we dont want the frame grabber
+		//to be released in the middle of a getBuffer() call.
 		synchronized(state) {
 			if(!state.isStarted())
 				throw new StateException("Invalid method call");
@@ -329,14 +350,16 @@ public class FrameGrabber {
 			if(state==UNINIT && temp!=INIT) {
 				temp=INIT;
 			} else
-				throw new StateException("This FrameGrabber can not be initialised again");
+				throw new StateException("This FrameGrabber can not be "
+						+"initialised again");
 		}
 		
 		public synchronized void start(){
 			if(state==INIT || state==STOPPED && temp!=STARTED) {
 				temp=STARTED;
 			} else
-				throw new StateException("This FrameGrabber is not initialised or stopped and can not be started");
+				throw new StateException("This FrameGrabber is not initialised"
+						+" or stopped and can not be started");
 		}
 		
 		/**
@@ -351,7 +374,8 @@ public class FrameGrabber {
 			if(state==INIT || state==STARTED && temp!=STOPPED) {
 				users++;
 			} else
-				throw new StateException("This FrameGrabber is neither initialised nor started and can not be used");
+				throw new StateException("This FrameGrabber is neither "
+						+"initialised nor started and can not be used");
 		}
 		
 		public synchronized void put(){
@@ -359,7 +383,8 @@ public class FrameGrabber {
 				if(--users==0  && temp==STOPPED)
 					notify();
 			} else
-				throw new StateException("This FrameGrabber is neither initialised nor started and can not be used");
+				throw new StateException("This FrameGrabber is neither "
+						+"initialised nor started and can not be used");
 		}
 		
 		
@@ -370,19 +395,23 @@ public class FrameGrabber {
 					try {
 						wait();
 					} catch (InterruptedException e) {
-						System.err.println("Interrupted while waiting for FrameGrabber users to complete");
+						System.err.println("Interrupted while waiting for "
+								+"FrameGrabber users to complete");
 						e.printStackTrace();
-						throw new StateException("There are remaining users of this FrameGrabber and it can not be stopped");
+						throw new StateException("There are remaining users of "
+								+"this FrameGrabber and it can not be stopped");
 					}
 			} else
-				throw new StateException("This FrameGrabber is not started and can not be stopped");
+				throw new StateException("This FrameGrabber is not started and "
+						+"can not be stopped");
 		}
 		
 		public synchronized void remove(){
 			if(state==INIT || state==STOPPED && temp!=REMOVED) {
 				temp=REMOVED;
 			} else
-				throw new StateException("This FrameGrabber is neither initialised nor stopped and can not be released");
+				throw new StateException("This FrameGrabber is neither "
+						+"initialised nor stopped and can not be released");
 		}
 		
 		public synchronized void commit(){

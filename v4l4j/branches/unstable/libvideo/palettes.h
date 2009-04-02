@@ -54,7 +54,7 @@ struct libv4l_palette{
 #define VIDEO_PALETTE_UNDEFINED_V4L1	-1
 #define COMPRESSED_FORMAT_DEPTH			-1
 
-static struct libv4l_palette libv4l_palettes[] = {
+static const struct libv4l_palette libv4l_palettes[] = {
 	{
 		YUV420,
 		VIDEO_PALETTE_YUV420,
