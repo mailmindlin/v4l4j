@@ -1341,7 +1341,7 @@ public class VideoDevice {
 	public FrameGrabber getRawFrameGrabber(int w, int h, int input, int std) 
 			throws V4L4JException{
 		return getRawFrameGrabber(w, h, input, std, 
-				deviceInfo.getFormatList().getList().get(0));
+				deviceInfo.getFormatList().getNativeFormats().get(0));
 	}
 	
 	/**
@@ -1493,7 +1493,7 @@ public class VideoDevice {
 		System.out.println("name: "+d.getName());
 		System.out.println("Device file: "+d.getDeviceFile());
 		System.out.println("Supported formats:");
-		for(ImageFormat f : d.getFormatList().getList())
+		for(ImageFormat f : d.getFormatList().getNativeFormats())
 			System.out.println("\t"+f.getName()+" - "+f.getIndex());
 		
 		System.out.print("Formats that can be RGB24-converted: "
