@@ -147,7 +147,7 @@ static int get_buffer_length(struct v4l4j_device *d){
 				d->vdev->capture->width * d->vdev->capture->height * 3/2);
 
 		return d->vdev->capture->width * d->vdev->capture->height * 3/2;
-	} else if(d->output_fmt==OUTPUT_YUV420) {
+	} else if(d->output_fmt==OUTPUT_YVU420) {
 		//YVU420 means w * h * 3/2
 		dprint(LOG_V4L4J, "[V4L4J] OUTPUT: YVU420 - Using ByteBuffer of "
 				"size %d\n",
@@ -229,7 +229,7 @@ static void release_format_converter(struct v4l4j_device *d){
  */
 static int init_capture_format(struct v4l4j_device *d, int output, int input){
 	int ret=-1, i;
-	int rgb_conv_formats[] = JPEG_CONVERTIBLE_FORMATS;
+	int rgb_conv_formats[] = RGB24_CONVERTIBLE_FORMATS;
 
 	dprint(LOG_LIBV4L, "[V4L4J] Setting output to %s - input format: %s\n",
 						output==OUTPUT_RAW?"RAW":
@@ -261,7 +261,7 @@ static int init_capture_format(struct v4l4j_device *d, int output, int input){
 				return input;
 			}
 		}
-		//libvideo convert does it
+		//libvideo does it
 		dprint(LOG_LIBV4L,
 				"[V4L4J] RGB24 conversion done by libvideo\n");
 		ret=RGB24;
