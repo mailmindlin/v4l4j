@@ -6,7 +6,7 @@ import java.util.Vector;
 /**
  * ImageFormatList objects group together a list of native {@link ImageFormat}s
  * supported by a {@link VideoDevice}. This list is obtained by calling
- * {@link #getList()}. Additionally, v4l4j can convert some native formats to 
+ * {@link #getNativeFormats()}. Additionally, v4l4j can convert some native formats to 
  * RGB24, BGR24, JPEG, YUV420 and YVU420. The 
  * {@link #getRGBEncodableFormats()}, {@link #getBGREncodableFormats()}, 
  * {@link #getJPEGEncodableFormats()}, {@link #getYUVEncodableFormats()} 
@@ -149,11 +149,37 @@ public class ImageFormatList {
 	}
 	
 	/**
+	 * this method returns a format in a list given its name
+	 * @param l the image format list
+	 * @param n the name of the format
+	 * @return the image format with the given name, or null
+	 */
+	private ImageFormat getFormat(List<ImageFormat> l, String n){
+		for(ImageFormat f:l)
+			if(f.getName().equals(n))
+				return f;
+		return null;
+	} 
+	
+	/**
+	 * this method returns a format in a list given its index
+	 * @param l the image format list
+	 * @param i the index of the format
+	 * @return the image format with the given index, or null
+	 */
+	private ImageFormat getFormat(List<ImageFormat> l, int i){
+		for(ImageFormat f:l)
+			if(f.getIndex()==i)
+				return f;
+		return null;
+	}
+	
+	/**
 	 * This method returns the native {@link ImageFormat}s contained in this 
 	 * list.
 	 * @return the {@link ImageFormat}s contained in this list
 	 */
-	public List<ImageFormat>getList(){
+	public List<ImageFormat>getNativeFormats(){
 		return new Vector<ImageFormat>(formats);
 	}
 	
@@ -164,11 +190,8 @@ public class ImageFormatList {
 	 * @return the <code>ImageFormat</code>, or <code>null</code> 
 	 * if not found in the list.
 	 */
-	public ImageFormat getFormat(String n){
-		for(ImageFormat f:formats)
-			if(f.getName().equals(n))
-				return f;
-		return null;
+	public ImageFormat getNativeFormat(String n){
+		return getFormat(formats, n);
 	}
 	
 	/**
@@ -181,11 +204,8 @@ public class ImageFormatList {
 	 * @see {@link V4L4JConstants} : the image format index constant name start
 	 * with V4L4JConstants.IMF_*
 	 */
-	public ImageFormat getFormat(int i){
-		for(ImageFormat f:formats)
-			if(f.getIndex()==i)
-				return f;
-		return null;
+	public ImageFormat getNativeFormat(int i){
+		return getFormat(formats, i);
 	}
 	
 	/**
@@ -200,6 +220,33 @@ public class ImageFormatList {
 	}
 	
 	/**
+	 * This method looks for a native {@link ImageFormat} that can be converted 
+	 * to JPEG by v4l4j in this list given its name, and returns it, or 
+	 * <code>null</code> if not found.
+	 * @param n the name of the <code>ImageFormat</code>.
+	 * @return the <code>ImageFormat</code>, or <code>null</code> 
+	 * if not found in the list.
+	 */
+	public ImageFormat getJPEGEncodableFormat(String n){
+		return getFormat(JPEGformats, n);
+	}
+	
+	/**
+	 * This method looks for a native {@link ImageFormat}  that can be converted 
+	 * to JPEG by v4l4j given its 
+	 * index, and returns it, or <code>null</code> if not found. A list of all 
+	 * known format indexes can be found in {@link V4L4JConstants} 
+	 * (V4L4JConstants.IMF_*). 
+	 * @param i the index of the <code>ImageFormat</code> to look up
+	 * @return the <code>ImageFormat</code> or <code>null</code> if not found.
+	 * @see {@link V4L4JConstants} : the image format index constant name start
+	 * with V4L4JConstants.IMF_*
+	 */
+	public ImageFormat getJPEGEncodableFormat(int i){
+		return getFormat(JPEGformats, i);
+	}
+	
+	/**
 	 * This method returns a list of native {@link ImageFormat}s contained
 	 * in this object, that can be converted to RGB24 by v4l4j. The list is 
 	 * sorted: image formats better suited for the conversion are listed first.
@@ -208,6 +255,32 @@ public class ImageFormatList {
 	 */
 	public List<ImageFormat> getRGBEncodableFormats(){
 		return new Vector<ImageFormat>(RGBformats);
+	}
+	
+	/**
+	 * This method looks for a native {@link ImageFormat} that can be converted 
+	 * to RGB24 by v4l4j in this list given its name, and returns it, or 
+	 * <code>null</code> if not found.
+	 * @param n the name of the <code>ImageFormat</code>.
+	 * @return the <code>ImageFormat</code>, or <code>null</code> 
+	 * if not found in the list.
+	 */
+	public ImageFormat getRGBEncodableFormat(String n){
+		return getFormat(RGBformats, n);
+	}
+	
+	/**
+	 * This method looks for a native {@link ImageFormat} that can be converted 
+	 * to RGB24 by v4l4j given its index, and returns it, or <code>null</code> 
+	 * if not found. A list of all known format indexes can be found in 
+	 * {@link V4L4JConstants} (V4L4JConstants.IMF_*). 
+	 * @param i the index of the <code>ImageFormat</code> to look up
+	 * @return the <code>ImageFormat</code> or <code>null</code> if not found.
+	 * @see {@link V4L4JConstants} : the image format index constant name start
+	 * with V4L4JConstants.IMF_*
+	 */
+	public ImageFormat getRGBEncodableFormat(int i){
+		return getFormat(RGBformats, i);
 	}
 	
 	/**
@@ -222,6 +295,33 @@ public class ImageFormatList {
 	}
 	
 	/**
+	 * This method looks for a native {@link ImageFormat} that can be converted 
+	 * to BGR24 by v4l4j in this list given its name, and returns it, or 
+	 * <code>null</code> if not found.
+	 * @param n the name of the <code>ImageFormat</code>.
+	 * @return the <code>ImageFormat</code>, or <code>null</code> 
+	 * if not found in the list.
+	 */
+	public ImageFormat getBGREncodableFormat(String n){
+		return getFormat(BGRformats, n);
+	}
+	
+	/**
+	 * This method looks for a native {@link ImageFormat}  that can be converted 
+	 * to BGR24 by v4l4j given its index,
+	 * and returns it, or <code>null</code> if not found. A list of all known 
+	 * format indexes can be found in {@link V4L4JConstants} 
+	 * (V4L4JConstants.IMF_*). 
+	 * @param i the index of the <code>ImageFormat</code> to look up
+	 * @return the <code>ImageFormat</code> or <code>null</code> if not found.
+	 * @see {@link V4L4JConstants} : the image format index constant name start
+	 * with V4L4JConstants.IMF_*
+	 */
+	public ImageFormat getBGREncodableFormat(int i){
+		return getFormat(BGRformats, i);
+	}
+	
+	/**
 	 * This method returns a list of native {@link ImageFormat}s contained
 	 * in this object, that can be converted to YUV420 by v4l4j. The list is 
 	 * sorted: image formats better suited for the conversion are listed first.
@@ -233,6 +333,33 @@ public class ImageFormatList {
 	}
 	
 	/**
+	 * This method looks for a native {@link ImageFormat} that can be converted 
+	 * to YUV420 by v4l4j in this list given 
+	 * its name, and returns it, or <code>null</code> if not found.
+	 * @param n the name of the <code>ImageFormat</code>.
+	 * @return the <code>ImageFormat</code>, or <code>null</code> 
+	 * if not found in the list.
+	 */
+	public ImageFormat getYUVEncodableFormat(String n){
+		return getFormat(YUV420formats, n);
+	}
+	
+	/**
+	 * This method looks for a native {@link ImageFormat}  that can be converted 
+	 * to YUV420 by v4l4j given its index,
+	 * and returns it, or <code>null</code> if not found. A list of all known 
+	 * format indexes can be found in {@link V4L4JConstants} 
+	 * (V4L4JConstants.IMF_*). 
+	 * @param i the index of the <code>ImageFormat</code> to look up
+	 * @return the <code>ImageFormat</code> or <code>null</code> if not found.
+	 * @see {@link V4L4JConstants} : the image format index constant name start
+	 * with V4L4JConstants.IMF_*
+	 */
+	public ImageFormat getYUVEncodableFormat(int i){
+		return getFormat(YUV420formats, i);
+	}
+	
+	/**
 	 * This method returns a list of native {@link ImageFormat}s contained
 	 * in this object, that can be converted to YVU420 by v4l4j. The list is 
 	 * sorted: image formats better suited for the conversion are listed first.
@@ -241,6 +368,33 @@ public class ImageFormatList {
 	 */
 	public List<ImageFormat> getYVUEncodableFormats(){
 		return new Vector<ImageFormat>(YVU420formats);
+	}
+	
+	/**
+	 * This method looks for a native {@link ImageFormat} that can be converted 
+	 * to YVU420 by v4l4j in this list given 
+	 * its name, and returns it, or <code>null</code> if not found.
+	 * @param n the name of the <code>ImageFormat</code>.
+	 * @return the <code>ImageFormat</code>, or <code>null</code> 
+	 * if not found in the list.
+	 */
+	public ImageFormat getYVUEncodableFormat(String n){
+		return getFormat(YVU420formats, n);
+	}
+	
+	/**
+	 * This method looks for a native {@link ImageFormat}  that can be converted 
+	 * to YVU420 by v4l4j given its index,
+	 * and returns it, or <code>null</code> if not found. A list of all known 
+	 * format indexes can be found in {@link V4L4JConstants} 
+	 * (V4L4JConstants.IMF_*). 
+	 * @param i the index of the <code>ImageFormat</code> to look up
+	 * @return the <code>ImageFormat</code> or <code>null</code> if not found.
+	 * @see {@link V4L4JConstants} : the image format index constant name start
+	 * with V4L4JConstants.IMF_*
+	 */
+	public ImageFormat getYVUEncodableFormat(int i){
+		return getFormat(YVU420formats, i);
 	}
 }
 
