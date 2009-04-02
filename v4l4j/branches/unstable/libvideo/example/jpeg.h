@@ -1,6 +1,6 @@
 /*
 	copyright 2006 Gilles GIGAN (gilles.gigan@gmail.com)
-			
+
 	This file is part of light_cap.
 
    	light_cap is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 #ifndef H_JPEG
 #define H_JPEG
 
-#include "libv4l.h"
+#include "libvideo.h"
 #include "utils.h"
 
 void release_jpeg_encoder(struct capture_device *, struct jpeg *);

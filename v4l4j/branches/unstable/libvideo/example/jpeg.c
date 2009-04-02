@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "libv4l.h"
+#include "libvideo.h"
 #include "utils.h"
 #include "log.h"
 
