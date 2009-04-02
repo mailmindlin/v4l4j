@@ -1,5 +1,3 @@
-#uncomment the following line to enable debug output
-#DEBUG=-DDEBUG -ggdb -Wall
 
 VERSION_MAJOR=1
 VERSION_MINOR=0
@@ -11,13 +9,19 @@ BIN=light_cap
 CC=gcc
 OBJ=main.o jpeg.o
 
-OPTIMISATION=-O3
 INCLUDES=-I$(PATH_TO_LIBV4L2)
-CFLAGS=$(DEBUG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) $(OPTIMISATION) $(INCLUDES)
+
+ifneq ($(DEBUG),)
+DBG=-DDEBUG -ggdb -Wall
+else
+OPTIMISATION=-O3
+endif
+
+CFLAGS=$(DBG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) $(OPTIMISATION) $(INCLUDES)
 
 LD=gcc
 LIBPATH=-L$(PATH_TO_LIBV4L2)
-LIB=-ljpeg -lv4l -pthread
+LIB=-ljpeg -lvideo -lv4lconvert -pthread
 LDFLAGS=$(LIBPATH) $(LIB)
 
 

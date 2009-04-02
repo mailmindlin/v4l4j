@@ -30,10 +30,10 @@
 #include "libvideo-err.h"
 #include "log.h"
 
-static void set_palette_info(struct palette_info *palettes, int idx, int palette){
-	XREALLOC(palettes, struct palette_info *,(idx+1) * sizeof(struct palette_info));
-	palettes[idx].index = palette;
-	palettes[idx].raw_palette = -1;
+static void set_palette_info(struct device_info *di, int idx, int palette){
+	XREALLOC(di->palettes, struct palette_info *,(idx+1) * sizeof(struct palette_info));
+	di->palettes[idx].index = palette;
+	di->palettes[idx].raw_palette = -1;
 	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: %s supported\n",
 			libv4l_palettes[palette].name);
 }
@@ -51,7 +51,7 @@ static int check_palettes_v4l1(struct video_device *vdev){
 					"QRY: trying %s\n", libv4l_palettes[palette].name);
 			CLEAR(pic);
 			if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0)
-				set_palette_info(di->palettes, index++, palette);
+				set_palette_info(di, index++, palette);
 		}
 	}
 
