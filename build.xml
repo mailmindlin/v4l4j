@@ -116,11 +116,14 @@
 	<target name="jar" depends="compile">
 		<jar jarfile="${project.dir}/${project.jar.file}">
 			<manifest>
-				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.RGBVideoViewer"/>
+				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.DeviceChooser"/>
 			</manifest>
 			<fileset dir="${project.classes}">
 				<include name="**"/>
 				<exclude name="au/edu/jcu/v4l4j/test/"/>
+			</fileset>
+			<fileset dir="${project.dir}">
+							<include name="resources/**" />
 			</fileset>
 		</jar>
 	</target>
@@ -128,19 +131,22 @@
 	<target name="jar-debug" depends="compile-debug">
 	    <jar jarfile="${project.dir}/${project.jar.file}">
             <manifest>
-				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.RGBVideoViewer"/>
+				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.DeviceChooser"/>
             </manifest>
             <fileset dir="${project.classes}">
                 <include name="**"/>
                 <exclude name="au/edu/jcu/v4l4j/test/"/>
             </fileset>
+			<fileset dir="${project.dir}">
+							<include name="resources/**" />
+			</fileset>
 	    </jar>
 	</target>
 
 	<target name="jar-src" depends="compile">
 		<jar jarfile="${project.dir}/${project.jar.file}">
 			<manifest>
-				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.RGBVideoViewer"/>
+				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.DeviceChooser"/>
 			</manifest>
 			<fileset dir="${project.classes}">
 				<include name="**"/>
@@ -149,6 +155,9 @@
 			<fileset dir="${project.src}">
 				<include name="**"/>
 				<exclude name="au/edu/jcu/v4l4j/test/"/>
+			</fileset>
+			<fileset dir="${project.dir}">
+							<include name="resources/**" />
 			</fileset>
 		</jar>
 	</target>
@@ -161,9 +170,6 @@
 	
 	<target name="jar-test" depends="compile">
 		<jar jarfile="${project.dir}/${project.jar.file}">
-			<manifest>
-				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.WebcamViewer"/>
-			</manifest>
 			<fileset dir="${project.classes}">
 				<include name="**"/>
 			</fileset>
@@ -223,18 +229,7 @@
 			<classpath refid="test.classpath" />
 		</junit>
 	</target>
-	
-<!--	<target name="test-multiple" depends="jar-test,jnilib">
-		<junit fork="yes" haltonfailure="yes">
-			<jvmarg value="-Djava.library.path=."/>
-			<test name="${test.class.name.multiple}" />
-			<formatter type="plain" usefile="false" />
-			<classpath refid="test.classpath" />
-		</junit>
-	</target>
-	
-	<target name="test-all" depends="test-junit, test-fps" />-->
-	
+		
 	<target name="clean">
 		<exec executable="make">
 		<arg line="-C ${libvideo.dir} clean" />

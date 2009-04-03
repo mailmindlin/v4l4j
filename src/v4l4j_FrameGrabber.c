@@ -39,7 +39,7 @@
 #define INCR_BUF_ID(i, max) do { (i) = ((i) >= (max)) ? 0 : ((i) + 1); } while(0)
 
 /*
- * Updates the width, height & format fields in a framegrabber object
+ * Updates the width, height, standard & format fields in a framegrabber object
  */
 static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
@@ -57,6 +57,7 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 		return;
 	}
 
+	//width
 	field = (*e)->GetFieldID(e, this_class, "width", "I");
 	if(field==NULL) {
 		info("[V4L4J] error looking up width field in FrameGrabber class\n");
@@ -66,6 +67,7 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 	}
 	(*e)->SetIntField(e, this, field, d->vdev->capture->width);
 
+	//height
 	field = (*e)->GetFieldID(e, this_class, "height", "I");
 	if(field==NULL) {
 		info("[V4L4J] error looking up height field in FrameGrabber class\n");
@@ -75,6 +77,18 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 	}
 	(*e)->SetIntField(e, this, field, d->vdev->capture->height);
 
+	//standard
+	field = (*e)->GetFieldID(e, this_class, "standard", "I");
+	if(field==NULL) {
+		info("[V4L4J] error looking up height standard in FrameGrabber class\n");
+		THROW_EXCEPTION(e, JNI_EXCP, "error looking up standard field in "
+				"FrameGrabber class");
+		return;
+	}
+	(*e)->SetIntField(e, this, field, d->vdev->capture->std);
+
+
+	//format
 	if(d->output_fmt!=OUTPUT_RAW){
 		field = (*e)->GetFieldID(e, this_class, "format",
 				"Lau/edu/jcu/v4l4j/ImageFormat;");
@@ -188,7 +202,7 @@ static int init_format_converter(struct v4l4j_device *d){
 			d->len = get_buffer_length(d);
 
 			//check who does it
-			if(d->vdev->capture->convert->need_conv==0){
+			if(d->vdev->capture->is_native==1){
 				dprint(LOG_V4L4J, "[V4L4J] Initialising RGB converter\n");
 				//we do it
 				ret = init_rgb_converter(d);
@@ -212,19 +226,19 @@ static int init_format_converter(struct v4l4j_device *d){
 
 static void release_format_converter(struct v4l4j_device *d){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	if(d->output_fmt==OUTPUT_JPG)
-		destroy_jpeg_compressor(d);
-	else if(d->output_fmt == OUTPUT_RGB24){
-		if(d->vdev->capture->convert->need_conv==0){
-			destroy_rgb_converter(d);
-		}
+	if(d->need_conv==1){
+		if(d->output_fmt==OUTPUT_JPG)
+			destroy_jpeg_compressor(d);
+		else if(d->output_fmt == OUTPUT_RGB24)
+			if(d->vdev->capture->is_native==1)
+				destroy_rgb_converter(d);
 	}
 }
 
 /*
  * this function checks the output format and returns the capture image format
  * to use, depending on whether format conversion is done by v4l4j or libvideo
- * intput is a libvideo palette index, output is enum output_format in common.h
+ * input is a libvideo palette index, output is enum output_format in common.h
  * the returned value is a libvideo palette index
  */
 static int init_capture_format(struct v4l4j_device *d, int output, int input){
@@ -431,7 +445,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(
 	}
 
 
-	//update width, height & image format in FrameGrabber class
+	//update width, height, standard & image format in FrameGrabber class
 	update_width_height(e, t, d);
 	d->buf_id = -1;
 	return arr;

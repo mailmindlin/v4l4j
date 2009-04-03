@@ -34,8 +34,8 @@ static void set_palette_info(struct device_info *di, int idx, int palette){
 	XREALLOC(di->palettes, struct palette_info *,(idx+1) * sizeof(struct palette_info));
 	di->palettes[idx].index = palette;
 	di->palettes[idx].raw_palette = -1;
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: %s supported\n",
-			libv4l_palettes[palette].name);
+	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: %s (%d) supported\n",
+			libv4l_palettes[palette].name, palette);
 }
 
 static int check_palettes_v4l1(struct video_device *vdev){
@@ -45,15 +45,45 @@ static int check_palettes_v4l1(struct video_device *vdev){
 	di->palettes = NULL;
 
 	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: Checking supported palettes.\n");
-	for(palette = 0; palette < ARRAY_SIZE(libv4l_palettes); palette++){
+	for(palette = 0; palette < ARRAY_SIZE(libv4l_palettes)-3; palette++){
 		if(libv4l_palettes[palette].v4l1_palette!=VIDEO_PALETTE_UNDEFINED_V4L1){
 			dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1,
 					"QRY: trying %s\n", libv4l_palettes[palette].name);
 			CLEAR(pic);
+			pic.palette = libv4l_palettes[palette].v4l1_palette;
+			pic.depth = libv4l_palettes[palette].depth;
 			if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0)
 				set_palette_info(di, index++, palette);
 		}
 	}
+
+	//v4l1 weirdness
+	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1,
+			"QRY: trying %s\n", libv4l_palettes[YUV420P].name);
+	CLEAR(pic);
+	pic.palette = libv4l_palettes[YUV420P].v4l1_palette;
+	pic.depth = libv4l_palettes[YUV420P].depth;
+	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0)
+		set_palette_info(di, index++, YUV420);
+
+	//v4l1 weirdness
+	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1,
+			"QRY: trying %s\n", libv4l_palettes[YUV422].name);
+	CLEAR(pic);
+	pic.palette = libv4l_palettes[YUV422].v4l1_palette;
+	pic.depth = libv4l_palettes[YUV422].depth;
+	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0)
+		set_palette_info(di, index++, YUYV);
+
+	//v4l1 weirdness
+	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1,
+			"QRY: trying %s\n", libv4l_palettes[YUV411].name);
+	CLEAR(pic);
+	pic.palette = libv4l_palettes[YUV411].v4l1_palette;
+	pic.depth = libv4l_palettes[YUV411].depth;
+	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0)
+		set_palette_info(di, index++, YUV411P);
+
 
 	return index;
 }

@@ -60,12 +60,15 @@ char *get_libvideo_version(char * c) {
  *
  */
 struct video_device *open_device(char *file) {
+	static int show_ver=0;
 	struct video_device *vdev;
 	int fd = -1;
 	char version[40];
-
-	info("Using libvideo version %s\n", get_libvideo_version(version));
-	fflush(stdout);
+	if(show_ver==0){
+		info("Using libvideo version %s\n", get_libvideo_version(version));
+		fflush(stdout);
+		show_ver=1;
+	}
 
 	//open device
 	dprint(LIBV4L_LOG_SOURCE_VIDEO_DEVICE, LIBV4L_LOG_LEVEL_DEBUG, "VD: Opening device file %s.\n", file);
