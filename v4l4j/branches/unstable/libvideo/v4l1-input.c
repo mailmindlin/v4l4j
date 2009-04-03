@@ -245,6 +245,7 @@ int set_cap_param_v4l1(struct video_device *vdev, int *palettes, int nb) {
 		list_cap_v4l1(vdev->fd);
 		return LIBV4L_ERR_FORMAT;
 	}
+	c->is_native=1;
 
 	win.x = win.y = 0;
 	win.width = c->width;
@@ -272,6 +273,9 @@ int set_cap_param_v4l1(struct video_device *vdev, int *palettes, int nb) {
 		c->width = win.width;
 		c->height = win.height;
 	}
+
+	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG,
+			"CAP: capture resolution: %dx%d\n", c->width, c->height);
 
 	return 0;
 }

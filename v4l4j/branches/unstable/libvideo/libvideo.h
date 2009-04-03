@@ -143,7 +143,6 @@ struct mmap {
 
 struct convert_data {
 	struct v4lconvert_data *priv;//the libv4l convert struct (used only when V4L2)
-	int need_conv;				//whether or not we need conversion (1: yes, 0:no)
 	struct v4l2_format *src_fmt; //the source pixel format (the one the capture is made in)
 	struct v4l2_format *dst_fmt; //the dest format (the one obtained after conversion);
 	int src_palette;			//the source libvideo palette
@@ -162,11 +161,19 @@ struct capture_device {
 	int imagesize;					//in bytes
 	int tuner_nb;					//the index of the tuner associated with this capture_device, -1 if not tuner input
 	struct capture_actions *actions;	//see def below
+	int is_native;					//this field is meaningful only with v4l2 device.
+									//for v4l1, it is always set to 1.
+									//it specifies whether or not the palette is native,
+									//ie, whether it is converted from a native format
+									//or it actually is a native format. if it is converted
+									//(by libv4l convert), then the convert member is valid
+
 	int real_v4l1_palette;			//v4l1 weirdness: v4l1 defines 2 distinct palettes YUV420 and YUV420P
 									//but they are the same (same goes for YUYV and YUV422). In this field
 									//we store the real palette used by v4l1. In the palette field above,
 									//we store what the application should know (YUYV instead of YUV422)
-	struct convert_data* convert;	//libv4lconvert stuff (used only when v4l2)
+	struct convert_data* convert;	//do not touch - libv4lconvert stuff (used only when v4l2)
+									//only valid if is_native is 0
 };
 
 

@@ -328,6 +328,25 @@ public class FrameGrabber {
 		return width;
 	}
 	
+	/**
+	 * This method returns the video channel used to capture frames.
+	 * @return the channel
+	 */
+	public int getChannel(){
+		return channel;
+	}
+	
+	/**
+	 * This method returns the actual video standard: 
+	 * {@link V4L4JConstants#STANDARD_NTSC}, {@link V4L4JConstants#STANDARD_PAL}
+	 * , {@link V4L4JConstants#STANDARD_SECAM} or 
+	 * {@link V4L4JConstants#STANDARD_WEBCAM}
+	 * @return the video standard
+	 */
+	public int getStandard(){
+		return standard;
+	}
+	
 	private static class State {
 
 		private int state;
