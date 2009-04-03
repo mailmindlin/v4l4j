@@ -410,11 +410,11 @@ static int set_image_format(struct capture_device *c, int *palettes,
 			c->convert->src_palette,
 			libv4l_palettes[c->convert->src_palette].name
 			);
-	c->convert->need_conv = v4lconvert_needs_conversion(
-			c->convert->priv,c->convert->src_fmt, c->convert->dst_fmt);
+	c->is_native = v4lconvert_needs_conversion(
+			c->convert->priv,c->convert->src_fmt, c->convert->dst_fmt)==1?0:1;
 	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG,
 			"CAP: libv4lconvert required ? %s\n",
-			(c->convert->need_conv==0?"No":"Yes"));
+			(c->is_native==0?"No":"Yes"));
 
 	dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG,
 			"CAP: conv to (dst) width: %d, "
@@ -430,7 +430,7 @@ static int set_image_format(struct capture_device *c, int *palettes,
 	//Store actual width & height
 	c->width = c->convert->dst_fmt->fmt.pix.width;
 	c->height= c->convert->dst_fmt->fmt.pix.height;
-	if(c->convert->need_conv==0){
+	if(c->is_native==1){
 		//if no need for conversion, libv4lconvert sometimes returns 0 in
 		//sizeimage and bytesperline fields, so get values from src palette
 		c->imagesize = c->convert->src_fmt->fmt.pix.sizeimage;
@@ -597,7 +597,7 @@ int init_capture_v4l2(struct video_device *vdev) {
 				c->mmap->buffers[i].start);
 	}
 
-	if(vdev->capture->convert->need_conv!=0){
+	if(vdev->capture->is_native!=1){
 		dprint(LIBV4L_LOG_SOURCE_CAPTURE, LIBV4L_LOG_LEVEL_DEBUG,
 				"CAP: need conversion, create temp buffer (%d bytes)\n",
 				vdev->capture->convert->dst_fmt->fmt.pix.sizeimage);
@@ -754,7 +754,7 @@ void free_capture_v4l2(struct video_device *vdev) {
 
 	XFREE(vdev->capture->mmap->buffers);
 
-	if(vdev->capture->convert->need_conv!=0)
+	if(vdev->capture->is_native!=1)
 		XFREE(vdev->capture->convert->frame);
 
 	XFREE(vdev->capture->convert->dst_fmt);

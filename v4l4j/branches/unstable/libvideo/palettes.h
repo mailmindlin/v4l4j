@@ -445,27 +445,27 @@ static const struct libv4l_palette libv4l_palettes[] = {
 	},
 
 
-//Dont use the following two, use YUV420 and YUYV instead !!
+//Dont use the following, use YUV420, YUYV & YUV411 instead !!
 	{
 		YUV420P,
 		VIDEO_PALETTE_YUV420P,
 		0,
 		12,
-		"YUV420"
+		"YUV420-w"
 	},
 		{
 		YUV422,
 		VIDEO_PALETTE_YUV422,
 		0,
 		8,
-		"YUYV"
+		"YUYV-w"
 	},
 	{
 		YUV411,
 		VIDEO_PALETTE_YUV411,
 		V4L2_PIX_FMT_YUV411P,
 		16,
-		"YUV411"
+		"YUV411-w"
 	}
 
 };

@@ -2,7 +2,7 @@ package au.edu.jcu.v4l4j.test;
 
 import java.io.IOException;
 
-import au.edu.jcu.v4l4j.JPEGFrameGrabber;
+import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
@@ -19,15 +19,67 @@ public class MemLeak implements Runnable{
 	}
 	
 	public void run(){
-		JPEGFrameGrabber fg;
+		FrameGrabber fg;
 		int count = 0;
 		
 		while(!stop){
 			count = 0;
 			try {
-				vd = new VideoDevice("/dev/video3");
+				vd = new VideoDevice("/dev/video0");
 				vd.getControlList();
 				fg = vd.getJPEGFrameGrabber(640, 480, 1, 1, 80);
+				fg.startCapture();
+				while(count++<200)
+					fg.getFrame();
+				fg.stopCapture();
+				vd.releaseFrameGrabber();	
+			} catch (V4L4JException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				vd = new VideoDevice("/dev/video0");
+				vd.getControlList();
+				fg = vd.getRGBFrameGrabber(640, 480, 1, 1);
+				fg.startCapture();
+				while(count++<200)
+					fg.getFrame();
+				fg.stopCapture();
+				vd.releaseFrameGrabber();	
+			} catch (V4L4JException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				vd = new VideoDevice("/dev/video0");
+				vd.getControlList();
+				fg = vd.getBGRFrameGrabber(640, 480, 1, 1);
+				fg.startCapture();
+				while(count++<200)
+					fg.getFrame();
+				fg.stopCapture();
+				vd.releaseFrameGrabber();	
+			} catch (V4L4JException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				vd = new VideoDevice("/dev/video0");
+				vd.getControlList();
+				fg = vd.getYUVFrameGrabber(640, 480, 1, 1);
+				fg.startCapture();
+				while(count++<200)
+					fg.getFrame();
+				fg.stopCapture();
+				vd.releaseFrameGrabber();	
+			} catch (V4L4JException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				vd = new VideoDevice("/dev/video0");
+				vd.getControlList();
+				fg = vd.getYVUFrameGrabber(640, 480, 1, 1);
 				fg.startCapture();
 				while(count++<200)
 					fg.getFrame();
