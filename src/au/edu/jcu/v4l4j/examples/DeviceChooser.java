@@ -18,6 +18,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.Spring;
 import javax.swing.SpringLayout;
+import javax.swing.SwingUtilities;
 
 import au.edu.jcu.v4l4j.DeviceInfo;
 import au.edu.jcu.v4l4j.ImageFormat;
@@ -104,22 +105,37 @@ public class DeviceChooser implements ActionListener{
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		String dev = (String)deviceFiles.getSelectedItem();
-		System.out.println("Selected: "+dev);
-		if(info!=null)
+
+		if(info!=null){
+			info.close();
 			mainPanel.remove(info.getPanel());
+		}
+		
 		try {
 			info = new DeviceInfoPane(dev, this);
 		} catch (V4L4JException e1) {
 			e1.printStackTrace();
 			return;
 		}
+		//info.getPanel().setBorder(BorderFactory.createLineBorder(Color.RED, 2));
+		
 		mainPanel.add(info.getPanel());
 		mainPanel.validate();
 		mainPanel.repaint();
 	}
 
-	public static void main(String[] args){
-		new DeviceChooser(null);
+	public static void main(final String[] args){
+		SwingUtilities.invokeLater(new Runnable(){
+
+			@Override
+			public void run() {
+				if(args.length==1)
+					new DeviceChooser(args[0]);
+				else
+					new DeviceChooser(null);
+			}
+			
+		});
 	}
 	
 	public void close(){
@@ -129,6 +145,7 @@ public class DeviceChooser implements ActionListener{
 	public static class DeviceInfoPane implements ActionListener{
 		private static String RGB_BUTTON_STR="Run RGB viewer";
 		private static String JPEG_BUTTON_STR="Run JPEG viewer";
+		private static String CTRL_ONLY_STR="Run control-only viewer";
 		private JPanel mainPane, dataPane, buttonPane;
 		private JLabel name, nativeFmt, JPEGEncFmts, RGBEncFmts, BGREncFmts,
 				YUVEncFmts, YVUEncFmts, input, inputType, tunerType, standard;
@@ -137,16 +154,22 @@ public class DeviceChooser implements ActionListener{
 				BGREncFmtsValues, YUVEncFmtsValues, YVUEncFmtsValues;
 		private JComboBox inputs, standards;
 		private DeviceInfo di;
+		private VideoDevice vd;
 		private JButton rgbView, jpegView;
 		private DeviceChooser chooser;
 		
 		
-		public DeviceInfoPane(String dev, DeviceChooser c) throws V4L4JException{
+		public DeviceInfoPane(String d, DeviceChooser c) throws V4L4JException{
 			chooser = c;
 			String tmp ="";
-			VideoDevice vd = new VideoDevice(dev);
-			di = vd.getDeviceInfo();
-			vd.release();
+			vd = new VideoDevice(d);
+			try {
+				di = vd.getDeviceInfo();
+			} catch (V4L4JException e){
+				di = null;
+				initControlsOnly();
+				return;
+			}
 			
 			mainPane = new JPanel();
 			dataPane = new JPanel();
@@ -210,6 +233,17 @@ public class DeviceChooser implements ActionListener{
 			jpegView.addActionListener(this);
 			
 			initGUI();
+		}
+		
+		private void initControlsOnly(){
+			mainPane = new JPanel();
+			mainPane.setLayout(new BoxLayout(mainPane, BoxLayout.PAGE_AXIS));
+			name = new JLabel("Unable to get device information");
+			rgbView = new JButton(CTRL_ONLY_STR);
+			rgbView.addActionListener(this);
+			mainPane.add(name);
+			mainPane.add(rgbView);
+			
 		}
 		
 		private void initGUI(){
@@ -408,33 +442,42 @@ public class DeviceChooser implements ActionListener{
 			} else if(e.getSource() instanceof JButton){
 				JButton b = (JButton) e.getSource();
 				chooser.close();
-				int std=0, channel=0;
-				if(((String)standards.getSelectedItem()).equals("PAL"))
-					std = V4L4JConstants.STANDARD_PAL;
-				else if(((String)standards.getSelectedItem()).equals("NTSC"))
-					std = V4L4JConstants.STANDARD_NTSC;
-				else if(((String)standards.getSelectedItem()).equals("SECAM"))
-					std = V4L4JConstants.STANDARD_SECAM;
-				else if(((String)standards.getSelectedItem()).equals("WEBCAM"))
-					std = V4L4JConstants.STANDARD_WEBCAM;
 				
-				for(InputInfo i: di.getInputs())
-					if(i.getName().equals((String) inputs.getSelectedItem()))
-							channel = i.getIndex();
-
-				if(b.getText().indexOf(RGB_BUTTON_STR)!=-1){
-					try {
-						new RGBViewer(di.getDeviceFile(), 640,480,std, channel);
-					} catch (V4L4JException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-				} else {
-					try {
-						new JPEGViewer(di.getDeviceFile(), 640,480,std, channel, 80);
-					} catch (V4L4JException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
+				//catch ctrl-only stuff
+				if(b.getText().equals(CTRL_ONLY_STR))
+						new ControlViewer(vd);
+				else{
+					
+					int std=0, channel=0;
+					if(((String)standards.getSelectedItem()).equals("PAL"))
+						std = V4L4JConstants.STANDARD_PAL;
+					else if(((String)standards.getSelectedItem()).equals("NTSC"))
+						std = V4L4JConstants.STANDARD_NTSC;
+					else if(((String)standards.getSelectedItem()).equals("SECAM"))
+						std = V4L4JConstants.STANDARD_SECAM;
+					else if(((String)standards.getSelectedItem()).equals("WEBCAM"))
+						std = V4L4JConstants.STANDARD_WEBCAM;
+					
+					for(InputInfo i: di.getInputs())
+						if(i.getName().equals((String) inputs.getSelectedItem()))
+								channel = i.getIndex();
+	
+					if(b.getText().indexOf(RGB_BUTTON_STR)!=-1){
+						try {
+							new RGBViewer(vd, 640,480,std, 
+									channel);
+						} catch (V4L4JException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+					} else {
+						try {
+							new JPEGViewer(vd, 640,480,std, 
+									channel, 80);
+						} catch (V4L4JException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
 					}
 				}
 			}
@@ -442,6 +485,10 @@ public class DeviceChooser implements ActionListener{
 		
 		public JPanel getPanel(){
 			return mainPane;
+		}
+		
+		public void close(){
+			vd.release();
 		}
 	}
 }

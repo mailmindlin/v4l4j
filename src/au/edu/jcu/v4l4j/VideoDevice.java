@@ -71,7 +71,11 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * <li>Details about available tuners (type, frequency range & unit, ...) </li>
  * <li>List of image formats supported by the device</li>
  * </ul>
- * See the {@link DeviceInfo} class for an example on how to use it.
+ * See the {@link DeviceInfo} class for an example on how to use it. Note that
+ * most video device drivers do not allow multiple processes to open the device
+ * at the same time. Depending on the driver, this restriction can be seen in
+ * different ways. One of them is {@link #getDeviceInfo()} will throw a
+ * {@link V4L4JException} if a process is already using the device.
  * <h2>Capturing frames</h2>
  * In order to capture frames from a video device, an instance of a 
  * <code>FrameGrabber</code> object must be obtained. The 
@@ -252,25 +256,39 @@ public class VideoDevice {
 
 		state = new State();		
 		deviceFile = dev;
+		v4l4jObject = doInit(deviceFile);
 		
-		init();
+		try {
+			initDeviceInfo();
+		} catch (V4L4JException e){
+			//error getting DeviceInfo
+			//keep going but set things accordingly
+			deviceInfo = null;
+			
+			supportJPEG = false;
+			supportRGB24 = false;
+			supportBGR24 = false;
+			supportYUV420 = false;
+			supportYVU420 = false;
+		}
 	}
 	
 	/**
-	 * This method initialises this VideoDevice. This method must be called 
+	 * This method initialises this VideoDevice with the information obtained 
+	 * from the {@link DeviceInfo}. This method must be called 
 	 * before any other methods.
 	 * @throws V4L4JException if the device can not be initialised
 	 */
-	private void init() throws V4L4JException{		
-		v4l4jObject = doInit(deviceFile);
+	private void initDeviceInfo() throws V4L4JException{		
 		//initialise deviceInfo
 		deviceInfo = new DeviceInfo(v4l4jObject, deviceFile);
+		ImageFormatList l = deviceInfo.getFormatList();
 		
-		supportJPEG = deviceInfo.getFormatList().getJPEGEncodableFormats().size()==0?false:true;
-		supportRGB24 = deviceInfo.getFormatList().getRGBEncodableFormats().size()==0?false:true;
-		supportBGR24 = deviceInfo.getFormatList().getBGREncodableFormats().size()==0?false:true;
-		supportYUV420 = deviceInfo.getFormatList().getYUVEncodableFormats().size()==0?false:true;
-		supportYVU420 = deviceInfo.getFormatList().getYVUEncodableFormats().size()==0?false:true;
+		supportJPEG = l.getJPEGEncodableFormats().size()==0?false:true;
+		supportRGB24 = l.getRGBEncodableFormats().size()==0?false:true;
+		supportBGR24 = l.getBGREncodableFormats().size()==0?false:true;
+		supportYUV420 = l.getYUVEncodableFormats().size()==0?false:true;
+		supportYVU420 = l.getYVUEncodableFormats().size()==0?false:true;
 		
 		//initialise TunerList
 		Vector<Tuner> v= new Vector<Tuner>();
@@ -333,10 +351,25 @@ public class VideoDevice {
 	 * In other word, the returned {@link DeviceInfo} object does not need to be
 	 * released before releasing the {@link VideoDevice}.
 	 * @return a <code>DeviceInfo</code> object describing this video device.
+	 * @throws V4L4JException if there was an error gathering information
+	 * about the video device. This happens for example, when another 
+	 * application is currently using the device. 
 	 * @see DeviceInfo
 	 */
-	public DeviceInfo getDeviceInfo(){
-		return deviceInfo;		
+	public DeviceInfo getDeviceInfo() throws V4L4JException{
+		if(deviceInfo!=null)
+			return deviceInfo;
+		
+		throw new V4L4JException("Error getting information about device");
+	}
+	
+	/**
+	 * This method returns the full path to the device file associated with this
+	 * video device.
+	 * @return the full path to the device file
+	 */
+	public String getDevicefile() {
+		return deviceFile;
 	}
 	
 	/**
@@ -537,24 +570,25 @@ public class VideoDevice {
 	 */
 	public JPEGFrameGrabber getJPEGFrameGrabber(int w, int h, int input, 
 			int std, int q, ImageFormat imf) throws V4L4JException{
-		if(!supportJPEG)
+		if(!supportJPEG || deviceInfo==null)
 			throw new ImageFormatException("This video device does not support "
 					+"JPEG-encoding of its frames.");
 		
-		if(imf!=null && 
-			!deviceInfo.getFormatList().getJPEGEncodableFormats().contains(imf))
+		if(imf!=null){
+			if(!deviceInfo.getFormatList().
+					getJPEGEncodableFormats().contains(imf))
 			
-			throw new ImageFormatException("The image format "+imf.getName()+
-					" cannot be JPEG encoded.");
-		
-		//if imf is null, pick the first format that can be rgb encoded
-		//the list returned by getJPEGEncodableFormats() is sorted by best 
-		//format first, and if we re here, we know there is at least one 
-		//format in there
-		if(imf==null)
+				throw new ImageFormatException(
+						"The image format "+imf.getName()+" cannot be JPEG "
+						+"encoded.");
+		} else 
+			//if imf is null, pick the first format that can be rgb encoded
+			//the list returned by getJPEGEncodableFormats() is sorted by best 
+			//format first, and if we re here, we know there is at least one 
+			//format in there
 			imf = deviceInfo.getFormatList().getJPEGEncodableFormats().get(0);
-		
-		
+	
+
 		synchronized(this){
 			if(fg==null) {
 				state.get();
@@ -690,21 +724,21 @@ public class VideoDevice {
 	public RGBFrameGrabber getRGBFrameGrabber(int w, int h, int input, int std,
 			ImageFormat imf) throws V4L4JException{
 		
-		if(!supportRGB24)
+		if(!supportRGB24 || deviceInfo==null)
 			throw new ImageFormatException("This video device does not support "
 					+"RGB-encoding of its frames.");
 		
-		if(imf!=null && 
-				!deviceInfo.getFormatList().
-				getRGBEncodableFormats().contains(imf))
-			throw new ImageFormatException("The image format "+imf.getName()+
-					" cannot be converted to RGB24");
-		
-		//if imf is null, pick the first format that can be rgb encoded
-		//the list returned by getRGBEncodableFormats() is sorted by best 
-		//format first, and if we re here, we know there is at least one 
-		//format in there
-		if(imf==null)
+		if(imf!=null){
+			if(!deviceInfo.getFormatList().
+					getRGBEncodableFormats().contains(imf))
+				throw new ImageFormatException(
+						"The image format "+imf.getName()+
+						" cannot be converted to RGB24");
+		} else
+			//if imf is null, pick the first format that can be rgb encoded
+			//the list returned by getRGBEncodableFormats() is sorted by best 
+			//format first, and if we re here, we know there is at least one 
+			//format in there
 			imf = deviceInfo.getFormatList().getRGBEncodableFormats().get(0);
 	
 		
@@ -839,21 +873,20 @@ public class VideoDevice {
 	 */
 	public BGRFrameGrabber getBGRFrameGrabber(int w, int h, int input, int std, 
 			ImageFormat imf) throws V4L4JException{
-		if(!supportBGR24)
+		if(!supportBGR24 || deviceInfo==null)
 			throw new ImageFormatException("This video device does not support "
 					+"BGR-encoding of its frames.");
 		
-		if(imf!=null && 
-				!deviceInfo.getFormatList().
+		if(imf!=null){
+				if(!deviceInfo.getFormatList().
 				getBGREncodableFormats().contains(imf))
 			throw new ImageFormatException("The image format "+imf.getName()+
 					" cannot be converted to BGR24");
-		
-		//if imf is null, pick the first format that can be rgb encoded
-		//the list returned by getBGREncodableFormats() is sorted by best 
-		//format first, and if we re here, we know there is at least one 
-		//format in there
-		if(imf==null)
+		} else
+			//if imf is null, pick the first format that can be rgb encoded
+			//the list returned by getBGREncodableFormats() is sorted by best 
+			//format first, and if we re here, we know there is at least one 
+			//format in there
 			imf = deviceInfo.getFormatList().getBGREncodableFormats().get(0);
 		
 		synchronized(this){
@@ -988,21 +1021,21 @@ public class VideoDevice {
 	 */
 	public YUVFrameGrabber getYUVFrameGrabber(int w, int h, int input, int std, 
 			ImageFormat imf) throws V4L4JException{
-		if(!supportYUV420)
+		if(!supportYUV420 || deviceInfo==null)
 			throw new ImageFormatException("This video device does not support "
 					+"YUV-encoding of its frames.");
 		
-		if(imf!=null && 
-				!deviceInfo.getFormatList().
-				getYUVEncodableFormats().contains(imf))
-			throw new ImageFormatException("The image format "+imf.getName()+
-					" cannot be converted to YUV420");
-		
-		//if imf is null, pick the first format that can be rgb encoded
-		//the list returned by getYUVEncodableFormats() is sorted by best 
-		//format first, and if we re here, we know there is at least one 
-		//format in there
-		if(imf==null)
+		if(imf!=null){ 
+				if(!deviceInfo.getFormatList().
+						getYUVEncodableFormats().contains(imf))
+					throw new ImageFormatException(
+							"The image format "+imf.getName()+
+							" cannot be converted to YUV420");
+		} else 
+			//if imf is null, pick the first format that can be rgb encoded
+			//the list returned by getYUVEncodableFormats() is sorted by best 
+			//format first, and if we re here, we know there is at least one 
+			//format in there
 			imf = deviceInfo.getFormatList().getYUVEncodableFormats().get(0);
 		
 		synchronized(this){
@@ -1137,22 +1170,22 @@ public class VideoDevice {
 	 */
 	public YVUFrameGrabber getYVUFrameGrabber(int w, int h, int input, int std, 
 			ImageFormat imf) throws V4L4JException{
-		if(!supportYVU420)
+		if(!supportYVU420 || deviceInfo==null)
 			throw new ImageFormatException("This video device does not support "
 					+"YVU-encoding of its frames.");
 		
-		if(imf!=null && 
-				!deviceInfo.getFormatList().
-				getYVUEncodableFormats().contains(imf))
-			throw new ImageFormatException("The image format "+imf.getName()+
-					" cannot be converted to YVU420");
-		
-		//if imf is null, pick the first format that can be rgb encoded
-		//the list returned by getYVUEncodableFormats() is sorted by best 
-		//format first, and if we re here, we know there is at least one 
-		//format in there
-		if(imf==null)
+		if(imf!=null){			
+			if(!deviceInfo.getFormatList().
+					getYVUEncodableFormats().contains(imf))
+				throw new ImageFormatException("The image format "
+						+imf.getName()+" cannot be converted to YVU420");
+		} else {		
+			//if imf is null, pick the first format that can be rgb encoded
+			//the list returned by getYVUEncodableFormats() is sorted by best 
+			//format first, and if we re here, we know there is at least one 
+			//format in there
 			imf = deviceInfo.getFormatList().getYVUEncodableFormats().get(0);
+		}
 		
 		synchronized(this){
 			if(fg==null) {
@@ -1334,12 +1367,17 @@ public class VideoDevice {
 	 * supported.
 	 * @throws InitialisationException if the video device file can not be 
 	 * initialised.
+	 * @throws ImageFormatException if no image format could be found because
+	 * the {@link DeviceInfo} object could not be obtained.
 	 * @throws V4L4JException if there is an error applying capture parameters
 	 * @throws StateException if a <code>FrameGrabber</code> already exists or 
 	 * if the <code>VideoDevice</code> has been released.
 	 */
 	public FrameGrabber getRawFrameGrabber(int w, int h, int input, int std) 
 			throws V4L4JException{
+		if(deviceInfo==null)
+			throw new ImageFormatException("No DeviceInfo could be obtained & "
+					+"no image format could be found");
 		return getRawFrameGrabber(w, h, input, std, 
 				deviceInfo.getFormatList().getNativeFormats().get(0));
 	}
@@ -1392,13 +1430,15 @@ public class VideoDevice {
 	
 	
 	private Tuner findTuner(int input){
-		for(InputInfo i: deviceInfo.getInputs())
-			if(i.getIndex() == input && i.hasTuner())
-				try {
-					return tuners.getTuner(i.getTunerInfo().getIndex());
-				} catch (NoTunerException e) {
-					//weird, shoudlnt be here
-				}
+		if(deviceInfo!=null) {
+			for(InputInfo i: deviceInfo.getInputs())
+				if(i.getIndex() == input && i.hasTuner())
+					try {
+						return tuners.getTuner(i.getTunerInfo().getIndex());
+					} catch (NoTunerException e) {
+						//weird, shoudlnt be here
+					}
+		}
 		
 		return null;
 

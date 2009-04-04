@@ -25,6 +25,8 @@
 package au.edu.jcu.v4l4j.examples;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Vector;
 
 import javax.swing.JOptionPane;
 
@@ -50,7 +52,7 @@ public class JPEGViewer implements ImageProcessor{
 	
 	/**
 	 * Builds a WebcamViewer object
-	 * @param dev the video device file to capture from
+	 * @param v the video device 
 	 * @param w the desired capture width
 	 * @param h the desired capture height
 	 * @param s the capture standard
@@ -59,27 +61,24 @@ public class JPEGViewer implements ImageProcessor{
 	 * @throws V4L4JException if any parameter if invalid,  or if the video device 
 	 * does not support an image format that can be converted to JPEG
 	 */
-    public JPEGViewer(String dev, int w, int h, int s, int c, int q) 
+    public JPEGViewer(VideoDevice v, int w, int h, int s, int c, int q) 
     	throws V4L4JException{
-    	viewer = new VideoViewer(dev, this);
-    	vd = viewer.getVideoDevice();
+    	viewer = new VideoViewer(v, this);
+    	vd = v;
+    	List<ImageFormat> fmts;
 
 		if(!vd.supportJPEGConversion()){
 			String msg = "Image from this video device cannot be converted\n"
-				+ "to JPEG. Please submit a bug report about this,\n"
+				+ "to JPEG. If no other application is currently using\n"
+				+ "the device, please submit a bug report about this issue,\n"
 				+"so support for your device can be added to v4l4j.\n"
 				+"See README file in the v4l4j/ directory for directions.";
 			JOptionPane.showMessageDialog(null, msg);
-			throw new V4L4JException(msg);
-		}
+			fmts=new Vector<ImageFormat>();
+		} else
+			fmts = vd.getDeviceInfo().getFormatList().getJPEGEncodableFormats();
     	
-		viewer.initGUI(
-				vd.getDeviceInfo().getFormatList()
-					.getJPEGEncodableFormats().toArray(), 
-				w,
-				h,
-				"JPEG"
-				);
+		viewer.initGUI(fmts.toArray(),w,h,"JPEG");
 		
 		width = w;
 		height = h;
@@ -133,6 +132,6 @@ public class JPEGViewer implements ImageProcessor{
 			channel = 0;
 		}
 		
-		new JPEGViewer(dev,w,h,std,channel,80);
+		new JPEGViewer(new VideoDevice(dev),w,h,std,channel,80);
 	}
 }

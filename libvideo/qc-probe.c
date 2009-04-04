@@ -48,7 +48,7 @@ int qc_driver_probe(struct video_device *vdev, void **data){
 	int i=-1;
 	struct qc_userlut default_ulut, our_ulut, check_ulut;
 
-	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: probing Quickam\n");
+	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "QC: probing Quickam\n");
 	/*
 	 * Probing qc ....
 	 * qc has many private ioctls: among them, VIDIOCQCGCOMPATIBLE and VIDIOCQCSCOMPATIBLE set
@@ -64,7 +64,7 @@ int qc_driver_probe(struct video_device *vdev, void **data){
 	default_ulut.flags |= QC_USERLUT_DEFAULT;
 	if(ioctl(vdev->fd, VIDIOCQCGUSERLUT, &default_ulut)!=0)
 		goto end;
-	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "..\n");
+	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "..\n");
 
 	//create a fake ulut
 	while(++i<QC_LUT_SIZE){
@@ -78,20 +78,20 @@ int qc_driver_probe(struct video_device *vdev, void **data){
 	our_ulut.flags |= QC_USERLUT_DEFAULT;
 	if(ioctl(vdev->fd, VIDIOCQCSUSERLUT, &our_ulut)!=0)
 		goto end;
-	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, ".. ..\n");
+	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, ".. ..\n");
 
 	//read it back and check it
 	check_ulut.flags |= QC_USERLUT_VALUES;
 	check_ulut.flags |= QC_USERLUT_DEFAULT;
 	if(ioctl(vdev->fd, VIDIOCQCGUSERLUT, &check_ulut)!=0)
 		goto end;
-	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, ".. .. ..\n");
+	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, ".. .. ..\n");
 
 	i=0;
 	while(++i<QC_LUT_SIZE)
 		if(check_ulut.lut[i]!=our_ulut.lut[i])
 			goto end;
-	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, ".. .. .. ..\n");
+	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, ".. .. .. ..\n");
 
 	//put default back
 	default_ulut.flags |= QC_USERLUT_VALUES;
@@ -100,14 +100,14 @@ int qc_driver_probe(struct video_device *vdev, void **data){
 		goto end;
 
 	//do we need more checks ?
-	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: found QC driver (%d controls)\n", NB_PRIV_IOCTL);
+	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "QC: found QC driver (%d controls)\n", NB_PRIV_IOCTL);
 	XMALLOC(priv, struct qc_probe_private *, sizeof(struct qc_probe_private ));
 	*data = (void *)priv;
 	priv->ok = 1;
 	return NB_PRIV_IOCTL;
 
 end:
-	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "QC: not found\n");
+	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "QC: not found\n");
 	return -1;
 }
 
@@ -135,7 +135,7 @@ int qc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, in
 				ret = 0;
 			break;
 		default:
-			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "QC: Cant identify control %d\n",q->id);
+			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "QC: Cant identify control %d\n",q->id);
 	}
 	return ret;
 }
@@ -179,7 +179,7 @@ int qc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val, v
 				*val = prev;
 			break;
 		default:
-			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "QC: Cant identify control %d\n",q->id);
+			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "QC: Cant identify control %d\n",q->id);
 	}
 
 	return ret;
@@ -191,7 +191,7 @@ int qc_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 	if(priv->ok==1) {
 
 		//
-		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: Found quickcam private ioctl Brightness Settle\n");
+		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "QC: Found quickcam private ioctl Brightness Settle\n");
 		c[i].v4l2_ctrl->id=i;
 		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
 		strcpy((char *) c[i].v4l2_ctrl->name,"Brightness Settle");
@@ -203,7 +203,7 @@ int qc_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 		c[i].v4l2_ctrl->reserved[1]=QC_PROBE_INDEX;
 		i++;
 
-		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: Found quickcam private ioctl Compression mode\n");
+		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "QC: Found quickcam private ioctl Compression mode\n");
 		c[i].v4l2_ctrl->id=i;
 		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
 		strcpy((char *) c[i].v4l2_ctrl->name,"Compression");
@@ -215,7 +215,7 @@ int qc_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 		c[i].v4l2_ctrl->reserved[1]=QC_PROBE_INDEX;
 		i++;
 
-		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: Found quickcam private ioctl Interpolation\n");
+		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "QC: Found quickcam private ioctl Interpolation\n");
 		c[i].v4l2_ctrl->id=i;
 		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
 		strcpy((char *) c[i].v4l2_ctrl->name,"Interpolation");
@@ -227,7 +227,7 @@ int qc_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 		c[i].v4l2_ctrl->reserved[1]=QC_PROBE_INDEX;
 		i++;
 
-		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: Found quickcam private ioctl Auto Brightness\n");
+		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "QC: Found quickcam private ioctl Auto Brightness\n");
 		c[i].v4l2_ctrl->id=i;
 		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
 		strcpy((char *) c[i].v4l2_ctrl->name,"Auto Brightness");
@@ -239,7 +239,7 @@ int qc_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 		c[i].v4l2_ctrl->reserved[1]=QC_PROBE_INDEX;
 		i++;
 
-		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: Found quickcam private ioctl Equalise image\n");
+		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "QC: Found quickcam private ioctl Equalise image\n");
 		c[i].v4l2_ctrl->id=i;
 		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
 		strcpy((char *) c[i].v4l2_ctrl->name,"Equalise image");
@@ -251,7 +251,7 @@ int qc_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 		c[i].v4l2_ctrl->reserved[1]=QC_PROBE_INDEX;
 		i++;
 	} else{
-			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "QC: QC not found\n");
+			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "QC: QC not found\n");
 	}
 	return i;
 }
