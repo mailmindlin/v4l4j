@@ -28,13 +28,13 @@
 #define CLEAR(x) memset(&x, 0x0, sizeof(x));
 
 #define LOG_CALLS			1
-#define LOG_LIBV4L			2
+#define LOG_LIBVIDEO		2
 #define LOG_MEMALLOC		4
 #define LOG_JPEG			8
 #define LOG_RGB				16
 #define LOG_V4L4J			32
 
-#define LOG_ALL 			( LOG_CALLS | LOG_LIBV4L |\
+#define LOG_ALL 			( LOG_CALLS | LOG_LIBVIDEO |\
 								LOG_MEMALLOC | LOG_JPEG |\
 								LOG_RGB | LOG_V4L4J)
 

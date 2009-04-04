@@ -38,7 +38,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_Control_doGetValue(JNIEnv *e, jobje
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 	int val = 0, ret;
 
-	dprint(LOG_LIBV4L, "[LIBV4L] Calling get_control_value(dev: %s, ctrl name:%s)\n", d->vdev->file,d->vdev->control->controls[id].v4l2_ctrl->name);
+	dprint(LOG_LIBVIDEO, "[LIBV4L] Calling get_control_value(dev: %s, ctrl name:%s)\n", d->vdev->file,d->vdev->control->controls[id].v4l2_ctrl->name);
 	ret = get_control_value(d->vdev,d->vdev->control->controls[id].v4l2_ctrl, &val);
 
 	if(ret != 0) {
@@ -59,7 +59,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_Control_doSetValue(JNIEnv *e, jobje
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
-	dprint(LOG_LIBV4L, "[LIBV4L] Calling set_control_value(dev: %s, ctrl name:%s, val: %d)\n", d->vdev->file,d->vdev->control->controls[id].v4l2_ctrl->name,value);
+	dprint(LOG_LIBVIDEO, "[LIBV4L] Calling set_control_value(dev: %s, ctrl name:%s, val: %d)\n", d->vdev->file,d->vdev->control->controls[id].v4l2_ctrl->name,value);
 	ret = set_control_value(d->vdev, d->vdev->control->controls[id].v4l2_ctrl, &v);
 	if(ret != 0) {
 		if(ret == LIBV4L_ERR_OUT_OF_RANGE){

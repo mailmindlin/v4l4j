@@ -39,7 +39,7 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doInit(JNIEnv *e, jobj
 	XMALLOC(d, struct v4l4j_device *, sizeof(struct v4l4j_device));
 
 	const char * device_file = (*e)->GetStringUTFChars(e, dev, 0);
-	dprint(LOG_LIBV4L, "[LIBV4L] Calling open_device()\n");
+	dprint(LOG_LIBVIDEO, "[LIBV4L] Calling open_device()\n");
 	d->vdev = open_device((char *)device_file);
 	(*e)->ReleaseStringUTFChars(e, dev,device_file);
 
@@ -61,13 +61,13 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doRelease(JNIEnv *e, jo
 
 	if ((ret = close_device(d->vdev)) !=0 ) {
 		if (ret== LIBV4L_ERR_CAPTURE_IN_USE){
-			dprint(LOG_LIBV4L, "[V4L4J] Error closing video_device - capture in progress\n");
+			dprint(LOG_LIBVIDEO, "[V4L4J] Error closing video_device - capture in progress\n");
 			THROW_EXCEPTION(e, RELEASE_EXCP, "Error closing video device, capture in progress");
 		} else if (ret == LIBV4L_ERR_INFO_IN_USE){
-			dprint(LOG_LIBV4L, "[V4L4J] Error closing video_device - DeviceInfo not released\n");
+			dprint(LOG_LIBVIDEO, "[V4L4J] Error closing video_device - DeviceInfo not released\n");
 			THROW_EXCEPTION(e, RELEASE_EXCP, "Error closing video device, DeviceInfo in use");
 		} else if (ret == LIBV4L_ERR_CONTROL_IN_USE){
-			dprint(LOG_LIBV4L, "[V4L4J] Error closing video_device - ControlList not released\n");
+			dprint(LOG_LIBVIDEO, "[V4L4J] Error closing video_device - ControlList not released\n");
 			THROW_EXCEPTION(e, RELEASE_EXCP, "Error closing video device, ControlList in use");
 		}
 		return;
@@ -182,7 +182,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doGetControlLis
 	jobject element;
 	int i, type;
 
-	dprint(LOG_LIBV4L, "[LIBV4L] Calling get_control_list()\n");
+	dprint(LOG_LIBVIDEO, "[LIBV4L] Calling get_control_list()\n");
 	l = get_control_list(d->vdev);
 
 	//Creates the java objects matching v4l2 controls
@@ -255,7 +255,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doReleaseControlList(JN
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
 
-	dprint(LOG_LIBV4L, "[LIBV4L] Calling release_control_list()\n");
+	dprint(LOG_LIBVIDEO, "[LIBV4L] Calling release_control_list()\n");
 	release_control_list(d->vdev);
 }
 
@@ -263,7 +263,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doGetTunerActions(JNIEn
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
 
-	dprint(LOG_LIBV4L, "[LIBV4L] Calling get_tuner_actions()\n");
+	dprint(LOG_LIBVIDEO, "[LIBV4L] Calling get_tuner_actions()\n");
 	get_tuner_actions(d->vdev);
 }
 
@@ -271,7 +271,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doReleaseTunerActions(J
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
 
-	dprint(LOG_LIBV4L, "[LIBV4L] Calling release_tuner_actions()\n");
+	dprint(LOG_LIBVIDEO, "[LIBV4L] Calling release_tuner_actions()\n");
 	release_tuner_actions(d->vdev);
 }
 

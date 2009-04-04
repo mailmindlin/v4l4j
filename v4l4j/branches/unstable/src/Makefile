@@ -24,7 +24,8 @@ JDK_HOME=/usr/lib/jvm/java-6-sun
 ifneq ($(V4L4J_LOG_SOURCE),)
 LSRC=$(V4L4J_LOG_SOURCE)
 else
-LSRC=38
+#LSRC=38
+LSRC=63
 endif
 
 ifneq ($(DEBUG),)

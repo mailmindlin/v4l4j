@@ -118,11 +118,11 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 		}
 
 		dprint(LOG_V4L4J, "[V4L4J] Setting format field to '%s' image format\n",
-				libv4l_palettes[d->vdev->capture->palette].name);
+				libvideo_palettes[d->vdev->capture->palette].name);
 		obj = (*e)->NewObject(e, format_class, format_ctor,
 						(*e)->NewStringUTF(e,
 								(const char *)
-								libv4l_palettes[d->vdev->capture->palette].name
+								libvideo_palettes[d->vdev->capture->palette].name
 								),
 						d->vdev->capture->palette);
 		(*e)->SetObjectField(e, this, field, obj);
@@ -216,7 +216,7 @@ static int init_format_converter(struct v4l4j_device *d){
 			}
 		}
 	} else {
-		dprint(LOG_LIBV4L, "[V4L4J] no conversion done by v4l4j - raw copy\n");
+		dprint(LOG_LIBVIDEO, "[V4L4J] no conversion done by v4l4j - raw copy\n");
 		d->len = get_buffer_length(d);
 		d->convert = raw_copy;
 	}
@@ -245,20 +245,20 @@ static int init_capture_format(struct v4l4j_device *d, int output, int input){
 	int ret=-1, i;
 	int rgb_conv_formats[] = RGB24_CONVERTIBLE_FORMATS;
 
-	dprint(LOG_LIBV4L, "[V4L4J] Setting output to %s - input format: %s\n",
+	dprint(LOG_LIBVIDEO, "[V4L4J] Setting output to %s - input format: %s\n",
 						output==OUTPUT_RAW?"RAW":
 						output==OUTPUT_JPG?"JPEG":
 						output==OUTPUT_RGB24?"RGB24":
 						output==OUTPUT_BGR24?"BGR24":
 						output==OUTPUT_YUV420?"YUV420":
 						output==OUTPUT_YVU420?"YVU420":"UNKNOWN",
-						libv4l_palettes[input].name);
+						libvideo_palettes[input].name);
 
 	//check if libvideo does the conv
 	switch(output){
 	case OUTPUT_JPG:
 		//for JPEG, v4l4j always does the conv
-		dprint(LOG_LIBV4L,
+		dprint(LOG_LIBVIDEO,
 				"[V4L4J] JPEG conversion done by v4l4j\n");
 		ret=input;
 		d->need_conv=1;
@@ -269,14 +269,14 @@ static int init_capture_format(struct v4l4j_device *d, int output, int input){
 		for(i=0; i<ARRAY_SIZE(rgb_conv_formats);i++){
 			if(rgb_conv_formats[i]==input){
 				//we do it
-				dprint(LOG_LIBV4L,
+				dprint(LOG_LIBVIDEO,
 						"[V4L4J] RGB24 conversion done by v4l4j\n");
 				d->need_conv=1;
 				return input;
 			}
 		}
 		//libvideo does it
-		dprint(LOG_LIBV4L,
+		dprint(LOG_LIBVIDEO,
 				"[V4L4J] RGB24 conversion done by libvideo\n");
 		ret=RGB24;
 		d->need_conv=0;
@@ -284,7 +284,7 @@ static int init_capture_format(struct v4l4j_device *d, int output, int input){
 
 	case OUTPUT_RAW:
 		ret=input;
-		dprint(LOG_LIBV4L,
+		dprint(LOG_LIBVIDEO,
 				"[V4L4J] raw format - no conversion\n");
 		d->need_conv=0;
 		break;
@@ -292,20 +292,20 @@ static int init_capture_format(struct v4l4j_device *d, int output, int input){
 		//for all other output formats,
 		//let libvideo handle it
 	case OUTPUT_BGR24:
-		dprint(LOG_LIBV4L,
+		dprint(LOG_LIBVIDEO,
 				"[V4L4J] BGR24 conversion done by libvideo\n");
 		ret=BGR24;
 		d->need_conv=0;
 		break;
 	case OUTPUT_YUV420:
 		ret=YUV420;
-		dprint(LOG_LIBV4L,
+		dprint(LOG_LIBVIDEO,
 				"[V4L4J] YUV420 conversion done by libvideo\n");
 		d->need_conv=0;
 		break;
 	case OUTPUT_YVU420:
 		ret=YVU420;
-		dprint(LOG_LIBV4L,
+		dprint(LOG_LIBVIDEO,
 				"[V4L4J] YVU420 conversion done by libvideo\n");
 		d->need_conv=0;
 		break;
@@ -339,7 +339,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(
 	/*
 	 * i n i t _ c a p t u r e _ d e v i c e ( )
 	 */
-	dprint(LOG_LIBV4L, "[LIBV4L] Calling init_capture_device()\n");
+	dprint(LOG_LIBVIDEO, "[LIBV4L] Calling init_capture_device()\n");
 	c = init_capture_device(d->vdev, w,h,ch,std,n);
 
 	if(c==NULL) {
@@ -361,10 +361,10 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(
 		return 0;
 	}
 
-	dprint(LOG_LIBV4L, "[V4L4J] input format: %s\n",
-						libv4l_palettes[fmts].name);
+	dprint(LOG_LIBVIDEO, "[V4L4J] input format: %s\n",
+						libvideo_palettes[fmts].name);
 
-	dprint(LOG_LIBV4L, "[LIBV4L] calling 'set_cap_param'\n");
+	dprint(LOG_LIBVIDEO, "[LIBV4L] calling 'set_cap_param'\n");
 	if((i=(*c->actions->set_cap_param)(d->vdev, &fmts, 1))!=0){
 		dprint(LOG_V4L4J, "[V4L4J] set_cap_param failed\n");
 		free_capture_device(d->vdev);
@@ -377,7 +377,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(
 					"The requested channel (%d) is invalid", c->channel);
 		else if(i==LIBV4L_ERR_FORMAT)
 			THROW_EXCEPTION(e, FORMAT_EXCP,
-					"Image format %s not supported", libv4l_palettes[fmt].name);
+					"Image format %s not supported", libvideo_palettes[fmt].name);
 		else if(i==LIBV4L_ERR_STD)
 			THROW_EXCEPTION(e, STD_EXCP,
 					"The requested standard (%d) is invalid", c->std);
@@ -392,7 +392,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(
 	/*
 	 * i n i t _ c a p t u r e ( )
 	 */
-	dprint(LOG_LIBV4L, "[LIBV4L] Calling 'init_capture(dev: %s)'\n",
+	dprint(LOG_LIBVIDEO, "[LIBV4L] Calling 'init_capture(dev: %s)'\n",
 			d->vdev->file);
 	if((i=(*c->actions->init_capture)(d->vdev))<0){
 		dprint(LOG_V4L4J, "[V4L4J] init_capture failed\n");
@@ -459,7 +459,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_start(
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
-	dprint(LOG_LIBV4L, "[LIBV4L] Calling 'start_capture(dev: %s)'\n",
+	dprint(LOG_LIBVIDEO, "[LIBV4L] Calling 'start_capture(dev: %s)'\n",
 			d->vdev->file);
 	if((*d->vdev->capture->actions->start_capture)(d->vdev)<0){
 		dprint(LOG_V4L4J, "[V4L4J] start_capture failed\n");
@@ -521,7 +521,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_stop(
 		JNIEnv *e, jobject t, jlong object){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
-	dprint(LOG_LIBV4L, "[LIBV4L] Calling stop_capture(dev: %s)\n",
+	dprint(LOG_LIBVIDEO, "[LIBV4L] Calling stop_capture(dev: %s)\n",
 			d->vdev->file);
 	if((*d->vdev->capture->actions->stop_capture)(d->vdev)<0) {
 		dprint(LOG_V4L4J, "Error stopping capture\n");

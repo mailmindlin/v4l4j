@@ -230,8 +230,8 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobje
 	}
 
 
-	dprint(LOG_LIBV4L, "[LIBV4L] call to get_device_info\n");
-	//get data from libv4l
+	dprint(LOG_LIBVIDEO, "[LIBVIDEO] call to get_device_info\n");
+	//get data from libvideo
 	if(get_device_info(vd)!=NULL){
 		//fill in values in DeviceInfo object
 		/* set the name field */
@@ -245,7 +245,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobje
 		dprint(LOG_V4L4J, "[V4L4J] Creating Format objects\n");
 		create_formats_object(e, t, this_class, d);
 
-		dprint(LOG_LIBV4L, "[LIBV4L] call to release_device_info\n");
+		dprint(LOG_LIBVIDEO, "[LIBVIDEO] call to release_device_info\n");
 		release_device_info(vd);
 	} else
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error getting information from video device");

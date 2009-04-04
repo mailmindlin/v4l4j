@@ -24,8 +24,8 @@
 package au.edu.jcu.v4l4j.exceptions;
 
 /**
- * Exceptions of this type are thrown when an JNI-related error occurs (unable to find a class
- * , unable to instantiate an object, ...) 
+ * Exceptions of this type are thrown when an JNI-related error occurs 
+ * (unable to find a class, unable to instantiate an object, ...) 
  * @author gilles
  *
  */

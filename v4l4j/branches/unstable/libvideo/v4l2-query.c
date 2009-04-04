@@ -38,8 +38,8 @@
 static int find_v4l2_palette(int v4l2_fmt){
 	int i = 0;
 
-	while(i<ARRAY_SIZE(libv4l_palettes)) {
-		if(libv4l_palettes[i].v4l2_palette == v4l2_fmt)
+	while(i<libvideo_palettes_size) {
+		if(libvideo_palettes[i].v4l2_palette == v4l2_fmt)
 			return i;
 		i++;
 	}
@@ -49,7 +49,7 @@ static int find_v4l2_palette(int v4l2_fmt){
 
 //this function adds the given palette fmt to the list of
 //supported palettes in struct device_info. It also
-//check with libv4l_convert if it is converted from another palette
+//checks with libv4l_convert if it is converted from another palette
 //it returns 0 if everything went fine, LIBV4L_ERR_IOCTL otherwise
 static int add_supported_palette(struct device_info *di, int fmt,
 		struct v4lconvert_data *conv){
@@ -67,13 +67,13 @@ static int add_supported_palette(struct device_info *di, int fmt,
 	//check if this format is the result of a conversion form another format
 	//by libv4l_convert
 	dst.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	dst.fmt.pix.pixelformat = libv4l_palettes[fmt].v4l2_palette;
+	dst.fmt.pix.pixelformat = libvideo_palettes[fmt].v4l2_palette;
 	dst.fmt.pix.width=640;
 	dst.fmt.pix.height=480;
 	if(v4lconvert_try_format(conv,&dst,&src)!=0){
-		dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_ERR,
+		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_ERR,
 				"QRY: Error checking palette %s (libv4l convert says: %s)\n",
-				libv4l_palettes[fmt].name,
+				libvideo_palettes[fmt].name,
 				v4lconvert_get_error_message(conv));
 		return LIBV4L_ERR_IOCTL;
 	}
@@ -82,10 +82,10 @@ static int add_supported_palette(struct device_info *di, int fmt,
 		//it is converted form another format
 		di->palettes[(di->nb_palettes - 1)].raw_palette =
 			find_v4l2_palette(src.fmt.pix.pixelformat);
-		dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG,
+		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
 				"QRY: converted from %d (%s)\n",
 				di->palettes[(di->nb_palettes - 1)].raw_palette,
-				libv4l_palettes[di->palettes[(di->nb_palettes - 1)].raw_palette].name
+				libvideo_palettes[di->palettes[(di->nb_palettes - 1)].raw_palette].name
 				);
 	} else
 		di->palettes[(di->nb_palettes - 1)].raw_palette = UNSUPPORTED_PALETTE;
@@ -103,25 +103,26 @@ static int check_palettes_v4l2(struct video_device *vdev){
 	di->palettes = NULL;
 	int p;
 
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: Checking supported palettes.\n");
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: Checking supported palettes.\n");
 
 	fmtd.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	fmtd.index = 0;
 
-	//while(ioctl(vdev->fd, VIDIOC_ENUM_FMT, &fmtd) >= 0) {
 	while(v4lconvert_enum_fmt(convert, &fmtd)>=0){
-		dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1, "QRY: looking for palette %d\n", fmtd.pixelformat);
+		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, "QRY: looking for palette %d\n", fmtd.pixelformat);
 		if ((p=find_v4l2_palette(fmtd.pixelformat)) == UNSUPPORTED_PALETTE) {
 			info("libv4l has encountered an unsupported image format:\n");
 			info("%s (%d)\n", fmtd.description, fmtd.pixelformat);
 			info("Please let the author know about this error.\n");
 			info("See the ISSUES section in the libv4l README file.\n");
 		} else {
-			dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG,
-					"QRY: %s supported (%d)\n", libv4l_palettes[p].name, p);
+			dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
+					"QRY: %s supported (%d)\n", libvideo_palettes[p].name, p);
 			if(add_supported_palette(di, p, convert)!=0){
 				if(di->palettes)
 					XFREE(di->palettes);
+
+				v4lconvert_destroy(convert);
 				return LIBV4L_ERR_IOCTL;
 			}
 		}
@@ -138,7 +139,7 @@ static int query_tuner(struct video_input_info *vi, int fd, int index){
 	if (ioctl (fd, VIDIOC_G_TUNER, &t) != 0)
 		return -1;
 
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG,
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
 			"QRY: Tuner: %s - low: %u - high: %u - unit: %s\n",
 			t.name, t.rangelow, t.rangehigh,
 			t.capability & V4L2_TUNER_CAP_LOW ? "kHz": "MHz");
@@ -152,7 +153,7 @@ static int query_tuner(struct video_input_info *vi, int fd, int index){
 	vi->tuner->rangehigh = t.rangehigh;
 	vi->tuner->rangelow = t.rangelow;
 
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG,
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
 				"QRY: Tuner: %s - low: %lu - high: %lu - unit: %d\n",
 				vi->tuner->name, vi->tuner->rangelow, vi->tuner->rangehigh,
 				vi->tuner->unit);
@@ -175,7 +176,7 @@ static void free_video_inputs(struct video_input_info *vi, int nb){
 }
 
 static void add_supported_std(struct video_input_info *vi, int std){
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: Adding standard %d\n", std);
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: Adding standard %d\n", std);
 	vi->nb_stds++;
 	XREALLOC(vi->supported_stds, int *, vi->nb_stds * sizeof(int));
 	vi->supported_stds[(vi->nb_stds - 1)] = std;
@@ -188,7 +189,7 @@ int check_inputs_v4l2(struct video_device *vdev){
 	CLEAR(vi);
 	di->inputs = NULL;
 
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: querying inputs\n");
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: querying inputs\n");
 
 	//Check how many inputs there are
 	while (-1 != ioctl(vdev->fd, VIDIOC_ENUMINPUT, &vi))
@@ -196,7 +197,7 @@ int check_inputs_v4l2(struct video_device *vdev){
 
 	di->nb_inputs = vi.index;
 
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: found %d inputs\n", di->nb_inputs );
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: found %d inputs\n", di->nb_inputs );
 
 	XMALLOC(di->inputs, struct video_input_info *, di->nb_inputs * sizeof(struct video_input_info ));
 
@@ -211,14 +212,14 @@ int check_inputs_v4l2(struct video_device *vdev){
 			goto end;
 		}
 
-		dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: input %d - %s - %s - tuner: %d\n", i, vi.name, (vi.type == V4L2_INPUT_TYPE_TUNER) ? "Tuner" : "Camera",vi.tuner);
+		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: input %d - %s - %s - tuner: %d\n", i, vi.name, (vi.type == V4L2_INPUT_TYPE_TUNER) ? "Tuner" : "Camera",vi.tuner);
 
 		strncpy(di->inputs[i].name, (char *) vi.name, NAME_FIELD_LENGTH);
 		di->inputs[i].index = i;
 		di->inputs[i].type = (vi.type == V4L2_INPUT_TYPE_TUNER) ? INPUT_TYPE_TUNER : INPUT_TYPE_CAMERA;
 
 		if (vi.type & V4L2_INPUT_TYPE_TUNER) {
-			dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: Querying tuner\n");
+			dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: Querying tuner\n");
 			if (-1 == query_tuner(&di->inputs[i], vdev->fd, vi.tuner)) {
 				info("Failed to get details of tuner on input %d of device %s\n", i, vdev->file);
 				ret = LIBV4L_ERR_IOCTL;
@@ -226,7 +227,7 @@ int check_inputs_v4l2(struct video_device *vdev){
 				goto end;
 			}
 		} else {
-			dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: No tuner\n");
+			dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: No tuner\n");
 			di->inputs[i].tuner = NULL;
 		}
 
@@ -244,7 +245,7 @@ int query_device_v4l2(struct video_device *vdev){
 	int ret = 0;
 	struct v4l2_capability caps;
 
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: Querying V4L2 device.\n");
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: Querying V4L2 device.\n");
 
 	if (check_v4l2(vdev->fd, &caps)==-1) {
 		info("Error checking capabilities of V4L2 video device %s", vdev->file);
@@ -264,7 +265,7 @@ int query_device_v4l2(struct video_device *vdev){
 	//fill palettes field
 	if((vdev->info->nb_palettes = check_palettes_v4l2(vdev))==LIBV4L_ERR_IOCTL){
 		free_video_inputs(vdev->info->inputs, vdev->info->nb_inputs);
-		info("Error checking supported palettes on V4L2 video device %s", vdev->file);
+		info("Error checking supported palettes on V4L2 video device %s\n", vdev->file);
 		ret = LIBV4L_ERR_NOCAPS;
 	}
 

@@ -77,15 +77,15 @@ int gspca_driver_probe(struct video_device *vdev, void **data){
 	CLEAR(p);
 	p.chg_para = CHGLIGHTFREQ;
 	p.light_freq = 60;
-	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: probing GSPCA\n");
+	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "GSPCA: probing GSPCA\n");
 	if(ioctl(vdev->fd, SPCASVIDIOPARAM, &p)==0) {
-		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "..\n");
+		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "..\n");
 		CLEAR(p);
 		if(ioctl(vdev->fd, SPCAGVIDIOPARAM, &p)!=0)
 			goto end;
 
 		if(p.light_freq!=60) {
-			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: light_freq: %d\n", p.light_freq);
+			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "GSPCA: light_freq: %d\n", p.light_freq);
 			goto end;
 		}
 
@@ -93,13 +93,13 @@ int gspca_driver_probe(struct video_device *vdev, void **data){
 		p.chg_para = CHGLIGHTFREQ;
 		p.light_freq = 50;
 		if(ioctl(vdev->fd, SPCASVIDIOPARAM, &p)==0) {
-			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, ".. ..\n");
+			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, ".. ..\n");
 			CLEAR(p);
 			if(ioctl(vdev->fd, SPCAGVIDIOPARAM, &p)!=0)
 				goto end;
 
 			if(p.light_freq!=50){
-				dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: light_freq: %d\n", p.light_freq);
+				dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "GSPCA: light_freq: %d\n", p.light_freq);
 				goto end;
 			}
 
@@ -107,13 +107,13 @@ int gspca_driver_probe(struct video_device *vdev, void **data){
 			p.chg_para = CHGLIGHTFREQ;
 			p.light_freq = 0;
 			if(ioctl(vdev->fd, SPCASVIDIOPARAM, &p)==0) {
-				dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, ".. .. ..\n");
+				dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, ".. .. ..\n");
 					CLEAR(p);
 					if(ioctl(vdev->fd, SPCAGVIDIOPARAM, &p)!=0)
 						goto end;
 
 					if(p.light_freq!=0) {
-						dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: light_freq: %d\n", p.light_freq);
+						dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "GSPCA: light_freq: %d\n", p.light_freq);
 						goto end;
 					}
 					CLEAR(p);
@@ -125,7 +125,7 @@ int gspca_driver_probe(struct video_device *vdev, void **data){
 						if(ioctl(vdev->fd, SPCAGVIDIOPARAM, &p)!=0)
 							goto end;
 						if(p.light_freq==0) {
-							dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: found GSPCA driver (%d controls)\n", NB_PRIV_IOCTL);
+							dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "GSPCA: found GSPCA driver (%d controls)\n", NB_PRIV_IOCTL);
 							XMALLOC(priv, struct gspca_probe_private *, sizeof(struct gspca_probe_private ));
 							*data = (void *)priv;
 							priv->ok = 1;
@@ -137,7 +137,7 @@ int gspca_driver_probe(struct video_device *vdev, void **data){
 	}
 
 end:
-	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "GSPCA: not found\n");
+	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "GSPCA: not found\n");
 	return -1;
 }
 
@@ -145,7 +145,7 @@ int gspca_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d,
 	int ret = 0;
 	struct video_param p;
 	if(ioctl(vdev->fd, SPCAGVIDIOPARAM, &p)<0) {
-		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "GSPCA: Cant get value of control %s\n",q->name);
+		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "GSPCA: Cant get value of control %s\n",q->name);
 		return ret;
 	}
 	switch (q->id) {
@@ -162,7 +162,7 @@ int gspca_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d,
 			*val = p.light_freq;
 			break;
 		default:
-			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "GSPCA: Cant identify control %d\n",q->id);
+			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "GSPCA: Cant identify control %d\n",q->id);
 			ret = LIBV4L_ERR_IOCTL;
 	}
 	return ret;
@@ -188,12 +188,12 @@ int gspca_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val
 			p.light_freq = *val;
 			break;
 		default:
-			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "GSPCA: Cant identify control %d\n",q->id);
+			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "GSPCA: Cant identify control %d\n",q->id);
 			return -1;
 	}
 
 	if(ioctl(vdev->fd, SPCASVIDIOPARAM, &p)<0) {
-		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "GSPCA: Cant set control %s to value %d\n",q->name, *val);
+		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "GSPCA: Cant set control %s to value %d\n",q->name, *val);
 		return LIBV4L_ERR_IOCTL;
 	}
 
@@ -206,7 +206,7 @@ int gspca_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 	if(priv->ok==1) {
 
 		//
-		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: Found gspca private ioctl Auto-Brightness\n");
+		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "GSPCA: Found gspca private ioctl Auto-Brightness\n");
 		c[i].v4l2_ctrl->id=i;
 		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_BOOLEAN;
 		strcpy((char *) c[i].v4l2_ctrl->name,"Auto-Brightness");
@@ -218,7 +218,7 @@ int gspca_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 		c[i].v4l2_ctrl->reserved[1]=GSPCA_PROBE_INDEX;
 		i++;
 
-		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: Found gspca private ioctl Quality\n");
+		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "GSPCA: Found gspca private ioctl Quality\n");
 		c[i].v4l2_ctrl->id=i;
 		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
 		strcpy((char *) c[i].v4l2_ctrl->name,"Quality");
@@ -230,7 +230,7 @@ int gspca_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 		c[i].v4l2_ctrl->reserved[1]=GSPCA_PROBE_INDEX;
 		i++;
 
-		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: Found gspca private ioctl Frame Interval\n");
+		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "GSPCA: Found gspca private ioctl Frame Interval\n");
 		c[i].v4l2_ctrl->id=i;
 		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
 		strcpy((char *) c[i].v4l2_ctrl->name,"Frame Interval");
@@ -242,7 +242,7 @@ int gspca_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 		c[i].v4l2_ctrl->reserved[1]=GSPCA_PROBE_INDEX;
 		i++;
 
-		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: Found gspca private ioctl Light Frequency\n");
+		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "GSPCA: Found gspca private ioctl Light Frequency\n");
 		c[i].v4l2_ctrl->id=i;
 		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_MENU;
 		strcpy((char *) c[i].v4l2_ctrl->name,"Light Frequency");
@@ -265,7 +265,7 @@ int gspca_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 		strcpy((char *) c[2].v4l2_menu[1].name,"60 Hz light frequency filter");
 		i++;
 	} else{
-			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "GSPCA: GSPCA not found\n");
+			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "GSPCA: GSPCA not found\n");
 	}
 	return i;
 }

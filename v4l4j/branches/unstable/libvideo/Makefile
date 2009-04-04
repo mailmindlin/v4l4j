@@ -16,7 +16,8 @@
 ifneq ($(LIBV4L_LOG_LEVEL),)
 LOG_LEVEL=$(LIBV4L_LOG_LEVEL)
 else
-LOG_LEVEL=23
+#LOG_LEVEL=23
+LOG_LEVEL=31
 endif
 
 
@@ -34,7 +35,8 @@ endif
 ifneq ($(LIBV4L_LOG_SOURCE),)
 LOG_SOURCE=$(LIBV4L_LOG_SOURCE)
 else
-LOG_SOURCE=63
+#LOG_SOURCE=63
+LOG_SOURCE=127
 endif
 
 
@@ -58,7 +60,7 @@ LIBV4LCONVERT_NAME=v4lconvert
 
 LIB=libvideo.a
 TESTOBJ=test-capture.o dump-capture.o list-caps.o
-OBJ=v4l2-input.o v4l1-input.o libvideo.o pwc-probe.o gspca-probe.o qc-probe.o fps-param-probe.o v4l1-query.o v4l2-query.o v4l1-tuner.o v4l2-tuner.o
+OBJ=v4l2-input.o v4l1-input.o libvideo.o pwc-probe.o gspca-probe.o qc-probe.o fps-param-probe.o v4l1-query.o v4l2-query.o v4l1-tuner.o v4l2-tuner.o palettes.o
 
 CC=gcc
 CFLAGS=$(DBG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) $(OPTIMISATION) -fPIC -I.
