@@ -25,6 +25,8 @@
 package au.edu.jcu.v4l4j.examples;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Vector;
 
 import javax.swing.JOptionPane;
 
@@ -40,42 +42,38 @@ public class RGBViewer implements ImageProcessor{
 	
 	/**
 	 * Builds a WebcamViewer object
-	 * @param dev the video device file to capture from
+	 * @param v the video device
 	 * @param w the desired capture width
 	 * @param h the desired capture height
 	 * @param s the capture standard
 	 * @param c the capture channel
-	 * @throws V4L4JException if the device file is not readable, or does 
-	 * not support an image format that can be converted to RGB24
+	 * @throws V4L4JException if the device file is not readable
 	 */
-    public RGBViewer(String dev, int w, int h, int s, int c)
+    public RGBViewer(VideoDevice v, int w, int h, int s, int c)
     	throws V4L4JException{
-    	viewer = new VideoViewer(dev, this);
-    	vd = viewer.getVideoDevice();
+    	viewer = new VideoViewer(v, this);
+    	vd = v;
+    	List<ImageFormat> fmts;
 		if(!vd.supportRGBConversion()){
 			String msg = "Image from this video device cannot be converted\n"
-				+ "to RGB. Please submit a bug report about this,\n"
+				+ "to RGB. If no other application is currently using the\n"
+				+ "device, please submit a bug report about this issue,\n"
 				+"so support for your device can be added to v4l4j.\n"
 				+"See README file in the v4l4j/ directory for directions.";
 			JOptionPane.showMessageDialog(null, msg);
-			throw new V4L4JException(msg);
-		}
+			fmts=new Vector<ImageFormat>();
+		} else
+			fmts = vd.getDeviceInfo().getFormatList().getRGBEncodableFormats();
 		
 		width = w;
 		height = h;
 		std = s;
 		channel = c;
 
-        viewer.initGUI(
-        			vd.getDeviceInfo()
-        			.getFormatList().getRGBEncodableFormats().toArray(), 
-        			w, 
-        			h,
-        			"RGB"
-        		);
+        viewer.initGUI(fmts.toArray(),w,h,"RGB");
       
     }
-
+  
 	@Override
 	public FrameGrabber getGrabber(ImageFormat i) throws V4L4JException {
 		return vd.getRGBFrameGrabber(width, height, channel, std, i);
@@ -120,6 +118,6 @@ public class RGBViewer implements ImageProcessor{
 			channel = 0;
 		}
 		
-		new RGBViewer(dev,w,h,std,channel);
+		new RGBViewer(new VideoDevice(dev),w,h,std,channel);
 	}
 }

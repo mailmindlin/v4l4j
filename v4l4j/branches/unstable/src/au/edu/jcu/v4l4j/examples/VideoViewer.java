@@ -52,7 +52,6 @@ import au.edu.jcu.v4l4j.TunerInfo;
 import au.edu.jcu.v4l4j.V4L4JConstants;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.exceptions.ControlException;
-import au.edu.jcu.v4l4j.exceptions.NoTunerException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 /**
@@ -94,14 +93,12 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 	
 	/**
 	 * The method builds a new VideoViewer object
-	 * @param dev the video device file to capture from
+	 * @param d the video device
 	 * @param p the image processor to which we will send frames as they are
 	 * captured
-	 * @throws V4L4JException if the video device cant be created
 	 */
-    public VideoViewer(String dev, ImageProcessor p) 
-    	throws V4L4JException{
-    	vd = new VideoDevice(dev);
+    public VideoViewer(VideoDevice d, ImageProcessor p) {
+    	vd = d;
 		fg = null;
 		processor = p;
     	controls = vd.getControlList().getTable();
@@ -135,7 +132,9 @@ public class VideoViewer extends WindowAdapter implements Runnable{
      * This method creates the graphical interface components and initialises 
      * them. It then makes them visible.
      * @param i an array of {@link ImageFormat}s to be added in the format list
-	 * @param fmtName the name of format of images displayed in the title bar
+	 * @param fmtName the name of format of images displayed in the title bar. 
+	 * If this array is empty, the format list is disabled and capture cannot
+	 * be started 
      */
     public void initGUI(Object[] i, int width, int height, String fmtName){
         f = new JFrame();
@@ -163,8 +162,14 @@ public class VideoViewer extends WindowAdapter implements Runnable{
         formats.setMaximumSize(d);
         startCap = new JButton("Start");
         startCap.setAlignmentX(Component.CENTER_ALIGNMENT);
+        if(i.length==0){
+        	startCap.setEnabled(false);
+        	formats.setEnabled(false);
+        }else
+        	startCap.setEnabled(true);
         stopCap = new JButton("Stop");
         stopCap.setAlignmentX(Component.CENTER_ALIGNMENT);
+        stopCap.setEnabled(false);
         fps = new JLabel("FPS: 0.0");
         fps.setAlignmentX(Component.CENTER_ALIGNMENT);
         freq = new JLabel("Frequency");
@@ -222,7 +227,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 
         f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         f.addWindowListener(this);
-        f.setTitle(fmtName+" capture from "+vd.getDeviceInfo().getName());
+        f.setTitle(fmtName+" capture from ");//+vd.getDeviceInfo().getName());
         f.pack();
         f.setVisible(true);
     }
@@ -341,7 +346,9 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 			video.setSize(new Dimension(width, height));			
 			controlScrollPane.setPreferredSize(
 					new Dimension(300, height));
-			formats.setEnabled(false);			
+			formats.setEnabled(false);
+			startCap.setEnabled(false);
+			stopCap.setEnabled(true);
 			
 			//show tuner frequency adjust if there s a tuner			
 			try {
@@ -355,7 +362,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 						new Double(1)));
 				freq.setVisible(true);
 				freqSpinner.setVisible(true);
-			} catch (NoTunerException nte){}//No tuner for input			
+			} catch (V4L4JException nte){}//No tuner for input
 			f.pack();
 			
 			//Create the BufferedImage

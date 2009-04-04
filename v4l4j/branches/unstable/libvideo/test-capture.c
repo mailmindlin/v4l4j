@@ -104,7 +104,7 @@ int main(int argc, char** argv) {
 
 	if(argc==8){
 		fmt = atoi(argv[7]);
-		printf("Trying image format %s (%d)\n",libv4l_palettes[fmt].name, fmt);
+		printf("Trying image format %s (%d)\n",libvideo_palettes[fmt].name, fmt);
 	}
 
 	printf("Make sure your video source is connected, and press <Enter>, or Ctrl-C to abort now.");
@@ -144,7 +144,7 @@ int main(int argc, char** argv) {
 	printf("Capturing from %s at %dx%d.\n", argv[1], c->width,c->height);
 	width = c->width;
 	height = c->height;
-	printf("Image format %s, size: %d\n", libv4l_palettes[c->palette].name, c->imagesize);
+	printf("Image format %s, size: %d\n", libvideo_palettes[c->palette].name, c->imagesize);
 
 	if((*c->actions->init_capture)(v)<0){
 		free_capture_device(v);

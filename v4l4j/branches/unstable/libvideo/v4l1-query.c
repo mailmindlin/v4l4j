@@ -34,8 +34,8 @@ static void set_palette_info(struct device_info *di, int idx, int palette){
 	XREALLOC(di->palettes, struct palette_info *,(idx+1) * sizeof(struct palette_info));
 	di->palettes[idx].index = palette;
 	di->palettes[idx].raw_palette = -1;
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: %s (%d) supported\n",
-			libv4l_palettes[palette].name, palette);
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: %s (%d) supported\n",
+			libvideo_palettes[palette].name, palette);
 }
 
 static int check_palettes_v4l1(struct video_device *vdev){
@@ -44,43 +44,43 @@ static int check_palettes_v4l1(struct video_device *vdev){
 	struct device_info *di = vdev->info;
 	di->palettes = NULL;
 
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: Checking supported palettes.\n");
-	for(palette = 0; palette < ARRAY_SIZE(libv4l_palettes)-3; palette++){
-		if(libv4l_palettes[palette].v4l1_palette!=VIDEO_PALETTE_UNDEFINED_V4L1){
-			dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1,
-					"QRY: trying %s\n", libv4l_palettes[palette].name);
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: Checking supported palettes.\n");
+	for(palette = 0; palette < libvideo_palettes_size-3; palette++){
+		if(libvideo_palettes[palette].v4l1_palette!=VIDEO_PALETTE_UNDEFINED_V4L1){
+			dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
+					"QRY: trying %s\n", libvideo_palettes[palette].name);
 			CLEAR(pic);
-			pic.palette = libv4l_palettes[palette].v4l1_palette;
-			pic.depth = libv4l_palettes[palette].depth;
+			pic.palette = libvideo_palettes[palette].v4l1_palette;
+			pic.depth = libvideo_palettes[palette].depth;
 			if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0)
 				set_palette_info(di, index++, palette);
 		}
 	}
 
 	//v4l1 weirdness
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1,
-			"QRY: trying %s\n", libv4l_palettes[YUV420P].name);
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
+			"QRY: trying %s\n", libvideo_palettes[YUV420P].name);
 	CLEAR(pic);
-	pic.palette = libv4l_palettes[YUV420P].v4l1_palette;
-	pic.depth = libv4l_palettes[YUV420P].depth;
+	pic.palette = libvideo_palettes[YUV420P].v4l1_palette;
+	pic.depth = libvideo_palettes[YUV420P].depth;
 	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0)
 		set_palette_info(di, index++, YUV420);
 
 	//v4l1 weirdness
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1,
-			"QRY: trying %s\n", libv4l_palettes[YUV422].name);
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
+			"QRY: trying %s\n", libvideo_palettes[YUV422].name);
 	CLEAR(pic);
-	pic.palette = libv4l_palettes[YUV422].v4l1_palette;
-	pic.depth = libv4l_palettes[YUV422].depth;
+	pic.palette = libvideo_palettes[YUV422].v4l1_palette;
+	pic.depth = libvideo_palettes[YUV422].depth;
 	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0)
 		set_palette_info(di, index++, YUYV);
 
 	//v4l1 weirdness
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1,
-			"QRY: trying %s\n", libv4l_palettes[YUV411].name);
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
+			"QRY: trying %s\n", libvideo_palettes[YUV411].name);
 	CLEAR(pic);
-	pic.palette = libv4l_palettes[YUV411].v4l1_palette;
-	pic.depth = libv4l_palettes[YUV411].depth;
+	pic.palette = libvideo_palettes[YUV411].v4l1_palette;
+	pic.depth = libvideo_palettes[YUV411].depth;
 	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0)
 		set_palette_info(di, index++, YUV411P);
 
@@ -95,7 +95,7 @@ static int query_tuner(struct video_input_info *vi, int fd){
 	if (ioctl (fd, VIDIOCGTUNER, &t) != 0)
 		return -1;
 
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: Tuner: %s - low: %lu - high: %lu - unit: %s"
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: Tuner: %s - low: %lu - high: %lu - unit: %s"
 			" - PAL: %s - NTSC: %s - SECAM: %s\n", t.name, t.rangelow, t.rangehigh,
 			t.flags & VIDEO_TUNER_LOW ? "kHz": "MHz", t.flags & VIDEO_TUNER_PAL ? "Yes" : "No",
 			t.flags & VIDEO_TUNER_NTSC ? "Yes" : "No",t.flags & VIDEO_TUNER_SECAM ? "Yes" : "No");
@@ -150,7 +150,7 @@ int check_inputs_v4l1(struct video_device *vd){
 	struct device_info *di = vd->info;
 	di->inputs = NULL;
 
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG1, "QRY: querying inputs\n");
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, "QRY: querying inputs\n");
 
 	if (-1 == ioctl( vd->fd, VIDIOCGCAP, &vc)) {
 		info("Error checking capabilities of V4L1 video device %s\n", vd->file);
@@ -172,7 +172,7 @@ int check_inputs_v4l1(struct video_device *vd){
 			goto end;
 		}
 
-		dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: Found input %d - %s - %s - tuner: %d\n", i, chan.name, (chan.type == VIDEO_TYPE_TV) ? "Tuner" : "Camera",chan.tuners);
+		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: Found input %d - %s - %s - tuner: %d\n", i, chan.name, (chan.type == VIDEO_TYPE_TV) ? "Tuner" : "Camera",chan.tuners);
 
 		//Quirky code: for sake of consistency, we assume there is only one tuner per input
 		//(v4l2 says so, but not v4l1!!!
@@ -196,7 +196,7 @@ int check_inputs_v4l1(struct video_device *vd){
 		//given that there are no tuner to invoke VIDIOCSTUNER(struct video_tuner) on ?
 
 		if (chan.flags & VIDEO_VC_TUNER) {
-			dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: Querying tuner\n");
+			dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: Querying tuner\n");
 			if (-1 == query_tuner(&di->inputs[i], vd->fd)) {
 				info("Failed to get details of tuner on input %d of device %s\n", i, vd->file);
 				ret = LIBV4L_ERR_IOCTL;
@@ -204,7 +204,7 @@ int check_inputs_v4l1(struct video_device *vd){
 				goto end;
 			}
 		} else {
-			dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: No tuner\n");
+			dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: No tuner\n");
 			di->inputs[i].nb_stds = 1;
 			XMALLOC(di->inputs[i].supported_stds, int *, sizeof(int));
 			di->inputs[i].supported_stds[0] = WEBCAM;
@@ -220,7 +220,7 @@ int query_device_v4l1(struct video_device *vdev){
 	int ret = 0;
 	struct video_capability caps;
 
-	dprint(LIBV4L_LOG_SOURCE_QUERY, LIBV4L_LOG_LEVEL_DEBUG, "QRY: Querying V4L1 device.\n");
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: Querying V4L1 device.\n");
 
 	if (check_v4l1(vdev->fd, &caps)==-1) {
 		info("Error checking capabilities of V4L1 video device");

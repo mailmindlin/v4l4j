@@ -150,7 +150,7 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 
-	info(LOG_INFO, "Using palette %s\n", libv4l_palettes[cdev->palette].name);
+	info(LOG_INFO, "Using palette %s\n", libvideo_palettes[cdev->palette].name);
 
 	//init tcp server
 	sockfd = setup_tcp_server_sock(port);

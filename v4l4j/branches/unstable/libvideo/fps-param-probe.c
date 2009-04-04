@@ -75,12 +75,12 @@ int fps_param_probe(struct video_device *vdev, void **data){
 
 	XMALLOC(param, struct v4l2_streamparm *, sizeof(struct v4l2_streamparm ));
 
-	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "FPS-PARAM: probing FPS adjust caps ...\n");
+	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "FPS-PARAM: probing FPS adjust caps ...\n");
 
 	if(vdev->v4l_version!=V4L2_VERSION)
 		goto end;
 
-	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "FPS-PARAM: .. \n");
+	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "FPS-PARAM: .. \n");
 
 	CLEAR(*param);
 	param->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -90,19 +90,19 @@ int fps_param_probe(struct video_device *vdev, void **data){
 	if(!param->parm.capture.capability & V4L2_CAP_TIMEPERFRAME)
 		goto end;
 
-	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "FPS-PARAM: .. .. \n");
+	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "FPS-PARAM: .. .. \n");
 
 	if (0 != ioctl(vdev->fd, VIDIOC_S_PARM, param))
 		goto end;
 
 	*data = (void *) param;
 
-	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "FPS-PARAM: FPS adjustable  (%d control)!\n", NB_PRIV_IOCTL);
+	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "FPS-PARAM: FPS adjustable  (%d control)!\n", NB_PRIV_IOCTL);
 	return NB_PRIV_IOCTL;
 
 end:
 	XFREE(param);
-	dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "FPS-PARAM: NOT found\n");
+	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "FPS-PARAM: NOT found\n");
 	return -1;
 }
 
@@ -116,7 +116,7 @@ int fps_param_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void
 		*val = (int) param->parm.capture.timeperframe.numerator / param->parm.capture.timeperframe.denominator;
 		ret = 0;
 	} else
-		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "FPS-PARAM: Error getting current FPS\n");
+		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "FPS-PARAM: Error getting current FPS\n");
 
 	return ret;
 }
@@ -135,7 +135,7 @@ int fps_param_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int 
 
 
 	if (-1 == ioctl(vdev->fd, VIDIOC_S_PARM, param)) {
-		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "FPS-PARAM: Error setting new FPS %d\n", *val);
+		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "FPS-PARAM: Error setting new FPS %d\n", *val);
 		return LIBV4L_ERR_STREAMING;
 	}
 
@@ -148,10 +148,10 @@ int fps_param_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 		CLEAR(*param);
 		param->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		if (0 != ioctl(vdev->fd, VIDIOC_G_PARM, param))
-			dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_ERR, "FPS-PARAM: Error getting current FPS\n");
+			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "FPS-PARAM: Error getting current FPS\n");
 
 		//Set FPS
-		dprint(LIBV4L_LOG_SOURCE_CTRL_PROBE, LIBV4L_LOG_LEVEL_DEBUG, "FPS-PARAM: Found FPS adjust ioctl\n");
+		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "FPS-PARAM: Found FPS adjust ioctl\n");
 		c[0].v4l2_ctrl->id=0;
 		c[0].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
 		strcpy((char *) c[0].v4l2_ctrl->name,"Frame rate");

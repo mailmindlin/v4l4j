@@ -574,7 +574,7 @@ void destroy_jpeg_compressor(struct v4l4j_device *d){
 }
 
 //
-//gcc -I ../libv4l jpeg.c -ggdb -DDEBUG -ljpeg -o jpeg
+//
 //
 //Usage: ./jpeg *.raw
 

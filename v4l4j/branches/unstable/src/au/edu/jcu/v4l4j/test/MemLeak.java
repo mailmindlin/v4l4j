@@ -8,10 +8,12 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 public class MemLeak implements Runnable{
 	private boolean stop;
+	private String dev;
 	private VideoDevice vd;
 	
-	public MemLeak() throws V4L4JException{
+	public MemLeak(String d) throws V4L4JException{
 		stop = false;
+		dev = d;
 	}
 	
 	public void stop(){
@@ -25,7 +27,7 @@ public class MemLeak implements Runnable{
 		while(!stop){
 			count = 0;
 			try {
-				vd = new VideoDevice("/dev/video0");
+				vd = new VideoDevice(dev);
 				vd.getControlList();
 				fg = vd.getJPEGFrameGrabber(640, 480, 1, 1, 80);
 				fg.startCapture();
@@ -37,9 +39,9 @@ public class MemLeak implements Runnable{
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+
 			try {
-				vd = new VideoDevice("/dev/video0");
-				vd.getControlList();
+				count = 0;
 				fg = vd.getRGBFrameGrabber(640, 480, 1, 1);
 				fg.startCapture();
 				while(count++<200)
@@ -50,9 +52,9 @@ public class MemLeak implements Runnable{
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+
 			try {
-				vd = new VideoDevice("/dev/video0");
-				vd.getControlList();
+				count = 0;
 				fg = vd.getBGRFrameGrabber(640, 480, 1, 1);
 				fg.startCapture();
 				while(count++<200)
@@ -63,9 +65,9 @@ public class MemLeak implements Runnable{
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+
 			try {
-				vd = new VideoDevice("/dev/video0");
-				vd.getControlList();
+				count = 0;
 				fg = vd.getYUVFrameGrabber(640, 480, 1, 1);
 				fg.startCapture();
 				while(count++<200)
@@ -76,9 +78,9 @@ public class MemLeak implements Runnable{
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+
 			try {
-				vd = new VideoDevice("/dev/video0");
-				vd.getControlList();
+				count = 0;
 				fg = vd.getYVUFrameGrabber(640, 480, 1, 1);
 				fg.startCapture();
 				while(count++<200)
@@ -99,7 +101,10 @@ public class MemLeak implements Runnable{
 	}
 
 	public static void main(String[] args) throws V4L4JException, IOException, InterruptedException{
-		MemLeak m = new MemLeak();
+		String dev = "/dev/video0";
+		if(args.length==1)
+			dev = args[0];
+		MemLeak m = new MemLeak(dev);
 		Thread t = new Thread(m,"CaptureThread");
 		t.start();
 		System.in.read();
