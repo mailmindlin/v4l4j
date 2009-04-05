@@ -58,28 +58,30 @@ enum output_format {
 
 struct v4l4j_device {
 	void (*convert) (struct v4l4j_device *, unsigned char *, unsigned char *);
-	struct video_device *vdev;	//the libv4l struct
+	struct video_device *vdev;	//the libvideo struct
 	union {
 		struct jpeg_data *j;	//the converter's data
 		struct rgb_data *r;
 	};
 	enum output_format output_fmt;	//the output format (see enum above)
-	unsigned char **bufs;		//the buffers holding the last JPEG compressed frame
-	int capture_len;			//the size of the last captured frame returned by libv4l
+	unsigned char **bufs;		//the buffers holding the last JPEG  frame
+	int capture_len;			//the size of last captured frame by libvideo
 	int len;					//the size of the frame after conversion
-	int buf_id;					//the index of the buffer where the next frame goes
-	int need_conv;				//this flag is set by Java_au_edu_jcu_v4l4j_FrameGrabber_doInit
-								//and says whether v4l4j (1) or libvideo (0) does the output
-								//format conversion. 0 can also mean no conversion needed
+	int buf_id;					//the index of the buffer where the next
+								//frame goes
+	int need_conv;				//this flag is set by
+								//Java_au_edu_jcu_v4l4j_FrameGrabber_doInit
+								//and says whether v4l4j (1) or libvideo (0)
+								//does the output format conversion.
+								//0 means no conversion needed at all
 };
 
 #define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
 
-#define JPEG_CONVERTIBLE_FORMATS		{JPEG, MJPEG, YUV420, YUYV, RGB24, RGB32, BGR24, YVYU, UYVY, BGR32}
-//#define NB_JPEG_SUPPORTED_FORMATS	10
+#define JPEG_CONVERTIBLE_FORMATS \
+	{JPEG, MJPEG, YUV420, YUYV, RGB24, RGB32, BGR24, YVYU, UYVY, BGR32}
 
-//#define RGB24_SUPPORTED_FORMATS		{RGB24, BGR24, BGR32, RGB32, YUYV, UYVY, YVYU, YUV420, JPEG, MJPEG}
-//#define NB_RGB24_SUPPORTED_FORMATS	10
+
 
 //WHEN ADDING NEW CONVERSION ROUTINES,
 //DO NOT CONVERT NATIVE FORMATS THAT CAN ALREADY BE CONVERTED BY LIB4L_CONVERT
@@ -107,12 +109,12 @@ struct v4l4j_device {
 /* Exception throwing helper */
 #define EXCEPTION_MSG_LENGTH	100
 #define THROW_EXCEPTION(e, c, format, ...)\
-								do {\
-									char msg[EXCEPTION_MSG_LENGTH+1];\
-									jclass JV4L4JException = (*e)->FindClass(e,c);\
-									snprintf(msg, EXCEPTION_MSG_LENGTH, format, ## __VA_ARGS__);\
-									if(JV4L4JException!=0) (*e)->ThrowNew(e, JV4L4JException, msg);\
-								} while(0)
+		do {\
+			char msg[EXCEPTION_MSG_LENGTH+1];\
+			jclass JV4L4JException = (*e)->FindClass(e,c);\
+			snprintf(msg, EXCEPTION_MSG_LENGTH, format, ## __VA_ARGS__);\
+			if(JV4L4JException!=0) (*e)->ThrowNew(e, JV4L4JException, msg);\
+		} while(0)
 
 #define CLIP(x) (unsigned char) ((x) > 255) ? 255 : (((x) < 0) ? 0 : (x));
 

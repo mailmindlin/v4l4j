@@ -295,7 +295,7 @@ struct device_info *get_device_info(struct video_device *vdev){
 				"device %s\n", vdev->file);
 		info("If this device is not currently used by any other application,\n");
 		info("please let the author know about this issue.\n");
-		info("See the ISSUES section in libvideo libv4l README file.\n");
+		info("See the ISSUES section in libvideo README file.\n");
 		XFREE(vdev->info);
 		vdev->info = NULL;
 	}
@@ -426,10 +426,10 @@ struct control_list *get_control_list(struct video_device *vdev){
 
 	/*
 	 *  The following is an attempt to support driver private (custom) ioctls.
-	 * First libv4l will probe and detect the underlying video driver. Then, it
+	 * First libvideo will probe and detect the underlying video driver. Then, it
 	 * will create fake V4L controls for every private ioctls so
 	 * that the application can call these private ioctls through normal V4L
-	 * controls.In struct v4l2_query, libv4l will use the reserved[0]
+	 * controls.In struct v4l2_query, libvideo will use the reserved[0]
 	 * field  and set it to a special unused value V4L2_PRIV_IOCTL (currently in
 	 * kernel 2.6.25, only values from 1 to 6 are used by v4l2).
 	 * The following code attempts to probe the underlying driver (pwc, bttv,

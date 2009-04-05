@@ -1,4 +1,4 @@
-libv4l has been compiled and tested successfully on the following platforms:
+libvideo has been compiled and tested successfully on the following platforms:
 - Ubuntu 7.10 - x86
 - Ubuntu 8.04 - x86 & x86_64
 - Debian Etch - x86
@@ -30,7 +30,7 @@ Tested video devices and drivers:
 - USB - 046d:0994 Logitech QuickCam Orbit/Sphere AF (uvcvideo)
 
 
-Currently, libv4l will probe and detect the following drivers:
+Currently, libvideo will probe and detect the following drivers:
 - PWC 		v10.0.13
   PWC is already a V4L2 driver. Most of its private ioctls are already
   exported as V4L2 controls, except for the following three (which should be
@@ -43,14 +43,14 @@ Currently, libv4l will probe and detect the following drivers:
 - gspca 	v01.00.20
   gspca in its current version is still a V4L1 driver although the author
   is actively working on porting it to V4L2. But for now, a few private
-  ioctls dont have a V4L1 control counterpart, so libv4l exports the
+  ioctls dont have a V4L1 control counterpart, so libvideo exports the
   following private ioctls:
     SPCASVIDIOPARAM / SPCAGVIDIOPARAM (Set and Get autobrightness, quality,
     frame interval and image flicker)
 
 - qc-usb	v0.6.6
   qc-usb (Quickcam driver) is V4L1 driver and many private ioctls are not
-  available as V4L1 control. libv4l exposes the following ioctls:
+  available as V4L1 control. libvideo exposes the following ioctls:
     VIDIOCQCSSETTLE / VIDIOCQCGSETTLE (Let Brigthness settle ???)
     VIDIOCQCSCOMPRESS / VIDIOCQCGCOMPRESS (compression factor)
     VIDIOCQCSQUALITY / VIDIOCQCGQUALITY (interpolation)

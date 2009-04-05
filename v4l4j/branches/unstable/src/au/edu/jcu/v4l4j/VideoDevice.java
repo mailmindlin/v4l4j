@@ -161,8 +161,8 @@ public class VideoDevice {
 	private native long doInit(String device) throws V4L4JException;
 	
 	/**
-	 * This JNI method releases resources used by libv4l's struct video_device,
-	 * as allocated by <code>doInit()</code>
+	 * This JNI method releases resources used by libvideo's struct 
+	 * video_device, as allocated by <code>doInit()</code>
 	 * @param o A C pointer to a struct vl4j_device
 	 * @throws ReleaseException if the device is still in use.
 	 */

@@ -272,7 +272,7 @@ public class FrameGrabber {
 	 */
 	public ByteBuffer getFrame() throws V4L4JException {
 		//we need the synchronized statement to serialise calls to getBuffer
-		//since libv4l is not reentrant. Also we dont want the frame grabber
+		//since libvideo is not reentrant. Also we dont want the frame grabber
 		//to be released in the middle of a getBuffer() call.
 		synchronized(state) {
 			if(!state.isStarted())
