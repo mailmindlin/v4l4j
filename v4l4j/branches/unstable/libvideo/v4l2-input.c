@@ -488,7 +488,7 @@ int set_cap_param_v4l2(struct video_device *vdev, int *palettes, int nb) {
 	if(nb<0 || nb>=NB_SUPPORTED_PALETTE) {
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
 				"CAP: Incorrect number of palettes (%d)\n", nb);
-		return LIBV4L_ERR_FORMAT;
+		return LIBVIDEO_ERR_FORMAT;
 	}
 	if(nb==0 || palettes==NULL) {
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
@@ -499,26 +499,26 @@ int set_cap_param_v4l2(struct video_device *vdev, int *palettes, int nb) {
 
 	//set desired standard
 	if (set_std(c, vdev->fd) !=0 ) {
-		ret = LIBV4L_ERR_STD;
+		ret = LIBVIDEO_ERR_STD;
 		goto fail;
 	}
 
 	//set desired input
 	if (set_input(c, vdev->fd) != 0) {
-		ret = LIBV4L_ERR_CHANNEL;
+		ret = LIBVIDEO_ERR_CHANNEL;
 		goto fail;
 	}
 
 	//Set image format
 	if (set_image_format(c, palettes, nb, vdev->fd) != 0) {
-		ret = LIBV4L_ERR_FORMAT;
+		ret = LIBVIDEO_ERR_FORMAT;
 		goto fail;
 	}
 
 	//Set crop format
 	if (set_crop(c, vdev->fd) != 0) {
 		info("Listing the reported capabilities:\n");
-		ret = LIBV4L_ERR_CROP;
+		ret = LIBVIDEO_ERR_CROP;
 		goto fail;
 	}
 
@@ -557,7 +557,7 @@ int init_capture_v4l2(struct video_device *vdev) {
 	if (-1 == ioctl (vdev->fd, VIDIOC_REQBUFS, &req)) {
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
 				"CAP: Error getting mmap information from driver\n");
-		return LIBV4L_ERR_REQ_MMAP;
+		return LIBVIDEO_ERR_REQ_MMAP;
 	}
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
@@ -576,7 +576,7 @@ int init_capture_v4l2(struct video_device *vdev) {
 		if (-1 == ioctl (vdev->fd, VIDIOC_QUERYBUF, &buf)){
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
 					"CAP: cant query allocated V4L2 buffers\n");
-			return LIBV4L_ERR_REQ_MMAP_BUF;
+			return LIBVIDEO_ERR_REQ_MMAP_BUF;
 		}
 
 		c->mmap->buffers[i].length = buf.length;
@@ -590,7 +590,7 @@ int init_capture_v4l2(struct video_device *vdev) {
 		if (MAP_FAILED == c->mmap->buffers[i].start) {
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
 					"CAP: cant mmap allocated V4L2 buffers\n");
-			return LIBV4L_ERR_MMAP_BUF;
+			return LIBVIDEO_ERR_MMAP_BUF;
 		}
 
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
@@ -628,7 +628,7 @@ int start_capture_v4l2(struct video_device *vdev) {
 		if(-1 == ioctl(vdev->fd, VIDIOC_QBUF, b)) {
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
 					"CAP: cannot enqueue initial buffers\n");
-			return LIBV4L_ERR_IOCTL;
+			return LIBVIDEO_ERR_IOCTL;
 		}
 	}
 
@@ -636,7 +636,7 @@ int start_capture_v4l2(struct video_device *vdev) {
 	if( ioctl(vdev->fd, VIDIOC_STREAMON, &i) < 0 ){
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
 				"CAP: cannot start capture\n");
-		return LIBV4L_ERR_IOCTL;
+		return LIBVIDEO_ERR_IOCTL;
 	}
 	vdev->capture->mmap->tmp = (void *) b;
 
@@ -743,7 +743,7 @@ int stop_capture_v4l2(struct video_device *vdev) {
 	if( ioctl(vdev->fd, VIDIOC_STREAMOFF, &i ) < 0 ){
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
 				"CAP: cannot stop capture\n");
-		return LIBV4L_ERR_IOCTL;
+		return LIBVIDEO_ERR_IOCTL;
 	}
 	XFREE(vdev->capture->mmap->tmp);
 
@@ -1104,7 +1104,7 @@ static int fix_quirky_values(struct v4l2_queryctrl *qc, int v){
 int get_control_value_v4l2(struct video_device *vdev,
 		struct v4l2_queryctrl *ctrl, int *val){
 	struct v4l2_control vc;
-	int ret = LIBV4L_ERR_IOCTL;
+	int ret = LIBVIDEO_ERR_IOCTL;
 	CLEAR(vc);
 	vc.id = ctrl->id;
 	if( (ret = ioctl(vdev->fd, VIDIOC_G_CTRL, &vc)) == 0 ) {
@@ -1139,7 +1139,7 @@ int set_control_value_v4l2(struct video_device *vdev,
 		else
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
 					"CTRL: unknown error %d\n", errno);
-		return LIBV4L_ERR_IOCTL;
+		return LIBVIDEO_ERR_IOCTL;
 	}
 	return 0;
 }

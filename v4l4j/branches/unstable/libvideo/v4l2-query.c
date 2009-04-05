@@ -50,7 +50,7 @@ static int find_v4l2_palette(int v4l2_fmt){
 //this function adds the given palette fmt to the list of
 //supported palettes in struct device_info. It also
 //checks with libv4l_convert if it is converted from another palette
-//it returns 0 if everything went fine, LIBV4L_ERR_IOCTL otherwise
+//it returns 0 if everything went fine, LIBVIDEO_ERR_IOCTL otherwise
 static int add_supported_palette(struct device_info *di, int fmt,
 		struct v4lconvert_data *conv){
 	struct v4l2_format dst, src;
@@ -75,7 +75,7 @@ static int add_supported_palette(struct device_info *di, int fmt,
 				"QRY: Error checking palette %s (libv4l convert says: %s)\n",
 				libvideo_palettes[fmt].name,
 				v4lconvert_get_error_message(conv));
-		return LIBV4L_ERR_IOCTL;
+		return LIBVIDEO_ERR_IOCTL;
 	}
 
 	if(v4lconvert_needs_conversion(conv,&src,&dst)==1){
@@ -96,7 +96,7 @@ static int add_supported_palette(struct device_info *di, int fmt,
 }
 
 //this function checks the supporte palettes
-//it returns how many supported palettes there are, or LIBV4L_ERR_IOCTL
+//it returns how many supported palettes there are, or LIBVIDEO_ERR_IOCTL
 static int check_palettes_v4l2(struct video_device *vdev){
 	struct v4lconvert_data *convert = v4lconvert_create(vdev->fd);
 	struct v4l2_fmtdesc fmtd;
@@ -127,7 +127,7 @@ static int check_palettes_v4l2(struct video_device *vdev){
 					XFREE(di->palettes);
 
 				v4lconvert_destroy(convert);
-				return LIBV4L_ERR_IOCTL;
+				return LIBVIDEO_ERR_IOCTL;
 			}
 		}
 		fmtd.index++;
@@ -215,7 +215,7 @@ int check_inputs_v4l2(struct video_device *vdev){
 		if (-1 == ioctl(vdev->fd, VIDIOC_ENUMINPUT, &vi)) {
 			info("Failed to get details of input %d on device %s\n",
 					i, vdev->file);
-			ret = LIBV4L_ERR_IOCTL;
+			ret = LIBVIDEO_ERR_IOCTL;
 			free_video_inputs(di->inputs,i);
 			goto end;
 		}
@@ -235,7 +235,7 @@ int check_inputs_v4l2(struct video_device *vdev){
 			if (-1 == query_tuner(&di->inputs[i], vdev->fd, vi.tuner)) {
 				info("Failed to get details of tuner on input %d of device %s\n"
 						, i, vdev->file);
-				ret = LIBV4L_ERR_IOCTL;
+				ret = LIBVIDEO_ERR_IOCTL;
 				free_video_inputs(di->inputs,i);
 				goto end;
 			}
@@ -263,7 +263,7 @@ int query_device_v4l2(struct video_device *vdev){
 
 	if (check_v4l2(vdev->fd, &caps)==-1) {
 		info("Error checking capabilities of V4L2 video device %s", vdev->file);
-		ret = LIBV4L_ERR_NOCAPS;
+		ret = LIBVIDEO_ERR_NOCAPS;
 		goto end;
 	}
 	//fill name field
@@ -273,16 +273,16 @@ int query_device_v4l2(struct video_device *vdev){
 	if(check_inputs_v4l2(vdev)==-1){
 		info("Error checking available inputs on V4L2 video device %s",
 				vdev->file);
-		ret = LIBV4L_ERR_NOCAPS;
+		ret = LIBVIDEO_ERR_NOCAPS;
 		goto end;
 	}
 
 	//fill palettes field
-	if((vdev->info->nb_palettes = check_palettes_v4l2(vdev))==LIBV4L_ERR_IOCTL){
+	if((vdev->info->nb_palettes = check_palettes_v4l2(vdev))==LIBVIDEO_ERR_IOCTL){
 		free_video_inputs(vdev->info->inputs, vdev->info->nb_inputs);
 		info("Error checking supported palettes on V4L2 video device %s\n",
 				vdev->file);
-		ret = LIBV4L_ERR_NOCAPS;
+		ret = LIBVIDEO_ERR_NOCAPS;
 	}
 
 	end:

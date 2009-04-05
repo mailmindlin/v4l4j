@@ -22,68 +22,69 @@
 *
 */
 
-#ifndef H_LIBV4LERR_LOG
-#define H_LIBV4LERR_LOG
+#ifndef H_LIBVIDEOERR_LOG
+#define H_LIBVIDEOERR_LOG
 
 //Cant set channel (set_cap_param_v4l2)
-#define LIBV4L_ERR_CHANNEL					-1
+#define LIBVIDEO_ERR_CHANNEL				-1
 
 //Cant set standard (set_cap_param_v4l2)
-#define LIBV4L_ERR_STD						-2
+#define LIBVIDEO_ERR_STD					-2
 
 //Cant set standard (set_cap_param_v4l1)
-#define LIBV4L_ERR_CHANNEL_SETUP			-3
+#define LIBVIDEO_ERR_CHAN_SETUP				-3
 
 //cant get capabilities (set_cap_param_v4l1, query_device_v4l1)
-#define LIBV4L_ERR_NOCAPS					-4
+#define LIBVIDEO_ERR_NOCAPS					-4
 
 //wrong version of v4l in struct capture device
-#define LIBV4L_ERR_WRONG_VERSION			-5
+#define LIBVIDEO_ERR_WRONG_VERSION			-5
 
 //wrong height (set_cap_param_v4l1)
-#define LIBV4L_ERR_DIMENSIONS				-6
+#define LIBVIDEO_ERR_DIMENSIONS				-6
 
 //generic IOCTL error (check_inputs_v4l1)
-#define LIBV4L_ERR_IOCTL					-7
+#define LIBVIDEO_ERR_IOCTL					-7
 
 //cant set the image format, palette, width, height, ... (set_cap_param_v4l1 & 2)
-#define LIBV4L_ERR_FORMAT					-8
+#define LIBVIDEO_ERR_FORMAT					-8
 
 //cant set the image cropping(set_cap_param_v4l2)
-#define LIBV4L_ERR_CROP						-9
+#define LIBVIDEO_ERR_CROP					-9
 
 //cant request mmap info(init_cap_param_v4l1 & 2)
-#define LIBV4L_ERR_REQ_MMAP					-10
+#define LIBVIDEO_ERR_REQ_MMAP				-10
 
 //cant get mmap buffer (init_cap_param_v4l2)
-#define LIBV4L_ERR_REQ_MMAP_BUF				-11
+#define LIBVIDEO_ERR_REQ_MMAP_BUF			-11
 
 //unsupported number of mmap buffers (init_cap_param_v4l1)
-#define LIBV4L_ERR_INVALID_BUF_NB			-12
+#define LIBVIDEO_ERR_INVALID_BUF_NB			-12
 
 //Error mmap'ing buffers (init_cap_param_v4l1 & 2)
-#define LIBV4L_ERR_MMAP_BUF					-13
+#define LIBVIDEO_ERR_MMAP_BUF				-13
 
-//Wrong palette stored in struct capture_device, most likely changed by user (start_cap_param_v4l1)
-#define LIBV4L_ERR_PALETTE					-14
+//Wrong palette stored in struct capture_device, most likely changed by user
+//(start_cap_param_v4l1)
+#define LIBVIDEO_ERR_PALETTE				-14
 
 //Trying to use a control while streaming (fps-param-probe.c)
-#define LIBV4L_ERR_STREAMING				-15
+#define LIBVIDEO_ERR_STREAMING				-15
 
 //control value out of range (v4l2-input.c)
-#define LIBV4L_ERR_OUT_OF_RANGE				-16
+#define LIBVIDEO_ERR_OUT_OF_RANGE			-16
 
-//device_info in use (libv4.c)
-#define LIBV4L_ERR_INFO_IN_USE				-17
+//device_info in use (libvideo.c)
+#define LIBVIDEO_ERR_INFO_IN_USE			-17
 
-//capture in use (libv4.c)
-#define LIBV4L_ERR_CAPTURE_IN_USE			-18
+//capture in use (libvideo.c)
+#define LIBVIDEO_ERR_CAPTURE_IN_USE			-18
 
-//control in use (libv4.c)
-#define LIBV4L_ERR_CONTROL_IN_USE			-19
+//control in use (libvideo.c)
+#define LIBVIDEO_ERR_CONTROL_IN_USE			-19
 
-//tuner action in use (libv4.c)
-#define LIBV4L_ERR_TUNER_IN_USE				-20
+//tuner action in use (libvideo.c)
+#define LIBVIDEO_ERR_TUNER_IN_USE			-20
 
 #endif
 
