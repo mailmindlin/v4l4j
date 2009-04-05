@@ -31,7 +31,8 @@
 #include "log.h"
 
 static void set_palette_info(struct device_info *di, int idx, int palette){
-	XREALLOC(di->palettes, struct palette_info *,(idx+1) * sizeof(struct palette_info));
+	XREALLOC(di->palettes,
+			struct palette_info *,(idx+1) * sizeof(struct palette_info));
 	di->palettes[idx].index = palette;
 	di->palettes[idx].raw_palette = -1;
 	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: %s (%d) supported\n",
@@ -44,7 +45,8 @@ static int check_palettes_v4l1(struct video_device *vdev){
 	struct device_info *di = vdev->info;
 	di->palettes = NULL;
 
-	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: Checking supported palettes.\n");
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
+			"QRY: Checking supported palettes.\n");
 	for(palette = 0; palette < libvideo_palettes_size-3; palette++){
 		if(libvideo_palettes[palette].v4l1_palette!=VIDEO_PALETTE_UNDEFINED_V4L1){
 			dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
@@ -95,10 +97,13 @@ static int query_tuner(struct video_input_info *vi, int fd){
 	if (ioctl (fd, VIDIOCGTUNER, &t) != 0)
 		return -1;
 
-	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: Tuner: %s - low: %lu - high: %lu - unit: %s"
-			" - PAL: %s - NTSC: %s - SECAM: %s\n", t.name, t.rangelow, t.rangehigh,
-			t.flags & VIDEO_TUNER_LOW ? "kHz": "MHz", t.flags & VIDEO_TUNER_PAL ? "Yes" : "No",
-			t.flags & VIDEO_TUNER_NTSC ? "Yes" : "No",t.flags & VIDEO_TUNER_SECAM ? "Yes" : "No");
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
+			"QRY: Tuner: %s - low: %lu - high: %lu - unit: %s"
+			" - PAL: %s - NTSC: %s - SECAM: %s\n", t.name, t.rangelow,
+			t.rangehigh, t.flags & VIDEO_TUNER_LOW ? "kHz": "MHz",
+			t.flags & VIDEO_TUNER_PAL ? "Yes" : "No",
+			t.flags & VIDEO_TUNER_NTSC ? "Yes" : "No",
+			t.flags & VIDEO_TUNER_SECAM ? "Yes" : "No");
 
 	XMALLOC(vi->tuner, struct tuner_info *, sizeof(struct tuner_info));
 	strncpy(vi->tuner->name, t.name, NAME_FIELD_LENGTH);
@@ -159,28 +164,31 @@ int check_inputs_v4l1(struct video_device *vd){
 	}
 	di->nb_inputs = vc.channels;
 
-	XMALLOC(di->inputs, struct video_input_info *, vc.channels * sizeof(struct video_input_info ));
+	XMALLOC(di->inputs, struct video_input_info *,
+			vc.channels * sizeof(struct video_input_info ));
 
 	for (i=0; i<vc.channels; i++) {
 		CLEAR(chan);
 		CLEAR(di->inputs[i]);
 		chan.channel=i;
 		if (-1 == ioctl(vd->fd, VIDIOCGCHAN, &chan)) {
-			info("Failed to get details of input %d on device %s\n", i, vd->file);
+			info("Failed to get details of input %d on device %s\n",i,vd->file);
 			ret = LIBV4L_ERR_IOCTL;
 			free_video_inputs(di->inputs,i);
 			goto end;
 		}
 
-		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: Found input %d - %s - %s - tuner: %d\n", i, chan.name, (chan.type == VIDEO_TYPE_TV) ? "Tuner" : "Camera",chan.tuners);
+		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
+				"QRY: Found input %d - %s - %s - tuner: %d\n", i, chan.name,
+				(chan.type == VIDEO_TYPE_TV) ? "Tuner" : "Camera",chan.tuners);
 
-		//Quirky code: for sake of consistency, we assume there is only one tuner per input
-		//(v4l2 says so, but not v4l1!!!
+		//Quirky code: for sake of consistency, we assume there is only one
+		//tuner per input (v4l2 says so, but not v4l1!!!
 		if(chan.tuners > 1) {
-			info("Your V4L1 device has more than one tuner connected to this input.\n");
-			info("This is currently not supported by libv4l.\n");
+			info("Your V4L1 device has more than one tuner connected to this ");
+			info("input.\nThis is currently not supported by libvideo.\n");
 			info("Please let the author know about this error.\n");
-			info("See the ISSUES section in the libv4l README file.\n");
+			info("See the ISSUES section in the libvideo README file.\n");
 			ret = LIBV4L_ERR_NOCAPS;
 			free_video_inputs(di->inputs,i);
 			goto end;
@@ -188,17 +196,21 @@ int check_inputs_v4l1(struct video_device *vd){
 
 		strncpy(di->inputs[i].name, chan.name, NAME_FIELD_LENGTH);
 		di->inputs[i].index = 0;
-		di->inputs[i].type = (chan.type == VIDEO_TYPE_TV) ? INPUT_TYPE_TUNER : INPUT_TYPE_CAMERA;
+		di->inputs[i].type = (chan.type == VIDEO_TYPE_TV) ?
+				INPUT_TYPE_TUNER : INPUT_TYPE_CAMERA;
 
-		//Quirky code: input standard can only be set from struct video_tuner in v4l1
-		//which implies that there is a tuner. What if the input consists of an S-VIDEO
-		//connector supporting multiple standards ? how do you set the standard in this case,
-		//given that there are no tuner to invoke VIDIOCSTUNER(struct video_tuner) on ?
+		//Quirky code: input standard can only be set from struct video_tuner
+		//in v4l1 which implies that there is a tuner. What if the input
+		//consists of an S-VIDEO connector supporting multiple standards ? how
+		//do you set the standard in this case, given that there are no tuner
+		//to invoke VIDIOCSTUNER(struct video_tuner) on ?
 
 		if (chan.flags & VIDEO_VC_TUNER) {
-			dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: Querying tuner\n");
+			dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
+					"QRY: Querying tuner\n");
 			if (-1 == query_tuner(&di->inputs[i], vd->fd)) {
-				info("Failed to get details of tuner on input %d of device %s\n", i, vd->file);
+				info("Failed to get details of tuner on input %d of device %s\n"
+						, i, vd->file);
 				ret = LIBV4L_ERR_IOCTL;
 				free_video_inputs(di->inputs,i);
 				goto end;
@@ -220,7 +232,8 @@ int query_device_v4l1(struct video_device *vdev){
 	int ret = 0;
 	struct video_capability caps;
 
-	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: Querying V4L1 device.\n");
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
+			"QRY: Querying V4L1 device.\n");
 
 	if (check_v4l1(vdev->fd, &caps)==-1) {
 		info("Error checking capabilities of V4L1 video device");

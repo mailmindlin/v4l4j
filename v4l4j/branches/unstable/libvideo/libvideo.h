@@ -39,23 +39,27 @@
  *
  */
 struct mmap_buffer {
-	void *start;					//start of the mmaped buffer
-	int length;						//length of the mmaped buffer as given by v4l - does NOT indicate the length of the frame,
-									//use struct capture_device->imagesize instead
+	void *start;		//start of the mmaped buffer
+	int length;			//length of the mmaped buffer as given by v4l
+						//does NOT indicate the length of the frame,
+						//use struct capture_device->imagesize instead
 };
 
 struct mmap {
 	int req_buffer_nr;				//requested number of buffers
 	int buffer_nr;					//actual number of mmap buffers
 	struct mmap_buffer *buffers;	//array of buffers
-	void * tmp;						//temp buffer pointing to the latest dequeued buffer (V4L2) - last requested frame (V4L1)
-	int v4l1_mmap_size;				//used by v4l1 only, to store the overall size of the mmaped area
+	void * tmp;						//temp buffer pointing to the latest
+									//dequeued buffer (V4L2) - last
+									//requested frame (V4L1)
+	int v4l1_mmap_size;				//used by v4l1 only, to store the overall
+									//mmap size
 };
 
 
 //
 // Passing these values as desired width and height for the capture
-// will result libv4l using the maximun width and height allowed
+// will result libvideo using the maximun width and height allowed
 //
 #define MAX_WIDTH					0
 #define MAX_HEIGHT					0
@@ -127,14 +131,17 @@ struct mmap {
 #define		MR97310A				51
 #define		SQ905C					52
 
-//the default order in which palettes are tried if "set_cap_param(c, NULL, 0)" is used
-#define		DEFAULT_PALETTE_ORDER	{JPEG, YUV420, MJPEG, RGB24, RGB32, YUYV, RGB555, RGB565, GREY, \
-									MPEG, HI240, UYVY, YUV422P, YUV411P, YUV410P, RGB332, RGB444, \
-									RGB555X, RGB565X, BGR24, BGR32, Y16, PAL8, YVU410, YVU420, \
-									Y41P, YUV444, YUV555, YUV565, YUV32, NV12, NV21, YYUV, HM12, SBGGR8, \
-									SGBRG8, SGRBG8, SBGGR16, SN9C10X, SN9C20X_I420, PWC1, PWC2, ET61X251, \
-									SPCA501, SPCA505, SPCA508, SPCA561, PAC207, PJPG, YVYU, \
-									MR97310A, SQ905C}
+//the default order in which palettes are tried if "set_cap_param(c, NULL, 0)"
+//is used
+#define		DEFAULT_PALETTE_ORDER \
+	{JPEG, YUV420, MJPEG, RGB24, RGB32, YUYV, RGB555, RGB565, GREY, \
+	MPEG, HI240, UYVY, YUV422P, YUV411P, YUV410P, RGB332, RGB444, \
+	RGB555X, RGB565X, BGR24, BGR32, Y16, PAL8, YVU410, YVU420, \
+	Y41P, YUV444, YUV555, YUV565, YUV32, NV12, NV21, YYUV, HM12, SBGGR8, \
+	SGBRG8, SGRBG8, SBGGR16, SN9C10X, SN9C20X_I420, PWC1, PWC2, ET61X251, \
+	SPCA501, SPCA505, SPCA508, SPCA561, PAC207, PJPG, YVYU, \
+	MR97310A, SQ905C}
+
 //Dont use the following three, use YUV420, YUYV or YUV411P instead !!
 #define		IDENTICAL_FORMATS		3
 #define 	YUV420P					53
@@ -142,37 +149,44 @@ struct mmap {
 #define 	YUV411					55
 
 struct convert_data {
-	struct v4lconvert_data *priv;//the libv4l convert struct (used only when V4L2)
-	struct v4l2_format *src_fmt; //the source pixel format (the one the capture is made in)
-	struct v4l2_format *dst_fmt; //the dest format (the one obtained after conversion);
-	int src_palette;			//the source libvideo palette
-	void *frame;				//the last captured frame goes here after conversion
-								//the length of the buffer is set to dst_fmt->fmt.pix.sizeimage
+	struct v4lconvert_data *priv;//the libv4l convert struct (used only if V4L2)
+	struct v4l2_format *src_fmt; //the source pixel format used for capture
+	struct v4l2_format *dst_fmt; //the dest format, after conversion
+	int src_palette;			//the source libvideo palette index
+	void *frame;				//the last captured frame buffer after conv
+								//the length of the buffer is set to
+								//dst_fmt->fmt.pix.sizeimage
 };
 
 //all the fields in the following structure are read only
 struct capture_device {
 	struct mmap *mmap;				//do not touch
-	int palette;					//which palette is used. see #define enum above
+	int palette;					//which palette is used. see #define above
 	int width;						//captured frame width
 	int height;						//captured frame width
 	int std;						//v4l standard - see #define enum above
-	int channel;					//channel number (for video capture cards, not webcams)
+	int channel;					//channel number (0 for webcams)
 	int imagesize;					//in bytes
-	int tuner_nb;					//the index of the tuner associated with this capture_device, -1 if not tuner input
+	int tuner_nb;					//the index of the tuner associated with
+									//this capture_device, -1 if not tuner input
 	struct capture_actions *actions;	//see def below
-	int is_native;					//this field is meaningful only with v4l2 device.
+	int is_native;					//this field is meaningful only with v4l2.
 									//for v4l1, it is always set to 1.
-									//it specifies whether or not the palette is native,
-									//ie, whether it is converted from a native format
-									//or it actually is a native format. if it is converted
-									//(by libv4l convert), then the convert member is valid
+									//it specifies whether or not the palette is
+									//native, ie, whether it is converted from
+									//a native format or it actually is a native
+									//format. if it is converted (by libv4l
+									//convert), then the convert member is valid
 
-	int real_v4l1_palette;			//v4l1 weirdness: v4l1 defines 2 distinct palettes YUV420 and YUV420P
-									//but they are the same (same goes for YUYV and YUV422). In this field
-									//we store the real palette used by v4l1. In the palette field above,
-									//we store what the application should know (YUYV instead of YUV422)
-	struct convert_data* convert;	//do not touch - libv4lconvert stuff (used only when v4l2)
+	int real_v4l1_palette;			//v4l1 weirdness: v4l1 defines 2 distinct
+									//palettes YUV420 and YUV420P but they are
+									//the same (same goes for YUYV and YUV422).
+									//In this field we store the real palette
+									//used by v4l1. In the palette field above,
+									//we store what the application should know
+									//(YUYV instead of YUV422)
+	struct convert_data* convert;	//do not touch - libv4lconvert stuff
+									//(used only when v4l2)
 									//only valid if is_native is 0
 };
 
@@ -247,8 +261,10 @@ struct video_device;
 struct v4l_driver_probe {
 	int (*probe) (struct video_device *, void **);
 	int (*list_ctrl)(struct video_device *, struct control *, void *);
-	int (*get_ctrl)(struct video_device *, struct v4l2_queryctrl *, void *, int *);
-	int (*set_ctrl)(struct video_device *,  struct v4l2_queryctrl *, int *, void *);
+	int (*get_ctrl)(struct video_device *, struct v4l2_queryctrl *,
+			void *, int *);
+	int (*set_ctrl)(struct video_device *,  struct v4l2_queryctrl *,
+			int *, void *);
 	void *priv;
 };
 /*
@@ -263,7 +279,8 @@ typedef struct struct_elem {
 struct control_list {
 	int count;						//how many controls are available
 	struct control *controls;		//array of 'count' struct control's
-	driver_probe *probes; 			//linked list of driver probes, allocated in libv4l.c:get_control_list()
+	driver_probe *probes; 			//linked list of driver probes, allocated in
+									//libvideo.c:get_control_list()
 };
 
 /*
@@ -307,9 +324,10 @@ struct video_device {
  *
  */
 
-//Put the version in string & return it. allocation and freeing must be done by caller
+//Put the version in string & return it. allocation and freeing
+//must be done by caller
 //passing a char[10] is enough.
-char *get_libv4l_version(char *);
+char *get_libvideo_version(char *);
 
 /*
  *
@@ -326,11 +344,12 @@ int close_device(struct video_device *);
  *
  */
 
-//init_capture_device creates and initialises a struct capture_device, opens the device file, checks what
-//version of v4l the device supports, and whether capture and streaming are supported.
-//Then creates the V4L control list.
-//Arguments: device file, width, height, channel, std, nb_buf
-struct capture_device *init_capture_device(struct video_device *, int, int, int, int, int);
+//init_capture_device creates and initialises a struct capture_device,
+//opens the device file, checks what version of v4l the device supports,
+//and whether capture and streaming are supported. Then creates the V4L
+//control list. Arguments: device file, width, height, channel, std, nb_buf
+struct capture_device *init_capture_device(struct video_device *, int, int,
+		int, int, int);
 
 /*
  * functions pointed to by the members of this structure should be used
@@ -341,9 +360,11 @@ struct capture_actions {
  * Init methods
  */
 //set the capture parameters
-//int * point to an array of image formats (palettes) to try (see bottom of libv4l.h for a list of supported palettes)
-//the last argument (int) tells how many formats there are in the previous argument
-//arg2 can be set to NULL and arg3 to 0 to try the default order (again, see libv4l.h)
+//int * point to an array of image formats (palettes) to try
+//(see bottom of libvideo.h for a list of supported palettes)
+//the last argument (int) tells how many formats there are in
+//the previous argument, arg2 can be set to NULL and arg3 to 0 to
+//try the default order (again, see libvideo.h)
 	int (*set_cap_param)(struct video_device *, int *, int);
 
 //initialise streaming, request create mmap'ed buffers
@@ -354,7 +375,8 @@ struct capture_actions {
 
 /*
  * capture methods
- * these methods can be called if calls to ALL the init methods (above) were successful
+ * these methods can be called if calls to ALL the init methods
+ * (above) were successful
  */
 
 //dequeue the next buffer with available frame
@@ -381,12 +403,14 @@ struct capture_actions {
  * Dump to stdout methods
  * Must be called after init_capture_device and before free_capture_device
  */
-	void (*list_cap)(int);				//lists all supported image formats
-										//prints capabilities
-										//print max width max height for v4l1 and current settings for v4l2
+	void (*list_cap)(int);	//lists all supported image formats
+							//prints capabilities
+							//print max width max height for v4l1
+							//and current settings for v4l2
 };
 
-//counterpart of init_capture_device, must be called it init_capture_device was successful
+//counterpart of init_capture_device, must be called if init_capture_device
+//was successful
 void free_capture_device(struct video_device *);
 
 

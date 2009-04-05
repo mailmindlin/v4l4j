@@ -44,7 +44,7 @@
 #endif
 
 struct libvideo_palette{
-	int libv4l_palette;
+	int libvideo_palette;
 	int v4l1_palette;
 	int v4l2_palette;
 	int depth;

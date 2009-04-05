@@ -69,10 +69,12 @@ int main(int argc, char** argv) {
 	struct video_device *v;
 	void *d;
 	struct timeval start, now;
-	int size, count=0, std=0, channel=0, width=0, height=0, cap_length = 0, fmt=-1;
+	int size, count=0, std=0, channel=0, width=0, height=0, cap_length = 0,
+		fmt=-1;
 
 	if(argc!=7 && argc!=8) {
-		printf("Usage: %s <video_device_file> <single_frame> <standard> <input> <width> <height> [ format ]\n", argv[0]);
+		printf("Usage: %s <video_device_file> <single_frame> <standard> <input>"
+				" <width> <height> [ format ]\n", argv[0]);
 		printf("This program requires the following arguments in this order:\n");
 		printf("The video device file to be tested.\n");
 		printf("Single frame capture (1), or 10 second capture (0)\n");
@@ -80,8 +82,7 @@ int main(int argc, char** argv) {
 		printf("Video standards: webcam:0 - PAL:1 - SECAM:2 - NTSC:3\n");
 		printf("The capture resolution (width and height)\n");
 		printf("The last argument is optional and is an image format index. "
-				"A list of known formats can be found in libv4l.h . To see "
-				"what formats are supported by a video device, run "
+				"To see what formats are supported by a video device, run "
 				"'./list-caps /dev/videoXX' and check the "
 				"'Printing device info' section at the bottom.\n");
 		printf("Arguments must be in the specified order !!!\n");
@@ -90,10 +91,12 @@ int main(int argc, char** argv) {
 
 	if(atoi(argv[2])>=1){
 			cap_length = 0;
-			printf("This program will capture a single frame from %s\n", argv[1]);
+			printf("This program will capture a single frame from %s\n",
+					argv[1]);
 	} else {
 		cap_length = CAPTURE_LENGTH;
-		printf("This program will capture frames from %s for %d seconds\n", argv[1], cap_length);
+		printf("This program will capture frames from %s for %d seconds\n",
+				argv[1], cap_length);
 	}
 
 	std = atoi(argv[3]);
@@ -107,7 +110,8 @@ int main(int argc, char** argv) {
 		printf("Trying image format %s (%d)\n",libvideo_palettes[fmt].name, fmt);
 	}
 
-	printf("Make sure your video source is connected, and press <Enter>, or Ctrl-C to abort now.");
+	printf("Make sure your video source is connected, and press <Enter>, or "
+			"Ctrl-C to abort now.");
 
 	getchar();
 
