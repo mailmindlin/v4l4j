@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
 	cdev = init_capture_device(d, atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), 5);
 	if(cdev==NULL) {
 		info(LOG_ERR, "Failed to initialise video device\n");
-		info(LOG_ERR, "Recompile libv4l with debugging enabled (see README)\n");
+		info(LOG_ERR, "Recompile libvideo with debugging enabled (see README)\n");
 		info(LOG_ERR, "to see why/where the initialisation fails.\n");
 		exit(1);
 	}
@@ -132,8 +132,8 @@ int main(int argc, char **argv) {
 	//Set capture param (image format, color, size, crop...)
 	if ((*cdev->actions->set_cap_param)(d, fmts , NB_SUPPORTED_FORMATS)!=0) {
 		info(LOG_ERR, "Unable to set capture parameters. It could be due to:\n");
-		info(LOG_ERR, " - the chosen width and height,\n - the driver not supporting the image formats libv4l tried\n");
-		info(LOG_ERR, "Recompile libv4l with debugging enabled (see README)\n");
+		info(LOG_ERR, " - the chosen width and height,\n - the driver not supporting the image formats libvideo tried\n");
+		info(LOG_ERR, "Recompile libvideo with debugging enabled (see README)\n");
 		info(LOG_ERR, "to see why/where the setup fails.\n");
 		free_capture_device(d);
 		close_device(d);

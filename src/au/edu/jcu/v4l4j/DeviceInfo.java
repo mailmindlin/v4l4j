@@ -85,7 +85,7 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  */
 public class DeviceInfo {	
 	/**
-	 * Native method interacting with libv4l to get info on device f
+	 * Native method interacting with libvideo to get info on device f
 	 * @param f the full path to the V4L device file
 	 */
 	private native void getInfo(long o);

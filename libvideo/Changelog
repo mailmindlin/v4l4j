@@ -1,5 +1,6 @@
 v0.8:
-- Added libv4l convert code (libv5l v0.5.0) from Hans de Goede (
+- renamed libv4l to libvideo
+- Added libvideo convert code (libv4l v0.5.0) from Hans de Goede
 v0.5.7:
 - Reorganised V4L control code and driver probe sections.
 - Now, multiple driver probes can be successful (instead of only 1 before),
@@ -43,7 +44,7 @@ v0.5.1:
 
 
 v0.3.1:
-- Groupped open_device() and check_cap_param() under init_libv4l2() to fix an
+- Grouped open_device() and check_cap_param() under init_libv4l2() to fix an
   issue with controls being listed before checking if the video device is V4L2
 - as a consequence, close_device() is now called by del_libv4l2()
 

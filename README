@@ -1,8 +1,8 @@
 Video4Linux4Java (v4l4j) is a GPL'd java package providing a simple interface
 to capture frames  from Video4Linux devices. It consists of:
-- a v4l library (libv4l), which is a C wrapper library around the V4L API,
-- a set of java classes that provide access to the libv4l API, and
-- a JNI stub, which fills in the gap between JAVA and libv4l.
+- a v4l library (libvideo), which is a C wrapper library around the V4L API,
+- a set of java classes that provide access to the libvideo API, and
+- a JNI stub, which fills in the gap between JAVA and libvideo.
 
 FEATURES:
 - Captured frames handed out in a ByteBuffer object. Frames are given either
@@ -10,7 +10,7 @@ FEATURES:
 - Single frame or stream capture
 - Access to all V4L video source controls, even those accessible
   only through private ioctls, which are exposed as (pseudo-) controls.
-  See TestedHardware in the libv4l directory for a list of detected drivers
+  See TestedHardware in the libvideo directory for a list of detected drivers
   and exported private ioctls
 
 REQUIREMENTS:
@@ -27,7 +27,7 @@ v4l4j requires the following:
 
 COMPILING:
 To compile the JNI library and java classes, run "ant all" in the top-level
-directory. This will first compile libv4l and the JNI code, and then link both
+directory. This will first compile libvideo and the JNI code, and then link both
 of these to produce the JNI library libv4l4j. It will then compile the java 
 classes and pack them in a JAR file. Both the JNI library libv4l4j.so and the
 JAR file v4l4j.jar are copied in the top-level directory.
@@ -72,9 +72,9 @@ the height and so on).
 DEBUGGING:
 You can compile v4l4j to produce extra debug output, useful to troubleshoot
 issues, with "ant clean all-debug". If you have already installed v4l4j (with
-"ant install") then you must uninstall it with "ant uninstall", otherwise the
-previous jar file & JNI library (without debug statements) will take precedence
-over the new ones. 
+"ant install") then you MUST uninstall it with "ant uninstall" fisrt, otherwise
+the previous jar file & JNI library (without debug statements) will take
+precedence over the new ones. 
 
 CONTACT:
 Feedback is is greatly appreciated, specially because v4l4j has only been 

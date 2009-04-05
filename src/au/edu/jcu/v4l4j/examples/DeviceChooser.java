@@ -1,3 +1,26 @@
+/*
+* Copyright (C) 2007-2008 Gilles Gigan (gilles.gigan@gmail.com)
+* eResearch Centre, James Cook University (eresearch.jcu.edu.au)
+*
+* This program was developed as part of the ARCHER project
+* (Australian Research Enabling Environment) funded by a   
+* Systemic Infrastructure Initiative (SII) grant and supported by the Australian
+* Department of Innovation, Industry, Science and Research
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public  License as published by the
+* Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+* or FITNESS FOR A PARTICULAR PURPOSE.  
+* See the GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+*/
 package au.edu.jcu.v4l4j.examples;
 
 import java.awt.Component;
@@ -65,7 +88,6 @@ public class DeviceChooser implements ActionListener{
 		frame.getContentPane().add(mainPanel);
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
 		deviceFiles.setAlignmentX(Component.CENTER_ALIGNMENT);
-		deviceFiles.setAlignmentY(Component.TOP_ALIGNMENT);
 		Dimension d = new Dimension(120,25);
 		deviceFiles.setMaximumSize(d);
 		mainPanel.add(deviceFiles);
@@ -117,20 +139,21 @@ public class DeviceChooser implements ActionListener{
 			e1.printStackTrace();
 			return;
 		}
-		//info.getPanel().setBorder(BorderFactory.createLineBorder(Color.RED, 2));
 		
+		info.getPanel().setAlignmentX(Component.CENTER_ALIGNMENT);
 		mainPanel.add(info.getPanel());
 		mainPanel.validate();
 		mainPanel.repaint();
 	}
 
-	public static void main(final String[] args){
+	public static void main(String[] args){
+		final String[] argz = args;
 		SwingUtilities.invokeLater(new Runnable(){
 
 			@Override
 			public void run() {
-				if(args.length==1)
-					new DeviceChooser(args[0]);
+				if(argz.length==1)
+					new DeviceChooser(argz[0]);
 				else
 					new DeviceChooser(null);
 			}
@@ -239,9 +262,13 @@ public class DeviceChooser implements ActionListener{
 			mainPane = new JPanel();
 			mainPane.setLayout(new BoxLayout(mainPane, BoxLayout.PAGE_AXIS));
 			name = new JLabel("Unable to get device information");
+			name.setAlignmentX(Component.CENTER_ALIGNMENT);
 			rgbView = new JButton(CTRL_ONLY_STR);
+			rgbView.setAlignmentX(Component.CENTER_ALIGNMENT);
 			rgbView.addActionListener(this);
+			mainPane.add(Box.createVerticalStrut(5));
 			mainPane.add(name);
+			mainPane.add(Box.createVerticalStrut(5));
 			mainPane.add(rgbView);
 			
 		}
@@ -325,6 +352,13 @@ public class DeviceChooser implements ActionListener{
 			if(di.getFormatList().getJPEGEncodableFormats().size()!=0){
 				buttonPane.add(Box.createHorizontalGlue());
 				buttonPane.add(jpegView);
+			}
+			if(di.getFormatList().getRGBEncodableFormats().size()==0 &&
+					di.getFormatList().getJPEGEncodableFormats().size()==0
+					){
+				buttonPane.add(Box.createHorizontalGlue());
+				rgbView.setText(CTRL_ONLY_STR);
+				buttonPane.add(rgbView);
 			}
 			buttonPane.add(Box.createHorizontalGlue());
 			
