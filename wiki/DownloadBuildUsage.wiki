@@ -33,7 +33,7 @@ To compile the test programs, run "make test" in libvideo/.
 The libvideo/example/ directory contains a lighweight application called light_cap, which captures frames and sends them out as a multipart JPEG stream suitable for viewing in <img> tags of any standard-compliant web browser (no java applet required). See example/README for more details.
 
 =Debugging=
-libvideo contains lots of debug statements which are disable by default. To enable them, use 'DEBUG=1 make clean test'. Extra output will be produced to allow troubleshooting.
+libvideo contains lots of debug statements which are disabled by default. To enable them, use 'DEBUG=1 make clean test'. Extra output will be produced to allow troubleshooting.
 
 =Issues=
 Feedback is is greatly appreciated to expand the list of platforms and video devices libvideo has been successfully tested with.
