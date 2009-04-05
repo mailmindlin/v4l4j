@@ -1,4 +1,11 @@
-#summary This page presents libvideo, explains its raison d'être, details its API and gives a couple of examples on how to use it.
+#summary This page presents libvideo, its raison d'être and its features.
+
+Information on libvideo is split across multiple pages:
+
+ * The [libvideo libvideo] page (this page) gives a short introduction to libvideo and how it came about.
+ * The DownloadBuildUsage page explains how to download it, compile it and use it.
+ * The [libvideoAPI API] page explains how to write a program with libvideo.
+
 
 =Introduction=
 The goal of v4l4j is to provide a simple-to-use Java API allowing access to video streaming hardware under Linux. Besides capturing frames, I also wanted v4l4j to make it possible to discover available controls and use them. Both of these should require as little knowledge as possible about the underlying hardware. All the required low-level information should be provided dynamically at run time so applications could adjust accordingly. I quickly realised that the first step in writing v4l4j would involved designing and writing some form of abstraction layer first, due to the many differences involved in access video hardware.
@@ -18,7 +25,7 @@ Usage of V4L1 VIDIOCGPICT ioctl is fairly straight forward, but it is very limit
  * have the application to try and detect the underlying driver. 
 The former requires checking every single existing driver to find out whether or not it defines private ioctls, while the latter can not easily be done and again depends on which version of V4L is used.
 
-*Last*, different video devices support different image formats. An image format defines how bytes are organised in an image buffer returned by V4L. It specifies the layout of the image in the buffer. There are [http://v4l2spec.bytesex.org/spec/c2030.htm *MANY* different image formats out there] and a few color spaces also. Creating a video stream implies negotiating a video format supported by hardware and suitable to the application.
+*Last*, different video devices support different image formats. An image format defines how bytes are organised in an image buffer returned by V4L. It specifies the layout of the image in the buffer, the number of components, the color depth ... . There are [http://v4l2spec.bytesex.org/spec/c2030.htm *MANY* different image formats out there] and a few color spaces also. Creating a video stream implies negotiating a video format supported by hardware and suitable to the application.
 
 Which brings me back to my first point: *Providing seamless access to V4L devices from user space isn't an easy task.* This is why instead of creating java code to directly interact with V4L, I have created an intermediate layer: libvideo. v4l4j relies on libvideo to "smooth out" the rough edges of dealing with V4L.
 
@@ -28,132 +35,5 @@ libvideo is a C library of functions which facilitates interactions with the cap
  * It offers image format negotiation by allowing the application to provide a set of acceptable image formats.
  * It automatically detects all controls (V4L1, user and extended V4L2 controls) and reports them as [http://v4l2spec.bytesex.org/spec/r13317.htm#V4L2-QUERYCTRL V4L2 controls]
  * It holds a list of drivers with private ioctls. It will automatically detects the underlying driver and reports any private iotcls also as (fake) [http://v4l2spec.bytesex.org/spec/r13317.htm#V4L2-QUERYCTRL V4L2 controls].
- * libvideo uses libv4l_convert to transparently convert many exotic and hardware-specific image formats to RGB24, BGR24, YUV420 and YVU420. libv4l_convert is part of the [http://hansdegoede.livejournal.com/3636.html libv4l] project.
-In essence, libvideo acts as an adapter for both version of V4L, and in turns offer in uniform API to capture frames using V4L.
-
-=Tested Hardware=
-See TestedHardware page
-
-=Download=
-libvideo is included in v4l4j, in the libvideo/ subdirectory.
-If you want to download only libvideo (not the entire v4l4j project), use the following command:
-{{{
-svn co http://v4l4j.googlecode.com/svn/v4l4j/trunk/libvideo
-}}}
-
-=Requirements=
-libvideo requires make, gcc and a V4L-supported video source. It has been successfully compiled with gcc 4.2.3 and gcc 4.1.2
-
-=Build=
-Run "make" in the libvideo/ directory
-
-=Usage=
-libvideo is a library and is meant to be linked to an application. However, three test programs are shipped:
- * 'test-capture', which runs a capture from a given video device at a given resolution. 
-It then prints the frame rate. It can also dump raw captured frames to files.
- * 'dump-catpure' which is similar to the previous application, except that it will write the captured frames to disk,
- * 'list-caps' which lists information about a given video device.
-
-To compile the test programs, run "make test" in libvideo/.
-The libvideo/example/ directory contains light_cap, a lighweight application which captures frames and sends them out as a multipart JPEG stream suitable for viewing in <img> tags of any standard-compliant web browser (no java applet required). See example/README for more details.
-
-=Debugging=
-libvideo contains lots of debug statements which are disable by default. To enable them, use 'DEBUG=1 make clean test'. Extra output will be produced to allow troubleshooting.
-
-=Issues=
-Feedback is is greatly appreciated to expand the list of platforms and video devices libvideo has been successfully tested with.
-Issues and queries can be emailed to the [http://groups.google.com/group/v4l4j v4l4j mailing list] along with a description of what went wrong (or right) and what hardware you run libvideo on. 
-
-=libvideo API=
-*libvideo is NOT reentrant ! Only one thread should call libvideo methods at any time.* The application using libvideo is responsible for implementing a proper locking mechanism.
-See libvideo/test.c for a simple capture example.
-Basically, to capture frames, you need to:
- * Include the right header files
-{{{
-#include "libv4l.h"
-#include "palettes.h"
-}}}
- * Initialise libvideo. You specify which video device file is to be used, the desired width and height, the input channel and standard and the desired number of buffers to be allocated. This method only checks that the device file exists and is readable. The other parameters will be applied when calling the next method. This method also detects which V4L version is used by the device and sets the member of the returned struct capture_device accordingly.
-{{{
-struct capture_device *c;
-c = init_libv4l(video_device_file, width, height ,channel, std, nb_buf);
-if(c==NULL) {
-	printf("Error initialising device.\n");
-	return -1;
-}
-}}}
-
- * Set the capture parameters. This method takes an array of desired image formats (see libv4l.h for a list of supported formats). Calling this method will try to apply the capture formats given in init_libv4l() and each of the specified image formats will be tried successively until a match is found. The selected image format is then available in c->palette.
-{{{
-int formats[] = {JPEG, MJPEG, YUV420, RGB24, YUYV};
-int nb_formats = 5
-if((*c->capture.set_cap_param)(c, formats, 5)){
-	del_libv4l(c);
-	printf("Cant set capture parameters\n");
-	return -1;
-}
-
-printf("Capturing from %s at %dx%d.\n", c->file, c->width,c->height);
-printf("Image format %s, size: %d\n", libv4l_palettes[c->palette].name, c->imagesize);
-}}}
- After a successful call to set_cap_param(), the members of `struct capture_device c` will be set to reflect the actual capture parameters. For example, there may be a difference between the desired resolution (specified when calling `init_libv4l()`) and the one that will be used for capture:
-{{{
-c->palette   //image format
-c->width     //image width
-c->height    //image height
-c->imagesize //size in bytes, valid only for uncompressed image formats !!!
-             //for compressed formats, the size is returned when capturing the frame
-}}}
-
- * Intialise V4L buffers.
-{{{
-if((*c->capture.init_capture)(c)<0){
-	del_libv4l(c);
-	printf("Cant initialise capture ");
-	return -1;
-}
-}}}
-
- * Start the capture. This method should be called only when your application is ready to handle captured frames.
-{{{
-if((*c->capture.start_capture)(c)<0){
-	(*c->capture.free_capture)(c);
-	del_libv4l(c);
-	printf("Cant start capture");
-	return -1;
-}
-}}}
-	
- * Capture frames, do something useful with them and let libv4l know when you are done with the buffer.
-{{{
-int size; //will contain the size of the captured frame 
-void *d; //the buffer containing the frame
-
-if((d = (*c->capture.dequeue_buffer)(c, &size)) != NULL) {
-
-	//do something with buffer at "d" of length "size"
-
-	//return buffer to libv4l
-	(*c->capture.enqueue_buffer)(c);
-
-} else {
-	printf("Cant get buffer ");
-	break;
-}
-}}}
-
- * Stop capture. This method must be called if start_capture() was successful.
-{{{
-if((*c->capture.stop_capture)(c)<0)
-	printf("Error stopping capture\n");
-}}}
-
- * Free V4L buffers. This method must be called if init_capture() was successful.
-{{{
-(*c->capture.free_capture)(c);
-}}}
-
- * Free libv4l resources. This method must be called if init_liv4l() was successful
-{{{
-del_libv4l(c);
-}}}
+ * It offers transparent conversion from exotic and hardware-specific image formats to well-known ones (RGB24, BGR24, YUV420 and YVU420). libvideo relies on libv4l_convert to  perform these conversions. libv4l_convert is part of the [http://hansdegoede.livejournal.com/3636.html libv4l] project.
+All in all, you can think of libvideo as an adapter for both versions of V4L, which offer a uniform API to capture frames using V4L, and provides a few simplifications of intricate details you (most of the time) dont want to deal with.
