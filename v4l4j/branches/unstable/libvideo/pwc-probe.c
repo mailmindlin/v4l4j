@@ -80,7 +80,7 @@ end:
 
 int pwc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, int *val){
 	struct pwc_mpt_angles angles;
-	int ret = LIBV4L_ERR_IOCTL;
+	int ret = LIBVIDEO_ERR_IOCTL;
 
 	if(q->id==0) {
 		//Pan/tilt reset
@@ -115,7 +115,7 @@ int pwc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, i
 
 int pwc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val, void *d){
 	struct pwc_mpt_angles angles;
-	int ret = LIBV4L_ERR_IOCTL, prev = 0;
+	int ret = LIBVIDEO_ERR_IOCTL, prev = 0;
 
 	if(q->id==0) {
 

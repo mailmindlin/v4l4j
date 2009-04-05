@@ -109,6 +109,10 @@ struct video_device *open_device(char *file) {
 	return vdev;
 }
 
+//this method releases the video device. Provided that all other interfaces
+//are released, it returns 0. if not, it returns LIBVIDEO_ERR_INFO_IN_USE,
+//LIBVIDEO_ERR_CAPTURE_IN_USE, LIBVIDEO_ERR_CONTROL_IN_USE,
+//LIBVIDEO_ERR_TUNER_IN_USE
 int close_device(struct video_device *vdev) {
 	//Close device file
 	dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_DEBUG,
@@ -120,25 +124,25 @@ int close_device(struct video_device *vdev) {
 		dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_ERR,
 				"VD: Cant close device file %s - device info data not released\n"
 				, vdev->file);
-		return LIBV4L_ERR_INFO_IN_USE;
+		return LIBVIDEO_ERR_INFO_IN_USE;
 	}
 	if(vdev->capture) {
 		dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_ERR,
 				"VD: Cant close device file %s - capture interface not released\n"
 				, vdev->file);
-		return LIBV4L_ERR_CAPTURE_IN_USE;
+		return LIBVIDEO_ERR_CAPTURE_IN_USE;
 	}
 	if(vdev->control) {
 		dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_ERR,
 				"VD: Cant close device file %s - control interface not released\n"
 				, vdev->file);
-		return LIBV4L_ERR_CONTROL_IN_USE;
+		return LIBVIDEO_ERR_CONTROL_IN_USE;
 	}
 	if(vdev->tuner_action) {
 		dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_ERR,
 				"VD: Cant close device file %s - tuner action not released\n"
 				, vdev->file);
-		return LIBV4L_ERR_TUNER_IN_USE;
+		return LIBVIDEO_ERR_TUNER_IN_USE;
 	}
 
 	close(vdev->fd);
@@ -514,7 +518,7 @@ int get_control_value(struct video_device *vdev,
 		else {
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
 					"CTRL: Weird V4L version (%d)...\n", vdev->v4l_version);
-			ret =  LIBV4L_ERR_WRONG_VERSION;
+			ret =  LIBVIDEO_ERR_WRONG_VERSION;
 		}
 	}
 	return ret;
@@ -530,7 +534,7 @@ int set_control_value(struct video_device *vdev,
 	if(*i<ctrl->minimum || *i > ctrl->maximum){
 		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
 				"CTRL: control value out of range\n");
-		return LIBV4L_ERR_OUT_OF_RANGE;
+		return LIBVIDEO_ERR_OUT_OF_RANGE;
 	}
 
 	if(ctrl->reserved[0]==V4L2_PRIV_IOCTL){
@@ -544,7 +548,7 @@ int set_control_value(struct video_device *vdev,
 		else {
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
 					"CTRL: Weird V4L version (%d)...\n", vdev->v4l_version);
-			ret = LIBV4L_ERR_WRONG_VERSION;
+			ret = LIBVIDEO_ERR_WRONG_VERSION;
 		}
 
 	}

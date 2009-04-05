@@ -112,7 +112,7 @@ end:
 }
 
 int qc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, int *val){
-	int ret = LIBV4L_ERR_IOCTL;
+	int ret = LIBVIDEO_ERR_IOCTL;
 	switch (q->id) {
 		case 0:
 			if(ioctl(vdev->fd, VIDIOCQCGSETTLE, val)==0)
@@ -141,7 +141,7 @@ int qc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, in
 }
 
 int qc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val, void *d){
-	int prev = 0, ret = LIBV4L_ERR_IOCTL;
+	int prev = 0, ret = LIBVIDEO_ERR_IOCTL;
 	switch (q->id) {
 		case 0:
 			ioctl(vdev->fd, VIDIOCQCGSETTLE, &prev);

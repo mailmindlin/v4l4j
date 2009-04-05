@@ -368,17 +368,17 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(
 	if((i=(*c->actions->set_cap_param)(d->vdev, &fmts, 1))!=0){
 		dprint(LOG_V4L4J, "[V4L4J] set_cap_param failed\n");
 		free_capture_device(d->vdev);
-		if(i==LIBV4L_ERR_DIMENSIONS)
+		if(i==LIBVIDEO_ERR_DIMENSIONS)
 			THROW_EXCEPTION(e, DIM_EXCP,
 					"The requested dimensions (%dx%d) are not supported",
 					c->width, c->height);
-		else if(i==LIBV4L_ERR_CHANNEL_SETUP)
+		else if(i==LIBVIDEO_ERR_CHAN_SETUP)
 			THROW_EXCEPTION(e, CHANNEL_EXCP,
 					"The requested channel (%d) is invalid", c->channel);
-		else if(i==LIBV4L_ERR_FORMAT)
+		else if(i==LIBVIDEO_ERR_FORMAT)
 			THROW_EXCEPTION(e, FORMAT_EXCP,
 					"Image format %s not supported", libvideo_palettes[fmt].name);
-		else if(i==LIBV4L_ERR_STD)
+		else if(i==LIBVIDEO_ERR_STD)
 			THROW_EXCEPTION(e, STD_EXCP,
 					"The requested standard (%d) is invalid", c->std);
 		else
