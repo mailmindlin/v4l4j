@@ -60,13 +60,13 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doRelease(JNIEnv *e, jo
 	int ret;
 
 	if ((ret = close_device(d->vdev)) !=0 ) {
-		if (ret== LIBV4L_ERR_CAPTURE_IN_USE){
+		if (ret== LIBVIDEO_ERR_CAPTURE_IN_USE){
 			dprint(LOG_LIBVIDEO, "[V4L4J] Error closing video_device - capture in progress\n");
 			THROW_EXCEPTION(e, RELEASE_EXCP, "Error closing video device, capture in progress");
-		} else if (ret == LIBV4L_ERR_INFO_IN_USE){
+		} else if (ret == LIBVIDEO_ERR_INFO_IN_USE){
 			dprint(LOG_LIBVIDEO, "[V4L4J] Error closing video_device - DeviceInfo not released\n");
 			THROW_EXCEPTION(e, RELEASE_EXCP, "Error closing video device, DeviceInfo in use");
-		} else if (ret == LIBV4L_ERR_CONTROL_IN_USE){
+		} else if (ret == LIBVIDEO_ERR_CONTROL_IN_USE){
 			dprint(LOG_LIBVIDEO, "[V4L4J] Error closing video_device - ControlList not released\n");
 			THROW_EXCEPTION(e, RELEASE_EXCP, "Error closing video device, ControlList in use");
 		}

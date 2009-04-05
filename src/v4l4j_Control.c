@@ -62,9 +62,9 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_Control_doSetValue(JNIEnv *e, jobje
 	dprint(LOG_LIBVIDEO, "[LIBV4L] Calling set_control_value(dev: %s, ctrl name:%s, val: %d)\n", d->vdev->file,d->vdev->control->controls[id].v4l2_ctrl->name,value);
 	ret = set_control_value(d->vdev, d->vdev->control->controls[id].v4l2_ctrl, &v);
 	if(ret != 0) {
-		if(ret == LIBV4L_ERR_OUT_OF_RANGE){
+		if(ret == LIBVIDEO_ERR_OUT_OF_RANGE){
 			THROW_EXCEPTION(e, INVALID_VAL_EXCP, "Invalid value %d for control '%s': value out of range", value, d->vdev->control->controls[id].v4l2_ctrl->name);
-		} else if(ret == LIBV4L_ERR_STREAMING){
+		} else if(ret == LIBVIDEO_ERR_STREAMING){
 			THROW_EXCEPTION(e, CTRL_EXCP, "Cannot set value for control '%s' while streaming", d->vdev->control->controls[id].v4l2_ctrl->name);
 		} else {
 			THROW_EXCEPTION(e, CTRL_EXCP, "Error setting current value for control '%s'", d->vdev->control->controls[id].v4l2_ctrl->name);

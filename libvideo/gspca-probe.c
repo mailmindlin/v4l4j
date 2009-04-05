@@ -163,7 +163,7 @@ int gspca_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d,
 			break;
 		default:
 			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "GSPCA: Cant identify control %d\n",q->id);
-			ret = LIBV4L_ERR_IOCTL;
+			ret = LIBVIDEO_ERR_IOCTL;
 	}
 	return ret;
 }
@@ -194,7 +194,7 @@ int gspca_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val
 
 	if(ioctl(vdev->fd, SPCASVIDIOPARAM, &p)<0) {
 		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "GSPCA: Cant set control %s to value %d\n",q->name, *val);
-		return LIBV4L_ERR_IOCTL;
+		return LIBVIDEO_ERR_IOCTL;
 	}
 
 	return 0;

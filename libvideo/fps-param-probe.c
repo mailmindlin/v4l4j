@@ -108,7 +108,7 @@ end:
 
 int fps_param_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, int *val){
 	struct v4l2_streamparm *param = (struct v4l2_streamparm *) d;
-	int ret = LIBV4L_ERR_IOCTL;
+	int ret = LIBVIDEO_ERR_IOCTL;
 
 	CLEAR(*param);
 	param->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -136,7 +136,7 @@ int fps_param_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int 
 
 	if (-1 == ioctl(vdev->fd, VIDIOC_S_PARM, param)) {
 		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "FPS-PARAM: Error setting new FPS %d\n", *val);
-		return LIBV4L_ERR_STREAMING;
+		return LIBVIDEO_ERR_STREAMING;
 	}
 
 	return 0;

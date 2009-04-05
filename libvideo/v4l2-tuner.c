@@ -61,14 +61,14 @@ int set_tuner_freq_v4l2(struct video_device *vdev, int idx, unsigned int f){
 		dprint(LIBVIDEO_SOURCE_TUNER, LIBVIDEO_LOG_ERR,
 				"TUN: Failed to set frequency for tuner %d on "
 				"device %s\n", idx, vdev->file);
-		return LIBV4L_ERR_IOCTL;
+		return LIBVIDEO_ERR_IOCTL;
 	}
 	freq.frequency = f;
 	if(-1 == ioctl(vdev->fd, VIDIOC_S_FREQUENCY, &freq)){
 		dprint(LIBVIDEO_SOURCE_TUNER, LIBVIDEO_LOG_ERR,
 				"TUN: Failed to set frequency for tuner %d on "
 				"device %s\n", idx, vdev->file);
-		return LIBV4L_ERR_IOCTL;
+		return LIBVIDEO_ERR_IOCTL;
 	}
 	return 0;
 }
@@ -82,7 +82,7 @@ int get_tuner_freq_v4l2(struct video_device *vdev, int idx, unsigned int *f){
 		dprint(LIBVIDEO_SOURCE_TUNER, LIBVIDEO_LOG_ERR,
 				"TUN: Failed to get tuner frequency for tuner %d on "
 				"device %s\n", idx, vdev->file);
-		return LIBV4L_ERR_IOCTL;
+		return LIBVIDEO_ERR_IOCTL;
 	}
 	*f = freq.frequency;
 	fix_quirky_values(vdev,idx,f);
@@ -101,7 +101,7 @@ int get_rssi_afc_v4l2(struct video_device *vdev, int idx, int *r, int *a){
 		dprint(LIBVIDEO_SOURCE_TUNER, LIBVIDEO_LOG_ERR,
 				"TUN: Failed to get tuner info for tuner %d on "
 				"device %s\n", idx, vdev->file);
-		return LIBV4L_ERR_IOCTL;
+		return LIBVIDEO_ERR_IOCTL;
 	}
 	dprint(LIBVIDEO_SOURCE_TUNER, LIBVIDEO_LOG_DEBUG,
 			"TUN: Got RSSI %d & AFC %d for tuner %d on device %s\n"

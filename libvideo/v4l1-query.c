@@ -159,7 +159,7 @@ int check_inputs_v4l1(struct video_device *vd){
 
 	if (-1 == ioctl( vd->fd, VIDIOCGCAP, &vc)) {
 		info("Error checking capabilities of V4L1 video device %s\n", vd->file);
-		ret = LIBV4L_ERR_NOCAPS;
+		ret = LIBVIDEO_ERR_NOCAPS;
 		goto end;
 	}
 	di->nb_inputs = vc.channels;
@@ -173,7 +173,7 @@ int check_inputs_v4l1(struct video_device *vd){
 		chan.channel=i;
 		if (-1 == ioctl(vd->fd, VIDIOCGCHAN, &chan)) {
 			info("Failed to get details of input %d on device %s\n",i,vd->file);
-			ret = LIBV4L_ERR_IOCTL;
+			ret = LIBVIDEO_ERR_IOCTL;
 			free_video_inputs(di->inputs,i);
 			goto end;
 		}
@@ -189,7 +189,7 @@ int check_inputs_v4l1(struct video_device *vd){
 			info("input.\nThis is currently not supported by libvideo.\n");
 			info("Please let the author know about this error.\n");
 			info("See the ISSUES section in the libvideo README file.\n");
-			ret = LIBV4L_ERR_NOCAPS;
+			ret = LIBVIDEO_ERR_NOCAPS;
 			free_video_inputs(di->inputs,i);
 			goto end;
 		}
@@ -211,7 +211,7 @@ int check_inputs_v4l1(struct video_device *vd){
 			if (-1 == query_tuner(&di->inputs[i], vd->fd)) {
 				info("Failed to get details of tuner on input %d of device %s\n"
 						, i, vd->file);
-				ret = LIBV4L_ERR_IOCTL;
+				ret = LIBVIDEO_ERR_IOCTL;
 				free_video_inputs(di->inputs,i);
 				goto end;
 			}
@@ -237,7 +237,7 @@ int query_device_v4l1(struct video_device *vdev){
 
 	if (check_v4l1(vdev->fd, &caps)==-1) {
 		info("Error checking capabilities of V4L1 video device");
-		ret = LIBV4L_ERR_NOCAPS;
+		ret = LIBVIDEO_ERR_NOCAPS;
 		goto end;
 	}
 	//fill name field
@@ -246,7 +246,7 @@ int query_device_v4l1(struct video_device *vdev){
 	//fill input field
 	if(check_inputs_v4l1(vdev)==-1){
 		info("Error checking available inputs on V4L1 video device");
-		ret = LIBV4L_ERR_NOCAPS;
+		ret = LIBVIDEO_ERR_NOCAPS;
 		goto end;
 	}
 

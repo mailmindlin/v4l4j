@@ -365,12 +365,21 @@ struct capture_actions {
 //the last argument (int) tells how many formats there are in
 //the previous argument, arg2 can be set to NULL and arg3 to 0 to
 //try the default order (again, see libvideo.h)
+//returns: LIBVIDEO_ERR_FORMAT (no supplied format could be used),
+//LIBVIDEO_ERR_STD (the supplied standard could not be used),
+// LIBVIDEO_ERR_CHANNEL (the supplied channel is invalid)
+// LIBVIDEO_ERR_CROP (error applying cropping parameters)
+// or LIBVIDEO_ERR_NOCAPS (error checking capabilities)
 	int (*set_cap_param)(struct video_device *, int *, int);
 
 //initialise streaming, request create mmap'ed buffers
+//returns 0 if ok, LIBVIDEO_ERR_REQ_MMAP if error negotiating mmap params,
+//LIBVIDEO_ERR_INVALID_BUF_NB if the number of requested buffers is incorrect
+
 	int (*init_capture)(struct video_device *);
 
 //tell V4L to start the capture
+//returns 0 if ok, LIBVIDEO_ERR_IOCTL otherwise.
 	int (*start_capture)(struct video_device *);
 
 /*
@@ -379,7 +388,7 @@ struct capture_actions {
  * (above) were successful
  */
 
-//dequeue the next buffer with available frame
+//dequeue the next buffer with available frame, or NULL if there is an error
 	void * (*dequeue_buffer)(struct video_device *, int *);
 
 //enqueue the buffer when done using the frame
@@ -394,6 +403,7 @@ struct capture_actions {
  */
 
 //counterpart of start_capture, must be called it start_capture was successful
+//returns 0 if ok, LIBVIDEO_ERR_IOCTL otherwise
 	int (*stop_capture)(struct video_device *);
 
 //counterpart of init_capture, must be called it init_capture was successful
@@ -432,9 +442,9 @@ void release_device_info(struct video_device *);
  *
  */
 struct control_list *get_control_list(struct video_device *);
-//returns 0, LIBV4L_ERR_WRONG_VERSION, LIBV4L_ERR_IOCTL
+//returns 0, LIBVIDEO_ERR_WRONG_VERSION, LIBVIDEO_ERR_IOCTL
 int get_control_value(struct video_device *, struct v4l2_queryctrl *, int *);
-//returns 0, LIBV4L_ERR_WRONG_VERSION, LIBV4L_ERR_IOCTL or LIBV4L_ERR_STREAMING
+//returns 0, LIBVIDEO_ERR_WRONG_VERSION, LIBVIDEO_ERR_IOCTL or LIBVIDEO_ERR_STREAMING
 int set_control_value(struct video_device *, struct v4l2_queryctrl *,  int *);
 void release_control_list(struct video_device *);
 
