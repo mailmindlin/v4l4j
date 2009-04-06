@@ -5,22 +5,24 @@
 This page details some of the issues you may come across when using v4l4j. You will find answers to the following questions:
 
 *Compilation issues*<br>
-<a href="#missingHeaders"> I get an error at compile time about `jni.h` or `jpeglib.h` not found. What do I do ? </a>
+[#MissingHeaders I get an error at compile time about `jni.h` or `jpeglib.h` not found. What do I do ?]
 
 *JNI library issues*<br>
-<a href="#cantloadJNI"> I try to run my own Java program but the JVM complains that it cant load the JNI library `libv4l4j.so`.</a>
+[#JNI_Library_issues I try to run my own Java program but the JVM complains that it cant load the JNI library `libv4l4j.so`.]
 
 *Video streaming issues*<br>
-<a href="#lowFPS">I have a `FrameGrabber` object using image format XX & I get a very low frame rate. How can I improve it ?</a>
+[#lowFPS I have a `FrameGrabber` object using image format XX & I get a very low frame rate. How can I improve it ?]
 
 *JVM crash*<br>
-<a href="#segfault">When using v4l4j, the JVM crashes. What shall I do ? </a>
+[#SegFault When using v4l4j, the JVM crashes. What shall I do ?]
 
 The v4l4j mailing list is available at http://groups.google.com/group/v4l4j . You have the option to join the list if you want to get updates delivered to your email address. Otherwise, you have to keep checking the web page to read new posts. If you have a question which is not mentioned on this page, search the mailing list first to make sure it has no been answered already. If it has not, then go ahead and post your question. The email alias of the v4l4j mailing list (where you should send your posts) is v4l4j AT googlegroups DOT com .
 
 = Compilation issues =
+
+==Missing headers==
 *Question:*
-<a name="missingHeaders">I get an error at compile time about `jni.h` or `jpeglib.` not found. What do I do ?</a>
+I get an error at compile time about `jni.h` or `jpeglib.h` not found. What do I do ?
 
 *Answer:*
 v4l4j has a few dependencies that must be satisfied before you attempt compiling it. Make sure you have installed:
@@ -60,7 +62,7 @@ Send a post on the mailing list and attach the `failed_compile.tar.bz2` file gen
 
 ==JNI Library issues==
 *Question:*
-<a name="cantloadJNI">I try to run my own Java program but the JVM complains that it cant load the JNI library `libv4l4j.so`</a>:
+I try to run my own Java program but the JVM complains that it cant load the JNI library `libv4l4j.so`:
 {{{
 Cant load v4l4j JNI library
 Exception in thread "main" java.lang.UnsatisfiedLinkError: no v4l4j in java.library.path
@@ -82,8 +84,10 @@ Run `sudo ant install-jnilib` (or `ant install-jnilib64` for AMD64) to install t
 
 
 ==Video streaming==
+
+==Low FPS==
 *Question:*
-<a name="lowFPS">I have a `FrameGrabber` object using image format XX & I get a very low frame rate. How can I improve it ?</a>
+I have a `FrameGrabber` object using image format XX & I get a very low frame rate. How can I improve it ?
 
 *Answer:*
 Some video devices can achieve higher frame rates if you select the right image format. For instance, on my test machine, the Hauppauge HVR 1300 card produces around 9 frames per second using YUYV, but achieves 29 frames per second if I use RGB32.
@@ -99,8 +103,9 @@ ant test-fps  -Dtest.device=/dev/video0 -Dtest.inFormat=XX -DoutFormat=0
 This command will tell you the maximum frame rate you can achieve with the given image format.
 
 ==JVM crash==
-<a name="segfault">*Question:*
-When using v4l4j, the JVM crashes. What shall I do ? </a>
+==SegFault==
+*Question:*
+When using v4l4j, the JVM crashes. What shall I do ?
 
 *Answser:*
 Most of the time, this happens because of a bug in the JNI code. 
