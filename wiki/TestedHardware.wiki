@@ -28,8 +28,10 @@ libv4l has been compiled and tested successfully on the following platforms:
 || PCI - 0070:9600 || Hauppauge WinTV-HVR-1300 DVB-T || cx88_blackbird and cx88 familly (kernel 2.6.24) || This is a hybrid Analogue TV / DVB-T with  S-Video and composite inputs. The card has an MPEG encoder chip (*NOT* decoder). *As of now, v4l4j only supports the Video4Linux API, not the DVB API.* This means that only analogue signals from this card (Analogue TV, S-Video and Composite signals) can be captured with v4l4j, ie *nothing from DVB-T*.||
 || USB - 0471:0332 || Philips SPC 1000NC PC Camera || uvcvideo (kernel 2.6.27.2) ||  ||
 || USB - 046d:0994 || Logitech QuickCam Orbit/Sphere AF (bcdDevice 0.08) || uvcvideo (kernel 2.6.27.2 &  2.6.24) ||  ||
+|| USB - 093a:2460 || Pixart Imaging, Inc. - Q-TEC WEBCAM 100 || gspca_pac207 (2.6.27) || ||
+|| USB - 04f2:b071 || Chicony - CNF7129 (eee pc webcam) || uvcvideo (2.6.24) || ||
 
-Currently, libv4l will probe and detect the following drivers/features:
+Currently, [libvideo libvideo] will probe and detect the following drivers/features:
  * *PWC (linux kernel v2.6.26)*
  PWC is already a V4L2 driver. Most of its private ioctls are already exported as V4L2 controls, except for the following three (which should be exported as extended controls in the camera control class in the future ?). Exported private ioctls:
   * VIDIOCPWCMPTRESET (Pan/Tilt reset))
@@ -37,7 +39,7 @@ Currently, libv4l will probe and detect the following drivers/features:
   * VIDIOCPWCMPTSANGLE (Set Pan/Tilt angle)
 
  * *gspca (v01.00.20)*
- gspca in its current version is still a V4L1 driver although the author is actively working on porting it to V4L2. But for now, a few private ioctls dont have a V4L1 control counterpart, so libv4l exports the following private ioctls:
+ gspca in its current version is still a V4L1 driver although the author is actively working on porting it to V4L2. But for now, a few private ioctls dont have a V4L1 control counterpart, so libvideo exports the following private ioctls:
   * SPCASVIDIOPARAM / SPCAGVIDIOPARAM (Set and Get autobrightness, quality, frame interval and image flicker)
 
  * *qc-usb (v0.6.6)*
