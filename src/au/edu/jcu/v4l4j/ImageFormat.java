@@ -52,14 +52,14 @@ public class ImageFormat {
 	private String name;
 
 	/**
-	 * the libv4l Id for this format
+	 * the libvideo Id for this format
 	 */
-	private int libv4lID;
+	private int libvideoID;
 	
 	
 	ImageFormat(String n, int i) {
 		name = n;
-		libv4lID = i;
+		libvideoID = i;
 	}
 
 	/**
@@ -71,18 +71,21 @@ public class ImageFormat {
 	}
 
 	/**
-	 * This method returns the index for this format.  
+	 * This method returns the index for this format.
+	 * A list of all known format indexes can be found in {@link V4L4JConstants}
+	 * (V4L4JConstants.IMF_*).
 	 * @return the index of this format
+	 * @see V4L4JConstants.IMF_*
 	 */
 	public int getIndex() {
-		return libv4lID;
+		return libvideoID;
 	}
 	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + libv4lID;
+		result = prime * result + libvideoID;
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		return result;
 	}
@@ -96,7 +99,7 @@ public class ImageFormat {
 		if (!(obj instanceof ImageFormat))
 			return false;
 		ImageFormat other = (ImageFormat) obj;
-		if (libv4lID != other.libv4lID)
+		if (libvideoID != other.libvideoID)
 			return false;
 		if (name == null) {
 			if (other.name != null)
