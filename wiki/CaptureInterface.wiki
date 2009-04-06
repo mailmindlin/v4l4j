@@ -2,7 +2,7 @@
 #sidebar LibvideoApiSideBar
 
 = The Capture interface =
-This interface is used to capture images from a video device. It is represented by a `struct capture_device`, which contains the following members:
+This interface provides methods to setup capture parameters, apply them and obtain images from a video device. It is represented by a `struct capture_device`, which contains the following members:
 {{{
 //all the fields in the following structure are read only
 struct capture_device {
@@ -231,7 +231,3 @@ free_capture_device(v);
 //release video device interface
 close_device(v);
 }}}
-
-= The Control interface =
-= The Query interface =
-= The Tuner interface =
