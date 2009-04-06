@@ -1,4 +1,5 @@
 #summary This page presents libvideo, its raison d'être and its features.
+#labels Featured
 #sidebar LibvideoApiSideBar
 
 =Introduction=
