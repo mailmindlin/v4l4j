@@ -23,7 +23,7 @@
 */
 #include "common.h"
 #include "debug.h"
-#include "libv4l.h"
+#include "libvideo.h"
 
 #define DHT_SIZE		420
 static unsigned char huffman_table[] =
@@ -574,7 +574,7 @@ void destroy_jpeg_compressor(struct v4l4j_device *d){
 }
 
 //
-//gcc -I ../libv4l jpeg.c -ggdb -DDEBUG -ljpeg -o jpeg
+//
 //
 //Usage: ./jpeg *.raw
 
