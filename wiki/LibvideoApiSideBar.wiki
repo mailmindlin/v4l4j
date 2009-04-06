@@ -16,3 +16,6 @@
      * [ControlInterface#Listing_controls Listing available controls]
      * [ControlInterface#Getting_/_Setting_control_values Getting & setting values]
      * [ControlInterface#Example Example]
+ * [QueryInterface The Query Interface]
+    * [QueryInterface#Getting_information Getting information]
+    * [QueryInterface#Example Example]
