@@ -1,11 +1,5 @@
 #summary This page presents libvideo, its raison d'être and its features.
-
-Information on libvideo is split across multiple pages:
-
- * The [libvideo libvideo] page (this page) gives a short introduction to libvideo and how it came about.
- * The DownloadBuildUsage page explains how to download it, compile it and use it.
- * The [libvideoAPI API] page explains how to write a program with libvideo.
-
+#sidebar LibvideoApiSideBar
 
 =Introduction=
 The goal of v4l4j is to provide a simple-to-use Java API allowing access to video streaming hardware under Linux. Besides capturing frames, I also wanted v4l4j to make it possible to discover available controls and use them. Both of these should require as little knowledge as possible about the underlying hardware. All the required low-level information should be provided dynamically at run time so applications could adjust accordingly. I quickly realised that the first step in writing v4l4j would involved designing and writing some form of abstraction layer first, due to the many differences involved in access video hardware.
@@ -37,3 +31,10 @@ libvideo is a C library of functions which facilitates interactions with the cap
  * It holds a list of drivers with private ioctls. It will automatically detects the underlying driver and reports any private iotcls also as (fake) [http://v4l2spec.bytesex.org/spec/r13317.htm#V4L2-QUERYCTRL V4L2 controls].
  * It offers transparent conversion from exotic and hardware-specific image formats to well-known ones (RGB24, BGR24, YUV420 and YVU420). libvideo relies on libv4l_convert to  perform these conversions. libv4l_convert is part of the [http://hansdegoede.livejournal.com/3636.html libv4l] project.
 All in all, you can think of libvideo as an adapter for both versions of V4L, which offer a uniform API to capture frames using V4L, and provides a few simplifications of intricate details you (most of the time) dont want to deal with.
+
+=Contents=
+Information on libvideo is split across multiple pages:
+ * The [libvideo libvideo] page (this page) gives a short introduction to libvideo and how it came about.
+ * The DownloadBuildUsage page explains how to download it, compile it and use it.
+ * The [libvideoAPI API] pages explain how to write a program with libvideo.
+Links to these pages and sections within them are available in the side bar at the top of the page.
