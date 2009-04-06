@@ -5,7 +5,7 @@
 This page details some of the issues you may come across when using v4l4j. You will find answers to the following questions:
 
 *Compilation issues*<br>
-[#MissingHeaders I get an error at compile time about `jni.h` or `jpeglib.h` not found. What do I do ?]
+[#Missing_headers I get an error at compile time about `jni.h` or `jpeglib.h` not found. What do I do ?]
 
 *JNI library issues*<br>
 [#JNI_Library_issues I try to run my own Java program but the JVM complains that it cant load the JNI library `libv4l4j.so`.]
