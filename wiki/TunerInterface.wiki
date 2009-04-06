@@ -1,0 +1,64 @@
+#summary this page describes the Tuner interface of libvideo
+#sidebar LibvideoApiSideBar
+
+= The Tuner interface =
+This interface allows you to control a video device's tuners. It is represented by a `struct tuner_action` structure:
+{{{
+struct tuner_actions{
+	int (*set_tuner_freq)(struct video_device *, int, unsigned int);
+	int (*get_tuner_freq)(struct video_device *, int, unsigned int *);
+        //the following function returns the received signal strength 
+        //and automatic frequency control values.
+	int (*get_rssi_afc)(struct video_device *, int, int *, int *); 
+};
+}}}
+Prior to using this interface, an application must retrieve the indexes for each tuner on a video device using the [QueryInterface query interface].
+
+To acquire the Tuner interface, use the `get_tuner_actions()` function:
+{{{
+struct tuner_actions * t = get_tuner_actions(video_dev);
+}}}
+
+The interface is released with:
+{{{
+release_tuner_actions(video_dev);
+}}}
+
+==Getting  / setting the frequency==
+Before calling this function, you need to know the index of the tuner whose frequency must be set. This is done by checking the `tuner` member of each `struct video_input_info` listed in the device's `struct device_info` (see the [QueryInterface query interface] page).
+
+To get the frequency:
+{{{
+//the index of the tuner
+int index = 0;
+int freq;
+struct tuner_actions *t = get_tuner_actions(video_dev);
+int ret = t->get_tuner_freq(video_dev, index, &freq);
+//check returned value
+}}}
+This method returns 0 if everything went fine (the frequency is stored in the last argument), LIBVIDEO_ERR_IOCTL otherwise.
+
+To set the frequency:
+{{{
+//the index of the tuner
+int index = 0;
+int freq = 3500;
+struct tuner_actions *t = get_tuner_actions(video_dev);
+int ret = t->set_tuner_freq(video_dev, index, freq);
+//check returned value
+}}}
+This method returns 0 if everything went fine, LIBVIDEO_ERR_IOCTL otherwise.
+
+==Getting the RSSI / AFC==
+The RSSI (received signal strength indicator) ranges from 0 to 65535. Higher values indicate a better signal. The AFC (automatic frequency control) allows fine tuning: when the afc value is negative, the frequency is too low, when positive too high.
+
+To access those values:
+{{{
+//the index of the tuner
+int index = 0;
+int afc, rssi;
+struct tuner_actions *t = get_tuner_actions(video_dev);
+int ret = t->set_tunerget_rssi_afcfreq(video_dev, index, &rssi, &afc);
+//check returned value
+}}}
+This method returns 0 if everything went fine, LIBVIDEO_ERR_IOCTL otherwise.
