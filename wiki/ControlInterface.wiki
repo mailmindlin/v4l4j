@@ -1,0 +1,145 @@
+#summary this page presents the Control interface of libvideo
+#sidebar LibvideoApiSideBar
+
+= The Control interface =
+This interface provides functions to enumerate available video controls, get and set their values. Video devices can have many different controls which adjust various aspects of the video stream. Some controls can also adjust properties of a device, for example the tilt or pan angles.
+
+This interface is represented by a `struct control_list` which contains the following members:
+{{{
+struct control_list {
+    int count;  //how many controls are available
+    struct control *controls;   //array of 'count' struct control's
+    driver_probe *probes;  //do not touch
+};
+}}}
+Members of this structure are read-only. The member `controls`, which is an array of `struct control` provides access to all the controls the video device offers. A `struct control` contains the following members:
+{{{
+struct control {
+    struct v4l2_queryctrl *v4l2_ctrl;
+    struct v4l2_querymenu *v4l2_menu;//array of 'count_menu' v4l2_menus
+    int count_menu;
+};
+}}}
+A `struct control` represents a single control. The v4l2_ctrl member contains information about the control itself:
+{{{
+struct v4l2_queryctrl {
+	unsigned int	     id;  //do not touch
+	enum v4l2_ctrl_type  type;  //see enum def below
+	unsigned char	     name[32];  //name of the control
+	int		     minimum;  //min value
+	int		     maximum;  // max value
+	int		     step;  //step value
+	int		     default_value; 
+
+#define V4L2_CTRL_FLAG_DISABLED		0x0001 //do not use a control with this flag set
+#define V4L2_CTRL_FLAG_GRABBED		0x0002 //control in use
+#define V4L2_CTRL_FLAG_READ_ONLY 	0x0004 
+#define V4L2_CTRL_FLAG_UPDATE 		0x0008 //changing the value of this control will affect other controls
+#define V4L2_CTRL_FLAG_INACTIVE 	0x0010
+#define V4L2_CTRL_FLAG_SLIDER 		0x0020
+#define V4L2_CTRL_FLAG_WRITE_ONLY 	0x0040
+	unsigned int         flags;  
+	unsigned int         reserved[2];
+};
+enum v4l2_ctrl_type {
+	V4L2_CTRL_TYPE_INTEGER	     = 1,
+	V4L2_CTRL_TYPE_BOOLEAN	     = 2,
+	V4L2_CTRL_TYPE_MENU	     = 3,
+	V4L2_CTRL_TYPE_BUTTON	     = 4,
+};
+}}}
+For controls of type `V4L2_CTRL_TYPE_MENU`, the `v4l2_menu` member in `struct control` will point to an array of menu items of type `struct v4l2_querymenu`. Each element in the array defines a single item in the menu. There are a total of `count_menu` items in the array.
+{{{
+struct v4l2_querymenu {
+	int		id;  //do not touch
+	int		index;  //index of this menu item
+	unsigned char	name[32];
+	unsigned int	reserved;
+};
+}}}
+
+==Listing controls==
+To obtain a list of all available controls, acquire the control interface with:
+{{{
+//video_dev is the Video Device interface of type struct video_device *
+struct control_list *l = get_control_list(video_dev);
+}}}
+
+When done, release it with:
+{{{
+release_control_list(video_dev);
+}}}
+
+==Getting / Setting control values==
+To get the value for a control, use the `get_control_value()` function. The following example gets the value for the first available control:
+{{{
+int value;
+struct control_list *l = get_control_list(video_dev);
+struct v4l2_queryctrl *ctrl = l->v4l2_ctrl;
+
+int ret = get_control_value(video_dev, ctrl, &value);
+//check returned value. If ret==0, control value is in value.
+}}}
+This function returns 0 if everything went fine, LIBV4L_ERR_WRONG_VERSION if the `struct video_device` has been written to and is corrupted, or LIBV4L_ERR_IOCTL if there is an error getting the value from the driver.
+
+To set the value for a control, use the `set_control_value()` function. The following example sets the value for the first available control:
+{{{
+int value = ...;
+struct control_list *l = get_control_list(video_dev);
+struct v4l2_queryctrl *ctrl = l->v4l2_ctrl;
+
+int ret = set_control_value(video_dev, ctrl, &value);
+//check returned value
+}}}
+This function returns 0 if the value has been set, LIBV4L_ERR_WRONG_VERSION if the `struct video_device` is corrupted, LIBV4L_ERR_IOCTL if there is an error setting the value of LIBV4L_ERR_STREAMING if the value cannot be set because the hardware is currently streaming video. The `value` argument will be set to the previous value of this control.
+
+==Example==
+The following example obtains the control interface, and prints information about each available control.
+{{{
+int i;
+struct control_list *l;
+struct v4l2_queryctrl *qc;
+struct video_device *v;
+
+//get the video device interface
+v = open_device("/dev/video0");
+if(v==NULL){
+    printf("Error opening device\n");
+    return -1;
+}
+
+//get the control interface
+l = get_control_list(v);
+printf("Listing available controls (%d)\n", l->count);
+for(i=0;i<l->count; i++){
+    qc = l->controls[i].v4l2_ctrl;
+    printf("Control: id: 0x%x - name: %s - min: %d -max: %d - step: %d - type: %d(%s) - flags: %d (%s%s%s%s%s%s)\n",
+        qc->id, (char *) &qc->name, qc->minimum, qc->maximum, qc->step, qc->type, 
+	qc->type == V4L2_CTRL_TYPE_INTEGER ? "Integer" :  
+	qc->type == V4L2_CTRL_TYPE_BOOLEAN ? "Boolean" :  
+	qc->type == V4L2_CTRL_TYPE_MENU ? "Menu" :  
+	qc->type == V4L2_CTRL_TYPE_BUTTON ? "Button" : 
+	qc->flags, 
+	qc->flags & V4L2_CTRL_FLAG_DISABLED ? "Disabled " : "", 
+	qc->flags & V4L2_CTRL_FLAG_GRABBED ? "Grabbed " : "", 
+	qc->flags & V4L2_CTRL_FLAG_READ_ONLY ? "ReadOnly " : "", 
+	qc->flags & V4L2_CTRL_FLAG_UPDATE ? "Update " : "", 
+	qc->flags & V4L2_CTRL_FLAG_INACTIVE ? "Inactive " : "", 
+	qc->flags & V4L2_CTRL_FLAG_SLIDER ? "slider " : "");
+
+        if(l->controls[i].count_menu!=0){
+	    printf("Menu items (%d) %s\n", l->controls[i].count_menu, l->controls[i].v4l2_ctrl->step==1?"contiguous":"non-contiguous");
+	    for(j=0; j<l->controls[i].count_menu; j++)
+	        printf("\tMenu item: %s - %d\n", l->controls[i].v4l2_menu[j].name, l->controls[i].v4l2_menu[j].index);
+
+        }
+}
+
+//release the control interface
+release_control_list(v);
+
+//release the video device interface
+close_device(v);
+}}}
+= The Query interface =
+= The Tuner interface =
