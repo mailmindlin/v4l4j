@@ -28,6 +28,8 @@ Tested video devices and drivers:
   captured with v4l4j, ie nothing from DVB-T.)
 - USB - 0471:0332 Philips SPC 1000NC PC Camera (uvcvideo)
 - USB - 046d:0994 Logitech QuickCam Orbit/Sphere AF (uvcvideo)
+- USB - 093a:2460 Pixart Imaging, Inc. - Q-TEC WEBCAM 100 (gspca_pac207) 	
+- USB - 04f2:b071 Chicony - CNF7129 (eee pc webcam) uvcvideo 
 
 
 Currently, libvideo will probe and detect the following drivers:

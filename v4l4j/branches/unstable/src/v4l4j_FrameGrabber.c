@@ -317,7 +317,7 @@ static int init_capture_format(struct v4l4j_device *d, int output, int input){
 }
 
 /*
- * initialise LIBV4L (open, set_cap_param, init_capture)
+ * initialise LIBVIDEO (open, set_cap_param, init_capture)
  * creates the Java ByteBuffers
  * creates the V4L2Controls
  * initialise the JPEG compressor
@@ -339,7 +339,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(
 	/*
 	 * i n i t _ c a p t u r e _ d e v i c e ( )
 	 */
-	dprint(LOG_LIBVIDEO, "[LIBV4L] Calling init_capture_device()\n");
+	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling init_capture_device()\n");
 	c = init_capture_device(d->vdev, w,h,ch,std,n);
 
 	if(c==NULL) {
@@ -364,7 +364,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(
 	dprint(LOG_LIBVIDEO, "[V4L4J] input format: %s\n",
 						libvideo_palettes[fmts].name);
 
-	dprint(LOG_LIBVIDEO, "[LIBV4L] calling 'set_cap_param'\n");
+	dprint(LOG_LIBVIDEO, "[LIBVIDEO] calling 'set_cap_param'\n");
 	if((i=(*c->actions->set_cap_param)(d->vdev, &fmts, 1))!=0){
 		dprint(LOG_V4L4J, "[V4L4J] set_cap_param failed\n");
 		free_capture_device(d->vdev);
@@ -392,7 +392,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(
 	/*
 	 * i n i t _ c a p t u r e ( )
 	 */
-	dprint(LOG_LIBVIDEO, "[LIBV4L] Calling 'init_capture(dev: %s)'\n",
+	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling 'init_capture(dev: %s)'\n",
 			d->vdev->file);
 	if((i=(*c->actions->init_capture)(d->vdev))<0){
 		dprint(LOG_V4L4J, "[V4L4J] init_capture failed\n");
@@ -452,14 +452,14 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(
 }
 
 /*
- * tell LIBV4L to start the capture
+ * tell LIBVIDEO to start the capture
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_start(
 		JNIEnv *e, jobject t, jlong object){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
-	dprint(LOG_LIBVIDEO, "[LIBV4L] Calling 'start_capture(dev: %s)'\n",
+	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling 'start_capture(dev: %s)'\n",
 			d->vdev->file);
 	if((*d->vdev->capture->actions->start_capture)(d->vdev)<0){
 		dprint(LOG_V4L4J, "[V4L4J] start_capture failed\n");
@@ -515,13 +515,13 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getBufferLength(
 }
 
 /*
- * tell LIBV4L to stop the capture
+ * tell LIBVIDEO to stop the capture
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_stop(
 		JNIEnv *e, jobject t, jlong object){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
-	dprint(LOG_LIBVIDEO, "[LIBV4L] Calling stop_capture(dev: %s)\n",
+	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling stop_capture(dev: %s)\n",
 			d->vdev->file);
 	if((*d->vdev->capture->actions->stop_capture)(d->vdev)<0) {
 		dprint(LOG_V4L4J, "Error stopping capture\n");
@@ -535,7 +535,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_stop(
 
 /*
  * free JPEG compressor
- * free LIBV4L (free_capture, free_capture_device)
+ * free LIBVIDEO (free_capture, free_capture_device)
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doRelease(
 		JNIEnv *e, jobject t, jlong object){

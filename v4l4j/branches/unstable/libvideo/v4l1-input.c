@@ -632,7 +632,7 @@ int set_control_value_v4l1(struct video_device *vdev,
 			return LIBVIDEO_ERR_IOCTL;
 	}
 
-	//set the current image format
+	//set the new value
 	if((-1 == ioctl(vdev->fd, VIDIOCSPICT, &pict))) {
 		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
 				"CTRL: Error setting the new value (%d) for control %s\n",

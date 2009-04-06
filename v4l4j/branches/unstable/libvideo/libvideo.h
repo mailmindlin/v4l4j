@@ -289,7 +289,7 @@ struct control_list {
  *
  */
 struct tuner_actions{
-	//returns 0 if OK, LIBV4L_ERR-IOCTL otherwise
+	//returns 0 if OK, LIBVIDEO_ERR_IOCTL otherwise
 	int (*set_tuner_freq)(struct video_device *, int, unsigned int);
 	int (*get_tuner_freq)(struct video_device *, int, unsigned int *);
 	int (*get_rssi_afc)(struct video_device *, int, int *, int *);
@@ -445,6 +445,7 @@ struct control_list *get_control_list(struct video_device *);
 //returns 0, LIBVIDEO_ERR_WRONG_VERSION, LIBVIDEO_ERR_IOCTL
 int get_control_value(struct video_device *, struct v4l2_queryctrl *, int *);
 //returns 0, LIBVIDEO_ERR_WRONG_VERSION, LIBVIDEO_ERR_IOCTL or LIBVIDEO_ERR_STREAMING
+//the last argument (int *) will be set to the previous value of this control
 int set_control_value(struct video_device *, struct v4l2_queryctrl *,  int *);
 void release_control_list(struct video_device *);
 
