@@ -36,13 +36,14 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * {@link VideoDevice}. v4l4j also provide {@link FrameGrabber} objects to
  * retrieve images in a native format. An RGB frame grabber can only be created 
  * if the associated video device can produce images in a format v4l4j
- * knows how to convert to RGB24. The {@link VideoDevice#supportJPEGConversion()} method
- * can be used to find out whether a video device can have its images JPEG-encoded 
- * by v4l4j, ie if a JPEG frame grabber can be instantiated.
- * <code>JPEGFrameGrabber</code> objects are not 
- * instantiated directly. Instead, the 
- * {@link VideoDevice#getJPEGFrameGrabber(int, int, int, int, int)}
- * or {@link VideoDevice#getJPEGFrameGrabber(int, int, int, int, int, ImageFormat)}
+ * knows how to convert to RGB24. The 
+ * {@link VideoDevice#supportJPEGConversion()} method can be used to find out 
+ * whether a video device can have its images JPEG-encoded by v4l4j, ie if a 
+ * JPEG frame grabber can be instantiated.
+ * <code>JPEGFrameGrabber</code> objects are not instantiated directly. Instead,
+ * the 
+ * {@link VideoDevice#getJPEGFrameGrabber(int, int, int, int, int)} or
+ * {@link VideoDevice#getJPEGFrameGrabber(int, int, int, int, int, ImageFormat)}
  * method must be called on the associated {@link VideoDevice}. Requested height
  * and width may be adjusted to the closest supported values. The adjusted
  * width and height can be retrieved by calling {@link #getWidth()} and 
@@ -69,11 +70,10 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * </code><br><br>
  * 
  * Once the frame grabber is released with 
- * {@link VideoDevice#releaseFrameGrabber()}, it can NOT be re-initialised again, and
- * a new one must be obtained. 
- * However, when the capture is stopped with {@link #stopCapture()}, it can be
- * started again with {@link #stopCapture()} without having to create a new 
- * <code>FrameGrabber</code>.
+ * {@link VideoDevice#releaseFrameGrabber()}, it can NOT be re-initialised again
+ * , and a new one must be obtained. However, when the capture is stopped with 
+ * {@link #stopCapture()}, it can be started again with {@link #stopCapture()} 
+ * without having to create a new <code>FrameGrabber</code>.
  * @see FrameGrabber
  * @author gilles
  *
@@ -81,32 +81,40 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
 public class RGBFrameGrabber extends FrameGrabber {
 	
 	/**
-	 * This constructor builds a FrameGrabber object used to capture JPEG frames from a video source
+	 * This constructor builds a FrameGrabber object used to capture RGB frames 
+	 * from a video source
+	 * @param o a JNI pointer to a v4l4j_device structure
 	 * @param w the requested frame width 
 	 * @param h the requested frame height
-	 * @param ch the input index, as returned by <code>InputInfo.getIndex()</code>
-	 * @param std the video standard, as returned by <code>InputInfo.getSupportedStandards()</code>
-	 * (see V4L4JConstants)
-	 * @param imf the image format frame should be captured in or null to let v4l4j choose
-	 * an appropriate format. 
+	 * @param ch the input index, as returned by 
+	 * {@link InputInfo#getIndex()}
+	 * @param std the video standard, as returned by 
+	 * {@link InputInfo#getSupportedStandards()} (see V4L4JConstants)
+	 * @param imf the image format frame should be captured in
 	 */
-	RGBFrameGrabber(long o, int w, int h, int ch, int std, Tuner t, ImageFormat imf) throws V4L4JException{
+	RGBFrameGrabber(long o, int w, int h, int ch, int std, Tuner t, 
+			ImageFormat imf) throws V4L4JException{
 		super(o,w,h,ch,std, t , imf, RGB24_GRABBER);	
 	}
 	
 	/**
 	 * This method initialises the capture, and apply the capture parameters.
-	 * V4L may either adjust the height and width parameters to the closest valid values
-	 * or reject them altogether. If the values were adjusted, they can be retrieved 
-	 * after calling init() using getWidth() and getHeight()
-	 * @throws VideoStandardException if the chosen video standard is not supported
-	 * @throws ImageFormatException for a raw frame grabber, this exception is thrown if 
-	 * the chosen Image format is unsupported. For an RGB frame grabber, this exception
-	 * is thrown if the video device does not have any image formats that can be converted
-	 * to RGB24 (let the author know if you get this exception, see README file)
-	 * @throws CaptureChannelException if the given channel number value is not valid
-	 * @throws ImageDimensionException if the given image dimensions are not supported
-	 * @throws InitialisationException if the video device file can not be initialised 
+	 * V4L may either adjust the height and width parameters to the closest 
+	 * valid values or reject them altogether. If the values were adjusted, 
+	 * they can be retrieved after calling {@link #init()} using 
+	 * {@link #getWidth()} and {@link #getHeight()}.
+	 * @throws VideoStandardException if the chosen video standard is not 
+	 * supported
+	 * @throws ImageFormatException this exception is thrown if the chosen image
+	 * format cannot be RGB24 encoded. If no image format was chosen, the video 
+	 * device does not have any image formats that can be RGB24 encoded
+	 * (let the author know, see README file)
+	 * @throws CaptureChannelException if the given channel number value is not 
+	 * valid
+	 * @throws ImageDimensionException if the given image dimensions are not 
+	 * supported
+	 * @throws InitialisationException if the video device file can not be 
+	 * initialised 
 	 * @throws StateException if the frame grabber is already initialised
 	 * @throws V4L4JException if there is an error applying capture parameters
 	 */
@@ -114,12 +122,16 @@ public class RGBFrameGrabber extends FrameGrabber {
 		try {
 			super.init();
 		} catch (ImageFormatException ife){
-			if(format == null)
-				ife = new ImageFormatException("v4l4j was unable to find image format supported by the \n"
-						+ "video device and that can be converted to RGB24.\n"
-						+ "Please let the author know about this, so that support\n"
-						+ "for this video device can be improved. See \nREADME file "
-						+ "on how to submit v4l4j reports.");
+			if(format == null){
+				String msg = 
+					"v4l4j was unable to find image format supported by the"
+					+ " \nvideo device and that can be converted to RGB24.\n"
+					+ "Please let the author know about this, so that support\n"
+					+ "for this video device can be improved. See \nREADME file"
+					+ " on how to submit v4l4j reports.";
+				System.err.println(msg);
+				ife = new ImageFormatException(msg);
+			}
 			
 			throw ife;
 		}

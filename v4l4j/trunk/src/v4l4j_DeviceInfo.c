@@ -24,7 +24,7 @@
 #include <jni.h>
 #include <stdint.h>
 
-#include "libv4l.h"
+#include "libvideo.h"
 #include "palettes.h"
 #include "common.h"
 #include "debug.h"
@@ -160,28 +160,14 @@ static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct
 
 }
 
-static void create_formats_object(JNIEnv *e, jobject t, jclass this_class, struct video_device *vd){
-	jclass format_list_class, format_class, vector_class;
+static void create_formats_object(JNIEnv *e, jobject t, jclass this_class,
+		struct v4l4j_device *d){
+	jclass format_list_class;
 	jfieldID formats_field;
-	jmethodID format_list_ctor, format_ctor, add_method, vector_ctor;
-	jobject obj, vector_object;
-	int i;
+	jmethodID format_list_ctor;
+	jobject obj;
 
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-
-	format_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/ImageFormat");
-	if(format_class == NULL){
-		info( "[V4L4J] Error looking up the ImageFormat class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up ImageFormat class");
-		return;
-	}
-
-	format_ctor = (*e)->GetMethodID(e, format_class, "<init>", "(Ljava/lang/String;I)V");
-	if(format_ctor == NULL){
-		info( "[V4L4J] Error looking up the constructor of ImageFormat class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of ImageFormat class");
-		return;
-	}
 
 	format_list_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/ImageFormatList");
 	if(format_list_class == NULL){
@@ -190,31 +176,10 @@ static void create_formats_object(JNIEnv *e, jobject t, jclass this_class, struc
 		return;
 	}
 
-	format_list_ctor = (*e)->GetMethodID(e, format_list_class, "<init>", "(Ljava/util/List;)V");
+	format_list_ctor = (*e)->GetMethodID(e, format_list_class, "<init>", "(J)V");
 	if(format_list_ctor == NULL){
 		info("[V4L4J] Error looking up the constructor of ImageFormatList class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of ImageFormatList class");
-		return;
-	}
-
-	vector_class = (*e)->FindClass(e, "java/util/Vector");
-	if(vector_class == NULL){
-		info("[V4L4J] Error looking up the Vector class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up Vector java objects");
-		return;
-	}
-
-	vector_ctor = (*e)->GetMethodID(e, vector_class, "<init>", "()V");
-	if(vector_ctor == NULL){
-		info("[V4L4J] Error looking up the constructor of Vector class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of Vector class");
-		return;
-	}
-
-	add_method = (*e)->GetMethodID(e, vector_class, "addElement", "(Ljava/lang/Object;)V");
-	if(add_method == NULL){
-		info("[V4L4J] Error looking up the add method of Vector class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the add method of Vector objects");
 		return;
 	}
 
@@ -224,19 +189,15 @@ static void create_formats_object(JNIEnv *e, jobject t, jclass this_class, struc
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the formats attribute ID");
 		return;
 	}
-	//creates a vector of Image formats
-	vector_object = (*e)->NewObject(e, vector_class, vector_ctor);
-	for(i=0; i<vd->info->nb_palettes; i++){
-		dprint(LOG_V4L4J, "[V4L4J] Creating ImageFormat object: name %s - id: %d\n",
-				libv4l_palettes[vd->info->palettes[i]].name, vd->info->palettes[i]);
-		obj = (*e)->NewObject(e, format_class, format_ctor,
-				(*e)->NewStringUTF(e, (const char *) libv4l_palettes[vd->info->palettes[i]].name ),
-				vd->info->palettes[i]);
-		(*e)->CallVoidMethod(e, vector_object, add_method, obj);
-	}
 
-	//Creates an ImageFormatList from the previous vector
-	obj =  (*e)->NewObject(e, format_list_class, format_list_ctor, vector_object);
+
+	//Creates an ImageFormatList
+	obj =  (*e)->NewObject(e, format_list_class, format_list_ctor, (uintptr_t) d);
+	if(obj == NULL){
+		info("[V4L4J] Error creating the format list\n");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error creating the format list");
+		return;
+	}
 	(*e)->SetObjectField(e, t, formats_field, obj);
 
 
@@ -253,7 +214,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobje
 	jclass this_class;
 	struct video_device *vd = d->vdev;
 
-	//get handle on need java objects
+	//get handles on needed java objects
 	this_class = (*e)->GetObjectClass(e,t);
 	if(this_class == NULL){
 		info("[V4L4J] Error looking up the DeviceInfo class\n");
@@ -269,8 +230,8 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobje
 	}
 
 
-	dprint(LOG_LIBV4L, "[LIBV4L] call to get_device_info\n");
-	//get data from libv4l
+	dprint(LOG_LIBVIDEO, "[LIBVIDEO] call to get_device_info\n");
+	//get data from libvideo
 	if(get_device_info(vd)!=NULL){
 		//fill in values in DeviceInfo object
 		/* set the name field */
@@ -282,9 +243,9 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobje
 
 		/* set the formats field */
 		dprint(LOG_V4L4J, "[V4L4J] Creating Format objects\n");
-		create_formats_object(e, t, this_class, vd);
+		create_formats_object(e, t, this_class, d);
 
-		dprint(LOG_LIBV4L, "[LIBV4L] call to release_device_info\n");
+		dprint(LOG_LIBVIDEO, "[LIBVIDEO] call to release_device_info\n");
 		release_device_info(vd);
 	} else
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error getting information from video device");
