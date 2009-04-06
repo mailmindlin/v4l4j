@@ -141,5 +141,5 @@ release_control_list(v);
 //release the video device interface
 close_device(v);
 }}}
-= The Query interface =
+
 = The Tuner interface =
