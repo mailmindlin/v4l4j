@@ -11,11 +11,11 @@ Information on libvideo is split across multiple pages:
 *libvideo is NOT reentrant ! Only one thread should call libvideo methods at any time.* The application using libvideo is responsible for implementing a proper locking mechanism.
 
 The libvideo API is divided in five categories (or interfaces):
- # *[#The Video Device interface The video device interface]*. This is the main interface which is used to acquire other interfaces,
- # *[#The_Capture_interface The capture interface]* used to capture images from the device,
- # *The control interface* used to access video controls,
- # *The query interface* used to gather information on the video device,
- # *The tuner interface* used to control tuners on the video device.
+ # *[VideoInterface The video device interface]*. This is the main interface which is used to acquire other interfaces,
+ # *[CaptureInterface The capture interface]* used to capture images from the device,
+ # *[ControlInterface The control interface]* used to access video controls,
+ # *[QueryInterface The query interface]* used to gather information on the video device,
+ # *[TunerInterface The tuner interface]* used to control tuners on the video device.
 An interface provides a set of methods related in functionality. Using an interface is a two step process: 
  * you first *acquire the interface* you want to access by calling the right method on the main interface (video device). You can then use this interface.
  * when you are done, you must *release the interface* by calling the appropriate method on the main interface.
