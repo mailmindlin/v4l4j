@@ -3,7 +3,7 @@
  * [libvideoAPI#libvideo_API libvideo API & header files]
  * [libvideoAPI#Header_files Header files]
  * [VideoDeviceInterface#The_Video_Device_interface The Video Device interface]
- * [CaptureInterface#The_Capture_interface The Capture interface]
+ * [CaptureInterface The Capture interface]
    * [CaptureInterface#Apply_capture_parameters Selecting & applying capture parameters]
    * [CaptureInterface#Initialise_capture_resources Initialising capture]
    * [CaptureInterface#Start_the_capture Starting the capture]
