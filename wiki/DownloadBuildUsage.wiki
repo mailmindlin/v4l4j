@@ -1,11 +1,5 @@
 #summary this page explains how to download, build and test libvideo
-
-Information on libvideo is split across multiple pages:
-
- * The [libvideo libvideo] page gives a short introduction to libvideo and how it came about.
- * The DownloadBuildUsage (this page) page explains how to download it, compile it and use it.
- * The [libvideoAPI API] page explains how to write a program with libvideo.
-
+#sidebar LibvideoApiSideBar
 
 =Tested Hardware=
 See TestedHardware page for a list of platforms and video devices libvideo has been successfully tested with.
@@ -24,17 +18,21 @@ libvideo requires make, gcc and a V4L-supported video source. It has been succes
 Run "make" in the libvideo/ directory
 
 =Usage=
-libvideo is a library and is meant to be linked to an application. However, it does come with three test programs which can be used as examples:
+libvideo is a library and is meant to be linked to an application. To this end, check the [libvideoAPI libvideo API] page for documentation and examples on how to use libvideo.
+
+=Example applications=
+libvideo comes with three test programs which can be used as examples:
  * 'test-capture' is used to print the maximum achievable frame rate. It runs a capture from a given video device at a given resolution for  10 seconds and then prints the frame rate.
  * 'dump-catpure' which is similar to the previous application, except that it will write the captured frames to disk,
  * 'list-caps' which lists information about a given video device.
 
 To compile the test programs, run "make test" in libvideo/.
-The libvideo/example/ directory contains a lighweight application called light_cap, which captures frames and sends them out as a multipart JPEG stream suitable for viewing in <img> tags of any standard-compliant web browser (no java applet required). See example/README for more details.
+
+In addition to these simple programs, the libvideo/example/ directory contains a lighweight application called light_cap, which captures frames and sends them out as a multipart JPEG stream suitable for viewing in <img> tags of any standard-compliant web browser (no java applet required). The video stream can also be viewed in standard programs such as ffplay and VLC. See libvideo/example/README for more details.
 
 =Debugging=
 libvideo contains lots of debug statements which are disabled by default. To enable them, use 'DEBUG=1 make clean test'. Extra output will be produced to allow troubleshooting.
 
 =Issues=
 Feedback is is greatly appreciated to expand the list of platforms and video devices libvideo has been successfully tested with.
-Issues and queries can be emailed to the [http://groups.google.com/group/v4l4j v4l4j mailing list] along with a description of what went wrong (or right) and what hardware you run libvideo on. 
+Feedback, issues and queries can be emailed to the [http://groups.google.com/group/v4l4j v4l4j mailing list] along with a description of what went wrong (or right) and what hardware you run libvideo on. 
