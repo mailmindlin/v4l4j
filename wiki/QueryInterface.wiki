@@ -1,0 +1,133 @@
+#summary this page presents the Query interface of libvideo
+#sidebar LibvideoApiSideBar
+
+= The Query interface =
+This interface provides useful information about a video device. An application should check some important characteristics available through this interface (such as supported image formats) before attempting to acquire and use other interfaces.
+The query interface is represented by a `struct device_info` structure:
+{{{
+#define NAME_FIELD_LENGTH 			32 + 1
+struct device_info {
+	int nb_inputs;  //the number of video inputs on this device
+	struct video_input_info *inputs; //an array of 'nb_inputs' structures, see below
+	int nb_palettes;  //the number of supported image formats
+	struct palette_info *palettes; //an array of 'nb_palettes' structure, see below
+	char name[NAME_FIELD_LENGTH];  //the name of this video device
+};
+}}}
+Information about a video input is contained in a `struct video_input_info`:
+{{{
+struct video_input_info {
+#define INPUT_TYPE_TUNER			1
+#define INPUT_TYPE_CAMERA			2
+	int type;  //this input is either a tuner or a camera input
+	int nb_stds; //how many video standards are supported by this input
+	int *supported_stds; //an array of 'nb_stds' video standards (int)
+                             //video standards macros are defined in libvideo.h:
+                             //WEBCAM, PAL, NTSC, SECAM
+	struct tuner_info *tuner; //contains information about the tuner associated with
+                                  //this input (if type==INPUT_TYPE_TUNER), NULL otherwise
+	char name[NAME_FIELD_LENGTH];  //the name of this input
+	int index;  //this input's index
+};
+}}}
+Information about an image format is encapsulated in a `struct palette_info`:
+{{{
+struct palette_info{
+	//the libvideo index for this image format
+	int index;
+
+	//raw_palette store the libvideo index of the real palette used when capturing
+	//and is meaningful for V4L2 devices only. If this palette is converted,
+	//the converted one is stored here. Otherwise,
+	//raw_palette=UNSUPPORTED_PALETTE
+	int raw_palette;
+};
+}}}
+The previous structure needs explaining: libvideo can convert native image formats (image formats produce by the video device) into convenience formats RGB24, BGR24, YUV420 & YVU420. This is internally accomplished by libv4l_convert. When checking supported image formats, both native and converted formats are reported by libvideo. The application can make the difference between a native and a converted format by checking the `raw_palette` member: if it is set to `UNSUPPORTED_PALETTE` then it is a native format. Otherwise, it is set to the native format which is converted into the new one.
+
+Information about a tuner is contained in a `struct tuner_info`:
+{{{
+struct tuner_info {
+#define RADIO_TYPE					1
+#define TV_TYPE						2
+	int type; //RADIO_TYPE or TV_TYPE
+	//In units of 62.5 Khz if unit==MHZ_UNIT
+	//of 62.5Hz if unit==KHZ_UNIT
+	unsigned long rangelow;
+	unsigned long rangehigh;
+#define KHZ_UNIT					1
+#define MHZ_UNIT					2
+	int unit;
+	int rssi;  //received signal strength indicator
+	char name[NAME_FIELD_LENGTH]; //the name of this tuner
+	int index; //the index of this tuner
+};
+}}}
+
+==Getting information==
+To acquire the query interface, use the `get_device_info()` function:
+{{{
+struct device_info * d = get_device_info(video_dev);
+//check returned value
+}}}
+This method returns a pointer to a `struct device_info` detailed above, or NULL if there was an error gathering information about the device. This can happen with some webcam if there is already another application using the camera. This behaviour is driver-dependent.
+
+The query interface must be release with:
+{{{
+release_device_info(video_dev);
+}}}
+
+Assuming the query interface has been acquired, the convenience method `print_device_info()` dumps the contents of the query interface to stdout in an easy-to-read format. The code for this method is presented in the next section.
+
+==Example==
+The following code prints out information contained in the query interface.
+{{{
+int j,k;
+struct video_device *v = open_device("/dev/video0");
+struct device_info *i = get_device_info(video_dev);
+if(i!=NULL){
+	printf("============================================\n\n");
+	printf("Printing device info\n\n");
+	printf("Device name: %s\n",i->name);
+	printf("Device file: %s\n",v->file);
+	printf("Supported image formats (Name - Index):\n");
+	for(j=0; j<i->nb_palettes; j++){
+		printf("\t%s - %d", libvideo_palettes[i->palettes[j].index].name,
+				i->palettes[j].index);
+		if(i->palettes[j].raw_palette!=UNSUPPORTED_PALETTE){
+			printf(" (converted from %s - %d)", 
+                               libvideo_palettes[i->palettes[j].raw_palette].name,i->palettes[j].raw_palette);
+		}
+		printf("\n");
+
+	}
+
+	printf("Inputs:\n");
+	for(j=0; j<i->nb_inputs; j++){
+		printf("\tName: %s\n", i->inputs[j].name);
+		printf("\tNumber: %d\n", i->inputs[j].index);
+		printf("\tType: %d (%s)\n", i->inputs[j].type,
+				i->inputs[j].type==INPUT_TYPE_TUNER ? "Tuner" : "Camera");
+		printf("\tSupported standards:\n");
+		for(k=0; k<i->inputs[j].nb_stds; k++)
+			printf("\t\t%d (%s)\n",i->inputs[j].supported_stds[k],
+					i->inputs[j].supported_stds[k]==WEBCAM?"Webcam":
+					i->inputs[j].supported_stds[k]==PAL?"PAL":
+					i->inputs[j].supported_stds[k]==SECAM?"SECAM":"NTSC");
+		if(i->inputs[j].tuner!=NULL){
+			printf("\tTuner\n");
+			printf("\t\tName: %s\n",i->inputs[j].tuner->name);
+			printf("\t\tIndex: %d\n", i->inputs[j].tuner->index);
+			printf("\t\tRange low: %lu\n", i->inputs[j].tuner->rangelow);
+			printf("\t\tRange high: %lu\n", i->inputs[j].tuner->rangehigh);
+			printf("\t\tUnit: %d (%s)\n", i->inputs[j].tuner->unit,
+					i->inputs[j].tuner->unit==KHZ_UNIT?"KHz":"MHz");
+			printf("\t\tType: %d (%s)\n", i->inputs[j].tuner->type,
+					i->inputs[j].tuner->type==RADIO_TYPE?"Radio":"TV");
+
+		}
+	}
+}
+release_device_info(video_dev);
+close_device(video_dev);
+}}}
