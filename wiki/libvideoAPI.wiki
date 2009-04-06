@@ -11,7 +11,7 @@ Information on libvideo is split across multiple pages:
 
 The libvideo API is divided in five categories (or interfaces):
  # *The video device interface*. This is the main interface which is used to acquire other interfaces,
- # *The capture interface* used to capture images from the device,
+ # <a href="#The_Capture_interface">*The capture interface*</a> used to capture images from the device,
  # *The control interface* used to access video controls,
  # *The query interface* used to gather information on the video device,
  # *The tuner interface* used to control tuners on the video device.
@@ -48,6 +48,7 @@ To acquire the video device interface, do the following:
 {{{
 char device[] = "/dev/video0";
 struct video_device *video_dev = open_device(device);
+//check return value and take appropriate action
 
 //when done:
 if(close_device(video_dev)!=0)
@@ -56,7 +57,7 @@ if(close_device(video_dev)!=0)
 
 `open_device()` initialises the video device & returns a pointer to a `struct video_device` or `NULL` if there is an error opening the device, if the given device file is not a video device, or if there is an error detecting the version of V4L.
 
-`close_device()` releases resources and frees the `struct video_device` pointer, provided that all other interfaces have been released. If not, it returns LIBVIDEO_ERR_INFO_IN_USE, LIBVIDEO_ERR_CAPTURE_IN_USE, LIBVIDEO_ERR_CONTROL_IN_USE, LIBVIDEO_ERR_TUNER_IN_USE (these are defined in `libvideo-err.h`.
+`close_device()` releases resources and frees the `struct video_device` pointer, provided that all other interfaces have been released. If not, it returns LIBVIDEO_ERR_INFO_IN_USE, LIBVIDEO_ERR_CAPTURE_IN_USE, LIBVIDEO_ERR_CONTROL_IN_USE, LIBVIDEO_ERR_TUNER_IN_USE (these are defined in `libvideo-err.h`).
 
 = The Capture interface =
 
@@ -95,17 +96,17 @@ The structure must be released when finished with:
 free_capture_device(cap);
 }}}
 
-Video capture done in steps:
- * apply capture parameters
- * intialise capture resources
- * start the capture
- * get the buffer with the latest frame
- * do something with the frame
- * put the buffer back
- * stop the capture
- * free resources
+Video capture involves the following steps:
+ # apply capture parameters
+ # intialise capture resources
+ # start the capture
+ # get the buffer with the latest frame
+ # do something with the frame
+ # put the buffer back
+ # stop the capture
+ # free resources
 
-Each of these steps is carried out using a specific method found in the `struct capture_actions` present in the `actions` member of the `struct capture_device`.
+Steps 4,5 & 6 are repeated as many times as required to produce a video stream. Each of these steps is carried out using a specific method found in the `struct capture_actions` present in the `actions` member of the `struct capture_device`.
 
 == Apply capture parameters ==
 This step allows the application to specify a list of image formats it wishes to use. This is done using the `set_cap_param` member:
