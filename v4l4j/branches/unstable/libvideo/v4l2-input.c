@@ -1141,6 +1141,7 @@ int set_control_value_v4l2(struct video_device *vdev,
 					"CTRL: unknown error %d\n", errno);
 		return LIBVIDEO_ERR_IOCTL;
 	}
+	*i=prev;
 	return 0;
 }
 

@@ -15,7 +15,7 @@ JDK_HOME=/usr/lib/jvm/java-6-sun
 # V4L4J_LOG_SOURCE=63 ant clean all 
 #
 #LOG_CALLS         1
-#LOG_LIBV4L        2
+#LOG_LIBVIDEO      2
 #LOG_MEMALLOC      4
 #LOG_JPEG          8
 #LOG_RGB           16

@@ -65,20 +65,20 @@ int main(int argc, char** argv) {
 	printf("Listing available controls (%d)\n", l->count);
 	for(i=0;i<l->count; i++){
 		qc = l->controls[i].v4l2_ctrl;
-		printf("Control: id: 0x%x - name: %s - min: %d -max: %d - step: %d - type: %d(%s) - flags: %d (%s%s%s%s%s%s)\n", \
-				qc->id, (char *) &qc->name, qc->minimum, qc->maximum, qc->step, qc->type, \
-				qc->type == V4L2_CTRL_TYPE_INTEGER ? "Integer" :  \
-				qc->type == V4L2_CTRL_TYPE_BOOLEAN ? "Boolean" :  \
-				qc->type == V4L2_CTRL_TYPE_MENU ? "Menu" :  \
-				qc->type == V4L2_CTRL_TYPE_BUTTON ? "Button" : \
-				qc->type == V4L2_CTRL_TYPE_INTEGER64 ? "Integer64" :  \
-				qc->type == V4L2_CTRL_TYPE_CTRL_CLASS ? "Class" : "", \
-				qc->flags, \
-				qc->flags & V4L2_CTRL_FLAG_DISABLED ? "Disabled " : "", \
-				qc->flags & V4L2_CTRL_FLAG_GRABBED ? "Grabbed " : "", \
-				qc->flags & V4L2_CTRL_FLAG_READ_ONLY ? "ReadOnly " : "", \
-				qc->flags & V4L2_CTRL_FLAG_UPDATE ? "Update " : "", \
-				qc->flags & V4L2_CTRL_FLAG_INACTIVE ? "Inactive " : "", \
+		printf("Control: id: 0x%x - name: %s - min: %d -max: %d - step: %d - type: %d(%s) - flags: %d (%s%s%s%s%s%s)\n",
+				qc->id, (char *) &qc->name, qc->minimum, qc->maximum, qc->step, qc->type,
+				qc->type == V4L2_CTRL_TYPE_INTEGER ? "Integer" :
+				qc->type == V4L2_CTRL_TYPE_BOOLEAN ? "Boolean" :
+				qc->type == V4L2_CTRL_TYPE_MENU ? "Menu" :
+				qc->type == V4L2_CTRL_TYPE_BUTTON ? "Button" :
+				qc->type == V4L2_CTRL_TYPE_INTEGER64 ? "Integer64" :
+				qc->type == V4L2_CTRL_TYPE_CTRL_CLASS ? "Class" : "",
+				qc->flags,
+				qc->flags & V4L2_CTRL_FLAG_DISABLED ? "Disabled " : "",
+				qc->flags & V4L2_CTRL_FLAG_GRABBED ? "Grabbed " : "",
+				qc->flags & V4L2_CTRL_FLAG_READ_ONLY ? "ReadOnly " : "",
+				qc->flags & V4L2_CTRL_FLAG_UPDATE ? "Update " : "",
+				qc->flags & V4L2_CTRL_FLAG_INACTIVE ? "Inactive " : "",
 				qc->flags & V4L2_CTRL_FLAG_SLIDER ? "slider " : "");
 
 		if(l->controls[i].count_menu!=0){

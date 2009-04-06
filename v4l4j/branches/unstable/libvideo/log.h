@@ -22,8 +22,8 @@
 *
 */
 
-#ifndef H_LIBV4L_LOG
-#define H_LIBV4L_LOG
+#ifndef H_LIBVIDEO_LOG
+#define H_LIBVIDEO_LOG
 
 #include <stdio.h>		//for fprintf
 #include <stdlib.h>		//for malloc
