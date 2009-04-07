@@ -1,13 +1,12 @@
 #!/bin/bash
-url="$(svn info | grep 'URL')"
-url="${url##*/}"
-rev="$(svn info | grep 'Revision' | cut -f 2 -d ' ')"
+branch="$(svn info | grep 'URL')"
+branch="${branch%/*}"
+branch="${branch##*/}"
+rev="${branch}_r$(svn info | grep 'Revision' | cut -f 2 -d ' ')"
 
-if [ "x${url}" != "x" -a "x${rev}" != "x" ]; then
-	echo "#define SVN_BRANCH \"${url}\"" > version.h
-	echo "#define SVN_REV \"r${rev}\"" >> version.h
+if [ "x${rev}" != "x" ]; then
+	echo "#define VER_REV \"${rev}\"" > version.h
 else
-        echo "#define SVN_BRANCH \"Unknown\"" > version.h
-        echo "#define SVN_REV \"\"" >> version.h
+        echo "#define VER_REV \"UNKNOWN\"" > version.h
 fi
 
