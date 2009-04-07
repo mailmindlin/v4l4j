@@ -50,7 +50,7 @@
  * It must be allocated by caller. char [40] is enough
  */
 char *get_libvideo_version(char * c) {
-	snprintf(c, 39,"%d.%d-%s_%s", VER_MAJ, VER_MIN, SVN_BRANCH, SVN_REV);
+	snprintf(c, 39,"%d.%d-%s", VER_MAJ, VER_MIN, VER_REV);
 	return c;
 }
 
