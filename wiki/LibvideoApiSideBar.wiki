@@ -2,6 +2,7 @@
  * [DownloadBuildUsage How to download, build and test libvideo]
  * [libvideoAPI#libvideo_API Introduction to the libvideo API]
    * [libvideoAPI#Header_files libvideo header files]
+   * [libvideoAPI#Image_formats Image formats supporte by libvideo]
  * [VideoDeviceInterface The Video Device interface]
  * [CaptureInterface The Capture interface]
    * [CaptureInterface#Apply_capture_parameters Selecting & applying capture parameters]
