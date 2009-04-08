@@ -1,0 +1,34 @@
+#summary this page explains how to import v4l4j in eclipse
+#labels Featured
+
+There are two ways to import v4l4j in Eclipse:
+ *  by checking out a copy of v4l4j from the subversion repository and creating a new project, or
+ * by downloading the source tarball, unpacking it and importing it in Eclipse.
+Both of these are explained in the following sections. I have tested them with Eclipse Ganymede version 3.4.1
+
+= Importing from SVN =
+
+ # First, make sure you have a working Subversion plug-in for Eclipse. You can use either [http://subclipse.tigris.org/ subclipse], or [http://www.eclipse.org/subversive/ Subversive]. These steps assume you use Subclipse, but can be used with Subversive too.
+ # In eclipse, check out a copy of http://v4l4j.googlecode.com/svn/v4l4j/trunk using the New project wizard. Refer to your eclipse plugin documentation to find out how to do that.
+ # Select the Java Project wizard.
+ # Give the project a name (we will use v4l4j-trunk). Make sure you use JRE 6. Select "create separate folders for sources and class files".
+ # On the Java settings page, change the default output folder to v4l4j-trunk/classes, and click "finish".
+ # When the checkout is completed, right-click on the project in the package explorer view, and select "New" -> "Other...".
+ # On the "Select a wizard" page, select "Convert to a C/C++ Make project" and click Next.
+ # Select only the v4l4j-trunk project and "C project", and click Finish.
+ # Right-click on the project in the package explorer view and select "Build path" -> "Configure build path".
+ # Expand the "C/C++ General" node on the left side and select "Paths & symbols".
+ # In the "Includes" tab, select "GNU C" in "Languages". Click on "Add..." and select "File system...". Navigate to the location of your JDK, and select the "include" directory. On my computer (Ubuntu Hardy 8.04), the Sun JDK 6 is installed at "/usr/lib/jvm/java-6-sun", so I selected "/usr/lib/jvm/java-6-sun/include". Repeat the process and add "/usr/lib/jvm/java-6-sun/include/linux". 
+ # Click on "Add..." one last time, select "Workspace..." and select the libvideo directory under the v4l4j-trunk project.
+ # You may need to add Junit to the build path. Right on the v4l4j-trunk project in the package explorer, select "Build path" -> "Configure build path".
+ # On the Libraries tab, select "Add JAR...", navigate to the lib directory in the v4l4j-trunk project and select the junit jar file. Click OK
+
+You can now create your own project that uses v4l4j. Eclipse's auto-complete feature will now offer v4l4j-related classes, and will show v4l4j's javadoc.
+
+= Importing from source tarball =
+
+The steps here are very similar to the previous ones:
+
+ # Download the latest stable version of v4l4j using the link on the homepage. At the time of writing, the latest stable version is 0.8 and the source archive is at http://v4l4j.googlecode.com/files/v4l4j-0.8.0.tar.gz .
+ # Unpack the archive in your eclipse workspace dirctory.
+ # In Eclipse, select "File" -> "New" -> "Java project", and continue from step 4 above.
