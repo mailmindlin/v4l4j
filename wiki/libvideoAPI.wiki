@@ -19,7 +19,77 @@ The libvideo API is divided in five categories (or interfaces):
 An interface provides a set of methods related in functionality. Using an interface is a two step process: 
  * you first *acquire the interface* you want to access by calling the right method on the main interface (video device). You can then use this interface.
  * when you are done, you must *release the interface* by calling the appropriate method on the main interface.
-Interfaces are independent from each other and can be used regardless of which other interfaces are currently acquired.
+Interfaces are independent from each other and can be used regardless of which other interfaces are currently acquired. This allows for instance a user to run a GUI to access video controls while another application is concurrently streaming video from the same device. Obviously, this is only possible if the driver allows multiple applications to concurrently open the same device file while allowing only one application to stream video. The Linux UVC driver works this way.
 
 = Header files = 
 The main header file is `libvideo.h` and contains all user-side required structures, function definitions and macros. `palettes.h` contains the definitions of an array of `struct libvideo_palette` which can be used to translate a libvideo palette index to its textual name. `livideo-err.h` contains all the macro definitions for returned values representing error codes.
+
+= Image formats =
+libvideo has an index for every single image format existing in Video4Linux. These indexes are marcos defined in `libvideo.h` and listed here for convenience. A global array of `struct libvideo_palette` named `libvideo_palettes` translates an image format index into a textual name (include `palettes.h` for that). See the example below.
+
+{{{
+#include "palettes.h"
+
+...
+int fmt = YUV420;
+printf("Palette index: %d - name: %s\n", fmt, libvideo_palettes[fmt].name);
+
+}}}
+
+Below is a list of known image formats and their libvideo index. For a description of each image format, check [http://www.linuxtv.org/downloads/video4linux/API/V4L2_API/spec/c2030.htm this page] in the V4L2 specs.
+{{{
+//palettes
+#define 	YUV420       0
+#define  	YUYV         1
+#define 	RGB24        2
+#define 	RGB32        3
+#define	 	RGB555       4
+#define 	RGB565       5
+#define 	GREY         6
+#define 	MJPEG        7
+#define 	JPEG         8
+#define 	MPEG         9
+#define 	HI240        10
+#define 	UYVY         11
+#define		YUV422P      12
+#define		YUV411P      13
+#define		YUV410P      14
+#define		RGB332       15
+#define		RGB444       16
+#define		RGB555X      17
+#define		RGB565X      18
+#define		BGR24        19
+#define		BGR32        20
+#define		Y16          21
+#define		PAL8         22
+#define		YVU410       23
+#define		YVU420       24
+#define		Y41P         25
+#define		YUV444       26
+#define		YUV555       27
+#define		YUV565       28
+#define		YUV32        29
+#define		NV12         30
+#define		NV21         31
+#define		YYUV         32
+#define		HM12         33
+#define		SBGGR8       34
+#define		SGBRG8       35
+#define		SGRBG8       36
+#define		SRGGB8       37
+#define		SBGGR16      38
+#define		SN9C10X      39
+#define 	SN9C20X_I420 40
+#define		PWC1         41
+#define		PWC2         42
+#define		ET61X251     43
+#define		SPCA501      44
+#define		SPCA505      45
+#define		SPCA508      46
+#define		SPCA561      47
+#define		PAC207       48
+#define		PJPG         49
+#define		YVYU         50
+#define		MR97310A     51
+#define		SQ905C       52
+}}}
