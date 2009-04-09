@@ -31,4 +31,5 @@ The steps here are very similar to the previous ones:
 
  # Download the latest stable version of v4l4j using the link on the homepage. At the time of writing, the latest stable version is 0.8 and the source archive is at http://v4l4j.googlecode.com/files/v4l4j-0.8.0.tar.gz .
  # Unpack the archive in your eclipse workspace dirctory.
- # In Eclipse, select "File" -> "New" -> "Java project", and continue from step 4 above.
+ # In Eclipse, select "File" -> "New" -> "Java project".
+ # Select "Create project from existing source" and continue from step 4 above.
