@@ -340,7 +340,7 @@ public class Control {
 	 * This method returns a list of the discrete values accepted by this control.
 	 * The list is ordered in the same way as the list returned by {@link #getDiscreteValueNames()}.
 	 * So a value at index 'i' in the list returned by this method, matches the name
-	 * at the same index in the list returned by {@link #getDefaultValueNames()}.
+	 * at the same index in the list returned by {@link #getDiscreteValueNames()}.
 	 * @return a list of the discrete values accepted by this control
 	 * @throws UnsupportedMethod if this control does not support discrete values. Instead,
 	 * any values between {@link #getMinValue()} and {@link #getMaxValue()} with a step of
@@ -363,7 +363,7 @@ public class Control {
 	 * This method returns the list of names for each of the supported discrete values.
 	 * The list is ordered in the same way as the list returned by {@link #getDiscreteValues()}.
 	 * So the name at index 'i' in the list returned by this method, matches the value
-	 * at the same index in the list returned by {@link #getDefaultValue()}.
+	 * at the same index in the list returned by {@link #getDiscreteValues()}.
 	 * @return a list of names for each of the supported discrete values.
 	 * @throws UnsupportedMethod if this control does not support discrete values. Instead,
 	 * any values between {@link #getMinValue()} and {@link #getMaxValue()} with a step of

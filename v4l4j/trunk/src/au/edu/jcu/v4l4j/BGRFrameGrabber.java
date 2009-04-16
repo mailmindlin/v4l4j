@@ -38,11 +38,11 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * knows how to encode in BGR24. The {@link VideoDevice#supportBGRConversion()} 
  * method can be used to find out whether a video device can have its images 
  * BGR24-encoded by v4l4j, ie if a BGR24 frame grabber can be instantiated.
- * <code>BGRFrameGrabber</code> objects are not * instantiated directly. 
+ * <code>BGRFrameGrabber</code> objects are not instantiated directly. 
  * Instead, the 
- * {@link VideoDevice#getBGRFrameGrabber(int, int, int, int, int)}
+ * {@link VideoDevice#getBGRFrameGrabber(int, int, int, int)}
  * or 
- * {@link VideoDevice#getBGRFrameGrabber(int, int, int, int, int, ImageFormat)}
+ * {@link VideoDevice#getBGRFrameGrabber(int, int, int, int, ImageFormat)}
  * method must be called on the associated {@link VideoDevice}. Requested height
  * and width may be adjusted to the closest supported values. The adjusted
  * width and height can be retrieved by calling {@link #getWidth()} and 
@@ -92,7 +92,7 @@ public class BGRFrameGrabber extends FrameGrabber {
 	 * {@link InputInfo#getSupportedStandards()} (see V4L4JConstants)
 	 * @param imf the image format frame should be captured in
 	 */
-	public BGRFrameGrabber(long o, int w, int h, int ch, int std, Tuner t,
+	BGRFrameGrabber(long o, int w, int h, int ch, int std, Tuner t,
 			ImageFormat imf) throws ImageFormatException {
 		super(o, w, h, ch, std, t, imf, BGR24_GRABBER);
 	}

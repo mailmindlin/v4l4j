@@ -224,8 +224,6 @@ public class ImageFormatList {
 	 * (V4L4JConstants.IMF_*). 
 	 * @param i the index of the <code>ImageFormat</code> to look up
 	 * @return the <code>ImageFormat</code> or <code>null</code> if not found.
-	 * @see {@link V4L4JConstants} : the image format index constant name start
-	 * with V4L4JConstants.IMF_*
 	 */
 	public ImageFormat getNativeFormat(int i){
 		return getFormat(formats, i);
@@ -262,8 +260,6 @@ public class ImageFormatList {
 	 * (V4L4JConstants.IMF_*). 
 	 * @param i the index of the <code>ImageFormat</code> to look up
 	 * @return the <code>ImageFormat</code> or <code>null</code> if not found.
-	 * @see {@link V4L4JConstants} : the image format index constant name start
-	 * with V4L4JConstants.IMF_*
 	 */
 	public ImageFormat getJPEGEncodableFormat(int i){
 		return getFormat(JPEGformats, i);
@@ -299,8 +295,6 @@ public class ImageFormatList {
 	 * {@link V4L4JConstants} (V4L4JConstants.IMF_*). 
 	 * @param i the index of the <code>ImageFormat</code> to look up
 	 * @return the <code>ImageFormat</code> or <code>null</code> if not found.
-	 * @see {@link V4L4JConstants} : the image format index constant name start
-	 * with V4L4JConstants.IMF_*
 	 */
 	public ImageFormat getRGBEncodableFormat(int i){
 		return getFormat(RGBformats, i);
@@ -337,8 +331,6 @@ public class ImageFormatList {
 	 * (V4L4JConstants.IMF_*). 
 	 * @param i the index of the <code>ImageFormat</code> to look up
 	 * @return the <code>ImageFormat</code> or <code>null</code> if not found.
-	 * @see {@link V4L4JConstants} : the image format index constant name start
-	 * with V4L4JConstants.IMF_*
 	 */
 	public ImageFormat getBGREncodableFormat(int i){
 		return getFormat(BGRformats, i);
@@ -375,8 +367,6 @@ public class ImageFormatList {
 	 * (V4L4JConstants.IMF_*). 
 	 * @param i the index of the <code>ImageFormat</code> to look up
 	 * @return the <code>ImageFormat</code> or <code>null</code> if not found.
-	 * @see {@link V4L4JConstants} : the image format index constant name start
-	 * with V4L4JConstants.IMF_*
 	 */
 	public ImageFormat getYUVEncodableFormat(int i){
 		return getFormat(YUV420formats, i);
@@ -413,8 +403,6 @@ public class ImageFormatList {
 	 * (V4L4JConstants.IMF_*). 
 	 * @param i the index of the <code>ImageFormat</code> to look up
 	 * @return the <code>ImageFormat</code> or <code>null</code> if not found.
-	 * @see {@link V4L4JConstants} : the image format index constant name start
-	 * with V4L4JConstants.IMF_*
 	 */
 	public ImageFormat getYVUEncodableFormat(int i){
 		return getFormat(YVU420formats, i);

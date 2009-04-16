@@ -37,22 +37,22 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * retrieve images in a native format. An RGB frame grabber can only be created 
  * if the associated video device can produce images in a format v4l4j
  * knows how to convert to RGB24. The 
- * {@link VideoDevice#supportJPEGConversion()} method can be used to find out 
- * whether a video device can have its images JPEG-encoded by v4l4j, ie if a 
- * JPEG frame grabber can be instantiated.
- * <code>JPEGFrameGrabber</code> objects are not instantiated directly. Instead,
+ * {@link VideoDevice#supportRGBConversion()} method can be used to find out 
+ * whether a video device can have its images RGB-encoded by v4l4j, ie if a 
+ * RGB frame grabber can be instantiated.
+ * <code>RGBFrameGrabber</code> objects are not instantiated directly. Instead,
  * the 
- * {@link VideoDevice#getJPEGFrameGrabber(int, int, int, int, int)} or
- * {@link VideoDevice#getJPEGFrameGrabber(int, int, int, int, int, ImageFormat)}
+ * {@link VideoDevice#getRGBFrameGrabber(int, int, int, int)} or
+ * {@link VideoDevice#getRGBFrameGrabber(int, int, int, int, ImageFormat)}
  * method must be called on the associated {@link VideoDevice}. Requested height
  * and width may be adjusted to the closest supported values. The adjusted
  * width and height can be retrieved by calling {@link #getWidth()} and 
  * {@link #getHeight()}.<br>
- * A typical <code>JPEGFrameGrabber</code> use is as follows:<br><br>
+ * A typical <code>RGBFrameGrabber</code> use is as follows:<br><br>
  * <code>//create a new video device<br>
  * VideoDevice vd = new VideoDevice("/dev/video0");<br>
  * <br>//Create an instance of FrameGrabber
- * <br>FrameGrabber f = vd.getJPEGFrameGrabber(320, 240, 0, 0, 80);
+ * <br>FrameGrabber f = vd.getRGBFrameGrabber(320, 240, 0, 0);
  * <br>
  * <br> //Start the frame capture 
  * <br>f.startCapture();
