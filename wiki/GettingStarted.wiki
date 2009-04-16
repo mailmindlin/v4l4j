@@ -2,21 +2,28 @@
 #labels Featured
 
 =Quick Start=
-For the impatient, here are a few instructions that will get you started, assuming you are using Ubuntu or Debian:
+For the impatient, here are a few instructions that will get you started, assuming you are using Ubuntu or Debian. You have two options to download v4l4j:I suggest you first try the latest stable version, available as a tar archive from the "Downloads" tab above. The second option, which is to download the latest SVN version, should be used only if the stable version does not work for you. To download the latest SVN version, use :
 {{{
 svn co http://v4l4j.googlecode.com/svn/v4l4j/trunk v4l4j
+}}}
+
+Go to the v4l4j source directory and do the following to compile and test v4l4j:
+{{{
 sudo apt-get install sun-java6-jdk libjpeg-dev build-essential ant
-cd v4l4j
 ant test-gui
 }}}
-This will download v4l4j and its dependencies, compile the package and run a test application that displays a video stream from /dev/video0 by default. To use another video device, add `-Dtest.device=/dev/videoXX` to the last line.
-If things go wrong, then read on. Otherwise, you can generate the Java documentation with `ant javadoc`, and write your own application using v4l4j.
+This will download v4l4j and its dependencies, compile the package and run a test application that displays a video stream from /dev/video0 by default. To use another video device, add `-Dtest.device=/dev/videoXX` to the last line. If things go wrong, then read on. Otherwise, you can generate the Java documentation with `ant javadoc`, and write your own application using v4l4j.
 
 =Download=
+Choose on of the following method to download v4l4j:
+ * Latest snapshot
 The latest snapshot of v4l4j can be downloaded using:
 {{{
 svn co http://v4l4j.googlecode.com/svn/v4l4j/trunk v4l4j
 }}}
+
+ * Latest stable version
+The latest stable version of v4l4j is available as a tar archive from the "Downloads" tab.
 
 
 =Requirements=
@@ -79,7 +86,7 @@ By default, these tests will use /dev/video0 as the video device (assumed to be 
     * 5: YVU420 format
 
 =Debugging=
-You can compile both the wrapper library libv4l and v4l4j with extra debug output: by running `ant clean all-debug` in v4l4j/. Check the the [Troubleshooting troubleshooting page] for help on solving common issues.
+You can compile v4l4j with extra debug output by running `ant clean all-debug` in v4l4j/. Make sure you also uninstall v4l4j (if previously installed) using `sudo ant uninstall`. Check the the [Troubleshooting troubleshooting page] for help on solving common issues.
 
 =Issues=
 Feedback is is greatly appreciated to expand the list of platforms and video devices v4l4j has been successfully tested with. Feedback, issues and queries can be emailed to the [http://groups.google.com/group/v4l4j v4l4j mailing list] along with a description of what went wrong (or right) and what hardware you run v4l4j on. Before posting, check the [Troubleshooting troubleshooting] page for more information.
