@@ -12,13 +12,16 @@ Information on libvideo is split across multiple pages:
 
 The libvideo API is divided in five categories (or interfaces):
  # *[VideoDeviceInterface The video device interface]*. This is the main interface which is used to acquire other interfaces,
+ # *[QueryInterface The query interface]* used to gather information on the video device,
  # *[CaptureInterface The capture interface]* used to capture images from the device,
  # *[ControlInterface The control interface]* used to access video controls,
- # *[QueryInterface The query interface]* used to gather information on the video device,
  # *[TunerInterface The tuner interface]* used to control tuners on the video device.
 An interface provides a set of methods related in functionality. Using an interface is a two step process: 
  * you first *acquire the interface* you want to access by calling the right method on the main interface (video device). You can then use this interface.
  * when you are done, you must *release the interface* by calling the appropriate method on the main interface.
+
+With the Video Device interface acquired, the next step is usually to check hardware capabilities, ie how many video inputs/tuners there are, what image formats are supported, and so on. This is done by acquiring the [QueryInterface Query interface].
+
 Interfaces are independent from each other and can be used regardless of which other interfaces are currently acquired. This allows for instance a user to run a GUI to access video controls while another application is concurrently streaming video from the same device. Obviously, this is only possible if the driver allows multiple applications to concurrently open the same device file while allowing only one application to stream video. The Linux UVC driver works this way.
 
 = Header files = 
