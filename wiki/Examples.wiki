@@ -1,7 +1,7 @@
 #summary Examples of video capture using v4l4j.
 #labels Featured
 
-This page shows a few examples in Java on how to use v4l4j. It assumes you have successfully compiled and installed v4l4j (see GettingStarted page for detailed instructions). Here, video source refers to any video-capture device supported by the Linux kernel, and accessible through the Video4Linux API using the associated device file. The v4l4j API has many more methods and classes than presented here. Be sure to check the Java documentation for a more complete reference.
+This page shows a few examples in Java on how to use v4l4j. It assumes you have successfully compiled and installed v4l4j (see GettingStarted page for detailed instructions). Here, video source refers to any video-capture device supported by the Linux kernel, and accessible through the Video4Linux API using the associated device file (usually /dev/video0). The v4l4j API has many more methods and classes than presented here. Be sure to check the Java documentation for a more complete reference.
 Below, you will find the following examples:
  * *Initialising the video device*: Creating a java object to interact with a video device.
  * *Gathering information about the device*: finding out the number of inputs, tuners, supported image formats, and lots more.
@@ -37,7 +37,7 @@ DeviceInfo di = vd.getDeviceInfo();
     * the device file,
     * the name of the video device,
     * a list of `InputInfo` object providing information about each video input,
-    * and ImageFormatList object providing information about the supported image formats.
+    * an `ImageFormatList` object providing information about the supported image formats.
 
 Each `InputInfo` object contains:
     * The textual name of the input,
@@ -52,9 +52,7 @@ Each `InputInfo` object contains:
     * the index of the tuner,
     * and the lowest and highest tunable frequencies.
 
-Lastly, the `ImageFormatList` object details the image formats supported by the video device. This object can also be used to
-  * find out whether v4l4j can convert images to JPEG or RGB24 and
-  * find out which image formats specifically can be converted to JPEG / RGB24
+Lastly, the `ImageFormatList` object details the native image formats supported by the video device. This object also lists native image formats that can be encoded into more convenient formats: JPEG, RGB24, BGR24, YUV420 and YVU420.
 {{{
 //get the ImageFormatList object
 ImageFormatList l = vd.getDeviceInfo().getFormatList();
@@ -86,10 +84,10 @@ if(vd.supportRGBConversion()){
 
 
 = Capturing frames =
-A `FrameGrabber` object (or one of its subclasses) gives you access to the frame capture facility. There are three types of frame grabbers: raw, JPEG and RGB. Raw frame grabbers will capture a frame and hand it in straight away in its raw format. JPEG and RGB frame grabbers will capture a frame and JPEG/RGB-convert it before handing it in. JPEG and RGB frame grabbers can only be used with video devices supporting pre-defined image formats v4l4j can convert. In its current release, JPEG & RGB encoding is possible only with video sources supporting one of JPEG, MJPEG, YUV420, YUYV, RGB24, RGB32, BGR24, YVYU, UYVY and BGR32 formats. Patches to convert more formats are welcome. You can check whether a video device supports JPEG/RGB -encoding by calling:
+A `FrameGrabber` object (or one of its subclasses) gives you access to the frame capture facility. There are 6 types of frame grabbers: raw, JPEG, RGB, BGR, YUV and YVU. Raw frame grabbers will capture a frame and hand it in straight away in its native format. All other frame grabbers will capture a frame and convert its format before handing it in. Most video devices can have their image converted. v4l4j has a few conversion routines of its own, and relies on libv4l to preform camera-specific processing. You can check whether a video device supports JPEG/RGB/YUV -encoding by calling:
 {{{
 VideoDevice vd = new VideoDevice("/dev/video0");
-if(!vd.supportJPEGConversion()){ // use vd.supportRGBConversion() for RGB
+if(!vd.supportJPEGConversion()){ // use the other supportXXXConversion() for other formats
   vd.release();
   throw new Exception("The video device does not support JPEG encoding");
 }
@@ -104,13 +102,16 @@ FrameGrabber fg;
 int width = 640, height = 480, input = 0, standard = V4L4JConstants.PAL;
 fg = vd.getRawFrameGrabber(width, height, input, channel);
 
+//find out what image format is used
+ImageFormat imf = fg.getImageFormat()
+
 ...
 
 vd.releaseFrameGrabber();
 }}}
 The above code will create a frame grabber object capturing frames in the first image format supported by the device, as returned by:
 {{{
-vd.getDeviceInfo().getFormatList().getList().get(0);
+vd.getDeviceInfo().getFormatList().getNativeFormats().get(0);
 }}}
 Alternatively, you can use specify the desired image format: 
 {{{
@@ -149,7 +150,7 @@ An RGB frame grabber is instantiated by calling:
 {{{
 FrameGrabber fg;
 int width = 640, height = 480, input = 1, standard = V4L4JConstants.NTSC;
-fg = vd.getRGBFrameGrabber(width, height, input, channel,);
+fg = vd.getRGBFrameGrabber(width, height, input, channel);
 
 ...
 
@@ -208,7 +209,7 @@ f.stopCapture()
 }
 }}}
 
-The following example shows you how to capture JPEG-encoded frames from your video device and display them in a JFrame object. Note that this approach uses a JLabel and its `setIcon()` method to display the images of the video stream, which is not optimal. A better way would be to create a `BufferedImage`, update its raster and draw it onto the component instead. Refer to the `RGBVideoViewer` class in the au.edu.jcu.v4l4j.examples package where this technique is used.
+The following example shows you how to capture JPEG-encoded frames from your video device and display them in a JFrame object. Note that this approach uses a JLabel and its `setIcon()` method to display the images of the video stream, which is not optimal. A better way would be to create a `BufferedImage`, update its raster and draw it onto the component instead. Refer to the `RGBViewer` class in the `au.edu.jcu.v4l4j.examples` package where this technique is used.
 {{{
 package v4l4jTest;
 
