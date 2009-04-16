@@ -287,8 +287,6 @@ public class VideoViewer extends WindowAdapter implements Runnable{
      * @param b the image as a byte array
      */
     public void setImageIcon(byte[] b) {
-    	video.setIcon(new ImageIcon(b));
-    	
     	// Computes the frame rate
     	if(start==0)
     		start = System.currentTimeMillis();
@@ -297,8 +295,10 @@ public class VideoViewer extends WindowAdapter implements Runnable{
     				(float) 1000*n/(System.currentTimeMillis()-start)));
 			start = System.currentTimeMillis();
 			n = 0;
-		} else
-			n++;
+		}
+    	
+    	video.setIcon(new ImageIcon(b));
+    	n++;
     }
     
     /**
@@ -307,10 +307,6 @@ public class VideoViewer extends WindowAdapter implements Runnable{
      * @param b the image as a byte array
      */
     public void setImageRaster(byte[] b) {
-        raster.setDataElements(0, 0, width, height, b);
-        video.getGraphics().drawImage(img, 0, 0, width, height, null);
-
-    	
     	// Computes the frame rate
     	if(start==0)
     		start = System.currentTimeMillis();
@@ -319,8 +315,14 @@ public class VideoViewer extends WindowAdapter implements Runnable{
     				(float) 1000*n/(System.currentTimeMillis()-start)));
 			start = System.currentTimeMillis();
 			n = 0;
-		} else
-			n++;
+		}
+    	
+        raster.setDataElements(0, 0, width, height, b);
+        video.getGraphics().drawImage(img, 0, 0, width, height, null);
+        n++;
+
+    	
+    	
     }
     
     /**

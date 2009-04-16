@@ -5,6 +5,7 @@ CFLAGS += -Wall -Wno-unused -Wpointer-arith -Wstrict-prototypes -Wmissing-protot
 
 ifeq ($(LINKTYPE),static)
 CONVERT_LIB   = libv4lconvert.a
+override CPPFLAGS += -fPIC
 else
 CONVERT_LIB   = libv4lconvert.so
 override CPPFLAGS += -fPIC

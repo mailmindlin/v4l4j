@@ -25,9 +25,9 @@
 		<echo message="Available targets :"/>
 		<echo message=""/>
 		<echo message=" all :                       Build the JAR file and JNI library"/>
-                <echo message=" all-debug :                 Build the JAR file and JNI library with debug statments"/>
+		<echo message=" all-debug :                 Build the JAR file and JNI library with debug statments"/>
 		<echo message=" jar :                       Build a JAR file with the v4l4j classes"/>
-                <echo message=" jar-debug :                 Build a JAR file with the v4l4j classes (compiled with debug information)"/>
+		<echo message=" jar-debug :                 Build a JAR file with the v4l4j classes (compiled with debug information)"/>
 		<echo message=" javadoc:                    Build the v4l4j Java documentation"/>
 		<echo message=" jar-src :                   Build a JAR file with the v4l4j classes and sources"/>
 		<echo message=" jnilib :                    Build the JNI library (libv4l4j.so)"/>
@@ -40,7 +40,7 @@
 		<echo message=" clean:                      Remove all build generated files"/>
 		<echo message=""/>
 		<echo message=""/>
-		<echo message="The 'install' target will copy v4l4j.jar in ${pr"/>
+		<echo message="The 'install' target will copy v4l4j.jar in ${platform.standard.jar.location}"/>
 		<echo message="By default, '${test.device}' is used as the video source. Capture "/>
 		<echo message="resolution is set to ${test.width}x${test.height}, using input ${test.channel} and video standard ${test.standard}."/>
 		<echo message="See the REAME file to change these default values." />
@@ -56,8 +56,8 @@
 
 	<target name="jnilib-debug" depends="init">
 		<exec executable="make">
-		<env key="DEBUG" value="1"/>
-		        <arg line="-C ${libvideo.dir}" />
+			<env key="DEBUG" value="1"/>
+		    <arg line="-C ${libvideo.dir}" />
 		</exec>
 		<exec executable="make">
 		        <env key="DEBUG" value="1"/>

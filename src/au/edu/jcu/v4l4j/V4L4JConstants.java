@@ -56,8 +56,8 @@ public class V4L4JConstants {
 	 */
 	public static final int MAX_WIDTH = 0;
 	/**
-	 * Setting the capture height to this value will set the actual height to the
-	 * maximum height supported by the hardware  
+	 * Setting the capture height to this value will set the actual height to 
+	 * the maximum height supported by the hardware  
 	 */
 	public static final int MAX_HEIGHT = 0;
 	/**
@@ -70,45 +70,54 @@ public class V4L4JConstants {
 	public static final int MIN_JPEG_QUALITY = 0;
 	/**
 	 * If a control has a type equal to CTRL_TYPE_BUTTON, its value is always 0,
-	 * and pressing it is done by setting any value using {@link Control#setValue(int)}.
+	 * and pressing it is done by setting any value using 
+	 * {@link Control#setValue(int)}.
 	 */
 	public final static int CTRL_TYPE_BUTTON=0;
 	/**
-	 * If a control has a type equal to CTRL_TYPE_SLIDER, it accepts a range of value between a 
-	 * minimum (as returned by {@link Control#getMinValue()}) and
-	 * a maximum (as returned by {@link Control#getMaxValue()}) in increments 
-	 * (as returned by {@link Control#getStepValue()})
+	 * If a control has a type equal to CTRL_TYPE_SLIDER, it accepts a range of 
+	 * values between a minimum (as returned by {@link Control#getMinValue()})
+	 * and a maximum (as returned by {@link Control#getMaxValue()}) in 
+	 * increments (as returned by {@link Control#getStepValue()})
 	 */
 	public final static int CTRL_TYPE_SLIDER=1;
 	/**
-	 * If a control has a type equal to CTRL_TYPE_SWITCH, it accepts two different values: 
+	 * If a control has a type equal to CTRL_TYPE_SWITCH, it accepts two 
+	 * different values: 
 	 * 0 (as returned by {@link Control#getMinValue()}) and
-	 *  1 (as returned by {@link Control#getMaxValue()}.
+	 * 1 (as returned by {@link Control#getMaxValue()}.
 	 */
 	public final static int CTRL_TYPE_SWITCH=2;	
 	/**
-	 * If a control has a type equal to CTRL_TYPE_DISCRETE, it accepts discrete values as 
+	 * If a control has a type equal to CTRL_TYPE_DISCRETE, it only accepts 
+	 * a set of values (discrete values). This set of acceptable values is  
 	 * returned by {@link Control#getDiscreteValues()}.
 	 * These discrete values may have string descriptions (returned by 
-	 * {@link Control#getDiscreteValueNames()} )are in the range 
-	 * <code>Control.getMin()</code> and <code>Control.getMax()</code>. The step value as returned by <code>Control.getStep()</code> is not applicable.
+	 * {@link Control#getDiscreteValueNames()}) and are in the range 
+	 * {@link Control#getMinValue()} and {@link Control#getMaxValue()}. The 
+	 * step value as returned by {@link Control#getStepValue()} is not 
+	 * applicable.
 	 */
 	public final static int CTRL_TYPE_DISCRETE=3;
 	
 	/**
-	 * Radio tuner type
+	 * A tuner with a type (as returned by {@link TunerInfo#getType()}) equal to
+	 * TUNER_TYPE_RADIO is a radio tuner
 	 */
 	public static final int TUNER_TYPE_RADIO = 1;
 	/**
-	 * TV tuner type
+	 * A tuner with a type (as returned by {@link TunerInfo#getType()}) equal to
+	 * TUNER_TV_TYPE is a  TV tuner
 	 */
 	public static final int TUNER_TYPE_TV = 2;
 	/**
-	 * Frequencies in KHz
+	 * Frequencies of a tuner (as returned by 
+	 * {@link TunerInfo#getUnit()}) are expressed in KHz
 	 */
 	public static final int FREQ_KHZ = 1;
 	/**
-	 * Frequencies in MHz
+	 * Frequencies of a tuner (as returned by 
+	 * {@link TunerInfo#getUnit()}) are expressed in MHz
 	 */
 	public static final int FREQ_MHZ = 2;
 	
