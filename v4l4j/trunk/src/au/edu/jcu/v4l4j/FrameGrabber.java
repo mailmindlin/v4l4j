@@ -87,12 +87,12 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  *
  */
 public class FrameGrabber {
-	protected static int RAW_GRABBER = 0;
-	protected static int JPEG_GRABBER = 1;
-	protected static int RGB24_GRABBER = 2;
-	protected static int BGR24_GRABBER = 3;
-	protected static int YUV_GRABBER = 4;
-	protected static int YVU_GRABBER = 5;
+	protected final static int RAW_GRABBER = 0;
+	protected final static int JPEG_GRABBER = 1;
+	protected final static int RGB24_GRABBER = 2;
+	protected final static int BGR24_GRABBER = 3;
+	protected final static int YUV_GRABBER = 4;
+	protected final static int YVU_GRABBER = 5;
 	
 	private int width;
 	private int height;

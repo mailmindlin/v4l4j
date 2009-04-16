@@ -35,14 +35,14 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * {@link VideoDevice}. v4l4j also provide {@link FrameGrabber} objects to
  * retrieve images in a native format. A YVU420 frame grabber can only be 
  * created if the associated video device can produce images in a format v4l4j
- * knows how to encode in YVU420. The {@link VideoDevice#supportBGRConversion()} 
+ * knows how to encode in YVU420. The {@link VideoDevice#supportYVUConversion()} 
  * method can be used to find out whether a video device can have its images 
  * YVU420-encoded by v4l4j, ie if a YVU420 frame grabber can be instantiated.
- * <code>YVUFrameGrabber</code> objects are not * instantiated directly. 
+ * <code>YVUFrameGrabber</code> objects are not instantiated directly. 
  * Instead, the 
- * {@link VideoDevice#getYVUFrameGrabber(int, int, int, int, int)}
+ * {@link VideoDevice#getYVUFrameGrabber(int, int, int, int)}
  * or 
- * {@link VideoDevice#getYVUFrameGrabber(int, int, int, int, int, ImageFormat)}
+ * {@link VideoDevice#getYVUFrameGrabber(int, int, int, int, ImageFormat)}
  * method must be called on the associated {@link VideoDevice}. Requested height
  * and width may be adjusted to the closest supported values. The adjusted
  * width and height can be retrieved by calling {@link #getWidth()} and 
@@ -91,7 +91,7 @@ public class YVUFrameGrabber extends FrameGrabber {
 	 * {@link InputInfo#getSupportedStandards()} (see V4L4JConstants)
 	 * @param imf the image format frame should be captured in
 	 */
-	public YVUFrameGrabber(long o, int w, int h, int ch, int std, Tuner t,
+	YVUFrameGrabber(long o, int w, int h, int ch, int std, Tuner t,
 			ImageFormat imf) throws ImageFormatException {
 		super(o, w, h, ch, std, t, imf, YVU_GRABBER);
 	}

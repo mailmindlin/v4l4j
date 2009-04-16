@@ -4,9 +4,9 @@
  * The Video4Linux (V4L) API provides data structure & methods to access and control
  * video input & output hardware, as well as radio tuners. The API is divided into
  * several interfaces, including video capture, video overlay, video output & 
- * teletext interfaces. Classes in this package provide access to the video capture 
- * interface of V4L only. This interface allows you to setup a video source and grab 
- * images or frames from it.  
+ * teletext interfaces. v4l4j provides access to the video capture 
+ * interface of V4L only. v4l4j allows you to retrieve information about a video
+ * device, access its video controls & tuners and grab images from it.  
  * <h2>Usage</h2>
  * <h3>Video device object</h3>
  * To use v4l4j, the first step is to create a {@link au.edu.jcu.v4l4j.VideoDevice}
@@ -29,7 +29,7 @@
  * than once will throw a
  *  {@link au.edu.jcu.v4l4j.exceptions.StateException StateException}.
  * <br>
- * {@link au.edu.jcu.v4l4j.VideoDevice} objects give you access to 3 broad 
+ * {@link au.edu.jcu.v4l4j.VideoDevice} objects give you access to 4 broad 
  * categories:
  * <ul>
  * <li>information about the underlying hardware through 
@@ -38,6 +38,8 @@
  * objects, and</li>
  * <li>a frame capture facility using {@link au.edu.jcu.v4l4j.FrameGrabber}
  * objects.</li>
+ * <li>an interface to control any tuners, using {@link au.edu.jcu.v4l4j.TunerList}
+ * objects.
  * </ul>
  * Each of these can be obtained independently from the other, by calling 
  * the appropriate method on a {@link au.edu.jcu.v4l4j.VideoDevice} instance.
@@ -75,28 +77,22 @@
  * <h3>Video capture</h3>
  * Capture in v4l4j is extremely simple. v4l4j hands out captured frames in a
  * {@link java.nio.ByteBuffer} object, either in a native format (also called 
- * raw format) or JPEG format:
- * <ul>
- * <li>JPEG format capture availability depends on what native formats are available.
- * Most (but not all) native formats can be JPEG-encoded. Calling 
- * {@link au.edu.jcu.v4l4j.VideoDevice#supportJPEGConversion()} will tell whether it is
- * available or not. 
- * <li>Native format capture is always available regardless of the video device. 
- * The set of supported {@link au.edu.jcu.v4l4j.ImageFormat}s can be obtained through 
- * the {@link au.edu.jcu.v4l4j.DeviceInfo} object associated with a
- * {@link au.edu.jcu.v4l4j.VideoDevice} object (see paragraph "Video hardware 
- * information" above). When capturing in a native format, v4l4j simply hands out the 
- * captured frame without further processing.</li>
- * </ul>
+ * raw format) or one of the 5 convenience formats (JPEG, RGB24, BGR24, YUV420 
+ * or YVU420). Each of these 6 output formats has its own frame grabber object,
+ * which will grab frames and convert them if required. 
+ *    
+ * The set of native {@link au.edu.jcu.v4l4j.ImageFormat}s supported by a video 
+ * device can be obtained using the {@link au.edu.jcu.v4l4j.DeviceInfo} object
+ * (see paragraph "Video hardware information" above). 
+ * When capturing in a native format, v4l4j simply hands out the 
+ * captured frame without further processing. When capturing in a convenience 
+ * format, v4l4j will transparently convert the image.
  *  
- * Frame capture in v4l4j is done using {@link au.edu.jcu.v4l4j.FrameGrabber} or 
- * {@link au.edu.jcu.v4l4j.JPEGFrameGrabber} objects:
+ * Frame capture in v4l4j is done using {@link au.edu.jcu.v4l4j.FrameGrabber}
+ * objects (or one of its subclasses):
  * <ul>
  * <li>First, get a frame grabber object from a video device, by invoking
- * {@link au.edu.jcu.v4l4j.VideoDevice#getRawFrameGrabber(int, int, int, int) 
- * VideoDevice.getRawFrameGrabber()} or
- * {@link au.edu.jcu.v4l4j.VideoDevice#getJPEGFrameGrabber(int, int, int, int, int) 
- * VideoDevice.getJPEGFrameGrabber()}.</li>
+ * one of the <code>getXXXFrameGrabber()</code> methods on the video device.</li>
  * <li>Second, when ready to capture, start it by calling 
  * {@link au.edu.jcu.v4l4j.FrameGrabber#startCapture()}.</li>
  * <li>Get the last frame using 
