@@ -25,7 +25,7 @@
 #include <stdint.h>
 
 #include "libvideo.h"
-#include "palettes.h"
+#include "libvideo-palettes.h"
 #include "common.h"
 #include "debug.h"
 

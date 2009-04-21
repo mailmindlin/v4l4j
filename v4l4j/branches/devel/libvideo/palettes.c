@@ -24,7 +24,7 @@
 
 #include "libvideo.h"
 #include "log.h"
-#include "palettes.h"
+#include "libvideo-palettes.h"
 
 const struct libvideo_palette libvideo_palettes[] = {
 	{

@@ -1,6 +1,14 @@
 <project name="v4l4j" default="usage">
 	
 	<property file="build.properties"/>
+	
+	<!-- 
+		destdir property is used when installing v4l4j.jar, JNIlib and javadoc
+		It is a prefix that will be added before install paths
+	-->
+	<condition property="destdir" value="${DESTDIR}" else="">
+		<isset property="DESTDIR"/>
+	</condition>
 
 	<path id="build.classpath">
 		<pathelement location="${project.src}"/>
@@ -32,8 +40,8 @@
 		<echo message=" jar-src :                   Build a JAR file with the v4l4j classes and sources"/>
 		<echo message=" jnilib :                    Build the JNI library (libv4l4j.so)"/>
 		<echo message=" jnilib-debug :              Build the JNI library with debug output(libv4l4j.so)"/>
-		<echo message=" install(64):                Install v4l4j.jar and the JNI lib, append 64 on 64-bit platforms (must be root)"/>
-		<echo message=" uninstall(64):              Uninstall v4l4j.jar and the JNI lib, append 64 on 64-bit platforms (must be root)"/>
+		<echo message=" install(64):                Install v4l4j.jar, the JNI lib and the JavaDoc. Append 64 on 64-bit platforms (must be root)"/>
+		<echo message=" uninstall(64):              Uninstall v4l4j.jar, the JNI lib and the JavaDoc. Append 64 on 64-bit platforms (must be root)"/>
 		<echo message=" test-fps :                  Check the FPS of a video source"/>
 		<echo message=" test-gui :                  Display video stream in a window"/>
 		<echo message=" deviceInfo:                 Display information about a video source"/>
@@ -41,6 +49,7 @@
 		<echo message=""/>
 		<echo message=""/>
 		<echo message="The 'install' target will copy v4l4j.jar in ${platform.standard.jar.location}"/>
+		<echo message="The 'install-doc' target will copy the JavaDoc in ${platform.standard.javadoc.location}"/>
 		<echo message="By default, '${test.device}' is used as the video source. Capture "/>
 		<echo message="resolution is set to ${test.width}x${test.height}, using input ${test.channel} and video standard ${test.standard}."/>
 		<echo message="See the REAME file to change these default values." />
@@ -50,16 +59,16 @@
 		<mkdir dir="${project.classes}"/>
 	</target>
 	
-	<target name="all" depends="jnilib,jar"/>
+	<target name="all" depends="jnilib,jar,javadoc"/>
 
-    <target name="all-debug" depends="jnilib-debug,jar-debug"/>
+    <target name="all-debug" depends="jnilib-debug,jar-debug,javadoc"/>
 
 	<target name="jnilib-debug" depends="init">
 		<exec executable="make">
 			<env key="DEBUG" value="1"/>
 		    <arg line="-C ${libvideo.dir}" />
 		</exec>
-		<exec executable="make">
+		<exec executable="make" failonerror="true">
 		        <env key="DEBUG" value="1"/>
 		        <arg line="-C ${project.src}" />
 		</exec>
@@ -67,36 +76,56 @@
 	</target>
 	
 	<target name="jnilib" depends="init">
-		<exec executable="make">
+		<exec executable="make" failonerror="true">
 			<arg line="-C ${libvideo.dir}" />
 		</exec>
-		<exec executable="make">
+		<exec executable="make" failonerror="true">
 			<arg line="-C ${project.src}" />
 		</exec>
 		<copy file="${project.src}/libv4l4j.so" tofile="${project.dir}/libv4l4j.so" />
 	</target>
 	
-	<target name="install" depends="all">
-		<mkdir dir="${platform.standard.jar.location}"/>
-		<mkdir dir="${platform.standard.jni32.location}"/>
-		<copy file="${project.dir}/${project.jni.file}" tofile="${platform.standard.jni32.location}/${project.jni.file}" />
-		<copy file="${project.dir}/${project.jar.file}" tofile="${platform.standard.jar.location}/${project.jar.file}" />
-	</target>
-	<target name="uninstall" depends="">
-		<delete file="${platform.standard.jar.location}/${project.jar.file}" />
-		<delete file="${platform.standard.jni32.location}/${project.jni.file}" />
+	<target name="install-libvideo">
+		<exec executable="make" failonerror="true">
+			<arg line="-C ${libvideo.dir} install"/>
+		</exec>
 	</target>
 	
-	<target name="install64" depends="all">
+	<target name="uninstall-libvideo">
+		<exec executable="make" failonerror="true">
+			<arg line="-C ${libvideo.dir} uninstall"/>
+		</exec>
+	</target>
+	
+	<target name="install" depends="install-libvideo">
+		<mkdir dir="${platform.standard.jar.location}"/>
+		<mkdir dir="${platform.standard.jni32.location}"/>
+		<copy file="${project.dir}/${project.jni.file}" tofile="${destdir}${platform.standard.jni32.location}/${project.jni.file}" />
+		<copy file="${project.dir}/${project.jar.file}" tofile="${destdir}${platform.standard.jar.location}/${project.jar.file}" />
+		<copy todir="${destdir}${platform.standard.javadoc.location}">
+			<fileset dir="${project.javadoc.dir}"/>
+		</copy>
+	</target>
+	<target name="uninstall" depends="uninstall-libvideo">
+		<delete file="${destdir}${platform.standard.jar.location}/${project.jar.file}" />
+		<delete file="${destdir}${platform.standard.jni32.location}/${project.jni.file}" />
+		<delete dir="${destdir}${platform.standard.javadoc.location}"/>
+	</target>
+	
+	<target name="install64" depends="install-libvideo">
 		<mkdir dir="${platform.standard.jar.location}"/>
 		<mkdir dir="${platform.standard.jni64.location}"/>
-		<copy file="${project.dir}/${project.jni.file}" tofile="${platform.standard.jni64.location}/${project.jni.file}" />
-		<copy file="${project.dir}/${project.jar.file}" tofile="${platform.standard.jar.location}/${project.jar.file}" />
+		<copy file="${project.dir}/${project.jni.file}" tofile="${destdir}${platform.standard.jni64.location}/${project.jni.file}" />
+		<copy file="${project.dir}/${project.jar.file}" tofile="${destdir}${platform.standard.jar.location}/${project.jar.file}" />
+		<copy todir="${destdir}${platform.standard.javadoc.location}">
+			<fileset dir="${project.javadoc.dir}"/>
+		</copy>
 	</target>
 
-	<target name="uninstall64" depends="">
-		<delete file="${platform.standard.jar.location}/${project.jar.file}" />
-		<delete file="${platform.standard.jni64.location}/${project.jni.file}" />
+	<target name="uninstall64" depends="uninstall-libvideo">
+		<delete file="${destdir}${platform.standard.jar.location}/${project.jar.file}" />
+		<delete file="${destdir}${platform.standard.jni64.location}/${project.jni.file}" />
+		<delete dir="${destdir}${platform.standard.javadoc.location}" />
 	</target>
 	
 	<target name="compile" depends="init">
