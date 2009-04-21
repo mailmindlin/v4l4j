@@ -1,0 +1,245 @@
+<project name="v4l4j" default="usage">
+	
+	<property file="build.properties"/>
+
+	<path id="build.classpath">
+		<pathelement location="${project.src}"/>
+		<fileset dir="${project.lib}">
+			<include name="*.jar"/>
+		</fileset>
+	</path>
+	
+	<path id="test.classpath">
+		<pathelement location="${project.classes}" />
+		<fileset dir="${project.lib}">
+			<include name="*.jar"/>
+		</fileset>
+	</path>
+
+	
+	<!-- default target that displays usage -->
+	<target name="usage">
+		<echo message=""/>
+		<echo message="Video4Linux4Java"/>
+		<echo message=""/>
+		<echo message="Available targets :"/>
+		<echo message=""/>
+		<echo message=" all :                       Build the JAR file and JNI library"/>
+		<echo message=" all-debug :                 Build the JAR file and JNI library with debug statments"/>
+		<echo message=" jar :                       Build a JAR file with the v4l4j classes"/>
+		<echo message=" jar-debug :                 Build a JAR file with the v4l4j classes (compiled with debug information)"/>
+		<echo message=" javadoc:                    Build the v4l4j Java documentation"/>
+		<echo message=" jar-src :                   Build a JAR file with the v4l4j classes and sources"/>
+		<echo message=" jnilib :                    Build the JNI library (libv4l4j.so)"/>
+		<echo message=" jnilib-debug :              Build the JNI library with debug output(libv4l4j.so)"/>
+		<echo message=" install(64):                Install v4l4j.jar and the JNI lib, append 64 on 64-bit platforms (must be root)"/>
+		<echo message=" uninstall(64):              Uninstall v4l4j.jar and the JNI lib, append 64 on 64-bit platforms (must be root)"/>
+		<echo message=" test-fps :                  Check the FPS of a video source"/>
+		<echo message=" test-gui :                  Display video stream in a window"/>
+		<echo message=" deviceInfo:                 Display information about a video source"/>
+		<echo message=" clean:                      Remove all build generated files"/>
+		<echo message=""/>
+		<echo message=""/>
+		<echo message="The 'install' target will copy v4l4j.jar in ${platform.standard.jar.location}"/>
+		<echo message="By default, '${test.device}' is used as the video source. Capture "/>
+		<echo message="resolution is set to ${test.width}x${test.height}, using input ${test.channel} and video standard ${test.standard}."/>
+		<echo message="See the REAME file to change these default values." />
+	</target>
+	
+	<target name="init">
+		<mkdir dir="${project.classes}"/>
+	</target>
+	
+	<target name="all" depends="jnilib,jar"/>
+
+    <target name="all-debug" depends="jnilib-debug,jar-debug"/>
+
+	<target name="jnilib-debug" depends="init">
+		<exec executable="make">
+			<env key="DEBUG" value="1"/>
+		    <arg line="-C ${libvideo.dir}" />
+		</exec>
+		<exec executable="make">
+		        <env key="DEBUG" value="1"/>
+		        <arg line="-C ${project.src}" />
+		</exec>
+		<move file="${project.src}/libv4l4j.so" tofile="${project.dir}/libv4l4j.so" />
+	</target>
+	
+	<target name="jnilib" depends="init">
+		<exec executable="make">
+			<arg line="-C ${libvideo.dir}" />
+		</exec>
+		<exec executable="make">
+			<arg line="-C ${project.src}" />
+		</exec>
+		<copy file="${project.src}/libv4l4j.so" tofile="${project.dir}/libv4l4j.so" />
+	</target>
+	
+	<target name="install" depends="all">
+		<mkdir dir="${platform.standard.jar.location}"/>
+		<mkdir dir="${platform.standard.jni32.location}"/>
+		<copy file="${project.dir}/${project.jni.file}" tofile="${platform.standard.jni32.location}/${project.jni.file}" />
+		<copy file="${project.dir}/${project.jar.file}" tofile="${platform.standard.jar.location}/${project.jar.file}" />
+	</target>
+	<target name="uninstall" depends="">
+		<delete file="${platform.standard.jar.location}/${project.jar.file}" />
+		<delete file="${platform.standard.jni32.location}/${project.jni.file}" />
+	</target>
+	
+	<target name="install64" depends="all">
+		<mkdir dir="${platform.standard.jar.location}"/>
+		<mkdir dir="${platform.standard.jni64.location}"/>
+		<copy file="${project.dir}/${project.jni.file}" tofile="${platform.standard.jni64.location}/${project.jni.file}" />
+		<copy file="${project.dir}/${project.jar.file}" tofile="${platform.standard.jar.location}/${project.jar.file}" />
+	</target>
+
+	<target name="uninstall64" depends="">
+		<delete file="${platform.standard.jar.location}/${project.jar.file}" />
+		<delete file="${platform.standard.jni64.location}/${project.jni.file}" />
+	</target>
+	
+	<target name="compile" depends="init">
+		<javac srcdir="${project.src}" destdir="${project.classes}" deprecation="on" source="${source}" debug="off">
+			<classpath refid="build.classpath"/>
+			<include name="**/*.java"/>
+		</javac>
+	</target>
+
+	<target name="compile-debug" depends="init">
+        <javac srcdir="${project.src}" destdir="${project.classes}" deprecation="on" source="${source}" debug="on">
+                <classpath refid="build.classpath"/>
+                <include name="**/*.java"/>
+        </javac>
+	</target>
+
+	<target name="jar" depends="compile">
+		<jar jarfile="${project.dir}/${project.jar.file}">
+			<manifest>
+				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.DeviceChooser"/>
+			</manifest>
+			<fileset dir="${project.classes}">
+				<include name="**"/>
+				<exclude name="au/edu/jcu/v4l4j/test/"/>
+			</fileset>
+			<fileset dir="${project.dir}">
+							<include name="resources/**" />
+			</fileset>
+		</jar>
+	</target>
+	
+	<target name="jar-debug" depends="compile-debug">
+	    <jar jarfile="${project.dir}/${project.jar.file}">
+            <manifest>
+				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.DeviceChooser"/>
+            </manifest>
+            <fileset dir="${project.classes}">
+                <include name="**"/>
+                <exclude name="au/edu/jcu/v4l4j/test/"/>
+            </fileset>
+			<fileset dir="${project.dir}">
+							<include name="resources/**" />
+			</fileset>
+	    </jar>
+	</target>
+
+	<target name="jar-src" depends="compile">
+		<jar jarfile="${project.dir}/${project.jar.file}">
+			<manifest>
+				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.DeviceChooser"/>
+			</manifest>
+			<fileset dir="${project.classes}">
+				<include name="**"/>
+				<exclude name="au/edu/jcu/v4l4j/test/"/>
+			</fileset>
+			<fileset dir="${project.src}">
+				<include name="**"/>
+				<exclude name="au/edu/jcu/v4l4j/test/"/>
+			</fileset>
+			<fileset dir="${project.dir}">
+							<include name="resources/**" />
+			</fileset>
+		</jar>
+	</target>
+	
+	<target name="javadoc">
+		<javadoc sourcepath="${project.src}" packagenames="au.edu.jcu.v4l4j.*" destdir="${project.javadoc.dir}" public="true" use="true">
+			<excludepackage name="au.edu.jcu.v4l4j.test" />
+		</javadoc>
+	</target>
+	
+	<target name="jar-test" depends="compile">
+		<jar jarfile="${project.dir}/${project.jar.file}">
+			<fileset dir="${project.classes}">
+				<include name="**"/>
+			</fileset>
+			<fileset dir="${project.src}">
+				<include name="**"/>
+			</fileset>
+		</jar>
+	</target>
+	
+	<target name="test-fps" depends="jar,jnilib">
+		<java classname="au.edu.jcu.v4l4j.examples.GetFrameRate" fork="true" failonerror="true">
+			<classpath>
+			      <pathelement location="${project.dir}/${project.jar.file}"/>
+		    </classpath>
+			<jvmarg value="-Djava.library.path=."/>
+			<arg value="${test.device}" /> <!-- device file -->
+			<arg value="${test.width}" /> <!-- width -->
+			<arg value="${test.height}" /> <!-- height -->
+			<arg value="${test.standard}" /> <!-- standard -->
+			<arg value="${test.channel}" /> <!-- channel -->
+			<arg value="${test.inFormat}" /> <!-- capture image format -->
+			<arg value="${test.outFormat}" /> <!-- output image format -->
+		</java>
+	</target>
+	
+	<target name="test-gui" depends="jar,jnilib">
+		<java jar="${project.dir}/${project.jar.file}" fork="true" failonerror="true">
+			<jvmarg value="-Djava.library.path=."/>
+			<arg value="${test.device}" /> <!-- device file -->
+			<arg value="${test.width}" /> <!-- width -->
+			<arg value="${test.height}" /> <!-- height -->
+			<arg value="${test.standard}" /> <!-- standard -->
+			<arg value="${test.channel}" /> <!-- channel -->
+		</java>
+	</target>
+	
+	<target name="deviceInfo" depends="jar,jnilib">
+		<java classname="au.edu.jcu.v4l4j.VideoDevice" fork="true" failonerror="true">
+			<classpath>
+			      <pathelement location="${project.dir}/${project.jar.file}"/>
+		    </classpath>
+			<jvmarg value="-Djava.library.path=."/>
+			<arg value="${test.device}" /> <!-- device file -->
+		</java>
+	</target>
+
+	<target name="test-junit" depends="jar-test,jnilib">
+		<junit fork="yes" haltonfailure="yes">
+			<jvmarg value="-Djava.library.path=."/>
+			<jvmarg value="-Dtest.device=${test.device}" />
+			<jvmarg value="-Dtest.width=${test.width}" />
+			<jvmarg value="-Dtest.height=${test.height}" /> 
+			<jvmarg value="-Dtest.standard=${test.standard}" /> 
+			<jvmarg value="-Dtest.channel=${test.channel}" />
+			<test name="${test.class.name.single}" />
+			<formatter type="plain" usefile="false" />
+			<classpath refid="test.classpath" />
+		</junit>
+	</target>
+		
+	<target name="clean">
+		<exec executable="make">
+		<arg line="-C ${libvideo.dir} clean" />
+		</exec>
+		<exec executable="make">
+			<arg line="-C ${project.src} clean" />
+		</exec>
+		<delete file="${project.dir}/${project.jar.file}" />
+		<delete file="${project.dir}/${project.jni.file}" />
+		<delete dir="${project.classes}"/>
+		<delete dir="${project.javadoc.dir}"/>
+	</target>
+</project>
