@@ -5,7 +5,7 @@
 # DEFINING THE LIBVIDEO_LOG_LEVEL OR LIBVIDEO_LOG_SOURCE VARIABLES.
 #
 # for example: 
-# LIBVIDEO_LOG_LEVEL=16 LIBVIDEO_LOG_SOURCE=127 ant clean all 
+# LIBVIDEO_LOG_LEVEL=16 LIBVIDEO_LOG_SOURCE=127 make clean all
 #
 # LOG_LEVEL_INFO            1
 # LOG_LEVEL_DEBUG           2
@@ -13,15 +13,11 @@
 # LOG_LEVEL_DEBUG2          8
 # LOG_LEVEL_ERR             16
 # LOG_LEVEL_ALL             31
-ifneq ($(LIBVIDEO_LOG_LEVEL),)
-LOG_LEVEL=$(LIBVIDEO_LOG_LEVEL)
-else
-#LOG_LEVEL=23
-LOG_LEVEL=31
-endif
+LIBVIDEO_LOG_LEVEL ?= 31
 
 
-# change the value of LOG_SOURCE to control which parts of v4l4j will
+
+# change the value of LOG_SOURCE to control which parts of libvideo will
 # print debug statements
 #
 # LOG_SOURCE_VIDEO_DEVICE   1
@@ -32,12 +28,15 @@ endif
 # LOG_SOURCE_CTRL_PROBE     32
 # LOG_SOURCE_TUNER          64
 # LOG_SOURCE_ALL            127
-ifneq ($(LIBVIDEO_LOG_SOURCE),)
-LOG_SOURCE=$(LIBVIDEO_LOG_SOURCE)
-else
-#LOG_SOURCE=63
-LOG_SOURCE=127
-endif
+LIBVIDEO_LOG_SOURCE ?= 127
+
+#Installation directory prefix
+PREFIX:=/usr
+#Directory where libvideo.so will be installed
+LIB_INSTALL_DIR := $(PREFIX)/lib
+#Directory where the include files will be installed
+INC_INSTALL_DIR := $(PREFIX)/include
+
 
 
 #
@@ -46,45 +45,71 @@ endif
 
 
 ifneq ($(DEBUG),)
-DBG=-DDEBUG -ggdb -Wall -DLIBVIDEO_LOG_LEVEL=$(LOG_LEVEL) -DLIBVIDEO_LOG_SOURCE=$(LOG_SOURCE)
+DBG := -DDEBUG -ggdb -Wall -DLIBVIDEO_LOG_LEVEL=$(LIBVIDEO_LOG_LEVEL) \
+  -DLIBVIDEO_LOG_SOURCE=$(LIBVIDEO_LOG_SOURCE)
 else
-OPTIMISATION=-O3
+OPTIMISATION := -O3
 endif
 
-VERSION_MAJOR=0
-VERSION_MINOR=8
+USER_INCLUDES := libvideo.h libvideo-err.h libvideo-palettes.h
 
-LIBV4LCONVERT_DIR=libv4lconvert
-LIBV4LCONVERT_AR=libv4lconvert.a
-LIBV4LCONVERT_NAME=v4lconvert
+VERSION_MAJOR := 0
+VERSION_MINOR := 8
+LIB_RELEASE := 0
 
-LIB=libvideo.a
-TESTOBJ=test-capture.o dump-capture.o list-caps.o
-OBJ=v4l2-input.o v4l1-input.o libvideo.o pwc-probe.o gspca-probe.o qc-probe.o fps-param-probe.o v4l1-query.o v4l2-query.o v4l1-tuner.o v4l2-tuner.o palettes.o
+LIBV4LCONVERT_DIR := libv4lconvert
+LIBV4LCONVERT_AR := libv4lconvert.a
+LIBV4LCONVERT_NAME := v4lconvert
 
-CC=gcc
-CFLAGS=$(DBG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) $(OPTIMISATION) -fPIC -I.
+LIB_NAME := video
+LIB := lib$(LIB_NAME).so
+TESTOBJ := test-capture.o dump-capture.o list-caps.o
+OBJ := v4l2-input.o v4l1-input.o libvideo.o pwc-probe.o gspca-probe.o \
+  qc-probe.o fps-param-probe.o v4l1-query.o v4l2-query.o v4l1-tuner.o \
+  v4l2-tuner.o palettes.o
 
-LD=gcc
-LDFLAGS=
+CC := gcc
+CFLAGS := $(DBG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) \
+  $(OPTIMISATION) -fPIC -I.
 
-all: $(LIBV4LCONVERT_AR) $(LIB)
+LD := gcc
+LDFLAGS := -shared
+
+all: $(LIB).$(LIB_RELEASE)
+
+$(LIB).$(LIB_RELEASE): version.h $(OBJ) $(LIBV4LCONVERT_AR)
+	$(LD) $(OBJ) $(LIBV4LCONVERT_AR) -Wl,-soname,$(LIB).$(LIB_RELEASE) \
+  $(LDFLAGS) -o $(LIB).$(LIB_RELEASE)
+	ln -f -s $(LIB).$(LIB_RELEASE) $(LIB)
 
 $(LIBV4LCONVERT_AR):
 	LINKTYPE=static make -C $(LIBV4LCONVERT_DIR)
 	cp $(LIBV4LCONVERT_DIR)/$(LIBV4LCONVERT_AR) .
 
-$(LIB): version.h $(OBJ)
-	ar rc $(LIB) $(OBJ) ; ranlib $(LIB)
+install: $(LIB).$(LIB_RELEASE)
+	mkdir -p $(DESTDIR)$(INC_INSTALL_DIR)
+	install -p -m 644 $(USER_INCLUDES) $(DESTDIR)$(INC_INSTALL_DIR)
+	mkdir -p $(DESTDIR)$(LIB_INSTALL_DIR)
+	install -m 755 $(LIB).$(LIB_RELEASE) $(DESTDIR)$(LIB_INSTALL_DIR)
+	cd $(DESTDIR)$(LIB_INSTALL_DIR) && ln -f -s $(LIB).$(LIB_RELEASE) $(LIB)
+	/sbin/ldconfig
+
+uninstall:
+	for f in $(USER_INCLUDES); do rm -f $(DESTDIR)$(INC_INSTALL_DIR)/$${f}; done
+	rm -f $(DESTDIR)$(LIB_INSTALL_DIR)/$(LIB)
+	rm -f $(DESTDIR)$(LIB_INSTALL_DIR)/$(LIB).$(LIB_RELEASE)
+
+test: $(LIB).$(LIB_RELEASE) $(TESTOBJ)
+	$(LD) test-capture.o -L. -l$(LIB_NAME) -o test-capture
+	$(LD) list-caps.o -L. -l$(LIB_NAME) -o list-caps
+	$(LD) dump-capture.o -L. -l$(LIB_NAME) -o dump-capture
 
 version.h:
 	@sh svn-version.sh
 
-test: version.h $(TESTOBJ) $(LIB) $(LIBV4LCONVERT_AR)
-	$(LD) $(LDFLAGS) test-capture.o $(OBJ) -L. -l$(LIBV4LCONVERT_NAME) -o test-capture
-	$(LD) $(LDFLAGS) list-caps.o $(OBJ) -L. -l$(LIBV4LCONVERT_NAME) -o list-caps
-	$(LD) $(LDFLAGS) dump-capture.o $(OBJ) -L. -l$(LIBV4LCONVERT_NAME) -o dump-capture
-
 clean:
 	make -C $(LIBV4LCONVERT_DIR) clean
-	rm -f $(OBJ) $(BIN) $(LIB) $(TESTOBJ) $(LIBV4LCONVERT_AR) ./*.o list-caps test-capture dump-capture version.h ./*~
+	rm -f $(OBJ) $(BIN) $(LIB) $(LIB).$(LIB_RELEASE) $(TESTOBJ) \
+  $(LIBV4LCONVERT_AR) ./*.o list-caps test-capture dump-capture version.h ./*~
+
+.PHONY: all install uninstall test clean

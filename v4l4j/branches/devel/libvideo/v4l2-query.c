@@ -28,7 +28,7 @@
 #include "v4l2-input.h"
 #include "libvideo-err.h"
 #include "log.h"
-#include "palettes.h"
+#include "libvideo-palettes.h"
 
 
 /*

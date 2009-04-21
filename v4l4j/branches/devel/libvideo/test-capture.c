@@ -37,7 +37,7 @@
 #include <unistd.h>
 
 #include "libvideo.h"
-#include "palettes.h"
+#include "libvideo-palettes.h"
 
 #define CAPTURE_LENGTH  	10 // in seconds
 

@@ -25,7 +25,7 @@
 #include <sys/ioctl.h>		//for ioctl
 
 #include "libvideo.h"
-#include "palettes.h"
+#include "libvideo-palettes.h"
 #include "v4l1-input.h"
 #include "libvideo-err.h"
 #include "log.h"

@@ -36,7 +36,7 @@
 #include <unistd.h>
 
 #include "libvideo.h"
-#include "palettes.h"
+#include "libvideo-palettes.h"
 
 void write_frame(void *d, int size) {
 	int outfile, len = 0;
