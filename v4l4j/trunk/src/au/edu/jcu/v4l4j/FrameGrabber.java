@@ -94,6 +94,7 @@ public class FrameGrabber {
 	protected final static int YUV_GRABBER = 4;
 	protected final static int YVU_GRABBER = 5;
 	
+	protected VideoDevice vdev;
 	private int width;
 	private int height;
 	private int channel;
@@ -101,7 +102,7 @@ public class FrameGrabber {
 	private int nbV4LBuffers = 4;
 	private ByteBuffer[] bufs;
 	private State state;
-	protected ImageFormat format;
+	protected int format;
 	private Tuner tuner;
 	private int type;
 	
@@ -142,6 +143,7 @@ public class FrameGrabber {
 	/**
 	 * This constructor builds a FrameGrabber object used to capture frames from
 	 * a video source.
+	 * @param vd the VideoDevice who created this frame grabber
 	 * @param o a JNI pointer to the v4l4j_device structure
 	 * @param w the requested frame width 
 	 * @param h the requested frame height
@@ -158,17 +160,18 @@ public class FrameGrabber {
 	 * @throw {@link ImageFormatException} if the image format is null and 
 	 * type = {@link #RAW_GRABBER}
 	 */
-	protected FrameGrabber(long o, int w, int h, int ch, int std, Tuner t,
-			ImageFormat imf, int ty) throws ImageFormatException{
+	protected FrameGrabber(VideoDevice vd, long o, int w, int h, int ch, int std
+			, Tuner t,ImageFormat imf, int ty) throws ImageFormatException{
 		if(imf==null)
 			throw new ImageFormatException("The image format can not be null");
-		state= new State();	
+		state= new State();
+		vdev = vd;
 		object = o;
 		width = w;
 		height = h;
 		channel = ch;
 		standard= std;
-		format = imf;
+		format = imf==null?-1:imf.getIndex();
 		tuner = t;
 		type = ty;
 	}
@@ -176,6 +179,7 @@ public class FrameGrabber {
 	/**
 	 * This constructor builds a raw FrameGrabber object used to raw frames 
 	 * from a video source.
+	 * @param vd the VideoDevice who created this frame grabber
 	 * @param o a JNI pointer to the v4l4j_device structure
 	 * @param w the requested frame width 
 	 * @param h the requested frame height
@@ -189,9 +193,9 @@ public class FrameGrabber {
 	 * @throws ImageFormatException if the image format is null and a RAW frame 
 	 * grabber is to be created  
 	 */
-	protected FrameGrabber(long o, int w, int h, int ch, int std, Tuner t,
-			ImageFormat imf) throws ImageFormatException{
-		this(o,w,h,ch,std,t,imf, RAW_GRABBER);
+	protected FrameGrabber(VideoDevice vd, long o, int w, int h, int ch, 
+			int std, Tuner t, ImageFormat imf) throws ImageFormatException{
+		this(vd, o,w,h,ch,std,t,imf, RAW_GRABBER);
 	}
 
 	
@@ -217,18 +221,25 @@ public class FrameGrabber {
 	void init() throws V4L4JException{
 		state.init();
 		bufs = doInit(object, width, height, channel, standard, nbV4LBuffers,
-				format.getIndex(), type);
+				format, type);
 		state.commit();
 	}
 	
 	/**
-	 * This method returns the {@link ImageFormat} used by this FrameGrabber. 
-	 * The returned format applies to images captured from the video device.
-	 * @return {@link ImageFormat} used by this FrameGrabber.
+	 * This method returns the native image format used by this 
+	 * FrameGrabber. The returned format specifies the image format the capture
+	 * uses.
+	 * @return the native image format used by this FrameGrabber.
 	 */
 	public ImageFormat getImageFormat(){
-		return format;
+		try {
+			return vdev.getDeviceInfo().getFormatList().getNativeFormat(format);
+		} catch (V4L4JException e) {
+			// we shouldnt be here
+		}
+		return null;
 	}
+
 	
 	/**
 	 * This method returns the {@link Tuner} associated with the input of this 

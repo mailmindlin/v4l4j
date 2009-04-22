@@ -27,7 +27,10 @@ package au.edu.jcu.v4l4j;
 
 /**
  * Objects of this class represent an image format (YUV, RGB, GREY, BGR, ...).
- * <code>ImageFormat</code> objects have two members: a name and a unique index.
+ * <code>ImageFormat</code> objects have three members: a name, a unique index,
+ * and a {@link ResolutionInfo} object which provides information on
+ * supported capture resolutions for this format.
+ * A list of known image format indexes can be found in {@link V4L4JConstants}. 
  * <code>ImageFormat</code>s
  * are not directly instantiated. Instead, they can be enumerated by instantiating
  * a {@link VideoDevice}, and checking the {@link DeviceInfo} object associated
@@ -37,7 +40,7 @@ package au.edu.jcu.v4l4j;
  * <br>vd.init();
  * <br>List<ImageFormat> fmts = vd.getDeviceInfo().getFormats();
  * <br>for(ImageFormat im: fmts)
- * <br>&nbsp;&nbsp; System.out.println("Format name: "+im.getName()+" - Index: "+im.getIndex());
+ * <br>&nbsp;&nbsp; System.out.println("Format name: "+im);
  * <br>vd.release();
  * </code>
  * 
@@ -56,10 +59,36 @@ public class ImageFormat {
 	 */
 	private int libvideoID;
 	
+	/**
+	 * Info on supported resolutions for this image format
+	 */
+	private ResolutionInfo resolutions;
 	
-	ImageFormat(String n, int i) {
+	
+	/**
+	 * This method builds a new Image format with the given name and index. It 
+	 * also invokes a JNI method to retrieve the list of supported resolutions
+	 * Therefore, it MUST be called while the device info interface of libvideo
+	 * is checked out
+	 * @param n the name of this image format
+	 * @param i the index of this image format
+	 * @param o a C pointer to a struct v4l4j_device
+	 */
+	ImageFormat(String n, int i, long o) {
 		name = n;
 		libvideoID = i;
+		resolutions = new ResolutionInfo(i,o);
+	}
+	
+	/**
+	 * This method returns the {@link ResolutionInfo} object associated with
+	 * this image format. {@link ResolutionInfo} objects provide information
+	 * on supported capture resolutions.
+	 * @return the {@link ResolutionInfo} object associated with
+	 * this image format. 
+	 */
+	public ResolutionInfo getResolutionInfo(){
+		return resolutions;
 	}
 
 	/**
@@ -110,6 +139,10 @@ public class ImageFormat {
 	
 	@Override
 	public String toString(){
-		return name;
+		return name+" - "+libvideoID;
+	}
+	
+	public String toNiceString(){
+		return name+" - "+libvideoID+" - "+resolutions;
 	}
 }

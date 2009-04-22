@@ -592,7 +592,7 @@ public class VideoDevice {
 		synchronized(this){
 			if(fg==null) {
 				state.get();
-				fg = new JPEGFrameGrabber(v4l4jObject, w, h, input, std, q, 
+				fg = new JPEGFrameGrabber(this, v4l4jObject, w, h, input, std, q, 
 						findTuner(input), imf);
 				try {
 					fg.init();
@@ -745,7 +745,7 @@ public class VideoDevice {
 		synchronized(this){
 			if(fg==null) {
 				state.get();
-				fg = new RGBFrameGrabber(v4l4jObject, w, h, input, std,
+				fg = new RGBFrameGrabber(this, v4l4jObject, w, h, input, std,
 						findTuner(input), imf);
 				try {
 					fg.init();
@@ -892,7 +892,7 @@ public class VideoDevice {
 		synchronized(this){
 			if(fg==null) {
 				state.get();
-				fg = new BGRFrameGrabber(v4l4jObject, w, h, input, std,
+				fg = new BGRFrameGrabber(this, v4l4jObject, w, h, input, std,
 						findTuner(input), imf);
 				try {
 					fg.init();
@@ -1041,7 +1041,7 @@ public class VideoDevice {
 		synchronized(this){
 			if(fg==null) {
 				state.get();
-				fg = new YUVFrameGrabber(v4l4jObject, w, h, input, std,
+				fg = new YUVFrameGrabber(this, v4l4jObject, w, h, input, std,
 						findTuner(input), imf);
 				try {
 					fg.init();
@@ -1190,7 +1190,7 @@ public class VideoDevice {
 		synchronized(this){
 			if(fg==null) {
 				state.get();
-				fg = new YVUFrameGrabber(v4l4jObject, w, h, input, std,
+				fg = new YVUFrameGrabber(this, v4l4jObject, w, h, input, std,
 						findTuner(input), imf);
 				try {
 					fg.init();
@@ -1313,7 +1313,7 @@ public class VideoDevice {
 		synchronized(this){
 			if(fg==null) {
 				state.get();
-				fg = new FrameGrabber(v4l4jObject, w, h, input, std, 
+				fg = new FrameGrabber(this, v4l4jObject, w, h, input, std, 
 						findTuner(input), format);
 				try {
 					fg.init();
@@ -1534,42 +1534,38 @@ public class VideoDevice {
 		System.out.println("Device file: "+d.getDeviceFile());
 		System.out.println("Supported formats:");
 		for(ImageFormat f : d.getFormatList().getNativeFormats())
-			System.out.println("\t"+f.getName()+" - "+f.getIndex());
+			System.out.println("\t"+f.toNiceString());
 		
-		System.out.print("Formats that can be RGB24-converted: "
+		System.out.println("\tFormats that can be RGB24-converted: "
 				+(vd.supportRGBConversion()?"":"None"));
 		if(vd.supportRGBConversion())
 			for(ImageFormat f: d.getFormatList().getRGBEncodableFormats())
-				System.out.print(f.getName()+" ("+f.getIndex()+") ");
-		System.out.println("");
+				System.out.println("\t\t"+f.toNiceString());
 		
-		System.out.print("Formats that can be BGR24-converted: "
+		System.out.println("\tFormats that can be BGR24-converted: "
 				+(vd.supportBGRConversion()?"":"None"));
 		if(vd.supportBGRConversion())
 			for(ImageFormat f: d.getFormatList().getBGREncodableFormats())
-				System.out.print(f.getName()+" ("+f.getIndex()+") ");
-		System.out.println("");
+				System.out.println("\t\t"+f.toNiceString());
 		
-		System.out.print("Formats that can be YUV420-converted: "
+		System.out.println("\tFormats that can be YUV420-converted: "
 				+(vd.supportYUVConversion()?"":"None"));
 		if(vd.supportYUVConversion())
 			for(ImageFormat f: d.getFormatList().getYUVEncodableFormats())
-				System.out.print(f.getName()+" ("+f.getIndex()+") ");
-		System.out.println("");
+				System.out.println("\t\t"+f.toNiceString());
 		
-		System.out.print("Formats that can be YVU420-converted: "
+		System.out.println("\tFormats that can be YVU420-converted: "
 				+(vd.supportYVUConversion()?"":"None"));
 		if(vd.supportYVUConversion())
 			for(ImageFormat f: d.getFormatList().getYVUEncodableFormats())
-				System.out.print(f.getName()+" ("+f.getIndex()+") ");
-		System.out.println("");
+				System.out.println("\t\t"+f.toNiceString());
 		
-		System.out.print("Formats that can be JPEG-encoded: "
+		System.out.println("\tFormats that can be JPEG-encoded: "
 				+(vd.supportJPEGConversion()?"":"None"));
 		if(vd.supportJPEGConversion())
 			for(ImageFormat f: d.getFormatList().getJPEGEncodableFormats())
-				System.out.print(f.getName()+" ("+f.getIndex()+") ");
-		System.out.println("");
+				System.out.println("\t\t"+f.toNiceString());
+	
 		
 		System.out.println("Inputs:");
 		for(InputInfo i: d.getInputs()){
