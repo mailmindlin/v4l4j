@@ -278,7 +278,7 @@ static int create_native_list(JNIEnv *e, struct v4l4j_device *d,
 		dprint(LOG_V4L4J, "[V4L4J] Checking format %s - index: %d - raw ? %s\n",
 				libvideo_palettes[di->palettes[i].index].name,
 				di->palettes[i].index,
-				(!di->palettes[i].raw_palette?"Yes-adding it":"No-skipping it")
+				(!di->palettes[i].raw_palettes?"Yes-adding it":"No-skipping it")
 				);
 
 		if(!di->palettes[i].raw_palettes)
