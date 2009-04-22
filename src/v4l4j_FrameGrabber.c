@@ -91,7 +91,7 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 	//format
 	if(d->output_fmt!=OUTPUT_RAW){
 		field = (*e)->GetFieldID(e, this_class, "format",
-				"Lau/edu/jcu/v4l4j/ImageFormat;");
+				"I");
 		if(field==NULL) {
 			info("[V4L4J] error looking up format field in FrameGrabber "
 					"class\n");
@@ -100,32 +100,9 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 			return;
 		}
 
-		format_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/ImageFormat");
-		if(format_class == NULL){
-			info("[V4L4J] Error looking up the ImageFormat class\n");
-			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up ImageFormat class");
-			return;
-		}
-
-		format_ctor = (*e)->GetMethodID(e, format_class, "<init>",
-				"(Ljava/lang/String;I)V");
-		if(format_ctor == NULL){
-			info("[V4L4J] Error looking up the constructor of ImageFormat "
-					"class\n");
-			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of "
-					"ImageFormat class");
-			return;
-		}
-
 		dprint(LOG_V4L4J, "[V4L4J] Setting format field to '%s' image format\n",
 				libvideo_palettes[d->vdev->capture->palette].name);
-		obj = (*e)->NewObject(e, format_class, format_ctor,
-						(*e)->NewStringUTF(e,
-								(const char *)
-								libvideo_palettes[d->vdev->capture->palette].name
-								),
-						d->vdev->capture->palette);
-		(*e)->SetObjectField(e, this, field, obj);
+		(*e)->SetIntField(e, this, field, d->vdev->capture->palette);
 	}
 }
 

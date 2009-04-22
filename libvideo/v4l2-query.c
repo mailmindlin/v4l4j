@@ -34,17 +34,55 @@
 /*
  * this function takes an image format int returned by v4l2
  * and finds the matching libvideo id
+ * returns -1 if not found
  */
 static int find_v4l2_palette(int v4l2_fmt){
-	int i = 0;
-
-	while(i<libvideo_palettes_size) {
+	int i = -1;
+	while(++i<libvideo_palettes_size)
 		if(libvideo_palettes[i].v4l2_palette == v4l2_fmt)
 			return i;
-		i++;
-	}
 
-	return UNSUPPORTED_PALETTE;
+	info("Error looking up V4L2 format %x. Please submit\n"
+			"a bug report on the v4l4j mailing list.", v4l2_fmt);
+	return -1;
+}
+
+/*
+ * this function add a new raw palette (fmt) to the end of the list of
+ * raw palettes at 'p->raw_palettes' of current size 'size
+ */
+static void add_raw_format(struct palette_info *p, int fmt, int size){
+	XREALLOC(p->raw_palettes, int *, (size+1)*sizeof(int));
+	p->raw_palettes[size] = fmt;
+}
+
+/*
+ * This function searches the raw_palettes int array of current size 'size
+ * for the format fmt. if it is found it returns 1, 0 otherwise
+ */
+static int has_raw_format(int *raw_palettes, int fmt, int size){
+	while(--size>=0)
+		if(raw_palettes[size]==fmt)
+			return 1;
+
+	return 0;
+}
+
+/*
+ * This function calles v4lconvert_try_format to check if dst format
+ * is supported. If it is, this function will fill in src with the format
+ * that must be used to obtain dst
+ * returns the result of v4lconvert_try_format
+ */
+static int try_format(int index, int w, int h, struct v4l2_format *dst,
+		struct v4l2_format *src, struct v4lconvert_data *conv){
+	CLEAR(*dst);
+	CLEAR(*src);
+	dst->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	dst->fmt.pix.pixelformat = libvideo_palettes[index].v4l2_palette;
+	dst->fmt.pix.width=w;
+	dst->fmt.pix.height=h;
+	return v4lconvert_try_format(conv,dst,src);
 }
 
 //this function adds the given palette fmt to the list of
@@ -54,23 +92,27 @@ static int find_v4l2_palette(int v4l2_fmt){
 static int add_supported_palette(struct device_info *di, int fmt,
 		struct v4lconvert_data *conv){
 	struct v4l2_format dst, src;
-	CLEAR(dst);
-	CLEAR(src);
+	struct v4l2_frmsizeenum s;
+	struct palette_info *curr;
+	int i = 0;
+	CLEAR(s);
+
 
 	di->nb_palettes++;
 	XREALLOC(di->palettes, struct palette_info *,
 			di->nb_palettes * sizeof(struct palette_info));
 
-	di->palettes[(di->nb_palettes - 1)].index = fmt;
+	curr = &di->palettes[(di->nb_palettes - 1)];
+	CLEAR(*curr);
+	curr->index = fmt;
+	curr->size_type=FRAME_SIZE_UNSUPPORTED;
 
 
 	//check if this format is the result of a conversion form another format
 	//by libv4l_convert
-	dst.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	dst.fmt.pix.pixelformat = libvideo_palettes[fmt].v4l2_palette;
-	dst.fmt.pix.width=640;
-	dst.fmt.pix.height=480;
-	if(v4lconvert_try_format(conv,&dst,&src)!=0){
+	//arbitrary values - enough since it conversion happens at this resolution
+	//it is safe to assume it will happen at other as well
+	if(try_format(fmt,640,480,&dst,&src,conv)!=0){
 		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_ERR,
 				"QRY: Error checking palette %s (libv4l convert says: %s)\n",
 				libvideo_palettes[fmt].name,
@@ -79,18 +121,119 @@ static int add_supported_palette(struct device_info *di, int fmt,
 	}
 
 	if(v4lconvert_needs_conversion(conv,&src,&dst)==1){
-		//it is converted form another format
-		di->palettes[(di->nb_palettes - 1)].raw_palette =
-			find_v4l2_palette(src.fmt.pix.pixelformat);
 		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
-				"QRY: converted from %d (%s)\n",
-				di->palettes[(di->nb_palettes - 1)].raw_palette,
-				libvideo_palettes[
-				                 di->palettes[(di->nb_palettes - 1)].raw_palette
-				                 ].name
+				"QRY: %s is a converted palette\n",
+				libvideo_palettes[fmt].name
+		);
+		//it is converted from another format
+		//adds the format returned by v4lconvert_needs_conversion
+		add_raw_format(curr,find_v4l2_palette(src.fmt.pix.pixelformat), i);
+		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
+				"QRY: from %d (%s)\n",
+				curr->raw_palettes[i],
+				libvideo_palettes[curr->raw_palettes[i]].name
 				);
-	} else
-		di->palettes[(di->nb_palettes - 1)].raw_palette = UNSUPPORTED_PALETTE;
+		i++;
+
+		//check if there are other formats that can be converted to this one too
+		//by trying other image sizes
+		s.index = 0;
+		s.pixel_format = dst.fmt.pix.pixelformat;
+		while(v4lconvert_enum_framesizes(conv, &s)==0){
+			if(s.type==V4L2_FRMSIZE_TYPE_DISCRETE){
+				//try with this resolution
+				//dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
+				//	"QRY: trying %dx%d\n",s.discrete.width, s.discrete.height);
+				try_format(fmt,s.discrete.width,s.discrete.height,
+						&dst,&src,conv);
+				//no return value check since the values here are given by
+				//libv4l_convert... maybe a TODO:
+
+				if(v4lconvert_needs_conversion(conv,&src,&dst)==1 &&
+						!has_raw_format(curr->raw_palettes,
+								find_v4l2_palette(src.fmt.pix.pixelformat), i)){
+					//it is converted from another format which is not
+					//in the array yet. adds the format
+					add_raw_format(curr,find_v4l2_palette(src.fmt.pix.pixelformat), i);
+					dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
+							"QRY: from %d (%s)\n",
+							curr->raw_palettes[i],
+							libvideo_palettes[curr->raw_palettes[i]].name
+							);
+					i++;
+				} //else no need for conversion or format already seen
+				s.index++;
+			} else {
+				//TODO: frame size are stepwise, try other image sizes to see
+				//TODO: if there are other raw image formats
+				break;
+			}
+		}
+		add_raw_format(curr,-1, i);
+	} else {
+		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
+				"QRY: %s is a native palette\n",
+				libvideo_palettes[fmt].name
+		);
+		//it is not converted from another image format
+		curr->raw_palettes = NULL;
+
+
+		//find supported resolutions
+		s.index = 0;
+		s.pixel_format = dst.fmt.pix.pixelformat;
+		while(v4lconvert_enum_framesizes(conv, &s)==0){
+			if(s.type==V4L2_FRMSIZE_TYPE_DISCRETE){
+				if(curr->size_type==FRAME_SIZE_UNSUPPORTED){
+					dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
+						"QRY: Found discrete supported resolution:\n");
+					curr->size_type = FRAME_SIZE_DISCRETE;
+				}
+				XREALLOC(curr->discrete, struct frame_size_discrete *,
+						(s.index+1)*sizeof(struct frame_size_discrete));
+				CLEAR(curr->discrete[s.index]);
+				curr->discrete[s.index].height = s.discrete.height;
+				curr->discrete[s.index].width = s.discrete.width;
+				dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
+					"QRY: %d x %d\n",
+					curr->discrete[s.index].width, curr->discrete[s.index].height);
+				s.index++;
+			} else {
+				//continuous & stepwise end up here
+				dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
+								"QRY: Found %s supported resolution:\n",
+								s.type==V4L2_FRMSIZE_TYPE_CONTINUOUS?"continuous":
+									"stepwise"
+						);
+				curr->size_type=FRAME_SIZE_CONTINUOUS;
+				//copy data
+				XMALLOC(curr->continuous, struct frame_size_continuous *,
+						sizeof(struct frame_size_continuous ));
+				curr->continuous->max_height = s.stepwise.max_height;
+				curr->continuous->min_height = s.stepwise.min_height;
+				curr->continuous->max_width = s.stepwise.max_width;
+				curr->continuous->min_width= s.stepwise.min_width;
+				curr->continuous->step_height = s.stepwise.step_height;
+				curr->continuous->step_width = s.stepwise.step_width;
+
+				dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
+						"QRY: Width x height (min/max/step) : %d,%d,%d x %d,%d,%d\n",
+						curr->continuous->min_width,
+						curr->continuous->max_width,
+						curr->continuous->step_width,
+						curr->continuous->min_height,
+						curr->continuous->max_height,
+						curr->continuous->step_height
+					);
+				break;
+			}
+		}
+		if(curr->size_type==FRAME_SIZE_DISCRETE){
+			XREALLOC(curr->discrete, struct frame_size_discrete *,
+					(s.index+1)*sizeof(struct frame_size_discrete));
+			CLEAR(curr->discrete[s.index]);
+		}
+	}
 
 	return 0;
 }
@@ -113,10 +256,10 @@ static int check_palettes_v4l2(struct video_device *vdev){
 
 	while(v4lconvert_enum_fmt(convert, &fmtd)>=0){
 		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
-				"QRY: looking for palette %d\n", fmtd.pixelformat);
-		if ((p=find_v4l2_palette(fmtd.pixelformat)) == UNSUPPORTED_PALETTE) {
+				"QRY: looking for palette %#x\n", fmtd.pixelformat);
+		if ((p=find_v4l2_palette(fmtd.pixelformat)) == -1) {
 			info("libvideo has encountered an unsupported image format:\n");
-			info("%s (%d)\n", fmtd.description, fmtd.pixelformat);
+			info("%s (%#x)\n", fmtd.description, fmtd.pixelformat);
 			info("Please let the author know about this error.\n");
 			info("See the ISSUES section in the libvideo README file.\n");
 		} else {
@@ -290,6 +433,15 @@ int query_device_v4l2(struct video_device *vdev){
 }
 
 void free_video_device_v4l2(struct video_device *vd){
+	int i;
+	for(i=0; i<vd->info->nb_palettes;i++){
+		if(vd->info->palettes[i].size_type==FRAME_SIZE_CONTINUOUS)
+			XFREE(vd->info->palettes[i].continuous);
+		else if(vd->info->palettes[i].size_type==FRAME_SIZE_DISCRETE)
+			XFREE(vd->info->palettes[i].discrete);
+		if(vd->info->palettes[i].raw_palettes)
+			XFREE(vd->info->palettes[i].raw_palettes);
+	}
 	XFREE(vd->info->palettes);
 	free_video_inputs(vd->info->inputs, vd->info->nb_inputs);
 }

@@ -70,7 +70,6 @@ struct mmap {
 #define		SECAM					2
 #define		NTSC					3
 
-#define UNSUPPORTED_PALETTE			-1
 #define NB_SUPPORTED_PALETTE		53
 //palette formats
 //YUV420 is the same as YUV420P - YUYV is the same as YUV422
@@ -225,14 +224,61 @@ struct video_input_info {
 	int index;
 };
 
+struct frame_size_discrete {
+	int width;
+	int height;
+};
+
+struct frame_size_continuous {
+	int min_width;
+	int max_width;
+	int step_width;
+	int min_height;
+	int max_height;
+	int step_height;
+};
+
+enum frame_size_types{
+	FRAME_SIZE_UNSUPPORTED=0,
+	FRAME_SIZE_DISCRETE,
+	FRAME_SIZE_CONTINUOUS
+};
+
+/*
+ * a palette (or image format) can be either raw or converted.
+ * A raw palette is a palette produced by the driver natively.
+ * A converted palette is a palette which is converted by libvideo from
+ * a raw palette
+ */
 struct palette_info{
 	//this palette's index
 	int index;
-	//raw_palette store the index of the real palette used for capture
-	//and is used for V4L2 only. If this palette is converted,
-	//the converted one is stored here. Otherwise,
-	//raw_palette=UNSUPPORTED_PALETTE
-	int raw_palette;
+
+	//if raw_palettes is not NULL, then this palette is a converted palette and
+	//raw_palettes contains an array of indexes of raw palettes. It is used
+	//for V4L2 only. The last element in the array is -1
+	//if raw_palettes is NULL, this palette is raw, and size_type and
+	//(continuous or discrete) are valid (check value of size_type).
+	//If raw_palettes is not NULL, then
+	//size_type==FRAME_SIZE_UNSUPPORTED, continuous and discrete and not valid.
+	int *raw_palettes;
+
+	//the type of frame sizes
+	enum frame_size_types size_type;
+
+	//if size_type==FRAME_SIZE_CONTINUOUS, then only the continuous member
+	//of this union is valid, and points to a single
+	//struct frame_size_continuous
+	//if size_type==FRAME_SIZE_DISCRETE, then only the discrete member
+	//of this union is valid, and points to an array of
+	//struct frame_size_discrete. The last element in the array has its members
+	//(width and height) set to 0.
+	//if size_type==FRAME_SIZE_UNSUPPORTED, then none of the two members are
+	//valid
+	union {
+		struct frame_size_continuous *continuous;
+		struct frame_size_discrete *discrete;
+	};
 };
 
 struct device_info {
