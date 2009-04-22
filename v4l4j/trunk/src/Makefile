@@ -42,7 +42,7 @@ LIBV4L_CONV_NAME=libv4lconvert.a
 
 
 LIB=libv4l4j.so
-OBJ=jpeg.o rgb.o v4l4j_FrameGrabber.o v4l4j_ImageFormatList.o v4l4j_DeviceInfo.o v4l4j_VideoDevice.o v4l4j_Control.o v4l4j_Tuner.o
+OBJ=jpeg.o rgb.o v4l4j_FrameGrabber.o v4l4j_ImageFormatList.o v4l4j_DeviceInfo.o v4l4j_VideoDevice.o v4l4j_Control.o v4l4j_Tuner.o v4l4j_ResolutionInfo.o
 
 CC=gcc
 INCLUDES=-I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ -I$(LIBVIDEO_PATH) -I.

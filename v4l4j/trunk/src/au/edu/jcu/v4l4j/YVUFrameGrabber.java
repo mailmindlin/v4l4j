@@ -82,6 +82,7 @@ public class YVUFrameGrabber extends FrameGrabber {
 	/**
 	 * This constructor builds a FrameGrabber object used to capture YVU420
 	 * frames from a video source
+	 * @param vd the VideoDevice who created this frame grabber
 	 * @param o a JNI pointer to a v4l4j_device structure
 	 * @param w the requested frame width 
 	 * @param h the requested frame height
@@ -91,9 +92,9 @@ public class YVUFrameGrabber extends FrameGrabber {
 	 * {@link InputInfo#getSupportedStandards()} (see V4L4JConstants)
 	 * @param imf the image format frame should be captured in
 	 */
-	YVUFrameGrabber(long o, int w, int h, int ch, int std, Tuner t,
+	YVUFrameGrabber(VideoDevice vd,long o, int w, int h, int ch, int std, Tuner t,
 			ImageFormat imf) throws ImageFormatException {
-		super(o, w, h, ch, std, t, imf, YVU_GRABBER);
+		super(vd, o, w, h, ch, std, t, imf, YVU_GRABBER);
 	}
 
 	/**
@@ -121,7 +122,7 @@ public class YVUFrameGrabber extends FrameGrabber {
 		try {
 			super.init();
 		} catch (ImageFormatException ife){
-			if(format == null){
+			if(format == -1){
 				String msg = 
 					"v4l4j was unable to find image format supported by the"
 					+ " \nvideo device and that can be converted to YVU420.\n"
@@ -134,5 +135,21 @@ public class YVUFrameGrabber extends FrameGrabber {
 			
 			throw ife;
 		}
+	}
+	
+	/**
+	 * This method returns the native image format used by this 
+	 * FrameGrabber. The returned format specifies the image format the capture
+	 * uses, ie the one images are retrieved from the device BEFORE BGR 
+	 * conversion.
+	 * @return the native image format used by this FrameGrabber.
+	 */
+	public ImageFormat getImageFormat(){
+		try {
+			return vdev.getDeviceInfo().getFormatList().getYVUEncodableFormat(format);
+		} catch (V4L4JException e) {
+			// we shouldnt be here
+		}
+		return null;
 	}
 }
