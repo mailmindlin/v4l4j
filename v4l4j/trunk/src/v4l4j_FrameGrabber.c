@@ -43,9 +43,7 @@
  */
 static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	jclass this_class, format_class;
-	jobject obj;
-	jmethodID format_ctor;
+	jclass this_class;
 	jfieldID field;
 
 	//Updates the FrameGrabber class width, height & format fields with the
