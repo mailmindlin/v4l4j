@@ -30,14 +30,28 @@ import java.util.Vector;
 import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
 
 /**
- * This class encapsulates information about the supported capture resolution
- * for a video device. Supported resolutions are expressed in one of two ways:
+ * This class encapsulates information about the supported capture resolutions
+ * for a video device. The first step is to determine how the supported 
+ * resolutions are expressed by calling {@link #getType()}. This method returns
+ * either:
  * <ul>
- * <li><b>As a list of discrete width-height pairs</b></li>
- * <li><b>As a minimum/maximum/step structure</b></li>
+ * <li>{@link Type#UNSUPPORTED}: no resolution information can be obtained from
+ * the driver. Calling any methods (except {@link #getType()}) will throw a
+ * {@link UnsupportedMethod} exception.</li>
+ * <li>{@link Type#DISCRETE}: supported resolutions are returned as a list
+ * of {@link DiscreteResolution} objects, which encapsulate the width and height
+ * for this resolution. Calling {@link #getDiscreteResolutions()} returns this
+ * list.</li>
+ * <li>{@link Type#STEPWISE}: supported width and height values can be anywhere
+ * within a given minimum and maximum using a step value. The minimum, maximum &
+ * step values for width and height are obtained using the similarly named 
+ * methods.</li>
  * </ul>
- * The first step is to determine how the supported resolutions are expressed 
- * by calling
+ * {@link ResolutionInfo} objects are not instantiated directly. Instead, each 
+ * {@link ImageFormat} carries a reference to a {@link ResolutionInfo} object, 
+ * describing the supported resolutions for this format. A list of supported
+ * image formats is obtained by calling {@link DeviceInfo#getFormatList()} on 
+ * a {@link VideoDevice}. 
  * @author gilles
  *
  */

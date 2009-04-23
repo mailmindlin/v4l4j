@@ -160,7 +160,8 @@ struct convert_data {
 //all the fields in the following structure are read only
 struct capture_device {
 	struct mmap *mmap;				//do not touch
-	int palette;					//which palette is used. see #define above
+	int palette;					//the image format returned by libvideo
+									//see #define above
 	int width;						//captured frame width
 	int height;						//captured frame width
 	int std;						//v4l standard - see #define enum above

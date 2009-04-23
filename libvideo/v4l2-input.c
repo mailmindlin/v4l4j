@@ -415,7 +415,7 @@ static int set_image_format(struct capture_device *c, int *palettes,
 			c->convert->priv,c->convert->src_fmt, c->convert->dst_fmt)==1?0:1;
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: libv4lconvert required ? %s\n",
-			(c->is_native==0?"No":"Yes"));
+			(c->is_native==0?"Yes":"No"));
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: conv to (dst) width: %d, "
@@ -466,7 +466,7 @@ static int set_crop(struct capture_device *c, int fd) {
 static int set_param(struct capture_device *c, int fd) {
 	struct v4l2_streamparm param;
 
-	//TODO: for now the FPS is hardcoded to 25. could be improved ?
+	//TODO: for now the FPS is hardcoded to 30. could be improved ?
 
 	CLEAR(param);
 	param.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -661,7 +661,7 @@ void *dequeue_buffer_v4l2_convert(struct video_device *vdev, int *len) {
 
 		if (-1 == ioctl(vdev->fd, VIDIOC_DQBUF, b)) {
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
-					"CAP: error dequeuing buffer\n");
+					"CAP: Error dequeuing buffer (%d)\n", errno);
 			return NULL;
 		}
 

@@ -32,8 +32,7 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
 
 /**
  * Objects of this class are used to retrieve YVU420-encoded frames from a 
- * {@link VideoDevice}. v4l4j also provide {@link FrameGrabber} objects to
- * retrieve images in a native format. A YVU420 frame grabber can only be 
+ * {@link VideoDevice}. A YVU420 frame grabber can only be 
  * created if the associated video device can produce images in a format v4l4j
  * knows how to encode in YVU420. The {@link VideoDevice#supportYVUConversion()} 
  * method can be used to find out whether a video device can have its images 
@@ -74,15 +73,15 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * However, when the capture is stopped with {@link #stopCapture()}, it can be
  * started again with {@link #startCapture()} without having to create a new 
  * <code>FrameGrabber</code>.
- * @see FrameGrabber
+ * @see AbstractGrabber
  * @author gilles
  *
  */
-public class YVUFrameGrabber extends FrameGrabber {
+public class YVUFrameGrabber extends AbstractGrabber {
 	/**
 	 * This constructor builds a FrameGrabber object used to capture YVU420
 	 * frames from a video source
-	 * @param vd the VideoDevice who created this frame grabber
+	 * @param di the DeviceInfo of the VideoDevice who created this frame grabber
 	 * @param o a JNI pointer to a v4l4j_device structure
 	 * @param w the requested frame width 
 	 * @param h the requested frame height
@@ -92,9 +91,9 @@ public class YVUFrameGrabber extends FrameGrabber {
 	 * {@link InputInfo#getSupportedStandards()} (see V4L4JConstants)
 	 * @param imf the image format frame should be captured in
 	 */
-	YVUFrameGrabber(VideoDevice vd,long o, int w, int h, int ch, int std, Tuner t,
+	YVUFrameGrabber(DeviceInfo di,long o, int w, int h, int ch, int std, Tuner t,
 			ImageFormat imf) throws ImageFormatException {
-		super(vd, o, w, h, ch, std, t, imf, YVU_GRABBER);
+		super(di, o, w, h, ch, std, t, imf, YVU_GRABBER);
 	}
 
 	/**
@@ -145,11 +144,6 @@ public class YVUFrameGrabber extends FrameGrabber {
 	 * @return the native image format used by this FrameGrabber.
 	 */
 	public ImageFormat getImageFormat(){
-		try {
-			return vdev.getDeviceInfo().getFormatList().getYVUEncodableFormat(format);
-		} catch (V4L4JException e) {
-			// we shouldnt be here
-		}
-		return null;
+		return dInfo.getFormatList().getYVUEncodableFormat(format);
 	}
 }
