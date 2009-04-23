@@ -415,7 +415,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 			stop = false;
 	    	captureThread = new Thread(this, "Capture Thread");
 	        captureThread.start();
-			System.out.println("Image format: "+fg.getImageFormat().getName());
+			System.out.println("Input format: "+fg.getImageFormat().getName());
 	        
     	}
     }

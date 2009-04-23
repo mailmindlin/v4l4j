@@ -43,12 +43,17 @@
  * </ul>
  * Each of these can be obtained independently from the other, by calling 
  * the appropriate method on a {@link au.edu.jcu.v4l4j.VideoDevice} instance.
+ * This flexibility allows an application to create a GUI which provides access
+ * to video controls, while another application is streaming video from the 
+ * device. For this to work, the device driver must allows multiple applications
+ * to open the device file simultaneously. As an example, the UVC driver works
+ * this way.
  * <h3>Video hardware information</h3>
  * With a valid {@link au.edu.jcu.v4l4j.VideoDevice} object, you 
  * can retrieve information about 
  * the underlying hardware and find out, for example how many video inputs the 
- * device has, how many tuners are available or the set of supported video 
- * standards. This kind of information is contained in a 
+ * device has, how many tuners are available, the set of supported video 
+ * standards and capture resolutions. This kind of information is contained in a 
  * {@link au.edu.jcu.v4l4j.DeviceInfo} object. You can get a reference to a 
  * {@link au.edu.jcu.v4l4j.DeviceInfo} object for a given video device by calling
  * {@link au.edu.jcu.v4l4j.VideoDevice#getDeviceInfo()} on the 
@@ -88,24 +93,33 @@
  * captured frame without further processing. When capturing in a convenience 
  * format, v4l4j will transparently convert the image.
  *  
- * Frame capture in v4l4j is done using {@link au.edu.jcu.v4l4j.FrameGrabber}
- * objects (or one of its subclasses):
+ * Frame capture in v4l4j is done using objects implementing the
+ * {@link au.edu.jcu.v4l4j.FrameGrabber} interface:
  * <ul>
  * <li>First, get a frame grabber object from a video device, by invoking
  * one of the <code>getXXXFrameGrabber()</code> methods on the video device.</li>
  * <li>Second, when ready to capture, start it by calling 
  * {@link au.edu.jcu.v4l4j.FrameGrabber#startCapture()}.</li>
  * <li>Get the last frame using 
- * {@link au.edu.jcu.v4l4j.FrameGrabber#getFrame()} and do something useful with it.</li>
+ * {@link au.edu.jcu.v4l4j.FrameGrabber#getFrame()} and do something useful 
+ * with it.</li>
  * <li>When done capturing, stop the capture with 
- * {@link au.edu.jcu.v4l4j.FrameGrabber#stopCapture()}. If you need to start capturing 
- * again later, just call {@link au.edu.jcu.v4l4j.FrameGrabber#startCapture()} again.</li>
- * <li><strong>Again, when finished with the {@link au.edu.jcu.v4l4j.FrameGrabber} 
- * object, you must release it with a call to
- * {@link au.edu.jcu.v4l4j.VideoDevice#releaseFrameGrabber()}.
- * </strong> Do not use the frame grabber subsequently and set any stray reference to null.</li>
+ * {@link au.edu.jcu.v4l4j.FrameGrabber#stopCapture()}. If you need to start 
+ * capturing again later, just call 
+ * {@link au.edu.jcu.v4l4j.FrameGrabber#startCapture()} again.</li>
+ * <li><strong>Again, when finished with the 
+ * {@link au.edu.jcu.v4l4j.FrameGrabber} object, you must release it with a 
+ * call to {@link au.edu.jcu.v4l4j.VideoDevice#releaseFrameGrabber()}.
+ * </strong> Do not use the frame grabber subsequently and set any stray 
+ * reference to null.</li>
  * </ul>
  * More information on video capture is given in the documentation of the 
  * {@link au.edu.jcu.v4l4j.FrameGrabber} class.
+ * 
+ * <h3>Tuners</h3>
+ * v4l4j provides access to tuners if present in the video device. A 
+ * {@link au.edu.jcu.v4l4j.TunerList} object can be obtained by calling 
+ * {@link au.edu.jcu.v4l4j.VideoDevice#getTunerList()}. Note that the tuner list
+ * need not be released when finished.
  */
 package au.edu.jcu.v4l4j;
