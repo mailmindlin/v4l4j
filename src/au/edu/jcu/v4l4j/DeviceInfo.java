@@ -36,9 +36,11 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * <li>the name of the video device,</li>
  * <li>a list of {@link InputInfo} object providing information about each 
  * video input,</li>
- * <li>and a list of {@link ImageFormat}s used by the video device.
+ * <li>and a list of {@link ImageFormat}s & capture resolutions 
+ * ({@link ResolutionInfo})used by the video device.
  * </ul>
- * To retrieve information about a video device, call {@link VideoDevice#getDeviceInfo()} on its 
+ * To retrieve information about a video device, call 
+ * {@link VideoDevice#getDeviceInfo()} on its 
  * <code>VideoDevice</code> object, and retrieve parameters of interest.
  * Example:<br>
  * <code>
@@ -52,7 +54,8 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * System.out.println("Inputs:");<br>
  * for(InputInfo i: d.getInputs()){<br>
  * &nbsp;&nbsp;System.out.println("\tName: "+i.getName());<br>
- * &nbsp;&nbsp;System.out.println("\tType: "+i.getType()+"("+(i.getType() == V4L4JConstants.CAMERA ? "Camera" : "Tuner")+")");<br>
+ * &nbsp;&nbsp;System.out.println("\tType: "+i.getType()+"("+
+ * (i.getType() == V4L4JConstants.CAMERA ? "Camera" : "Tuner")+")");<br>
  * &nbsp;&nbsp;System.out.println("\tIndex: "+i.getIndex());<br>
  * &nbsp;&nbsp;System.out.println("\tSupported standards:");<br>
  * &nbsp;&nbsp;for(Integer s: i.getSupportedStandards()){<br>
@@ -71,10 +74,14 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * &nbsp;&nbsp;&nbsp;&nbsp;System.out.println("\tTuner");<br>
  * &nbsp;&nbsp;&nbsp;&nbsp;System.out.println("\t\tname: "+t.getName());<br>
  * &nbsp;&nbsp;&nbsp;&nbsp;System.out.println("\t\tIndex: "+t.getIndex());<br>
- * &nbsp;&nbsp;&nbsp;&nbsp;System.out.println("\t\tRange high: "+t.getRangeHigh());<br>
- * &nbsp;&nbsp;&nbsp;&nbsp;System.out.println("\t\tRange low: "+t.getRangeLow());<br>
- * &nbsp;&nbsp;&nbsp;&nbsp;System.out.println("\t\tUnit: "+t.getUnit()+"("+(t.getUnit() == TunerInfo.MHZ ? "MHz" : "kHz")+")");<br>
- * &nbsp;&nbsp;&nbsp;&nbsp;System.out.println("\t\tType: "+t.getType()+"("+(t.getType() == TunerInfo.RADIO ? "Radio" : "TV")+")");<br>
+ * &nbsp;&nbsp;&nbsp;&nbsp;System.out.println("\t\tRange high: "+
+ * t.getRangeHigh());<br>
+ * &nbsp;&nbsp;&nbsp;&nbsp;System.out.println("\t\tRange low: "+
+ * t.getRangeLow());<br>
+ * &nbsp;&nbsp;&nbsp;&nbsp;System.out.println("\t\tUnit: "+
+ * t.getUnit()+"("+(t.getUnit() == TunerInfo.MHZ ? "MHz" : "kHz")+")");<br>
+ * &nbsp;&nbsp;&nbsp;&nbsp;System.out.println("\t\tType: "+
+ * t.getType()+"("+(t.getType() == TunerInfo.RADIO ? "Radio" : "TV")+")");<br>
  * &nbsp;&nbsp;}<br>
  * }<br>
  * vd.release();<br>
@@ -150,7 +157,7 @@ public class DeviceInfo {
 
 	/**
 	 * This method returns an {@link ImageFormatList} object containing
-	 * the various image formats the video device supports.
+	 * the various image formats & resolutions the video device supports.
 	 * @return an<code>ImageFormatList</code> object
 	 * @see ImageFormatList
 	 */

@@ -33,8 +33,7 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
 
 /**
  * Objects of this class are used to retrieve JPEG-encoded frames from a 
- * {@link VideoDevice}. v4l4j also provide {@link FrameGrabber} objects to
- * retrieve images in a native format. A JPEG frame grabber can only be created 
+ * {@link VideoDevice}. A JPEG frame grabber can only be created 
  * if the associated video device can produce images in a format v4l4j
  * knows how to encode in JPEG. The {@link VideoDevice#supportJPEGConversion()} 
  * method can be used to find out whether a video device can have its images 
@@ -75,17 +74,18 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * However, when the capture is stopped with {@link #stopCapture()}, it can be
  * started again with {@link #startCapture()} without having to create a new 
  * <code>FrameGrabber</code>.
- * @see FrameGrabber
+ * @see AbstractGrabber
  * @author gilles
  *
  */
-public class JPEGFrameGrabber extends FrameGrabber {
+public class JPEGFrameGrabber extends AbstractGrabber {
 	
 	private int quality;
 	
 	/**
 	 * This constructor builds a FrameGrabber object used to capture JPEG frames
 	 * from a video source
+	 * @param di the DeviceInfo of the VideoDevice who created this frame grabber
 	 * @param w the requested frame width 
 	 * @param h the requested frame height
 	 * @param ch the input index, as returned by {@link InputInfo#getIndex()}
@@ -96,9 +96,9 @@ public class JPEGFrameGrabber extends FrameGrabber {
 	 * {@link V4L4JConstants#MAX_JPEG_QUALITY}.
 	 * @param imf the image format frame should be captured in 
 	 */
-	JPEGFrameGrabber(long o, int w, int h, int ch, int std, int q, Tuner t,
-			ImageFormat imf) throws V4L4JException{
-		super(o,w,h,ch,std, t , imf, JPEG_GRABBER);	
+	JPEGFrameGrabber(DeviceInfo di,long o, int w, int h, int ch, int std, int q
+			, Tuner t,ImageFormat imf) throws V4L4JException{
+		super(di, o,w,h,ch,std, t , imf, JPEG_GRABBER);	
 		setJPGQuality(q);
 	}
 	
@@ -128,7 +128,7 @@ public class JPEGFrameGrabber extends FrameGrabber {
 			super.init();
 			setQuality(object, quality);
 		} catch (ImageFormatException ife){
-			if(format == null){
+			if(format == -1){
 				String msg ="v4l4j was unable to find image format supported by"
 					+ "the \nvideo device and that can be encoded in JPEG.\n"
 					+ "Please let the author know about this, so that support\n"
@@ -164,5 +164,16 @@ public class JPEGFrameGrabber extends FrameGrabber {
 	 */
 	public int getJPGQuality(){
 		return quality;
+	}
+	
+	/**
+	 * This method returns the native image format used by this 
+	 * FrameGrabber. The returned format specifies the image format the capture
+	 * uses, ie the one images are retrieved from the device BEFORE JPEG 
+	 * conversion.
+	 * @return the native image format used by this FrameGrabber.
+	 */
+	public ImageFormat getImageFormat(){
+		return dInfo.getFormatList().getJPEGEncodableFormat(format);
 	}
 }

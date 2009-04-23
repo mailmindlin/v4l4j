@@ -27,14 +27,218 @@ package au.edu.jcu.v4l4j.examples;
 import java.io.IOException;
 
 import au.edu.jcu.v4l4j.FrameGrabber;
+import au.edu.jcu.v4l4j.ImageFormatList;
 import au.edu.jcu.v4l4j.V4L4JConstants;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
+/**
+ * Objects of this class compute the maximum achievable frame rate for a video
+ * device, and print it.
+ * @author gilles
+ *
+ */
 public class GetFrameRate {
+	public static final int captureLength = 10;
+	private int inFmt, outFmt, width, height, channel, std;
+	private FrameGrabber fg;
+	private VideoDevice vd;
+	private ImageFormatList imfList;
+	
+	/**
+	 * This method builds a new object to test the maximum FPS for a video 
+	 * device
+	 * @param dev the full path to the device file
+	 * @param ifmt the input format (-1, or a device-supported format)
+	 * @param ofmt the output format (0: raw - 1: JPEG - 2: RGB - 3: BGR - 
+	 * 4:YUV - 5:YVU)
+	 * @param w the desired capture width
+	 * @param h the desired capture height
+	 * @param c the input index
+	 * @param s the video standard (0: webcam - 1: PAL - 2:SECAM - 3:NTSC)
+	 * @throws V4L4JException if there is an error initialising the video device
+	 */
+	public GetFrameRate(String dev, int ifmt, int ofmt, int w, int h, int c, 
+			int s) throws V4L4JException{
+		inFmt = ifmt;
+		outFmt = ofmt;
+		width = w;
+		height = h;
+		channel = c;
+		std = s;
+		try {
+			vd = new VideoDevice(dev);
+			imfList = vd.getDeviceInfo().getFormatList();
+			if(outFmt==0)
+				getRawFg();
+			else if(outFmt==1 && vd.supportJPEGConversion())
+				getJPEGfg();
+			else if(outFmt==2 && vd.supportRGBConversion())
+				getRGBfg();
+			else if(outFmt==3 && vd.supportBGRConversion())
+				getBGRfg();
+			else if(outFmt==4 && vd.supportYUVConversion())
+				getYUVfg();
+			else if(outFmt==5 && vd.supportYVUConversion())
+				getYVUfg();
+			else {
+				System.out.println("Unknown output format: "+outFmt);
+				throw new V4L4JException("unknown output format");
+			}
+			System.out.println("Input image format: "+fg.getImageFormat().getName());
+		} catch (V4L4JException e) {
+			e.printStackTrace();
+			System.out.println("Failed to instanciate the FrameGrabber ("+dev+")");
+			vd.release();
+			throw e;
+		}
+		width = fg.getWidth();
+		height = fg.getHeight();
+		std = fg.getStandard();
+		channel = fg.getChannel();
+	}
+	
+	private void getJPEGfg() throws V4L4JException{
+		if(inFmt==-1 ||	imfList.getJPEGEncodableFormat(inFmt)==null){
+			System.out.println("Invalid format / no capture format " +
+					"specified, let v4l4j find a suitable one");
+			fg= vd.getJPEGFrameGrabber(width, height, channel, std, 80);
+		} else{ 
+			System.out.println("Trying input format "+
+					imfList.getJPEGEncodableFormat(inFmt).getName());
+			fg= vd.getJPEGFrameGrabber(width, height, channel, std, 80, 
+					imfList.getJPEGEncodableFormat(inFmt));
+		}				
+		System.out.println("Output image format: JPEG");		
+	}
+	
+	private void getRGBfg() throws V4L4JException{
+		if(inFmt==-1 || imfList.getRGBEncodableFormat(inFmt)==null){
+			System.out.println("Invalid format / no capture format " +
+					"specified, let v4l4j find a suitable one");
+			fg= vd.getRGBFrameGrabber(width, height, channel, std);
+		} else { 
+			System.out.println("Trying input format "+
+					imfList.getRGBEncodableFormat(inFmt).getName());
+			fg= vd.getRGBFrameGrabber(width, height, channel, std,
+					imfList.getRGBEncodableFormat(inFmt));
+		}
+		System.out.println("Output image format: RGB");		
+	}
+	
+	private void getBGRfg() throws V4L4JException{
+		if(inFmt==-1 || imfList.getBGREncodableFormat(inFmt)==null){
+			System.out.println("Invalid format / no capture format " +
+					"specified, let v4l4j find a suitable one");
+			fg= vd.getBGRFrameGrabber(width, height, channel, std);
+		} else { 
+			System.out.println("Trying input format "+
+					imfList.getBGREncodableFormat(inFmt).getName());
+			fg= vd.getBGRFrameGrabber(width, height, channel, std,
+					imfList.getBGREncodableFormat(inFmt));
+		}
+		System.out.println("Output image format: BGR");		
+	}
+	
+	private void getYUVfg() throws V4L4JException{
+		if(inFmt==-1 || imfList.getYUVEncodableFormat(inFmt)==null){
+			System.out.println("Invalid format / no capture format " +
+					"specified, let v4l4j find a suitable one");
+			fg= vd.getYUVFrameGrabber(width, height, channel, std);
+		} else { 
+			System.out.println("Trying input format "+
+					imfList.getYUVEncodableFormat(inFmt).getName());
+			fg= vd.getYUVFrameGrabber(width, height, channel, std,
+					imfList.getYUVEncodableFormat(inFmt));
+		}
+		System.out.println("Output image format: YUV");		
+	}
+	
+	private void getYVUfg() throws V4L4JException{
+		if(inFmt==-1 || imfList.getYVUEncodableFormat(inFmt)==null){
+			System.out.println("Invalid format / no capture format " +
+					"specified, let v4l4j find a suitable one");
+			fg= vd.getYVUFrameGrabber(width, height, channel, std);
+		} else { 
+			System.out.println("Trying input format "+
+					imfList.getYVUEncodableFormat(inFmt).getName());
+			fg= vd.getYVUFrameGrabber(width, height, channel, std,
+					imfList.getYVUEncodableFormat(inFmt));
+		}
+		System.out.println("Output image format: YVU");		
+	}
+	
+	private void getRawFg() throws V4L4JException{
+		if(inFmt==-1 || imfList.getNativeFormat(inFmt)==null){
+			System.out.println("Invalid format / no capture format " +
+					"specified, v4l4j will pick the first one");
+			fg= vd.getRawFrameGrabber(width, height, channel, std);
+		} else {
+			System.out.println("Trying input format "+
+					imfList.getNativeFormat(inFmt).getName());
+			fg= vd.getRawFrameGrabber(width, height, channel, std,
+					imfList.getNativeFormat(inFmt));					
+		}
+		System.out.println("Output image format: RAW (same as input)");
+	}
+	
+	private void startCapture() throws V4L4JException{
+		try {
+			fg.startCapture();
+		} catch (V4L4JException e) {
+			e.printStackTrace();
+			System.out.println("Failed to start capture");
+			vd.releaseFrameGrabber();
+			vd.release();
+			throw e;
+		}
+	}
+	
+	/**
+	 * This method starts the frame rate test. It will run for 10 seconds, and
+	 * then print the achieved FPS
+	 * @throws V4L4JException if there is an error capturing frames
+	 */
+	public void startTest() throws V4L4JException{
+		long start=0, now=0;
+		int n=0;
+		startCapture();
+
+		try {
+			//discard the first frame to make sure device has settled
+			fg.getFrame();
+			
+			System.out.println("Starting test capture at "+
+					width+"x"+height+" for "+captureLength+" seconds");
+			now=start=System.currentTimeMillis();
+			while(now<start+(captureLength*1000)){
+				fg.getFrame();
+				//Uncomment the following to dump the captured frame to a jpeg file
+				//also import java.io.FileOutputStream 
+				//new FileOutputStream("file"+n+".raw").getChannel().write(f.getFrame());
+				n++;
+				now=System.currentTimeMillis();
+			}
+			
+			System.out.println(" =====  TEST RESULTS  =====");
+			System.out.println("\tFrames captured :"+n);
+			System.out.println("\tFPS: "+((float) n/(now/1000-start/1000)));
+			System.out.println(" =====  END  RESULTS  =====");
+			
+		} catch (V4L4JException e) {
+			e.printStackTrace();
+			System.out.println("Failed to perform test capture");
+			throw e;
+		} finally {
+			fg.stopCapture();
+			vd.releaseFrameGrabber();
+			vd.release();
+		}		
+	}
+	
 	public static void main(String[] args) throws V4L4JException, IOException {
 		String dev;
-		int w, h, std, channel, inFmt, outFmt, captureLength = 10;
+		int w, h, std, channel, inFmt, outFmt;
 		//Check if we have the required args
 		//otherwise put sensible values in
 		try {
@@ -74,137 +278,10 @@ public class GetFrameRate {
 		} catch (Exception e){
 			outFmt = 0;
 		}
-		
-
-		long start=0, now=0;
-		int n=0;
-		FrameGrabber f = null;
-		VideoDevice vd = null;
 
 		System.out.println("This program will open "+dev+", capture frames for "
 					+ captureLength+ " seconds and print the FPS");
-
-		try {
-			vd = new VideoDevice(dev);
-			if(outFmt==1 && vd.supportJPEGConversion()) {
-				if(inFmt==-1){
-					System.out.println("no capture format specified, let v4l4j find a suitable one");
-					f= vd.getJPEGFrameGrabber(w, h, channel, std, 80);
-				} else if(vd.getDeviceInfo().getFormatList().getJPEGEncodableFormat(inFmt)==null) {
-					System.out.println("Capture format "+inFmt+" doesnt exist, let v4l4j find a suitable one");
-					f= vd.getJPEGFrameGrabber(w, h, channel, std, 80);
-				}else{ 
-					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getJPEGEncodableFormat(inFmt).getName());
-					f= vd.getJPEGFrameGrabber(w, h, channel, std, 80, vd.getDeviceInfo().getFormatList().getJPEGEncodableFormat(inFmt));
-				}				
-				System.out.println("Output image format: JPEG");
-			} else if(outFmt==2 && vd.supportRGBConversion()) {
-				if(inFmt==-1){
-					System.out.println("no capture format specified, let v4l4j find a suitable one");
-					f= vd.getRGBFrameGrabber(w, h, channel, std);
-				} else if(vd.getDeviceInfo().getFormatList().getRGBEncodableFormat(inFmt)==null) {
-					System.out.println("Capture format "+inFmt+" doesnt exist, trying to find a suitable one");
-					f= vd.getRGBFrameGrabber(w, h, channel, std);
-				} else { 
-					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getRGBEncodableFormat(inFmt).getName());
-					f= vd.getRGBFrameGrabber(w, h, channel, std,vd.getDeviceInfo().getFormatList().getRGBEncodableFormat(inFmt));
-				}
-				System.out.println("Output image format: RGB");
-			} else if(outFmt==3 && vd.supportBGRConversion()) {
-				if(inFmt==-1){
-					System.out.println("no capture format specified, let v4l4j find a suitable one");
-					f= vd.getBGRFrameGrabber(w, h, channel, std);
-				} else if(vd.getDeviceInfo().getFormatList().getBGREncodableFormat(inFmt)==null) {
-					System.out.println("Capture format "+inFmt+" doesnt exist, trying to find a suitable one");
-					f= vd.getBGRFrameGrabber(w, h, channel, std);
-				} else { 
-					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getBGREncodableFormat(inFmt).getName());
-					f= vd.getBGRFrameGrabber(w, h, channel, std,vd.getDeviceInfo().getFormatList().getBGREncodableFormat(inFmt));
-				}
-				System.out.println("Output image format: BGR");
-			} else if(outFmt==4 && vd.supportYUVConversion()) {
-				if(inFmt==-1){
-					System.out.println("no capture format specified, let v4l4j find a suitable one");
-					f= vd.getYUVFrameGrabber(w, h, channel, std);
-				} else if(vd.getDeviceInfo().getFormatList().getYUVEncodableFormat(inFmt)==null) {
-					System.out.println("Capture format "+inFmt+" doesnt exist, trying to find a suitable one");
-					f= vd.getYUVFrameGrabber(w, h, channel, std);
-				} else { 
-					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getYUVEncodableFormat(inFmt).getName());
-					f= vd.getYUVFrameGrabber(w, h, channel, std,vd.getDeviceInfo().getFormatList().getYUVEncodableFormat(inFmt));
-				}
-				System.out.println("Output image format: YUV");
-			} else if(outFmt==5 && vd.supportYVUConversion()) {
-				if(inFmt==-1){
-					System.out.println("no capture format specified, let v4l4j find a suitable one");
-					f= vd.getYVUFrameGrabber(w, h, channel, std);
-				} else if(vd.getDeviceInfo().getFormatList().getYVUEncodableFormat(inFmt)==null) {
-					System.out.println("Capture format "+inFmt+" doesnt exist, trying to find a suitable one");
-					f= vd.getYVUFrameGrabber(w, h, channel, std);
-				} else { 
-					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getYVUEncodableFormat(inFmt).getName());
-					f= vd.getYVUFrameGrabber(w, h, channel, std,vd.getDeviceInfo().getFormatList().getYVUEncodableFormat(inFmt));
-				}
-				System.out.println("Output image format: YVU");
-			} else {
-				if(inFmt==-1){
-					System.out.println("No capture format specified, v4l4j will pick the first one");
-					f= vd.getRawFrameGrabber(w, h, channel, std);
-				} else {
-					if(vd.getDeviceInfo().getFormatList().getNativeFormat(inFmt)==null){
-						System.out.println("The specified input format does not exist, or is not supported by the video device");
-						throw new V4L4JException("Unsupported image format");
-					}
-					System.out.println("Trying capture format "+vd.getDeviceInfo().getFormatList().getNativeFormat(inFmt).getName());
-					f= vd.getRawFrameGrabber(w, h, channel, std,vd.getDeviceInfo().getFormatList().getNativeFormat(inFmt));					
-				}
-				System.out.println("Output image format: RAW  (same as capture format)");
-			}
-			System.out.println("Capture image format: "+f.getImageFormat().getName());
-		} catch (V4L4JException e) {
-			e.printStackTrace();
-			System.out.println("Failed to instanciate the FrameGrabber ("+dev+")");
-			vd.release();
-			throw e;
-		}
-
-		try {
-			f.startCapture();
-		} catch (V4L4JException e) {
-			e.printStackTrace();
-			System.out.println("Failed to start capture");
-			vd.releaseFrameGrabber();
-			vd.release();
-			throw e;
-		}
-
-		try {
-			System.out.println("Starting test capture at "+f.getWidth()+"x"+f.getHeight()+" for "+captureLength+" seconds");
-			now=start=System.currentTimeMillis();
-			while(now<start+(captureLength*1000)){
-				f.getFrame();
-				//Uncomment the following to dump the captured frame to a jpeg file
-				//also import java.io.FileOutputStream 
-				//new FileOutputStream("file"+n+".raw").getChannel().write(f.getFrame());
-				n++;
-				now=System.currentTimeMillis();
-			}
-		} catch (V4L4JException e) {
-			e.printStackTrace();
-			System.out.println("Failed to perform test capture");
-			f.stopCapture();
-			vd.releaseFrameGrabber();
-			vd.release();
-			throw e;
-		}
-
-		System.out.println(" =====  TEST RESULTS  =====");
-		System.out.println("\tFrames captured :"+n);
-		System.out.println("\tFPS: "+((float) n/(now/1000-start/1000)));
-		System.out.println(" =====  END  RESULTS  =====");
-
-		f.stopCapture();
-		vd.releaseFrameGrabber();
-		vd.release();
+		
+		new GetFrameRate(dev, inFmt, outFmt, w, h, channel, std).startTest();
 	}
 }

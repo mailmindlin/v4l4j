@@ -33,8 +33,7 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
 
 /**
  * Objects of this class are used to retrieve RGB frames from a 
- * {@link VideoDevice}. v4l4j also provide {@link FrameGrabber} objects to
- * retrieve images in a native format. An RGB frame grabber can only be created 
+ * {@link VideoDevice}. An RGB frame grabber can only be created 
  * if the associated video device can produce images in a format v4l4j
  * knows how to convert to RGB24. The 
  * {@link VideoDevice#supportRGBConversion()} method can be used to find out 
@@ -74,15 +73,16 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * , and a new one must be obtained. However, when the capture is stopped with 
  * {@link #stopCapture()}, it can be started again with {@link #stopCapture()} 
  * without having to create a new <code>FrameGrabber</code>.
- * @see FrameGrabber
+ * @see AbstractGrabber
  * @author gilles
  *
  */
-public class RGBFrameGrabber extends FrameGrabber {
+public class RGBFrameGrabber extends AbstractGrabber {
 	
 	/**
 	 * This constructor builds a FrameGrabber object used to capture RGB frames 
 	 * from a video source
+	 * @param di the DeviceInfo of the VideoDevice who created this frame grabber
 	 * @param o a JNI pointer to a v4l4j_device structure
 	 * @param w the requested frame width 
 	 * @param h the requested frame height
@@ -92,9 +92,9 @@ public class RGBFrameGrabber extends FrameGrabber {
 	 * {@link InputInfo#getSupportedStandards()} (see V4L4JConstants)
 	 * @param imf the image format frame should be captured in
 	 */
-	RGBFrameGrabber(long o, int w, int h, int ch, int std, Tuner t, 
+	RGBFrameGrabber(DeviceInfo di, long o, int w, int h, int ch, int std, Tuner t, 
 			ImageFormat imf) throws V4L4JException{
-		super(o,w,h,ch,std, t , imf, RGB24_GRABBER);	
+		super(di, o,w,h,ch,std, t , imf, RGB24_GRABBER);	
 	}
 	
 	/**
@@ -122,7 +122,7 @@ public class RGBFrameGrabber extends FrameGrabber {
 		try {
 			super.init();
 		} catch (ImageFormatException ife){
-			if(format == null){
+			if(format == -1){
 				String msg = 
 					"v4l4j was unable to find image format supported by the"
 					+ " \nvideo device and that can be converted to RGB24.\n"
@@ -135,5 +135,16 @@ public class RGBFrameGrabber extends FrameGrabber {
 			
 			throw ife;
 		}
+	}
+	
+	/**
+	 * This method returns the native image format used by this 
+	 * FrameGrabber. The returned format specifies the image format the capture
+	 * uses, ie the one images are retrieved from the device BEFORE RGB 
+	 * conversion.
+	 * @return the native image format used by this FrameGrabber.
+	 */
+	public ImageFormat getImageFormat(){
+		return dInfo.getFormatList().getRGBEncodableFormat(format);
 	}
 }
