@@ -29,11 +29,10 @@ import java.util.Vector;
 import au.edu.jcu.v4l4j.exceptions.StateException;
 
 /**
- * Objects of this class encapsulate a list of tuner {@link Tuner}. This class
- * can not be directly instantiated. Instead, to retrieve a list of tuners
- * from a {@link VideoDevice}, use its 
+ * Objects of this class encapsulate a list of available {@link Tuner}s. 
+ * This class can not be directly instantiated. Instead, to retrieve a list of 
+ * tuners from a {@link VideoDevice}, use its
  * {@link VideoDevice#getTunerList() getTunerList()} method.  
- * any attempt to use them is made, a {@link StateException} will be raised.
  * @author gilles
  *
  */
@@ -54,7 +53,8 @@ public class TunerList {
 	/**
 	 * This method returns a copy of the tuner list.
 	 * @return a copy of the tuner list.
-	 * @throws StateException if this tuner list has been released and must not be used anymore
+	 * @throws StateException if this tuner list has been released and must 
+	 * not be used anymore
 	 */
 	public synchronized List<Tuner> getList(){
 		checkReleased();
@@ -64,7 +64,8 @@ public class TunerList {
 	/**
 	 * This method returns a tuner given its index.
 	 * @return the tuner matching the given index, null otherwise
-	 * @throws StateException if this tuner list has been released and must not be used anymore
+	 * @throws StateException if this tuner list has been released and must not 
+	 * be used anymore
 	 * @throws ArrayIndexOutOfBoundsException if the given index is out of bounds
 	 */
 	public synchronized Tuner getTuner(int i){
@@ -87,7 +88,8 @@ public class TunerList {
 
 	private void checkReleased(){
 		if(released)
-			throw new StateException("The tuner list has been released and must not be used");
+			throw new StateException("The tuner list has been released and " +
+					"must not be used");
 	}
 }
 

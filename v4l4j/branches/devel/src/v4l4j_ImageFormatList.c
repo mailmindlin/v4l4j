@@ -30,7 +30,8 @@
 #include "debug.h"
 
 static int add_format(JNIEnv *e, jobject vector, jmethodID add_method,
-		jclass format_class,jmethodID format_ctor, int index){
+		jclass format_class,jmethodID format_ctor, int index,
+		struct v4l4j_device *d){
 	jobject obj;
 	obj = (*e)->NewObject(e,
 			format_class,
@@ -38,7 +39,8 @@ static int add_format(JNIEnv *e, jobject vector, jmethodID add_method,
 			(*e)->NewStringUTF(e,
 					(const char *)libvideo_palettes[index].name
 					)
-			, index
+			, index,
+			(uintptr_t) d
 			);
 	if(obj==NULL){
 		info("[V4L4J] Error creating the ImageFormat object\n");
@@ -61,14 +63,13 @@ static int create_JPEG_list(JNIEnv *e, struct v4l4j_device *d,
 	/* Populates the JPEGformats list*/
 
 	for(i=0; i<di->nb_palettes; i++){
-		if(di->palettes[i].index==JPEG &&
-				di->palettes[i].raw_palette==UNSUPPORTED_PALETTE){
+		if(di->palettes[i].index==JPEG && !di->palettes[i].raw_palettes){
 			//if there is native JPEG format, add it
 			dprint(LOG_V4L4J,
 					"[V4L4J] Found native JPEG format - adding it to list\n");
 
 			if(add_format(e,formats,add_method,format_class,
-					format_ctor, JPEG)==-1)
+					format_ctor, JPEG, d)==-1)
 				return -1;
 
 		} else {
@@ -83,7 +84,7 @@ static int create_JPEG_list(JNIEnv *e, struct v4l4j_device *d,
 							libvideo_palettes[jpeg_conv_formats[j]].name);
 
 					if(add_format(e,formats,add_method,format_class,
-							format_ctor, jpeg_conv_formats[j])==-1)
+							format_ctor, jpeg_conv_formats[j], d)==-1)
 						return -1;
 				}
 			} //end for v4l4j JPEG convertible formats
@@ -105,34 +106,34 @@ static int create_RGB_list(JNIEnv *e, struct v4l4j_device *d,
 	/* Populates the RGBformats list*/
 
 	for(i=0; i<di->nb_palettes; i++){
-		if(di->palettes[i].index==RGB24 &&
-				di->palettes[i].raw_palette==UNSUPPORTED_PALETTE){
+		if(di->palettes[i].index==RGB24 && !di->palettes[i].raw_palettes){
 			//if there is native RGB24 format, add it
 			dprint(LOG_V4L4J,
 					"[V4L4J] Found native RGB24 format - adding it to list\n");
 
 			if(add_format(e,formats,add_method,format_class,
-					format_ctor, RGB24)==-1)
+					format_ctor, RGB24, d)==-1)
 				return -1;
 
-		} else if(di->palettes[i].index==RGB24 &&
-				di->palettes[i].raw_palette!=UNSUPPORTED_PALETTE){
-			//if there is libvideo-converted RGB24 format, add it
+		} else if(di->palettes[i].index==RGB24 && di->palettes[i].raw_palettes){
+			//if there are libvideo-converted formats, add them
+			j=-1;
+			while(di->palettes[i].raw_palettes[++j]!=-1){
+				dprint(LOG_V4L4J, "[V4L4J] Found libvideo-converted RGB24 "
+						"format from %s format - add it\n",
+						libvideo_palettes[di->palettes[i].raw_palettes[j]].name);
 
-			dprint(LOG_V4L4J, "[V4L4J] Found libvideo-converted RGB24 "
-					"format from %s format - add it\n",
-					libvideo_palettes[di->palettes[i].raw_palette].name);
-
-			if(add_format(e,formats,add_method,format_class,
-					format_ctor, di->palettes[i].raw_palette)==-1)
-				return -1;
+				if(add_format(e,formats,add_method,format_class,
+						format_ctor, di->palettes[i].raw_palettes[j], d)==-1)
+					return -1;
+			}
 
 		} else {
 			//check if v4l4j can convert it
 			for(j=0; j<ARRAY_SIZE(v4l4j_rgb24_conv_formats); j++){
 
 				//if it is a native format AND v4l4j knows how to convert it
-				if(di->palettes[i].raw_palette==UNSUPPORTED_PALETTE &&
+				if(!di->palettes[i].raw_palettes &&
 						di->palettes[i].index==v4l4j_rgb24_conv_formats[j]){
 
 					dprint(LOG_V4L4J, "[V4L4J] Found v4l4j provided RGB24 "
@@ -140,7 +141,7 @@ static int create_RGB_list(JNIEnv *e, struct v4l4j_device *d,
 							libvideo_palettes[v4l4j_rgb24_conv_formats[j]].name);
 
 					if(add_format(e,formats,add_method,format_class,
-							format_ctor, v4l4j_rgb24_conv_formats[j])==-1)
+							format_ctor, v4l4j_rgb24_conv_formats[j], d)==-1)
 						return -1;
 				}
 			} //end for v4l4j rgv24 convertible formats
@@ -153,7 +154,7 @@ static int create_RGB_list(JNIEnv *e, struct v4l4j_device *d,
 static int create_BGR_list(JNIEnv *e, struct v4l4j_device *d,
 		jobject formats, jmethodID add_method, jclass format_class,
 		jmethodID format_ctor ){
-	int i;
+	int i, j;
 	struct device_info *di = d->vdev->info;
 
 	dprint(LOG_V4L4J, "[V4L4J] Creating BGR24 encodable format list\n");
@@ -161,28 +162,27 @@ static int create_BGR_list(JNIEnv *e, struct v4l4j_device *d,
 	/* Populates the BGRformats list*/
 
 	for(i=0; i<di->nb_palettes; i++){
-		if(di->palettes[i].index==BGR24 &&
-				di->palettes[i].raw_palette==UNSUPPORTED_PALETTE){
+		if(di->palettes[i].index==BGR24 && !di->palettes[i].raw_palettes){
 			//if there is native BGR24 format, add it
 			dprint(LOG_V4L4J,
 					"[V4L4J] Found native BGR24 format - adding it to list\n");
 
 			if(add_format(e,formats,add_method,format_class,
-					format_ctor, BGR24)==-1)
+					format_ctor, BGR24, d)==-1)
 				return -1;
 
-		} else if(di->palettes[i].index==BGR24 &&
-				di->palettes[i].raw_palette!=UNSUPPORTED_PALETTE){
-			//if there is libvideo-converted BGR24 format, add it
+		} else if(di->palettes[i].index==BGR24 && di->palettes[i].raw_palettes){
+			//if there are libvideo-converted BGR24 formats, add them
+			j=-1;
+			while(di->palettes[i].raw_palettes[++j]!=-1){
+				dprint(LOG_V4L4J, "[V4L4J] Found libvideo-converted BGR24 "
+						"format from %s format - add it\n",
+						libvideo_palettes[di->palettes[i].raw_palettes[j]].name);
 
-			dprint(LOG_V4L4J, "[V4L4J] Found libvideo-converted BGR24 "
-					"format from %s format - add it\n",
-					libvideo_palettes[di->palettes[i].raw_palette].name);
-
-			if(add_format(e,formats,add_method,format_class,
-					format_ctor, di->palettes[i].raw_palette)==-1)
-				return -1;
-
+				if(add_format(e,formats,add_method,format_class,
+						format_ctor, di->palettes[i].raw_palettes[j], d)==-1)
+					return -1;
+			}
 		}
 	}
 
@@ -192,7 +192,7 @@ static int create_BGR_list(JNIEnv *e, struct v4l4j_device *d,
 static int create_YUV_list(JNIEnv *e, struct v4l4j_device *d,
 		jobject formats, jmethodID add_method, jclass format_class,
 		jmethodID format_ctor ){
-	int i;
+	int i,j;
 	struct device_info *di = d->vdev->info;
 
 	dprint(LOG_V4L4J, "[V4L4J] Creating YUV encodable format list\n");
@@ -200,28 +200,27 @@ static int create_YUV_list(JNIEnv *e, struct v4l4j_device *d,
 	/* Populates the YUVformats list*/
 
 	for(i=0; i<di->nb_palettes; i++){
-		if(di->palettes[i].index==YUV420 &&
-				di->palettes[i].raw_palette==UNSUPPORTED_PALETTE){
+		if(di->palettes[i].index==YUV420 && !di->palettes[i].raw_palettes){
 			//if there is native YUV420 format, add it
 			dprint(LOG_V4L4J,
 					"[V4L4J] Found native YUV420 format - adding it to list\n");
 
 			if(add_format(e,formats,add_method,format_class, format_ctor,
-					YUV420)==-1)
+					YUV420, d)==-1)
 				return -1;
 
-		} else if(di->palettes[i].index==YUV420 &&
-				di->palettes[i].raw_palette!=UNSUPPORTED_PALETTE){
-			//if there is libvideo-converted YUV420 format, add it
+		} else if(di->palettes[i].index==YUV420 && di->palettes[i].raw_palettes){
+			//if there are libvideo-converted YUV420 format, add them
+			j=-1;
+			while(di->palettes[i].raw_palettes[++j]!=-1){
+				dprint(LOG_V4L4J, "[V4L4J] Found libvideo-converted YUV420 "
+						"format from %s format - add it\n",
+						libvideo_palettes[di->palettes[i].raw_palettes[j]].name);
 
-			dprint(LOG_V4L4J, "[V4L4J] Found libvideo-converted YUV420 "
-					"format from %s format - add it\n",
-					libvideo_palettes[di->palettes[i].raw_palette].name);
-
-			if(add_format(e,formats,add_method,format_class,
-					format_ctor, di->palettes[i].raw_palette)==-1)
-				return -1;
-
+				if(add_format(e,formats,add_method,format_class,
+						format_ctor, di->palettes[i].raw_palettes[j], d)==-1)
+					return -1;
+			}
 		}
 	}
 
@@ -231,7 +230,7 @@ static int create_YUV_list(JNIEnv *e, struct v4l4j_device *d,
 static int create_YVU_list(JNIEnv *e, struct v4l4j_device *d,
 		jobject formats, jmethodID add_method, jclass format_class,
 		jmethodID format_ctor ){
-	int i;
+	int i,j;
 	struct device_info *di = d->vdev->info;
 
 	dprint(LOG_V4L4J, "[V4L4J] Creating YVU encodable format list\n");
@@ -239,28 +238,27 @@ static int create_YVU_list(JNIEnv *e, struct v4l4j_device *d,
 	/* Populates the YUVformats list*/
 
 	for(i=0; i<di->nb_palettes; i++){
-		if(di->palettes[i].index==YVU420 &&
-				di->palettes[i].raw_palette==UNSUPPORTED_PALETTE){
+		if(di->palettes[i].index==YVU420 && !di->palettes[i].raw_palettes){
 			//if there is native YVU420 format, add it
 			dprint(LOG_V4L4J,
 					"[V4L4J] Found native YVU420 format - adding it to list\n");
 
 			if(add_format(e,formats,add_method,format_class, format_ctor,
-					YVU420)==-1)
+					YVU420,d )==-1)
 				return -1;
 
-		} else if(di->palettes[i].index==YVU420 &&
-				di->palettes[i].raw_palette!=UNSUPPORTED_PALETTE){
-			//if there is libvideo-converted YVU420 format, add it
+		} else if(di->palettes[i].index==YVU420 && di->palettes[i].raw_palettes){
+			//if there are libvideo-converted YVU420 format, add them
+			j=-1;
+			while(di->palettes[i].raw_palettes[++j]!=-1){
+				dprint(LOG_V4L4J, "[V4L4J] Found libvideo-converted YVU420 "
+						"format from %s format - add it\n",
+						libvideo_palettes[di->palettes[i].raw_palettes[j]].name);
 
-			dprint(LOG_V4L4J, "[V4L4J] Found libvideo-converted YVU420 "
-					"format from %s format - add it\n",
-					libvideo_palettes[di->palettes[i].raw_palette].name);
-
-			if(add_format(e,formats,add_method,format_class,
-					format_ctor, di->palettes[i].raw_palette)==-1)
-				return -1;
-
+				if(add_format(e,formats,add_method,format_class,
+						format_ctor, di->palettes[i].raw_palettes[j],d)==-1)
+					return -1;
+			}
 		}
 	}
 
@@ -280,14 +278,13 @@ static int create_native_list(JNIEnv *e, struct v4l4j_device *d,
 		dprint(LOG_V4L4J, "[V4L4J] Checking format %s - index: %d - raw ? %s\n",
 				libvideo_palettes[di->palettes[i].index].name,
 				di->palettes[i].index,
-				(di->palettes[i].raw_palette==UNSUPPORTED_PALETTE?
-						"Yes - adding it":"No - skipping it")
+				(!di->palettes[i].raw_palettes?"Yes-adding it":"No-skipping it")
 				);
 
-		if(di->palettes[i].raw_palette==UNSUPPORTED_PALETTE)
+		if(!di->palettes[i].raw_palettes)
 			//it is a native format, add it to the list
 			if(add_format(e, formats,add_method, format_class,
-					format_ctor, di->palettes[i].index)==-1)
+					format_ctor, di->palettes[i].index,d)==-1)
 				return -1;
 	}
 
@@ -324,7 +321,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(
 	}
 
 	format_ctor = (*e)->GetMethodID(e, format_class, "<init>",
-			"(Ljava/lang/String;I)V");
+			"(Ljava/lang/String;IJ)V");
 	if(format_ctor == NULL){
 		info("[V4L4J] Error looking up the constructor of ImageFormat class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, \

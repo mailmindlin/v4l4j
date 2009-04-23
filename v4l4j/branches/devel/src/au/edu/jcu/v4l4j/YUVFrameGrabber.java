@@ -32,8 +32,7 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
 
 /**
  * Objects of this class are used to retrieve YUV420-encoded frames from a 
- * {@link VideoDevice}. v4l4j also provide {@link FrameGrabber} objects to
- * retrieve images in a native format. A YUV420 frame grabber can only be 
+ * {@link VideoDevice}. A YUV420 frame grabber can only be 
  * created if the associated video device can produce images in a format v4l4j
  * knows how to encode in YUV420. The {@link VideoDevice#supportYUVConversion()} 
  * method can be used to find out whether a video device can have its images 
@@ -74,14 +73,15 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * However, when the capture is stopped with {@link #stopCapture()}, it can be
  * started again with {@link #startCapture()} without having to create a new 
  * <code>FrameGrabber</code>.
- * @see FrameGrabber
+ * @see AbstractGrabber
  * @author gilles
  *
  */
-public class YUVFrameGrabber extends FrameGrabber {
+public class YUVFrameGrabber extends AbstractGrabber {
 	/**
 	 * This constructor builds a FrameGrabber object used to capture YUV420
 	 * frames from a video source
+	 * @param di the DeviceInfo of the VideoDevice who created this frame grabber
 	 * @param o a JNI pointer to a v4l4j_device structure
 	 * @param w the requested frame width 
 	 * @param h the requested frame height
@@ -91,9 +91,9 @@ public class YUVFrameGrabber extends FrameGrabber {
 	 * {@link InputInfo#getSupportedStandards()} (see V4L4JConstants)
 	 * @param imf the image format frame should be captured in 
 	 */
-	YUVFrameGrabber(long o, int w, int h, int ch, int std, Tuner t,
+	YUVFrameGrabber(DeviceInfo di, long o, int w, int h, int ch, int std, Tuner t,
 			ImageFormat imf) throws ImageFormatException {
-		super(o, w, h, ch, std, t, imf, YUV_GRABBER);
+		super(di, o, w, h, ch, std, t, imf, YUV_GRABBER);
 	}
 
 	/**
@@ -121,7 +121,7 @@ public class YUVFrameGrabber extends FrameGrabber {
 		try {
 			super.init();
 		} catch (ImageFormatException ife){
-			if(format == null){
+			if(format == -1){
 				String msg = 
 					"v4l4j was unable to find image format supported by the"
 					+ " \nvideo device and that can be converted to YUV420.\n"
@@ -134,5 +134,16 @@ public class YUVFrameGrabber extends FrameGrabber {
 			
 			throw ife;
 		}
+	}
+	
+	/**
+	 * This method returns the native image format used by this 
+	 * FrameGrabber. The returned format specifies the image format the capture
+	 * uses, ie the one images are retrieved from the device BEFORE YUV 
+	 * conversion.
+	 * @return the native image format used by this FrameGrabber.
+	 */
+	public ImageFormat getImageFormat(){
+		return dInfo.getFormatList().getYUVEncodableFormat(format);
 	}
 }

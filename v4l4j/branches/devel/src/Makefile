@@ -1,7 +1,7 @@
 # Edit the following line to point to the JDK directory
 # It must be a JDK, not a JRE !!!
 JDK_HOME := /usr/lib/jvm/java-6-sun
-#JDK_HOME=/usr/lib/j2sdk1.6-sun
+#JDK_HOME := /usr/lib/j2sdk1.6-sun
 
 
 #
@@ -37,7 +37,8 @@ LIBVIDEO_PATH := ../libvideo
 
 LIB := libv4l4j.so
 OBJ := jpeg.o rgb.o v4l4j_FrameGrabber.o v4l4j_ImageFormatList.o \
-  v4l4j_DeviceInfo.o v4l4j_VideoDevice.o v4l4j_Control.o v4l4j_Tuner.o
+  v4l4j_DeviceInfo.o v4l4j_VideoDevice.o v4l4j_Control.o v4l4j_Tuner.o \
+  v4l4j_ResolutionInfo.o
 
 CC := gcc
 INCLUDES := -I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ \

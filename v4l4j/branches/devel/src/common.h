@@ -90,7 +90,6 @@ struct v4l4j_device {
 
 #define BYTEBUFER_CLASS			"java/nio/ByteBuffer"
 #define V4L4J_PACKAGE			"au/edu/jcu/v4l4j/"
-#define FRAMEGRABBER_CLASS		V4L4J_PACKAGE "FrameGrabber"
 #define CONTROL_CLASS			V4L4J_PACKAGE "Control"
 #define CONSTANTS_CLASS			V4L4J_PACKAGE "V4L4JConstants"
 #define EXCEPTION_PACKAGE		V4L4J_PACKAGE "exceptions/"
