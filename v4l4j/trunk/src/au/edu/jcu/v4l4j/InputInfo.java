@@ -29,7 +29,7 @@ import java.util.Set;
 import au.edu.jcu.v4l4j.exceptions.NoTunerException;
 
 /**
- * Objects of this class encapsulate information about a video input:<br>
+ * Objects of this class encapsulate information about a video input.<br>
  * <ul>
  * <li>The name of this input</li>
  * <li>The supported standards ({@link V4L4JConstants#STANDARD_PAL}, {@link V4L4JConstants#STANDARD_SECAM},

@@ -28,8 +28,8 @@ import au.edu.jcu.v4l4j.ImageFormat;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 /**
- * Objects implementing this interface can produce a {@link FrameGrabber} (or
- * one of its subclasses), and can handle images as they are captured.
+ * Objects implementing this interface can produce a {@link FrameGrabber} 
+ * , and can handle images as they are captured.
  * @author gilles
  *
  */
@@ -37,7 +37,7 @@ public interface ImageProcessor {
 	/**
 	 * This method is called on this processor whenever a {@link FrameGrabber}
 	 * (or one of its subclasses) must be created for a given {@link ImageFormat}
-	 * @param i the Image format the frmae grabber must be created for
+	 * @param i the Image format the frame grabber must be created for
 	 * @return the frame grabber
 	 * @throws V4L4JException if there is an error creating the frame grabber
 	 */

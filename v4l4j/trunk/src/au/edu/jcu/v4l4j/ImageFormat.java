@@ -26,11 +26,13 @@ package au.edu.jcu.v4l4j;
 
 
 /**
- * Objects of this class represent an image format (YUV, RGB, GREY, BGR, ...).
+ * Objects of this class represent an image format (YUV, RGB, GREY, BGR, ...) 
+ * and its supported capture resolutions.
  * <code>ImageFormat</code> objects have three members: a name, a unique index,
  * and a {@link ResolutionInfo} object which provides information on
  * supported capture resolutions for this format.
- * A list of known image format indexes can be found in {@link V4L4JConstants}. 
+ * A list of known image format indexes can be found in 
+ * {@link V4L4JConstants}.IMF_*. 
  * <code>ImageFormat</code>s
  * are not directly instantiated. Instead, they can be enumerated by instantiating
  * a {@link VideoDevice}, and checking the {@link DeviceInfo} object associated

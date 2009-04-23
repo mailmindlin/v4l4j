@@ -46,6 +46,7 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * <ul>
  * <li>Information gathering about the video device,</li>
  * <li>Capturing frames from the video device,</li>
+ * <li>Accessing and controlling tuners,</li>
  * <li>and Adjusting values of available video controls.</li>
  * </ul>
  * Each of these categories is detailed in the following sections.
@@ -69,7 +70,7 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * <ul>
  * <li>List of all video inputs, their types & their supported standards</li>
  * <li>Details about available tuners (type, frequency range & unit, ...) </li>
- * <li>List of image formats supported by the device</li>
+ * <li>List of image formats & capture resolutions supported by the device</li>
  * </ul>
  * See the {@link DeviceInfo} class for an example on how to use it. Note that
  * most video device drivers do not allow multiple processes to open the device
@@ -77,10 +78,10 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * different ways. One of them is {@link #getDeviceInfo()} will throw a
  * {@link V4L4JException} if a process is already using the device.
  * <h2>Capturing frames</h2>
- * In order to capture frames from a video device, an instance of a 
- * <code>FrameGrabber</code> object must be obtained. The 
- * <code>VideoDevice</code> object provides 2 methods for that, depending on the
- * image format required:
+ * In order to capture frames from a video device, an object implementing the 
+ * {@link FrameGrabber} interface must be obtained. The 
+ * {@link VideoDevice} objects provides several methods for that, 
+ * depending on the image format required:
  * <ul>
  *  
  * <li>The <code>getRGBFrameGrabber()</code> & <code>getBGRFrameGrabber()</code>
@@ -104,19 +105,14 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * <code>YVUFrameGrabber</code> can be created.</li>
  * 
  * <li>The <code>getRawFrameGrabber()</code> methods return a 
- * {@link FrameGrabber} object capable of capturing frames in one of the 
+ * {@link RawFrameGrabber} object capable of capturing frames in one of the 
  * supported image formats, as reported by the 
  * {@link DeviceInfo#getFormatList() getFormatList()} method of 
  * {@link DeviceInfo} objects. Captured frames are handed out straight away to 
  * the caller, without any other form of processing.</li>
  * <li>The <code>getJPEGFrameGrabber()</code> methods return a 
  * {@link JPEGFrameGrabber} object capable of capturing frames and JPEG-encoding
- * them before handing them out. This frame grabber cannot be used with all 
- * video sources. It requires images from the video source to be in some 
- * pre-defined formats (namely JPEG, MJPEG, YUV420, YUYV, RGB24, RGB32, BGR24, 
- * YVYU, UYVY and BGR32) in order to be JPEG-encoded. If the video source is not
- * capable of producing images in one of these formats, then no 
- * <code>JPEGFrameGrabber</code> can be created.</li>
+ * them before handing them out.</li>
  * 
  * </ul>
  * To check whether JPEG, RGB, BGR, YUV or YVU conversion is supported by a 
@@ -126,7 +122,13 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * <b>Similarly to <code>VideoDevice</code> objects, once the frame grabber is 
  * no longer used, its resources must be released.</b> This is achieved by 
  * calling the {@link #releaseFrameGrabber()}. See the 
- * {@link FrameGrabber} class for more information on how to capture frames.
+ * {@link FrameGrabber} interface for more information on how to capture frames.
+ * 
+ * <h2>Tuners</h2>
+ * A list of available tuners can be obtained by calling the 
+ * {@link #getTunerList()} method. Each {@link Tuner} object in the list
+ * represents an individual tuner and allow getting/setting of various 
+ * parameters, including the frequency.
  * 
  * <h2>Video controls</h2>
  * A list of available video controls can be obtained by calling the 
@@ -203,7 +205,7 @@ public class VideoDevice {
 	/**
 	 * The FrameGrabber interface associated with this video device
 	 */
-	private FrameGrabber fg;
+	private AbstractGrabber fg;
 	
 	/**
 	 * The DeviceInfo object associated with this video device
@@ -312,10 +314,7 @@ public class VideoDevice {
 	 * progress.
 	 */
 	public void release(){
-		state.release();
-		doReleaseTunerActions(v4l4jObject);
-		doRelease(v4l4jObject);
-		state.commit();
+		release(true);
 	}	
 	
 	/**
@@ -340,6 +339,9 @@ public class VideoDevice {
 	 */
 	public void release(boolean wait){
 		state.release(wait);
+		doReleaseTunerActions(v4l4jObject);
+		if(tuners!=null)
+			tuners.release();
 		doRelease(v4l4jObject);
 		state.commit();
 	}	
@@ -515,7 +517,7 @@ public class VideoDevice {
 	}
 	
 	/**
-	 * This method returns a <code>FrameGrabber</code> associated with this 
+	 * This method returns a {@link JPEGFrameGrabber} associated with this 
 	 * video device. Captured frames will be JPEG-encoded before being handed 
 	 * out. To obtain a JPEGFrameGrabber, this video device must support an 
 	 * appropriate image format that v4l4j can convert to JPEG. If it does 
@@ -592,8 +594,8 @@ public class VideoDevice {
 		synchronized(this){
 			if(fg==null) {
 				state.get();
-				fg = new JPEGFrameGrabber(this, v4l4jObject, w, h, input, std, q, 
-						findTuner(input), imf);
+				fg = new JPEGFrameGrabber(deviceInfo, v4l4jObject, w, h, input, 
+						std, q, findTuner(input), imf);
 				try {
 					fg.init();
 				} catch (V4L4JException ve){
@@ -623,7 +625,7 @@ public class VideoDevice {
 	}
 	
 	/**
-	 * This method returns a <code>FrameGrabber</code> associated with this 
+	 * This method returns a {@link JPEGFrameGrabber} associated with this 
 	 * video device. Captured frames will be JPEG-encoded before being handed 
 	 * out. The video device must support an appropriate image format that v4l4j
 	 * can convert to JPEG. If it does not, this method will throw an 
@@ -675,7 +677,7 @@ public class VideoDevice {
 	}
 	
 	/**
-	 * This method returns a <code>FrameGrabber</code> associated with this 
+	 * This method returns a {@link RGBFrameGrabber} associated with this 
 	 * video device. Captured frames will be converted to RGB24 before being 
 	 * handed out. The video device must support an appropriate image format 
 	 * that v4l4j can convert to RGB24. If it does not, this method will throw 
@@ -700,7 +702,7 @@ public class VideoDevice {
 	 * this video device's {@link ImageFormatList} by calling 
 	 * <code>getDeviceInfo().getFormatList()</code>. If this argument is 
 	 * <code>null</code>, v4l4j will pick the first image format it can 
-	 * RGB24-encode. 
+	 * RGB24-encode.
 	 * @return a {@link RGBFrameGrabber} associated with this video device, if 
 	 * supported.
 	 * @throws VideoStandardException if the chosen video standard is not 
@@ -745,8 +747,8 @@ public class VideoDevice {
 		synchronized(this){
 			if(fg==null) {
 				state.get();
-				fg = new RGBFrameGrabber(this, v4l4jObject, w, h, input, std,
-						findTuner(input), imf);
+				fg = new RGBFrameGrabber(deviceInfo, v4l4jObject, w, h, input,
+						std, findTuner(input), imf);
 				try {
 					fg.init();
 				} catch (V4L4JException ve){
@@ -776,7 +778,7 @@ public class VideoDevice {
 	}
 	
 	/**
-	 * This method returns a <code>FrameGrabber</code> associated with this 
+	 * This method returns a {@link RGBFrameGrabber} associated with this 
 	 * video device. Captured frames will be RGB24-encoded before being handed 
 	 * out. The video device must support an appropriate image format that v4l4j
 	 * can convert to RGB24. If it does not, this method will throw an 
@@ -825,7 +827,7 @@ public class VideoDevice {
 	}
 	
 	/**
-	 * This method returns a <code>FrameGrabber</code> associated with this 
+	 * This method returns a {@link BGRFrameGrabber} associated with this 
 	 * video device. Captured frames will be converted to BGR24 before being 
 	 * handed out. The video device must support an appropriate image format 
 	 * that v4l4j can convert to BGR24. If it does not, this method will throw 
@@ -892,8 +894,8 @@ public class VideoDevice {
 		synchronized(this){
 			if(fg==null) {
 				state.get();
-				fg = new BGRFrameGrabber(this, v4l4jObject, w, h, input, std,
-						findTuner(input), imf);
+				fg = new BGRFrameGrabber(deviceInfo, v4l4jObject, w, h, input,
+						std, findTuner(input), imf);
 				try {
 					fg.init();
 				} catch (V4L4JException ve){
@@ -923,7 +925,7 @@ public class VideoDevice {
 	}
 	
 	/**
-	 * This method returns a <code>FrameGrabber</code> associated with this 
+	 * This method returns a {@link BGRFrameGrabber} associated with this 
 	 * video device. Captured frames will be BGR24-encoded before being handed 
 	 * out. The video device must support an appropriate image format that v4l4j
 	 * can convert to BGR24. If it does not, this method will throw an 
@@ -972,7 +974,7 @@ public class VideoDevice {
 	}
 	
 	/**
-	 * This method returns a <code>FrameGrabber</code> associated with this 
+	 * This method returns a {@link YUVFrameGrabber} associated with this 
 	 * video device. Captured frames will be converted to YUV420 before being 
 	 * handed out. The video device must support an appropriate image format 
 	 * that v4l4j can convert to YUV420. If it does not, this method will throw 
@@ -1041,8 +1043,8 @@ public class VideoDevice {
 		synchronized(this){
 			if(fg==null) {
 				state.get();
-				fg = new YUVFrameGrabber(this, v4l4jObject, w, h, input, std,
-						findTuner(input), imf);
+				fg = new YUVFrameGrabber(deviceInfo, v4l4jObject, w, h, input,
+						std, findTuner(input), imf);
 				try {
 					fg.init();
 				} catch (V4L4JException ve){
@@ -1072,7 +1074,7 @@ public class VideoDevice {
 	}
 	
 	/**
-	 * This method returns a <code>FrameGrabber</code> associated with this 
+	 * This method returns a {@link YUVFrameGrabber} associated with this 
 	 * video device. Captured frames will be YUV420-encoded before being handed 
 	 * out. The video device must support an appropriate image format that v4l4j
 	 * can convert to YUV420. If it does not, this method will throw an 
@@ -1121,7 +1123,7 @@ public class VideoDevice {
 	}
 	
 	/**
-	 * This method returns a <code>FrameGrabber</code> associated with this 
+	 * This method returns a {@link YVUFrameGrabber} associated with this 
 	 * video device. Captured frames will be converted to YVU420 before being 
 	 * handed out. The video device must support an appropriate image format 
 	 * that v4l4j can convert to YVU420. If it does not, this method will throw 
@@ -1164,7 +1166,7 @@ public class VideoDevice {
 	 * @throws InitialisationException if the video device file can not be 
 	 * initialised 
 	 * @throws V4L4JException if there is an error applying capture parameters
-	 * @throws StateException if a {@link FrameGrabber} already exists and must 
+	 * @throws StateException if a {@link AbstractGrabber} already exists and must 
 	 * be released  before another FrameGrabber can be allocated, or if the 
 	 * <code>VideoDevice</code> has been released.
 	 */
@@ -1190,8 +1192,8 @@ public class VideoDevice {
 		synchronized(this){
 			if(fg==null) {
 				state.get();
-				fg = new YVUFrameGrabber(this, v4l4jObject, w, h, input, std,
-						findTuner(input), imf);
+				fg = new YVUFrameGrabber(deviceInfo, v4l4jObject, w, h, input,
+						std, findTuner(input), imf);
 				try {
 					fg.init();
 				} catch (V4L4JException ve){
@@ -1221,7 +1223,7 @@ public class VideoDevice {
 	}
 	
 	/**
-	 * This method returns a <code>FrameGrabber</code> associated with this 
+	 * This method returns a {@link YVUFrameGrabber} associated with this 
 	 * video device. Captured frames will be YVU420-encoded before being handed 
 	 * out. The video device must support an appropriate image format that v4l4j
 	 * can convert to YVU420. If it does not, this method will throw an 
@@ -1270,14 +1272,14 @@ public class VideoDevice {
 	}
 	
 	/**
-	 * This method returns a <code>FrameGrabber</code> associated with this 
+	 * This method returns a {@link RawFrameGrabber} associated with this 
 	 * video device. Captured frames will be handed out in the same format as 
 	 * received from the driver and can be chosen amongst the ones supported by
 	 * this video device. To enumerate the supported {@link ImageFormat}s, check
 	 * the {@link ImageFormatList} returned by
 	 * {@link DeviceInfo#getFormatList()}.
-	 * The returned {@link FrameGrabber} must be released when no longer used by
-	 * calling {@link #releaseFrameGrabber()}.
+	 * The returned {@link RawFrameGrabber} must be released when no longer used
+	 * by calling {@link #releaseFrameGrabber()}.
 	 * @param w the desired frame width. This value may be adjusted to the 
 	 * closest supported by hardware. 
 	 * @param h the desired frame height. This value may be adjusted to the 
@@ -1302,10 +1304,10 @@ public class VideoDevice {
 	 * @throws InitialisationException if the video device file can not be 
 	 * initialised 
 	 * @throws V4L4JException if there is an error applying capture parameters
-	 * @throws StateException if a <code>FrameGrabber</code> already exists or
+	 * @throws StateException if a {@link FrameGrabber} already exists or
 	 * if the <code>VideoDevice</code> has been released.
 	 */
-	public FrameGrabber getRawFrameGrabber(int w, int h, int input, int std,
+	public RawFrameGrabber getRawFrameGrabber(int w, int h, int input, int std,
 			ImageFormat format) throws V4L4JException{
 		if(format==null)
 			throw new ImageFormatException("The image format can not be null");
@@ -1313,8 +1315,8 @@ public class VideoDevice {
 		synchronized(this){
 			if(fg==null) {
 				state.get();
-				fg = new FrameGrabber(this, v4l4jObject, w, h, input, std, 
-						findTuner(input), format);
+				fg = new RawFrameGrabber(deviceInfo, v4l4jObject, w, h, input,
+						std, findTuner(input), format);
 				try {
 					fg.init();
 				} catch (V4L4JException ve){
@@ -1330,13 +1332,13 @@ public class VideoDevice {
 					state.put();
 					throw new V4L4JException("Error", t);
 				}
-				return fg;
+				return (RawFrameGrabber) fg;
 			} else {
-				if(fg.getClass().isInstance(FrameGrabber.class))
-					return fg;
+				if(fg.getClass().isInstance(RawFrameGrabber.class))
+					return (RawFrameGrabber) fg;
 				else {
 					state.put();
-					throw new StateException("A JPEGFrameGrabber object already "
+					throw new StateException("Another FrameGrabber object already "
 							+"exists");
 				}
 			}
@@ -1344,11 +1346,11 @@ public class VideoDevice {
 	}
 	
 	/**
-	 * This method returns a <code>FrameGrabber</code> associated with this 
+	 * This method returns a {@link RawFrameGrabber} associated with this 
 	 * video device. Captured frames will be handed out in the same format as 
 	 * received from the driver. The chosen format is the one returned by
-	 * <code>getDeviceInfo().getFormatList().getList.get(0)</code>. The 
-	 * {@link FrameGrabber} must be released when no longer used by calling
+	 * <code>getDeviceInfo().getFormatList().getNativeFormats.get(0)</code>. The 
+	 * {@link RawFrameGrabber} must be released when no longer used by calling
 	 * {@link #releaseFrameGrabber()}.
 	 * @param w the desired frame width. This value may be adjusted to the 
 	 * closest supported by hardware. 
@@ -1358,7 +1360,7 @@ public class VideoDevice {
 	 * {@link InputInfo#getIndex()}.
 	 * @param std the video standard, as returned by 
 	 * {@link InputInfo#getSupportedStandards()} (see {@link V4L4JConstants})
-	 * @return the <code>FrameGrabber</code> associated with this video device.
+	 * @return a <code>RawFrameGrabber</code> associated with this video device.
 	 * @throws VideoStandardException if the chosen video standard is not 
 	 * supported.
 	 * @throws CaptureChannelException if the given channel number value is not 
@@ -1368,16 +1370,17 @@ public class VideoDevice {
 	 * @throws InitialisationException if the video device file can not be 
 	 * initialised.
 	 * @throws ImageFormatException if no image format could be found because
-	 * the {@link DeviceInfo} object could not be obtained.
+	 * the {@link DeviceInfo} object could not be obtained. Check if the device
+	 * is not already used by another application.
 	 * @throws V4L4JException if there is an error applying capture parameters
 	 * @throws StateException if a <code>FrameGrabber</code> already exists or 
 	 * if the <code>VideoDevice</code> has been released.
 	 */
-	public FrameGrabber getRawFrameGrabber(int w, int h, int input, int std) 
+	public RawFrameGrabber getRawFrameGrabber(int w, int h, int input, int std) 
 			throws V4L4JException{
 		if(deviceInfo==null)
-			throw new ImageFormatException("No DeviceInfo could be obtained & "
-					+"no image format could be found");
+			throw new ImageFormatException("No DeviceInfo could be obtained. "
+					+"The device is probably used by another application");
 		return getRawFrameGrabber(w, h, input, std, 
 				deviceInfo.getFormatList().getNativeFormats().get(0));
 	}
