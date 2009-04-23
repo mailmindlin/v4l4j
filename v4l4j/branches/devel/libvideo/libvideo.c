@@ -237,16 +237,42 @@ void print_device_info(struct video_device *v){
 	printf("Device file: %s\n",v->file);
 	printf("Supported image formats (Name - Index):\n");
 	for(j=0; j<i->nb_palettes; j++){
-		printf("\t%s - %d", libvideo_palettes[i->palettes[j].index].name,
+		printf("\t%s (%d)", libvideo_palettes[i->palettes[j].index].name,
 				i->palettes[j].index);
-		if(i->palettes[j].raw_palette!=UNSUPPORTED_PALETTE){
-			printf(" (converted from %s - %d)",
-					libvideo_palettes[i->palettes[j].raw_palette].name,
-					i->palettes[j].raw_palette
-					);
-		}
-		printf("\n");
+		if(i->palettes[j].raw_palettes!=NULL){
+			k=-1;
+			printf(" ( converted from ");
+			while(i->palettes[j].raw_palettes[++k]!=-1)
+				printf("%s (%d) - ",
+						libvideo_palettes[i->palettes[j].raw_palettes[k]].name,
+						i->palettes[j].raw_palettes[k]
+				);
+			printf(" )\n");
+		} else {
+			printf("\n");
 
+			if(i->palettes[j].size_type==FRAME_SIZE_CONTINUOUS){
+				printf("\t\tWidth (min/max/step): %d / %d / %d\n",
+						i->palettes[j].continuous->min_width,
+						i->palettes[j].continuous->max_width,
+						i->palettes[j].continuous->step_width
+				);
+				printf("\t\tHeight (min/max/step): %d / %d / %d\n",
+						i->palettes[j].continuous->min_height,
+						i->palettes[j].continuous->max_height,
+						i->palettes[j].continuous->step_height
+				);
+			}else if(i->palettes[j].size_type==FRAME_SIZE_DISCRETE){
+				k = -1;
+				while(i->palettes[j].discrete[++k].width!=0)
+					printf("\t\t%d x %d\n",
+							i->palettes[j].discrete[k].width,
+							i->palettes[j].discrete[k].height
+					);
+
+			}else
+				printf("\t\tFrame size enumeration not supported\n");
+		}
 	}
 
 	printf("Inputs:\n");

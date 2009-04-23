@@ -43,10 +43,9 @@
  */
 static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	jclass this_class, format_class;
-	jobject obj;
-	jmethodID format_ctor;
+	jclass this_class;
 	jfieldID field;
+	int i;
 
 	//Updates the FrameGrabber class width, height & format fields with the
 	//values returned by V4L2
@@ -91,7 +90,7 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 	//format
 	if(d->output_fmt!=OUTPUT_RAW){
 		field = (*e)->GetFieldID(e, this_class, "format",
-				"Lau/edu/jcu/v4l4j/ImageFormat;");
+				"I");
 		if(field==NULL) {
 			info("[V4L4J] error looking up format field in FrameGrabber "
 					"class\n");
@@ -100,32 +99,14 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 			return;
 		}
 
-		format_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/ImageFormat");
-		if(format_class == NULL){
-			info("[V4L4J] Error looking up the ImageFormat class\n");
-			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up ImageFormat class");
-			return;
-		}
-
-		format_ctor = (*e)->GetMethodID(e, format_class, "<init>",
-				"(Ljava/lang/String;I)V");
-		if(format_ctor == NULL){
-			info("[V4L4J] Error looking up the constructor of ImageFormat "
-					"class\n");
-			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of "
-					"ImageFormat class");
-			return;
-		}
+		if(d->vdev->capture->is_native==1)
+			i = d->vdev->capture->palette;
+		else
+			i = d->vdev->capture->convert->src_palette;
 
 		dprint(LOG_V4L4J, "[V4L4J] Setting format field to '%s' image format\n",
-				libvideo_palettes[d->vdev->capture->palette].name);
-		obj = (*e)->NewObject(e, format_class, format_ctor,
-						(*e)->NewStringUTF(e,
-								(const char *)
-								libvideo_palettes[d->vdev->capture->palette].name
-								),
-						d->vdev->capture->palette);
-		(*e)->SetObjectField(e, this, field, obj);
+			libvideo_palettes[i].name);
+		(*e)->SetIntField(e, this, field, i);
 	}
 }
 
@@ -200,7 +181,6 @@ static int init_format_converter(struct v4l4j_device *d){
 				dprint(LOG_V4L4J, "[V4L4J] Error initialising JPEG converter\n");
 		} else if(d->output_fmt==OUTPUT_RGB24){
 			d->len = get_buffer_length(d);
-
 			//check who does it
 			if(d->vdev->capture->is_native==1){
 				dprint(LOG_V4L4J, "[V4L4J] Initialising RGB converter\n");
@@ -310,7 +290,7 @@ static int init_capture_format(struct v4l4j_device *d, int output, int input){
 		d->need_conv=0;
 		break;
 	default:
-		dprint(LOG_V4L4J, "[V4L4J] unknown output format %d\n", output);
+		info("[V4L4J] Error: unknown output format %d\n", output);
 		break;
 	}
 	return ret;
@@ -324,7 +304,7 @@ static int init_capture_format(struct v4l4j_device *d, int output, int input){
  * fmt is the input format
  * output is the output format (enum output_format in common.h)
  */
-JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(
+JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doInit(
 		JNIEnv *e, jobject t, jlong object, jint w, jint h, jint ch, jint std,
 		jint n, jint fmt, jint output){
 
@@ -377,7 +357,8 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(
 					"The requested channel (%d) is invalid", c->channel);
 		else if(i==LIBVIDEO_ERR_FORMAT)
 			THROW_EXCEPTION(e, FORMAT_EXCP,
-					"Image format %s not supported", libvideo_palettes[fmt].name);
+					"Image format %s not supported",
+					libvideo_palettes[fmt].name);
 		else if(i==LIBVIDEO_ERR_STD)
 			THROW_EXCEPTION(e, STD_EXCP,
 					"The requested standard (%d) is invalid", c->std);
@@ -454,7 +435,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doInit(
 /*
  * tell LIBVIDEO to start the capture
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_start(
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_start(
 		JNIEnv *e, jobject t, jlong object){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
@@ -470,7 +451,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_start(
 /*
  * tell the JPEG compressor the new compression factor
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_setQuality(
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_setQuality(
 		JNIEnv *e, jobject t, jlong object, jint q){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
@@ -484,7 +465,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_setQuality(
 /*
  * get a new JPEG-compressed frame from the device
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getBuffer(
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_getBuffer(
 		JNIEnv *e, jobject t, jlong object) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	int i;
@@ -508,7 +489,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getBuffer(
 /*
  * return the length of the last captured frame
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getBufferLength(
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_getBufferLength(
 		JNIEnv *e, jobject t, jlong object){
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 	return d->len;
@@ -517,7 +498,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_getBufferLength(
 /*
  * tell LIBVIDEO to stop the capture
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_stop(
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_stop(
 		JNIEnv *e, jobject t, jlong object){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
@@ -537,7 +518,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_stop(
  * free JPEG compressor
  * free LIBVIDEO (free_capture, free_capture_device)
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameGrabber_doRelease(
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doRelease(
 		JNIEnv *e, jobject t, jlong object){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;

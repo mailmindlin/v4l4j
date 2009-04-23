@@ -30,20 +30,45 @@
 #include "libvideo-err.h"
 #include "log.h"
 
-static void set_palette_info(struct device_info *di, int idx, int palette){
+static void set_palette_info(struct device_info *di, int idx, int palette,
+		struct frame_size_continuous *cont){
 	XREALLOC(di->palettes,
 			struct palette_info *,(idx+1) * sizeof(struct palette_info));
 	di->palettes[idx].index = palette;
-	di->palettes[idx].raw_palette = -1;
+	di->palettes[idx].raw_palettes = NULL;
+	di->palettes[idx].size_type = FRAME_SIZE_CONTINUOUS;
+	di->palettes[idx].continuous = cont;
 	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: %s (%d) supported\n",
 			libvideo_palettes[palette].name, palette);
 }
 
 static int check_palettes_v4l1(struct video_device *vdev){
 	struct video_picture pic;
+	struct video_capability vc;
+	struct frame_size_continuous *cont;
+
 	int palette = 0, index=0;
 	struct device_info *di = vdev->info;
 	di->palettes = NULL;
+
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
+				"QRY: Checking frame size.\n");
+	if (-1 == ioctl( vdev->fd, VIDIOCGCAP, &vc)) {
+		info("Error checking frame size of V4L1 video device %s\n",
+				vdev->file);
+		return 0;
+	}
+
+	XMALLOC(cont, struct frame_size_continuous *,
+			sizeof(struct frame_size_continuous ));
+	cont->max_height = vc.maxheight;
+	cont->min_height = vc.minheight;
+	cont->max_width = vc.maxwidth;
+	cont->min_width = vc.minwidth;
+
+	//can anyone think of a better value ?
+	cont->step_width = 1;
+	cont->step_height = 1;
 
 	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
 			"QRY: Checking supported palettes.\n");
@@ -55,7 +80,7 @@ static int check_palettes_v4l1(struct video_device *vdev){
 			pic.palette = libvideo_palettes[palette].v4l1_palette;
 			pic.depth = libvideo_palettes[palette].depth;
 			if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0)
-				set_palette_info(di, index++, palette);
+				set_palette_info(di, index++, palette, cont);
 		}
 	}
 
@@ -66,7 +91,7 @@ static int check_palettes_v4l1(struct video_device *vdev){
 	pic.palette = libvideo_palettes[YUV420P].v4l1_palette;
 	pic.depth = libvideo_palettes[YUV420P].depth;
 	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0)
-		set_palette_info(di, index++, YUV420);
+		set_palette_info(di, index++, YUV420, cont);
 
 	//v4l1 weirdness
 	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
@@ -75,7 +100,7 @@ static int check_palettes_v4l1(struct video_device *vdev){
 	pic.palette = libvideo_palettes[YUV422].v4l1_palette;
 	pic.depth = libvideo_palettes[YUV422].depth;
 	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0)
-		set_palette_info(di, index++, YUYV);
+		set_palette_info(di, index++, YUYV, cont);
 
 	//v4l1 weirdness
 	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
@@ -84,7 +109,7 @@ static int check_palettes_v4l1(struct video_device *vdev){
 	pic.palette = libvideo_palettes[YUV411].v4l1_palette;
 	pic.depth = libvideo_palettes[YUV411].depth;
 	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0)
-		set_palette_info(di, index++, YUV411P);
+		set_palette_info(di, index++, YUV411P, cont);
 
 
 	return index;
@@ -260,5 +285,6 @@ int query_device_v4l1(struct video_device *vdev){
 
 void free_video_device_v4l1(struct video_device *vd){
 	free_video_inputs(vd->info->inputs, vd->info->nb_inputs);
+	XFREE(vd->info->palettes->continuous);
 	XFREE(vd->info->palettes);
 }

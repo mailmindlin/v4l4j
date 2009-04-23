@@ -36,7 +36,7 @@
 								 fflush(stderr); } while(0)
 
 #define CLEAR_ARR(x,s) memset((x), 0x0, (s));
-#define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
+#define ARRAY_SIZE(x) ( ((x)==NULL)?0:((int)sizeof(x)/(int)sizeof((x)[0])) )
 
 
 //debug stuff

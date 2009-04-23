@@ -1,26 +1,26 @@
 /*
-* Copyright (C) 2007-2008 Gilles Gigan (gilles.gigan@gmail.com)
-* eResearch Centre, James Cook University (eresearch.jcu.edu.au)
-*
-* This program was developed as part of the ARCHER project
-* (Australian Research Enabling Environment) funded by a   
-* Systemic Infrastructure Initiative (SII) grant and supported by the Australian
-* Department of Innovation, Industry, Science and Research
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public  License as published by the
-* Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  
-* See the GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Copyright (C) 2007-2008 Gilles Gigan (gilles.gigan@gmail.com)
+ * eResearch Centre, James Cook University (eresearch.jcu.edu.au)
+ *
+ * This program was developed as part of the ARCHER project
+ * (Australian Research Enabling Environment) funded by a   
+ * Systemic Infrastructure Initiative (SII) grant and supported by the Australian
+ * Department of Innovation, Industry, Science and Research
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public  License as published by the
+ * Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 package au.edu.jcu.v4l4j;
 
 import java.util.List;
@@ -28,8 +28,9 @@ import java.util.Vector;
 
 /**
  * ImageFormatList objects group together a list of native {@link ImageFormat}s
- * supported by a {@link VideoDevice}. This list is obtained by calling
- * {@link #getNativeFormats()}. Additionally, v4l4j can convert some native formats to 
+ * and capture resolutions supported by a {@link VideoDevice}. This native 
+ * format list is  obtained by calling {@link #getNativeFormats()}. 
+ * Additionally, v4l4j can convert some native formats to 
  * RGB24, BGR24, JPEG, YUV420 and YVU420. The 
  * {@link #getRGBEncodableFormats()}, {@link #getBGREncodableFormats()}, 
  * {@link #getJPEGEncodableFormats()}, {@link #getYUVEncodableFormats()} 
@@ -51,7 +52,7 @@ public class ImageFormatList {
 			throw e;
 		}
 	}
-	
+
 	/**
 	 * Native method used to populate the {@link #formats}, {@link #JPEGformats}
 	 * {@link #RGBformats}, {@link #BGRformats}, {@link #YUV420formats} &
@@ -220,8 +221,7 @@ public class ImageFormatList {
 	/**
 	 * This method looks for a native {@link ImageFormat} given its index,
 	 * and returns it, or <code>null</code> if not found. A list of all known 
-	 * format indexes can be found in {@link V4L4JConstants} 
-	 * (V4L4JConstants.IMF_*). 
+	 * format indexes can be found in {@link V4L4JConstants}.IMF_*. 
 	 * @param i the index of the <code>ImageFormat</code> to look up
 	 * @return the <code>ImageFormat</code> or <code>null</code> if not found.
 	 */
@@ -256,8 +256,7 @@ public class ImageFormatList {
 	 * This method looks for a native {@link ImageFormat}  that can be converted 
 	 * to JPEG by v4l4j given its 
 	 * index, and returns it, or <code>null</code> if not found. A list of all 
-	 * known format indexes can be found in {@link V4L4JConstants} 
-	 * (V4L4JConstants.IMF_*). 
+	 * known format indexes can be found in {@link V4L4JConstants}.IMF_* . 
 	 * @param i the index of the <code>ImageFormat</code> to look up
 	 * @return the <code>ImageFormat</code> or <code>null</code> if not found.
 	 */
@@ -292,7 +291,7 @@ public class ImageFormatList {
 	 * This method looks for a native {@link ImageFormat} that can be converted 
 	 * to RGB24 by v4l4j given its index, and returns it, or <code>null</code> 
 	 * if not found. A list of all known format indexes can be found in 
-	 * {@link V4L4JConstants} (V4L4JConstants.IMF_*). 
+	 * {@link V4L4JConstants}.IMF_* . 
 	 * @param i the index of the <code>ImageFormat</code> to look up
 	 * @return the <code>ImageFormat</code> or <code>null</code> if not found.
 	 */
@@ -327,8 +326,7 @@ public class ImageFormatList {
 	 * This method looks for a native {@link ImageFormat}  that can be converted 
 	 * to BGR24 by v4l4j given its index,
 	 * and returns it, or <code>null</code> if not found. A list of all known 
-	 * format indexes can be found in {@link V4L4JConstants} 
-	 * (V4L4JConstants.IMF_*). 
+	 * format indexes can be found in {@link V4L4JConstants}.IMF_* . 
 	 * @param i the index of the <code>ImageFormat</code> to look up
 	 * @return the <code>ImageFormat</code> or <code>null</code> if not found.
 	 */
@@ -363,8 +361,7 @@ public class ImageFormatList {
 	 * This method looks for a native {@link ImageFormat}  that can be converted 
 	 * to YUV420 by v4l4j given its index,
 	 * and returns it, or <code>null</code> if not found. A list of all known 
-	 * format indexes can be found in {@link V4L4JConstants} 
-	 * (V4L4JConstants.IMF_*). 
+	 * format indexes can be found in {@link V4L4JConstants}.IMF_* . 
 	 * @param i the index of the <code>ImageFormat</code> to look up
 	 * @return the <code>ImageFormat</code> or <code>null</code> if not found.
 	 */
@@ -399,8 +396,7 @@ public class ImageFormatList {
 	 * This method looks for a native {@link ImageFormat}  that can be converted 
 	 * to YVU420 by v4l4j given its index,
 	 * and returns it, or <code>null</code> if not found. A list of all known 
-	 * format indexes can be found in {@link V4L4JConstants} 
-	 * (V4L4JConstants.IMF_*). 
+	 * format indexes can be found in {@link V4L4JConstants}V4L4JConstants.IMF_* 
 	 * @param i the index of the <code>ImageFormat</code> to look up
 	 * @return the <code>ImageFormat</code> or <code>null</code> if not found.
 	 */

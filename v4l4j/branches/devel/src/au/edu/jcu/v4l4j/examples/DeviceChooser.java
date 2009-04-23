@@ -28,6 +28,8 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.Vector;
 
@@ -51,7 +53,7 @@ import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.exceptions.NoTunerException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
-public class DeviceChooser implements ActionListener{
+public class DeviceChooser  extends WindowAdapter implements ActionListener{
 	
 	private static String v4lSysfsPath="/sys/class/video4linux/";
 	
@@ -86,6 +88,7 @@ public class DeviceChooser implements ActionListener{
 	
 	public void initGUI(){
 		frame.getContentPane().add(mainPanel);
+		frame.addWindowListener(this);
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
 		deviceFiles.setAlignmentX(Component.CENTER_ALIGNMENT);
 		Dimension d = new Dimension(120,25);
@@ -98,6 +101,15 @@ public class DeviceChooser implements ActionListener{
 		mainPanel.setMaximumSize(d);
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(1, 0, 0, 0));
 
+	}
+	
+    /**
+     * Catch window closing event so we can free up resources before exiting
+     * @param e
+     */
+	public void windowClosing(WindowEvent e) {
+		if(info!=null)
+			info.close();
 	}
 	
 	private Object[] listV4LDeviceFiles(){
