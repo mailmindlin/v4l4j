@@ -4,7 +4,7 @@
 This page shows a few examples in Java on how to use v4l4j. It assumes you have successfully compiled and installed v4l4j (see GettingStarted page for detailed instructions). Here, video source refers to any video-capture device supported by the Linux kernel, and accessible through the Video4Linux API using the associated device file (usually /dev/video0). The v4l4j API has many more methods and classes than presented here. Be sure to check the Java documentation for a more complete reference.
 Below, you will find the following examples:
  * *Initialising the video device*: Creating a java object to interact with a video device.
- * *Gathering information about the device*: finding out the number of inputs, tuners, supported image formats, and lots more.
+ * *Gathering information about the device*: finding out the number of inputs, tuners, supported image formats, supported capture resolutions and lots more.
  * *Dealing with controls*: List the controls associated with a video device and get / set their values.
  * *Capturing frames*: Getting a `FrameGrabber` object to capture images from the video device.
  * *Display video in a GUI (JFrame)*: Create a graphical interface (JFrame) to display the captured video stream.
@@ -17,7 +17,7 @@ String dev = "/dev/video0";
 VideoDevice vd = new VideoDevice(dev);
 }}}
 The VideoDevice object allows you to:
-  * get textual information about the video device itself, such as its name, the supported image formats, and the type of video inputs,
+  * get textual information about the video device itself, such as its name, the supported image formats & resolutions, and the type of video inputs,
   * capture frames through a `FrameGrabber` object (or one of its subclasses),
   * control tuners the device may have, through the `TunerList` object,
   * access video control, such as brightness, contrast, and gain, through the `ControlList` object.
@@ -52,15 +52,17 @@ Each `InputInfo` object contains:
     * the index of the tuner,
     * and the lowest and highest tunable frequencies.
 
-Lastly, the `ImageFormatList` object details the native image formats supported by the video device. This object also lists native image formats that can be encoded into more convenient formats: JPEG, RGB24, BGR24, YUV420 and YVU420.
+Lastly, the `ImageFormatList` object details the native image formats & resolutions supported by the video device. This object also lists native image formats that can be encoded into more convenient formats: JPEG, RGB24, BGR24, YUV420 and YVU420.
 {{{
 //get the ImageFormatList object
 ImageFormatList l = vd.getDeviceInfo().getFormatList();
 
 
-//List all supported image formats
-for(ImageFormat f : l.getList())
-System.out.println("\t"+f.getName()+" - "+f.getIndex());
+//List all supported image formats & resolutions
+for(ImageFormat f : l.getList()) {
+  System.out.println("\t"+f.getName()+" - "+f.getIndex());
+  System.out.println("\t\tResolutions: "+f.getResolutionInfo());
+}
 
 
 //List all supported image formats that can be JPEG-encoded
