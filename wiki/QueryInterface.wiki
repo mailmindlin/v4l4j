@@ -32,18 +32,66 @@ struct video_input_info {
 }}}
 Information about an image format is encapsulated in a `struct palette_info`:
 {{{
+struct frame_size_discrete {
+	int width;
+	int height;
+};
+
+struct frame_size_continuous {
+	int min_width;
+	int max_width;
+	int step_width;
+	int min_height;
+	int max_height;
+	int step_height;
+};
+
+enum frame_size_types{
+	FRAME_SIZE_UNSUPPORTED=0,
+	FRAME_SIZE_DISCRETE,
+	FRAME_SIZE_CONTINUOUS
+};
+
+/*
+ * a palette (or image format) can be either raw or converted.
+ * A raw palette is a palette produced by the driver natively.
+ * A converted palette is a palette which is converted by libvideo from
+ * a raw palette
+ */
 struct palette_info{
-	//the libvideo index for this image format
+	//this palette's index
 	int index;
 
-	//raw_palette store the libvideo index of the real palette used when capturing
-	//and is meaningful for V4L2 devices only. If this palette is converted,
-	//the converted one is stored here. Otherwise,
-	//raw_palette=UNSUPPORTED_PALETTE
-	int raw_palette;
+	//if raw_palettes is not NULL, then this palette is a converted palette and
+	//raw_palettes contains an array of indexes of raw palettes. It is used
+	//for V4L2 only. The last element in the array is -1
+	//if raw_palettes is NULL, this palette is raw, and size_type and
+	//(continuous or discrete) are valid (check value of size_type).
+	//If raw_palettes is not NULL, then
+	//size_type==FRAME_SIZE_UNSUPPORTED, continuous and discrete and not valid.
+	int *raw_palettes;
+
+	//the type of frame sizes
+	enum frame_size_types size_type;
+
+	//if size_type==FRAME_SIZE_CONTINUOUS, then only the continuous member
+	//of this union is valid, and points to a single
+	//struct frame_size_continuous
+	//if size_type==FRAME_SIZE_DISCRETE, then only the discrete member
+	//of this union is valid, and points to an array of
+	//struct frame_size_discrete. The last element in the array has its members
+	//(width and height) set to 0.
+	//if size_type==FRAME_SIZE_UNSUPPORTED, then none of the two members are
+	//valid
+	union {
+		struct frame_size_continuous *continuous;
+		struct frame_size_discrete *discrete;
+	};
 };
 }}}
-The previous structure needs explaining: libvideo can convert native image formats (image formats produce by the video device) into convenience formats RGB24, BGR24, YUV420 & YVU420. This is internally accomplished by libv4l_convert. When checking supported image formats, both native and converted formats are reported by libvideo. The application can make the difference between a native and a converted format by checking the `raw_palette` member: if it is set to `UNSUPPORTED_PALETTE` then it is a native format. Otherwise, it is set to the native format which is converted into the new one.
+The previous structure needs explaining: libvideo can convert native image formats (image formats produce by the video device) into convenience formats RGB24, BGR24, YUV420 & YVU420. This is internally accomplished by libv4l_convert. When checking supported image formats, both native and converted formats are reported by libvideo. The application can make the difference between a native and a converted format by checking the `raw_palette` member: if it is set to `NULL` then it is a native format. Otherwise, it points to an integer array which lists the native formats that can be converted.
+
+Also a `struct palette_info` contains information on the supported captures resolutions for the image format it describes. If the image format is native, the member `size_type` indicates whether the supported resolutions are reported as a list of discrete Width,Height pairs (size_type=FRAME_SIZE_DISCRETE), or as minimum/maximum/step values for both width and height (size_type=FRAME_SIZE_CONTINUOUS). if size_type=FRAME_SIZE_UNSUPPORTED, then no resolution information could be obtained form the driver.
 
 Information about a tuner is contained in a `struct tuner_info`:
 {{{
@@ -92,15 +140,43 @@ if(i!=NULL){
 	printf("Device file: %s\n",v->file);
 	printf("Supported image formats (Name - Index):\n");
 	for(j=0; j<i->nb_palettes; j++){
-		printf("\t%s - %d", libvideo_palettes[i->palettes[j].index].name,
+		printf("\t%s (%d)", libvideo_palettes[i->palettes[j].index].name,
 				i->palettes[j].index);
-		if(i->palettes[j].raw_palette!=UNSUPPORTED_PALETTE){
-			printf(" (converted from %s - %d)", 
-                               libvideo_palettes[i->palettes[j].raw_palette].name,i->palettes[j].raw_palette);
-		}
-		printf("\n");
+		if(i->palettes[j].raw_palettes!=NULL){
+			k=-1;
+			printf(" ( converted from ");
+			while(i->palettes[j].raw_palettes[++k]!=-1)
+				printf("%s (%d) - ",libvideo_palettes[i->palettes[j].raw_palettes[k]].name,
+						i->palettes[j].raw_palettes[k]
+				);
+			printf(" )\n");
+		} else {
+			printf("\n");
 
+			if(i->palettes[j].size_type==FRAME_SIZE_CONTINUOUS){
+				printf("\t\tWidth (min/max/step): %d / %d / %d\n",
+						i->palettes[j].continuous->min_width,
+						i->palettes[j].continuous->max_width,
+						i->palettes[j].continuous->step_width
+				);
+				printf("\t\tHeight (min/max/step): %d / %d / %d\n",
+						i->palettes[j].continuous->min_height,
+						i->palettes[j].continuous->max_height,
+						i->palettes[j].continuous->step_height
+				);
+			}else if(i->palettes[j].size_type==FRAME_SIZE_DISCRETE){
+				k = -1;
+				while(i->palettes[j].discrete[++k].width!=0)
+					printf("\t\t%d x %d\n",
+							i->palettes[j].discrete[k].width,
+							i->palettes[j].discrete[k].height
+					);
+
+			}else
+				printf("\t\tFrame size enumeration not supported\n");
+		}
 	}
+
 
 	printf("Inputs:\n");
 	for(j=0; j<i->nb_inputs; j++){
