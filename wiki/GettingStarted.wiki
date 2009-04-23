@@ -2,7 +2,7 @@
 #labels Featured
 
 =Quick Start=
-For the impatient, here are a few instructions that will get you started, assuming you are using Ubuntu or Debian. You have two options to download v4l4j:I suggest you first try the latest stable version, available as a tar archive from the "Downloads" tab above. The second option, which is to download the latest SVN version, should be used only if the stable version does not work for you. To download the latest SVN version, use :
+For the impatient, here are a few instructions that will get you started, assuming you are using Ubuntu or Debian. You have two options to download v4l4j:I suggest you first try the latest stable version, available as a tar archive from the [http://code.google.com/p/v4l4j/downloads/list Downloads tab] above. The second option, which is to download the latest SVN version, should be used only if the stable version does not work for you. To download the latest SVN version, use :
 {{{
 svn co http://v4l4j.googlecode.com/svn/v4l4j/trunk v4l4j
 }}}
