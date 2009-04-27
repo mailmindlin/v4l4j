@@ -98,8 +98,8 @@
 	</target>
 	
 	<target name="install" depends="install-libvideo">
-		<mkdir dir="${platform.standard.jar.location}"/>
-		<mkdir dir="${platform.standard.jni32.location}"/>
+		<mkdir dir="${destdir}${platform.standard.jar.location}"/>
+		<mkdir dir="${destdir}${platform.standard.jni32.location}"/>
 		<copy file="${project.dir}/${project.jni.file}" tofile="${destdir}${platform.standard.jni32.location}/${project.jni.file}" />
 		<copy file="${project.dir}/${project.jar.file}" tofile="${destdir}${platform.standard.jar.location}/${project.jar.file}" />
 		<copy todir="${destdir}${platform.standard.javadoc.location}">
@@ -113,8 +113,8 @@
 	</target>
 	
 	<target name="install64" depends="install-libvideo">
-		<mkdir dir="${platform.standard.jar.location}"/>
-		<mkdir dir="${platform.standard.jni64.location}"/>
+		<mkdir dir="${destdir}${platform.standard.jar.location}"/>
+		<mkdir dir="${destdir}${platform.standard.jni64.location}"/>
 		<copy file="${project.dir}/${project.jni.file}" tofile="${destdir}${platform.standard.jni64.location}/${project.jni.file}" />
 		<copy file="${project.dir}/${project.jar.file}" tofile="${destdir}${platform.standard.jar.location}/${project.jar.file}" />
 		<copy todir="${destdir}${platform.standard.javadoc.location}">
@@ -186,7 +186,7 @@
 				<exclude name="au/edu/jcu/v4l4j/test/"/>
 			</fileset>
 			<fileset dir="${project.dir}">
-							<include name="resources/**" />
+				<include name="resources/**" />
 			</fileset>
 		</jar>
 	</target>
