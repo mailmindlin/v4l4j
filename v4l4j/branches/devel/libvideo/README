@@ -17,6 +17,10 @@ is then done via driver-specific ioctls. libvideo will probe the driver.If it
 is PWC, it will probe the device and if the device supports Pan/Tilt features,
 libvideo will create V4L controls to provide access to Pan & tilt.
 
+DOCUMENTATION:
+libvideo and associated documentation (Howtos, API, ...) can be obtained from
+http://v4l4j.googlecode.com
+
 TESTED DEVICES:
 see TestedHardware file
 
