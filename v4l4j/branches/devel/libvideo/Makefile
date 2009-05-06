@@ -92,7 +92,6 @@ install: $(LIB).$(LIB_RELEASE)
 	mkdir -p $(DESTDIR)$(LIB_INSTALL_DIR)
 	install -m 755 $(LIB).$(LIB_RELEASE) $(DESTDIR)$(LIB_INSTALL_DIR)
 	cd $(DESTDIR)$(LIB_INSTALL_DIR) && ln -f -s $(LIB).$(LIB_RELEASE) $(LIB)
-	/sbin/ldconfig
 
 uninstall:
 	for f in $(USER_INCLUDES); do rm -f $(DESTDIR)$(INC_INSTALL_DIR)/$${f}; done
@@ -113,3 +112,4 @@ clean:
   $(LIBV4LCONVERT_AR) ./*.o list-caps test-capture dump-capture version.h ./*~
 
 .PHONY: all install uninstall test clean
+
