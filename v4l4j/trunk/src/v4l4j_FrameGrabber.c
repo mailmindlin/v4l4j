@@ -32,7 +32,7 @@
 #include "libvideo.h"
 #include "libvideo-err.h"
 #include "jpeg.h"
-#include "palettes.h"
+#include "libvideo-palettes.h"
 #include "rgb.h"
 
 
