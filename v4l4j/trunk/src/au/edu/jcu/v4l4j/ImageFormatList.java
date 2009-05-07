@@ -28,8 +28,9 @@ import java.util.Vector;
 
 /**
  * ImageFormatList objects group together a list of native {@link ImageFormat}s
- * and capture resolutions supported by a {@link VideoDevice}. This native 
- * format list is  obtained by calling {@link #getNativeFormats()}. 
+ * and capture resolutions supported by a {@link VideoDevice}. A native (or raw)
+ * format is a format supported and used by the driver. This native 
+ * format list is obtained by calling {@link #getNativeFormats()}. 
  * Additionally, v4l4j can convert some native formats to 
  * RGB24, BGR24, JPEG, YUV420 and YVU420. The 
  * {@link #getRGBEncodableFormats()}, {@link #getBGREncodableFormats()}, 

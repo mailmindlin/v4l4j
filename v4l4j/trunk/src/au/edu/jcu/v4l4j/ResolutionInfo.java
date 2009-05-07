@@ -31,7 +31,7 @@ import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
 
 /**
  * This class encapsulates information about the supported capture resolutions
- * for a video device. The first step is to determine how the supported 
+ * for a given {@link ImageFormat}. The first step is to determine how the supported 
  * resolutions are expressed by calling {@link #getType()}. This method returns
  * either:
  * <ul>
@@ -67,9 +67,10 @@ public class ResolutionInfo {
 	 */
 	public enum Type{
 		/**
-		 * An UNSUPPORTED type means supported resolutions cannot be obtained
-		 * from the driver. Calling any methods on the {@link ResolutionInfo}
-		 * object (except {@link ResolutionInfo#getType()} will throw an
+		 * An UNSUPPORTED type means supported resolution information cannot be 
+		 * obtained from the driver. Calling any methods on the 
+		 * {@link ResolutionInfo} object (except 
+		 * {@link ResolutionInfo#getType()} will throw an
 		 * {@link UnsupportedMethod} exception. 
 		 */
 		UNSUPPORTED,
