@@ -29,7 +29,7 @@
 #include "libvideo.h"
 #include "log.h"
 #include "libvideo-err.h"
-#include "palettes.h"
+#include "libvideo-palettes.h"
 #include "v4l1-input.h"
 
 

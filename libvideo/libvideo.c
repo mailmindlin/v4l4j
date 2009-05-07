@@ -33,7 +33,7 @@
 #include "libvideo.h"
 #include "libvideo-err.h"
 #include "log.h"
-#include "palettes.h"
+#include "libvideo-palettes.h"
 #include "pwc-probe.h"
 #include "qc-probe.h"
 #include "version.h"
