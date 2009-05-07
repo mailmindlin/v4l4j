@@ -4,6 +4,7 @@ to capture frames  from Video4Linux devices. It consists of:
 - a set of java classes that provide access to the libvideo API, and
 - a JNI stub, which fills in the gap between JAVA and libvideo.
 
+
 FEATURES:
 - Captured frames handed out in a ByteBuffer object. Frames are handed in either
   in raw format or converted to JPEG, RGB24, BGR24, YUV420 or YVU420.
@@ -13,43 +14,55 @@ FEATURES:
   See TestedHardware in the libvideo directory for a list of detected drivers
   and exported private ioctls
 
+
+DOCUMENTATION:
+The latest version of v4l4j and associated documentation (Howtos, API, ...) can
+always be found at http://v4l4j.googlecode.com
+
+
+QUICK START:
+The following installs the dependencies, compiles v4l4j and runs a test 
+application, assuming you are running Ubuntu or Debian:
+
+sudo apt-get install openjdk-6-jdk libjpeg-dev build-essential ant
+ant test-gui
+
+If you want to use v4l4j from your own code, jump to the INSTALLING section.
+
+
 REQUIREMENTS:
 v4l4j requires the following:
 - a supported V4L video source (webcam, capture card, tuner card).
-- Sun JAVA JDK 1.6 (it wont compile with earlier versions). Some users have
-  successfully used v4l4j with OpenJDK, although it has not officially been
-  tested.
+- Sun JAVA JDK 1.6 or OpenJDK6 (it wont compile with earlier versions).
 - the development files of libjpeg, as well as libjpeg itself
 - standard build tools (make, gcc, ld) & headers (libc)
 - Apache Ant
 
+
 COMPILING:
-To compile the JNI library and java classes, run "ant all" in the top-level
-directory. This will first compile libvideo and the JNI code, and then link both
-of these to produce the JNI library libv4l4j. It will then compile the java 
-classes and pack them in a JAR file. Both the JNI library libv4l4j.so and the
-JAR file v4l4j.jar are copied in the top-level directory.
+To compile v4l4j, run "ant all" in the top-level directory. This will first 
+compile the libvideo shared library and the JNI library libv4l4j.so. It will 
+then compile the java classes and pack them in a JAR file. Both the JNI library
+libv4l4j.so and the JAR file v4l4j.jar are copied in the top-level directory. 
+libvideo is NOT copied in the top-level directory and remains in libvideo/ .
+
 
 INSTALLING:
-In order to use the v4l4j package from your java application, you must do
-two things:
-FIRST, make sure JNI library libv4l4j.so can be loaded by the JVM. This is done
-by EITHER:
-- installing libv4l4j.so in the JRE lib directory. This is achieved by running
-  "ant install" as root in the top-level directory. It can be
-  uninstalled with "ant uninstall" as root later on. If you are on a
-  64-bit platform, use "ant install64" and "ant uninstall64" instead, 
-OR
-- setting the shell variable LD_LIBRARY_PATH to point to the directory where
-  libv4l4j.so resides before running your program. By default, libv4l4j.so
-  is created in the v4l4j/ directory. For example:
-  LD_LIBRARY_PATH=path/to/libv4l4j_dir java my.package.MyApp
-  The same can be achieved by setting the java.library.path property using:
-  "-Djava.library.path=path/to/libv4l4j_dir" when invoking the JVM.
+In order to use the v4l4j package from your Java application, it is recommended 
+that you install both libraries (libvideo and the JNI library), as well as 
+v4l4j's JAR file. This is done in 3 steps:
+- Run "sudo ant install". This will copy libvideo's shared library in /usr/lib ,
+  the JNI library libv4l4j.so in /usr/lib/jni and v4l4j's JAR file in 
+  /usr/share/java. Any of these paths can be changed by modifying the right 
+  property in build.properties .
+ 
+- Make sure you run "sudo ldconfig" so libvideo's shared library is added to the
+  cache.
 
-SECOND, make sure v4l4j.jar is in your application's classpath. If you used
-"ant install(64)" in the previous step, v4l4j.jar will be copied to 
-/usr/share/java by default.
+- When running your application, pass the following arguments to the JVM:
+  "-Djava.library.path=/usr/lib/jni -cp /usr/share/java/v4l4j.jar"
+  (modify the above values if you have changed the default installation 
+  directories).
 
 TESTING:
 Three example applications are shipped with v4l4j:
@@ -67,12 +80,14 @@ or provide those values on the ant command line (-Dtest.device=..., to change
 the device file, -Dtest.width=... the change the width, -Dtest.height=... for 
 the height and so on). 
 
+
 DEBUGGING:
-You can compile v4l4j to produce extra debug output, useful to troubleshoot
-issues, with "ant clean all-debug". If you have already installed v4l4j (with
-"ant install") then you MUST uninstall it with "ant uninstall" first, otherwise
-the previous jar file & JNI library (without debug statements) will take
-precedence over the new ones. 
+First, if you have already installed v4l4j (with "sudo ant install") then you 
+MUST uninstall it with "sudo ant uninstall", otherwise the previous jar file & 
+libraries (without debug statements) will take precedence over the new ones. 
+Then, compile v4l4j to produce extra debug output, useful to troubleshoot 
+issues, with "ant clean all-debug". Install it with "sudo ant install". 
+
 
 CONTACT:
 Feedback is is greatly appreciated to expand the list of platforms and video

@@ -147,13 +147,14 @@ public class DeviceChooser  extends WindowAdapter implements ActionListener{
 		
 		try {
 			info = new DeviceInfoPane(dev, this);
+			info.getPanel().setAlignmentX(Component.CENTER_ALIGNMENT);
+			mainPanel.add(info.getPanel());
 		} catch (V4L4JException e1) {
-			e1.printStackTrace();
-			return;
+			//e1.printStackTrace();
+			System.out.println(e1.getMessage());
+			info=null;
 		}
-		
-		info.getPanel().setAlignmentX(Component.CENTER_ALIGNMENT);
-		mainPanel.add(info.getPanel());
+
 		mainPanel.validate();
 		mainPanel.repaint();
 	}
