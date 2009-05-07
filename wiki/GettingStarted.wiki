@@ -3,9 +3,12 @@
 
 =Quick Start=
 For the impatient, here are a few instructions that will get you started:
- * If you are using Ubuntu or Debian, check [DebianInstall this page to install v4l4j Debian packages].
+ * If you are using Ubuntu or Debian, check [DebianInstall this page to install v4l4j Debian packages] (COMING SOON !).
  * Otherwise, use the following these steps to install from source:
-   * Either download the latest stable tarball from [http://code.google.com/p/v4l4j/downloads/list Downloads tab] above, or the latest SVN version using `svn co http://v4l4j.googlecode.com/svn/v4l4j/trunk v4l4j`
+   * Either download the latest stable tarball from [http://code.google.com/p/v4l4j/downloads/list Downloads tab] above, or the latest SVN version using
+{{{
+svn co http://v4l4j.googlecode.com/svn/v4l4j/trunk v4l4j
+}}}
    * Install Sun JDK6 or OpenJDK6, libjpeg development files & Apache ant 
    * Edit v4l4j/src/Makefile and point `JDK_HOME` to the where the JDK is installed
    * Run `ant test-gui`.
@@ -14,7 +17,7 @@ This will compile v4l4j and run a test application that displays a video stream 
 
 =Download=
 Choose one of the following method to download v4l4j:
- * *Debian packages*
+ * *Debian packages (COMING SOON !)*
 [DebianInstall This page] explains how to install v4l4j from Debian packages.
  * *Latest SVN snapshot*
 The latest snapshot of v4l4j can be downloaded using:
