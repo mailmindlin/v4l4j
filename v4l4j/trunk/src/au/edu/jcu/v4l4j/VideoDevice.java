@@ -1349,7 +1349,7 @@ public class VideoDevice {
 	 * This method returns a {@link RawFrameGrabber} associated with this 
 	 * video device. Captured frames will be handed out in the same format as 
 	 * received from the driver. The chosen format is the one returned by
-	 * <code>getDeviceInfo().getFormatList().getNativeFormats.get(0)</code>. The 
+	 * <code>getDeviceInfo().getFormatList().getNativeFormats().get(0)</code>. The 
 	 * {@link RawFrameGrabber} must be released when no longer used by calling
 	 * {@link #releaseFrameGrabber()}.
 	 * @param w the desired frame width. This value may be adjusted to the 
