@@ -1,3 +1,7 @@
+v0.8.2:
+- added resolution information to image formats
+v0.8.1:
+- Fixed bug in svn-version.sh
 v0.8:
 - renamed libv4l to libvideo
 - Added libvideo convert code (libv4l v0.5.0) from Hans de Goede
