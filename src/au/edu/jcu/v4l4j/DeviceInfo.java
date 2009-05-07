@@ -49,8 +49,13 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * System.out.println("name: "+d.getName());<br>
  * System.out.println("Device file: "+d.getDeviceFile());<br>
  * System.out.println("Supported formats:");<br>
- * for(ImageFormat f : d.getFormats())<br>
- * &nbsp;&nbsp;System.out.println("\t"+f.getName()+" - "+f.getIndex());<br>
+ * for(ImageFormat f : d.getFormatList().getNativeFormats())<br>
+ * &nbsp;&nbsp;System.out.println("\t"+f.toNiceString());<br>
+ * System.out.println("\tFormats that can be RGB24-converted: "
+ *				+(vd.supportRGBConversion()?"":"None"));<br>
+ * if(vd.supportRGBConversion())<br>
+ * &nbsp;&nbsp;for(ImageFormat f: d.getFormatList().getRGBEncodableFormats())<br>
+ * &nbsp;&nbsp;&nbsp;&nbsp;System.out.println("\t\t"+f.toNiceString());<br>
  * System.out.println("Inputs:");<br>
  * for(InputInfo i: d.getInputs()){<br>
  * &nbsp;&nbsp;System.out.println("\tName: "+i.getName());<br>

@@ -40,7 +40,7 @@ package au.edu.jcu.v4l4j;
  * <br><code>
  * <br>VideoDevice vd = new VideoDevice("/dev/video0");
  * <br>vd.init();
- * <br>List<ImageFormat> fmts = vd.getDeviceInfo().getFormats();
+ * <br>List<ImageFormat> fmts = vd.getDeviceInfo().getFormatList().getNativeFormats();
  * <br>for(ImageFormat im: fmts)
  * <br>&nbsp;&nbsp; System.out.println("Format name: "+im);
  * <br>vd.release();
