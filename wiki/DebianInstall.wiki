@@ -1,0 +1,50 @@
+#summary how to install v4l4j Debian packages
+#labels Featured
+
+v4l4j is made of four Debian packages:
+  * *libv4l4j-java* contains the core v4l4j Java packages and the associated JNI library,
+  * *libvideo* contains an abstraction of the Video4Linux API and is required by libv4l4j-java,
+  * *libv4l4j-java-doc* contains the JavaDoc of the v4l4j API (installed in `/usr/share/doc/libv4l4j-java-doc/api`),
+  * *libv4l4j-bin* contains Desktop shortcut and icons to launch a GUI application to control video devices and view video streams.
+
+*You must install at least libvideo0 and libv4l4j-java* . The JAR package is installed in `/usr/lib/java/v4l4j.jar` and the JNI library is in `/usr/lib/jni/libv4l4j.so` .
+
+= Ubuntu =
+
+You have two options:
+  * *Add v4l4j's APT repository* and let apt-get install v4l4j and handle its dependencies
+  * *Manually download the v4l4j packages*, install the dependencies followed by the v4l4j packages,
+
+== APT repository ==
+  * Add the correct line to /etc/apt/sources.list, depending on your Ubuntu version:
+|| *Hardy* || deb http://ppa.launchpad.net/gillesg/ppa/ubuntu hardy main ||
+|| *Intrepid* || deb http://ppa.launchpad.net/gillesg/ppa/ubuntu intrepid main ||
+|| *Jaunty* || deb http://ppa.launchpad.net/gillesg/ppa/ubuntu jaunty main ||
+
+  * (Optional) Add the repository's OpenPGP key with:
+{{{
+sudo apt-key adv --recv-keys --keyserver keyserver.ubuntu.com a580d05366101444040e1b52683cc7a81603f6c9
+}}}
+  * Install libv4l4j-java with:
+{{{
+sudo apt-get udpate
+sudo apt-get install libv4l4j-java
+}}}
+
+== Manual download ==
+The latest packages are available on the [http://code.google.com/p/v4l4j/downloads/list Downloads tab].
+  * Download the latest versions of libvideo0 and libv4l4j-java. You need at least these two packages.
+  * Run the following (I assume you have already installed a JRE 6):
+{{{
+sudo apt-get install libjpeg62
+sudo dpkg -i libvideo0_XXX.deb libv4l4j-java_XXX.deb
+}}}
+(Replace XXX with the right version info)
+  * To install libv4l4j-bin, use:
+{{{
+sudo apt-get install jarwrapper realpath
+sudo dpkg -i libv4l4j-bin_XXX.deb
+}}}
+
+= Debian =
+On Debian, download the packages containing `ppa1` and follow the [DebianInstall#Manual_download manual download] section
