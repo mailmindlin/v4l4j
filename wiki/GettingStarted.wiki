@@ -3,7 +3,7 @@
 
 =Quick Start=
 For the impatient, here are a few instructions that will get you started:
- * If you are using Ubuntu or Debian, check [DebianInstall this page to install v4l4j Debian packages] (COMING SOON !).
+ * If you are using Ubuntu or Debian, check [DebianInstall this page to install v4l4j Debian packages].
  * Otherwise, use the following these steps to install from source:
    * Either download the latest stable tarball from [http://code.google.com/p/v4l4j/downloads/list Downloads tab] above, or the latest SVN version using
 {{{
@@ -17,7 +17,7 @@ This will compile v4l4j and run a test application that displays a video stream 
 
 =Download=
 Choose one of the following method to download v4l4j:
- * *Debian packages (COMING SOON !)*
+ * *Debian packages*
 [DebianInstall This page] explains how to install v4l4j from Debian packages.
  * *Latest SVN snapshot*
 The latest snapshot of v4l4j can be downloaded using:
