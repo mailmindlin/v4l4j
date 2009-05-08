@@ -47,4 +47,4 @@ sudo dpkg -i libv4l4j-bin_XXX.deb
 }}}
 
 = Debian =
-On Debian, download the packages containing `ppa1` and follow the [DebianInstall#Manual_download manual download] section
+Follow the [DebianInstall#Manual_download manual download] section
