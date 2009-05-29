@@ -1,0 +1,63 @@
+#!/usr/bin/make -f
+build: build-stamp
+build-stamp:
+	#build v4l4j
+	JAVA_HOME=/usr/lib/jvm/java-6-sun ant all
+	touch $@
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp install-stamp
+	ant clean
+	dh_clean
+
+install: install-stamp
+
+install-stamp:
+	dh_testdir
+	dh_testroot
+	ant install -DDESTDIR=$(CURDIR)/debian/tmp
+#we need to chmod 755 the jar file so it can be exceuted thanks to binfmt
+#howver, this makes lintian complain...
+	chmod 755 $(CURDIR)/debian/tmp/usr/share/java/v4l4j.jar
+	touch $@
+
+# Build architecture independent packages
+binary-indep: build install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs -i
+	dh_installdocs -i
+	dh_installmenu -i
+	dh_install -i
+	dh_desktop -i
+	dh_fixperms -Nlibv4l4j-java -i
+	dh_compress -i
+	dh_installdeb -
+	dh_gencontrol -i
+	dh_md5sums -i
+	dh_builddeb -i
+	
+
+# Build architecture dependent packages
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs -plibvideo0 -plibvideo-dev libvideo/Changelog
+	dh_installchangelogs -plibv4l4j-java
+	dh_installdocs -s
+	dh_install -s --sourcedir=debian/tmp
+	dh_strip -s
+	dh_compress -s
+	dh_fixperms -s
+	dh_makeshlibs -s
+	dh_shlibdeps -s
+	dh_installdeb -s
+	dh_gencontrol -s
+	dh_md5sums -s
+	dh_builddeb -s
+
+binary: binary-arch binary-indep
+.PHONY: build clean install binary-indep binary-arch binary
+
