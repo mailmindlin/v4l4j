@@ -1,0 +1,67 @@
+Source: v4l4j
+Section: libs
+Priority: extra
+Maintainer: Ubuntu MOTU Developers <ubuntu-motu@lists.ubuntu.com>
+XSBC-Original-Maintainer: Gilles Gigan <gilles.gigan@gmail.com>
+Build-Depends: sun-java6-jdk, debhelper (>= 5), libjpeg62-dev, ant (>=1.7.0)
+Standards-Version: 3.8.0
+Homepage: http://v4l4j.googlecode.com
+Vcs-Browser: http://v4l4j.googlecode.com/svn/v4l4j/trunk
+Vcs-Svn: http://v4l4j.googlecode.com/svn/v4l4j/trunk
+
+Package: libvideo0
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: Simple access to V4L
+ libvideo provides a simple and seamless access to the capture interface of
+ the Video4Linux1 & Video4Linux2 APIs through its single interface. It 
+ currently allows video device information gathering, video capture, access
+ to controls and tuners.
+
+Package: libvideo-dev
+Architecture: any
+Section: libdevel
+Depends: libvideo0 (= ${binary:Version}), libc6-dev
+Description: Simple access to V4L
+ libvideo provides a simple and seamless access to the capture interface of
+ the Video4Linux1 & Video4Linux2 APIs through its single interface. It 
+ currently allows video device information gathering, video capture, access
+ to controls and tuners.
+ .
+ This package contains the development files for libvideo
+
+Package: libv4l4j-java
+Architecture: any
+Depends: sun-java6-jre | openjdk-6-jre, ${shlibs:Depends}
+Suggests: libv4l4j-java-doc
+Description: Java V4L capture API (Java & JNI library)
+ v4l4j is a simple Java package providing access to the capture interface
+ of the Video4Linux API. v4l4j allows Java applications to retrieve
+ information about a video device, capture images from it & access its video
+ controls and tuners.
+ .
+ This package contains the java and JNI libraries.
+
+Package: libv4l4j-bin
+Architecture: all
+Depends: libv4l4j-java (>= ${binary:Version}), jarwrapper
+Description: Java V4L capture API (Java test application)
+ v4l4j is a simple Java package providing access to the capture interface
+ of the Video4Linux API. v4l4j allows Java applications to retrieve 
+ information about a video device, capture images from it & access its video
+ controls and tuners.
+ .
+ This package provides a test program to demonstrate the use of v4l4j.
+
+Package: libv4l4j-java-doc
+Architecture: all
+Section: doc
+Recommends: libv4l4j-java
+Description: Java V4L capture API (JavaDoc)
+ v4l4j is a simple Java package providing access to the capture interface
+ of the Video4Linux API. v4l4j allows Java applications to retrieve
+ information about a video device, capture images from it & access its video
+ controls and tuners.
+ .
+ This package provides contains the JavaDoc API for v4l4j.
+

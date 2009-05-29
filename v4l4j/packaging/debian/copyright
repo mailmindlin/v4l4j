@@ -1,0 +1,26 @@
+This package was debianized by Gilles Gigan <gilles.gigan@gmail.com> on
+Mon, 27 Apr 2009 15:36:12 +1000.
+
+It was downloaded from http://v4l4j.googlecode.com
+
+Upstream Author: 
+
+    Gilles Gigan <gilles.gigan@gmail.com>
+
+Copyright: 
+
+    Gilles Gigan <gilles.gigan@gmail.com>
+
+License:
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public  License as published by the
+    Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+    On Debian systems, the complete text of the GNU General Public
+    License can be found in the file `/usr/share/common-licenses/GPL-3'.
+
+
+The Debian packaging is Copyright 2009, Gilles Gigan <gilles.gigan@gmail.com> and
+is also licensed under the GPL version 3.
+

@@ -1,0 +1,3 @@
+debian/libv4l4j.desktop usr/share/applications
+debian/tmp/usr/share/pixmaps/v4l4j.png usr/share/pixmaps
+debian/tmp/usr/share/pixmaps/v4l4j-48x48.png usr/share/pixmaps

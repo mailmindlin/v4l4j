@@ -1,0 +1,11 @@
+v4l4j (0.8.3-0ubuntu1~ppa3) jaunty; urgency=low
+
+  * new upstream release
+
+ -- Gilles Gigan <gilles.gigan@gmail.com>  Thu, 07 May 2009 20:00:44 +1000
+
+v4l4j (0.8.2-1) unstable; urgency=low
+
+  * Initial release (Closes: #6)
+
+ -- Gilles Gigan <gilles.gigan@gmail.com>  Mon, 27 Apr 2009 15:42:08 +1000
