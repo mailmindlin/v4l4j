@@ -30,7 +30,7 @@ libv4l has been compiled and tested successfully on the following platforms:
 || USB - 046d:0994 || Logitech QuickCam Orbit/Sphere AF (bcdDevice 0.08) || uvcvideo (kernel 2.6.27.2 &  2.6.24) ||  ||
 || USB - 093a:2460 || Pixart Imaging, Inc. - Q-TEC WEBCAM 100 || gspca_pac207 (2.6.27) || ||
 || USB - 04f2:b071 || Chicony - CNF7129 (eee pc webcam) || uvcvideo (2.6.24) || ||
-|| USB - 045e:074a || Microsoft LifeCam || uvcvideo  || ||
+|| USB - 045e:074a || Microsoft LifeCam || uvcvideo (FC10 - kernel 2.6.27.24) || ||
 
 Currently, [libvideo libvideo] will probe and detect the following drivers/features:
  * *PWC (linux kernel v2.6.26)*
