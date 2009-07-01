@@ -21,7 +21,11 @@
 
 #include <stdio.h>
 #include "libv4lconvert.h"
+#include "control/libv4lcontrol.h"
+#include "processing/libv4lprocessing.h"
 #include "tinyjpeg.h"
+
+/* Workaround these potentially missing from videodev2.h */
 
 #ifndef V4L2_PIX_FMT_SPCA501
 #define V4L2_PIX_FMT_SPCA501 v4l2_fourcc('S','5','0','1') /* YUYV per line */
@@ -79,6 +83,8 @@
 #define V4L2_PIX_FMT_SN9C20X_I420  v4l2_fourcc('S', '9', '2', '0')
 #endif
 
+#define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
+
 #define V4LCONVERT_ERROR_MSG_SIZE 256
 #define V4LCONVERT_MAX_FRAMESIZES 16
 
@@ -87,43 +93,43 @@
   "v4l-convert: error " __VA_ARGS__)
 
 /* Card flags */
-#define V4LCONVERT_ROTATE_90  0x01
-#define V4LCONVERT_ROTATE_180 0x02
-#define V4LCONVERT_IS_UVC     0x04
+#define V4LCONVERT_IS_UVC                0x01
+#define V4LCONVERT_IS_SN9C20X            0x02
 
 /* Pixformat flags */
-#define V4LCONVERT_COMPRESSED 0x01
+#define V4LCONVERT_COMPRESSED            0x01 /* Compressed format */
+#define V4LCONVERT_NEEDS_CONVERSION      0x02 /* Apps likely wont know this */
 
 struct v4lconvert_data {
   int fd;
   int flags; /* bitfield */
+  int control_flags; /* bitfield */
   int supported_src_formats; /* bitfield */
   unsigned int no_formats;
   char error_msg[V4LCONVERT_ERROR_MSG_SIZE];
   struct jdec_private *jdec;
   struct v4l2_frmsizeenum framesizes[V4LCONVERT_MAX_FRAMESIZES];
   unsigned int no_framesizes;
-  int convert_buf_size;
-  int rotate_buf_size;
+  int convert1_buf_size;
+  int convert2_buf_size;
+  int rotate90_buf_size;
+  int flip_buf_size;
   int convert_pixfmt_buf_size;
-  unsigned char *convert_buf;
-  unsigned char *rotate_buf;
+  unsigned char *convert1_buf;
+  unsigned char *convert2_buf;
+  unsigned char *rotate90_buf;
+  unsigned char *flip_buf;
   unsigned char *convert_pixfmt_buf;
-};
-
-struct v4lconvert_flags_info {
-  unsigned short vendor_id;
-  unsigned short product_id;
-/* We could also use the USB manufacturer and product strings some devices have
-  const char *manufacturer;
-  const char *product; */
-  int flags;
+  struct v4lcontrol_data *control;
+  struct v4lprocessing_data *processing;
 };
 
 struct v4lconvert_pixfmt {
   unsigned int fmt;
   int flags;
 };
+
+void v4lconvert_fixup_fmt(struct v4l2_format *fmt);
 
 void v4lconvert_rgb24_to_yuv420(const unsigned char *src, unsigned char *dest,
   const struct v4l2_format *src_fmt, int bgr, int yvu);
@@ -209,8 +215,11 @@ void v4lconvert_hm12_to_bgr24(const unsigned char *src,
 void v4lconvert_hm12_to_yuv420(const unsigned char *src,
   unsigned char *dst, int width, int height, int yvu);
 
-void v4lconvert_rotate(unsigned char *src, unsigned char *dest,
-  int width, int height, unsigned int pix_fmt, int rotate);
+void v4lconvert_rotate90(unsigned char *src, unsigned char *dest,
+  struct v4l2_format *fmt);
+
+void v4lconvert_flip(unsigned char *src, unsigned char *dest,
+  struct v4l2_format *fmt, int hflip, int vflip);
 
 void v4lconvert_crop(unsigned char *src, unsigned char *dest,
   const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt);

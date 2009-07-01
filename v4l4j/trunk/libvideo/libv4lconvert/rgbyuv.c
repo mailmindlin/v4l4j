@@ -135,7 +135,7 @@ void v4lconvert_yuv420_to_bgr24(const unsigned char *src, unsigned char *dest,
       vsrc++;
     }
     /* Rewind u and v for next line */
-    if (i&1) {
+    if (!(i&1)) {
       usrc -= width / 2;
       vsrc -= width / 2;
     }
@@ -189,7 +189,7 @@ void v4lconvert_yuv420_to_rgb24(const unsigned char *src, unsigned char *dest,
       vsrc++;
     }
     /* Rewind u and v for next line */
-    if (i&1) {
+    if (!(i&1)) {
       usrc -= width / 2;
       vsrc -= width / 2;
     }
@@ -409,7 +409,6 @@ void v4lconvert_uyvy_to_yuv420(const unsigned char *src, unsigned char *dest,
   }
 
   /* copy the U and V values */
-  src++;				/* point to V */
   src1 = src + width * 2;		/* next line */
   if (yvu) {
     vdest = dest;

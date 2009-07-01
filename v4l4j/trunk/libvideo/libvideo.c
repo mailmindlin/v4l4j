@@ -438,12 +438,14 @@ struct control_list *get_control_list(struct video_device *vdev){
 	XMALLOC(vdev->control, struct control_list *, sizeof(struct control_list));
 	l = vdev->control;
 
+
 	CLEAR(ctrl);
 
 	//dry run to see how many control we have
-	if(vdev->v4l_version==V4L2_VERSION)
+	if(vdev->v4l_version==V4L2_VERSION){
+		l->priv=v4lconvert_create(vdev->fd);
 		v4l_count = count_v4l2_controls(vdev);
-	else if(vdev->v4l_version==V4L1_VERSION)
+	} else if(vdev->v4l_version==V4L1_VERSION)
 		//4 basic controls in V4L1
 		v4l_count = count_v4l1_controls(vdev);
 	else {
@@ -604,6 +606,10 @@ void release_control_list(struct video_device *vdev){
 
 	//empty driver probe linked list
 	empty_list(vdev->control->probes);
+
+	//free libv4lconvert struct
+	if(vdev->control->priv)
+		v4lconvert_destroy(vdev->control->priv);
 
 	//free control_list
 	if (vdev->control)
