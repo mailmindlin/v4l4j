@@ -824,11 +824,11 @@ int count_v4l2_controls(struct video_device *vdev) {
 
 	CLEAR(qctrl);
 
-
 	//std ctrls
 	for( i = V4L2_CID_BASE; i< V4L2_CID_LASTP1; i++) {
 		qctrl.id = i;
-		if(ioctl(vdev->fd, VIDIOC_QUERYCTRL, &qctrl) == 0) {
+		//if(ioctl(vdev->fd, VIDIOC_QUERYCTRL, &qctrl) == 0) {
+		if(v4lconvert_vidioc_queryctrl(vdev->control->priv, &qctrl) == 0) {
 			if (qctrl.flags & V4L2_CTRL_FLAG_DISABLED ||
 					qctrl.type == V4L2_CTRL_TYPE_CTRL_CLASS)
 				continue;
@@ -841,7 +841,8 @@ int count_v4l2_controls(struct video_device *vdev) {
 
 	//priv ctrls
 	for (qctrl.id = V4L2_CID_PRIVATE_BASE;; qctrl.id++) {
-		if (0 == ioctl (vdev->fd, VIDIOC_QUERYCTRL, &qctrl)) {
+		//if (0 == ioctl (vdev->fd, VIDIOC_QUERYCTRL, &qctrl)) {
+		if(v4lconvert_vidioc_queryctrl(vdev->control->priv, &qctrl) == 0) {
 			if (qctrl.flags & V4L2_CTRL_FLAG_DISABLED ||
 					qctrl.type == V4L2_CTRL_TYPE_CTRL_CLASS)
 				continue;
@@ -860,7 +861,8 @@ int count_v4l2_controls(struct video_device *vdev) {
 
 	//checking extended controls
 	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
-	while (0 == ioctl (vdev->fd, VIDIOC_QUERYCTRL, &qctrl)) {
+	//while (0 == ioctl (vdev->fd, VIDIOC_QUERYCTRL, &qctrl)) {
+	while(0 == v4lconvert_vidioc_queryctrl(vdev->control->priv, &qctrl)) {
 		if(!has_id(list,qctrl.id) && !(qctrl.flags & V4L2_CTRL_FLAG_DISABLED)
 				&& qctrl.type!=V4L2_CTRL_TYPE_CTRL_CLASS){
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
@@ -1009,7 +1011,8 @@ int create_v4l2_controls(struct video_device *vdev, struct control *controls,
 	//create standard V4L controls
 	for( i = V4L2_CID_BASE; i< V4L2_CID_LASTP1 && count < max; i++) {
 		controls[count].v4l2_ctrl->id = i;
-		if(ioctl(vdev->fd, VIDIOC_QUERYCTRL, controls[count].v4l2_ctrl) == 0) {
+		//if(ioctl(vdev->fd, VIDIOC_QUERYCTRL, controls[count].v4l2_ctrl) == 0) {
+		if(v4lconvert_vidioc_queryctrl(vdev->control->priv, controls[count].v4l2_ctrl) == 0) {
 			dprint_v4l2_control(controls[count].v4l2_ctrl);
 			if ( !(controls[count].v4l2_ctrl->flags & V4L2_CTRL_FLAG_DISABLED)&&
 					controls[count].v4l2_ctrl->type!=V4L2_CTRL_TYPE_CTRL_CLASS){
@@ -1027,7 +1030,8 @@ int create_v4l2_controls(struct video_device *vdev, struct control *controls,
 	//create device-specific private V4L2 controls
 	for (i = V4L2_CID_PRIVATE_BASE;count < max; i++) {
 		controls[count].v4l2_ctrl->id = i;
-		if (0 == ioctl (vdev->fd, VIDIOC_QUERYCTRL, controls[count].v4l2_ctrl)) {
+		//if (0 == ioctl (vdev->fd, VIDIOC_QUERYCTRL, controls[count].v4l2_ctrl)) {
+		if(v4lconvert_vidioc_queryctrl(vdev->control->priv, controls[count].v4l2_ctrl) == 0) {
 			dprint_v4l2_control(controls[count].v4l2_ctrl);
 			if( ! (controls[count].v4l2_ctrl->flags & V4L2_CTRL_FLAG_DISABLED) &&
 					controls[count].v4l2_ctrl->type!=V4L2_CTRL_TYPE_CTRL_CLASS){
@@ -1059,7 +1063,8 @@ int create_v4l2_controls(struct video_device *vdev, struct control *controls,
 	//checking extended controls
 	CLEAR(qctrl);
 	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
-	while (0 == ioctl (vdev->fd, VIDIOC_QUERYCTRL, &qctrl)) {
+	// while (0 == ioctl (vdev->fd, VIDIOC_QUERYCTRL, &qctrl)) {
+	while (v4lconvert_vidioc_queryctrl(vdev->control->priv, &qctrl) == 0) {
 		if(!has_id(list,qctrl.id ) && !(qctrl.flags & V4L2_CTRL_FLAG_DISABLED)
 				&& qctrl.type!=V4L2_CTRL_TYPE_CTRL_CLASS ){
 			dprint_v4l2_control((&qctrl));
@@ -1107,7 +1112,8 @@ int get_control_value_v4l2(struct video_device *vdev,
 	int ret = LIBVIDEO_ERR_IOCTL;
 	CLEAR(vc);
 	vc.id = ctrl->id;
-	if( (ret = ioctl(vdev->fd, VIDIOC_G_CTRL, &vc)) == 0 ) {
+	//if( (ret = ioctl(vdev->fd, VIDIOC_G_CTRL, &vc)) == 0 ) {
+	if( (ret = v4lconvert_vidioc_g_ctrl(vdev->control->priv, &vc)) == 0 ){
 		*val = fix_quirky_values(ctrl, vc.value);
 		ret = 0;
 	} else
@@ -1127,7 +1133,8 @@ int set_control_value_v4l2(struct video_device *vdev,
 	vc.id = ctrl->id;
 	vc.value = *i;
 
-	if(ioctl(vdev->fd, VIDIOC_S_CTRL, &vc)!= 0) {
+	//if(ioctl(vdev->fd, VIDIOC_S_CTRL, &vc)!= 0) {
+	if( v4lconvert_vidioc_s_ctrl(vdev->control->priv, &vc) != 0 ){
 		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
 				"CTRL: Error setting value\n");
 		if(errno == EINVAL)
@@ -1321,12 +1328,14 @@ static void query_controls_v4l2(int fd) {
 	int i;
 	struct v4l2_queryctrl qctrl;
 	CLEAR(qctrl);
+	struct v4lconvert_data *d = v4lconvert_create(fd);
 	printf("============================================\n"
 			"Querying standard controls\n\n");
 	//std ctrls
 	for( i = V4L2_CID_BASE; i< V4L2_CID_LASTP1; i++) {
 		qctrl.id = i;
-		if((ioctl(fd, VIDIOC_QUERYCTRL, &qctrl) == 0))
+		//if((ioctl(fd, VIDIOC_QUERYCTRL, &qctrl) == 0))
+		if(v4lconvert_vidioc_queryctrl(d,&qctrl)==0)
 			print_v4l2_control(&qctrl);
 	}
 
@@ -1334,7 +1343,7 @@ static void query_controls_v4l2(int fd) {
 			"Querying private controls\n\n");
 	//priv ctrls
 	for (qctrl.id = V4L2_CID_PRIVATE_BASE;; qctrl.id++) {
-		if (0 == ioctl (fd, VIDIOC_QUERYCTRL, &qctrl)) {
+		if(v4lconvert_vidioc_queryctrl(d,&qctrl)==0) {
 			print_v4l2_control(&qctrl);
 		} else {
 			if (errno == EINVAL)
@@ -1348,10 +1357,11 @@ static void query_controls_v4l2(int fd) {
 			"Querying extended controls\n\n");
 	//checking extended controls
 	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
-	while (0 == ioctl (fd, VIDIOC_QUERYCTRL, &qctrl)) {
+	while (v4lconvert_vidioc_queryctrl(d,&qctrl)==0) {
 		print_v4l2_control(&qctrl);
 		qctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
 	}
+	v4lconvert_destroy(d);
 }
 
 
