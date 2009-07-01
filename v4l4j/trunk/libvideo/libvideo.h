@@ -297,7 +297,7 @@ struct device_info {
  *
  */
 
-//struct used to represent a driver probe. Used and populated in v4l-control.c
+//struct used to represent a driver probe.
 struct control {
 	struct v4l2_queryctrl *v4l2_ctrl;
 	struct v4l2_querymenu *v4l2_menu;//array of 'count_menu' v4l2_menus
@@ -328,6 +328,8 @@ struct control_list {
 	struct control *controls;		//array of 'count' struct control's
 	driver_probe *probes; 			//linked list of driver probes, allocated in
 									//libvideo.c:get_control_list()
+	struct v4lconvert_data *priv;//the libv4l convert struct (used only if V4L2)
+								//DO NOT TOUCH
 };
 
 /*

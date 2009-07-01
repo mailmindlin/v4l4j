@@ -73,7 +73,7 @@ CFLAGS := $(DBG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) \
   $(OPTIMISATION) -fPIC -I.
 
 LD := gcc
-LDFLAGS := -shared
+LDFLAGS := -lm -lrt -shared
 
 all: $(LIB).$(LIB_RELEASE)
 
@@ -99,9 +99,9 @@ uninstall:
 	rm -f $(DESTDIR)$(LIB_INSTALL_DIR)/$(LIB).$(LIB_RELEASE)
 
 test: $(LIB).$(LIB_RELEASE) $(TESTOBJ)
-	$(LD) test-capture.o -L. -l$(LIB_NAME) -o test-capture
-	$(LD) list-caps.o -L. -l$(LIB_NAME) -o list-caps
-	$(LD) dump-capture.o -L. -l$(LIB_NAME) -o dump-capture
+	$(LD) test-capture.o -lm -lrt -L. -l$(LIB_NAME) -o test-capture
+	$(LD) list-caps.o -lm -lrt -L. -l$(LIB_NAME) -o list-caps
+	$(LD) dump-capture.o -lm -lrt -L. -l$(LIB_NAME) -o dump-capture
 
 version.h:
 	@sh svn-version.sh
