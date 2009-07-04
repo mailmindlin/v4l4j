@@ -1,3 +1,9 @@
+v4l4j (0.8.4-0ubuntu1~ppa1) hardy; urgency=low
+
+  * new upstream release with updated version of libv4l(0.5.99)
+
+ -- Gilles Gigan <gilles.gigan@gmail.com>  Sat, 04 Jul 2009 16:45:27 +1000
+
 v4l4j (0.8.3-0ubuntu1~ppa3) jaunty; urgency=low
 
   * new upstream release
