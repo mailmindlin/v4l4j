@@ -1,0 +1,7 @@
+  * Copy libv4l/libv4lconvert to libvideo/
+  * Copy libv4l/include/libv4lconvert.h to libvideo/
+  * Edit libvideo/libv4lconvert/Makefile:
+    * Replace first line with "override CPPFLAGS += -I.. -fvisibility=hidden"
+    * Add "override CPPFLAGS += -fPIC" to "ifeq ($(LINKTYPE),static)" block
+  * fix v4l2-input.c
+  * test compilation using "ant all-debug"
