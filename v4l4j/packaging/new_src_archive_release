@@ -1,0 +1,7 @@
+  * export a version of v4l4j without SVN dir with 
+    "svn export v4l4j/ v4l4j-X.Y.Z"
+  * create version.h with 
+    "echo '#define VER_REV "X"' > v4l4j-X.Y.Z/libvideo/version.h"
+  * prevent version.h from being deleted with 'make clean': edit 
+    libvideo/Makefile and remove reference to version.h in clean target
+  * edit libvideo/changelog

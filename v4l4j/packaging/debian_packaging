@@ -1,0 +1,18 @@
+  * Create packaging dir, assuming packaging/ here
+  * download v4l4j-X.Y.z.tar.gz in packaging/ and copy to v4l4j_X.Y.Z.orig.tar.gz
+  * unpack v4l4j-X.Y.Z.tar.gz and cd v4l4j-X.Y.Z
+  * download debian dir with "svn co https://v4l4j.googlecode.com/svn/v4l4j/packaging/debian"
+  * update changelog with "dch". Use the following names for each version of ubuntu:
+    * v4l4j (X.Y.Z-0ubuntu1~ppa1) hardy; urgency=low
+    * v4l4j (X.Y.Z-0ubuntu1~ppa2) intrepid; urgency=low
+    * v4l4j (X.Y.Z-0ubuntu1~ppa3) jaunty; urgency=low
+  * cd ..
+  * test source package build with "debuild -S -sa"
+  * check for lintian errors
+  * if build is successful, remove SVN files with "rm -Rf debian/.svn"
+  * remove all source build files with "rm ../v4l4j_X.Y.Z-0ubuntu*"
+  * rebuild with "debuild -S -sa"
+  * if successful, upload with "cd .. && dput LP-ppa v4l4j_X.Y.Z-0ubuntu1~ppaT_source.changes"
+ 
+  * For following versions of Ubuntu, update changelog (as per above), use "debuild -S -sd" to not re-upload .orig.tar.gz,
+    and upload with "dput LP-ppa v4l4j_X.Y.Z-0ubuntu1~ppaT_source.changes"
