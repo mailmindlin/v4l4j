@@ -41,13 +41,13 @@ DeviceInfo di = vd.getDeviceInfo();
 
 Each `InputInfo` object contains:
     * The textual name of the input,
-    * The supported standards (`V4L4JConstants.PAL`, `V4L4JConstants.SECAM`, `V4L4JConstants.NTSC` or `V4L4JConstants.WEBCAM`)
-    * The input type (`V4L4JConstants.TUNER` or `V4L4JConstants.CAMERA`)
+    * The supported standards (`V4L4JConstants.STANDARD_PAL`, `V4L4JConstants.STANDARD_SECAM`, `V4L4JConstants.STANDARD_NTSC` or `V4L4JConstants.STANDARD_WEBCAM`)
+    * The input type (`V4L4JConstants.INPUT_TYPE_TUNER` or `V4L4JConstants.INPUT_TYPE_CAMERA`)
     * The `TunerInfo` object associated with this input if it is connected to a tuner.
 
 `TunerInfo` objects contain:
-    * the tuner type: `V4L4JConstants.RADIO` or `V4L4JConstants.TV`,
-    * the frequency unit: `V4L4JConstants.KHZ` or `V4L4JConstants.MHZ`,
+    * the tuner type: `V4L4JConstants.TUNER_TYPE_RADIO` or `V4L4JConstants.TUNER_TYPE_TV`,
+    * the frequency unit: `V4L4JConstants.FREQ_KHZ` or `V4L4JConstants.FREQ_MHZ`,
     * the name of the tuner,
     * the index of the tuner,
     * and the lowest and highest tunable frequencies.
@@ -97,11 +97,11 @@ if(!vd.supportJPEGConversion()){ // use the other supportXXXConversion() for oth
 Frame grabber constructors need at least 4 arguments:
  * the desired capture resolution in pixels - width and height. Setting them to `V4L4JConstants.MAX_WIDTH` and `V4L4JConstants.MAX_HEIGHT` will request the highest supported resolution.
  * the input channel, this depends on the hardware, webcams have only 1 input (0), capture cards can have many,
- * the video standard (`FrameGrabber.WEBCAM`, `FrameGrabber.PAL`, `FrameGrabber.SECAM`, `FrameGrabber.NTSC`)
+ * the video standard (`FrameGrabber.STANDARD_WEBCAM`, `FrameGrabber.STANDARD_PAL`, `FrameGrabber.STANDARD_SECAM`, `FrameGrabber.STANDARD_NTSC`)
 
 {{{
 FrameGrabber fg;
-int width = 640, height = 480, input = 0, standard = V4L4JConstants.PAL;
+int width = 640, height = 480, input = 0, standard = V4L4JConstants.STANDARD_PAL;
 fg = vd.getRawFrameGrabber(width, height, input, channel);
 
 //find out what image format is used
@@ -119,10 +119,10 @@ Alternatively, you can use specify the desired image format:
 {{{
 ImageFormat imf = null;
 for(ImageFormat i: vd.getDeviceInfo().getFormats().getList())
-  if(i.getName().equals("YUYV")
+  if(i.getName().equals(IMF_YUYV)
     imf = i;
 if(img==null)
-  throw new Exception("YUYV format not supported");
+  throw new Exception(IMF_YUYV +" format not supported");
 
 fg = vd.getRawFrameGrabber(width, height, input, channel, imf);
 }}}
@@ -131,7 +131,7 @@ fg = vd.getRawFrameGrabber(width, height, input, channel, imf);
 A JPEG frame grabber is instantiated by calling:
 {{{
 FrameGrabber fg;
-int width = 640, height = 480, input = 1, standard = V4L4JConstants.PAL, quality = 80;
+int width = 640, height = 480, input = 1, standard = V4L4JConstants.STANDARD_PAL, quality = 80;
 fg = vd.getJPEGFrameGrabber(width, height, input, channel, quality);
 
 ...
@@ -151,7 +151,7 @@ vd.releaseFrameGrabber();
 An RGB frame grabber is instantiated by calling:
 {{{
 FrameGrabber fg;
-int width = 640, height = 480, input = 1, standard = V4L4JConstants.NTSC;
+int width = 640, height = 480, input = 1, standard = V4L4JConstants.STANDARD_NTSC;
 fg = vd.getRGBFrameGrabber(width, height, input, channel);
 
 ...
@@ -335,7 +335,7 @@ public class Viewer extends WindowAdapter implements Runnable {
 	public static void main(String[] args) throws V4L4JException, IOException {
 
 		String dev = "/dev/video0";
-		int w=640, h=480, std=FrameGrabber.WEBCAM, channel = 0, qty = 60;
+		int w=640, h=480, std=FrameGrabber.STANDARD_WEBCAM, channel = 0, qty = 60;
 		new Viewer(dev,w,h,std,channel,qty);
 	}
 }
