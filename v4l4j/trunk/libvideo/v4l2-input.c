@@ -274,7 +274,14 @@ static int try_image_format(struct capture_device *c, struct v4l2_format *src,
 	dst->fmt.pix.height = c->height;
 	dst->fmt.pix.field = V4L2_FIELD_ANY;
 	dst->fmt.pix.pixelformat = libvideo_palettes[palette_idx].v4l2_palette;
-	if(0 == v4lconvert_try_format(c->convert->priv, dst, src)){
+
+	//v4lconvert_try_format may succeed(return 0) even though the given dst
+	//format is not supported. In this case, the function will store a supported
+	//format in dst. That s why, not only thhe return value is checked, but also
+	//the format in dst
+	if(0 == v4lconvert_try_format(c->convert->priv, dst, src)
+			&&
+		dst->fmt.pix.pixelformat == libvideo_palettes[palette_idx].v4l2_palette){
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1,
 				"CAP: For dest palette %#x (%s - %d) %dx%d - ...\n",\
 				dst->fmt.pix.pixelformat,
