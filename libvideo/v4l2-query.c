@@ -30,6 +30,9 @@
 #include "log.h"
 #include "libvideo-palettes.h"
 
+//forward declarations
+static int try_format(int, int, int, struct v4l2_format *,
+		struct v4l2_format *, struct v4lconvert_data *);
 
 /*
  * this function takes an image format int returned by v4l2
@@ -47,13 +50,114 @@ static int find_v4l2_palette(int v4l2_fmt){
 	return -1;
 }
 
+//this function enumerates the frame sizes for a given v4l2 format fmt
+//and populates the struct palette_info with these sizes
+static void lookup_frame_sizes(struct v4lconvert_data *conv, int fmt,
+		struct palette_info *p){
+
+	struct v4l2_frmsizeenum s;
+	CLEAR(s);
+
+	s.index = 0;
+	s.pixel_format = fmt;
+	while(v4lconvert_enum_framesizes(conv, &s)==0){
+		if(s.type==V4L2_FRMSIZE_TYPE_DISCRETE){
+			if(p->size_type==FRAME_SIZE_UNSUPPORTED){
+				dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
+					"QRY: Found discrete supported resolution:\n");
+				p->size_type = FRAME_SIZE_DISCRETE;
+			}
+			XREALLOC(p->discrete, struct frame_size_discrete *,
+					(s.index+1)*sizeof(struct frame_size_discrete));
+			CLEAR(p->discrete[s.index]);
+			p->discrete[s.index].height = s.discrete.height;
+			p->discrete[s.index].width = s.discrete.width;
+			dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
+				"QRY: %d x %d\n",
+				p->discrete[s.index].width, p->discrete[s.index].height);
+			s.index++;
+		} else {
+			//continuous & stepwise end up here
+			dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
+							"QRY: Found %s supported resolution:\n",
+							s.type==V4L2_FRMSIZE_TYPE_CONTINUOUS?"continuous":
+								"stepwise"
+					);
+			p->size_type=FRAME_SIZE_CONTINUOUS;
+			//copy data
+			XMALLOC(p->continuous, struct frame_size_continuous *,
+					sizeof(struct frame_size_continuous ));
+			p->continuous->max_height = s.stepwise.max_height;
+			p->continuous->min_height = s.stepwise.min_height;
+			p->continuous->max_width = s.stepwise.max_width;
+			p->continuous->min_width= s.stepwise.min_width;
+			p->continuous->step_height = s.stepwise.step_height;
+			p->continuous->step_width = s.stepwise.step_width;
+
+			dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
+					"QRY: Width x height (min/max/step) : %d,%d,%d x %d,%d,%d\n",
+					p->continuous->min_width,
+					p->continuous->max_width,
+					p->continuous->step_width,
+					p->continuous->min_height,
+					p->continuous->max_height,
+					p->continuous->step_height
+				);
+			break;
+		}
+	}
+	//add a struct frame_size_discrete with null values at the end of
+	//the list
+	if(p->size_type==FRAME_SIZE_DISCRETE){
+		XREALLOC(p->discrete, struct frame_size_discrete *,
+				(s.index+1)*sizeof(struct frame_size_discrete));
+		CLEAR(p->discrete[s.index]);
+	}
+
+}
+
 /*
- * this function add a new raw palette (fmt) to the end of the list of
- * raw palettes at 'p->raw_palettes' of current size 'size
+ * this function checks if the given raw native format can be used for capture &
+ * adds a new raw palette (fmt) to the end of the list of  raw palettes at
+ * 'p->raw_palettes' of current size 'size' and (size+1) is returned.
+ * If the palette cannot be used for capture because libv4lconvert doesnt support
+ * it, the matching converted palette is advertised as native and -1 is returned
  */
-static void add_raw_format(struct palette_info *p, int fmt, int size){
+static int add_raw_format(struct v4lconvert_data *conv,
+		struct palette_info *p, int fmt, int size){
+	if(fmt!=-1){
+		//test the given native format fmt to see if it can be used
+		//by v4lconvert. Sometimes, the native format that must be used to
+		//obtain a converted format CANNOT be used for capture in native format
+		//(for instance with SPCA561 webcams). See GC issue 7.
+		struct v4l2_format src, dst;
+		try_format(fmt, 320,240, &dst, &src, conv);
+		if(dst.fmt.pix.pixelformat != libvideo_palettes[fmt].v4l2_palette){
+			//the given native format is not supported by libv4lconvert
+			dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
+					"QRY: raw palette %d (%s - %#x) cannot be used for capture"
+					"- Advertising this 'converted' palette (%s - %d) as a "
+					"native one\n",
+					fmt,
+					libvideo_palettes[fmt].name,
+					libvideo_palettes[fmt].v4l2_palette,
+					libvideo_palettes[p->index].name,
+					p->index);
+
+			if(size!=0){
+				info("This converted format has a native format that is not\n");
+				info("handled by v4lconvert. Please report this bug to the\n");
+				info("author on the V4L4J mailing list.\n");
+			} else {
+				p->raw_palettes=NULL;
+				lookup_frame_sizes(conv, libvideo_palettes[fmt].v4l2_palette, p);
+			}
+			return -1;
+		}
+	}
 	XREALLOC(p->raw_palettes, int *, (size+1)*sizeof(int));
 	p->raw_palettes[size] = fmt;
+	return (size+1);
 }
 
 /*
@@ -92,11 +196,9 @@ static int try_format(int index, int w, int h, struct v4l2_format *dst,
 static int add_supported_palette(struct device_info *di, int fmt,
 		struct v4lconvert_data *conv){
 	struct v4l2_format dst, src;
-	struct v4l2_frmsizeenum s;
 	struct palette_info *curr;
-	int i = 0;
-	CLEAR(s);
-
+	int i = 0, src_palette;
+	struct v4l2_frmsizeenum s;
 
 	di->nb_palettes++;
 	XREALLOC(di->palettes, struct palette_info *,
@@ -125,15 +227,17 @@ static int add_supported_palette(struct device_info *di, int fmt,
 				"QRY: %s is a converted palette\n",
 				libvideo_palettes[fmt].name
 		);
+		src_palette = find_v4l2_palette(src.fmt.pix.pixelformat);
 		//it is converted from another format
 		//adds the format returned by v4lconvert_needs_conversion
-		add_raw_format(curr,find_v4l2_palette(src.fmt.pix.pixelformat), i);
 		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
 				"QRY: from %d (%s)\n",
-				curr->raw_palettes[i],
-				libvideo_palettes[curr->raw_palettes[i]].name
+				src_palette,
+				libvideo_palettes[src_palette].name
 				);
-		i++;
+		i = add_raw_format(conv, curr,src_palette, i);
+		if(i==-1)
+			return 0;
 
 		//check if there are other formats that can be converted to this one too
 		//by trying other image sizes
@@ -148,19 +252,24 @@ static int add_supported_palette(struct device_info *di, int fmt,
 						&dst,&src,conv);
 				//no return value check since the values here are given by
 				//libv4l_convert... maybe a TODO:
+				src_palette = find_v4l2_palette(src.fmt.pix.pixelformat);
 
 				if(v4lconvert_needs_conversion(conv,&src,&dst)==1 &&
-						!has_raw_format(curr->raw_palettes,
-								find_v4l2_palette(src.fmt.pix.pixelformat), i)){
+						!has_raw_format(curr->raw_palettes,	src_palette, i)){
 					//it is converted from another format which is not
 					//in the array yet. adds the format
-					add_raw_format(curr,find_v4l2_palette(src.fmt.pix.pixelformat), i);
 					dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
-							"QRY: from %d (%s)\n",
-							curr->raw_palettes[i],
-							libvideo_palettes[curr->raw_palettes[i]].name
-							);
-					i++;
+												"QRY: from %d (%s)\n",
+												src_palette,
+												libvideo_palettes[src_palette].name
+												);
+					i = add_raw_format(conv, curr, src_palette, i);
+					if(i==-1){
+						info("There is a bug in libvideo. Please report\n");
+						info("this to the author through the v4l4j mailing\n");
+						info("list at http://groups.google.com/group/v4l4j\n");
+						return LIBVIDEO_ERR_IOCTL;
+					}
 				} //else no need for conversion or format already seen
 				s.index++;
 			} else {
@@ -169,7 +278,7 @@ static int add_supported_palette(struct device_info *di, int fmt,
 				break;
 			}
 		}
-		add_raw_format(curr,-1, i);
+		i = add_raw_format(conv, curr,-1, i);
 	} else {
 		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
 				"QRY: %s is a native palette\n",
@@ -178,61 +287,8 @@ static int add_supported_palette(struct device_info *di, int fmt,
 		//it is not converted from another image format
 		curr->raw_palettes = NULL;
 
-
 		//find supported resolutions
-		s.index = 0;
-		s.pixel_format = dst.fmt.pix.pixelformat;
-		while(v4lconvert_enum_framesizes(conv, &s)==0){
-			if(s.type==V4L2_FRMSIZE_TYPE_DISCRETE){
-				if(curr->size_type==FRAME_SIZE_UNSUPPORTED){
-					dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
-						"QRY: Found discrete supported resolution:\n");
-					curr->size_type = FRAME_SIZE_DISCRETE;
-				}
-				XREALLOC(curr->discrete, struct frame_size_discrete *,
-						(s.index+1)*sizeof(struct frame_size_discrete));
-				CLEAR(curr->discrete[s.index]);
-				curr->discrete[s.index].height = s.discrete.height;
-				curr->discrete[s.index].width = s.discrete.width;
-				dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
-					"QRY: %d x %d\n",
-					curr->discrete[s.index].width, curr->discrete[s.index].height);
-				s.index++;
-			} else {
-				//continuous & stepwise end up here
-				dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
-								"QRY: Found %s supported resolution:\n",
-								s.type==V4L2_FRMSIZE_TYPE_CONTINUOUS?"continuous":
-									"stepwise"
-						);
-				curr->size_type=FRAME_SIZE_CONTINUOUS;
-				//copy data
-				XMALLOC(curr->continuous, struct frame_size_continuous *,
-						sizeof(struct frame_size_continuous ));
-				curr->continuous->max_height = s.stepwise.max_height;
-				curr->continuous->min_height = s.stepwise.min_height;
-				curr->continuous->max_width = s.stepwise.max_width;
-				curr->continuous->min_width= s.stepwise.min_width;
-				curr->continuous->step_height = s.stepwise.step_height;
-				curr->continuous->step_width = s.stepwise.step_width;
-
-				dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
-						"QRY: Width x height (min/max/step) : %d,%d,%d x %d,%d,%d\n",
-						curr->continuous->min_width,
-						curr->continuous->max_width,
-						curr->continuous->step_width,
-						curr->continuous->min_height,
-						curr->continuous->max_height,
-						curr->continuous->step_height
-					);
-				break;
-			}
-		}
-		if(curr->size_type==FRAME_SIZE_DISCRETE){
-			XREALLOC(curr->discrete, struct frame_size_discrete *,
-					(s.index+1)*sizeof(struct frame_size_discrete));
-			CLEAR(curr->discrete[s.index]);
-		}
+		lookup_frame_sizes(conv, libvideo_palettes[fmt].v4l2_palette,curr);
 	}
 
 	return 0;
