@@ -20,6 +20,7 @@
 #define __LIBV4LCONVERT_PRIV_H
 
 #include <stdio.h>
+#include <sys/types.h>
 #include "libv4lconvert.h"
 #include "control/libv4lcontrol.h"
 #include "processing/libv4lprocessing.h"
@@ -83,6 +84,14 @@
 #define V4L2_PIX_FMT_SN9C20X_I420  v4l2_fourcc('S', '9', '2', '0')
 #endif
 
+#ifndef V4L2_PIX_FMT_OV511
+#define V4L2_PIX_FMT_OV511 v4l2_fourcc('O', '5', '1', '1')
+#endif
+
+#ifndef V4L2_PIX_FMT_OV518
+#define V4L2_PIX_FMT_OV518 v4l2_fourcc('O', '5', '1', '8') /* ov518 JPEG */
+#endif
+
 #define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
 
 #define V4LCONVERT_ERROR_MSG_SIZE 256
@@ -122,6 +131,11 @@ struct v4lconvert_data {
   unsigned char *convert_pixfmt_buf;
   struct v4lcontrol_data *control;
   struct v4lprocessing_data *processing;
+
+  /* Data for external decompression helpers code */
+  pid_t decompress_pid;
+  int decompress_in_pipe[2];  /* Data from helper to us */
+  int decompress_out_pipe[2]; /* Data from us to helper */
 };
 
 struct v4lconvert_pixfmt {
@@ -170,6 +184,15 @@ void v4lconvert_swap_rgb(const unsigned char *src, unsigned char *dst,
 void v4lconvert_swap_uv(const unsigned char *src, unsigned char *dst,
   const struct v4l2_format *src_fmt);
 
+void v4lconvert_rgb565_to_rgb24(const unsigned char *src, unsigned char *dest,
+  int width, int height);
+
+void v4lconvert_rgb565_to_bgr24(const unsigned char *src, unsigned char *dest,
+  int width, int height);
+
+void v4lconvert_rgb565_to_yuv420(const unsigned char *src, unsigned char *dest,
+  const struct v4l2_format *src_fmt, int yvu);
+
 void v4lconvert_spca501_to_yuv420(const unsigned char *src, unsigned char *dst,
   int width, int height, int yvu);
 
@@ -188,7 +211,8 @@ void v4lconvert_decode_spca561(const unsigned char *src, unsigned char *dst,
 void v4lconvert_decode_sn9c10x(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
-void v4lconvert_decode_pac207(const unsigned char *src, unsigned char *dst,
+int v4lconvert_decode_pac207(struct v4lconvert_data *data,
+  const unsigned char *inp, int src_size, unsigned char *outp,
   int width, int height);
 
 void v4lconvert_decode_mr97310a(const unsigned char *src, unsigned char *dst,
@@ -223,5 +247,11 @@ void v4lconvert_flip(unsigned char *src, unsigned char *dest,
 
 void v4lconvert_crop(unsigned char *src, unsigned char *dest,
   const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt);
+
+int v4lconvert_helper_decompress(struct v4lconvert_data *data,
+  const char *helper, const unsigned char *src, int src_size,
+  unsigned char *dest, int dest_size, int width, int height, int command);
+
+void v4lconvert_helper_cleanup(struct v4lconvert_data *data);
 
 #endif

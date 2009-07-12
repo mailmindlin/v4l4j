@@ -36,6 +36,8 @@ PREFIX:=/usr
 LIB_INSTALL_DIR := $(PREFIX)/lib
 #Directory where the include files will be installed
 INC_INSTALL_DIR := $(PREFIX)/include
+#Directory where hte libv4l helpers will be installed
+LIBV4L_HELPERS_INSTALL_DIR := $(PREFIX)/local/lib/v4l4j
 
 
 
@@ -60,6 +62,7 @@ LIB_RELEASE := 0
 LIBV4LCONVERT_DIR := libv4lconvert
 LIBV4LCONVERT_AR := libv4lconvert.a
 LIBV4LCONVERT_NAME := v4lconvert
+LIBV4LCONVERT_HELPERS := ov511-decomp ov518-decomp
 
 LIB_NAME := video
 LIB := lib$(LIB_NAME).so
@@ -83,7 +86,8 @@ $(LIB).$(LIB_RELEASE): version.h $(OBJ) $(LIBV4LCONVERT_AR)
 	ln -f -s $(LIB).$(LIB_RELEASE) $(LIB)
 
 $(LIBV4LCONVERT_AR):
-	LINKTYPE=static make -C $(LIBV4LCONVERT_DIR)
+	LINKTYPE=static LIBDIR=$(LIBV4L_HELPERS_INSTALL_DIR) \
+		make -C $(LIBV4LCONVERT_DIR)
 	cp $(LIBV4LCONVERT_DIR)/$(LIBV4LCONVERT_AR) .
 
 install: $(LIB).$(LIB_RELEASE)
@@ -92,11 +96,15 @@ install: $(LIB).$(LIB_RELEASE)
 	mkdir -p $(DESTDIR)$(LIB_INSTALL_DIR)
 	install -m 755 $(LIB).$(LIB_RELEASE) $(DESTDIR)$(LIB_INSTALL_DIR)
 	cd $(DESTDIR)$(LIB_INSTALL_DIR) && ln -f -s $(LIB).$(LIB_RELEASE) $(LIB)
+	mkdir -p $(DESTDIR)$(LIBV4L_HELPERS_INSTALL_DIR)/libv4l
+	install -m 755 $(LIBV4LCONVERT_DIR)/*-decomp \
+		$(DESTDIR)$(LIBV4L_HELPERS_INSTALL_DIR)/libv4l
 
 uninstall:
 	for f in $(USER_INCLUDES); do rm -f $(DESTDIR)$(INC_INSTALL_DIR)/$${f}; done
 	rm -f $(DESTDIR)$(LIB_INSTALL_DIR)/$(LIB)
 	rm -f $(DESTDIR)$(LIB_INSTALL_DIR)/$(LIB).$(LIB_RELEASE)
+	rm -f $(DESTDIR)$(LIBV4L_HELPERS_INSTALL_DIR)/libv4l/*-decomp
 
 test: $(LIB).$(LIB_RELEASE) $(TESTOBJ)
 	$(LD) test-capture.o -lm -lrt -L. -l$(LIB_NAME) -o test-capture

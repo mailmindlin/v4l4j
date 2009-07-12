@@ -333,6 +333,13 @@ public class V4L4JConstants {
 	 * SQ905C image format
 	 */
 	public static final int IMF_SQ905C=52;
-	
+	/**
+	 * OV511 image format
+	 */
+	public static final int IMF_OV511=53;
+	/**
+	 * OV518 image format
+	 */
+	public static final int IMF_OV518=54;
 
 }

@@ -608,12 +608,16 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 	
 	public class MenuControl extends ControlModelGUI implements ActionListener{
 		private JComboBox box;
+		String[] names = new String[0];
+		Integer[] values = new Integer[0];
 		
 		public MenuControl(Control c){
 			super(c);
+			names = (String[]) ctrl.getDiscreteValueNames().toArray(names);
+			values = (Integer[]) ctrl.getDiscreteValues().toArray(values);
 
 			int v = c.getDefaultValue();
-			box = new JComboBox(ctrl.getDiscreteValues().toArray());
+			box = new JComboBox(names);
 			try {v = c.getValue();} catch (ControlException e){}
 			box.setSelectedIndex(ctrl.getDiscreteValues().indexOf(v));				
 			initPanel();
@@ -628,7 +632,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			try {
-				ctrl.setValue(ctrl.getDiscreteValues().get(box.getSelectedIndex()));
+				ctrl.setValue(values[box.getSelectedIndex()].intValue());
 			} catch (ControlException e1) {
 				JOptionPane.showMessageDialog(null, "Error setting value.\n"+e1.getMessage());
 			}
