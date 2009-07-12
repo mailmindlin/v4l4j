@@ -70,7 +70,7 @@ struct mmap {
 #define		SECAM					2
 #define		NTSC					3
 
-#define NB_SUPPORTED_PALETTE		53
+#define NB_SUPPORTED_PALETTE		55
 //palette formats
 //YUV420 is the same as YUV420P - YUYV is the same as YUV422
 //YUV411 is the same as YUV411P
@@ -129,6 +129,8 @@ struct mmap {
 #define		YVYU					50
 #define		MR97310A				51
 #define		SQ905C					52
+#define 	OV511					53
+#define		OV518					54
 
 //the default order in which palettes are tried if "set_cap_param(c, NULL, 0)"
 //is used
@@ -139,13 +141,13 @@ struct mmap {
 	Y41P, YUV444, YUV555, YUV565, YUV32, NV12, NV21, YYUV, HM12, SBGGR8, \
 	SGBRG8, SGRBG8, SBGGR16, SN9C10X, SN9C20X_I420, PWC1, PWC2, ET61X251, \
 	SPCA501, SPCA505, SPCA508, SPCA561, PAC207, PJPG, YVYU, \
-	MR97310A, SQ905C}
+	MR97310A, SQ905C, OV511, OV518}
 
 //Dont use the following three, use YUV420, YUYV or YUV411P instead !!
 #define		IDENTICAL_FORMATS		3
-#define 	YUV420P					53
-#define 	YUV422					54
-#define 	YUV411					55
+#define 	YUV420P					55
+#define 	YUV422					56
+#define 	YUV411					57
 
 struct convert_data {
 	struct v4lconvert_data *priv;//the libv4l convert struct (used only if V4L2)

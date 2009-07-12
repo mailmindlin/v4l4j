@@ -57,9 +57,56 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   /* Genius E-M 112 (also want whitebalance by default) */
   { 0x093a, 0x2476, 0, NULL, NULL,
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED|V4LCONTROL_WANTS_WB, 1500 },
-  /* Asus N50Vn laptop */
+  /* Laptops */
   { 0x04f2, 0xb106, 0, "ASUSTeK Computer Inc.        ", "N50Vn      ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x04f2, 0xb106, 0, "ASUSTeK Computer Inc.        ", "N51Vg      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x04f2, 0xb012, 0, "ASUSTeK Computer Inc.        ", "F7SR      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x04f2, 0xb012, 0, "ASUSTeK Computer Inc.        ", "W7S       ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x04f2, 0xb012, 0, "ASUSTeK Computer Inc.        ", "X55SR     ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x04f2, 0xb012, 0, "ASUSTeK Computer Inc.        ", "X55SV     ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  /* These 2 PACKARD BELL's are Asus notebook in disguise */
+  { 0x04f2, 0xb012, 0, "PACKARD BELL BV              ", "EasyNote_BG45",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x04f2, 0xb012, 0, "PACKARD BELL BV              ", "EasyNote_BG46",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x04f2, 0xb071, 0, "ASUSTeK Computer Inc.        ", "K40IJ     ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x04f2, 0xb071, 0, "ASUSTeK Computer Inc.        ", "N10J      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  /* Note no whitespace padding for board vendor, this is not a typo */
+  { 0x064e, 0xa111, 0, "ASUSTeK Computer Inc.", "F5RL      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  /* Another Asus laptop in disguise */
+  { 0x064e, 0xa111, 0, "PEGATRON CORPORATION         ", "F5SR    ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "N20A      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x090c, 0xe370, 0, "ASUSTeK Computer Inc.        ", "U6S       ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "F3Ke      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "F3Sa      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "F3Sr      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  /* The G1S has been seen with 2 different board name strings */
+  { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "G1S                 ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "G1S       ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "G1Sn      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "G2S       ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x5986, 0x0205, 0, "LENOVO", "Base Board Product Name",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0, "Lenovo IdeaPad U330" },
+
 /* Second: devices which should use some software processing by default */
   /* Pac207 based devices */
   { 0x041e, 0x4028, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 1500 },
@@ -78,6 +125,11 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   { 0x046d, 0x0928, 7,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN },
   /* logitech quickcam express stv06xx + pb0100 */
   { 0x046d, 0x0840, 0,    NULL, NULL, V4LCONTROL_WANTS_WB },
+  /* logitech quickcam messenger variants, st6422 */
+  { 0x046d, 0x08f0, 0,    NULL, NULL, V4LCONTROL_WANTS_AUTOGAIN },
+  { 0x046d, 0x08f5, 0,    NULL, NULL, V4LCONTROL_WANTS_AUTOGAIN },
+  { 0x046d, 0x08f6, 0,    NULL, NULL, V4LCONTROL_WANTS_AUTOGAIN },
+  { 0x046d, 0x08da, 0,    NULL, NULL, V4LCONTROL_WANTS_AUTOGAIN },
 };
 
 static const struct v4l2_queryctrl fake_controls[];
@@ -91,6 +143,7 @@ static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
   unsigned short product_id = 0;
   char dmi_board_vendor[512] = "";
   char dmi_board_name[512]= "";
+  char dmi_system_version[512]= "";
   int i, minor;
   char c, *s, buf[32];
   struct v4l2_input input;
@@ -186,6 +239,14 @@ static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
     fclose(f);
   }
 
+  f = fopen("/sys/devices/virtual/dmi/id/product_version", "r");
+  if (f) {
+    s = fgets(dmi_system_version, sizeof(dmi_system_version), f);
+    if (s)
+      s[strlen(s) - 1] = 0;
+    fclose(f);
+  }
+
   for (i = 0; i < ARRAY_SIZE(v4lcontrol_flags); i++)
     if (v4lcontrol_flags[i].vendor_id == vendor_id &&
 	v4lcontrol_flags[i].product_id ==
@@ -193,7 +254,9 @@ static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
 	(v4lcontrol_flags[i].dmi_board_vendor == NULL ||
 	 !strcmp(v4lcontrol_flags[i].dmi_board_vendor, dmi_board_vendor)) &&
 	(v4lcontrol_flags[i].dmi_board_name == NULL ||
-	 !strcmp(v4lcontrol_flags[i].dmi_board_name, dmi_board_name))) {
+	 !strcmp(v4lcontrol_flags[i].dmi_board_name, dmi_board_name)) &&
+	(v4lcontrol_flags[i].dmi_system_version == NULL ||
+	 !strcmp(v4lcontrol_flags[i].dmi_system_version, dmi_system_version))) {
       data->flags |= v4lcontrol_flags[i].flags;
       data->flags_info = &v4lcontrol_flags[i];
       break;
@@ -203,7 +266,7 @@ static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
 struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 {
   int shm_fd;
-  int i, init = 0;
+  int i, rc, init = 0;
   char *s, shm_name[256];
   struct v4l2_capability cap;
   struct v4l2_queryctrl ctrl;
@@ -230,7 +293,8 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
   if (always_needs_conversion || v4lcontrol_needs_conversion(data)) {
     for (i = 0; i < V4LCONTROL_AUTO_ENABLE_COUNT; i++) {
       ctrl.id = fake_controls[i].id;
-      if (SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &ctrl) == -1)
+      rc = SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &ctrl);
+      if (rc == -1 || (rc == 0 && (ctrl.flags & V4L2_CTRL_FLAG_DISABLED)))
 	data->controls |= 1 << i;
     }
   }
@@ -315,7 +379,7 @@ static const struct v4l2_queryctrl fake_controls[V4LCONTROL_COUNT] = {
 {
   .id = V4L2_CID_HFLIP,
   .type = V4L2_CTRL_TYPE_BOOLEAN,
-  .name =  "Horizontal flip",
+  .name =  "Horizontal flip (sw)",
   .minimum = 0,
   .maximum = 1,
   .step = 1,
@@ -325,7 +389,7 @@ static const struct v4l2_queryctrl fake_controls[V4LCONTROL_COUNT] = {
 {
   .id = V4L2_CID_VFLIP,
   .type = V4L2_CTRL_TYPE_BOOLEAN,
-  .name =  "Vertical flip",
+  .name =  "Vertical flip (sw)",
   .minimum = 0,
   .maximum = 1,
   .step = 1,
