@@ -415,7 +415,20 @@ const struct libvideo_palette libvideo_palettes[] = {
 		COMPRESSED_FORMAT_DEPTH,
 		"SQ905C"
 	},
-
+	{
+		OV511,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_OV511,
+		COMPRESSED_FORMAT_DEPTH,
+		"OV511"
+	},
+	{
+		OV518,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_OV518,
+		COMPRESSED_FORMAT_DEPTH,
+		"OV518"
+	},
 
 //Dont use the following, use YUV420, YUYV & YUV411 instead !!
 	{

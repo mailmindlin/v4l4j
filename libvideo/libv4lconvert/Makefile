@@ -15,11 +15,11 @@ endif
 
 CONVERT_OBJS  = libv4lconvert.o tinyjpeg.o sn9c10x.o sn9c20x.o pac207.o \
 		mr97310a.o flip.o crop.o jidctflt.o spca561-decompress.o \
-		rgbyuv.o spca501.o sq905c.o bayer.o hm12.o \
+		rgbyuv.o spca501.o sq905c.o bayer.o hm12.o helper.o \
 		control/libv4lcontrol.o processing/libv4lprocessing.o \
 		processing/whitebalance.o processing/autogain.o \
 		processing/gamma.o
-TARGETS       = $(CONVERT_LIB) libv4lconvert.pc
+TARGETS       = $(CONVERT_LIB) libv4lconvert.pc ov511-decomp ov518-decomp
 INCLUDES      = ../include/libv4lconvert.h
 
 ifeq ($(LIB_RELEASE),)
@@ -33,6 +33,8 @@ endif
 ifeq ($(LIBDIR),)
 LIBDIR = $(PREFIX)/lib
 endif
+
+override CPPFLAGS += -DLIBDIR=\"$(LIBDIR)\"
 
 all: $(TARGETS)
 
@@ -54,21 +56,21 @@ libv4lconvert.pc:
 install: all
 	mkdir -p $(DESTDIR)$(PREFIX)/include
 	install -p -m 644 $(INCLUDES) $(DESTDIR)$(PREFIX)/include
-	mkdir -p $(DESTDIR)$(LIBDIR)
+	mkdir -p $(DESTDIR)$(LIBDIR)/libv4l
 ifeq ($(LINKTYPE),static)
-	mkdir -p $(DESTDIR)$(LIBDIR)
 	install -m 644 $(CONVERT_LIB) $(DESTDIR)$(LIBDIR)
 else
 	install -m 755 $(CONVERT_LIB).$(LIB_RELEASE) $(DESTDIR)$(LIBDIR)
 	cd $(DESTDIR)$(LIBDIR) && \
 	  ln -f -s $(CONVERT_LIB).$(LIB_RELEASE) $(CONVERT_LIB)
 endif
+	install -m 755 *-decomp $(DESTDIR)$(LIBDIR)/libv4l
 	mkdir -p $(DESTDIR)$(LIBDIR)/pkgconfig
 	install -m 644 libv4lconvert.pc $(DESTDIR)$(LIBDIR)/pkgconfig
 
 clean::
 	rm -f *.a *.so* *.o *.d */*.o */*.d libv4lconvert.pc log *~ */*~
-	rm -f *.orig *.rej */*.orig */*.rej
+	rm -f *.orig *.rej */*.orig */*.rej DEADJOE */DEADJOE *-decomp
 
 %.o: %.c
 	$(CC) -Wp,-MMD,"$*.d",-MQ,"$@",-MP -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
@@ -79,3 +81,6 @@ clean::
 
 %.a:
 	$(AR) cqs $@ $^
+
+ov511-decomp: ov511-decomp.o
+ov518-decomp: ov518-decomp.o

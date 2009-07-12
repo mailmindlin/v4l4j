@@ -894,58 +894,108 @@ int count_v4l2_controls(struct video_device *vdev) {
 	return count;
 }
 
+static void set_menu(struct v4l2_querymenu *q, int id, int idx, char *val){
+	q->id = id;
+	q->index = idx;
+	snprintf(q->name, 32, "%s", val);
+}
+
 static void set_query_menu(struct video_device *vd, struct control *c){
-	int i, count = 0, idx = 0;
+	int i, count = 0, idx = 0, id = c->v4l2_ctrl->id;
 	struct v4l2_querymenu qm, *q;
 	CLEAR(qm);
 	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
 			"CTRL: Setting menu for control %#x\n", c->v4l2_ctrl->id);
 
-	//count how many menus there are
-	qm.id = c->v4l2_ctrl->id;
-	for(i = c->v4l2_ctrl->minimum; i==c->v4l2_ctrl->maximum; i++){
-		qm.index = i;
-		if(ioctl(vd->fd, VIDIOC_QUERYMENU, &qm) == 0){
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
-					"CTRL: found menu item %s - %d\n", qm.name, qm.index);
-			count++;
-		}
-	}
-
-	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-			"CTRL: found %d menus\n", count);
-
-	if(count>0){
+	//check for known menu controls and put in some sensible menu items
+	if(c->v4l2_ctrl->id == V4L2_CID_POWER_LINE_FREQUENCY){
 		//populate struct control->v4l2_querymenu
-		XMALLOC(q, struct v4l2_querymenu *, count * sizeof(struct v4l2_querymenu));
-
-		q[idx].id = c->v4l2_ctrl->id;
-		for(i = c->v4l2_ctrl->minimum; i==c->v4l2_ctrl->maximum; i++){
-			q[idx].index = i;
-			if(ioctl(vd->fd, VIDIOC_QUERYMENU, &q[idx]) == 0)
-				idx++;
-		}
+		XMALLOC(q, struct v4l2_querymenu *, 3*sizeof(struct v4l2_querymenu));
+		set_menu(&q[count++], id, V4L2_CID_POWER_LINE_FREQUENCY_DISABLED, "Disabled");
+		set_menu(&q[count++], id, V4L2_CID_POWER_LINE_FREQUENCY_50HZ, "50 Hz");
+		set_menu(&q[count++], id, V4L2_CID_POWER_LINE_FREQUENCY_60HZ, "60 Hz");
+	} else if(c->v4l2_ctrl->id == V4L2_CID_COLORFX){
+		XMALLOC(q, struct v4l2_querymenu *, 3*sizeof(struct v4l2_querymenu));
+		set_menu(&q[count++], id, V4L2_COLORFX_NONE, "None");
+		set_menu(&q[count++], id, V4L2_COLORFX_BW, "Black/White");
+		set_menu(&q[count++], id, V4L2_COLORFX_SEPIA, "Sepia");
+	} else if(c->v4l2_ctrl->id == V4L2_CID_MPEG_STREAM_TYPE){
+		XMALLOC(q, struct v4l2_querymenu *, 6*sizeof(struct v4l2_querymenu));
+		set_menu(&q[count++], id, V4L2_MPEG_STREAM_TYPE_MPEG2_PS, "MPEG2 - Program stream");
+		set_menu(&q[count++], id, V4L2_MPEG_STREAM_TYPE_MPEG2_TS, "MPEG2 - Transport stream");
+		set_menu(&q[count++], id, V4L2_MPEG_STREAM_TYPE_MPEG1_SS, "MPEG1 - System stream");
+		set_menu(&q[count++], id, V4L2_MPEG_STREAM_TYPE_MPEG2_DVD, "MPEG2 - DVD-compatible stream");
+		set_menu(&q[count++], id, V4L2_MPEG_STREAM_TYPE_MPEG1_VCD, "MPEG1 - VCD-compatible stream");
+		set_menu(&q[count++], id, V4L2_MPEG_STREAM_TYPE_MPEG2_SVCD, "MPEG2 - SVCD-compatible stream");
+	} else if(c->v4l2_ctrl->id == V4L2_CID_EXPOSURE_AUTO){
+		XMALLOC(q, struct v4l2_querymenu *, 4*sizeof(struct v4l2_querymenu));
+		set_menu(&q[count++], id, V4L2_EXPOSURE_AUTO, "Auto");
+		set_menu(&q[count++], id, V4L2_EXPOSURE_MANUAL, "Manual");
+		set_menu(&q[count++], id, V4L2_EXPOSURE_SHUTTER_PRIORITY, "Shutter priority");
+		set_menu(&q[count++], id, V4L2_EXPOSURE_APERTURE_PRIORITY, "Aperture priority");
+		//TODO: finish this by addinng all the MPEG-specific menus
+/*
+	} else if(c->v4l2_ctrl->id == V4L2_CID_COLORFX){
+		XMALLOC(q, struct v4l2_querymenu *, 3);
+		set_menu(&q[count++], id, V4L2_COLORFX_NONE, "None");
+		set_menu(&q[count++], id, V4L2_COLORFX_BW, "Black/White");
+		set_menu(&q[count++], id, V4L2_COLORFX_SEPIA, "Sepia");
+	} else if(c->v4l2_ctrl->id == V4L2_CID_COLORFX){
+		XMALLOC(q, struct v4l2_querymenu *, 3);
+		set_menu(&q[count++], id, V4L2_COLORFX_NONE, "None");
+		set_menu(&q[count++], id, V4L2_COLORFX_BW, "Black/White");
+		set_menu(&q[count++], id, V4L2_COLORFX_SEPIA, "Sepia");
+*/
 	} else {
-		//sometimes, nothing is returned by the ioctl(VIDIOC_QUERYMENU),
-		//but the menu still exist and is
-		//made of contiguous values between minimum and maximum.
-		count = (c->v4l2_ctrl->maximum - c->v4l2_ctrl->minimum)/
-				c->v4l2_ctrl->step + 1;
+		//Not defined in the videodev2 header
+
+		//count how many menus there are
+		qm.id = id;
+		for(i = c->v4l2_ctrl->minimum; i==c->v4l2_ctrl->maximum; i++){
+			qm.index = i;
+			if(ioctl(vd->fd, VIDIOC_QUERYMENU, &qm) == 0){
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
+						"CTRL: found menu item %s - %d\n", qm.name, qm.index);
+				count++;
+			}
+		}
+
 		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-				"CTRL: creating %d menus\n", count);
-		XMALLOC(q, struct v4l2_querymenu *,count*sizeof(struct v4l2_querymenu));
-		for(i = c->v4l2_ctrl->minimum;
-			i<=c->v4l2_ctrl->maximum;
-			i+=c->v4l2_ctrl->step){
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
-					"CTRL: menu %d - val: %d\n", idx, i);
-			q[idx].id = c->v4l2_ctrl->id;
-			sprintf((char *) q[idx].name, "%d", i);
-			q[idx++].index = i;
+				"CTRL: found %d menus\n", count);
+
+		if(count>0){
+			//populate struct control->v4l2_querymenu
+			XMALLOC(q, struct v4l2_querymenu *, count * sizeof(struct v4l2_querymenu));
+
+			for(i = c->v4l2_ctrl->minimum; i==c->v4l2_ctrl->maximum; i++){
+				q[idx].id = id;
+				q[idx].index = i;
+				if(ioctl(vd->fd, VIDIOC_QUERYMENU, &q[idx]) == 0)
+					idx++;
+			}
+		} else {
+			//sometimes, nothing is returned by the ioctl(VIDIOC_QUERYMENU),
+			//but the menu still exist and is
+			//made of contiguous values between minimum and maximum.
+			count = (c->v4l2_ctrl->maximum - c->v4l2_ctrl->minimum)/
+					c->v4l2_ctrl->step + 1;
+			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
+					"CTRL: creating %d menus\n", count);
+			XMALLOC(q, struct v4l2_querymenu *,count*sizeof(struct v4l2_querymenu));
+			for(i = c->v4l2_ctrl->minimum;
+				i<=c->v4l2_ctrl->maximum;
+				i+=c->v4l2_ctrl->step){
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
+						"CTRL: menu %d - val: %d\n", idx, i);
+				q[idx].id = c->v4l2_ctrl->id;
+				sprintf((char *) q[idx].name, "%d", i);
+				q[idx++].index = i;
+			}
 		}
 	}
 	c->count_menu = count;
 	c->v4l2_menu = q;
+
 }
 
 static void fix_quirky_struct(struct v4l2_queryctrl *v){
