@@ -1,7 +1,7 @@
 #summary a step-by-step guide to downloading & installing v4l4j
 #labels Featured
 
-=Quick Start=
+=Quick Start Guide=
 For the impatient, here are a few instructions that will get you started:
  * If you are using Ubuntu or Debian, check [DebianInstall this page to install v4l4j Debian packages]. You can run a test application with 
 {{{
@@ -14,9 +14,11 @@ svn co http://v4l4j.googlecode.com/svn/v4l4j/trunk v4l4j
 }}}
    * Install Sun JDK6 or OpenJDK6, libjpeg development files & Apache ant 
    * Edit v4l4j/src/Makefile and point `JDK_HOME` to the where the JDK is installed
-   * Run `ant test-gui`.
+   * Run `ant clean all` to compile v4l4j.
+   * Run `sudo ant install` to install v4l4j (it can be uninstalled later on with `sudo ant uninstall`).
+   * Run a test application with `ant test-gui`.
 
-This will compile v4l4j and run a test application that displays a video stream from /dev/video0 by default. To use another video device, add `-Dtest.device=/dev/videoXX` to the last line. If things go wrong, then read on. Otherwise, jump to [GettingStarted#Installing the install section] to install v4l4j and start writing your own application.
+The test application displays a video stream from /dev/video0 by default. To use another video device, add `-Dtest.device=/dev/videoXX`. If things go wrong, then read on. Otherwise, jump to [GettingStarted#Installing the install section] to include v4l4j in your own application.
 
 =Download=
 Choose one of the following method to download v4l4j:
@@ -46,8 +48,7 @@ sudo apt-get install build-essential ant
 }}}
 
 =Build=
-First, make sure that you have all the dependencies installed (see previous Requirements paragraph). To compile v4l4j, run `ant all` in the top-level directory. This will first 
-compile the libvideo shared library and the JNI library libv4l4j.so. It will then compile the java classes and pack them in a JAR file. Both the JNI library libv4l4j.so and the JAR file v4l4j.jar are copied in the top-level directory. libvideo is NOT copied in the top-level directory and remains in libvideo/ .
+First, make sure that you have all the dependencies installed (see previous [GettingStarted#Requirements requirements] paragraph). To compile v4l4j, run `ant all` in the top-level directory. This will first compile the libvideo shared library and the JNI library libv4l4j.so. It will then compile the java classes and pack them in a JAR file. Both the JNI library libv4l4j.so and the JAR file v4l4j.jar are copied in the top-level directory. libvideo is NOT copied in the top-level directory and remains in libvideo/ .
 If you get this error:
 {{{
 v4l4j_FrameGrabber.c:25:17: error: jni.h: No such file or directory
@@ -62,15 +63,20 @@ you havent installed the development files on libjpeg. See the previous paragrap
 The JavaDoc can be generated with `ant javadoc` and is located in doc/.
 
 =Installing=
-*Please note that if you have insatlled a previous version of v4l4j, you MUST uninstall it before you install a new one.* In order to use the v4l4j package from your Java application, it is recommended that you install both libraries (libvideo and the JNI library), as well as v4l4j's JAR file. This is done in 3 steps:
- * Run `sudo ant install`. This will copy libvideo's shared library in /usr/lib , the JNI library libv4l4j.so in /usr/lib/jni and v4l4j's JAR file in /usr/share/java. Any of these paths can be changed by modifying the right property in build.properties .
+v4l4j can be installed by:
+ * running `sudo ant install`. This will copy libvideo's shared library in /usr/lib , the JNI library libv4l4j.so in /usr/lib/jni and v4l4j's JAR file in /usr/share/java. Any of these paths can be changed by modifying the right property in build.properties .
  * Make sure you run `sudo ldconfig` so libvideo's shared library is added to the cache.
- * When running your application, pass the following arguments to the JVM: `-Djava.library.path=/usr/lib/jni -cp /usr/share/java/v4l4j.jar` . Modify these values if you have changed the default installation directories.
+
+
+In order to use the v4l4j package from your own Java application, pass the following arguments to the JVM:
+"-Djava.library.path=/usr/lib/jni -cp /usr/share/java/v4l4j.jar" (modify the above values if you have changed the default installation directories).
+
 
 You can later on uninstall v4l4j using `sudo ant uninstall`
 
 =Testing=
-Three example applications are shipped with v4l4j:
+In order to use the following example applications, make sure you first install
+v4l4j (see above section). Three example applications are shipped with v4l4j:
  * The first one simply captures frames for 10 seconds and print the frame rate. Run it with `ant test-fps`
  * The second one displays the video stream in a window. Run it with `ant test-gui`.
  * The third one prints information about the video device itself. Run it with `ant deviceInfo`
