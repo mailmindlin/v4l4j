@@ -908,18 +908,18 @@ static void set_query_menu(struct video_device *vd, struct control *c){
 			"CTRL: Setting menu for control %#x\n", c->v4l2_ctrl->id);
 
 	//check for known menu controls and put in some sensible menu items
-	if(c->v4l2_ctrl->id == V4L2_CID_POWER_LINE_FREQUENCY){
+	if(id == V4L2_CID_POWER_LINE_FREQUENCY){
 		//populate struct control->v4l2_querymenu
 		XMALLOC(q, struct v4l2_querymenu *, 3*sizeof(struct v4l2_querymenu));
 		set_menu(&q[count++], id, V4L2_CID_POWER_LINE_FREQUENCY_DISABLED, "Disabled");
 		set_menu(&q[count++], id, V4L2_CID_POWER_LINE_FREQUENCY_50HZ, "50 Hz");
 		set_menu(&q[count++], id, V4L2_CID_POWER_LINE_FREQUENCY_60HZ, "60 Hz");
-	} else if(c->v4l2_ctrl->id == V4L2_CID_COLORFX){
+	} else if(id == V4L2_CID_COLORFX){
 		XMALLOC(q, struct v4l2_querymenu *, 3*sizeof(struct v4l2_querymenu));
 		set_menu(&q[count++], id, V4L2_COLORFX_NONE, "None");
 		set_menu(&q[count++], id, V4L2_COLORFX_BW, "Black/White");
 		set_menu(&q[count++], id, V4L2_COLORFX_SEPIA, "Sepia");
-	} else if(c->v4l2_ctrl->id == V4L2_CID_MPEG_STREAM_TYPE){
+	} else if(id == V4L2_CID_MPEG_STREAM_TYPE){
 		XMALLOC(q, struct v4l2_querymenu *, 6*sizeof(struct v4l2_querymenu));
 		set_menu(&q[count++], id, V4L2_MPEG_STREAM_TYPE_MPEG2_PS, "MPEG2 - Program stream");
 		set_menu(&q[count++], id, V4L2_MPEG_STREAM_TYPE_MPEG2_TS, "MPEG2 - Transport stream");
@@ -927,7 +927,7 @@ static void set_query_menu(struct video_device *vd, struct control *c){
 		set_menu(&q[count++], id, V4L2_MPEG_STREAM_TYPE_MPEG2_DVD, "MPEG2 - DVD-compatible stream");
 		set_menu(&q[count++], id, V4L2_MPEG_STREAM_TYPE_MPEG1_VCD, "MPEG1 - VCD-compatible stream");
 		set_menu(&q[count++], id, V4L2_MPEG_STREAM_TYPE_MPEG2_SVCD, "MPEG2 - SVCD-compatible stream");
-	} else if(c->v4l2_ctrl->id == V4L2_CID_EXPOSURE_AUTO){
+	} else if(id == V4L2_CID_EXPOSURE_AUTO){
 		XMALLOC(q, struct v4l2_querymenu *, 4*sizeof(struct v4l2_querymenu));
 		set_menu(&q[count++], id, V4L2_EXPOSURE_AUTO, "Auto");
 		set_menu(&q[count++], id, V4L2_EXPOSURE_MANUAL, "Manual");
@@ -935,12 +935,12 @@ static void set_query_menu(struct video_device *vd, struct control *c){
 		set_menu(&q[count++], id, V4L2_EXPOSURE_APERTURE_PRIORITY, "Aperture priority");
 		//TODO: finish this by addinng all the MPEG-specific menus
 /*
-	} else if(c->v4l2_ctrl->id == V4L2_CID_COLORFX){
+	} else if(id == V4L2_CID_COLORFX){
 		XMALLOC(q, struct v4l2_querymenu *, 3);
 		set_menu(&q[count++], id, V4L2_COLORFX_NONE, "None");
 		set_menu(&q[count++], id, V4L2_COLORFX_BW, "Black/White");
 		set_menu(&q[count++], id, V4L2_COLORFX_SEPIA, "Sepia");
-	} else if(c->v4l2_ctrl->id == V4L2_CID_COLORFX){
+	} else if(id == V4L2_CID_COLORFX){
 		XMALLOC(q, struct v4l2_querymenu *, 3);
 		set_menu(&q[count++], id, V4L2_COLORFX_NONE, "None");
 		set_menu(&q[count++], id, V4L2_COLORFX_BW, "Black/White");
