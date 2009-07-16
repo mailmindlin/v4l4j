@@ -1,3 +1,10 @@
+v4l4j (0.8.5-0ubuntu1~ppa1) hardy; urgency=low
+
+  * new upstream release with updated version of libv4l(0.6)
+  * Do not report native formats if they can not be used for capture
+
+ -- Gilles Gigan <gilles.gigan@gmail.com>  Thu, 16 Jul 2009 22:37:17 +1000
+
 v4l4j (0.8.4-0ubuntu1~ppa1) hardy; urgency=low
 
   * new upstream release with updated version of libv4l(0.5.99)
