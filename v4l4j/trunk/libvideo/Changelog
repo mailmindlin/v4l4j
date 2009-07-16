@@ -1,3 +1,10 @@
+v0.8.5:
+- updated to latest videodev2.h from v4l mercurial repository.
+- updated to libv4l v0.6
+- fix bug caused by v4lconvert_try_format not failing when given an unsupported
+  format 
+v0.8.4:
+- updated to libv4l v0.5.99
 v0.8.3:
 - modified build system to simplify Debian packaging
 v0.8.2:

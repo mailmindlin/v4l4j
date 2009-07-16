@@ -21,10 +21,12 @@ always be found at http://v4l4j.googlecode.com
 
 
 QUICK START:
-The following installs the dependencies, compiles v4l4j and runs a test 
-application, assuming you are running Ubuntu or Debian:
+The following installs the dependencies, compiles & install v4l4j and runs a
+test application, assuming you are running Ubuntu or Debian:
 
 sudo apt-get install openjdk-6-jdk libjpeg-dev build-essential ant
+ant clean all
+sudo ant install
 ant test-gui
 
 If you want to use v4l4j from your own code, jump to the INSTALLING section.
@@ -48,24 +50,23 @@ libvideo is NOT copied in the top-level directory and remains in libvideo/ .
 
 
 INSTALLING:
-In order to use the v4l4j package from your Java application, it is recommended 
-that you install both libraries (libvideo and the JNI library), as well as 
-v4l4j's JAR file. This is done in 3 steps:
-- Run "sudo ant install". This will copy libvideo's shared library in /usr/lib ,
-  the JNI library libv4l4j.so in /usr/lib/jni and v4l4j's JAR file in 
-  /usr/share/java. Any of these paths can be changed by modifying the right 
+v4l4j can be installed by:
+- running "sudo ant install". This will copy libvideo's shared library in 
+  /usr/lib , the JNI library libv4l4j.so in /usr/lib/jni and v4l4j's JAR file 
+  in /usr/share/java. Any of these paths can be changed by modifying the right 
   property in build.properties .
- 
 - Make sure you run "sudo ldconfig" so libvideo's shared library is added to the
   cache.
-
-- When running your application, pass the following arguments to the JVM:
-  "-Djava.library.path=/usr/lib/jni -cp /usr/share/java/v4l4j.jar"
-  (modify the above values if you have changed the default installation 
-  directories).
+  
+In order to use the v4l4j package from your own Java application, pass the 
+following arguments to the JVM:
+"-Djava.library.path=/usr/lib/jni -cp /usr/share/java/v4l4j.jar"
+(modify the above values if you have changed the default installation
+directories).
 
 TESTING:
-Three example applications are shipped with v4l4j:
+In order to use the following example applications, make sure you first install
+v4l4j (see above section). Three example applications are shipped with v4l4j:
 - The first one simply captures frames for 10 seconds and print the frame rate.
   Run it with "ant test-fps"
 - The second one displays the video stream & video controls in a window. Run it

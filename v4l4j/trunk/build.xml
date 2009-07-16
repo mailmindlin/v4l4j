@@ -1,7 +1,6 @@
 <project name="v4l4j" default="usage">
 	
 	<property file="build.properties"/>
-	<property environment="my_env" />
 	
 	<!-- 
 		destdir property is used when installing v4l4j.jar, JNIlib and javadoc
@@ -43,14 +42,19 @@
 		<echo message=" jnilib-debug :     Build the JNI library with debug output(libv4l4j.so)"/>
 		<echo message=" install:           Install v4l4j.jar, the JNI lib and the JavaDoc.(must be root)"/>
 		<echo message=" uninstall:         Uninstall v4l4j.jar, the JNI lib and the JavaDoc.(must be root)"/>
+		<echo message=" clean:             Remove all build generated files"/>		
+		<echo message=" ********************************************************" />
+		<echo message="" />
+		<echo message=" The following targets will work ONLY if v4l4j has been" />
+		<echo message=" installed using the 'install' target." />
 		<echo message=" test-fps :         Check the FPS of a video source"/>
 		<echo message=" test-gui :         Display video stream in a window"/>
 		<echo message=" deviceInfo:        Display information about a video source"/>
-		<echo message=" clean:             Remove all build generated files"/>
+
 		<echo message=""/>
 		<echo message=""/>
 		<echo message="The 'install' target will copy v4l4j.jar in ${platform.standard.jar.location}, "/>
-                <echo message="the JNI library in ${platform.standard.jni.location} and the JavaDoc in ${platform.standard.javadoc.location}"/>
+        <echo message="the JNI library in ${platform.standard.jni.location} and the JavaDoc in ${platform.standard.javadoc.location}"/>
 		<echo message="By default, '${test.device}' is used as the video source. Capture resolution is set to " />
 		<echo message="${test.width}x${test.height}, using input ${test.channel} and video standard ${test.standard}."/>
 		<echo message="See the REAME file to change these default values." />
@@ -133,6 +137,7 @@
 		<javac srcdir="${project.src}" destdir="${project.classes}" deprecation="on" source="${source}" debug="off">
 			<classpath refid="build.classpath"/>
 			<include name="**/*.java"/>
+			<exclude name="**/package-info.java" />
 		</javac>
 	</target>
 
@@ -140,6 +145,7 @@
 		<javac srcdir="${project.src}" destdir="${project.classes}" deprecation="on" source="${source}" debug="on">
 			<classpath refid="build.classpath"/>
 			<include name="**/*.java"/>
+			<exclude name="**/package-info.java" />
 		</javac>
 	</target>
 
@@ -185,6 +191,7 @@
 			<fileset dir="${project.src}">
 				<include name="**"/>
 				<exclude name="au/edu/jcu/v4l4j/test/"/>
+				<exclude name="**/package-info.java" />
 			</fileset>
 			<fileset dir="${project.dir}">
 				<include name="resources/**" />
@@ -213,9 +220,9 @@
 	<target name="test-fps" depends="jar,jnilib">
 		<java classname="au.edu.jcu.v4l4j.examples.GetFrameRate" fork="true" failonerror="true">
 			<classpath>
-				<pathelement location="${project.dir}/${project.jar.file}"/>
+				<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
 			</classpath>
-			<jvmarg value="-Djava.library.path=."/>
+			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
 			<arg value="${test.device}" /> <!-- device file -->
 			<arg value="${test.width}" /> <!-- width -->
 			<arg value="${test.height}" /> <!-- height -->
@@ -223,30 +230,27 @@
 			<arg value="${test.channel}" /> <!-- channel -->
 			<arg value="${test.inFormat}" /> <!-- capture image format -->
 			<arg value="${test.outFormat}" /> <!-- output image format -->
-			<env key="LD_LIBRARY_PATH" value="libvideo:${my_env.LD_LIBRARY_PATH}" />
 		</java>
 	</target>
 	
 	<target name="test-gui" depends="jar,jnilib">
-		<java jar="${project.dir}/${project.jar.file}" fork="true" failonerror="true">
-			<jvmarg value="-Djava.library.path=."/>
+		<java jar="${platform.standard.jar.location}/${project.jar.file}" fork="true" failonerror="true">
+			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
 			<arg value="${test.device}" /> <!-- device file -->
 			<arg value="${test.width}" /> <!-- width -->
 			<arg value="${test.height}" /> <!-- height -->
 			<arg value="${test.standard}" /> <!-- standard -->
 			<arg value="${test.channel}" /> <!-- channel -->
-			<env key="LD_LIBRARY_PATH" value="libvideo:${my_env.LD_LIBRARY_PATH}" />
 		</java>
 	</target>
 	
 	<target name="deviceInfo" depends="jar,jnilib">
 		<java classname="au.edu.jcu.v4l4j.VideoDevice" fork="true" failonerror="true">
 			<classpath>
-				<pathelement location="${project.dir}/${project.jar.file}"/>
+				<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
 			</classpath>
-			<jvmarg value="-Djava.library.path=."/>
+			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
 			<arg value="${test.device}" /> <!-- device file -->
-			<env key="LD_LIBRARY_PATH" value="libvideo:${my_env.LD_LIBRARY_PATH}" />
 		</java>
 	</target>
 
