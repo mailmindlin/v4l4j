@@ -28,7 +28,7 @@ Interfaces are independent from each other and can be used regardless of which o
 The main header file is `libvideo.h` and contains all user-side required structures, function definitions and macros. `palettes.h` contains the definitions of an array of `struct libvideo_palette` which can be used to translate a libvideo palette index to its textual name. `livideo-err.h` contains all the macro definitions for returned values representing error codes.
 
 = Image formats =
-libvideo has an index for every single image format existing in Video4Linux. These indexes are marcos defined in `libvideo.h` and listed here for convenience. A global array of `struct libvideo_palette` named `libvideo_palettes` translates an image format index into a textual name (include `palettes.h` for that). See the example below.
+libvideo has an index for every single image format existing in Video4Linux. These indexes are marcos defined in `libvideo.h` and listed here for convenience. A global array of `struct libvideo_palette` named `libvideo_palettes` translates an image format index into a textual name (include `libvideo-palettes.h` for that). See the example below.
 
 {{{
 #include "palettes.h"
@@ -95,4 +95,6 @@ Below is a list of known image formats and their libvideo index. For a descripti
 #define		YVYU         50
 #define		MR97310A     51
 #define		SQ905C       52
+#define         OV511        53
+#define         OV518        54
 }}}
