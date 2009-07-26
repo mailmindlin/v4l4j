@@ -163,6 +163,8 @@ static void setup_capture_actions(struct video_device *vdev) {
 	if(vdev->v4l_version == V4L1_VERSION) {
 		c->actions->set_cap_param = set_cap_param_v4l1;
 		c->actions->init_capture = init_capture_v4l1;
+		c->actions->set_frame_interval = set_frame_intv_v4l1;
+		c->actions->get_frame_interval = get_frame_intv_v4l1;
 		c->actions->start_capture = start_capture_v4l1;
 		c->actions->dequeue_buffer = dequeue_buffer_v4l1;
 		c->actions->enqueue_buffer = enqueue_buffer_v4l1;
@@ -172,6 +174,8 @@ static void setup_capture_actions(struct video_device *vdev) {
 	} else {
 		c->actions->set_cap_param = set_cap_param_v4l2;
 		c->actions->init_capture = init_capture_v4l2;
+		c->actions->set_frame_interval = set_frame_intv_v4l2;
+		c->actions->get_frame_interval = get_frame_intv_v4l2;
 		c->actions->start_capture = start_capture_v4l2;
 		c->actions->dequeue_buffer = dequeue_buffer_v4l2;
 		c->actions->enqueue_buffer = enqueue_buffer_v4l2;
@@ -228,6 +232,20 @@ void free_capture_device(struct video_device *vdev){
 	XFREE(vdev->capture);
 }
 
+static void print_frame_intv_cont(struct frame_intv_continuous *c){
+	printf("\t\t\tMin: %d / %d", c->min.numerator, c->min.denominator);
+	printf(" - Max: %d / %d", c->max.numerator, c->max.denominator);
+	printf(" - Step: %d / %d\n", c->step.numerator, c->step.denominator);
+}
+
+static void print_frame_intv_disc(struct frame_intv_discrete *c){
+	int k = -1;
+	while(c[++k].numerator!=0)
+		printf("%d/%d - ", c[k].numerator, c[k].denominator);
+
+	printf("\n");
+}
+
 void print_device_info(struct video_device *v){
 	int j,k;
 	struct device_info *i = v->info;
@@ -236,10 +254,16 @@ void print_device_info(struct video_device *v){
 	printf("Device name: %s\n",i->name);
 	printf("Device file: %s\n",v->file);
 	printf("Supported image formats (Name - Index):\n");
+	//for each palette
 	for(j=0; j<i->nb_palettes; j++){
+
+		//print it name and index
 		printf("\t%s (%d)", libvideo_palettes[i->palettes[j].index].name,
 				i->palettes[j].index);
+
 		if(i->palettes[j].raw_palettes!=NULL){
+			//if it s a converted palette, print the native palettes
+			//which can be used to obtain this converted palette
 			k=-1;
 			printf(" ( converted from ");
 			while(i->palettes[j].raw_palettes[++k]!=-1)
@@ -249,32 +273,67 @@ void print_device_info(struct video_device *v){
 				);
 			printf(" )\n");
 		} else {
+			//if it is a native palette, print the frame sizes and intervals
+			//if available
 			printf("\n");
 
+			//if the frame size is a continuous one, print its details
 			if(i->palettes[j].size_type==FRAME_SIZE_CONTINUOUS){
-				printf("\t\tWidth (min/max/step): %d / %d / %d\n",
+				printf("\t\tResolution - "
+						"Min: %d x %d - Max: %d x %d"
+						" - Step: %d x %d\n",
 						i->palettes[j].continuous->min_width,
-						i->palettes[j].continuous->max_width,
-						i->palettes[j].continuous->step_width
-				);
-				printf("\t\tHeight (min/max/step): %d / %d / %d\n",
 						i->palettes[j].continuous->min_height,
+						i->palettes[j].continuous->max_width,
 						i->palettes[j].continuous->max_height,
+						i->palettes[j].continuous->step_width,
 						i->palettes[j].continuous->step_height
 				);
+
+				//print frame interval details
+				if(i->palettes[j].continuous->interval_type_min_res==FRAME_INTV_CONTINUOUS){
+					printf("\t\tContinuous frame intervals for minimum resolution: ");
+					print_frame_intv_cont(i->palettes[j].continuous->intv_min_res.continuous);
+				}else if(i->palettes[j].continuous->interval_type_min_res==FRAME_INTV_DISCRETE){
+					printf("\t\tDiscrete frame intervals for minimum resolution: ");
+					print_frame_intv_disc(i->palettes[j].continuous->intv_min_res.discrete);
+				} else
+					printf("\t\tFrame size enumeration not supported\n");
+
+				if(i->palettes[j].continuous->interval_type_max_res==FRAME_INTV_CONTINUOUS){
+					printf("\t\tContinuous frame intervals for maximum resolution: ");
+					print_frame_intv_cont(i->palettes[j].continuous->intv_max_res.continuous);
+				}else if(i->palettes[j].continuous->interval_type_max_res==FRAME_INTV_DISCRETE){
+					printf("\t\tDiscrete frame intervals for maximum resolution: ");
+					print_frame_intv_disc(i->palettes[j].continuous->intv_max_res.discrete);
+				} else
+					printf("\t\tFrame size enumeration not supported\n");
 			}else if(i->palettes[j].size_type==FRAME_SIZE_DISCRETE){
+				//frame size type is discrete
 				k = -1;
-				while(i->palettes[j].discrete[++k].width!=0)
+
+				//print frame size & interval info
+				while(i->palettes[j].discrete[++k].width!=0) {
 					printf("\t\t%d x %d\n",
 							i->palettes[j].discrete[k].width,
 							i->palettes[j].discrete[k].height
 					);
+					if(i->palettes[j].discrete[k].interval_type==FRAME_INTV_CONTINUOUS){
+						printf("\t\tContinuous frame intervals: ");
+						print_frame_intv_cont(i->palettes[j].discrete[k].intv.continuous);
+					}else if(i->palettes[j].discrete[k].interval_type==FRAME_INTV_DISCRETE){
+						printf("\t\tDiscrete frame intervals: ");
+						print_frame_intv_disc(i->palettes[j].discrete[k].intv.discrete);
+					} else
+						printf("\t\tFrame size enumeration not supported\n");
+				}
 
 			}else
 				printf("\t\tFrame size enumeration not supported\n");
 		}
 	}
 
+	//print the input detail
 	printf("Inputs:\n");
 	for(j=0; j<i->nb_inputs; j++){
 		printf("\tName: %s\n", i->inputs[j].name);

@@ -470,18 +470,36 @@ static int set_crop(struct capture_device *c, int fd) {
 	return 0;
 }
 
-static int set_param(struct capture_device *c, int fd) {
+int set_frame_intv_v4l2(struct video_device *vdev, int num, int denom) {
 	struct v4l2_streamparm param;
-
-	//TODO: for now the FPS is hardcoded to 30. could be improved ?
+	int ret;
 
 	CLEAR(param);
 	param.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	param.parm.capture.timeperframe.numerator = 1;
-	param.parm.capture.timeperframe.denominator = 30;
-	ioctl(fd, VIDIOC_S_PARM, &param);
+	param.parm.capture.timeperframe.numerator = num;
+	param.parm.capture.timeperframe.denominator = denom;
+	ret = ioctl(vdev->fd, VIDIOC_S_PARM, &param);
 
-	return 0;
+	if(ret==EINVAL)
+		return LIBVIDEO_ERR_IOCTL;
+	else if (ret==0)
+		return 0;
+	else
+		return LIBVIDEO_ERR_FORMAT;
+}
+
+int get_frame_intv_v4l2(struct video_device *vdev, int *num, int *denom) {
+	struct v4l2_streamparm param;
+
+	CLEAR(param);
+	param.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+	if (ioctl(vdev->fd, VIDIOC_G_PARM, &param)==0){
+		*num = param.parm.capture.timeperframe.numerator;
+		*denom = param.parm.capture.timeperframe.denominator;
+		return 0;
+	} else
+		return LIBVIDEO_ERR_IOCTL;
 }
 
 int set_cap_param_v4l2(struct video_device *vdev, int *palettes, int nb) {
@@ -530,7 +548,7 @@ int set_cap_param_v4l2(struct video_device *vdev, int *palettes, int nb) {
 	}
 
 	//set FPS
-	set_param(c, vdev->fd);
+	//set_param(c, vdev->fd);
 
 	return ret;
 
@@ -897,7 +915,7 @@ int count_v4l2_controls(struct video_device *vdev) {
 static void set_menu(struct v4l2_querymenu *q, int id, int idx, char *val){
 	q->id = id;
 	q->index = idx;
-	snprintf(q->name, 32, "%s", val);
+	snprintf((char *)q->name, 32, "%s", val);
 }
 
 static void set_query_menu(struct video_device *vd, struct control *c){
