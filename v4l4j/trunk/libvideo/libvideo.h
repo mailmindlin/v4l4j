@@ -227,9 +227,49 @@ struct video_input_info {
 	int index;
 };
 
+/*
+ * Frame intervals
+ */
+
+struct frame_intv_discrete{
+	unsigned int numerator;
+	unsigned int denominator;
+};
+
+struct frame_intv_continuous{
+	struct frame_intv_discrete min;
+	struct frame_intv_discrete max;
+	struct frame_intv_discrete step;
+};
+
+enum frame_intv_types{
+	FRAME_INTV_UNSUPPORTED=0,
+	FRAME_INTV_DISCRETE,
+	FRAME_INTV_CONTINUOUS
+};
+
+/*
+ * Frame size
+ */
 struct frame_size_discrete {
 	int width;
 	int height;
+
+	//the type of frame frame intervals (V4L2 only)
+	enum frame_intv_types interval_type;
+
+	//if interval_type==FRAME_INTV_CONTINUOUS, then only the continuous member
+	//of the union is valid and points to a single struct frame_intv_continuous
+	//if interval_type==FRAME_INTV_DISCRETE, then only the discrete member
+	//of the union is valid and points to an array of struct
+	//frame_intv_discrete. The last element in the array has its members (num
+	//& denom) set to 0.
+	//if interval_type==FRAME_INTV_UNSUPPORTED, then none of the two members are
+	//valid
+	union {
+		struct frame_intv_continuous *continuous;
+		struct frame_intv_discrete *discrete;
+	} intv;
 };
 
 struct frame_size_continuous {
@@ -239,6 +279,29 @@ struct frame_size_continuous {
 	int min_height;
 	int max_height;
 	int step_height;
+
+	//the type of frame frame intervals (V4L2 only)
+	//for the minimum and maximum resolutions
+	//(min_width X min_height) and (max_width X max_height)
+	enum frame_intv_types interval_type_min_res;
+	enum frame_intv_types interval_type_max_res;
+
+	//if interval_type==FRAME_INTV_CONTINUOUS, then only the continuous member
+	//of the union is valid and points to a single struct frame_intv_continuous
+	//if interval_type==FRAME_INTV_DISCRETE, then only the discrete member
+	//of the union is valid and points to an array of struct
+	//frame_intv_discrete. The last element in the array has its members (num
+	//& denom) set to 0.
+	//if interval_type==FRAME_INTV_UNSUPPORTED, then none of the two members are
+	//valid
+	union {
+		struct frame_intv_continuous *continuous;
+		struct frame_intv_discrete *discrete;
+	} intv_min_res;
+	union {
+		struct frame_intv_continuous *continuous;
+		struct frame_intv_discrete *discrete;
+	} intv_max_res;
 };
 
 enum frame_size_types{
@@ -252,7 +315,7 @@ enum frame_size_types{
  * A raw palette is a palette produced by the driver natively.
  * A converted palette is a palette which is converted by libvideo from
  * a raw palette
- */
+ */;
 struct palette_info{
 	//this palette's index
 	int index;
@@ -263,10 +326,10 @@ struct palette_info{
 	//if raw_palettes is NULL, this palette is raw, and size_type and
 	//(continuous or discrete) are valid (check value of size_type).
 	//If raw_palettes is not NULL, then
-	//size_type==FRAME_SIZE_UNSUPPORTED, continuous and discrete and not valid.
+	//size_type=FRAME_SIZE_UNSUPPORTED, continuous and discrete and not valid.
 	int *raw_palettes;
 
-	//the type of frame sizes
+	//the type of frame sizes (V4L2 only)
 	enum frame_size_types size_type;
 
 	//if size_type==FRAME_SIZE_CONTINUOUS, then only the continuous member
@@ -422,6 +485,24 @@ struct capture_actions {
 // LIBVIDEO_ERR_CROP (error applying cropping parameters)
 // or LIBVIDEO_ERR_NOCAPS (error checking capabilities)
 	int (*set_cap_param)(struct video_device *, int *, int);
+
+//set the frame interval for capture, ie the number of seconds in between
+//each captured frame. This function is available only for V4L2 devices
+//whose driver supports this feature. It cannot be called during capture.
+//This function returns LIBVIDEO_ERR_IOCTL on v4l1 devices and on v4l2
+//device which do not support setting frame intervals. It returns
+//LIBVIDEO_ERR_FORMAT if the given parameters are incorrect, or 0 if
+//everything went fine. The driver may adjust the given values to the closest
+//supported ones, which can be check with get_frame_interval()
+	int (*set_frame_interval)(struct video_device *, int, int);
+
+//get the current frame interval for capture, ie the number of seconds in
+//between each captured frame. This function is available only for V4L2 devices
+//whose driver supports this feature. It cannot be called during capture.
+//This function returns LIBVIDEO_ERR_IOCTL on v4l1 devices and on v4l2
+//device which do not support setting frame intervals or 0 if
+//everything went fine
+	int (*get_frame_interval)(struct video_device *, int *, int *);
 
 //initialise streaming, request create mmap'ed buffers
 //returns 0 if ok, LIBVIDEO_ERR_REQ_MMAP if error negotiating mmap params,
