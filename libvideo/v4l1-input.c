@@ -308,6 +308,14 @@ int set_cap_param_v4l1(struct video_device *vdev, int *palettes, int nb) {
 	return 0;
 }
 
+int set_frame_intv_v4l1(struct video_device *vdev, int num, int denom) {
+	return LIBVIDEO_ERR_IOCTL;
+}
+
+int get_frame_intv_v4l1(struct video_device *vdev, int *num, int *denom) {
+		return LIBVIDEO_ERR_IOCTL;
+}
+
 // get streaming cap details VIDIOCGMBUF, initialise streaming and
 // create mmap'ed buffers
 int init_capture_v4l1(struct video_device *vdev) {

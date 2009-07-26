@@ -44,6 +44,10 @@ int check_capture_capabilities_v4l2(int, char *);
 // set the capture parameters (hardcoded to require YUV420 for now
 int set_cap_param_v4l2(struct video_device *, int *, int);
 
+int set_frame_intv_v4l2(struct video_device *, int , int);
+
+int get_frame_intv_v4l2(struct video_device *, int *, int*);
+
 //initialise streaming, request V4L2 buffers and create mmap'ed buffers
 int init_capture_v4l2(struct video_device *);
 

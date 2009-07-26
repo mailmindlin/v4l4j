@@ -38,6 +38,8 @@ static void set_palette_info(struct device_info *di, int idx, int palette,
 	di->palettes[idx].raw_palettes = NULL;
 	di->palettes[idx].size_type = FRAME_SIZE_CONTINUOUS;
 	di->palettes[idx].continuous = cont;
+	di->palettes[idx].continuous->interval_type_max_res = FRAME_INTV_UNSUPPORTED;
+	di->palettes[idx].continuous->interval_type_min_res = FRAME_INTV_UNSUPPORTED;
 	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: %s (%d) supported\n",
 			libvideo_palettes[palette].name, palette);
 }

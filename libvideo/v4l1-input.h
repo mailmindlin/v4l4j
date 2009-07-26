@@ -50,6 +50,9 @@ int set_cap_param_v4l1(struct video_device *, int *, int);
 // set window 		VIDIOCSWIN
 // get window format	VIDIOCGWIN  (to double check)
 
+int set_frame_intv_v4l1(struct video_device *, int , int);
+
+int get_frame_intv_v4l1(struct video_device *, int *, int*);
 
 //initialise streaming, request V4L2 buffers and create mmap'ed buffers
 int init_capture_v4l1(struct video_device *);

@@ -30,6 +30,7 @@ Tested video devices and drivers:
 - USB - 046d:0994 Logitech QuickCam Orbit/Sphere AF (uvcvideo)
 - USB - 093a:2460 Pixart Imaging, Inc. - Q-TEC WEBCAM 100 (gspca_pac207) 	
 - USB - 04f2:b071 Chicony - CNF7129 (eee pc webcam) uvcvideo 
+- USB - 045e:074a Microsoft LifeCam - (uvcvideo) 
 
 
 Currently, libvideo will probe and detect the following drivers:
