@@ -67,6 +67,22 @@ After calling this method, all the members in `struct capture_device` will be se
  * the image size is `cap->imagesize` (this value is only meaningful for uncompressed image formats. For compressed formats, the image size is returned when fetching the frame buffer)
 This method returns 0 if successful, LIBVIDEO_ERR_FORMAT (no supplied image formats could be used), LIBVIDEO_ERR_STD (the supplied standard could not be used), LIBVIDEO_ERR_CHANNEL (the supplied channel is invalid), LIBVIDEO_ERR_CROP (error applying cropping parameters) or LIBVIDEO_ERR_NOCAPS (error checking capabilities).
 
+Also, if supported, the desired frame rate can be set using the following:
+{{{
+int num = 1, denom = 30, ret;
+ret = cap->actions->set_frame_interval(video_dev, num, denom);
+//check return value and take appropriate action
+}}}
+set_frame_interval() will apply the given frame interval, specified as numerator and denominator integers. The frame rate (in frame per second) FPS = 1 / frame_interval. So  the above frame interval is equivalent to 30 frames per second. set_frame_interval returns 0 if successful, LIBVIDEO_ERR_FORMAT (if the given frame interval is not supported), LIBVIDEO_ERR_IOCTL (setting frame interval is not supported).
+
+Similarly, getting the current frame interval is done using:
+{{{
+int num, denom,  ret;
+ret = cap->actions->get_frame_interval(video_dev, &num, &denom);
+//check return value and take appropriate action
+}}}
+get_frame_interval() will return the current frame interval. It returns 0 if successful or LIBVIDEO_ERR_IOCTL (getting frame interval is not supported).
+
 == Initialise capture resources ==
 This is done using:
 {{{
