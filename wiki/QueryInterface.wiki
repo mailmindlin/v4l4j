@@ -30,27 +30,10 @@ struct video_input_info {
 	int index;  //this input's index
 };
 }}}
+
+
 Information about an image format is encapsulated in a `struct palette_info`:
 {{{
-struct frame_size_discrete {
-	int width;
-	int height;
-};
-
-struct frame_size_continuous {
-	int min_width;
-	int max_width;
-	int step_width;
-	int min_height;
-	int max_height;
-	int step_height;
-};
-
-enum frame_size_types{
-	FRAME_SIZE_UNSUPPORTED=0,
-	FRAME_SIZE_DISCRETE,
-	FRAME_SIZE_CONTINUOUS
-};
 
 /*
  * a palette (or image format) can be either raw or converted.
@@ -89,9 +72,97 @@ struct palette_info{
 	};
 };
 }}}
-The previous structure needs explaining: libvideo can convert native image formats (image formats produce by the video device) into convenience formats RGB24, BGR24, YUV420 & YVU420. This is internally accomplished by libv4l_convert. When checking supported image formats, both native and converted formats are reported by libvideo. The application can make the difference between a native and a converted format by checking the `raw_palette` member: if it is set to `NULL` then it is a native format. Otherwise, it points to an integer array which lists the native formats that can be converted.
 
-Also a `struct palette_info` contains information on the supported captures resolutions for the image format it describes. If the image format is native, the member `size_type` indicates whether the supported resolutions are reported as a list of discrete Width,Height pairs (size_type=FRAME_SIZE_DISCRETE), or as minimum/maximum/step values for both width and height (size_type=FRAME_SIZE_CONTINUOUS). if size_type=FRAME_SIZE_UNSUPPORTED, then no resolution information could be obtained form the driver.
+libvideo can convert native image formats (image formats produce by the video device) into convenience formats RGB24, BGR24, YUV420 & YVU420. This is internally accomplished by libv4l_convert. When checking supported image formats, both native and converted formats are reported by libvideo. The application can make the difference between a native and a converted format by checking the `raw_palette` member: if it is set to `NULL` then it is a native format. Otherwise, it points to an integer array which lists the native formats that can be converted.
+
+
+Also a `struct palette_info` contains information on the supported captures resolutions and frame intervals for the image format it describes. If the image format is native, the member `size_type` indicates whether the supported resolutions are reported as a list of discrete Width,Height pairs (size_type=FRAME_SIZE_DISCRETE), or as minimum/maximum/step values for both width and height (size_type=FRAME_SIZE_CONTINUOUS). if size_type=FRAME_SIZE_UNSUPPORTED, then no resolution information could be obtained form the driver.
+Both discrete and continuous frame sizes may contain information about supported frame intervals in the corresponding members.
+
+{{{
+/*
+ * Frame intervals
+ */
+
+struct frame_intv_discrete{
+	unsigned int numerator;
+	unsigned int denominator;
+};
+
+struct frame_intv_continuous{
+	struct frame_intv_discrete min;
+	struct frame_intv_discrete max;
+	struct frame_intv_discrete step;
+};
+
+enum frame_intv_types{
+	FRAME_INTV_UNSUPPORTED=0,
+	FRAME_INTV_DISCRETE,
+	FRAME_INTV_CONTINUOUS
+};
+
+
+struct frame_size_discrete {
+	int width;
+	int height;
+
+	//the type of frame frame intervals (V4L2 only)
+	enum frame_intv_types interval_type;
+
+	//if interval_type==FRAME_INTV_CONTINUOUS, then only the continuous member
+	//of the union is valid and points to a single struct frame_intv_continuous
+	//if interval_type==FRAME_INTV_DISCRETE, then only the discrete member
+	//of the union is valid and points to an array of struct
+	//frame_intv_discrete. The last element in the array has its members (num
+	//& denom) set to 0.
+	//if interval_type==FRAME_INTV_UNSUPPORTED, then none of the two members are
+	//valid
+	union {
+		struct frame_intv_continuous *continuous;
+		struct frame_intv_discrete *discrete;
+	} intv;
+};
+
+struct frame_size_continuous {
+	int min_width;
+	int max_width;
+	int step_width;
+	int min_height;
+	int max_height;
+	int step_height;
+
+	//the type of frame frame intervals (V4L2 only)
+	//for the minimum and maximum resolutions
+	//(min_width X min_height) and (max_width X max_height)
+	enum frame_intv_types interval_type_min_res;
+	enum frame_intv_types interval_type_max_res;
+
+	//if interval_type==FRAME_INTV_CONTINUOUS, then only the continuous member
+	//of the union is valid and points to a single struct frame_intv_continuous
+	//if interval_type==FRAME_INTV_DISCRETE, then only the discrete member
+	//of the union is valid and points to an array of struct
+	//frame_intv_discrete. The last element in the array has its members (num
+	//& denom) set to 0.
+	//if interval_type==FRAME_INTV_UNSUPPORTED, then none of the two members are
+	//valid
+	union {
+		struct frame_intv_continuous *continuous;
+		struct frame_intv_discrete *discrete;
+	} intv_min_res;
+	union {
+		struct frame_intv_continuous *continuous;
+		struct frame_intv_discrete *discrete;
+	} intv_max_res;
+};
+
+enum frame_size_types{
+	FRAME_SIZE_UNSUPPORTED=0,
+	FRAME_SIZE_DISCRETE,
+	FRAME_SIZE_CONTINUOUS
+};
+
+}}}
+
 
 Information about a tuner is contained in a `struct tuner_info`:
 {{{
