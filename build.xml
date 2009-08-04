@@ -40,8 +40,10 @@
 		<echo message=" jar-src :          Build a JAR file with the v4l4j classes and sources"/>
 		<echo message=" jnilib :           Build the JNI library (libv4l4j.so)"/>
 		<echo message=" jnilib-debug :     Build the JNI library with debug output(libv4l4j.so)"/>
-		<echo message=" install:           Install v4l4j.jar, the JNI lib and the JavaDoc.(must be root)"/>
-		<echo message=" uninstall:         Uninstall v4l4j.jar, the JNI lib and the JavaDoc.(must be root)"/>
+		<echo message=" install:           Install v4l4j.jar, the JNI lib (must be root)"/>
+		<echo message=" uninstall:         Uninstall v4l4j.jar, the JNI lib (must be root)"/>
+		<echo message=" install-doc:       Build and install JavaDoc (must be root)"/>
+		<echo message=" uninstall-doc:     Uninstall JavaDoc (must be root)"/>
 		<echo message=" clean:             Remove all build generated files"/>		
 		<echo message=" ********************************************************" />
 		<echo message="" />
@@ -64,9 +66,9 @@
 		<mkdir dir="${project.classes}"/>
 	</target>
 	
-	<target name="all" depends="jnilib,jar,javadoc"/>
+	<target name="all" depends="jnilib,jar"/>
 
-    <target name="all-debug" depends="jnilib-debug,jar-debug,javadoc"/>
+    <target name="all-debug" depends="jnilib-debug,jar-debug"/>
 
 	<target name="jnilib-debug" depends="init">
 		<exec executable="make">
@@ -130,8 +132,8 @@
 		<delete dir="${destdir}${platform.standard.javadoc.location}" />
 	</target>
 
-	<target name="install" depends="install-libvideo, install-v4l4j, install-doc" />
-	<target name="uninstall" depends="uninstall-libvideo, uninstall-v4l4j, uninstall-doc" />
+	<target name="install" depends="install-libvideo, install-v4l4j" />
+	<target name="uninstall" depends="uninstall-libvideo, uninstall-v4l4j" />
 	
 	<target name="compile" depends="init">
 		<javac srcdir="${project.src}" destdir="${project.classes}" deprecation="on" source="${source}" debug="off">
