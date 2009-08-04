@@ -31,27 +31,32 @@ import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
 
 /**
  * This class encapsulates information about the supported capture resolutions
- * for a given {@link ImageFormat}. The first step is to determine how the supported 
- * resolutions are expressed by calling {@link #getType()}. This method returns
- * either:
+ * and frame intervals for a given {@link ImageFormat}. The first step is to 
+ * determine how the supported resolutions are expressed by calling 
+ * {@link #getType()}. This method returns either:
  * <ul>
  * <li>{@link Type#UNSUPPORTED}: no resolution information can be obtained from
  * the driver. Calling any methods (except {@link #getType()}) will throw a
  * {@link UnsupportedMethod} exception.</li>
- * <li>{@link Type#DISCRETE}: supported resolutions are returned as a list
- * of {@link DiscreteResolution} objects, which encapsulate the width and height
- * for this resolution. Calling {@link #getDiscreteResolutions()} returns this
- * list.</li>
+ * <li>{@link Type#DISCRETE}: supported resolutions and frame intervals are 
+ * returned as a list of {@link DiscreteResolution} objects, which encapsulate 
+ * the width and height for this resolution as well as supported frame intervals. 
+ * Calling {@link #getDiscreteResolutions()} returns this list.</li>
  * <li>{@link Type#STEPWISE}: supported width and height values can be anywhere
- * within a given minimum and maximum using a step value. The minimum, maximum &
- * step values for width and height are obtained using the similarly named 
- * methods.</li>
+ * within a given minimum and maximum using a step value. These values, along 
+ * with information on supported frame intervals are encapsulated in a
+ * {@link StepwiseResolution} object which is retrieved by calling
+ * {@link #getStepwiseResolution()}.</li>
  * </ul>
+ * {@link StepwiseResolution} and {@link DiscreteResolution} objects provide 
+ * information on supported capture resolutions and frame intervals for a given
+ * image format.<br>
  * {@link ResolutionInfo} objects are not instantiated directly. Instead, each 
  * {@link ImageFormat} carries a reference to a {@link ResolutionInfo} object, 
  * describing the supported resolutions for this format. A list of supported
  * image formats is obtained by calling {@link DeviceInfo#getFormatList()} on 
- * a {@link VideoDevice}. 
+ * a {@link VideoDevice}. See the {@link ImageFormatList} documentation for 
+ * more information.
  * @author gilles
  *
  */
@@ -82,13 +87,9 @@ public class ResolutionInfo {
 		DISCRETE,
 		/**
 		 * A STEPWISE type means that resolutions are reported as minimum,
-		 * maximum and step values for width and height, using
-		 * {@link ResolutionInfo#getMinWidth()}, 
-		 * {@link ResolutionInfo#getMaxWidth()},
-		 * {@link ResolutionInfo#getWidthStep()},
-		 * {@link ResolutionInfo#getMinHeight()}, 
-		 * {@link ResolutionInfo#getMaxHeight()},
-		 * {@link ResolutionInfo#getHeightStep()}.  
+		 * maximum and step values for width and height through a 
+		 * {@link StepwiseResolution} object. This object can be obtained by
+		 * calling {@link ResolutionInfo#getStepwiseResolution()}.  
 		 */
 		STEPWISE
 	};
@@ -99,10 +100,10 @@ public class ResolutionInfo {
 	private final Type type;
 	
 	/**
-	 * The minimum, maximum and step values for both width and height
+	 * The stepwise resolution object
 	 * Valid only if type==STEPWISE
 	 */
-	private int minWidth, maxWidth, stepWidth, minHeight, maxHeight, stepHeight;
+	private StepwiseResolution stepwiseObject;
 	
 	/**
 	 * A list of {@link DiscreteResolution} object if type==DISCRETE
@@ -139,8 +140,9 @@ public class ResolutionInfo {
 	 * @param o a C pointer to a struct v4l4j_device
 	 */
 	ResolutionInfo(int index, long o){
-		int t = doGetType(index, o);
+		int t;
 		try {
+			t = doGetType(index, o);
 			if(t==1){
 				discreteValues = new Vector<DiscreteResolution>();
 				doGetDiscrete(index,o);
@@ -192,95 +194,24 @@ public class ResolutionInfo {
 	}
 	
 	/**
-	 * This method returns the minimum width, or throws an 
-	 * {@link UnsupportedMethod} exception if this resolution info object is not
-	 * of type {@link Type#STEPWISE}
-	 * @return the minimum width
-	 * @throws UnsupportedMethod if this resolution info object is not
-	 * of type {@link Type#STEPWISE}
+	 * This method returns a {@link StepwiseResolution} object, or throws a 
+	 * {@link UnsupportedMethod} exception if this resolution info object
+	 * is not of type {@link Type#STEPWISE}.
+	 * @return a {@link StepwiseResolution} object
+	 * @throws UnsupportedMethod if this resolution info object
+	 * is not of type {@link Type#STEPWISE}.
 	 */
-	public int getMinWidth() throws UnsupportedMethod{
+	public StepwiseResolution getStepwiseResolution() throws UnsupportedMethod{
 		if(type!=Type.STEPWISE)
-			throw new UnsupportedMethod("Supported resolutions are not stepwise");
-		return minWidth;
-	}
-	
-	/**
-	 * This method returns the maximum width, or throws an 
-	 * {@link UnsupportedMethod} exception if this resolution info object is not
-	 * of type {@link Type#STEPWISE}
-	 * @return the maximum width
-	 * @throws UnsupportedMethod if this resolution info object is not
-	 * of type {@link Type#STEPWISE}
-	 */
-	public int getMaxWidth() throws UnsupportedMethod{
-		if(type!=Type.STEPWISE)
-			throw new UnsupportedMethod("Supported resolutions are not stepwise");
-		return maxWidth;
-	}
-	
-	/**
-	 * This method returns the width step, or throws an 
-	 * {@link UnsupportedMethod} exception if this resolution info object is not
-	 * of type {@link Type#STEPWISE}
-	 * @return the width step
-	 * @throws UnsupportedMethod if this resolution info object is not
-	 * of type {@link Type#STEPWISE}
-	 */
-	public int getWidthStep() throws UnsupportedMethod{
-		if(type!=Type.STEPWISE)
-			throw new UnsupportedMethod("Supported resolutions are not stepwise");
-		return stepWidth;
-	}
-	
-	/**
-	 * This method returns the minimum height, or throws an 
-	 * {@link UnsupportedMethod} exception if this resolution info object is not
-	 * of type {@link Type#STEPWISE}
-	 * @return the minimum height
-	 * @throws UnsupportedMethod if this resolution info object is not
-	 * of type {@link Type#STEPWISE}
-	 */
-	public int getMinHeight() throws UnsupportedMethod{
-		if(type!=Type.STEPWISE)
-			throw new UnsupportedMethod("Supported resolutions are not stepwise");
-		return minHeight;
-	}
-	
-	/**
-	 * This method returns the maximum height, or throws an 
-	 * {@link UnsupportedMethod} exception if this resolution info object is not
-	 * of type {@link Type#STEPWISE}
-	 * @return the maximum height
-	 * @throws UnsupportedMethod if this resolution info object is not
-	 * of type {@link Type#STEPWISE}
-	 */
-	public int getMaxHeight() throws UnsupportedMethod{
-		if(type!=Type.STEPWISE)
-			throw new UnsupportedMethod("Supported resolutions are not stepwise");
-		return maxHeight;
-	}
-	
-	/**
-	 * This method returns the height step, or throws an 
-	 * {@link UnsupportedMethod} exception if this resolution info object is not
-	 * of type {@link Type#STEPWISE}
-	 * @return the height step
-	 * @throws UnsupportedMethod if this resolution info object is not
-	 * of type {@link Type#STEPWISE}
-	 */
-	public int getHeightStep() throws UnsupportedMethod{
-		if(type!=Type.STEPWISE)
-			throw new UnsupportedMethod("Supported resolutions are not stepwise");
-		return stepHeight;
+			throw new UnsupportedMethod("Supported resolutions are not stepwsie");
+		return stepwiseObject;
 	}
 	
 	@Override
 	public String toString(){
 		String s;
 		if(type==Type.STEPWISE){
-			s = "(min/max/step) Width: "+minWidth+"/"+maxWidth+"/"+stepWidth+
-				" - Height: "+minHeight+"/"+maxHeight+"/"+stepHeight;
+			s = stepwiseObject.toString();
 		} else if(type == Type.DISCRETE){
 			s = "";
 			for(DiscreteResolution d: discreteValues)
@@ -293,6 +224,13 @@ public class ResolutionInfo {
 	
 	/**
 	 * This class represents a possible resolution supported by a video device.
+	 * It also contains information on supported frame intervals at this 
+	 * resolution, encapsulated in a {@link FrameInterval} object returned by
+	 * the {@link #getFrameInterval()} method.<br>
+	 * A {@link DiscreteResolution} object is not instantiated directly. 
+	 * Instead, a list of supported {@link DiscreteResolution}s for a given
+	 * video device can be obtained through a {@link ResolutionInfo} for that
+	 * device.
 	 * @author gilles
 	 */
 	public static class DiscreteResolution{
@@ -307,9 +245,16 @@ public class ResolutionInfo {
 		 */
 		public final int height;
 		
-		private DiscreteResolution(int w, int h){
+		/**
+		 * The frame interval object containing information on supported
+		 * frame intervals for capture at this resolution.
+		 */
+		public final FrameInterval interval;
+		
+		private DiscreteResolution(int w, int h, FrameInterval f){
 			width = w;
 			height = h;
+			interval = f;
 		}
 		
 		/**
@@ -328,9 +273,161 @@ public class ResolutionInfo {
 			return height;
 		}
 		
+		/**
+		 * This method returns the frame interval object, containing
+		 * information on supported frame intervals for this discrete 
+		 * resolution.
+		 * @return the frame intervals supported at this resolution 
+		 */
+		public FrameInterval getFrameInterval(){
+			return interval;
+		}
+		
 		@Override
 		public String toString(){
-			return width+"x"+height;
+			return width+"x"+height +" ("+interval+")";
+		}
+	}
+	
+	/**
+	 * This class encapsulates information about supported capture resolutions 
+	 * for a video device. The supported resolutions are continuous values, 
+	 * comprised between a minimum and a maximum, in given increments (called 
+	 * the step value).<br>
+	 * For instance, for a device supporting capture resolutions between 160x120 and
+	 * 800x600 in increments of 160x120, the following resolutions are 
+	 * supported: 160x120, 320x240, 480x360, 640x480, 800x600.<br>
+	 * A <code>StepwiseResolution<code> object matching the above criteria will
+	 * contain:
+	 * <ul>
+	 * <li><code>StepwiseResolution.minWidth = 160</code></li>
+	 * <li><code>StepwiseResolution.minHeight = 120</code></li>
+	 * <li><code>StepwiseResolution.stepWidth = 160</code></li>
+	 * <li><code>StepwiseResolution.stepHeight= 120</code></li>
+	 * <li><code>StepwiseResolution.maxWidth = 800</code></li>
+	 * <li><code>StepwiseResolution.maxHeight = 600</code></li>
+	 * </ul>
+	 * These values can also be obtained using the accessor methods.
+	 * <br><br>
+	 * Objects of this class also contains two {@link FrameInterval} objects
+	 * providing information on supported frame intervals for capture
+	 * at the minimum resolution 
+	 * ({@link StepwiseResolution#getMinResFrameInterval()}) and maximum 
+	 * resolution ({@link StepwiseResolution#getMaxResFrameInterval()}).
+	 * You can find out supported frame intervals for any other intermediate 
+	 * resolution by calling 
+	 * {@link DeviceInfo#listIntervals(ImageFormat, int, int)}. 
+	 * A StepwiseResolution object is not directly instantiated. Instead, it can
+	 * be obtained through a {@link ResolutionInfo}.
+	 * @author gilles
+	 */
+	public static class StepwiseResolution{
+		/**
+		 * The minimum, maximum and step values for both width and height
+		 */
+		public final int minWidth, maxWidth, stepWidth, minHeight, maxHeight, stepHeight;
+		
+		/**
+		 * The frame interval object containing information on supported
+		 * frame intervals for capture at the minimum resolution 
+		 * (minWidth x minHeight).
+		 */
+		public final FrameInterval minInterval;
+		
+		/**
+		 * The frame interval object containing information on supported
+		 * frame intervals for capture at the maximum resolution
+		 * (maxWidth x maxHeight).
+		 */
+		public final FrameInterval maxInterval;
+		
+		StepwiseResolution(int minw, int minh, int maxw, int maxh, 
+				int stepw, int steph, FrameInterval minI, FrameInterval maxI){
+			minWidth = minw;
+			maxWidth = maxw;
+			stepWidth = stepw;
+			minHeight = minh;
+			maxHeight = maxh;
+			stepHeight = steph;
+			minInterval = minI;
+			maxInterval = maxI;
+		}
+		
+		/**
+		 * This method returns the minimum width.
+		 * @return the minimum width
+		 */
+		public int getMinWidth(){
+			return minWidth;
+		}
+		
+		/**
+		 * This method returns the maximum width.
+		 * @return the maximum width
+		 */
+		public int getMaxWidth(){
+			return maxWidth;
+		}
+		
+		/**
+		 * This method returns the width step.
+		 * @return the width step
+		 */
+		public int getWidthStep(){
+			return stepWidth;
+		}
+		
+		/**
+		 * This method returns the minimum height.
+		 * @return the minimum height
+		 */
+		public int getMinHeight(){
+			return minHeight;
+		}
+		
+		/**
+		 * This method returns the maximum height.
+		 * @return the maximum height
+		 */
+		public int getMaxHeight(){
+			return maxHeight;
+		}
+		
+		/**
+		 * This method returns the height step.
+		 * @return the height step
+		 */
+		public int getHeightStep(){
+			return stepHeight;
+		}
+		
+		/**
+		 * This method returns the frame interval object, containing
+		 * information on all supported frame interval at the minimum 
+		 * resolution (minWidth x minHeight)
+		 * @return the frame interval supported at the minimum 
+		 * resolution (minWidth x minHeight)
+		 */
+		public FrameInterval getMinResFrameInterval(){
+			return minInterval;
+		}
+		
+		/**
+		 * This method returns the frame interval object, containing
+		 * information on all supported frame interval at the maximum 
+		 * resolution (maxWidth x maxHeight)
+		 * @return the frame interval supported at the maximum 
+		 * resolution (maxWidth x maxHeight) 
+		 */
+		public FrameInterval getMaxResFrameInterval(){
+			return maxInterval;
+		}
+		
+		@Override
+		public String toString(){
+			return "min: "+ minWidth +"x"+minHeight+" ("+minInterval+") - max: "
+				+maxWidth + "x" + maxHeight+" ("+ maxInterval+") - step: "+
+				stepWidth + "x" + stepHeight+ ")\n";
 		}
 	}
 }

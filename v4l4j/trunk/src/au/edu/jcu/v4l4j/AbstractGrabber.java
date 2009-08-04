@@ -25,9 +25,11 @@ package au.edu.jcu.v4l4j;
 
 import java.nio.ByteBuffer;
 
+import au.edu.jcu.v4l4j.FrameInterval.DiscreteInterval;
 import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
 import au.edu.jcu.v4l4j.exceptions.ImageFormatException;
 import au.edu.jcu.v4l4j.exceptions.InitialisationException;
+import au.edu.jcu.v4l4j.exceptions.InvalidValue;
 import au.edu.jcu.v4l4j.exceptions.NoTunerException;
 import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
@@ -59,7 +61,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	private int standard;
 	private int nbV4LBuffers = 4;
 	private ByteBuffer[] bufs;
-	private State state;
+	protected State state;
 	protected int format;
 	private Tuner tuner;
 	private int type;
@@ -96,6 +98,8 @@ abstract class AbstractGrabber implements FrameGrabber {
 	private native int getBufferLength(long o);
 	private native void stop(long o);
 	private native void doRelease(long o);
+	private native void doSetFrameIntv(long o, int n, int d) throws InvalidValue;
+	private native int doGetFrameIntv(long o, int what);
 
 	
 	/**
@@ -162,6 +166,35 @@ abstract class AbstractGrabber implements FrameGrabber {
 		state.commit();
 	}
 	
+	/* (non-Javadoc)
+	 * @see au.edu.jcu.v4l4j.FrameGrabber#setFrameInterval()
+	 */
+	@Override
+	public void setFrameInterval(int num, int denom) throws InvalidValue{
+		synchronized(state){
+			if(!state.isStarted())
+				throw new StateException("Invalid method call");
+			doSetFrameIntv(object, num, denom);
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see au.edu.jcu.v4l4j.FrameGrabber#getFrameInterval()
+	 */
+	@Override
+	public DiscreteInterval getFrameInterval() {
+		synchronized(state){
+			//TODO: not sure if the following if statement is required
+			//ie, it might be possible to get the current frame intv
+			//while capturing... to be tested
+			if(!state.isStarted())
+				throw new StateException("Invalid method call: cannot get the"
+						+" frame interval while capturing.");
+			return new DiscreteInterval(
+					doGetFrameIntv(object, 0), doGetFrameIntv(object, 1)
+			);
+		}
+	}
 	
 	/* (non-Javadoc)
 	 * @see au.edu.jcu.v4l4j.FrameGrabber#getTuner()
@@ -171,6 +204,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 		if(tuner==null)
 			throw new NoTunerException("This input does not have a tuner");
 		
+		state.checkReleased();
 		return tuner;
 	}
 	
@@ -233,6 +267,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 */
 	@Override
 	public final int getHeight(){
+		state.checkReleased();
 		return height;
 	}
 	
@@ -241,6 +276,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 */
 	@Override
 	public final int getWidth(){
+		state.checkReleased();
 		return width;
 	}
 	
@@ -249,6 +285,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 */
 	@Override
 	public final int getChannel(){
+		state.checkReleased();
 		return channel;
 	}
 	
@@ -257,20 +294,21 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 */
 	@Override
 	public final int getStandard(){
+		state.checkReleased();
 		return standard;
 	}
 	
-	private static class State {
+	protected static class State {
 
 		private int state;
 		private int temp;
 		private int users;
 		
-		private int UNINIT=0;
-		private int INIT=1;
-		private int STARTED=2;
-		private int STOPPED=3;
-		private int REMOVED=4;
+		private static int UNINIT=0;
+		private static int INIT=1;
+		private static int STARTED=2;
+		private static int STOPPED=3;
+		private static int RELEASED=4;
 
 		public State() {
 			state = UNINIT;
@@ -295,11 +333,22 @@ abstract class AbstractGrabber implements FrameGrabber {
 		}
 		
 		/**
-		 * Must be called with state object lock held
+		 * Must be called with state object lock held.
+		 * @throws StateException if released
 		 * @return
 		 */
 		public boolean isStarted(){
+			checkReleased();
 			return state==STARTED && temp!=STOPPED;
+		}
+		
+		/**
+		 * Must be called with state object lock held
+		 * @return
+		 */
+		public void checkReleased(){
+			if(state==RELEASED || temp==RELEASED)
+				throw new StateException("This FrameGrabber has been released");
 		}
 
 		public synchronized void get(){
@@ -339,8 +388,8 @@ abstract class AbstractGrabber implements FrameGrabber {
 		}
 		
 		public synchronized void remove(){
-			if(state==INIT || state==STOPPED && temp!=REMOVED) {
-				temp=REMOVED;
+			if(state==INIT || state==STOPPED && temp!=RELEASED) {
+				temp=RELEASED;
 			} else
 				throw new StateException("This FrameGrabber is neither "
 						+"initialised nor stopped and can not be released");

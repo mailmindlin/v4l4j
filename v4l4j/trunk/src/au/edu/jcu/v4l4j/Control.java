@@ -480,6 +480,7 @@ public class Control {
 //				throw new StateException("This Control has been released");
 		}
 		
+		@SuppressWarnings("unused")
 		public synchronized void commit(){
 			state=temp;
 		}
