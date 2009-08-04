@@ -315,7 +315,7 @@ enum frame_size_types{
  * A raw palette is a palette produced by the driver natively.
  * A converted palette is a palette which is converted by libvideo from
  * a raw palette
- */;
+ */
 struct palette_info{
 	//this palette's index
 	int index;
@@ -353,6 +353,18 @@ struct device_info {
 	int nb_palettes;
 	struct palette_info *palettes;
 	char name[NAME_FIELD_LENGTH];
+	//this function enumerates the frame intervals for a given video format
+	//, width and height and modifies the pointer at p to point to either
+	//NULL, a struct frame_intv_discrete, struct frame_intv_continuous. It returns
+	//FRAME_INTV_UNSUPPORTED (p points  to NULL),
+	//FRAME_INTV_DISCRETE (p points to a an array of struct frame_intv_discrete, the
+	//last struct has its members set to 0) or
+	//FRAME_INTV_CONTINUOUS (p points to a struct frame_intv_continuous)
+	//The returned pointer must be freed by the caller (using free()).
+	//						fmt, width, height, p
+	int (*list_frame_intv)(struct device_info*, int, int , int , void **);
+	//valid only for v4l2, dont touch
+	struct v4lconvert_data *convert;
 };
 
 

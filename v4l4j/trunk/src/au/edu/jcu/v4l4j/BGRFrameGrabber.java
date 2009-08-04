@@ -116,6 +116,7 @@ public class BGRFrameGrabber extends AbstractGrabber {
 	 * @throws InitialisationException if the video device file can not be 
 	 * initialised 
 	 * @throws StateException if the frame grabber is already initialised
+	 * or released
 	 * @throws V4L4JException if there is an error applying capture parameters
 	 */
 	void init() throws V4L4JException{
@@ -143,8 +144,12 @@ public class BGRFrameGrabber extends AbstractGrabber {
 	 * uses, ie the one images are retrieved from the device BEFORE BGR 
 	 * conversion.
 	 * @return the native image format used by this FrameGrabber.
+	 * @throws StateException if this 
+	 * <code>FrameGrabber</code> has been already released, and therefore must
+	 * not be used anymore.
 	 */
 	public ImageFormat getImageFormat(){
+		state.checkReleased();
 		return dInfo.getFormatList().getBGREncodableFormat(format);
 	}
 }

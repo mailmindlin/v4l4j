@@ -264,7 +264,9 @@ public class VideoDevice {
 			initDeviceInfo();
 		} catch (V4L4JException e){
 			//error getting DeviceInfo
-			//keep going but set things accordingly
+			//keep going so v4l4j can be used with drivers which supports
+			//multiple simultaneuous open() calls.
+			//However, set things accordingly
 			deviceInfo = null;
 			
 			supportJPEG = false;
@@ -339,10 +341,16 @@ public class VideoDevice {
 	 */
 	public void release(boolean wait){
 		state.release(wait);
-		doReleaseTunerActions(v4l4jObject);
+		
 		if(tuners!=null)
 			tuners.release();
+		doReleaseTunerActions(v4l4jObject);
+		
+		if(deviceInfo!=null)
+			deviceInfo.release();
+		
 		doRelease(v4l4jObject);
+		
 		state.commit();
 	}	
 	
@@ -1485,6 +1493,7 @@ public class VideoDevice {
 		 * until all users have finished.
 		 * @return whether we can switch to the released state or not
 		 */
+		@SuppressWarnings("unused")
 		public synchronized void release(){
 			release(true);
 		}
@@ -1568,8 +1577,8 @@ public class VideoDevice {
 		if(vd.supportJPEGConversion())
 			for(ImageFormat f: d.getFormatList().getJPEGEncodableFormats())
 				System.out.println("\t\t"+f.toNiceString());
-	
 		
+				
 		System.out.println("Inputs:");
 		for(InputInfo i: d.getInputs()){
 			System.out.println("\tName: "+i.getName());

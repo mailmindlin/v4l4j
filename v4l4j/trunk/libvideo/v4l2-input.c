@@ -31,6 +31,7 @@
 #include "libvideo-err.h"
 #include "libvideo-palettes.h"
 #include "v4l2-input.h"
+#include "v4l2-query.h"
 
 //Arbitrary values that hopefully will never be reached
 //v4l2 will adjust them to the closest available
@@ -480,12 +481,14 @@ int set_frame_intv_v4l2(struct video_device *vdev, int num, int denom) {
 	param.parm.capture.timeperframe.denominator = denom;
 	ret = ioctl(vdev->fd, VIDIOC_S_PARM, &param);
 
-	if(ret==EINVAL)
-		return LIBVIDEO_ERR_IOCTL;
-	else if (ret==0)
+	switch (ret){
+	case 0:
 		return 0;
-	else
+	case EINVAL:
+		return LIBVIDEO_ERR_IOCTL;
+	default:
 		return LIBVIDEO_ERR_FORMAT;
+	}
 }
 
 int get_frame_intv_v4l2(struct video_device *vdev, int *num, int *denom) {

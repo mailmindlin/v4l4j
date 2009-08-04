@@ -27,10 +27,10 @@ package au.edu.jcu.v4l4j;
 
 /**
  * Objects of this class represent an image format (YUV, RGB, GREY, BGR, ...) 
- * and its supported capture resolutions.
+ * and its supported capture resolutions and frame intervals.
  * <code>ImageFormat</code> objects have three members: a name, a unique index,
  * and a {@link ResolutionInfo} object which provides information on
- * supported capture resolutions for this format.
+ * supported capture resolutions and frame intervals for this format.
  * A list of known image format indexes can be found in 
  * {@link V4L4JConstants}.IMF_*. 
  * <code>ImageFormat</code>s
@@ -44,8 +44,10 @@ package au.edu.jcu.v4l4j;
  * <br>for(ImageFormat im: fmts)
  * <br>&nbsp;&nbsp; System.out.println("Format name: "+im);
  * <br>vd.release();
- * </code>
+ * </code><br>
+ * See the {@link ImageFormatList} documentation for more information.
  * 
+ * @see ImageFormatList
  * @author gilles
  *
  */
@@ -85,7 +87,7 @@ public class ImageFormat {
 	/**
 	 * This method returns the {@link ResolutionInfo} object associated with
 	 * this image format. {@link ResolutionInfo} objects provide information
-	 * on supported capture resolutions.
+	 * on supported capture resolutions and frame intervals.
 	 * @return the {@link ResolutionInfo} object associated with
 	 * this image format. 
 	 */

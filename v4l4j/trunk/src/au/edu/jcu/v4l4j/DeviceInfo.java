@@ -26,6 +26,7 @@ package au.edu.jcu.v4l4j;
 import java.util.List;
 import java.util.Vector;
 
+import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 /**
@@ -36,8 +37,8 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * <li>the name of the video device,</li>
  * <li>a list of {@link InputInfo} object providing information about each 
  * video input,</li>
- * <li>and a list of {@link ImageFormat}s & capture resolutions 
- * ({@link ResolutionInfo})used by the video device.
+ * <li>a list of {@link ImageFormat}s, capture resolutions 
+ * ({@link ResolutionInfo}) and frame intervals supported by the video device.
  * </ul>
  * To retrieve information about a video device, call 
  * {@link VideoDevice#getDeviceInfo()} on its 
@@ -91,6 +92,10 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * }<br>
  * vd.release();<br>
  * </code>
+ * <br>
+ * {@link DeviceInfo} objects can not be used anymore once the matching 
+ * VideoDevice object has been released. Calling any methods will then throw
+ * a {@link StateException}. 
  * 
  * @author gilles
  *
@@ -101,6 +106,25 @@ public class DeviceInfo {
 	 * @param f the full path to the V4L device file
 	 */
 	private native void getInfo(long o);
+	
+	/**
+	 * this method releases the libvideo query interface 
+	 * @param o a pointer to a v4l4j_Device struct
+	 */
+	private native void doRelease(long o);
+	
+	/**
+	 * this method returns a frame interval object representing the supported
+	 * frame intervals for capture at the given resolution using the given 
+	 * format
+	 * @param o a JNI pointer to a  struct v4l4j_device
+	 * @param imf the libvideo image format
+	 * @param w the capture width
+	 * @param h the capture height
+	 * @return a frame interval object
+	 */
+	private native FrameInterval doListIntervals(long o, int imf, int w, int h);
+	
 	
 	static {
 		try {
@@ -131,20 +155,34 @@ public class DeviceInfo {
 	 */
 	private ImageFormatList formats;	
 	
+	/**
+	 * a pointer to a C struct v4l4j_device
+	 */
+	private long object;
+	
+	/**
+	 * whether the device info has been released
+	 */
+	private boolean released;
+	
 	
 	/**
 	 * This method returns the name of the video device.
 	 * @return the name of the video device.
+	 * @throws StateException if the associated VideoDevice has been released
 	 */
-	public String getName() {
+	public synchronized String getName() {
+		checkRelease();
 		return name;
 	}
 
 	/**
 	 * This method returns the device file associated with the video device.
 	 * @return the device file
+	 * @throws StateException if the associated VideoDevice has been released
 	 */
-	public String getDeviceFile() {
+	public synchronized String getDeviceFile() {
+		checkRelease();
 		return deviceFile;
 	}
 
@@ -153,21 +191,53 @@ public class DeviceInfo {
 	 * This method returns a list of {@link InputInfo} objects which provide
 	 * information about each video input supported by the video device.
 	 * @return a list of <code>InputInfo</code> objects
+	 * @throws StateException if the associated VideoDevice has been released
 	 * @see InputInfo
 	 */
-	public List<InputInfo> getInputs() {
+	public synchronized List<InputInfo> getInputs() {
+		checkRelease();
 		return new Vector<InputInfo>(inputs);
 	}
 
 
 	/**
 	 * This method returns an {@link ImageFormatList} object containing
-	 * the various image formats & resolutions the video device supports.
+	 * the various image formats, capture resolutions and frame intervals the 
+	 * video device supports.
 	 * @return an<code>ImageFormatList</code> object
+	 * @throws StateException if the associated VideoDevice has been released
 	 * @see ImageFormatList
 	 */
-	public ImageFormatList getFormatList() {
+	public synchronized ImageFormatList getFormatList() {
+		checkRelease();
 		return formats;
+	}
+	
+	
+	/**
+	 * This method returns a {@link FrameInterval} object containing information
+	 * about the supported frame intervals for capture at the given resolution
+	 * and image format. <b>Note that the returned {@link FrameInterval} object
+	 * could have its type set to {@link FrameInterval.Type#UNSUPPORTED} if the
+	 * driver does not support frame interval enumeration OR if the device is
+	 * currently being used by another application and frame intervals cannot
+	 * be enumerated at this time.</b><br>Frame interval information can also
+	 * be obtained through {@link ResolutionInfo} objects, attached to each
+	 * {@link ImageFormat}. See {@link #getFormatList()}.
+	 * @return a {@link FrameInterval} object containing information about
+	 * the supported frame intervals
+	 * @param imf the capture image format for which the frame intervals should 
+	 * be enumerated
+	 * @param width the capture width for which the frame intervals should be 
+	 * enumerated
+	 * @param height the capture height for which the frame intervals should be 
+	 * enumerated
+	 * @throws StateException if the associated VideoDevice has been released
+	 */
+	public synchronized FrameInterval listIntervals(ImageFormat imf, 
+			int width, int height){
+		checkRelease();
+		return doListIntervals(object, imf.getIndex(), width, height);
 	}
 
 
@@ -180,7 +250,25 @@ public class DeviceInfo {
 	 */	
 	DeviceInfo(long object, String dev) throws V4L4JException{
 		inputs = new Vector<InputInfo>();
-		deviceFile = dev;	
+		deviceFile = dev;
 		getInfo(object);
+		this.object = object;
+	}
+	
+	/**
+	 * This method releases the libvideo query interface
+	 */
+	synchronized void release() {
+		doRelease(object);
+	}
+	
+	/**
+	 * checks if this object has been released (by the owning video device 
+	 * object). If yes, throws a {@link StateException}
+	 * @throws StateException if this object has been released 
+	 */
+	private void checkRelease() throws StateException{
+		if(released)
+			throw new StateException("The video device object has been released");
 	}
 }

@@ -43,7 +43,9 @@ static struct palette_info *find_palette_info(int index, struct v4l4j_device *d)
 }
 
 /*
- * this function returns the type of the frame size information
+ * this function returns the type of a frame size information
+ * for a given image format (index) and pointer to v4l4j_device struct (o)
+ * returns: int from enum frame_size_types
  */
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetType(
 		JNIEnv *e, jobject t, jint index, jlong o){
@@ -56,7 +58,10 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetType(
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up image format");
 		return 0;
 	}
-	dprint(LOG_V4L4J, "[V4L4J] Returning resolution of type %d\n",i->size_type);
+	dprint(LOG_V4L4J, "[V4L4J] Returning resolution of type %d (%s)\n",
+			i->size_type,
+			(i->size_type==0)?"unsupported":
+				((i->size_type==1)?"discrete":"continuous"));
 	return i->size_type;
 }
 
@@ -67,8 +72,10 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetStepwise(
 		JNIEnv *e, jobject t, jint index, jlong o){
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
 	struct palette_info *p;
-	jclass this_class;
+	jclass this_class, stepwise_res_class, frame_intv_class;
+	jmethodID ctor;
 	jfieldID fid;
+	jobject stepwise, intv_min, intv_max;
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 
 	/* Get handles on Java stuff */
@@ -86,73 +93,88 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetStepwise(
 		return;
 	}
 
-	//minWidth
-	fid = (*e)->GetFieldID(e, this_class, "minWidth",
-			"I");
-	if(fid == NULL){
-		info("[V4L4J] Error looking up the minwidth fieldID\n");
+	frame_intv_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/FrameInterval");
+	if(frame_intv_class == NULL){
+		info("[V4L4J] Error looking up the FrameInterval class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, \
-				"Error looking up the minwidth fieldID");
+				"Error looking up FrameInterval class");
 		return;
 	}
-	(*e)->SetIntField(e, t, fid, p->continuous->min_width);
 
-	//maxWidth
-	fid = (*e)->GetFieldID(e, this_class, "maxWidth",
-			"I");
-	if(fid == NULL){
-		info("[V4L4J] Error looking up the maxWidth fieldID\n");
+	ctor = (*e)->GetMethodID(e, frame_intv_class, "<init>",	"(IJ)V");
+	if(ctor == NULL){
+		info("[V4L4J] Error looking up the ctor of FrameInterval class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, \
-				"Error looking up the maxWidth fieldID");
+				"Error looking up the ctor of FrameInterval class");
 		return;
 	}
-	(*e)->SetIntField(e, t, fid, p->continuous->max_width);
 
-	//stepWidth
-	fid = (*e)->GetFieldID(e, this_class, "stepWidth",
-			"I");
-	if(fid == NULL){
-		info("[V4L4J] Error looking up the stepWidth fieldID\n");
+	dprint(LOG_V4L4J, "[V4L4L] Creating the frame interval for the min res\n");
+	//create the frame interval object for the min res
+	intv_min = (*e)->NewObject(e, frame_intv_class, ctor,
+			1, (uintptr_t) p->continuous);
+	if(intv_min == NULL){
+		info("[V4L4J] Error creating FrameInterval object\n");
 		THROW_EXCEPTION(e, JNI_EXCP, \
-				"Error looking up the stepWidth fieldID");
+				"Error creating FrameInterval object");
 		return;
 	}
-	(*e)->SetIntField(e, t, fid, p->continuous->step_width);
 
-	//minHeight
-	fid = (*e)->GetFieldID(e, this_class, "minHeight",
-			"I");
-	if(fid == NULL){
-		info("[V4L4J] Error looking up the minHeight fieldID\n");
+	dprint(LOG_V4L4J, "[V4L4L] Creating the frame interval for the max res\n");
+	//create the frame interval object for the max res
+	intv_max = (*e)->NewObject(e, frame_intv_class, ctor,
+			2, (uintptr_t) p->continuous);
+	if(intv_max == NULL){
+		info("[V4L4J] Error creating FrameInterval object\n");
 		THROW_EXCEPTION(e, JNI_EXCP, \
-				"Error looking up the minHeight fieldID");
+				"Error creating FrameInterval object");
 		return;
 	}
-	(*e)->SetIntField(e, t, fid, p->continuous->min_height);
 
-	//maxHeight
-	fid = (*e)->GetFieldID(e, this_class, "maxHeight",
-			"I");
-	if(fid == NULL){
-		info("[V4L4J] Error looking up the maxHeight fieldID\n");
+	stepwise_res_class = (*e)->FindClass(e,
+			"au/edu/jcu/v4l4j/ResolutionInfo$StepwiseResolution");
+	if(stepwise_res_class == NULL){
+		info("[V4L4J] Error looking up the StepwiseResolution class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, \
-				"Error looking up the maxHeight fieldID");
+				"Error looking up StepwiseResolution class");
 		return;
 	}
-	(*e)->SetIntField(e, t, fid, p->continuous->max_height);
 
-	//stepHeight
-	fid = (*e)->GetFieldID(e, this_class, "stepHeight",
-			"I");
-	if(fid == NULL){
-		info("[V4L4J] Error looking up the stepHeight fieldID\n");
+	ctor = (*e)->GetMethodID(e, stepwise_res_class, "<init>",
+		"(IIIIIILau/edu/jcu/v4l4j/FrameInterval;Lau/edu/jcu/v4l4j/FrameInterval;)V");
+	if(ctor == NULL){
+		info("[V4L4J] Error looking up the ctor of StepwiseResolution class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, \
-				"Error looking up the stepHeight fieldID");
+				"Error looking up the ctor of StepwiseResolution class");
 		return;
 	}
-	(*e)->SetIntField(e, t, fid, p->continuous->step_height);
 
-	dprint(LOG_V4L4J, "[V4L4J] Setting %d/%d/%d x %d/%d/%d\n",
+	dprint(LOG_V4L4J, "[V4L4L] Creating the stepwise res obj\n");
+	//create StepwiseResolution object
+	stepwise = (*e)->NewObject(e, stepwise_res_class, ctor,
+			p->continuous->min_width, p->continuous->min_height,
+			p->continuous->max_width, p->continuous->max_height,
+			p->continuous->step_width, p->continuous->step_height,
+			intv_min, intv_max);
+	if(stepwise == NULL){
+		info("[V4L4J] Error creating StepwiseResolution object\n");
+		THROW_EXCEPTION(e, JNI_EXCP, \
+				"Error creating StepwiseResolution object");
+		return;
+	}
+
+	//assign it to the stepwiseObject member
+	fid = (*e)->GetFieldID(e, this_class, "stepwiseObject",
+			"Lau/edu/jcu/v4l4j/ResolutionInfo$StepwiseResolution");
+	if(fid == NULL){
+		info("[V4L4J] Error looking up the StepwiseResolution fieldID\n");
+		THROW_EXCEPTION(e, JNI_EXCP, \
+				"Error looking up the StepwiseResolution fieldID");
+		return;
+	}
+	(*e)->SetObjectField(e, t, fid, stepwise);
+
+	dprint(LOG_V4L4J, "[V4L4J] Created stepwise resolution: %d/%d/%d x %d/%d/%d\n",
 			p->continuous->min_width,
 			p->continuous->max_width,
 			p->continuous->step_width,
@@ -160,6 +182,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetStepwise(
 			p->continuous->max_height,
 			p->continuous->step_height
 	);
+
 }
 
 /*
@@ -171,10 +194,10 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetDiscrete(
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
 	struct palette_info *p;
 	int i = -1;
-	jclass this_class, discrete_res_class, vector_class;
+	jclass this_class, discrete_res_class, vector_class, frame_intv_class;
 	jfieldID field;
-	jmethodID add_method, ctor;
-	jobject disc_attr, discrete;
+	jmethodID add_method, discrete_res_ctor, frame_intv_ctor;
+	jobject disc_attr, discrete, intv;
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 
 	/* Get handles on Java stuff */
@@ -225,6 +248,21 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetDiscrete(
 		return;
 	}
 
+	frame_intv_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/FrameInterval");
+	if(frame_intv_class == NULL){
+		info("[V4L4J] Error looking up the FrameInterval class\n");
+		THROW_EXCEPTION(e, JNI_EXCP, \
+				"Error looking up FrameInterval class");
+		return;
+	}
+
+	frame_intv_ctor = (*e)->GetMethodID(e, frame_intv_class, "<init>",	"(IJ)V");
+	if(frame_intv_ctor == NULL){
+		info("[V4L4J] Error looking up the ctor of FrameInterval class\n");
+		THROW_EXCEPTION(e, JNI_EXCP, \
+				"Error looking up the ctor of FrameInterval class");
+		return;
+	}
 
 	discrete_res_class = (*e)->FindClass(e,
 			"au/edu/jcu/v4l4j/ResolutionInfo$DiscreteResolution");
@@ -235,9 +273,9 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetDiscrete(
 		return;
 	}
 
-	ctor = (*e)->GetMethodID(e, discrete_res_class, "<init>",
-			"(II)V");
-	if(ctor == NULL){
+	discrete_res_ctor = (*e)->GetMethodID(e, discrete_res_class, "<init>",
+			"(IILau/edu/jcu/v4l4j/FrameInterval;)V");
+	if(discrete_res_ctor == NULL){
 		info("[V4L4J] Error looking up the ctor of DiscreteResolution class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, \
 				"Error looking up the ctor of DiscreteResolution class");
@@ -245,10 +283,27 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetDiscrete(
 	}
 
 	while(p->discrete[++i].width!=0){
+		dprint(LOG_V4L4J, "[V4L4J] creating discrete resolution %dx%d\n",
+							p->discrete[i].width,
+							p->discrete[i].height);
+
+		//create the frame interval object
+		dprint(LOG_V4L4J, "[V4L4J] creating frame interval object first with "
+				"ptr %p and type: 0\n",&p->discrete[i] );
+		intv = (*e)->NewObject(e, frame_intv_class, frame_intv_ctor,
+				0, (uintptr_t) &p->discrete[i]);
+		if(intv == NULL){
+			info("[V4L4J] Error creating FrameInterval object\n");
+			THROW_EXCEPTION(e, JNI_EXCP, \
+					"Error creating FrameInterval object");
+			return;
+		}
+
 		//create DiscreteResolution object
-		discrete = (*e)->NewObject(e, discrete_res_class, ctor,
+		discrete = (*e)->NewObject(e, discrete_res_class, discrete_res_ctor,
 				p->discrete[i].width,
-				p->discrete[i].height);
+				p->discrete[i].height,
+				intv);
 		if(discrete == NULL){
 			info("[V4L4J] Error creating DiscreteResolution object\n");
 			THROW_EXCEPTION(e, JNI_EXCP, \
@@ -256,9 +311,10 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetDiscrete(
 			return;
 		}
 
-		dprint(LOG_V4L4J, "[V4L4J] Adding discrete resolution %dx%d\n",
-				p->discrete[i].width,
-				p->discrete[i].height);
+		dprint(LOG_V4L4J, "[V4L4J] Done creating discrete resolution %dx%d\n",
+								p->discrete[i].width,
+								p->discrete[i].height);
+
 		//add to vector
 		(*e)->CallVoidMethod(e, disc_attr, add_method, discrete);
 	}

@@ -255,6 +255,12 @@ int check_inputs_v4l1(struct video_device *vd){
 	return ret;
 }
 
+static int list_frame_intv(struct device_info *dinfo, int fmt, int width,
+		int height, void **p){
+	*p = NULL;
+	return FRAME_INTV_UNSUPPORTED;
+}
+
 int query_device_v4l1(struct video_device *vdev){
 	int ret = 0;
 	struct video_capability caps;
@@ -279,6 +285,8 @@ int query_device_v4l1(struct video_device *vdev){
 
 	//fill palettes field
 	vdev->info->nb_palettes = check_palettes_v4l1(vdev);
+
+	vdev->info->list_frame_intv = list_frame_intv;
 
 	end:
 	return ret;

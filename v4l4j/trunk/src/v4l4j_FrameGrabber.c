@@ -461,6 +461,57 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_setQuality(
 	d->j->jpeg_quality = q;
 }
 
+/*
+ * sets the frame interval
+ */
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doSetFrameIntv(
+		JNIEnv *e, jobject t, jlong object, jint num, jint denom){
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	int ret = 0;
+	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
+
+	dprint(LOG_V4L4J, "[V4L4J] Setting frame interval to %d/%d\n",num, denom);
+	ret = d->vdev->capture->actions->set_frame_interval(d->vdev, num, denom);
+
+	switch(ret){
+	case LIBVIDEO_ERR_FORMAT:
+		dprint(LOG_V4L4J, "[V4L4J] Invalid frame interval\n");
+		THROW_EXCEPTION(e, INVALID_VAL_EXCP, "Error setting frame interval: "
+				"invalid values %d/%d", num, denom);
+		break;
+	case LIBVIDEO_ERR_IOCTL:
+		dprint(LOG_V4L4J, "[V4L4J] Setting frame interval not supported\n");
+		THROW_EXCEPTION(e, UNSUPPORTED_METH_EXCP,
+				"Setting frame interval not supported");
+		break;
+	}
+	return;
+}
+
+/*
+ * get the frame interval numerator (what=0) or denominator(what!=0)
+ * (expects some lock to be obtained so calling this method to obtain the other
+ * frac part of the frame intv does NOT interleave with doSetFrameIntv())
+ */
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetFrameIntv(
+		JNIEnv *e, jobject t, jlong object, jint what){
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+
+	int num, denom;
+	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
+
+	if(d->vdev->capture->actions->get_frame_interval(d->vdev, &num, &denom)!=0){
+		dprint(LOG_V4L4J, "[V4L4J] Getting frame interval not supported\n");
+		THROW_EXCEPTION(e, UNSUPPORTED_METH_EXCP,
+				"Getting frame interval not supported");
+		return 0;
+	}
+
+	if(what==0)
+		return num;
+	else
+		return denom;
+}
 
 /*
  * get a new JPEG-compressed frame from the device

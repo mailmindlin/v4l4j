@@ -121,6 +121,7 @@ public class JPEGFrameGrabber extends AbstractGrabber {
 	 * @throws InitialisationException if the video device file can not be 
 	 * initialised 
 	 * @throws StateException if the frame grabber is already initialised
+	 * or released
 	 * @throws V4L4JException if there is an error applying capture parameters
 	 */
 	void init() throws V4L4JException{
@@ -147,8 +148,12 @@ public class JPEGFrameGrabber extends AbstractGrabber {
 	 * @param q the quality (between 
 	 * {@link V4L4JConstants#MIN_JPEG_QUALITY} and 
 	 * {@link V4L4JConstants#MAX_JPEG_QUALITY} inclusive)
+	 * @throws StateException if this 
+	 * <code>FrameGrabber</code> has been already released, and therefore must
+	 * not be used anymore.
 	 */
 	public void setJPGQuality(int q){
+		state.checkReleased();
 		if(q<V4L4JConstants.MIN_JPEG_QUALITY)
 			q =V4L4JConstants.MIN_JPEG_QUALITY; 
 		if(q>V4L4JConstants.MAX_JPEG_QUALITY)
@@ -161,8 +166,12 @@ public class JPEGFrameGrabber extends AbstractGrabber {
 	/**
 	 * This method returns the current JPEG quality.
 	 * @return the JPEG quality
+	 * @throws StateException if this 
+	 * <code>FrameGrabber</code> has been already released, and therefore must
+	 * not be used anymore.
 	 */
 	public int getJPGQuality(){
+		state.checkReleased();
 		return quality;
 	}
 	
@@ -172,8 +181,12 @@ public class JPEGFrameGrabber extends AbstractGrabber {
 	 * uses, ie the one images are retrieved from the device BEFORE JPEG 
 	 * conversion.
 	 * @return the native image format used by this FrameGrabber.
+	 * @throws StateException if this 
+	 * <code>FrameGrabber</code> has been already released, and therefore must
+	 * not be used anymore.
 	 */
 	public ImageFormat getImageFormat(){
+		state.checkReleased();
 		return dInfo.getFormatList().getJPEGEncodableFormat(format);
 	}
 }
