@@ -77,7 +77,7 @@ public class JPEGViewer implements ImageProcessor{
 			fmts=new Vector<ImageFormat>();
 		} else
 			fmts = vd.getDeviceInfo().getFormatList().getJPEGEncodableFormats();
-    	
+
 		viewer.initGUI(fmts.toArray(),w,h,"JPEG");
 		
 		width = w;

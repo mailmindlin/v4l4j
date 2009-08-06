@@ -172,7 +172,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	@Override
 	public void setFrameInterval(int num, int denom) throws InvalidValue{
 		synchronized(state){
-			if(!state.isStarted())
+			if(state.isStarted())
 				throw new StateException("Invalid method call");
 			doSetFrameIntv(object, num, denom);
 		}
@@ -187,7 +187,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 			//TODO: not sure if the following if statement is required
 			//ie, it might be possible to get the current frame intv
 			//while capturing... to be tested
-			if(!state.isStarted())
+			if(state.isStarted())
 				throw new StateException("Invalid method call: cannot get the"
 						+" frame interval while capturing.");
 			return new DiscreteInterval(
