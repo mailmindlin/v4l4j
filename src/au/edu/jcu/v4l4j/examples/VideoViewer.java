@@ -61,6 +61,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JSpinner;
+import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
@@ -69,11 +70,15 @@ import javax.swing.event.ChangeListener;
 
 import au.edu.jcu.v4l4j.Control;
 import au.edu.jcu.v4l4j.FrameGrabber;
+import au.edu.jcu.v4l4j.FrameInterval;
 import au.edu.jcu.v4l4j.ImageFormat;
 import au.edu.jcu.v4l4j.Tuner;
 import au.edu.jcu.v4l4j.TunerInfo;
 import au.edu.jcu.v4l4j.V4L4JConstants;
 import au.edu.jcu.v4l4j.VideoDevice;
+import au.edu.jcu.v4l4j.FrameInterval.DiscreteInterval;
+import au.edu.jcu.v4l4j.FrameInterval.Type;
+import au.edu.jcu.v4l4j.examples.VideoViewer.IntervalGUI.Interval;
 import au.edu.jcu.v4l4j.exceptions.ControlException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
@@ -94,6 +99,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 	private JLabel video, fps, freq;
 	private JFrame f;
 	private JComboBox formats;
+	private IntervalGUI intervals;
 	private JPanel controlPanel, captureButtons;
 	private JScrollPane controlScrollPane;
 	private JPanel videoPanel;
@@ -149,8 +155,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
     public VideoDevice getVideoDevice(){
     	return vd;
     }
-    
-    
+ 
     /** 
      * This method creates the graphical interface components and initialises 
      * them. It then makes them visible.
@@ -158,8 +163,11 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 	 * @param fmtName the name of format of images displayed in the title bar. 
 	 * If this array is empty, the format list is disabled and capture cannot
 	 * be started 
+	 * @param width the capture width
+	 * @param height the capture height
+	 * @param intv the frame interval for this resolution
      */
-    public void initGUI(Object[] i, int width, int height, String fmtName){
+    public void initGUI(Object[] i, final int width, final int height, String fmtName){
         f = new JFrame();
         f.setLayout(new BoxLayout(f.getContentPane(),BoxLayout.LINE_AXIS));
         f.setIconImage(v4l4jIcon.getImage());
@@ -183,11 +191,36 @@ public class VideoViewer extends WindowAdapter implements Runnable{
         formats.setSize(d);
         formats.setPreferredSize(d);
         formats.setMaximumSize(d);
+        
+        FrameInterval intv = null;
+        try {
+        	intv = vd.getDeviceInfo().listIntervals((ImageFormat) i[0], width, height);
+        }catch (V4L4JException e){}
+        
+        intervals = new IntervalGUI();
+        intervals.setInterval(intv);
+        
+        formats.addActionListener(new ActionListener() {			
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				FrameInterval intv = null;
+		        try {
+		        	intv = vd.getDeviceInfo().listIntervals(
+		        			(ImageFormat) formats.getSelectedItem(), width, height
+		        			);
+		        }catch (V4L4JException e){}
+		        
+		        intervals.setInterval(intv);
+				
+			}
+		}
+		);
         startCap = new JButton("Start");
         startCap.setAlignmentX(Component.CENTER_ALIGNMENT);
         if(i.length==0){
         	startCap.setEnabled(false);
         	formats.setEnabled(false);
+        	intervals.setEnabled(false);
         }else
         	startCap.setEnabled(true);
         stopCap = new JButton("Stop");
@@ -212,6 +245,8 @@ public class VideoViewer extends WindowAdapter implements Runnable{
         });
         captureButtons.add(Box.createGlue());
         captureButtons.add(formats);
+        captureButtons.add(Box.createGlue());
+        captureButtons.add(intervals.getPanel());
         captureButtons.add(Box.createGlue());
         captureButtons.add(startCap);
         captureButtons.add(Box.createGlue());
@@ -352,11 +387,27 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 		}
     }
     
-    private void startCapture(){
+    private void startCapture(){    	
     	if(captureThread == null){
+    		
+    		//get the frame interval value
+    	   	Interval i;
+        	try {
+        		i = intervals.getInterval();
+        	} catch (Exception e){
+        		//the frame interval value entered is invalid
+        		return;
+        	}
+        	
     		try {
+    			//create the frame grabber
     			fg = processor.getGrabber(
     					(ImageFormat) formats.getSelectedItem());
+    			
+    			//set the frame interval if not null
+				if(i!=null)
+					fg.setFrameInterval(i.num, i.denom);
+    				
 				fg.startCapture();
 			} catch (V4L4JException e) {
 				System.out.println("Failed to start capture");
@@ -376,6 +427,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 			controlScrollPane.setPreferredSize(
 					new Dimension(300, height));
 			formats.setEnabled(false);
+			intervals.setEnabled(false);
 			startCap.setEnabled(false);
 			stopCap.setEnabled(true);
 			
@@ -432,6 +484,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 			vd.releaseFrameGrabber();
 			captureThread = null;
 			formats.setEnabled(true);
+			intervals.setEnabled(true);
 			freq.setVisible(false);
 			freqSpinner.setVisible(false);
 			video.setIcon(v4l4jIcon);
@@ -456,6 +509,151 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 	
 	public interface ControlGUI{
 		public JPanel getPanel();
+	}
+	
+	public class IntervalGUI implements ControlGUI {
+		protected JPanel contentPanel;
+		private FrameInterval intv;
+		private JComboBox discreteList;
+		private JTextField stepwiseValue;
+		
+		public IntervalGUI(){
+			contentPanel = new JPanel();
+			contentPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+			contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.LINE_AXIS));
+		}
+		
+		public void setInterval(FrameInterval i){
+			intv = i;
+			contentPanel.removeAll();
+			contentPanel.revalidate();
+			
+			if(intv==null)
+				return;
+			
+			if(intv.getType()==Type.DISCRETE){
+				discreteList = new JComboBox(
+						intv.getDiscreteIntervals().toArray()
+				);
+				contentPanel.add(discreteList);
+			} else if(intv.getType()==Type.STEPWISE){
+				stepwiseValue = new JTextField(8);
+				stepwiseValue.setText(
+						intv.getStepwiseInterval().maxIntv.numerator+
+						"/"+
+						intv.getStepwiseInterval().maxIntv.denominator);
+				stepwiseValue.setToolTipText(
+				"Min:"+
+				intv.getStepwiseInterval().minIntv.numerator+
+				"/"+
+				intv.getStepwiseInterval().minIntv.denominator+
+				" - Max: "+
+				intv.getStepwiseInterval().maxIntv.numerator+
+				"/"+
+				intv.getStepwiseInterval().maxIntv.denominator+
+				" - Step: "+
+				intv.getStepwiseInterval().stepIntv.numerator+
+				"/"+
+				intv.getStepwiseInterval().stepIntv.denominator
+				);
+				contentPanel.add(stepwiseValue);
+			} //else unsupported: do nothing
+		}
+		
+		public Interval getInterval(){
+			if(intv==null)
+				return null;
+			else if(intv.getType()==Type.DISCRETE) {
+				DiscreteInterval i = (DiscreteInterval) discreteList.getSelectedItem();
+				return new Interval(i.numerator, i.denominator);
+			} else if (intv.getType()==Type.STEPWISE) {
+				return validateStepwsiseValue();
+			} else
+				return null;
+		}
+		
+		public void setEnabled(boolean v){
+			if(intv==null)
+				return;
+			else if(intv.getType()==Type.DISCRETE) {
+				discreteList.setEnabled(v);
+			} else if (intv.getType()==Type.STEPWISE) {
+				stepwiseValue.setEnabled(v);
+			} 
+		}
+		
+		private Interval validateStepwsiseValue(){
+			String tokens[] = stepwiseValue.getText().split("/");
+			if(tokens.length==2){
+				int num = 0, denom = 1;
+				
+				// get the int values from the text field
+				try {
+					num = Integer.parseInt(tokens[0]);
+					denom = Integer.parseInt(tokens[1]);
+				} catch (NumberFormatException e){
+					//invalid frame interval
+					String msg = "The frame interval is invalid. It must\n"+
+								"be in the form 'X/Y'";
+					JOptionPane.showMessageDialog(null, msg);
+					throw e;
+				}
+				
+				//chec the int values are within the boundaries
+				if(num<0 || denom <0) {
+					String msg = "The frame interval is invalid.";
+					JOptionPane.showMessageDialog(null, msg);
+					throw new NumberFormatException();
+				}
+				
+				if(
+					(compareFrac(intv.getStepwiseInterval().minIntv.getNum(),
+						intv.getStepwiseInterval().minIntv.getDenom(),
+						num, denom)<=0)
+					&&
+					(compareFrac(intv.getStepwiseInterval().minIntv.getNum(),
+							intv.getStepwiseInterval().minIntv.getDenom(),
+							num, denom)>=0)
+					){
+					//values are ok
+					return new Interval(num,denom);
+					
+				} else {
+					//values are outside frame intv range
+					String msg = "The frame interval ("+num+"/"+denom+") is " +
+							"outside the\nallowed range ("+
+							intv.getStepwiseInterval().minIntv.getNum()+"/"+
+							intv.getStepwiseInterval().minIntv.getDenom()+" to"+
+							intv.getStepwiseInterval().maxIntv.getNum()+"/"+
+							intv.getStepwiseInterval().minIntv.getDenom()+")";
+							
+					JOptionPane.showMessageDialog(null, msg);
+					return null;
+				}
+			} else {
+				String msg = "The frame interval is invalid. It must\n"+
+				"be in the form 'X/Y'";
+				JOptionPane.showMessageDialog(null, msg);
+				throw new NumberFormatException();
+			}
+		}
+		
+		private int compareFrac(int n1, int d1, int n2, int d2){
+			long a = n1*d2, b = n2*d1;
+			return (a<b) ? -1 : (a==b) ? 0 : 1;
+		}
+		
+		public JPanel getPanel(){
+			return contentPanel;
+		}
+		
+		public class Interval {
+			public int num, denom;
+			public Interval(int n, int d){
+				num = n;
+				denom = d;
+			}
+		}
 	}
 	
 	public class ControlModelGUI implements ControlGUI{
