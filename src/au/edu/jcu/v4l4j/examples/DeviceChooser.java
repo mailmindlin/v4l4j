@@ -61,16 +61,20 @@ public class DeviceChooser  extends WindowAdapter implements ActionListener{
 	private JPanel mainPanel;
 	private JComboBox deviceFiles;
 	private DeviceInfoPane info;
+	private int width, height;
 	
 	/**
 	 * This method build a new device chooser object
 	 * @param dev the full path to a v4l device file, or null
 	 * to try and autodetect some.
 	 */
-	public DeviceChooser(String dev){
+	public DeviceChooser(String dev, int w, int h){
 		frame = new JFrame("V4L device file selection");
 		mainPanel = new JPanel();
 		info = null;
+		
+		width = w;
+		height =h;
 		
 		if(dev == null)
 			deviceFiles = new JComboBox(listV4LDeviceFiles());
@@ -165,10 +169,15 @@ public class DeviceChooser  extends WindowAdapter implements ActionListener{
 
 			@Override
 			public void run() {
-				if(argz.length==1)
-					new DeviceChooser(argz[0]);
-				else
-					new DeviceChooser(null);
+				if(argz.length==3)
+					new DeviceChooser(argz[0], Integer.parseInt(argz[1]), Integer.parseInt(argz[2]));
+				else if (argz.length == 2)
+					new DeviceChooser(null, Integer.parseInt(argz[0]), Integer.parseInt(argz[1]));
+				else {
+					System.out.println("Usage:\n");
+					System.out.println("DeviceChooser <device_file> <width> <height>\n");
+					System.out.println("DeviceChooser <width> <height>\n");
+				}
 			}
 			
 		});
@@ -511,7 +520,7 @@ public class DeviceChooser  extends WindowAdapter implements ActionListener{
 	
 					if(b.getText().indexOf(RGB_BUTTON_STR)!=-1){
 						try {
-							new RGBViewer(vd, 640,480,std, 
+							new RGBViewer(vd, chooser.width, chooser.height,std, 
 									channel);
 						} catch (V4L4JException e1) {
 							// TODO Auto-generated catch block
@@ -519,7 +528,7 @@ public class DeviceChooser  extends WindowAdapter implements ActionListener{
 						}
 					} else {
 						try {
-							new JPEGViewer(vd, 640,480,std, 
+							new JPEGViewer(vd, chooser.width, chooser.height,std, 
 									channel, 80);
 						} catch (V4L4JException e1) {
 							// TODO Auto-generated catch block

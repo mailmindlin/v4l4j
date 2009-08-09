@@ -232,6 +232,7 @@
 			<arg value="${test.channel}" /> <!-- channel -->
 			<arg value="${test.inFormat}" /> <!-- capture image format -->
 			<arg value="${test.outFormat}" /> <!-- output image format -->
+			<arg value="${test.fps}" /> <!-- FPS -->
 		</java>
 	</target>
 	
@@ -241,8 +242,6 @@
 			<arg value="${test.device}" /> <!-- device file -->
 			<arg value="${test.width}" /> <!-- width -->
 			<arg value="${test.height}" /> <!-- height -->
-			<arg value="${test.standard}" /> <!-- standard -->
-			<arg value="${test.channel}" /> <!-- channel -->
 		</java>
 	</target>
 	

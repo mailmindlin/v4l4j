@@ -391,11 +391,11 @@ public class VideoViewer extends WindowAdapter implements Runnable{
     	if(captureThread == null){
     		
     		//get the frame interval value
-    	   	Interval i;
+    	   	Interval i = null;
         	try {
         		i = intervals.getInterval();
         	} catch (Exception e){
-        		//the frame interval value entered is invalid
+        		//incorrect frame interval entered
         		return;
         	}
         	
@@ -403,17 +403,28 @@ public class VideoViewer extends WindowAdapter implements Runnable{
     			//create the frame grabber
     			fg = processor.getGrabber(
     					(ImageFormat) formats.getSelectedItem());
-    			
+    		} catch (V4L4JException e){
+    			JOptionPane.showMessageDialog(f, 
+						"Error obtaining the frame grabber");
+    			return;
+    		}
+    		
+    		
+    		try {
     			//set the frame interval if not null
 				if(i!=null)
 					fg.setFrameInterval(i.num, i.denom);
-    				
+    		} catch (Exception e){
+    			//cant set the frame interval, keep going
+    		}
+    		
+    		try {
 				fg.startCapture();
 			} catch (V4L4JException e) {
-				System.out.println("Failed to start capture");
 				JOptionPane.showMessageDialog(f, 
 						"Failed to start capture:\n"+e.getMessage());
 				e.printStackTrace();
+				processor.releaseGrabber();
 				return;
 			}
 	

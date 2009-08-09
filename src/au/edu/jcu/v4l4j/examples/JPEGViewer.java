@@ -93,6 +93,11 @@ public class JPEGViewer implements ImageProcessor{
 	public FrameGrabber getGrabber(ImageFormat i) throws V4L4JException {
 		return vd.getJPEGFrameGrabber(width, height, channel, std, qty, i);
 	}
+	
+	@Override
+	public void releaseGrabber() {
+		vd.releaseFrameGrabber();
+	}
 
 	@Override
 	public void processImage(byte[] b) {

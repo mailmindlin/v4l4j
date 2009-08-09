@@ -78,6 +78,11 @@ public class RGBViewer implements ImageProcessor{
 	public FrameGrabber getGrabber(ImageFormat i) throws V4L4JException {
 		return vd.getRGBFrameGrabber(width, height, channel, std, i);
 	}
+	
+	@Override
+	public void releaseGrabber() {
+		vd.releaseFrameGrabber();
+	}
 
 	@Override
 	public void processImage(byte[] b) {
