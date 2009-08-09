@@ -1,4 +1,5 @@
 #summary Examples of video capture using v4l4j.
+#sidebar v4l4jSideBar
 #labels Featured
 
 This page shows a few examples in Java on how to use v4l4j. It assumes you have successfully compiled and installed v4l4j (see GettingStarted page for detailed instructions). Here, video source refers to any video-capture device supported by the Linux kernel, and accessible through the Video4Linux API using the associated device file (usually /dev/video0). The v4l4j API has many more methods and classes than presented here. Be sure to check the Java documentation for a more complete reference.

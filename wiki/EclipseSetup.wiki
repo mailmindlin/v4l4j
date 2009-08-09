@@ -1,5 +1,6 @@
 #summary this page explains how to import v4l4j in eclipse
 #labels Featured
+#sidebar v4l4jSideBar
 
 There are two ways to import v4l4j in Eclipse:
  *  by checking out a copy of v4l4j from the subversion repository and creating a new project, or

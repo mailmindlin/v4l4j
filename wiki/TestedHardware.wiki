@@ -1,5 +1,6 @@
 #summary a listing of all video devices known to work with v4l4j
 #labels Featured
+#sidebar v4l4jSideBar
 =Tested Hardware=
 This page lists the platforms on which v4l4j is known to compile, and the various video devices which work with v4l4j.
 
