@@ -156,6 +156,11 @@ int main(int argc, char** argv) {
 		printf("Cant initialise capture ");
 		return -1;
 	}
+//
+//	if((*c->actions->set_frame_interval)(v, 1, 15)<0){
+//		printf("Cant set the frame interval");
+//		fflush(stdout);
+//	}
 
 	if((*c->actions->start_capture)(v)<0){
 		(*c->actions->free_capture)(v);
