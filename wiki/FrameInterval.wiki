@@ -11,7 +11,7 @@ A frame interval defines the amount of time in seconds elapsed between the captu
 
 There is a relationship between the frame interval and the frame rate: one is the inverse of the other, ie if the frame interval is set to 1/10 (or 0.1 second), the corresponding frame rate is 10 frames per second. 
 
-Frame intervals are specific to an image format and a capture resolution. This means to list supported frame intervals, you must first decide which image format and capture resolution you need the frame interval information for. 
+Frame intervals are specific to an image format and a capture resolution. This means to list supported frame intervals, you must first decide which image format and capture resolution you need the frame interval information for. See [http://v4l4j.googlecode.com/svn/www/v4l4j-api/index.html?au/edu/jcu/v4l4j/ImageFormat.html the `FrameInterval` class JavaDoc] for more information.
 
 == Implementation ==
 In v4l4j the frame interval feature is divided in two independent parts:
