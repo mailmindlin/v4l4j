@@ -483,10 +483,16 @@ int set_frame_intv_v4l2(struct video_device *vdev, int num, int denom) {
 
 	switch (ret){
 	case 0:
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
+				"CAP: Set frame interval to %d/%d\n", num, denom);
 		return 0;
 	case EINVAL:
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
+				"CAP: Error IOCTL while setting frame interval to %d/%d\n", num, denom);
 		return LIBVIDEO_ERR_IOCTL;
 	default:
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
+				"CAP: Error FORMAT while setting frame interval to %d/%d\n", num, denom);
 		return LIBVIDEO_ERR_FORMAT;
 	}
 }
@@ -500,8 +506,12 @@ int get_frame_intv_v4l2(struct video_device *vdev, int *num, int *denom) {
 	if (ioctl(vdev->fd, VIDIOC_G_PARM, &param)==0){
 		*num = param.parm.capture.timeperframe.numerator;
 		*denom = param.parm.capture.timeperframe.denominator;
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
+				"CAP: Get frame interval returned %d/%d\n", *num, *denom);
 		return 0;
 	} else
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
+				"CAP: Error while getting frame interval\n");
 		return LIBVIDEO_ERR_IOCTL;
 }
 

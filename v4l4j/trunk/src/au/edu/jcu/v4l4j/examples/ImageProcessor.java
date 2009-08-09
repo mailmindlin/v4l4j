@@ -44,6 +44,12 @@ public interface ImageProcessor {
 	public FrameGrabber getGrabber(ImageFormat i)  throws V4L4JException;
 	
 	/**
+	 * This method is called on this processor whenever to release
+	 * a previously allocated frame grabber.
+	 */
+	public void releaseGrabber();
+	
+	/**
 	 * this method is called on this image processor whenever a new image is
 	 * available for processing
 	 * @param b the image data as a byte array

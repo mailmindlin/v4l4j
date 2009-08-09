@@ -50,4 +50,9 @@ public class ControlViewer implements ImageProcessor{
 		
 	}
 
+	@Override
+	public void releaseGrabber() {
+		// we shouldnt be called
+	}
+
 }

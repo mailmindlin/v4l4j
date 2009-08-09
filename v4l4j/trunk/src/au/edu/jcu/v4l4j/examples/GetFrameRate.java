@@ -40,7 +40,7 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  */
 public class GetFrameRate {
 	public static final int captureLength = 10;
-	private int inFmt, outFmt, width, height, channel, std;
+	private int inFmt, outFmt, width, height, channel, std, intv;
 	private FrameGrabber fg;
 	private VideoDevice vd;
 	private ImageFormatList imfList;
@@ -56,16 +56,18 @@ public class GetFrameRate {
 	 * @param h the desired capture height
 	 * @param c the input index
 	 * @param s the video standard (0: webcam - 1: PAL - 2:SECAM - 3:NTSC)
+	 * @param iv the frame rate (how many frame per second)
 	 * @throws V4L4JException if there is an error initialising the video device
 	 */
 	public GetFrameRate(String dev, int ifmt, int ofmt, int w, int h, int c, 
-			int s) throws V4L4JException{
+			int s, int iv) throws V4L4JException{
 		inFmt = ifmt;
 		outFmt = ofmt;
 		width = w;
 		height = h;
 		channel = c;
 		std = s;
+		intv = iv;
 		try {
 			vd = new VideoDevice(dev);
 			imfList = vd.getDeviceInfo().getFormatList();
@@ -183,6 +185,15 @@ public class GetFrameRate {
 	}
 	
 	private void startCapture() throws V4L4JException{
+		if(intv!=-1){
+			//try setting the frame rate
+			try {
+				System.out.println("setting frame rate to "+intv);
+				fg.setFrameInterval(1, intv);
+			} catch (Exception e){
+				System.out.println("Couldnt set the frame interval");
+			}
+		}
 		try {
 			fg.startCapture();
 		} catch (V4L4JException e) {
@@ -238,7 +249,7 @@ public class GetFrameRate {
 	
 	public static void main(String[] args) throws V4L4JException, IOException {
 		String dev;
-		int w, h, std, channel, inFmt, outFmt;
+		int w, h, std, channel, inFmt, outFmt, intv;
 		//Check if we have the required args
 		//otherwise put sensible values in
 		try {
@@ -278,10 +289,16 @@ public class GetFrameRate {
 		} catch (Exception e){
 			outFmt = 0;
 		}
+		
+		try {
+			intv = Integer.parseInt(args[7]);
+		} catch (Exception e){
+			intv=-1;
+		}
 
 		System.out.println("This program will open "+dev+", capture frames for "
 					+ captureLength+ " seconds and print the FPS");
 		
-		new GetFrameRate(dev, inFmt, outFmt, w, h, channel, std).startTest();
+		new GetFrameRate(dev, inFmt, outFmt, w, h, channel, std, intv).startTest();
 	}
 }
