@@ -1,0 +1,42 @@
+#summary tests and results of the frame interval feature
+
+This page presents the "Frame interval" feature of v4l4j, the hardware and associated 
+drivers used to test it and the results. 
+
+* This feature is only supported by a few V4L drivers (see table below) *.
+
+== Definition ==
+A frame interval defines the amount of time in seconds elapsed between the capture of two successive frames. It is a floating-point number, represented by two integer values: a numerator, and a denominator.
+
+There is a relationship between the frame interval and the frame rate: one is the inverse of the other, ie if the frame interval is set to 1/10 (or 0.1 second), the corresponding frame rate is 10 frames per second. 
+
+Frame intervals are specific to an image format and a capture resolution. This means to list supported frame intervals, you must first decide which image format and capture resolution you need the frame interval information for. 
+
+== Implementation ==
+In v4l4j the frame interval feature is divided in two independent parts:
+ * querying supported frame intervals
+ * setting / getting frame intervals.
+
+=== Querying supported frame intervals ===
+Supported frame intervals are encapsulated in a `FrameInterval` object. Each image format supported by a `VideoDevice` carries a `ResolutionInfo` object which contains information on supported capture resolutions. Each supported resolution carries a `FrameInterval` object which can be obtained by calling "getFrameInterval()".
+
+The whole call chains to obtain a `FrameInterval` object is as follow:
+
+ * Create a `VideoDevice`,
+ * Get its associated `DeviceInfo`,
+ * Get its supported `ImageFormat`s and pick a format
+ * Get its `ResolutionInfo` object and pick a supported capture resolution,
+ * Get the `FrameInterval` for that resolution.
+
+=== Setting/Getting the frame interval used for capture ==
+
+Setting and getting the frame interval is done via a `FrameGrabber` object using "setFrameInterval()" and "getFrameInterval()". * These methods can NOT be called while capturing.* 
+
+== Tested hardware / drivers & Results ==
+
+All the tests below were carried out with the latest versions (as of 09/08/09) of the specified drivers from the V4L mercurial repository. In the last column, the image format & resolutions shown are the one used during the tests and listed frame rates are the ones achieved.
+
+|| *Driver* || *Device* || *Results* || *Frame rates* || 
+|| pwc || Logitech Quickcam Orbit (046D:08B5) || The pwc driver lacks the IOCTL to get/set the frame intervals. It will only report supported frame intervals. However, you can set the frame rate when you load the module, by specifying the parameter "fps=XX", where XX is a supported frame rate. *If you set the frame rate to an invalid value, you will not be able to obtain a frame grabber.* || *Image format:* YUV420<br>*640x480:*<br>5 - 10 - 15<br>*Lower resolutions:*<br>5 - 10 - 15 - 20 - 25 - 30 ||
+|| pwc || Logitech Quickcam Pro 4000 (046D:08B2) || The pwc driver lacks the IOCTL to get/set the frame intervals. It will only report supported frame intervals. However, you can set the frame rate when you load the module, by specifying the parameter "fps=XX", where XX is a supported frame rate. *If you set the frame rate to an invalid value, you will not be able to obtain a frame grabber.* || *Image format:* YUV420<br>*640x480:*<br>5 - 10 - 15<br>*Lower resolutions:*<br>5 - 10 - 15 - 20 - 25 - 30 ||
+|| UVC video || Logitech Quickcam Orbit/Sphere AF (046D:0994) || To achieve higher frame rates, set the "Exposure, Auto" control to "Aperture priority" and disable the "Exposure, Auto Priority" control.|| *Image format:* YUYV<br>*1600x1200:*<br>5<br>*Image format: *MJPEG<br>*960x720:*<br>5 - 10 - 15 - 20 - 25 - 30<br>*800x600:*<br>5 - 10 - 15 - 20 - 25 - 30<br>*640x480:*<br>5 - 10 - 15 - 20 - 25 - 30||
