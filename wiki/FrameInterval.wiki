@@ -1,4 +1,5 @@
 #summary tests and results of the frame interval feature
+#sidebar v4l4jSideBar
 
 This page presents the "Frame interval" feature of v4l4j, the hardware and associated 
 drivers used to test it and the results. 
