@@ -1,6 +1,6 @@
 #summary a step-by-step guide to downloading & installing v4l4j
 #labels Featured
-
+#sidebar v4l4jSideBar
 =Quick Start Guide=
 For the impatient, here are a few instructions that will get you started:
  * If you are using Ubuntu or Debian, check [DebianInstall this page to install v4l4j Debian packages]. You can run a test application with 
