@@ -1,5 +1,6 @@
 #summary How to troubleshoot v4l4j issues and ask for help.
 #labels Featured
+#sidebar v4l4jSideBar
 
 = Introduction =
 This page details some of the issues you may come across when using v4l4j. You will find answers to the following questions:

@@ -1,5 +1,6 @@
 #summary How to debug v4l4j & its JNI code
 #labels Featured
+#sidebar v4l4jSideBar
 
 = Introduction =
 
