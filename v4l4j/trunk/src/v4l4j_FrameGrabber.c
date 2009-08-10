@@ -470,7 +470,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doSetFrameIntv(
 	int ret = 0;
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
-	dprint(LOG_V4L4J, "[V4L4J] Setting frame interval to %d/%d\n",num, denom);
+	dprint(LOG_V4L4J, "[LIBVIDEO] Setting frame interval to %d/%d\n",num, denom);
 	ret = d->vdev->capture->actions->set_frame_interval(d->vdev, num, denom);
 
 	switch(ret){
@@ -478,14 +478,13 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doSetFrameIntv(
 		dprint(LOG_V4L4J, "[V4L4J] Invalid frame interval\n");
 		THROW_EXCEPTION(e, INVALID_VAL_EXCP, "Error setting frame interval: "
 				"invalid values %d/%d", num, denom);
-		break;
+		return;
 	case LIBVIDEO_ERR_IOCTL:
 		dprint(LOG_V4L4J, "[V4L4J] Setting frame interval not supported\n");
 		THROW_EXCEPTION(e, UNSUPPORTED_METH_EXCP,
 				"Setting frame interval not supported");
-		break;
+		return;
 	}
-	return;
 }
 
 /*
