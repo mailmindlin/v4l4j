@@ -483,9 +483,22 @@ int set_frame_intv_v4l2(struct video_device *vdev, int num, int denom) {
 
 	switch (ret){
 	case 0:
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
+		//drivers are allowed to return 0 and still
+		//change the given frame rate. so we check it here
+		//and make sure it s the same as the one we want
+		if((param.parm.capture.timeperframe.numerator == num) &&
+				(param.parm.capture.timeperframe.denominator == denom)) {
+			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 				"CAP: Set frame interval to %d/%d\n", num, denom);
-		return 0;
+			return 0;
+		} else {
+			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
+				"CAP: failed to set frame interval to %d/%d "
+				"(driver changed it to %d/%d)\n", num, denom,
+				param.parm.capture.timeperframe.numerator,
+				param.parm.capture.timeperframe.denominator);
+			return LIBVIDEO_ERR_FORMAT;
+		}
 	case EINVAL:
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 				"CAP: Error IOCTL while setting frame interval to %d/%d\n", num, denom);
