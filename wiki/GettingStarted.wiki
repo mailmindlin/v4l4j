@@ -95,6 +95,7 @@ By default, these tests will use /dev/video0 as the video device (assumed to be 
     * 3: BGR24 format
     * 4: YUV420 format
     * 5: YVU420 format
+  * `-Dtest.fps=` sets the frame rate to the given value, assuming 1) your driver supports adjusting the capture frame, 2) the given value is correct. An error message will be printed if either condition is not met.
 
 =Debugging=
 *First, if you have already installed v4l4j then uninstall it*, otherwise the previous jar file & libraries (without debug statements) may take precedence over the new ones. Then, compile v4l4j to produce extra debug output, useful to troubleshoot issues, with `ant clean all-debug`. Install it with `sudo ant install`. Also, check the the [Troubleshooting troubleshooting page] for help on solving common issues.
