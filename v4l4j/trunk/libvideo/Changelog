@@ -1,3 +1,5 @@
+v0.8.6:
+- added support for adjustable frame rate
 v0.8.5:
 - updated to latest videodev2.h from v4l mercurial repository.
 - updated to libv4l v0.6
