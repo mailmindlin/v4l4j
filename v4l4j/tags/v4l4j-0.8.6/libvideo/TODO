@@ -1,0 +1,12 @@
+TODO List:
+- Add support for frame metadata (timecode, frame type, ...), as reported by
+  struct v4l2_buffer.
+- Add support for MPEG format
+- Add a control to adjust the frame rate when ioctl(VIDIOC_S_PARM) is supported
+- Add methods to set multiple extended controls at once
+- Add probe for more drivers (need some help from people having hardware for 
+  that).
+- libvideo is NOT reentrant and does NOT implement a proper locking scheme yet.
+  Therefore, it is the caller's responsibility to ensure accesses to libvideo
+  are synchronised.
+
