@@ -1,3 +1,9 @@
+v4l4j (0.8.6-0ubuntu1~ppa1) hardy; urgency=low
+
+  * new upstream release with support for setting frame rate 
+
+ -- Gilles Gigan <gilles.gigan@gmail.com>  Sat, 15 Aug 2009 16:54:26 +1000
+
 v4l4j (0.8.5-0ubuntu1~ppa1) hardy; urgency=low
 
   * new upstream release with updated version of libv4l(0.6)

@@ -2,7 +2,7 @@
 build: build-stamp
 build-stamp:
 	#build v4l4j
-	JAVA_HOME=/usr/lib/jvm/java-6-sun ant all
+	JAVA_HOME=/usr/lib/jvm/java-6-sun ant all javadoc
 	touch $@
 
 clean:
@@ -17,9 +17,9 @@ install: install-stamp
 install-stamp:
 	dh_testdir
 	dh_testroot
-	ant install -DDESTDIR=$(CURDIR)/debian/tmp
+	ant install-doc install -DDESTDIR=$(CURDIR)/debian/tmp
 #we need to chmod 755 the jar file so it can be exceuted thanks to binfmt
-#howver, this makes lintian complain...
+#however, this makes lintian complain...
 	chmod 755 $(CURDIR)/debian/tmp/usr/share/java/v4l4j.jar
 	touch $@
 
