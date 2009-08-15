@@ -16,3 +16,9 @@
  
   * For following versions of Ubuntu, update changelog (as per above), use "debuild -S -sd" to not re-upload .orig.tar.gz,
     and upload with "dput LP-ppa v4l4j_X.Y.Z-0ubuntu1~ppaT_source.changes"
+
+
+ * OR
+ * from previous version directory, run uscan after uploading tarball to GC
+ * run uupdate ../v4l4j_X.Y.Z.orig.tar.gz
+ * then update the changelog and create source pkg as above
