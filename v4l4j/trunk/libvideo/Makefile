@@ -37,7 +37,7 @@ LIB_INSTALL_DIR := $(PREFIX)/lib
 #Directory where the include files will be installed
 INC_INSTALL_DIR := $(PREFIX)/include
 #Directory where the libv4l helpers will be installed
-LIBV4L_HELPERS_INSTALL_DIR := $(PREFIX)/local/lib/v4l4j
+LIBV4L_HELPERS_INSTALL_DIR := $(PREFIX)/lib/v4l4j
 
 
 
