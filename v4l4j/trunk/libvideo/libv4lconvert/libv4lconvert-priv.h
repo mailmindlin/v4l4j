@@ -1,5 +1,5 @@
 /*
-#             (C) 2008 Hans de Goede <j.w.r.degoede@hhs.nl>
+#             (C) 2008 Hans de Goede <hdegoede@redhat.com>
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -52,6 +52,10 @@
 #define V4L2_PIX_FMT_MR97310A v4l2_fourcc('M','3','1','0')
 #endif
 
+#ifndef V4L2_PIX_FMT_SN9C2028
+#define V4L2_PIX_FMT_SN9C2028 v4l2_fourcc('S', 'O', 'N', 'X')
+#endif
+
 #ifndef V4L2_PIX_FMT_SQ905C
 #define V4L2_PIX_FMT_SQ905C v4l2_fourcc('9', '0', '5', 'C')
 #endif
@@ -92,6 +96,14 @@
 #define V4L2_PIX_FMT_OV518 v4l2_fourcc('O', '5', '1', '8') /* ov518 JPEG */
 #endif
 
+#ifndef V4L2_PIX_FMT_STV0680
+#define V4L2_PIX_FMT_STV0680 v4l2_fourcc('S', '6', '8', '0')
+#endif
+
+#ifndef V4L2_FMT_FLAG_EMULATED
+#define V4L2_FMT_FLAG_EMULATED 0x0002
+#endif
+
 #define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
 
 #define V4LCONVERT_ERROR_MSG_SIZE 256
@@ -108,6 +120,7 @@
 /* Pixformat flags */
 #define V4LCONVERT_COMPRESSED            0x01 /* Compressed format */
 #define V4LCONVERT_NEEDS_CONVERSION      0x02 /* Apps likely wont know this */
+#define V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION 0x03
 
 struct v4lconvert_data {
   int fd;
@@ -218,7 +231,13 @@ int v4lconvert_decode_pac207(struct v4lconvert_data *data,
 void v4lconvert_decode_mr97310a(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
+void v4lconvert_decode_sn9c2028(const unsigned char *src, unsigned char *dst,
+  int width, int height);
+
 void v4lconvert_decode_sq905c(const unsigned char *src, unsigned char *dst,
+  int width, int height);
+
+void v4lconvert_decode_stv0680(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
 void v4lconvert_bayer_to_rgb24(const unsigned char *bayer,

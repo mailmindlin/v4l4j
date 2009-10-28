@@ -174,9 +174,7 @@ public class DeviceChooser  extends WindowAdapter implements ActionListener{
 				else if (argz.length == 2)
 					new DeviceChooser(null, Integer.parseInt(argz[0]), Integer.parseInt(argz[1]));
 				else {
-					System.out.println("Usage:\n");
-					System.out.println("DeviceChooser <device_file> <width> <height>\n");
-					System.out.println("DeviceChooser <width> <height>\n");
+					new DeviceChooser(null, 640, 480);
 				}
 			}
 			
