@@ -298,7 +298,7 @@ void print_device_info(struct video_device *v){
 					printf("\t\tDiscrete frame intervals for minimum resolution: ");
 					print_frame_intv_disc(i->palettes[j].continuous->intv_min_res.discrete);
 				} else
-					printf("\t\tFrame size enumeration not supported\n");
+					printf("\t\tFrame interval enumeration not supported\n");
 
 				if(i->palettes[j].continuous->interval_type_max_res==FRAME_INTV_CONTINUOUS){
 					printf("\t\tContinuous frame intervals for maximum resolution: ");
@@ -307,7 +307,7 @@ void print_device_info(struct video_device *v){
 					printf("\t\tDiscrete frame intervals for maximum resolution: ");
 					print_frame_intv_disc(i->palettes[j].continuous->intv_max_res.discrete);
 				} else
-					printf("\t\tFrame size enumeration not supported\n");
+					printf("\t\tFrame interval enumeration not supported\n");
 			}else if(i->palettes[j].size_type==FRAME_SIZE_DISCRETE){
 				//frame size type is discrete
 				k = -1;
@@ -325,11 +325,11 @@ void print_device_info(struct video_device *v){
 						printf("\t\tDiscrete frame intervals: ");
 						print_frame_intv_disc(i->palettes[j].discrete[k].intv.discrete);
 					} else
-						printf("\t\tFrame size enumeration not supported\n");
+						printf("\t\tFrame interval enumeration not supported\n");
 				}
 
 			}else
-				printf("\t\tFrame size enumeration not supported\n");
+				printf("\t\tFrame interval enumeration not supported\n");
 		}
 	}
 

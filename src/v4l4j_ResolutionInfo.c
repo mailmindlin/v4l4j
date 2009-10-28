@@ -165,7 +165,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetStepwise(
 
 	//assign it to the stepwiseObject member
 	fid = (*e)->GetFieldID(e, this_class, "stepwiseObject",
-			"Lau/edu/jcu/v4l4j/ResolutionInfo$StepwiseResolution");
+			"Lau/edu/jcu/v4l4j/ResolutionInfo$StepwiseResolution;");
 	if(fid == NULL){
 		info("[V4L4J] Error looking up the StepwiseResolution fieldID\n");
 		THROW_EXCEPTION(e, JNI_EXCP, \
