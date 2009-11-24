@@ -464,7 +464,8 @@ static int set_crop(struct capture_device *c, int fd) {
 		if(ioctl( fd, VIDIOC_S_CROP, &crop )!=0) {
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
 					"CAP: Error setting cropping info\n");
-			return -1;
+			// dont fail if cropping fails
+			//return -1;
 		}
 	}
 
