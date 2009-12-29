@@ -70,84 +70,174 @@ struct mmap {
 #define		SECAM					2
 #define		NTSC					3
 
-#define NB_SUPPORTED_PALETTE		55
 //palette formats
 //YUV420 is the same as YUV420P - YUYV is the same as YUV422
 //YUV411 is the same as YUV411P
-//DO NOT USE YUV420P, YUV422 or YUV411P - they re here for compatibility
-//USE YUV420, YUYV and YUV411 INSTEAD !!!!
-#define 	YUV420					0
-#define  	YUYV					1
-#define 	RGB24					2
-#define 	RGB32					3
-#define	 	RGB555					4
-#define 	RGB565					5
-#define 	GREY					6
-#define 	MJPEG					7
-#define 	JPEG					8
-#define 	MPEG					9
-#define 	HI240					10
-#define 	UYVY					11
-#define		YUV422P					12
-#define		YUV411P					13
-#define		YUV410P					14
-#define		RGB332					15
-#define		RGB444					16
-#define		RGB555X					17
-#define		RGB565X					18
-#define		BGR24					19
-#define		BGR32					20
-#define		Y16						21
-#define		PAL8					22
-#define		YVU410					23
-#define		YVU420					24
-#define		Y41P					25
-#define		YUV444					26
-#define		YUV555					27
-#define		YUV565					28
-#define		YUV32					29
-#define		NV12					30
-#define		NV21					31
-#define		YYUV					32
-#define		HM12					33
-#define		SBGGR8					34
-#define		SGBRG8					35
-#define		SGRBG8					36
-#define		SRGGB8					37
-#define		SBGGR16					38
-#define		SN9C10X					39
-#define 	SN9C20X_I420			40
-#define		PWC1					41
-#define		PWC2					42
-#define		ET61X251				43
-#define		SPCA501					44
-#define		SPCA505					45
-#define		SPCA508					46
-#define		SPCA561					47
-#define		PAC207					48
-#define		PJPG					49
-#define		YVYU					50
-#define		MR97310A				51
-#define		SQ905C					52
-#define 	OV511					53
-#define		OV518					54
+//DO NOT USE YUV420P, YUV422 or YUV411 - they re here for compatibility
+//USE YUV420, YUYV and YUV411P INSTEAD !!!!
+enum {
+	// RGB formats
+	RGB332 = 0,			// 0
+	RGB444,				// 1
+	RGB555,				// 2
+	RGB565,				// 3
+	RGB555X,			// 4
+	RGB565X,			// 5
+	BGR24,				// 6
+	RGB24,				// 7
+	BGR32,				// 8
+	RGB32,				// 9
+
+	// Grey formats
+	GREY,				//10
+	Y10,
+	Y16,				//12
+
+	// palette formats
+	PAL8,				// 13
+
+	// YUV formats
+	YVU410,				// 14
+	YVU420,
+	YUYV,
+	YYUV,
+	YVYU,
+	UYVY,
+	VYUY,				// 20
+	YUV422P,
+	YUV411P,
+	Y41P,
+	YUV444,
+	YUV555,
+	YUV565,
+	YUV32,
+	YUV410,
+	YUV420,
+	HI240,				// 30
+	HM12,
+
+	// Two planes - Y and Cb/Cr interleaved
+	NV12,				// 32
+	NV21,
+	NV16,
+	NV61,				// 35
+
+	// Bayer formats
+	SBGGR8,				// 36
+	SGBRG8,
+	SGRBG8,
+	SRGGB8,
+	SBGGR10,			// 40
+	SGBRG10,
+	SGRBG10,
+	SRGGB10,
+	SGRBG10DPCM8,
+	SBGGR16,			// 45
+
+	// Compressed formats
+	MJPEG,				//46
+	JPEG,
+	DV,
+	MPEG,				// 49
+
+	// Vendor-specific formats
+	WNVA,				// 50
+	SN9C10X,
+	SN9C20X_I420,
+	PWC1,
+	PWC2,
+	ET61X251,			// 55
+	SPCA501,
+	SPCA505,
+	SPCA508,
+	SPCA561,
+	PAC207,				// 60
+	MR97310A,
+	SQ905C,
+	PJPG,
+	OV511,
+	OV518,				// 65
+	STV0680,
+	TM6000,				// 67
+	NB_SUPPORTED_PALETTES,	// 68
+	/* Dont use the following three, use YUV420, YUYV or YUV411P instead !! */\
+	YUV420P,
+	YUV422,
+	YUV411,
+#define		IDENTICAL_FORMATS		3
+};
 
 //the default order in which palettes are tried if "set_cap_param(c, NULL, 0)"
 //is used
-#define		DEFAULT_PALETTE_ORDER \
-	{JPEG, YUV420, MJPEG, RGB24, RGB32, YUYV, RGB555, RGB565, GREY, \
-	MPEG, HI240, UYVY, YUV422P, YUV411P, YUV410P, RGB332, RGB444, \
-	RGB555X, RGB565X, BGR24, BGR32, Y16, PAL8, YVU410, YVU420, \
-	Y41P, YUV444, YUV555, YUV565, YUV32, NV12, NV21, YYUV, HM12, SBGGR8, \
-	SGBRG8, SGRBG8, SBGGR16, SN9C10X, SN9C20X_I420, PWC1, PWC2, ET61X251, \
-	SPCA501, SPCA505, SPCA508, SPCA561, PAC207, PJPG, YVYU, \
-	MR97310A, SQ905C, OV511, OV518}
-
-//Dont use the following three, use YUV420, YUYV or YUV411P instead !!
-#define		IDENTICAL_FORMATS		3
-#define 	YUV420P					55
-#define 	YUV422					56
-#define 	YUV411					57
+#define		DEFAULT_PALETTE_ORDER {\
+		JPEG,\
+		YUV420,\
+		MJPEG,\
+		RGB24,\
+		RGB32,\
+		RGB332,\
+		RGB444,\
+		RGB555,\
+		RGB565,\
+		RGB555X,\
+		RGB565X,\
+		BGR24,\
+		BGR32,\
+		GREY,\
+		Y10,\
+		Y16,\
+		PAL8,\
+		YVU410,\
+		YVU420,\
+		YUYV,\
+		YYUV,\
+		YVYU,\
+		UYVY,\
+		VYUY,\
+		YUV422P,\
+		YUV411P,\
+		Y41P,\
+		YUV444,\
+		YUV555,\
+		YUV565,\
+		YUV32,\
+		YUV410,\
+		HI240,\
+		HM12,\
+		NV12,\
+		NV21,\
+		NV16,\
+		NV61,\
+		SBGGR8,\
+		SGBRG8,\
+		SGRBG8,\
+		SRGGB8,\
+		SBGGR10,\
+		SGBRG10,\
+		SGRBG10,\
+		SRGGB10,\
+		SGRBG10DPCM8,\
+		SBGGR16,\
+		MPEG,\
+		WNVA,\
+		SN9C10X,\
+		SN9C20X_I420,\
+		PWC1,\
+		PWC2,\
+		ET61X251,\
+		SPCA501,\
+		SPCA505,\
+		SPCA508,\
+		SPCA561,\
+		PAC207,\
+		MR97310A,\
+		SQ905C,\
+		PJPG,\
+		OV511,\
+		OV518,\
+		STV0680,\
+		TM6000\
+	}
 
 struct convert_data {
 	struct v4lconvert_data *priv;//the libv4l convert struct (used only if V4L2)

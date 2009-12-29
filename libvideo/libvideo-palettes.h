@@ -27,30 +27,6 @@
 
 #include "videodev2.h"
 
-#ifndef V4L2_PIX_FMT_SGBRG8
-#define V4L2_PIX_FMT_SGBRG8 v4l2_fourcc('G','B','R','G')
-#endif
-
-#ifndef V4L2_PIX_FMT_SGRBG8
-#define V4L2_PIX_FMT_SGRBG8 v4l2_fourcc('G','R','B','G')
-#endif
-
-#ifndef V4L2_PIX_FMT_SRGGB8
-#define V4L2_PIX_FMT_SRGGB8 v4l2_fourcc('R','G','G','B')
-#endif
-
-#ifndef V4L2_PIX_FMT_SN9C20X_I420
-#define V4L2_PIX_FMT_SN9C20X_I420  v4l2_fourcc('S', '9', '2', '0')
-#endif
-
-#ifndef V4L2_PIX_FMT_OV511
-#define V4L2_PIX_FMT_OV511 v4l2_fourcc('O', '5', '1', '1')
-#endif
-
-#ifndef V4L2_PIX_FMT_OV518
-#define V4L2_PIX_FMT_OV518 v4l2_fourcc('O', '5', '1', '8') /* ov518 JPEG */
-#endif
-
 struct libvideo_palette{
 	int libvideo_palette;
 	int v4l1_palette;
