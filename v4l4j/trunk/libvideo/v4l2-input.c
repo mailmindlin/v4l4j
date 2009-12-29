@@ -250,7 +250,7 @@ static int apply_image_format(struct v4l2_format *fmt, int fd){
 
 static int get_palette_index(int pixelformat){
 	int i;
-	for(i = 0; i<NB_SUPPORTED_PALETTE; i++)
+	for(i = 0; i<NB_SUPPORTED_PALETTES; i++)
 		if(libvideo_palettes[i].v4l2_palette == pixelformat)
 			return i;
 
@@ -532,12 +532,12 @@ int get_frame_intv_v4l2(struct video_device *vdev, int *num, int *denom) {
 int set_cap_param_v4l2(struct video_device *vdev, int *palettes, int nb) {
 	struct capture_device *c = vdev->capture;
 	int ret = 0;
-	int def[NB_SUPPORTED_PALETTE] = DEFAULT_PALETTE_ORDER;
+	int def[NB_SUPPORTED_PALETTES] = DEFAULT_PALETTE_ORDER;
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: Setting capture parameters on device %s.\n", vdev->file);
 
-	if(nb<0 || nb>=NB_SUPPORTED_PALETTE) {
+	if(nb<0 || nb>=NB_SUPPORTED_PALETTES) {
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
 				"CAP: Incorrect number of palettes (%d)\n", nb);
 		return LIBVIDEO_ERR_FORMAT;
@@ -546,7 +546,7 @@ int set_cap_param_v4l2(struct video_device *vdev, int *palettes, int nb) {
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 				"CAP: No palettes supplied, trying default order.\n");
 		palettes = def;
-		nb = NB_SUPPORTED_PALETTE;
+		nb = NB_SUPPORTED_PALETTES;
 	}
 
 	//set desired standard
