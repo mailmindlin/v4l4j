@@ -27,111 +27,7 @@
 #include "libvideo-palettes.h"
 
 const struct libvideo_palette libvideo_palettes[] = {
-	{
-		YUV420,
-		VIDEO_PALETTE_YUV420,
-		V4L2_PIX_FMT_YUV420,
-		12,
-		"YUV420"
-	},
-	{
-		YUYV,
-		VIDEO_PALETTE_YUYV,
-		V4L2_PIX_FMT_YUYV,
-		16,
-		"YUYV"
-	},
-	{
-		RGB24,
-		VIDEO_PALETTE_RGB24,
-		V4L2_PIX_FMT_RGB24,
-		24,
-		"RGB24"
-	},
-		{
-		RGB32,
-		VIDEO_PALETTE_RGB32,
-		V4L2_PIX_FMT_RGB32,
-		32,
-		"RGB32"
-	},
-		{
-		RGB555,
-		VIDEO_PALETTE_RGB555,
-		V4L2_PIX_FMT_RGB555,
-		16,
-		"RGB555"
-	},
-		{
-		RGB565,
-		VIDEO_PALETTE_RGB565,
-		V4L2_PIX_FMT_RGB565,
-		16,
-		"RGB565"
-	},
-		{
-		GREY,
-		VIDEO_PALETTE_GREY,
-		V4L2_PIX_FMT_GREY,
-		8,
-		"GREY"
-	},
-		{
-		MJPEG,
-		VIDEO_PALETTE_UNDEFINED_V4L1,
-		V4L2_PIX_FMT_MJPEG,
-		COMPRESSED_FORMAT_DEPTH,
-		"MJPEG"
-	},
-		{
-		JPEG,
-		VIDEO_PALETTE_UNDEFINED_V4L1,
-		V4L2_PIX_FMT_JPEG,
-		COMPRESSED_FORMAT_DEPTH,
-		"JPEG"
-	},
-	{
-		MPEG,
-		VIDEO_PALETTE_UNDEFINED_V4L1,
-		V4L2_PIX_FMT_MPEG,
-		COMPRESSED_FORMAT_DEPTH,
-		"MPEG 1/2/4"
-	},
-	{
-		HI240,
-		VIDEO_PALETTE_HI240,
-		V4L2_PIX_FMT_HI240,
-		8,
-		"HI240"
-	},
-	{
-		UYVY,
-		VIDEO_PALETTE_UYVY,
-		V4L2_PIX_FMT_UYVY,
-		16,
-		"UYVY"
-	},
-	{
-		YUV422P,
-		VIDEO_PALETTE_YUV422P,
-		V4L2_PIX_FMT_YUV422P,
-		16,
-		"YUV422P"
-	},
-	{
-		YUV411P,
-		VIDEO_PALETTE_YUV411P,
-		V4L2_PIX_FMT_YUV411P,
-		16,
-		"YUV411P"
-	},
-	{
-		YUV410P,
-		VIDEO_PALETTE_YUV410P,
-		V4L2_PIX_FMT_YUV410,
-		9,
-		"YUV410"
-	},
+	// RGB palettes
 	{
 		RGB332,
 		VIDEO_PALETTE_UNDEFINED_V4L1,
@@ -145,6 +41,20 @@ const struct libvideo_palette libvideo_palettes[] = {
 		V4L2_PIX_FMT_RGB444,
 		16,
 		"RGB444"
+	},
+	{
+		RGB555,
+		VIDEO_PALETTE_RGB555,
+		V4L2_PIX_FMT_RGB555,
+		16,
+		"RGB555"
+	},
+	{
+		RGB565,
+		VIDEO_PALETTE_RGB565,
+		V4L2_PIX_FMT_RGB565,
+		16,
+		"RGB565"
 	},
 	{
 		RGB555X,
@@ -168,11 +78,41 @@ const struct libvideo_palette libvideo_palettes[] = {
 		"BGR24"
 	},
 	{
+		RGB24,
+		VIDEO_PALETTE_RGB24,
+		V4L2_PIX_FMT_RGB24,
+		24,
+		"RGB24"
+	},
+	{
 		BGR32,
 		VIDEO_PALETTE_UNDEFINED_V4L1,
 		V4L2_PIX_FMT_BGR32,
 		32,
 		"BGR32"
+	},
+	{
+		RGB32,
+		VIDEO_PALETTE_RGB32,
+		V4L2_PIX_FMT_RGB32,
+		32,
+		"RGB32"
+	},
+
+	// Grey palettes
+	{
+		GREY,
+		VIDEO_PALETTE_GREY,
+		V4L2_PIX_FMT_GREY,
+		8,
+		"GREY"
+	},
+	{
+		Y10,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_Y10,
+		10,
+		"Y10"
 	},
 	{
 		Y16,
@@ -181,6 +121,8 @@ const struct libvideo_palette libvideo_palettes[] = {
 		16,
 		"Y16"
 	},
+
+	// PAL8 format
 	{
 		PAL8,
 		VIDEO_PALETTE_UNDEFINED_V4L1,
@@ -188,6 +130,8 @@ const struct libvideo_palette libvideo_palettes[] = {
 		8,
 		"PAL8"
 	},
+
+	// YUV formats
 	{
 		YVU410,
 		VIDEO_PALETTE_UNDEFINED_V4L1,
@@ -201,6 +145,55 @@ const struct libvideo_palette libvideo_palettes[] = {
 		V4L2_PIX_FMT_YVU420,
 		12,
 		"YVU420"
+	},
+	{
+		YUYV,
+		VIDEO_PALETTE_YUYV,
+		V4L2_PIX_FMT_YUYV,
+		16,
+		"YUYV"
+	},
+	{
+		YYUV,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_YYUV,
+		16,
+		"YYUV"
+	},
+	{
+		YVYU,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_YVYU,
+		16,
+		"YVYU"
+	},
+	{
+		UYVY,
+		VIDEO_PALETTE_UYVY,
+		V4L2_PIX_FMT_UYVY,
+		16,
+		"UYVY"
+	},
+	{
+		VYUY,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_VYUY,
+		16,
+		"VYUY"
+	},
+	{
+		YUV422P,
+		VIDEO_PALETTE_YUV422P,
+		V4L2_PIX_FMT_YUV422P,
+		16,
+		"YUV422P"
+	},
+	{
+		YUV411P,
+		VIDEO_PALETTE_YUV411P,
+		V4L2_PIX_FMT_YUV411P,
+		16,
+		"YUV411P"
 	},
 	{
 		Y41P,
@@ -238,6 +231,36 @@ const struct libvideo_palette libvideo_palettes[] = {
 		"YUV32"
 	},
 	{
+		YUV410,
+		VIDEO_PALETTE_YUV410P,
+		V4L2_PIX_FMT_YUV410,
+		9,
+		"YUV410"
+	},
+	{
+		YUV420,
+		VIDEO_PALETTE_YUV420,
+		V4L2_PIX_FMT_YUV420,
+		12,
+		"YUV420"
+	},
+	{
+		HI240,
+		VIDEO_PALETTE_HI240,
+		V4L2_PIX_FMT_HI240,
+		8,
+		"HI240"
+	},
+	{
+		HM12,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_HM12,
+		8,
+		"HM12"
+	},
+
+	// two planes
+	{
 		NV12,
 		VIDEO_PALETTE_UNDEFINED_V4L1,
 		V4L2_PIX_FMT_NV12,
@@ -252,19 +275,21 @@ const struct libvideo_palette libvideo_palettes[] = {
 		"NV21"
 	},
 	{
-		YYUV,
+		NV16,
 		VIDEO_PALETTE_UNDEFINED_V4L1,
-		V4L2_PIX_FMT_YYUV,
+		V4L2_PIX_FMT_NV16,
 		16,
-		"YYUV"
+		"NV16"
 	},
 	{
-		HM12,
+		NV61,
 		VIDEO_PALETTE_UNDEFINED_V4L1,
-		V4L2_PIX_FMT_HM12,
-		8,
-		"HM12"
+		V4L2_PIX_FMT_NV61,
+		16,
+		"NV61"
 	},
+
+	// bayer formats
 	{
 		SBGGR8,
 		VIDEO_PALETTE_UNDEFINED_V4L1,
@@ -294,11 +319,69 @@ const struct libvideo_palette libvideo_palettes[] = {
 		"SRGGB8"
 	},
 	{
+		SBGGR10,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_SBGGR10,
+		10,
+		"SBGGR10"
+	},
+	{
+		SGBRG10,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_SGBRG10,
+		10,
+		"SGBRG10"
+	},
+	{
+		SGRBG10,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_SGRBG10,
+		10,
+		"SGRBG10"
+	},
+	{
+		SRGGB10,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_SRGGB10,
+		10,
+		"SRGGB10"
+	},
+	{
+		SGRBG10DPCM8,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_SGRBG10DPCM8,
+		8,
+		"SGRBG10DPCM8"
+	},
+	{
 		SBGGR16,
 		VIDEO_PALETTE_UNDEFINED_V4L1,
 		V4L2_PIX_FMT_SBGGR16,
 		16,
 		"SBGGR16"
+	},
+
+	// compressed formats
+	{
+		MJPEG,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_MJPEG,
+		COMPRESSED_FORMAT_DEPTH,
+		"MJPEG"
+	},
+		{
+		JPEG,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_JPEG,
+		COMPRESSED_FORMAT_DEPTH,
+		"JPEG"
+	},
+	{
+		MPEG,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_MPEG,
+		COMPRESSED_FORMAT_DEPTH,
+		"MPEG 1/2/4"
 	},
 /*	{
 		DV,
@@ -306,17 +389,16 @@ const struct libvideo_palette libvideo_palettes[] = {
 		V4L2_PIX_FMT_DV,
 		, left out until more info
 		"DV"
-	},
+	}, */
 
-	Old stuff
+	// vendor-specific
 	{
 		WNVA,
 		VIDEO_PALETTE_UNDEFINED_V4L1,
 		V4L2_PIX_FMT_WNVA,
 		16,
 		"WNVA"
-	},*/
-
+	},
 	{
 		SN9C10X,
 		VIDEO_PALETTE_UNDEFINED_V4L1,
@@ -388,20 +470,6 @@ const struct libvideo_palette libvideo_palettes[] = {
 		"PAC207"
 	},
 	{
-		PJPG,
-		VIDEO_PALETTE_UNDEFINED_V4L1,
-		V4L2_PIX_FMT_PJPG,
-		COMPRESSED_FORMAT_DEPTH,
-		"PJPG"
-	},
-	{
-		YVYU,
-		VIDEO_PALETTE_UNDEFINED_V4L1,
-		V4L2_PIX_FMT_YVYU,
-		16,
-		"YVYU"
-	},
-	{
 		MR97310A,
 		VIDEO_PALETTE_UNDEFINED_V4L1,
 		V4L2_PIX_FMT_MR97310A,
@@ -414,6 +482,13 @@ const struct libvideo_palette libvideo_palettes[] = {
 		V4L2_PIX_FMT_SQ905C,
 		COMPRESSED_FORMAT_DEPTH,
 		"SQ905C"
+	},
+	{
+		PJPG,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_PJPG,
+		COMPRESSED_FORMAT_DEPTH,
+		"PJPG"
 	},
 	{
 		OV511,
@@ -429,6 +504,21 @@ const struct libvideo_palette libvideo_palettes[] = {
 		COMPRESSED_FORMAT_DEPTH,
 		"OV518"
 	},
+	{
+		STV0680,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_STV0680,
+		COMPRESSED_FORMAT_DEPTH,
+		"STV0680"
+	},
+	{
+		TM6000,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_TM6000,
+		COMPRESSED_FORMAT_DEPTH,
+		"TM6000"
+	},
+
 
 //Dont use the following, use YUV420, YUYV & YUV411 instead !!
 	{
