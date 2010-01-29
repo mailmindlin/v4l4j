@@ -72,8 +72,7 @@ static int lookup_frame_intv(struct v4lconvert_data *conv, int fmt, int width,
 	//while we have a valid frame interval...
 	while (v4lconvert_enum_frameintervals(conv, &intv) == 0) {
 		//chekc its type (discrete, continuous / stepwwise)
-		switch(intv.type) {
-			case V4L2_FRMIVAL_TYPE_DISCRETE:
+		if(intv.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
 				if(intv_type == FRAME_INTV_UNSUPPORTED){
 					intv_type = FRAME_INTV_DISCRETE;
 					dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
@@ -98,10 +97,8 @@ static int lookup_frame_intv(struct v4lconvert_data *conv, int fmt, int width,
 				intv.pixel_format = fmt;
 				intv.width = width;
 				intv.height = height;
-				break;
-
-			case V4L2_FRMIVAL_TYPE_CONTINUOUS:
-			case V4L2_FRMIVAL_TYPE_STEPWISE:
+		} else if((intv.type == V4L2_FRMIVAL_TYPE_CONTINUOUS) || 
+					(intv.type == V4L2_FRMIVAL_TYPE_STEPWISE)) {
 				dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
 					"QRY: Found %s frame intv:\n",
 					(intv.type==V4L2_FRMIVAL_TYPE_CONTINUOUS)?"continuous":
@@ -113,12 +110,20 @@ static int lookup_frame_intv(struct v4lconvert_data *conv, int fmt, int width,
 				intv_type = FRAME_INTV_CONTINUOUS;
 
 				//copy the values
+				dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, 
+					"min - max - step : %d/%d - %d/%d - %d/%d",
+					intv.stepwise.min.numerator, intv.stepwise.min.denominator,
+					intv.stepwise.max.numerator, intv.stepwise.max.denominator,
+					intv.stepwise.step.numerator, intv.stepwise.step.denominator
+				);
 				c->min.numerator = intv.stepwise.min.numerator;
 				c->min.denominator = intv.stepwise.min.denominator;
 				c->max.numerator = intv.stepwise.max.numerator;
 				c->max.denominator = intv.stepwise.max.denominator;
 				c->step.numerator = intv.stepwise.step.numerator;
 				c->step.denominator = intv.stepwise.step.denominator;
+				
+				// exit the while loop
 				break;
 		}
 	}
