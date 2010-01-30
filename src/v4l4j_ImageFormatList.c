@@ -304,6 +304,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) v4l4j_device;
 
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	dump_v4l4j_struct(d);
 
 	/* Get handles on Java stuff */
 	this_class = (*e)->GetObjectClass(e, t);
@@ -313,16 +314,12 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(
 		return;
 	}
 
-	dprint(LOG_V4L4J, "[V4L4J] Past this_class (%#x)\n", this_class);
-
 	format_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/ImageFormat");
 	if(format_class == NULL){
 		info("[V4L4J] Error looking up the ImageFormat class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up ImageFormat class");
 		return;
 	}
-
-	dprint(LOG_V4L4J, "[V4L4J] Past format_class (%#x)\n", format_class);
 
 	format_ctor = (*e)->GetMethodID(e, format_class, "<init>",
 			"(Ljava/lang/String;IJ)V");
@@ -333,16 +330,12 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(
 		return;
 	}
 
-	dprint(LOG_V4L4J, "[V4L4J] Past format_ctor (%#x)\n", format_ctor);
-
 	vector_class = (*e)->FindClass(e, "java/util/Vector");
 	if(vector_class == NULL){
 		info("[V4L4J] Error looking up the Vector class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up Vector class");
 		return;
 	}
-
-	dprint(LOG_V4L4J, "[V4L4J] Past vector_class (%#x)\n", vector_class);
 
 	add_method = (*e)->GetMethodID(e, vector_class, "addElement",
 			"(Ljava/lang/Object;)V");
@@ -352,8 +345,6 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(
 				"Error looking up the add method of Vector class");
 		return;
 	}
-
-	dprint(LOG_V4L4J, "[V4L4J] Past add_method (%#x)\n", add_method);
 
 	//
 	// populates the native formats in the formats field
@@ -365,16 +356,12 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(
 		return;
 	}
 
-	dprint(LOG_V4L4J, "[V4L4J] Past field (%#x)\n", field);
-
 	obj = (*e)->GetObjectField(e, t, field);
 	if(obj == NULL){
 		info("[V4L4J] Error looking up the formats member\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the formats member");
 		return;
 	}
-
-	dprint(LOG_V4L4J, "[V4L4J] Past obj (%#x)\n", obj);
 
 	/* creates the list object and assign it to the formats attribute*/
 	if(create_native_list(e,d, obj, add_method, format_class,format_ctor)==-1)

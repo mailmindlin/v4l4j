@@ -168,6 +168,7 @@ static void create_formats_object(JNIEnv *e, jobject t, jclass this_class,
 	jobject obj;
 
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	dump_v4l4j_struct(d);
 
 	format_list_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/ImageFormatList");
 	if(format_list_class == NULL){
@@ -210,6 +211,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobje
 //void Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobject t, jlong v4l4j_device){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) v4l4j_device;
+	dump_v4l4j_struct(d);
 	jfieldID name_field;
 	jclass this_class;
 	struct video_device *vd = d->vdev;
@@ -231,6 +233,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobje
 
 
 	dprint(LOG_LIBVIDEO, "[LIBVIDEO] call to get_device_info\n");
+	dump_v4l4j_struct(d);
 	//get data from libvideo
 	if(get_device_info(vd)!=NULL){
 		//fill in values in DeviceInfo object
@@ -239,10 +242,12 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobje
 
 		/* set the inputs field */
 		dprint(LOG_V4L4J, "[V4L4J] Creating inputInfo objects\n");
+		dump_v4l4j_struct(d);
 		create_inputs_object(e, t, this_class, vd);
 
 		/* set the formats field */
 		dprint(LOG_V4L4J, "[V4L4J] Creating Format objects\n");
+		dump_v4l4j_struct(d);
 		create_formats_object(e, t, this_class, d);
 	} else
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error getting information from video device");
