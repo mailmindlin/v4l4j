@@ -2,12 +2,29 @@
 #labels Featured
 #sidebar v4l4jSideBar
 
-There are two ways to import v4l4j in Eclipse:
+This page explains how to import v4l4j in Eclipse, whether you want to make use of v4l4j in an existing project or you want to improve or tweak v4l4j.
+
+= Using v4l4j in an Eclipse project =
+
+Follow these steps if you want to use v4l4j in your own application.First, you must install v4l4j by following the installation instructions on the [GettingStarted] page. Then, assuming you have already created your Eclipse project, do the following to import the v4l4j JAR file, JNI library and JavaDoc:
+ * In the Project Explorer pane, right-click on your project and select Build Path -> Configure build path.
+ * Select the Libraries tab, and click Add external JARs...
+ * Select /usr/share/java/v4l4j.jar
+ * Expand the v4l4j.jar entry and double click on Native library location
+ * Select /usr/lib/jni
+ * Double click on Javadoc location, and select Javadoc URL
+ * Enter http://v4l4j.googlecode.com/svn/www/v4l4j-api
+ * Select OK
+
+Your project is now setup to use v4l4j.
+
+= Creating an Eclipse project for v4l4j =
+Follow these steps if you are planning to work on v4l4j itself. There are two ways to create a project for v4l4j in Eclipse:
  *  by checking out a copy of v4l4j from the subversion repository and creating a new project, or
  * by downloading the source tarball, unpacking it and importing it in Eclipse.
 Both of these are explained in the following sections. I have tested them with Eclipse Ganymede version 3.4.1
 
-= Importing from SVN =
+== Importing from SVN ==
 
  # First, make sure you have a working Subversion plug-in for Eclipse. You can use either [http://subclipse.tigris.org/ subclipse], or [http://www.eclipse.org/subversive/ Subversive]. These steps assume you use Subclipse, but can be used with Subversive too.
  # In eclipse, check out a copy of http://v4l4j.googlecode.com/svn/v4l4j/trunk using the New project wizard. Refer to your eclipse plugin documentation to find out how to do that.
@@ -26,7 +43,7 @@ Both of these are explained in the following sections. I have tested them with E
 
 You can now create your own project that uses v4l4j. Eclipse's auto-complete feature will now offer v4l4j-related classes, and will show v4l4j's javadoc.
 
-= Importing from source tarball =
+== Importing from source tarball ==
 
 The steps here are very similar to the previous ones:
 
