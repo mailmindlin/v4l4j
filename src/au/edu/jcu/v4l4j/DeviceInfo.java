@@ -251,6 +251,7 @@ public class DeviceInfo {
 	DeviceInfo(long object, String dev) throws V4L4JException{
 		inputs = new Vector<InputInfo>();
 		deviceFile = dev;
+		System.out.println("### deviceInfo ctor - v4l4j_device ptr at 0x" + Long.toHexString(object)+" ###");
 		getInfo(object);
 		this.object = object;
 	}
