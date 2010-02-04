@@ -7,14 +7,18 @@ This page lists the platforms on which v4l4j is known to compile, and the variou
 *Please, help me expand this list. If you have a successful (or unsuccessful) experience with a specific video device / platform not listed on this page, please take a few minutes to post a comment on the [http://groups.google.com/group/v4l4j v4l4j mailing list].*
 
 ==Tested Platforms==
-libv4l has been compiled and tested successfully on the following platforms:
+libv4l has been compiled for and tested successfully on the following platforms:
  * Ubuntu 7.10 - x86 
  * Ubuntu 8.04 - x86 & x86_64
+ * Ubuntu 8.10 - x86 & x86_64
+ * Ubuntu 9.04 - x86 & x86_64
+ * Ubuntu 9.10 - x86 & x86_64
  * Debian Etch - x86
  * Debian Lenny - Neo FreeRunner
  * Gentoo 2008.0 - x86_64
  * openSUSE 10.3 - x86
  * Fedora release 10 (Cambridge) - x86 
+ * Maemo 5 - Nokia N900
 
 ==Tested video devices and drivers==
 || *Device IDs* || *Device Name* || *Device Driver* || *Comments* ||
@@ -32,6 +36,8 @@ libv4l has been compiled and tested successfully on the following platforms:
 || USB - 093a:2460 || Pixart Imaging, Inc. - Q-TEC WEBCAM 100 || gspca_pac207 (2.6.27) || ||
 || USB - 04f2:b071 || Chicony - CNF7129 (eee pc webcam) || uvcvideo (2.6.24) || ||
 || USB - 045e:074a || Microsoft LifeCam || uvcvideo (FC10 - kernel 2.6.27.24) || ||
+|| USB - 05ca:18a0 ||  Ricoh Co., Ltd (integrated webcam - Dell Studio XPS 13) || uvcvideo (Ubuntu 9.10 - kernel 2.6.31) || ||
+|| - || Nokia N900 Webcam (front & rear) || Maemo || ||
 
 Currently, [libvideo libvideo] will probe and detect the following drivers/features:
  * *PWC (linux kernel v2.6.26)*
