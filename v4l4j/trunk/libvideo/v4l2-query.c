@@ -71,7 +71,7 @@ static int lookup_frame_intv(struct v4lconvert_data *conv, int fmt, int width,
 
 	//while we have a valid frame interval...
 	while (v4lconvert_enum_frameintervals(conv, &intv) == 0) {
-		//chekc its type (discrete, continuous / stepwwise)
+		//check its type (discrete, continuous / stepwise)
 		if(intv.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
 				if(intv_type == FRAME_INTV_UNSUPPORTED){
 					intv_type = FRAME_INTV_DISCRETE;
@@ -104,24 +104,56 @@ static int lookup_frame_intv(struct v4lconvert_data *conv, int fmt, int width,
 					(intv.type==V4L2_FRMIVAL_TYPE_CONTINUOUS)?"continuous":
 					"stepwise");
 
-				//allocate memory for the continuous intv struct
-				XMALLOC(c, struct frame_intv_continuous *,
-						sizeof(struct frame_intv_continuous));
-				intv_type = FRAME_INTV_CONTINUOUS;
+				// WORKAROUND FOR BROKEN DRIVER:
+				// reported on ML:
+				// http://groups.google.com/group/v4l4j/browse_thread/thread/a80cb345876acf76?hl=en_US#
+				// in this instance, ioctl(VIDIOC_ENUM_FRAMEINTERVALS) returns
+				// stepwise frame intervals where
+				// min frame interval == max frame interval and a weird value
+				// for the step (1/10000000). So instead of reporting this
+				// stepwise interval, we report it as a discrete one with only
+				// a single value.
+				if( (intv.stepwise.min.numerator == intv.stepwise.max.numerator)
+				&& (intv.stepwise.min.numerator == intv.stepwise.max.denominator) ) {
 
-				//copy the values
-				dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, 
-					"min - max - step : %d/%d - %d/%d - %d/%d/n",
-					intv.stepwise.min.numerator, intv.stepwise.min.denominator,
-					intv.stepwise.max.numerator, intv.stepwise.max.denominator,
-					intv.stepwise.step.numerator, intv.stepwise.step.denominator
-				);
-				c->min.numerator = intv.stepwise.min.numerator;
-				c->min.denominator = intv.stepwise.min.denominator;
-				c->max.numerator = intv.stepwise.max.numerator;
-				c->max.denominator = intv.stepwise.max.denominator;
-				c->step.numerator = intv.stepwise.step.numerator;
-				c->step.denominator = intv.stepwise.step.denominator;
+					dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
+						"QRY: using workaround for broken frame interval\n"
+						"QRY: Reporting discrete frame intv:\n"
+						"QRY: %d/%d\n", intv.stepwise.min.numerator ,
+						intv.stepwise.min.denominator);
+
+					intv_type = FRAME_INTV_DISCRETE;
+
+					//increase the array size by one for the extra
+					//discrete frame interval
+					XREALLOC(d,struct frame_intv_discrete *,
+							(intv.index+1) * sizeof(struct frame_intv_discrete));
+
+					//fill in the values of the new element
+					d[intv.index].numerator = intv.stepwise.min.numerator;
+					d[intv.index].denominator = intv.stepwise.min.denominator;
+
+					intv.index++;
+				} else {
+					//allocate memory for the continuous intv struct
+					XMALLOC(c, struct frame_intv_continuous *,
+							sizeof(struct frame_intv_continuous));
+					intv_type = FRAME_INTV_CONTINUOUS;
+
+					//copy the values
+					dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
+						"min - max - step : %d/%d - %d/%d - %d/%d/n",
+						intv.stepwise.min.numerator, intv.stepwise.min.denominator,
+						intv.stepwise.max.numerator, intv.stepwise.max.denominator,
+						intv.stepwise.step.numerator, intv.stepwise.step.denominator
+					);
+					c->min.numerator = intv.stepwise.min.numerator;
+					c->min.denominator = intv.stepwise.min.denominator;
+					c->max.numerator = intv.stepwise.max.numerator;
+					c->max.denominator = intv.stepwise.max.denominator;
+					c->step.numerator = intv.stepwise.step.numerator;
+					c->step.denominator = intv.stepwise.step.denominator;
+				}
 				
 				// exit the while loop
 				break;

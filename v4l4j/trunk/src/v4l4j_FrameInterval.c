@@ -253,7 +253,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetDiscrete(
  * (0: struct frame_size_discrete, 1: struct frame_size_continuous (min res),
  * 2: struct frame_size_continuous(max res) )
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetContinuous(
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetStepwise(
 		JNIEnv *e, jobject t, jint type, jlong o) {
 	struct frame_intv_continuous *d;
 	jclass this_class, stepwise_intv_class;
