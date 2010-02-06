@@ -111,7 +111,7 @@ static int lookup_frame_intv(struct v4lconvert_data *conv, int fmt, int width,
 
 				//copy the values
 				dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, 
-					"min - max - step : %d/%d - %d/%d - %d/%d",
+					"min - max - step : %d/%d - %d/%d - %d/%d/n",
 					intv.stepwise.min.numerator, intv.stepwise.min.denominator,
 					intv.stepwise.max.numerator, intv.stepwise.max.denominator,
 					intv.stepwise.step.numerator, intv.stepwise.step.denominator
