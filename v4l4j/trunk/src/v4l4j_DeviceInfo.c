@@ -192,7 +192,7 @@ static void create_formats_object(JNIEnv *e, jobject t, jclass this_class,
 
 
 	//Creates an ImageFormatList
-	obj =  (*e)->NewObject(e, format_list_class, format_list_ctor, (uintptr_t) d);
+	obj =  (*e)->NewObject(e, format_list_class, format_list_ctor, (jlong) (uintptr_t)d);
 	if(obj == NULL){
 		info("[V4L4J] Error creating the format list\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error creating the format list");
@@ -208,6 +208,7 @@ static void create_formats_object(JNIEnv *e, jobject t, jclass this_class,
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobject t, jlong v4l4j_device){
 //void Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobject t, jlong v4l4j_device){
+
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) v4l4j_device;
 	jfieldID name_field;
@@ -283,7 +284,7 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_doListIntervals(
 		dprint(LOG_V4L4J, "[V4L4L] Creating the frame interval (unsupported)\n");
 		//create the frame interval object
 		frame_intv = (*e)->NewObject(e, frame_intv_class, ctor,
-				3, (uintptr_t) p);
+				3, (jlong) (uintptr_t) p);
 		if(frame_intv == NULL){
 			info("[V4L4J] Error creating FrameInterval object\n");
 			THROW_EXCEPTION(e, JNI_EXCP, \
@@ -295,7 +296,7 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_doListIntervals(
 		dprint(LOG_V4L4J, "[V4L4L] Creating the frame interval (discrete)\n");
 		//create the frame interval object
 		frame_intv = (*e)->NewObject(e, frame_intv_class, ctor,
-				4, (uintptr_t) p);
+				4, (jlong) (uintptr_t) p);
 		XFREE(p);
 		if(frame_intv == NULL){
 			info("[V4L4J] Error creating FrameInterval object\n");
@@ -308,7 +309,7 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_doListIntervals(
 		dprint(LOG_V4L4J, "[V4L4L] Creating the frame interval (stepwise)\n");
 		//create the frame interval object
 		frame_intv = (*e)->NewObject(e, frame_intv_class, ctor,
-				5, (uintptr_t) p);
+				5, (jlong) (uintptr_t) p);
 		XFREE(p);
 		if(frame_intv == NULL){
 			info("[V4L4J] Error creating FrameInterval object\n");
