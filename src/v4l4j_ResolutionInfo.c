@@ -112,7 +112,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetStepwise(
 	dprint(LOG_V4L4J, "[V4L4L] Creating the frame interval for the min res\n");
 	//create the frame interval object for the min res
 	intv_min = (*e)->NewObject(e, frame_intv_class, ctor,
-			1, (uintptr_t) p->continuous);
+			1, (jlong) (uintptr_t) p->continuous);
 	if(intv_min == NULL){
 		info("[V4L4J] Error creating FrameInterval object\n");
 		THROW_EXCEPTION(e, JNI_EXCP, \
@@ -123,7 +123,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetStepwise(
 	dprint(LOG_V4L4J, "[V4L4L] Creating the frame interval for the max res\n");
 	//create the frame interval object for the max res
 	intv_max = (*e)->NewObject(e, frame_intv_class, ctor,
-			2, (uintptr_t) p->continuous);
+			2, (jlong) (uintptr_t) p->continuous);
 	if(intv_max == NULL){
 		info("[V4L4J] Error creating FrameInterval object\n");
 		THROW_EXCEPTION(e, JNI_EXCP, \
@@ -291,7 +291,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetDiscrete(
 		dprint(LOG_V4L4J, "[V4L4J] creating frame interval object first with "
 				"ptr %p and type: 0\n",&p->discrete[i] );
 		intv = (*e)->NewObject(e, frame_intv_class, frame_intv_ctor,
-				0, (uintptr_t) &p->discrete[i]);
+				0, (jlong) (uintptr_t) &p->discrete[i]);
 		if(intv == NULL){
 			info("[V4L4J] Error creating FrameInterval object\n");
 			THROW_EXCEPTION(e, JNI_EXCP, \
