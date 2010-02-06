@@ -81,7 +81,6 @@ public class ImageFormat {
 	ImageFormat(String n, int i, long o) {
 		name = n;
 		libvideoID = i;
-		System.out.println("### ImageFormat ctor: v4l4j_device ptr at 0x"+Long.toHexString(o)+" ###");
 		resolutions = new ResolutionInfo(i,o);
 	}
 	
