@@ -108,7 +108,6 @@ public class ImageFormatList {
 		BGRformats = new Vector<ImageFormat>();
 		YUV420formats = new Vector<ImageFormat>();
 		YVU420formats = new Vector<ImageFormat>();
-		System.out.println("### ImageFormatList: v4l4j_device ptr at: 0x"+Long.toHexString(o)+" ###");
 		listFormats(o);
 		sortLists();
 	}

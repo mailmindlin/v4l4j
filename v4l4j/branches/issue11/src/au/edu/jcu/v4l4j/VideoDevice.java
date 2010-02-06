@@ -260,8 +260,6 @@ public class VideoDevice {
 		deviceFile = dev;
 		v4l4jObject = doInit(deviceFile);
 		
-		System.out.println("### VideoDevice ctor: v4l4j_device ptr at: 0x"+Long.toHexString(v4l4jObject)+" ###");
-		
 		try {
 			initDeviceInfo();
 		} catch (V4L4JException e){

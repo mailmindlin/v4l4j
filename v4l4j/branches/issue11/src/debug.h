@@ -53,14 +53,6 @@
 #define dprint(source, format, ...) do {if(((source) & (LOG_SOURCE))) {\
 		fprintf (stderr, "[%s:%d] " format, __FILE__, __LINE__, ## __VA_ARGS__); fflush(stderr);} } while(0)
 
-#define dump_v4l4j_struct(d) do {\
-		fprintf (stderr, "[%s:%d]\n" , __FILE__, __LINE__);\
-		fprintf (stderr, "d: %#x\n", d);\
-		if (d) fprintf (stderr, "d->vdev: %#x\n", d->vdev);\
-		if (d->vdev) fprintf (stderr, "d->vdev->info: %#x\n", d->vdev->info);\
-		fflush(stderr); } while(0)
-
-
 #define XMALLOC(var, type, size)	\
 		do { \
 			var = (type) malloc((size)); \

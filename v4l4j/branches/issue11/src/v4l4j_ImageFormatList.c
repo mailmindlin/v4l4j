@@ -297,14 +297,13 @@ static int create_native_list(JNIEnv *e, struct v4l4j_device *d,
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(
 		JNIEnv *e, jobject t, jlong o){
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+
 	jclass vector_class, format_class, this_class;
 	jmethodID add_method, format_ctor;
 	jfieldID field;
 	jobject obj;
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
-
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	dump_v4l4j_struct(d);
 
 	/* Get handles on Java stuff */
 	this_class = (*e)->GetObjectClass(e, t);
