@@ -558,18 +558,23 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 void destroy_jpeg_compressor(struct v4l4j_device *d){
 	dprint(LOG_JPEG, "[JPEG] Destroying JPEG compressor\n");
 	if(d->vdev->capture->palette == YUV420 || d->vdev->capture->palette == YUYV ||
-			d->vdev->capture->palette == YVYU || d->vdev->capture->palette == RGB24 ||
-			d->vdev->capture->palette == RGB32 || d->vdev->capture->palette == BGR24 ||
-			d->vdev->capture->palette == UYVY || d->vdev->capture->palette == BGR32) {
-		jpeg_destroy_compress(d->j->cinfo);
-		XFREE(d->j->cinfo);
-		XFREE(d->j->jerr);
-		XFREE(d->j->destmgr);
+		d->vdev->capture->palette == YVYU || d->vdev->capture->palette == RGB24 ||
+		d->vdev->capture->palette == RGB32 || d->vdev->capture->palette == BGR24 ||
+		d->vdev->capture->palette == UYVY || d->vdev->capture->palette == BGR32) {
+
+		// free temp buffer if required
 		if(d->vdev->capture->palette == YUYV || d->vdev->capture->palette == YVYU ||
-				d->vdev->capture->palette == RGB32 || d->vdev->capture->palette == BGR24 ||
-				d->vdev->capture->palette == UYVY || d->vdev->capture->palette == BGR32)
-				XFREE(temp_buf);
+			d->vdev->capture->palette == RGB32 || d->vdev->capture->palette == BGR24 ||
+			d->vdev->capture->palette == UYVY || d->vdev->capture->palette == BGR32)
+			XFREE(temp_buf);
+
+		// free JPEG compressor & data structs
+		jpeg_destroy_compress(d->j->cinfo);
+		XFREE(d->j->destmgr);
+		XFREE(d->j->jerr);
+		XFREE(d->j->cinfo);
 	}
+
 	XFREE(d->j);
 }
 
