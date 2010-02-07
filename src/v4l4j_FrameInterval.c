@@ -307,7 +307,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetStepwise(
 
 	//assign it to the stepwiseInterval member
 	fid = (*e)->GetFieldID(e, this_class, "stepwiseInterval",
-			"Lau/edu/jcu/v4l4j/FrameInterval$StepwiseInterval");
+			"Lau/edu/jcu/v4l4j/FrameInterval$StepwiseInterval;");
 	if(fid == NULL){
 		info("[V4L4J] Error looking up the StepwiseInterval fieldID\n");
 		THROW_EXCEPTION(e, JNI_EXCP, \

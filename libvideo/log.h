@@ -126,7 +126,7 @@
 		} else {\
 			CLEAR_ARR((var), (size)); \
 			dprint(LIBVIDEO_SOURCE_MALLOC, LIBVIDEO_LOG_ALL,\
-				"MEMALLOC: allocating %lu bytes of type %s for var %s (%p)\n",\
+				"[MEMALLOC]: allocating %lu bytes of type %s for var %s (%p)\n",\
 				(long unsigned int) (size), #type, #var, (var));\
 		}\
 	} while (0)
@@ -145,7 +145,7 @@
 			if (should_clear) {\
 				CLEAR_ARR((var), (size)); \
 				dprint(LIBVIDEO_SOURCE_MALLOC, LIBVIDEO_LOG_ALL,\
-					"REALLOC: Allocating %lu bytes of type %s for var %s (%p)\n"\
+					"[REALLOC]: Allocating %lu bytes of type %s for var %s (%p)\n"\
 					, (long unsigned int) (size), #type, #var, (var));\
 			} else {\
 				dprint(LIBVIDEO_SOURCE_MALLOC, LIBVIDEO_LOG_ALL,\

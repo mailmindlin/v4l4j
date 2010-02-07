@@ -26,6 +26,7 @@
 #include <sys/mman.h>		//for mmap
 #include <errno.h>			//for errno
 #include <string.h>			//for memcpy
+#include <stdio.h>			// for perror
 #include "libvideo.h"
 #include "log.h"
 #include "libvideo-err.h"
@@ -235,17 +236,28 @@ static int set_input(struct capture_device *c, int fd){
 
 static int apply_image_format(struct v4l2_format *fmt, int fd){
 	int palette = fmt->fmt.pix.pixelformat;
-	if (0 == ioctl(fd, VIDIOC_S_FMT, fmt) &&
-			fmt->fmt.pix.pixelformat == palette) {
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_INFO,
-				"CAP: palette %#x  - accepted at %dx%d\n",
-				palette, fmt->fmt.pix.width, fmt->fmt.pix.height);
-		return 0;
+	if (0 == ioctl(fd, VIDIOC_S_FMT, fmt)) {
+		if (fmt->fmt.pix.pixelformat == palette) {
+			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_INFO,
+					"CAP: palette %#x  - accepted at %dx%d\n",
+					palette, fmt->fmt.pix.width, fmt->fmt.pix.height);
+			return 0;
+		} else {
+			info("CAP: VIODIOC_S_FMT succeeded but returned a different "
+				"palette from the one requested: requested palette %#x  "
+				"- returned palette: %#x\n",
+				palette, fmt->fmt.pix.pixelformat);
+			info("This is most likely a bug in v4l4j. Please\n");
+			info("let the author know about this issue. See README file.\n");
+			return -1;
+		}
+	} else {
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
+				"CAP: palette %#x rejected (errno: %d -%s)\n",
+				palette, errno);
+		perror(NULL);
+		return -1;
 	}
-
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
-			"CAP: palette %#x rejected\n", palette);
-	return -1;
 }
 
 static int get_palette_index(int pixelformat){
@@ -375,8 +387,8 @@ static int set_image_format(struct capture_device *c, int *palettes,
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: trying palettes (%d to try in total)\n", nb);
 
-	//we try all the supplied palettes and find the best one that give us
-	//a resolution closes to the desired one
+	//we try all the supplied palettes and find the best one that gives us
+	//a resolution closest to the desired one
 	best_palette = find_best_palette(c, palettes, nb, fd);
 
 	if(best_palette == -1) {
