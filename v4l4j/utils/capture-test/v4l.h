@@ -46,6 +46,6 @@ struct video_buffers* 	get_v4l2_buffers(int );
 int 					start_capture(int , struct video_buffers *);
 int 					get_latest_frame(int , struct video_buffers *);
 void 					stop_capture(int , struct video_buffers *);
-void 					put_v4l2_buffers(struct video_buffers *);
+void 					put_v4l2_buffers(int, struct video_buffers *);
 
 #endif /* V4L_H_ */

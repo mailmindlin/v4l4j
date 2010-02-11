@@ -239,8 +239,10 @@ void stop_capture(int fd, struct video_buffers *buffers) {
 }
 
 // unmmap v4l2 buffers
-void put_v4l2_buffers(struct video_buffers *buffers){
+void put_v4l2_buffers(int fd, struct video_buffers *buffers){
 	int i;
+	struct v4l2_requestbuffers req;
+
 	printf("Unmmaping v4l2 buffers...");
 	// unmap v4l buffers
 	if (buffers){
@@ -254,6 +256,20 @@ void put_v4l2_buffers(struct video_buffers *buffers){
 	free(buffers);
 
 	printf("OK\n");
+
+	// release v4l2 buffers
+	CLEAR(&req, sizeof(req));
+
+	req.count = 0;
+	req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	req.memory = V4L2_MEMORY_MMAP;
+
+	printf("Releasing V4L2 buffers...");
+
+	if (-1 == ioctl (fd, VIDIOC_REQBUFS, &req))
+		perror("\nUnable to release v4l2 buffers");
+	else
+		printf("OK\n");
 }
 
 

@@ -53,6 +53,8 @@ int run_test(int fd){
 	int result = -1, nb_captured_frames = NB_CAPTURED_FRAMES;
 	struct video_buffers *buffers = NULL;
 
+	printf("====== STARTING TEST ======\n");
+
 	// check the device is a V4L2 capture device
 	if (check_caps(fd) != 0) {
 		printf("Unable to test this device\n");
@@ -74,7 +76,7 @@ int run_test(int fd){
 	// start capture
 	if (start_capture(fd, buffers) != 0) {
 		printf("Error starting capture\n");
-		put_v4l2_buffers(buffers);
+		put_v4l2_buffers(fd, buffers);
 		goto bail;
 	}
 
@@ -85,11 +87,12 @@ int run_test(int fd){
 	stop_capture(fd, buffers);
 
 	// put v4l2 buffers back
-	put_v4l2_buffers(buffers);
+	put_v4l2_buffers(fd, buffers);
 
 	result = 0;
 
 bail:
+	printf("====== TEST END ======\n\n");
 	return result;
 }
 
