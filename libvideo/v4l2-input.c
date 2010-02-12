@@ -253,7 +253,7 @@ static int apply_image_format(struct v4l2_format *fmt, int fd){
 		}
 	} else {
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
-				"CAP: palette %#x rejected (errno: %d -%s)\n",
+				"CAP: palette %#x rejected (errno: %d)\n",
 				palette, errno);
 		perror(NULL);
 		return -1;
@@ -816,10 +816,16 @@ int stop_capture_v4l2(struct video_device *vdev) {
 
 void free_capture_v4l2(struct video_device *vdev) {
 	int i = 0;
+	struct v4l2_requestbuffers req;
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: freeing capture structure on device %s.\n", vdev->file);
 
+	// free temp frame buffer if required
+	if(vdev->capture->is_native!=1)
+		XFREE(vdev->capture->convert->frame);
+
+	// unmmap v4l2 buffers
 	for(i=0; i < vdev->capture->mmap->buffer_nr; i++){
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 				"CAP: unmmap %d bytes at %p\n",
@@ -832,10 +838,33 @@ void free_capture_v4l2(struct video_device *vdev) {
 					"CAP: error unmapping buffer %d\n",i);
 	}
 
+	// free buffers struct
 	XFREE(vdev->capture->mmap->buffers);
 
-	if(vdev->capture->is_native!=1)
-		XFREE(vdev->capture->convert->frame);
+	// fix for issue reported on v4l4j ML:
+	// http://groups.google.com/group/v4l4j/browse_thread/thread/a80cb345876acf76
+	// summary: "v4l2 specs say VIDIOC_S_FMT can fail if rsrcs are currently
+	// being used". In this case, this means if a previous capture has currently
+	// already mmap'ed v4l2 buffers, VIDIOC_S_FMT will fail.
+	// so the workaround is to try and release v4l2 buffers after un'mmap'ping
+	// them. According to v4l2 specs, releasing buffers can be done by requesting
+	// 0 buffers using VIDIOC_REQBUFS. Problem is: as of today, not all drivers
+	// support this. So for now, we try it anyway and ignore the returned value.
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
+			"CAP: Applying workaround - releasing v4l2 buffers\n");
+
+	CLEAR(req);
+
+	//allocates v4l2 buffers
+	req.count = 0;
+	req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	req.memory = V4L2_MEMORY_MMAP;
+
+	if (-1 == ioctl (vdev->fd, VIDIOC_REQBUFS, &req)) {
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
+				"CAP: Error releasing v4l2 buffers\n");
+
+	}
 
 	XFREE(vdev->capture->convert->dst_fmt);
 	XFREE(vdev->capture->convert->src_fmt);
