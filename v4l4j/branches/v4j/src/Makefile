@@ -42,7 +42,7 @@ OBJ := jpeg.o rgb.o v4l4j_FrameGrabber.o v4l4j_ImageFormatList.o \
 
 CC := gcc
 INCLUDES := -I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ \
-  -I$(LIBVIDEO_PATH) -I.
+  -I$(LIBVIDEO_PATH) -I$(LIBVIDEO_PATH)/linux -I.
 CFLAGS := $(INCLUDES) $(DBG) $(OPTIMISATION) -fPIC
 
 LD := gcc
