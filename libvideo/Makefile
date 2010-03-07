@@ -1,4 +1,6 @@
-# change the value of LOG_LEVEL to alter the king of debug statements
+# Makefile for the Linux version of libvideo 
+
+# change the value of LOG_LEVEL to alter the kind of debug statements
 # to be printed
 #
 # THE LOG SOURCE & LEVEL CAN BE CHANGED ON THE COMMAND LINE BY
@@ -46,6 +48,10 @@ LIBV4L_HELPERS_INSTALL_DIR := $(PREFIX)/lib/v4l4j
 #
 
 
+# local directories
+LINUX_DIR := linux
+TEST_APP_DIR := test
+
 ifneq ($(DEBUG),)
 DBG := -DDEBUG -ggdb -Wall -DLIBVIDEO_LOG_LEVEL=$(LIBVIDEO_LOG_LEVEL) \
   -DLIBVIDEO_LOG_SOURCE=$(LIBVIDEO_LOG_SOURCE)
@@ -59,28 +65,31 @@ VERSION_MAJOR := 0
 VERSION_MINOR := 8
 LIB_RELEASE := 0
 
-LIBV4LCONVERT_DIR := libv4lconvert
+LIBV4LCONVERT_DIR := $(LINUX_DIR)/libv4lconvert
 LIBV4LCONVERT_AR := libv4lconvert.a
 LIBV4LCONVERT_NAME := v4lconvert
 LIBV4LCONVERT_HELPERS := ov511-decomp ov518-decomp
 
 LIB_NAME := video
 LIB := lib$(LIB_NAME).so
-TESTOBJ := test-capture.o dump-capture.o list-caps.o
-OBJ := v4l2-input.o v4l1-input.o libvideo.o pwc-probe.o gspca-probe.o \
-  qc-probe.o fps-param-probe.o v4l1-query.o v4l2-query.o v4l1-tuner.o \
-  v4l2-tuner.o palettes.o
+TESTOBJ := $(TEST_APP_DIR)/test-capture.o $(TEST_APP_DIR)/dump-capture.o \
+  $(TEST_APP_DIR)/list-caps.o
+OBJ := $(LINUX_DIR)/v4l2-input.o $(LINUX_DIR)/v4l1-input.o libvideo.o  \
+  $(LINUX_DIR)/pwc-probe.o $(LINUX_DIR)/gspca-probe.o $(LINUX_DIR)/qc-probe.o \
+  $(LINUX_DIR)/fps-param-probe.o $(LINUX_DIR)/v4l1-query.o \
+  $(LINUX_DIR)/v4l2-query.o $(LINUX_DIR)/v4l1-tuner.o $(LINUX_DIR)/v4l2-tuner.o \
+  palettes.o
 
 CC := gcc
 CFLAGS := $(DBG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) \
-  $(OPTIMISATION) -fPIC -I.
+  $(OPTIMISATION) -fPIC -I. -I$(LINUX_DIR)
 
 LD := gcc
 LDFLAGS := -lm -lrt -shared
 
 all: $(LIB).$(LIB_RELEASE)
 
-$(LIB).$(LIB_RELEASE): version.h $(OBJ) $(LIBV4LCONVERT_AR)
+$(LIB).$(LIB_RELEASE): $(LINUX_DIR)/version.h $(OBJ) $(LIBV4LCONVERT_AR)
 	$(LD) $(OBJ) $(LIBV4LCONVERT_AR) -Wl,-soname,$(LIB).$(LIB_RELEASE) \
   $(LDFLAGS) -o $(LIB).$(LIB_RELEASE)
 	ln -f -s $(LIB).$(LIB_RELEASE) $(LIB)
@@ -107,17 +116,17 @@ uninstall:
 	rm -f $(DESTDIR)$(LIBV4L_HELPERS_INSTALL_DIR)/libv4l/*-decomp
 
 test: $(LIB).$(LIB_RELEASE) $(TESTOBJ)
-	$(LD) test-capture.o -lm -lrt -L. -l$(LIB_NAME) -o test-capture
-	$(LD) list-caps.o -lm -lrt -L. -l$(LIB_NAME) -o list-caps
-	$(LD) dump-capture.o -lm -lrt -L. -l$(LIB_NAME) -o dump-capture
+	$(LD) $(TEST_APP_DIR)/test-capture.o -lm -lrt -L. -l$(LIB_NAME) -o test-capture
+	$(LD) $(TEST_APP_DIR)/list-caps.o -lm -lrt -L. -l$(LIB_NAME) -o list-caps
+	$(LD) $(TEST_APP_DIR)/dump-capture.o -lm -lrt -L. -l$(LIB_NAME) -o dump-capture
 
-version.h:
-	@sh svn-version.sh
+$(LINUX_DIR)/version.h:
+	@sh $(LINUX_DIR)/svn-version.sh
 
 clean:
 	make -C $(LIBV4LCONVERT_DIR) clean
 	rm -f $(OBJ) $(BIN) $(LIB) $(LIB).$(LIB_RELEASE) $(TESTOBJ) \
-  $(LIBV4LCONVERT_AR) ./*.o list-caps test-capture dump-capture version.h ./*~
+  $(LIBV4LCONVERT_AR) ./*.o list-caps test-capture dump-capture $(LINUX_DIR)/version.h ./*~
 
 .PHONY: all install uninstall test clean
 
