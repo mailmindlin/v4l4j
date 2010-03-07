@@ -25,10 +25,12 @@
 #ifndef H_COMMON
 #define H_COMMON
 
+#ifdef __linux__
 #include <asm/types.h>		//for videodev2
 #include "videodev2.h"
 #include "videodev.h"
 #include "libv4lconvert.h"
+#endif		// linux
 
 #define CLEAR(x) memset(&x, 0x0, sizeof(x));
 
@@ -521,9 +523,9 @@ struct tuner_actions{
 struct video_device {
 	int fd;
 
-#define V4L1_VERSION				1
-#define V4L2_VERSION				2
-	int v4l_version;
+#define V4L1_INTERFACE				1
+#define V4L2_INTERFACE				2
+	int interface_type;
 	char file[FILENAME_LENGTH];
 	struct device_info *info;
 	struct capture_device *capture;

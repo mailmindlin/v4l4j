@@ -77,7 +77,7 @@ int fps_param_probe(struct video_device *vdev, void **data){
 
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "FPS-PARAM: probing FPS adjust caps ...\n");
 
-	if(vdev->v4l_version!=V4L2_VERSION)
+	if(vdev->interface_type!=V4L2_INTERFACE)
 		goto end;
 
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "FPS-PARAM: .. \n");

@@ -88,11 +88,11 @@ struct video_device *open_device(char *file) {
 	if(check_capture_capabilities_v4l2(fd, file)==0) {
 		dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_INFO,
 				"VD: device %s is V4L2\n", file);
-		vdev->v4l_version=V4L2_VERSION;
+		vdev->interface_type=V4L2_INTERFACE;
 	} else if(check_capture_capabilities_v4l1(fd, file)==0){
 		dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_INFO,
 				"VD: device %s is V4L1\n", file);
-		vdev->v4l_version=V4L1_VERSION;
+		vdev->interface_type=V4L1_INTERFACE;
 	} else {
 		info("libvideo was unable to detect the version of V4L used by "
 				"device %s\n", file);
@@ -160,7 +160,7 @@ static void setup_capture_actions(struct video_device *vdev) {
 	struct capture_device *c = vdev->capture;
 	XMALLOC(c->actions, struct capture_actions *,sizeof(struct capture_actions));
 
-	if(vdev->v4l_version == V4L1_VERSION) {
+	if(vdev->interface_type == V4L1_INTERFACE) {
 		c->actions->set_cap_param = set_cap_param_v4l1;
 		c->actions->init_capture = init_capture_v4l1;
 		c->actions->set_frame_interval = set_frame_intv_v4l1;
@@ -207,7 +207,7 @@ struct capture_device *init_capture_device(struct video_device *vdev,
 
 	setup_capture_actions(vdev);
 
-	if(vdev->v4l_version == V4L2_VERSION) {
+	if(vdev->interface_type == V4L2_INTERFACE) {
 		XMALLOC(vdev->capture->convert, struct convert_data *,\
 				sizeof(struct convert_data));
 		vdev->capture->convert->priv = v4lconvert_create(vdev->fd);
@@ -222,7 +222,7 @@ void free_capture_device(struct video_device *vdev){
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: Freeing capture device on %s.\n", vdev->file);
 
-	if(vdev->v4l_version == V4L2_VERSION){
+	if(vdev->interface_type == V4L2_INTERFACE){
 		v4lconvert_destroy(vdev->capture->convert->priv);
 		XFREE(vdev->capture->convert);
 	}
@@ -373,10 +373,10 @@ struct device_info *get_device_info(struct video_device *vdev){
 
 	XMALLOC(vdev->info, struct device_info *, sizeof(struct device_info));
 
-	if(vdev->v4l_version == V4L2_VERSION) {
+	if(vdev->interface_type == V4L2_INTERFACE) {
 		//v4l2 device
 		ret = query_device_v4l2(vdev);
-	} else if (vdev->v4l_version == V4L1_VERSION) {
+	} else if (vdev->interface_type == V4L1_INTERFACE) {
 		//v4l1 device
 		ret = query_device_v4l1(vdev);
 	} else {
@@ -405,10 +405,10 @@ struct device_info *get_device_info(struct video_device *vdev){
 void release_device_info(struct video_device *vdev){
 	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
 			"QRY: Releasing device info for device %s.\n", vdev->file);
-	if(vdev->v4l_version == V4L2_VERSION) {
+	if(vdev->interface_type == V4L2_INTERFACE) {
 		//v4l2 device
 		free_video_device_v4l2(vdev);
-	} else if (vdev->v4l_version == V4L1_VERSION) {
+	} else if (vdev->interface_type == V4L1_INTERFACE) {
 		//v4l1 device
 		free_video_device_v4l1(vdev);
 	} else {
@@ -501,15 +501,15 @@ struct control_list *get_control_list(struct video_device *vdev){
 	CLEAR(ctrl);
 
 	//dry run to see how many control we have
-	if(vdev->v4l_version==V4L2_VERSION){
+	if(vdev->interface_type==V4L2_INTERFACE){
 		l->priv=v4lconvert_create(vdev->fd);
 		v4l_count = count_v4l2_controls(vdev);
-	} else if(vdev->v4l_version==V4L1_VERSION)
+	} else if(vdev->interface_type==V4L1_INTERFACE)
 		//4 basic controls in V4L1
 		v4l_count = count_v4l1_controls(vdev);
 	else {
 		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-				"CTRL: Weird V4L version (%d)...\n", vdev->v4l_version);
+				"CTRL: Weird V4L version (%d)...\n", vdev->interface_type);
 		l->count=0;
 		return l;
 	}
@@ -560,9 +560,9 @@ struct control_list *get_control_list(struct video_device *vdev){
 				"CTRL: Creating v4l controls (found %d)...\n", v4l_count);
 
 		//fill in controls
-		if(vdev->v4l_version==V4L2_VERSION)
+		if(vdev->interface_type==V4L2_INTERFACE)
 			v4l_count = create_v4l2_controls(vdev, l->controls, l->count);
-		else if(vdev->v4l_version==V4L1_VERSION)
+		else if(vdev->interface_type==V4L1_INTERFACE)
 			v4l_count = create_v4l1_controls(vdev, l->controls, l->count);
 
 		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
@@ -598,13 +598,13 @@ int get_control_value(struct video_device *vdev,
 		struct v4l_driver_probe *s = &known_driver_probes[ctrl->reserved[1]];
 		ret = s->get_ctrl(vdev, ctrl, s->priv, val);
 	} else {
-		if(vdev->v4l_version==V4L2_VERSION)
+		if(vdev->interface_type==V4L2_INTERFACE)
 			ret = get_control_value_v4l2(vdev, ctrl, val);
-		else if(vdev->v4l_version==V4L1_VERSION)
+		else if(vdev->interface_type==V4L1_INTERFACE)
 			ret =  get_control_value_v4l1(vdev, ctrl, val);
 		else {
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: Weird V4L version (%d)...\n", vdev->v4l_version);
+					"CTRL: Weird V4L version (%d)...\n", vdev->interface_type);
 			ret =  LIBVIDEO_ERR_WRONG_VERSION;
 		}
 	}
@@ -628,13 +628,13 @@ int set_control_value(struct video_device *vdev,
 		struct v4l_driver_probe *s = &known_driver_probes[ctrl->reserved[1]];
 		ret = s->set_ctrl(vdev, ctrl, i,s->priv);
 	} else {
-		if(vdev->v4l_version==V4L2_VERSION)
+		if(vdev->interface_type==V4L2_INTERFACE)
 			ret = set_control_value_v4l2(vdev, ctrl, i);
-		else if(vdev->v4l_version==V4L1_VERSION)
+		else if(vdev->interface_type==V4L1_INTERFACE)
 			ret = set_control_value_v4l1(vdev, ctrl, i);
 		else {
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: Weird V4L version (%d)...\n", vdev->v4l_version);
+					"CTRL: Weird V4L version (%d)...\n", vdev->interface_type);
 			ret = LIBVIDEO_ERR_WRONG_VERSION;
 		}
 
@@ -687,7 +687,7 @@ struct tuner_actions *get_tuner_actions(struct video_device *vdev) {
 	XMALLOC(vdev->tuner_action,
 			struct tuner_actions *, sizeof(struct tuner_actions *));
 
-	if(vdev->v4l_version==V4L2_VERSION){
+	if(vdev->interface_type==V4L2_INTERFACE){
 		vdev->tuner_action->get_rssi_afc = get_rssi_afc_v4l2;
 		vdev->tuner_action->get_tuner_freq = get_tuner_freq_v4l2;
 		vdev->tuner_action->set_tuner_freq = set_tuner_freq_v4l2;
