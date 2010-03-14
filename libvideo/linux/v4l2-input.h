@@ -83,29 +83,4 @@ void free_capture_v4l2(struct video_device *);
 //counterpart of init_capture_device, must be called it init_capture_device was successful
 void free_capture_device2(struct video_device *);
 
-
-/*
- * Control related functions
- */
- //returns the number of controls (standard and private V4L2 controls only)
-int count_v4l2_controls(struct video_device *);
-//Populate the control_list with reported V4L2 controls
-//and returns how many controls were created
-int create_v4l2_controls(struct video_device *, struct control *, int);
-//returns the value of a control
-int get_control_value_v4l2(struct video_device *, struct v4l2_queryctrl *, int *);
-//sets the value of a control
-int set_control_value_v4l2(struct video_device *, struct v4l2_queryctrl *, int *);
-
-
-/*
- * Query and list methods (printf to stdout, use to debug)
- * Must be called after init_capture_device2 and before free_capture_device2
- */
-void list_cap_v4l2(int);	//lists all supported image formats
-							//prints capabilities
-							//print current settings for v4l2
-							//print controls
-
-
 #endif
