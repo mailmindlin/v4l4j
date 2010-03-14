@@ -388,8 +388,8 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doInit(
 
 	//Create the ByteBuffer array
 	dprint(LOG_V4L4J, "[V4L4J] Creating the ByteBuffer array[%d]\n",
-			c->mmap->buffer_nr);
-	arr = (*e)->NewObjectArray(e, c->mmap->buffer_nr,
+			c->buffer_nr);
+	arr = (*e)->NewObjectArray(e, c->buffer_nr,
 			(*e)->FindClass(e, BYTEBUFER_CLASS), NULL);
 	if(arr==NULL) {
 		info("[V4L4J] error creating byte buffer array\n");
@@ -397,9 +397,9 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doInit(
 		THROW_EXCEPTION(e, JNI_EXCP, "error creating byte buffer array");
 		return 0;
 	}
-	XMALLOC(d->bufs, unsigned char **, c->mmap->buffer_nr * sizeof(void *));
+	XMALLOC(d->bufs, unsigned char **, c->buffer_nr * sizeof(void *));
 
-	for(i=0; i<c->mmap->buffer_nr;i++) {
+	for(i=0; i<c->buffer_nr;i++) {
 		//for each v4l2 buffers created,
 		//we create a corresponding java Bytebuffer
 		dprint(LOG_V4L4J, "[V4L4J] Creating ByteBuffer %d - length: %d\n",
@@ -525,7 +525,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_getBuffer(
 	//get frame from v4l2
 	if((frame = (*d->vdev->capture->actions->dequeue_buffer)
 			(d->vdev, &d->capture_len)) != NULL) {
-		i = d->buf_id = (d->buf_id == (d->vdev->capture->mmap->buffer_nr-1)) ?
+		i = d->buf_id = (d->buf_id == (d->vdev->capture->buffer_nr-1)) ?
 				0 : d->buf_id+1;
 		(*d->convert)(d, frame, d->bufs[i]);
 		(*d->vdev->capture->actions->enqueue_buffer)(d->vdev);
@@ -577,8 +577,8 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doRelease(
 	release_format_converter(d);
 
 	dprint(LOG_V4L4J, "[V4L4J] Freeing %d ByteBuffers areas and array\n",
-			d->vdev->capture->mmap->buffer_nr);
-	for(i=0; i<d->vdev->capture->mmap->buffer_nr;i++)
+			d->vdev->capture->buffer_nr);
+	for(i=0; i<d->vdev->capture->buffer_nr;i++)
 		XFREE(d->bufs[i]);
 	XFREE(d->bufs);
 

@@ -37,10 +37,13 @@
 #include "pwc-probe.h"
 #include "qc-probe.h"
 #include "version.h"
+#include "v4l1-ctrl.h"
 #include "v4l1-input.h"
 #include "v4l1-query.h"
 #include "v4l1-tuner.h"
+#include "v4l2-ctrl.h"
 #include "v4l2-input.h"
+#include "v4l2-list.h"
 #include "v4l2-query.h"
 #include "v4l2-tuner.h"
 #include "videodev_additions.h"
@@ -196,10 +199,12 @@ struct capture_device *init_capture_device(struct video_device *vdev,
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: Initialising capture interface\n");
 	XMALLOC(vdev->capture,struct capture_device *,sizeof(struct capture_device));
-	XMALLOC(vdev->capture->mmap, struct mmap *, sizeof(struct mmap));
+	XMALLOC(vdev->capture->backend,struct capture_backend *,
+			sizeof(struct capture_backend));
+	XMALLOC(vdev->capture->backend->mmap, struct mmap *, sizeof(struct mmap));
 
-	//fill in cdev struct
-	vdev->capture->mmap->req_buffer_nr = nb_buf;
+	//fill in vdev struct
+	vdev->capture->backend->mmap->req_buffer_nr = nb_buf;
 	vdev->capture->width = w;
 	vdev->capture->height = h;
 	vdev->capture->channel = ch;
@@ -228,7 +233,8 @@ void free_capture_device(struct video_device *vdev){
 	}
 
 	XFREE(vdev->capture->actions);
-	XFREE(vdev->capture->mmap);
+	XFREE(vdev->capture->backend->mmap);
+	XFREE(vdev->capture->backend);
 	XFREE(vdev->capture);
 }
 
@@ -497,12 +503,14 @@ struct control_list *get_control_list(struct video_device *vdev){
 	XMALLOC(vdev->control, struct control_list *, sizeof(struct control_list));
 	l = vdev->control;
 
+	XMALLOC(vdev->control->backend, struct control_backend *, 
+			sizeof(struct control_backend));
 
 	CLEAR(ctrl);
 
 	//dry run to see how many control we have
 	if(vdev->interface_type==V4L2_INTERFACE){
-		l->priv=v4lconvert_create(vdev->fd);
+		l->backend->convert=v4lconvert_create(vdev->fd);
 		v4l_count = count_v4l2_controls(vdev);
 	} else if(vdev->interface_type==V4L1_INTERFACE)
 		//4 basic controls in V4L1
@@ -539,7 +547,7 @@ struct control_list *get_control_list(struct video_device *vdev){
 			//if the probe is successful, add the nb of private controls
 			//detected to the grand total
 			priv_ctrl_count += nb;
-			add_node(&l->probes,&known_driver_probes[probe_id]);
+			add_node(&l->backend->probes,&known_driver_probes[probe_id]);
 		}
 		probe_id++;
 	}
@@ -573,8 +581,9 @@ struct control_list *get_control_list(struct video_device *vdev){
 				priv_ctrl_count);
 		//Get the driver probes to look for private ioctls
 		//and turn them into fake V4L2 controls
-		for(e = l->probes;e;e=e->next)
-		 		e->probe->list_ctrl(vdev,&l->controls[v4l_count],e->probe->priv);
+		for(e = l->backend->probes;e;e=e->next)
+		 		e->probe->list_ctrl(vdev,&l->controls[v4l_count],
+		 						e->probe->priv);
 
 		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
 				"CTRL: done listing controls\n");
@@ -659,16 +668,18 @@ void release_control_list(struct video_device *vdev){
 		XFREE(vdev->control->controls);
 
 	//free all driver probe private data
-	for(e = vdev->control->probes; e; e = e->next)
+	for(e = vdev->control->backend->probes; e; e = e->next)
 		if (e->probe->priv)
 			XFREE(e->probe->priv);
 
 	//empty driver probe linked list
-	empty_list(vdev->control->probes);
+	empty_list(vdev->control->backend->probes);
 
 	//free libv4lconvert struct
-	if(vdev->control->priv)
-		v4lconvert_destroy(vdev->control->priv);
+	if(vdev->control->backend->convert)
+		v4lconvert_destroy(vdev->control->backend->convert);
+
+	XFREE(vdev->control->backend);
 
 	//free control_list
 	if (vdev->control)

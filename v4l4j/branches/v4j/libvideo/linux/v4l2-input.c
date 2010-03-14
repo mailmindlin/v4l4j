@@ -25,7 +25,6 @@
 #include <sys/ioctl.h>		//for ioctl
 #include <sys/mman.h>		//for mmap
 #include <errno.h>			//for errno
-#include <string.h>			//for memcpy
 #include <stdio.h>			// for perror
 #include "libvideo.h"
 #include "log.h"
@@ -33,6 +32,7 @@
 #include "libvideo-palettes.h"
 #include "v4l2-input.h"
 #include "v4l2-query.h"
+#include "v4l2-list.h"
 
 //Arbitrary values that hopefully will never be reached
 //v4l2 will adjust them to the closest available
@@ -376,8 +376,10 @@ static int find_best_palette(struct capture_device *c, int *palettes,
 static int set_image_format(struct capture_device *c, int *palettes,
 		int nb, int fd){
 	int best_palette = -1, i;
-	XMALLOC(c->convert->src_fmt,struct v4l2_format *,sizeof(struct v4l2_format));
-	XMALLOC(c->convert->dst_fmt,struct v4l2_format *,sizeof(struct v4l2_format));
+	struct convert_data* convert = c->convert;
+	
+	XMALLOC(convert->src_fmt,struct v4l2_format *,sizeof(struct v4l2_format));
+	XMALLOC(convert->dst_fmt,struct v4l2_format *,sizeof(struct v4l2_format));
 
 	if(c->width==MAX_WIDTH)
 		c->width=V4L2_MAX_WIDTH;
@@ -404,13 +406,13 @@ static int set_image_format(struct capture_device *c, int *palettes,
 				"CAP: Setting to best palette %s...\n",
 				libvideo_palettes[best_palette].name);
 
-		c->convert->src_palette = try_image_format(
-				c, c->convert->src_fmt, c->convert->dst_fmt, best_palette);
+		convert->src_palette = try_image_format(
+				c, convert->src_fmt, convert->dst_fmt, best_palette);
 
-		if (0 == apply_image_format(c->convert->src_fmt, fd)) {
+		if (0 == apply_image_format(convert->src_fmt, fd)) {
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1,
 					"CAP: setting src palette (%s) accepted\n",
-					libvideo_palettes[c->convert->src_palette].name);
+					libvideo_palettes[convert->src_palette].name);
 			c->palette = best_palette;
 		} else {
 			info("Unable to set the best detected palette: %s\n",
@@ -424,15 +426,15 @@ static int set_image_format(struct capture_device *c, int *palettes,
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: capturing (src) using width: %d, "
 			" height: %d, bytes/line %d, image size: %d - palette: %d (%s)\n",
-			c->convert->src_fmt->fmt.pix.width,
-			c->convert->src_fmt->fmt.pix.height,
-			c->convert->src_fmt->fmt.pix.bytesperline,
-			c->convert->src_fmt->fmt.pix.sizeimage,
-			c->convert->src_palette,
-			libvideo_palettes[c->convert->src_palette].name
+			convert->src_fmt->fmt.pix.width,
+			convert->src_fmt->fmt.pix.height,
+			convert->src_fmt->fmt.pix.bytesperline,
+			convert->src_fmt->fmt.pix.sizeimage,
+			convert->src_palette,
+			libvideo_palettes[convert->src_palette].name
 			);
 	c->is_native = v4lconvert_needs_conversion(
-			c->convert->priv,c->convert->src_fmt, c->convert->dst_fmt)==1?0:1;
+			convert->priv,convert->src_fmt, convert->dst_fmt)==1?0:1;
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: libv4lconvert required ? %s\n",
 			(c->is_native==0?"Yes":"No"));
@@ -440,23 +442,23 @@ static int set_image_format(struct capture_device *c, int *palettes,
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: conv to (dst) width: %d, "
 			"height: %d, bytes/line %d, image size: %d - palette: %d (%s)\n",
-			c->convert->dst_fmt->fmt.pix.width,
-			c->convert->dst_fmt->fmt.pix.height,
-			c->convert->dst_fmt->fmt.pix.bytesperline,
-			c->convert->dst_fmt->fmt.pix.sizeimage,
+			convert->dst_fmt->fmt.pix.width,
+			convert->dst_fmt->fmt.pix.height,
+			convert->dst_fmt->fmt.pix.bytesperline,
+			convert->dst_fmt->fmt.pix.sizeimage,
 			c->palette,
 			libvideo_palettes[c->palette].name
 	);
 
 	//Store actual width & height
-	c->width = c->convert->dst_fmt->fmt.pix.width;
-	c->height= c->convert->dst_fmt->fmt.pix.height;
+	c->width = convert->dst_fmt->fmt.pix.width;
+	c->height= convert->dst_fmt->fmt.pix.height;
 	if(c->is_native==1){
 		//if no need for conversion, libv4lconvert sometimes returns 0 in
 		//sizeimage and bytesperline fields, so get values from src palette
-		c->imagesize = c->convert->src_fmt->fmt.pix.sizeimage;
+		c->imagesize = convert->src_fmt->fmt.pix.sizeimage;
 	} else {
-		c->imagesize = c->convert->dst_fmt->fmt.pix.sizeimage;
+		c->imagesize = convert->dst_fmt->fmt.pix.sizeimage;
 	}
 
 	return 0;
@@ -602,6 +604,7 @@ fail:
 void *dequeue_buffer_v4l2_convert(struct video_device *, int *);
 int init_capture_v4l2(struct video_device *vdev) {
 	struct capture_device *c = vdev->capture;
+	struct mmap *m = c->backend->mmap;
 	struct v4l2_requestbuffers req;
 	struct v4l2_buffer buf;
 	int i=0;
@@ -611,7 +614,7 @@ int init_capture_v4l2(struct video_device *vdev) {
 	CLEAR(req);
 
 	//allocates v4l2 buffers
-	req.count = c->mmap->req_buffer_nr;
+	req.count = m->req_buffer_nr;
 	req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	req.memory = V4L2_MEMORY_MMAP;
 
@@ -626,11 +629,11 @@ int init_capture_v4l2(struct video_device *vdev) {
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: driver said %d V4L2 buffers\n", req.count);
-	c->mmap->buffer_nr = req.count;
-	XMALLOC( c->mmap->buffers, struct mmap_buffer *,
-			(c->mmap->buffer_nr * sizeof(struct mmap_buffer)) );
+	c->buffer_nr = req.count;
+	XMALLOC( m->buffers, struct mmap_buffer *,
+			(c->buffer_nr * sizeof(struct mmap_buffer)) );
 
-	for(i=0; i<c->mmap->buffer_nr ; i++) {
+	for(i=0; i<c->buffer_nr ; i++) {
 		CLEAR(buf);
 
 		buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -643,23 +646,23 @@ int init_capture_v4l2(struct video_device *vdev) {
 			return LIBVIDEO_ERR_REQ_MMAP_BUF;
 		}
 
-		c->mmap->buffers[i].length = buf.length;
-		c->mmap->buffers[i].start = mmap(NULL,
+		m->buffers[i].length = buf.length;
+		m->buffers[i].start = mmap(NULL,
 				buf.length,
 				PROT_READ | PROT_WRITE,
 				MAP_SHARED,
 				vdev->fd,
 				(off_t) buf.m.offset);
 
-		if (MAP_FAILED == c->mmap->buffers[i].start) {
+		if (MAP_FAILED == m->buffers[i].start) {
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
 					"CAP: cant mmap allocated V4L2 buffers\n");
 			return LIBVIDEO_ERR_MMAP_BUF;
 		}
 
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-				"CAP: mmap'ed %d bytes at %p\n",c->mmap->buffers[i].length,
-				c->mmap->buffers[i].start);
+				"CAP: mmap'ed %d bytes at %p\n",m->buffers[i].length,
+				m->buffers[i].start);
 	}
 
 	if(vdev->capture->is_native!=1){
@@ -684,7 +687,7 @@ int start_capture_v4l2(struct video_device *vdev) {
 			"CAP: Starting capture on device %s.\n", vdev->file);
 
 	//Enqueue all buffers
-	for(i=0; i< vdev->capture->mmap->buffer_nr; i++) {
+	for(i=0; i< vdev->capture->buffer_nr; i++) {
 		CLEAR(*b);
 		b->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		b->memory = V4L2_MEMORY_MMAP;
@@ -702,7 +705,7 @@ int start_capture_v4l2(struct video_device *vdev) {
 				"CAP: cannot start capture\n");
 		return LIBVIDEO_ERR_IOCTL;
 	}
-	vdev->capture->mmap->tmp = (void *) b;
+	vdev->capture->backend->mmap->tmp = (void *) b;
 
 	return 0;
 }
@@ -711,7 +714,7 @@ int start_capture_v4l2(struct video_device *vdev) {
 void enqueue_buffer_v4l2(struct video_device *);
 void *dequeue_buffer_v4l2_convert(struct video_device *vdev, int *len) {
 	struct convert_data *conv = vdev->capture->convert;
-	struct v4l2_buffer *b = (struct v4l2_buffer *) vdev->capture->mmap->tmp;
+	struct v4l2_buffer *b = (struct v4l2_buffer *) vdev->capture->backend->mmap->tmp;
 	int try = 2;
 	*len = -1;
 	while(*len==-1){
@@ -733,14 +736,14 @@ void *dequeue_buffer_v4l2_convert(struct video_device *vdev, int *len) {
 				"CAP: Passing buffer %d of len %d at %p with format %#x"
 				" to be stored in buffer at %p of length %d with format %#x\n",
 				b->index, b->bytesused,
-				vdev->capture->mmap->buffers[b->index].start,
+				vdev->capture->priv->mmap->buffers[b->index].start,
 				conv->src_fmt->fmt.pix.pixelformat,
 				conv->frame, conv->dst_fmt->fmt.pix.sizeimage,
 				conv->dst_fmt->fmt.pix.pixelformat
 				);
 
 		*len=v4lconvert_convert(conv->priv, conv->src_fmt, conv->dst_fmt,
-				vdev->capture->mmap->buffers[b->index].start, b->bytesused,
+				vdev->capture->backend->mmap->buffers[b->index].start, b->bytesused,
 				conv->frame, conv->dst_fmt->fmt.pix.sizeimage);
 
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
@@ -767,7 +770,7 @@ void *dequeue_buffer_v4l2_convert(struct video_device *vdev, int *len) {
 }
 
 void *dequeue_buffer_v4l2(struct video_device *vdev, int *len) {
-	struct v4l2_buffer *b = (struct v4l2_buffer *) vdev->capture->mmap->tmp;
+	struct v4l2_buffer *b = (struct v4l2_buffer *) vdev->capture->backend->mmap->tmp;
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
 			"CAP: dequeuing buffer on device %s.\n", vdev->file);
 
@@ -785,11 +788,11 @@ void *dequeue_buffer_v4l2(struct video_device *vdev, int *len) {
 	*len = b->bytesused;
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
 			"CAP: buffer length: %d\n", *len);
-	return vdev->capture->mmap->buffers[b->index].start;
+	return vdev->capture->backend->mmap->buffers[b->index].start;
 }
 
 void enqueue_buffer_v4l2(struct video_device *vdev) {
-	struct v4l2_buffer *b = (struct v4l2_buffer *) vdev->capture->mmap->tmp;
+	struct v4l2_buffer *b = (struct v4l2_buffer *) vdev->capture->backend->mmap->tmp;
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
 			"CAP: queuing buffer on device %s.\n", vdev->file);
 	if (-1 == ioctl(vdev->fd, VIDIOC_QBUF, b))
@@ -809,7 +812,7 @@ int stop_capture_v4l2(struct video_device *vdev) {
 				"CAP: cannot stop capture\n");
 		return LIBVIDEO_ERR_IOCTL;
 	}
-	XFREE(vdev->capture->mmap->tmp);
+	XFREE(vdev->capture->backend->mmap->tmp);
 
 	return 0;
 }
@@ -826,20 +829,20 @@ void free_capture_v4l2(struct video_device *vdev) {
 		XFREE(vdev->capture->convert->frame);
 
 	// unmmap v4l2 buffers
-	for(i=0; i < vdev->capture->mmap->buffer_nr; i++){
+	for(i=0; i < vdev->capture->buffer_nr; i++){
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 				"CAP: unmmap %d bytes at %p\n",
-				vdev->capture->mmap->buffers[i].length,
-				vdev->capture->mmap->buffers[i].start);
+				vdev->capture->priv->mmap->buffers[i].length,
+				vdev->capture->priv->mmap->buffers[i].start);
 
-		if (-1 == munmap(vdev->capture->mmap->buffers[i].start,
-				(size_t) vdev->capture->mmap->buffers[i].length))
+		if (-1 == munmap(vdev->capture->backend->mmap->buffers[i].start,
+				(size_t) vdev->capture->backend->mmap->buffers[i].length))
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
 					"CAP: error unmapping buffer %d\n",i);
 	}
 
 	// free buffers struct
-	XFREE(vdev->capture->mmap->buffers);
+	XFREE(vdev->capture->backend->mmap->buffers);
 
 	// fix for issue reported on v4l4j ML:
 	// http://groups.google.com/group/v4l4j/browse_thread/thread/a80cb345876acf76
@@ -871,712 +874,3 @@ void free_capture_v4l2(struct video_device *vdev) {
 }
 
 
-
-
-/*
- * Control related functions
- */
-struct struct_node {
- 	int id;
- 	struct struct_node *next;
- };
-typedef struct struct_node node;
-
-static void add_node(node **list, int id) {
-	node *t;
-	if((t=*list)) {
-		//create the subsequent nodes
-		while(t->next) t = t->next;
-		XMALLOC(t->next, node *, sizeof(node));
-		t->next->id = id;
-	} else {
-		//create the first node
-		XMALLOC((*list), node *, sizeof(node));
-		(*list)->id = id;
-	}
- }
-static  void empty_list(node *list){
- 	node *t;
- 	while(list) {
-		t = list->next;
-		XFREE(list);
-		list = t;
- 	}
- }
-static int has_id(node *list, int id){
- 	for(;list;list=list->next)
- 		if(list->id==id) return 1;
-
- 	return 0;
- }
- //returns the number of controls (standard and private V4L2 controls only)
-int count_v4l2_controls(struct video_device *vdev) {
-	struct v4l2_queryctrl qctrl;
-	node *list=NULL;
-	int i, count = 0, current = 0;
-
-	CLEAR(qctrl);
-
-	//std ctrls
-	for( i = V4L2_CID_BASE; i< V4L2_CID_LASTP1; i++) {
-		qctrl.id = i;
-		//if(ioctl(vdev->fd, VIDIOC_QUERYCTRL, &qctrl) == 0) {
-		if(v4lconvert_vidioc_queryctrl(vdev->control->priv, &qctrl) == 0) {
-			if (qctrl.flags & V4L2_CTRL_FLAG_DISABLED ||
-					qctrl.type == V4L2_CTRL_TYPE_CTRL_CLASS)
-				continue;
-			count++;
-			add_node(&list, i);
-		}
-	}
-	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-			"CTRL: found %d std ctrls\n", count);
-
-	//priv ctrls
-	for (qctrl.id = V4L2_CID_PRIVATE_BASE;; qctrl.id++) {
-		//if (0 == ioctl (vdev->fd, VIDIOC_QUERYCTRL, &qctrl)) {
-		if(v4lconvert_vidioc_queryctrl(vdev->control->priv, &qctrl) == 0) {
-			if (qctrl.flags & V4L2_CTRL_FLAG_DISABLED ||
-					qctrl.type == V4L2_CTRL_TYPE_CTRL_CLASS)
-				continue;
-			count++;
-			add_node(&list, qctrl.id);
-		} else {
-			if (errno == EINVAL)
-				break;
-
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: we shouldnt be here...\n");
-		}
-	}
-	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-			"CTRL: found %d std/priv ctrls\n", count);
-
-	//checking extended controls
-	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
-	//while (0 == ioctl (vdev->fd, VIDIOC_QUERYCTRL, &qctrl)) {
-	while(0 == v4lconvert_vidioc_queryctrl(vdev->control->priv, &qctrl)) {
-		if(!has_id(list,qctrl.id) && !(qctrl.flags & V4L2_CTRL_FLAG_DISABLED)
-				&& qctrl.type!=V4L2_CTRL_TYPE_CTRL_CLASS){
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
-					"CTRL: found unique ext ctrl\n");
-			count++;
-		} else {
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
-					"CTRL: found duplicate ext ctrl\n");
-		}
-		if(qctrl.id<=current){
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: found buggy driver\n");
-			qctrl.id++;
-		}
-		current = qctrl.id & ~V4L2_CTRL_FLAG_NEXT_CTRL;
-    	qctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
-	}
-
-	empty_list(list);
-	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-			"CTRL: found %d std/priv/ext controls\n", count);
-	return count;
-}
-
-static void set_menu(struct v4l2_querymenu *q, int id, int idx, char *val){
-	q->id = id;
-	q->index = idx;
-	snprintf((char *)q->name, 32, "%s", val);
-}
-
-static void set_query_menu(struct video_device *vd, struct control *c){
-	int i, count = 0, idx = 0, id = c->v4l2_ctrl->id;
-	struct v4l2_querymenu qm, *q;
-	CLEAR(qm);
-	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-			"CTRL: Setting menu for control %#x\n", c->v4l2_ctrl->id);
-
-	//check for known menu controls and put in some sensible menu items
-	if(id == V4L2_CID_POWER_LINE_FREQUENCY){
-		//populate struct control->v4l2_querymenu
-		XMALLOC(q, struct v4l2_querymenu *, 3*sizeof(struct v4l2_querymenu));
-		set_menu(&q[count++], id, V4L2_CID_POWER_LINE_FREQUENCY_DISABLED, "Disabled");
-		set_menu(&q[count++], id, V4L2_CID_POWER_LINE_FREQUENCY_50HZ, "50 Hz");
-		set_menu(&q[count++], id, V4L2_CID_POWER_LINE_FREQUENCY_60HZ, "60 Hz");
-	} else if(id == V4L2_CID_COLORFX){
-		XMALLOC(q, struct v4l2_querymenu *, 3*sizeof(struct v4l2_querymenu));
-		set_menu(&q[count++], id, V4L2_COLORFX_NONE, "None");
-		set_menu(&q[count++], id, V4L2_COLORFX_BW, "Black/White");
-		set_menu(&q[count++], id, V4L2_COLORFX_SEPIA, "Sepia");
-	} else if(id == V4L2_CID_MPEG_STREAM_TYPE){
-		XMALLOC(q, struct v4l2_querymenu *, 6*sizeof(struct v4l2_querymenu));
-		set_menu(&q[count++], id, V4L2_MPEG_STREAM_TYPE_MPEG2_PS, "MPEG2 - Program stream");
-		set_menu(&q[count++], id, V4L2_MPEG_STREAM_TYPE_MPEG2_TS, "MPEG2 - Transport stream");
-		set_menu(&q[count++], id, V4L2_MPEG_STREAM_TYPE_MPEG1_SS, "MPEG1 - System stream");
-		set_menu(&q[count++], id, V4L2_MPEG_STREAM_TYPE_MPEG2_DVD, "MPEG2 - DVD-compatible stream");
-		set_menu(&q[count++], id, V4L2_MPEG_STREAM_TYPE_MPEG1_VCD, "MPEG1 - VCD-compatible stream");
-		set_menu(&q[count++], id, V4L2_MPEG_STREAM_TYPE_MPEG2_SVCD, "MPEG2 - SVCD-compatible stream");
-	} else if(id == V4L2_CID_EXPOSURE_AUTO){
-		XMALLOC(q, struct v4l2_querymenu *, 4*sizeof(struct v4l2_querymenu));
-		set_menu(&q[count++], id, V4L2_EXPOSURE_AUTO, "Auto");
-		set_menu(&q[count++], id, V4L2_EXPOSURE_MANUAL, "Manual");
-		set_menu(&q[count++], id, V4L2_EXPOSURE_SHUTTER_PRIORITY, "Shutter priority");
-		set_menu(&q[count++], id, V4L2_EXPOSURE_APERTURE_PRIORITY, "Aperture priority");
-		//TODO: finish this by addinng all the MPEG-specific menus
-/*
-	} else if(id == V4L2_CID_COLORFX){
-		XMALLOC(q, struct v4l2_querymenu *, 3);
-		set_menu(&q[count++], id, V4L2_COLORFX_NONE, "None");
-		set_menu(&q[count++], id, V4L2_COLORFX_BW, "Black/White");
-		set_menu(&q[count++], id, V4L2_COLORFX_SEPIA, "Sepia");
-	} else if(id == V4L2_CID_COLORFX){
-		XMALLOC(q, struct v4l2_querymenu *, 3);
-		set_menu(&q[count++], id, V4L2_COLORFX_NONE, "None");
-		set_menu(&q[count++], id, V4L2_COLORFX_BW, "Black/White");
-		set_menu(&q[count++], id, V4L2_COLORFX_SEPIA, "Sepia");
-*/
-	} else {
-		//Not defined in the videodev2 header
-
-		//count how many menus there are
-		qm.id = id;
-		for(i = c->v4l2_ctrl->minimum; i==c->v4l2_ctrl->maximum; i++){
-			qm.index = i;
-			if(ioctl(vd->fd, VIDIOC_QUERYMENU, &qm) == 0){
-				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
-						"CTRL: found menu item %s - %d\n", qm.name, qm.index);
-				count++;
-			}
-		}
-
-		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-				"CTRL: found %d menus\n", count);
-
-		if(count>0){
-			//populate struct control->v4l2_querymenu
-			XMALLOC(q, struct v4l2_querymenu *, count * sizeof(struct v4l2_querymenu));
-
-			for(i = c->v4l2_ctrl->minimum; i==c->v4l2_ctrl->maximum; i++){
-				q[idx].id = id;
-				q[idx].index = i;
-				if(ioctl(vd->fd, VIDIOC_QUERYMENU, &q[idx]) == 0)
-					idx++;
-			}
-		} else {
-			//sometimes, nothing is returned by the ioctl(VIDIOC_QUERYMENU),
-			//but the menu still exist and is
-			//made of contiguous values between minimum and maximum.
-			count = (c->v4l2_ctrl->maximum - c->v4l2_ctrl->minimum)/
-					c->v4l2_ctrl->step + 1;
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-					"CTRL: creating %d menus\n", count);
-			XMALLOC(q, struct v4l2_querymenu *,count*sizeof(struct v4l2_querymenu));
-			for(i = c->v4l2_ctrl->minimum;
-				i<=c->v4l2_ctrl->maximum;
-				i+=c->v4l2_ctrl->step){
-				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
-						"CTRL: menu %d - val: %d\n", idx, i);
-				q[idx].id = c->v4l2_ctrl->id;
-				sprintf((char *) q[idx].name, "%d", i);
-				q[idx++].index = i;
-			}
-		}
-	}
-	c->count_menu = count;
-	c->v4l2_menu = q;
-
-}
-
-static void fix_quirky_struct(struct v4l2_queryctrl *v){
-	if(v->type==V4L2_CTRL_TYPE_INTEGER) {
-		if(v->step==0){
-			v->step = 1;
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: QUIRK: adjusted step value for INTEGER control '%s' "
-					"from 0 to 1\n", v->name);
-		}
-	} else if(v->type==V4L2_CTRL_TYPE_MENU) {
-		//Not sure about this one...
-		if(v->step==0){
-			v->step = 1;
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: QUIRK: adjusted step value for MENU control '%s' "
-					"from 0 to 1\n", v->name);
-		}
-	} else if(v->type==V4L2_CTRL_TYPE_BOOLEAN) {
-		if(v->step!=1){
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: QUIRK: adjusted step value for BOOLEAN control '%s' "
-					"from %d to 1\n", v->name, v->step);
-			v->step = 1;
-		}
-		if(v->minimum!=0){
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: QUIRK: adjusted minimum value for BOOLEAN control "
-					"'%s' from %d to 0\n", v->name, v->minimum);
-			v->minimum = 0;
-		}
-		if(v->maximum!=1){
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: QUIRK: adjusted maximum value for BOOLEAN control "
-					"'%s' from %d to 1\n", v->name, v->maximum);
-			v->maximum = 1;
-		}
-	} else if(v->type==V4L2_CTRL_TYPE_BUTTON) {
-		if(v->step!=0){
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: QUIRK: adjusted step value for BUTTON control "
-					"'%s' from %d to 0\n", v->name, v->step);
-			v->step = 1;
-		}
-		if(v->minimum!=0){
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: QUIRK: adjusted minimum value for BUTTON control "
-					"'%s' from %d to 0\n", v->name, v->minimum);
-			v->minimum = 0;
-		}
-		if(v->maximum!=0){
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: QUIRK: adjusted maximum value for BUTTON control "
-					"'%s' from %d to 0\n", v->name, v->maximum);
-			v->maximum = 0;
-		}
-	}
-}
-
-//Populate the control_list with reported V4L2 controls
-//and returns how many controls were created
-int create_v4l2_controls(struct video_device *vdev, struct control *controls,
-		int max){
-	struct v4l2_queryctrl qctrl;
-	node *list=NULL;
-	int count = 0, i, current = 0;
-
-	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-			"CTRL: Creating std controls\n");
-	//create standard V4L controls
-	for( i = V4L2_CID_BASE; i< V4L2_CID_LASTP1 && count < max; i++) {
-		controls[count].v4l2_ctrl->id = i;
-		//if(ioctl(vdev->fd, VIDIOC_QUERYCTRL, controls[count].v4l2_ctrl) == 0) {
-		if(v4lconvert_vidioc_queryctrl(vdev->control->priv, controls[count].v4l2_ctrl) == 0) {
-			dprint_v4l2_control(controls[count].v4l2_ctrl);
-			if ( !(controls[count].v4l2_ctrl->flags & V4L2_CTRL_FLAG_DISABLED)&&
-					controls[count].v4l2_ctrl->type!=V4L2_CTRL_TYPE_CTRL_CLASS){
-				fix_quirky_struct(controls[count].v4l2_ctrl);
-				if(controls[count].v4l2_ctrl->type == V4L2_CTRL_TYPE_MENU)
-					set_query_menu(vdev, &controls[count]);
-				count++;
-				add_node(&list, i);
-			}
-		}
-	}
-
-	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-			"CTRL: Creating priv controls (found %d std ctrl)\n", count);
-	//create device-specific private V4L2 controls
-	for (i = V4L2_CID_PRIVATE_BASE;count < max; i++) {
-		controls[count].v4l2_ctrl->id = i;
-		//if (0 == ioctl (vdev->fd, VIDIOC_QUERYCTRL, controls[count].v4l2_ctrl)) {
-		if(v4lconvert_vidioc_queryctrl(vdev->control->priv, controls[count].v4l2_ctrl) == 0) {
-			dprint_v4l2_control(controls[count].v4l2_ctrl);
-			if( ! (controls[count].v4l2_ctrl->flags & V4L2_CTRL_FLAG_DISABLED) &&
-					controls[count].v4l2_ctrl->type!=V4L2_CTRL_TYPE_CTRL_CLASS){
-				fix_quirky_struct(controls[count].v4l2_ctrl);
-				if(controls[count].v4l2_ctrl->type == V4L2_CTRL_TYPE_MENU)
-					set_query_menu(vdev, &controls[count]);
-				count++;
-				add_node(&list, i);
-			}
-    	} else {
-            if (errno == EINVAL)
-            	break;
-
-            dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-            		"CTRL: we shouldnt be here...\n");
-    	}
-	}
-
-	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-			"CTRL: Creating ext controls (created %d std/priv ctrl so far)\n",
-			count);
-	//create ext ctrls
-	//TODO Add support for group-changes of extended controls. For now,
-	//TODO reported ext ctrl can only be changed one at a time.
-	//TODO add an extra method that list ext (so move the following to the new
-	//TODO method) so apps are aware of which ctrls are
-	//TODO extended ones, and can decide whether or not to change multiple ctrls
-	//TODO at once or not
-	//checking extended controls
-	CLEAR(qctrl);
-	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
-	// while (0 == ioctl (vdev->fd, VIDIOC_QUERYCTRL, &qctrl)) {
-	while (v4lconvert_vidioc_queryctrl(vdev->control->priv, &qctrl) == 0) {
-		if(!has_id(list,qctrl.id ) && !(qctrl.flags & V4L2_CTRL_FLAG_DISABLED)
-				&& qctrl.type!=V4L2_CTRL_TYPE_CTRL_CLASS ){
-			dprint_v4l2_control((&qctrl));
-			CLEAR(*controls[count].v4l2_ctrl);
-			memcpy(controls[count].v4l2_ctrl, &qctrl,sizeof(struct v4l2_queryctrl));
-			fix_quirky_struct(controls[count].v4l2_ctrl);
-			if(controls[count].v4l2_ctrl->type == V4L2_CTRL_TYPE_MENU)
-				set_query_menu(vdev, &controls[count]);
-			count++;
-		} else {
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-					"CTRL: duplicate ext ctrl\n");
-		}
-		if(qctrl.id<=current){
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-					"CTRL: found buggy driver\n");
-			qctrl.id++;
-		}
-		current = qctrl.id & ~V4L2_CTRL_FLAG_NEXT_CTRL;
-		qctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
-	}
-
-	empty_list(list);
-	return count;
-}
-static int fix_quirky_values(struct v4l2_queryctrl *qc, int v){
-	if(v < qc->minimum) {
-		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-				"CTRL: QUIRK: fixed quirky control value %d below minimum %d\n",
-				v,qc->minimum);
-		return qc->minimum;
-	} else if (v>qc->maximum) {
-		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-				"CTRL: QUIRK: fixed quirky control value %d above maximum %d\n",
-				v,qc->maximum);
-		return qc->maximum;
-	}
-	return v;
-
-}
-//returns the value of a control
-int get_control_value_v4l2(struct video_device *vdev,
-		struct v4l2_queryctrl *ctrl, int *val){
-	struct v4l2_control vc;
-	int ret = LIBVIDEO_ERR_IOCTL;
-	CLEAR(vc);
-	vc.id = ctrl->id;
-	//if( (ret = ioctl(vdev->fd, VIDIOC_G_CTRL, &vc)) == 0 ) {
-	if( (ret = v4lconvert_vidioc_g_ctrl(vdev->control->priv, &vc)) == 0 ){
-		*val = fix_quirky_values(ctrl, vc.value);
-		ret = 0;
-	} else
-		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-				"CTRL: Error getting current value (%d)\n", errno);
-
-	return ret;
-}
-
-//sets the value of a control
-int set_control_value_v4l2(struct video_device *vdev,
-		struct v4l2_queryctrl *ctrl, int *i) {
-	struct v4l2_control vc;
-	int prev = 0;
-
-	get_control_value_v4l2(vdev,ctrl, &prev);
-	vc.id = ctrl->id;
-	vc.value = *i;
-
-	//if(ioctl(vdev->fd, VIDIOC_S_CTRL, &vc)!= 0) {
-	if( v4lconvert_vidioc_s_ctrl(vdev->control->priv, &vc) != 0 ){
-		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-				"CTRL: Error setting value\n");
-		if(errno == EINVAL)
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: einval\n");
-		else if(errno == ERANGE)
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: erange\n");
-		else
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: unknown error %d\n", errno);
-		return LIBVIDEO_ERR_IOCTL;
-	}
-	*i=prev;
-	return 0;
-}
-
-// ****************************************
-// List caps functions
-// ****************************************
-static void enum_image_fmt_v4l2(int fd) {
-	struct v4l2_fmtdesc fmtd;
-
-	printf("============================================\n"
-			"Querying image format\n\n");
-	memset(&fmtd, 0, sizeof(struct v4l2_fmtdesc));
-	fmtd.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	fmtd.index = 0;
-
-	while(ioctl(fd, VIDIOC_ENUM_FMT, &fmtd) >= 0) {
-		printf("%d - %s (compressed : %d) (%#x) \n",
-				fmtd.index, fmtd.description, fmtd.flags, fmtd.pixelformat);
-		fmtd.index++;
-	}
-
-	printf("\n");
-}
-
-static void query_current_image_fmt_v4l2(int fd) {
-	struct v4l2_format fmt;
-	struct v4l2_fmtdesc fmtd; //to find a text description of the image format
-
-	memset(&fmt, 0, sizeof(struct v4l2_format));
-	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	memset(&fmtd, 0, sizeof(struct v4l2_fmtdesc));
-	fmtd.index = 0;
-	fmtd.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-
-	printf("============================================\n"
-			"Querying current image format settings\n\n");
-	if (-1 == ioctl(fd, VIDIOC_G_FMT, &fmt)) {
-		perror("Failed to get image format.");
-	}
-	else {
-		printf("Current width: %d\n", fmt.fmt.pix.width);
-		printf("Current height: %d\n", fmt.fmt.pix.height);
-		printf("Current bytes per line: %d\n", fmt.fmt.pix.bytesperline);
-		printf("Current image size: %d\n", fmt.fmt.pix.sizeimage);
-		printf("Current color space: %d\n", fmt.fmt.pix.colorspace);
-		printf("Current pixel format: ");
-		while(ioctl(fd, VIDIOC_ENUM_FMT, &fmtd) >= 0){
-			if (fmt.fmt.pix.pixelformat == fmtd.pixelformat) {
-				printf("%s\n", fmtd.description);
-				break;
-			}
-			fmtd.index++;
-		}
-	}
-	printf("\n");
-}
-
-static void query_capture_intf_v4l2(int fd) {
-	struct v4l2_input vin;
-	struct v4l2_tuner tun;
-	struct v4l2_frequency freq;
-
-	memset(&vin, 0, sizeof(struct v4l2_input));
-	vin.index = 0;
-
-	printf("============================================\n"
-			"Querying capture capabilities\n");
-	while(ioctl(fd, VIDIOC_ENUMINPUT, &vin) >= 0) {
-		printf("Input number: %d\n", vin.index);
-		printf("Name: %s\n", vin.name);
-		printf("Type: (%d) ", vin.type);
-		if(vin.type & V4L2_INPUT_TYPE_TUNER) {
-			printf("Tuner\n");
-			printf("Tuner index: %d\n", vin.tuner);
-			memset(&tun, 0, sizeof(struct v4l2_tuner));
-			tun.index = vin.tuner;
-			if(ioctl(fd, VIDIOC_G_TUNER, &tun)==0) {
-				printf("Name: %s\n", tun.name);
-				if(tun.type==V4L2_TUNER_RADIO)
-					printf("It is a RADIO tuner\n");
-				if(tun.type==V4L2_TUNER_ANALOG_TV)
-					printf("It is a TV tuner\n");
-				if(tun.capability&V4L2_TUNER_CAP_LOW)
-					printf("Frequencies in units of 62.5Hz\n");
-				else
-					printf("Frequencies in units of 62.5kHz\n");
-
-				if(tun.capability&V4L2_TUNER_CAP_NORM)
-					printf("Multi-standard tuner\n");
-				if(tun.capability&V4L2_TUNER_CAP_STEREO)
-					printf("Stereo reception supported\n");
-				/* More flags here */
-				printf("lowest tunable frequency: %.2f %s\n",
-						tun.rangelow * 62.5,
-						(tun.capability&V4L2_TUNER_CAP_LOW) ? "Hz" : "kHz");
-				printf("highest tunable frequency: %.2f %s\n",
-						tun.rangehigh * 62.5,
-						(tun.capability&V4L2_TUNER_CAP_LOW) ? "Hz" : "kHz");
-				memset(&freq, 0, sizeof(struct v4l2_frequency));
-				freq.tuner = vin.tuner;
-				if(ioctl(fd, VIDIOC_G_FREQUENCY, &freq)==0) {
-					printf("Current frequency: %.2f %s\n",
-							freq.frequency * 62.5,
-							(tun.capability&V4L2_TUNER_CAP_LOW) ? "Hz" : "kHz");
-				}
-			}
-		}
-		if(vin.type & V4L2_INPUT_TYPE_CAMERA) printf("Camera\n");
-		printf("Supported standards: (%d) ", (int)vin.std);
-		if(vin.std & V4L2_STD_PAL) printf("PAL ");
-		if(vin.std & V4L2_STD_NTSC) printf("NTSC ");
-		if(vin.std & V4L2_STD_SECAM) printf("SECAM ");
-		printf("\n");
-		vin.index++;
-	}
-	printf("\n");
-}
-
-static void query_frame_sizes_v4l2(int fd){
-	struct v4l2_frmsizeenum frms;
-	struct v4l2_fmtdesc fmtd;
-
-	memset(&frms, 0, sizeof(struct v4l2_frmsizeenum));
-	memset(&fmtd, 0, sizeof(struct v4l2_fmtdesc));
-	fmtd.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	fmtd.index = 0;
-
-
-	printf("============================================\n"
-			"Querying supported frame sizes\n\n");
-	while(ioctl(fd, VIDIOC_ENUM_FMT, &fmtd) >= 0) {
-		printf("Image format: %s\n",fmtd.description);
-		frms.index = 0;
-		frms.pixel_format = fmtd.pixelformat;
-		while(ioctl (fd, VIDIOC_ENUM_FRAMESIZES, &frms) >=0) {
-			printf("index %d", frms.index);
-			if (frms.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
-				printf("\tHeight: %d - Width: %d\n",
-						frms.discrete.height, frms.discrete.width);
-				frms.index++;
-			}
-			else {
-				printf("\tMin, max & step height: %d - %d - %d Min, max & step"
-						"width: %d - %d - %d",
-					frms.stepwise.min_height, frms.stepwise.max_height,
-					frms.stepwise.step_height, frms.stepwise.min_width,
-					frms.stepwise.max_width, frms.stepwise.step_width);
-				break;
-			}
-		}
-		fmtd.index++;
-	}
-
-}
-
-static void print_v4l2_control(struct v4l2_queryctrl *qc) {
-	printf( "Control: id: 0x%x - name: %s - min: %d -max: %d - step: %d - "
-			"type: %d(%s) - flags: %d (%s%s%s%s%s%s)\n", \
-			qc->id, (char *) &qc->name, qc->minimum, qc->maximum, qc->step,
-			qc->type,
-			qc->type == V4L2_CTRL_TYPE_INTEGER ? "Integer" :
-			qc->type == V4L2_CTRL_TYPE_BOOLEAN ? "Boolean" :
-			qc->type == V4L2_CTRL_TYPE_MENU ? "Menu" :
-			qc->type == V4L2_CTRL_TYPE_BUTTON ? "Button" :
-			qc->type == V4L2_CTRL_TYPE_INTEGER64 ? "Integer64" :
-			qc->type == V4L2_CTRL_TYPE_CTRL_CLASS ? "Class" : "",
-			qc->flags,
-			qc->flags & V4L2_CTRL_FLAG_DISABLED ? "Disabled " : "",
-			qc->flags & V4L2_CTRL_FLAG_GRABBED ? "Grabbed " : "",
-			qc->flags & V4L2_CTRL_FLAG_READ_ONLY ? "ReadOnly " : "",
-			qc->flags & V4L2_CTRL_FLAG_UPDATE ? "Update " : "",
-			qc->flags & V4L2_CTRL_FLAG_INACTIVE ? "Inactive " : "",
-			qc->flags & V4L2_CTRL_FLAG_SLIDER ? "slider " : "");
-}
-
-static void query_controls_v4l2(int fd) {
-	int i;
-	struct v4l2_queryctrl qctrl;
-	CLEAR(qctrl);
-	struct v4lconvert_data *d = v4lconvert_create(fd);
-	printf("============================================\n"
-			"Querying standard controls\n\n");
-	//std ctrls
-	for( i = V4L2_CID_BASE; i< V4L2_CID_LASTP1; i++) {
-		qctrl.id = i;
-		//if((ioctl(fd, VIDIOC_QUERYCTRL, &qctrl) == 0))
-		if(v4lconvert_vidioc_queryctrl(d,&qctrl)==0)
-			print_v4l2_control(&qctrl);
-	}
-
-	printf("============================================\n"
-			"Querying private controls\n\n");
-	//priv ctrls
-	for (qctrl.id = V4L2_CID_PRIVATE_BASE;; qctrl.id++) {
-		if(v4lconvert_vidioc_queryctrl(d,&qctrl)==0) {
-			print_v4l2_control(&qctrl);
-		} else {
-			if (errno == EINVAL)
-				break;
-
-			printf( "we shouldnt be here...\n");
-		}
-	}
-
-	printf("============================================\n"
-			"Querying extended controls\n\n");
-	//checking extended controls
-	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
-	while (v4lconvert_vidioc_queryctrl(d,&qctrl)==0) {
-		print_v4l2_control(&qctrl);
-		qctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
-	}
-	v4lconvert_destroy(d);
-}
-
-
-
-void list_cap_v4l2(int fd) {
-	struct v4l2_capability cap;
-
-	printf("============================================\n"
-			"Querying general capabilities\n\n");
-	if (ioctl(fd, VIDIOC_QUERYCAP, &cap) < 0) {
-		printf("v4l2 not supported. Maybe a v4l1 device ...");
-	}
-	else {
-		//print capabilities
-		printf("Driver name: %s\n",cap.driver);
-		printf("Device name: %s\n",cap.card);
-		printf("bus_info: %s\n", cap.bus_info);
-		printf("version: %u.%u.%u\n",
-				(cap.version >> 16) & 0xFF,(cap.version >> 8) & 0xFF,
-				cap.version & 0xFF);
-		if (cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)
-			printf("Has"); else printf("Does NOT have");
-		printf(" capture capability\n");
-		if (cap.capabilities & V4L2_CAP_VIDEO_OUTPUT)
-			printf("Has"); else printf("Does NOT have");
-		printf(" output capability\n");
-		if (cap.capabilities & V4L2_CAP_VIDEO_OVERLAY)
-			printf("Has"); else printf("Does NOT have");
-		printf(" overlay capability\n");
-		if (cap.capabilities & V4L2_CAP_VBI_CAPTURE)
-			printf("Has"); else printf("Does NOT have");
-		printf(" VBI capture capability\n");
-		if (cap.capabilities & V4L2_CAP_VBI_OUTPUT)
-			printf("Has"); else printf("Does NOT have");
-		printf(" VBI output capability\n");
-		if (cap.capabilities & V4L2_CAP_SLICED_VBI_CAPTURE)
-			printf("Has"); else printf("Does NOT have");
-		printf(" SLICED VBI capture capability\n");
-		if (cap.capabilities & V4L2_CAP_SLICED_VBI_OUTPUT)
-			printf("Has"); else printf("Does NOT have");
-		printf(" SLICED VBI output capability\n");
-		if (cap.capabilities & V4L2_CAP_RDS_CAPTURE)
-			printf("Has"); else printf("Does NOT have");
-		printf(" RDS capability\n");
-		if (cap.capabilities & V4L2_CAP_TUNER)
-			printf("Has"); else printf("Does NOT have");
-		printf(" tuner capability\n");
-		if (cap.capabilities & V4L2_CAP_AUDIO)
-			printf("Has"); else printf("Does NOT have");
-		printf(" audio capability\n");
-		if (cap.capabilities & V4L2_CAP_RADIO)
-			printf("Has"); else printf("Does NOT have");
-		printf(" radio capability\n");
-		if (cap.capabilities & V4L2_CAP_READWRITE)
-			printf("Has"); else printf("Does NOT have");
-		printf(" read/write capability\n");
-		if (cap.capabilities & V4L2_CAP_ASYNCIO)
-			printf("Has"); else printf("Does NOT have");
-		printf(" asyncIO capability\n");
-		if (cap.capabilities & V4L2_CAP_STREAMING)
-			printf("Has"); else printf("Does NOT have");
-		printf(" streaming capability\n");
-		printf("\n");
-
-		if (cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)
-			query_capture_intf_v4l2(fd);
-		// FIXME Enumerate other capabilites (output, overlay,...
-
-		enum_image_fmt_v4l2(fd);
-		query_current_image_fmt_v4l2(fd);
-		query_frame_sizes_v4l2(fd);
-		query_controls_v4l2(fd);
-
-	}
-}
