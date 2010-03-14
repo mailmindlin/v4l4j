@@ -95,21 +95,6 @@ void free_capture_v4l1(struct video_device *);
 void free_capture_device1(struct video_device *);
 
 
-
-/*
- * Control related functions
- */
- //returns the number of controls (standard and private V4L2 controls only)
-int count_v4l1_controls(struct video_device *);
-//Populate the control_list with fake V4L2 controls matching V4L1 video
-//controls and returns how many fake controls were created
-int create_v4l1_controls(struct video_device *, struct control *, int);
-//returns the value of a control
-int get_control_value_v4l1(struct video_device *c, struct v4l2_queryctrl *ctrl, int *);
-//sets the value of a control
-int set_control_value_v4l1(struct video_device *, struct v4l2_queryctrl *, int *);
-
-
 /*
  * Query and list methods (printf to stdout, use to debug)
  * these methods can be called after init_capture_device and before free_capture_device1

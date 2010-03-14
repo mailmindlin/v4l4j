@@ -30,6 +30,7 @@
 #include "videodev2.h"
 #include "videodev.h"
 #include "libv4lconvert.h"
+#include "libvideo-linux.h"
 #endif		// linux
 
 #define CLEAR(x) memset(&x, 0x0, sizeof(x));
@@ -40,24 +41,6 @@
  * C A P TU R E   I N T E R F A C E   S T R U C T S
  *
  */
-struct mmap_buffer {
-	void *start;		//start of the mmaped buffer
-	int length;			//length of the mmaped buffer as given by v4l
-						//does NOT indicate the length of the frame,
-						//use struct capture_device->imagesize instead
-};
-
-struct mmap {
-	int req_buffer_nr;				//requested number of buffers
-	int buffer_nr;					//actual number of mmap buffers
-	struct mmap_buffer *buffers;	//array of buffers
-	void * tmp;						//temp buffer pointing to the latest
-									//dequeued buffer (V4L2) - last
-									//requested frame (V4L1)
-	int v4l1_mmap_size;				//used by v4l1 only, to store the overall
-									//mmap size
-};
-
 
 //
 // Passing these values as desired width and height for the capture
@@ -241,19 +224,20 @@ enum {
 		TM6000\
 	}
 
-struct convert_data {
-	struct v4lconvert_data *priv;//the libv4l convert struct (used only if V4L2)
-	struct v4l2_format *src_fmt; //the source pixel format used for capture
-	struct v4l2_format *dst_fmt; //the dest format, after conversion
-	int src_palette;			//the source libvideo palette index
-	void *frame;				//the last captured frame buffer after conv
-								//the length of the buffer is set to
-								//dst_fmt->fmt.pix.sizeimage
-};
-
 //all the fields in the following structure are read only
 struct capture_device {
-	struct mmap *mmap;				//do not touch
+	struct capture_actions *actions;	//see def below
+	struct capture_backend *backend;		// platform-specific struct	
+	struct convert_data* convert;	//do not touch - libv4lconvert stuff
+									//(used only when v4l2)
+									//only valid if is_native is 0
+	int is_native;					//this field is meaningful only with v4l2.
+									//for v4l1, it is always set to 1.
+									//it specifies whether or not the palette is
+									//native, ie, whether it is converted from
+									//a native format or it actually is a native
+									//format. if it is converted (by libv4l
+									//convert), then the convert member is valid
 	int palette;					//the image format returned by libvideo
 									//see #define above
 	int width;						//captured frame width
@@ -263,25 +247,7 @@ struct capture_device {
 	int imagesize;					//in bytes
 	int tuner_nb;					//the index of the tuner associated with
 									//this capture_device, -1 if not tuner input
-	struct capture_actions *actions;	//see def below
-	int is_native;					//this field is meaningful only with v4l2.
-									//for v4l1, it is always set to 1.
-									//it specifies whether or not the palette is
-									//native, ie, whether it is converted from
-									//a native format or it actually is a native
-									//format. if it is converted (by libv4l
-									//convert), then the convert member is valid
-
-	int real_v4l1_palette;			//v4l1 weirdness: v4l1 defines 2 distinct
-									//palettes YUV420 and YUV420P but they are
-									//the same (same goes for YUYV and YUV422).
-									//In this field we store the real palette
-									//used by v4l1. In the palette field above,
-									//we store what the application should know
-									//(YUYV instead of YUV422)
-	struct convert_data* convert;	//do not touch - libv4lconvert stuff
-									//(used only when v4l2)
-									//only valid if is_native is 0
+	int buffer_nr;					//actual number of buffers
 };
 
 
@@ -443,7 +409,7 @@ struct device_info {
 	int nb_inputs;
 	struct video_input_info *inputs;
 	int nb_palettes;
-	struct palette_info *palettes;
+	struct palette_info *palettes;	// array of nb_palettes elements
 	char name[NAME_FIELD_LENGTH];
 	//this function enumerates the frame intervals for a given video format
 	//, width and height and modifies the pointer at p to point to either
@@ -466,39 +432,18 @@ struct device_info {
  *
  */
 
-//struct used to represent a driver probe.
+//struct used to represent a single control.
 struct control {
 	struct v4l2_queryctrl *v4l2_ctrl;
 	struct v4l2_querymenu *v4l2_menu;//array of 'count_menu' v4l2_menus
 	int count_menu;
 };
 
-struct video_device;
-struct v4l_driver_probe {
-	int (*probe) (struct video_device *, void **);
-	int (*list_ctrl)(struct video_device *, struct control *, void *);
-	int (*get_ctrl)(struct video_device *, struct v4l2_queryctrl *,
-			void *, int *);
-	int (*set_ctrl)(struct video_device *,  struct v4l2_queryctrl *,
-			int *, void *);
-	void *priv;
-};
-/*
- * element in linked list of driver probe
- */
-typedef struct struct_elem {
-	struct v4l_driver_probe *probe;
- 	struct struct_elem *next;
-} driver_probe;
-
 
 struct control_list {
+	struct control *controls;		//array of 'count' struct control's	
+	struct control_backend *backend;
 	int count;						//how many controls are available
-	struct control *controls;		//array of 'count' struct control's
-	driver_probe *probes; 			//linked list of driver probes, allocated in
-									//libvideo.c:get_control_list()
-	struct v4lconvert_data *priv;//the libv4l convert struct (used only if V4L2)
-								//DO NOT TOUCH
 };
 
 /*

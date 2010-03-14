@@ -77,8 +77,9 @@ TESTOBJ := $(TEST_APP_DIR)/test-capture.o $(TEST_APP_DIR)/dump-capture.o \
 OBJ := $(LINUX_DIR)/v4l2-input.o $(LINUX_DIR)/v4l1-input.o libvideo.o  \
   $(LINUX_DIR)/pwc-probe.o $(LINUX_DIR)/gspca-probe.o $(LINUX_DIR)/qc-probe.o \
   $(LINUX_DIR)/fps-param-probe.o $(LINUX_DIR)/v4l1-query.o \
+  $(LINUX_DIR)/v4l1-ctrl.o $(LINUX_DIR)/v4l1-list.o \
   $(LINUX_DIR)/v4l2-query.o $(LINUX_DIR)/v4l1-tuner.o $(LINUX_DIR)/v4l2-tuner.o \
-  palettes.o
+  $(LINUX_DIR)/v4l2-ctrl.o $(LINUX_DIR)/v4l2-list.o palettes.o
 
 CC := gcc
 CFLAGS := $(DBG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) \
