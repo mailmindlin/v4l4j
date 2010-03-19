@@ -65,6 +65,7 @@ void write_frame(void *d, int size) {
 }
 
 int main(int argc, char** argv) {
+	struct device_id *id;
 	struct capture_device *c;
 	struct video_device *v;
 	void *d;
@@ -115,7 +116,14 @@ int main(int argc, char** argv) {
 
 	getchar();
 
-	v = open_device(argv[1]);
+
+	id = create_device_id(argv[1]);
+	if (! id) {
+		printf("Error probing device\n");
+		return -1;
+	}
+
+	v = open_device(id);
 	if(v==NULL){
 		printf("Error opening device %s", argv[1]);
 		return -1;
@@ -156,11 +164,6 @@ int main(int argc, char** argv) {
 		printf("Cant initialise capture ");
 		return -1;
 	}
-//
-//	if((*c->actions->set_frame_interval)(v, 1, 15)<0){
-//		printf("Cant set the frame interval");
-//		fflush(stdout);
-//	}
 
 	if((*c->actions->start_capture)(v)<0){
 		(*c->actions->free_capture)(v);
@@ -198,6 +201,7 @@ int main(int argc, char** argv) {
 	(*c->actions->free_capture)(v);
 	free_capture_device(v);
 	close_device(v);
+	release_device_id(id);
 
 	return 0;
 }

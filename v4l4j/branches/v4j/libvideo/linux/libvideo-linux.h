@@ -23,7 +23,7 @@
 
 /*
  * C A P T U R E   S T R U C T U R E S
- * 
+ *
  */
 // represent a single mmap buffer
 struct mmap_buffer {
@@ -34,7 +34,7 @@ struct mmap_buffer {
 };
 
 struct mmap {
-	struct mmap_buffer *buffers;	//array of mmap 'buffer_nb' buffers 
+	struct mmap_buffer *buffers;	//array of mmap 'buffer_nb' buffers
 									//(buffer_nb) is in struct capture_device
 	void * tmp;						//temp buffer pointing to the latest
 									//dequeued buffer (V4L2) - last
@@ -69,7 +69,7 @@ struct capture_backend {
 
 /*
  * C O N T R O L   S T R U C TU R E S
- * 
+ *
  */
  //forward declarations
 struct video_device;
@@ -77,9 +77,9 @@ struct control;
 struct v4l_driver_probe {
 	int (*probe) (struct video_device *, void **);
 	int (*list_ctrl)(struct video_device *, struct control *, void *);
-	int (*get_ctrl)(struct video_device *, struct v4l2_queryctrl *,
+	int (*get_ctrl)(struct video_device *, struct control *,
 			void *, int *);
-	int (*set_ctrl)(struct video_device *,  struct v4l2_queryctrl *,
+	int (*set_ctrl)(struct video_device *,  struct control *,
 			int *, void *);
 	void *priv;
 };

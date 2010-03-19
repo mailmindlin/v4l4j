@@ -177,7 +177,9 @@ public class DeviceInfo {
 	}
 
 	/**
-	 * This method returns the device file associated with the video device.
+	 * <b>Linux only method</b>. On Linux, this method returns the device file 
+	 * associated with the video device. <code>null</code> is returned on other
+	 * platforms.
 	 * @return the device file
 	 * @throws StateException if the associated VideoDevice has been released
 	 */
@@ -248,9 +250,10 @@ public class DeviceInfo {
 	 * @throws V4L4JException if there is an error retrieving information from
 	 * the video device.
 	 */	
-	DeviceInfo(long object, String dev) throws V4L4JException{
+	DeviceInfo(long object, String n) throws V4L4JException{
 		inputs = new Vector<InputInfo>();
-		deviceFile = dev;
+		deviceFile = null;
+		name = n;
 		getInfo(object);
 		this.object = object;
 	}

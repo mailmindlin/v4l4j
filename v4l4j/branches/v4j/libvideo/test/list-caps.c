@@ -32,9 +32,10 @@
 #include "libvideo.h"
 
 int main(int argc, char** argv) {
+	struct device_id *id;
 	struct capture_device *c;
 	struct control_list *l;
-	struct v4l2_queryctrl *qc;
+	struct control *qc;
 	struct video_device *v;
 	int std=0, channel=0, i, j;
 
@@ -53,7 +54,13 @@ int main(int argc, char** argv) {
 		printf("Using standard %d, channel %d\n",std, channel);
 	}
 
-	v = open_device(argv[1]);
+	id = create_device_id(argv[1]);
+	if (! id) {
+		printf("Error probing device\n");
+		return -1;
+	}
+
+	v = open_device(id);
 	if(v==NULL){
 		printf("Error opening device\n");
 		return -1;
@@ -64,7 +71,7 @@ int main(int argc, char** argv) {
 	l = get_control_list(v);
 	printf("Listing available controls (%d)\n", l->count);
 	for(i=0;i<l->count; i++){
-		qc = l->controls[i].v4l2_ctrl;
+		qc = &l->controls[i];
 		printf("Control: id: 0x%x - name: %s - min: %d -max: %d - step: %d - type: %d(%s) - flags: %d (%s%s%s%s%s%s)\n",
 				qc->id, (char *) &qc->name, qc->minimum, qc->maximum, qc->step, qc->type,
 				qc->type == V4L2_CTRL_TYPE_INTEGER ? "Integer" :
@@ -82,9 +89,9 @@ int main(int argc, char** argv) {
 				qc->flags & V4L2_CTRL_FLAG_SLIDER ? "slider " : "");
 
 		if(l->controls[i].count_menu!=0){
-			printf("Menu items (%d) %s\n", l->controls[i].count_menu, l->controls[i].v4l2_ctrl->step==1?"contiguous":"non-contiguous");
+			printf("Menu items (%d) %s\n", l->controls[i].count_menu, l->controls[i].step==1?"contiguous":"non-contiguous");
 			for(j=0; j<l->controls[i].count_menu; j++)
-				printf("\tMenu item: %s - %d\n", l->controls[i].v4l2_menu[j].name, l->controls[i].v4l2_menu[j].index);
+				printf("\tMenu item: %s - %d\n", l->controls[i].menus[j].name, l->controls[i].menus[j].index);
 
 		}
 	}
@@ -96,6 +103,7 @@ int main(int argc, char** argv) {
 	release_control_list(v);
 
 	close_device(v);
+	release_device_id(id);
 
 	return 0;
 }

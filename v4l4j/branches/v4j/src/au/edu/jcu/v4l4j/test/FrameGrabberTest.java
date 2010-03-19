@@ -31,6 +31,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import au.edu.jcu.v4l4j.DeviceList;
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.exceptions.StateException;
@@ -47,7 +48,7 @@ public class FrameGrabberTest {
 		int w,h, std, ch;
 		String dev;
 		dev = (System.getProperty("test.device")!=null) ? System.getProperty("test.device") : "/dev/video0"; 
-		vd = new VideoDevice(dev);
+		vd = DeviceList.getVideoDeviceFromDeviceFile(dev);
 
 		w = (System.getProperty("test.width")!=null) ? Integer.parseInt(System.getProperty("test.width")) : 320;
 		h = (System.getProperty("test.height")!=null) ? Integer.parseInt(System.getProperty("test.height")) : 240;

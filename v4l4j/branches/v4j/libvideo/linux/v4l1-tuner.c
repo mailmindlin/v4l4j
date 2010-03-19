@@ -32,11 +32,11 @@ static void fix_quirky_values(struct video_device *vdev, int idx, unsigned int *
 	if(-1 == ioctl(vdev->fd, VIDIOCGTUNER, &t))
 		return;
 	if(*f<t.rangelow){
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "TUN: QUIRKS: Tuner frequency %u for tuner %d on device %s BELOW min %lu\n", *f, idx, vdev->file, t.rangelow);
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "TUN: QUIRKS: Tuner frequency %u for tuner %d BELOW min %lu\n", *f, idx, t.rangelow);
 		*f = t.rangelow;
 		return;
 	} else if(*f>t.rangehigh) {
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "TUN: QUIRKS: Tuner frequency %u for tuner %d on device %s ABOVE max %lu\n", *f, idx, vdev->file, t.rangehigh);
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "TUN: QUIRKS: Tuner frequency %u for tuner %d ABOVE max %lu\n", *f, idx, t.rangehigh);
 		*f = t.rangehigh;
 		return;
 	}
@@ -44,7 +44,7 @@ static void fix_quirky_values(struct video_device *vdev, int idx, unsigned int *
 
 int set_tuner_freq_v4l1(struct video_device *vdev, int idx, unsigned int f){
 	if(-1 == ioctl(vdev->fd, VIDIOCSFREQ, &f)){
-		dprint(LIBVIDEO_SOURCE_TUNER, LIBVIDEO_LOG_ERR, "TUN: Failed to set tuner frequency on device %s\n", vdev->file);
+		dprint(LIBVIDEO_SOURCE_TUNER, LIBVIDEO_LOG_ERR, "TUN: Failed to set tuner frequency\n");
 		return LIBVIDEO_ERR_IOCTL;
 	}
 	return 0;
@@ -52,7 +52,7 @@ int set_tuner_freq_v4l1(struct video_device *vdev, int idx, unsigned int f){
 
 int get_tuner_freq_v4l1(struct video_device *vdev, int idx, unsigned int *f){
 	if(-1 == ioctl(vdev->fd, VIDIOCGFREQ, f)){
-		dprint(LIBVIDEO_SOURCE_TUNER, LIBVIDEO_LOG_ERR, "TUN: Failed to get tuner frequency on device %s\n", vdev->file);
+		dprint(LIBVIDEO_SOURCE_TUNER, LIBVIDEO_LOG_ERR, "TUN: Failed to get tuner frequency\n");
 		return LIBVIDEO_ERR_IOCTL;
 	}
 	fix_quirky_values(vdev, idx, f);
@@ -64,10 +64,10 @@ int get_rssi_afc_v4l1(struct video_device *vdev, int idx, int *r, int *a){
 	CLEAR(t);
 	t.tuner = 0;
 	if(-1 == ioctl (vdev->fd, VIDIOCGTUNER, &t)){
-		dprint(LIBVIDEO_SOURCE_TUNER, LIBVIDEO_LOG_ERR, "TUN: Failed to get tuner info on device %s\n", vdev->file);
+		dprint(LIBVIDEO_SOURCE_TUNER, LIBVIDEO_LOG_ERR, "TUN: Failed to get tuner info\n");
 		return LIBVIDEO_ERR_IOCTL;
 	}
-	dprint(LIBVIDEO_SOURCE_TUNER, LIBVIDEO_LOG_DEBUG, "TUN: Got RSSI %d & AFC 0 on device %s\n", t.signal, vdev->file);
+	dprint(LIBVIDEO_SOURCE_TUNER, LIBVIDEO_LOG_DEBUG, "TUN: Got RSSI %d & AFC 0\n", t.signal);
 	*r = t.signal;
 	*a = 0;
 	return 0;

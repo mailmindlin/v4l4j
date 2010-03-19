@@ -30,7 +30,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.File;
 import java.util.Vector;
 
 import javax.swing.BorderFactory;
@@ -46,6 +45,7 @@ import javax.swing.SpringLayout;
 import javax.swing.SwingUtilities;
 
 import au.edu.jcu.v4l4j.DeviceInfo;
+import au.edu.jcu.v4l4j.DeviceList;
 import au.edu.jcu.v4l4j.ImageFormat;
 import au.edu.jcu.v4l4j.InputInfo;
 import au.edu.jcu.v4l4j.V4L4JConstants;
@@ -55,35 +55,30 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 public class DeviceChooser  extends WindowAdapter implements ActionListener{
 	
-	private static String v4lSysfsPath="/sys/class/video4linux/";
-	
 	private JFrame frame;
 	private JPanel mainPanel;
-	private JComboBox deviceFiles;
+	private JComboBox devListBox;
 	private DeviceInfoPane info;
 	private int width, height;
+	private DeviceList devList;
 	
 	/**
 	 * This method build a new device chooser object
-	 * @param dev the full path to a v4l device file, or null
-	 * to try and autodetect some.
+	 * @param w the capture width
+	 * @param h the capture height
 	 */
-	public DeviceChooser(String dev, int w, int h){
+	public DeviceChooser(int w, int h){
 		frame = new JFrame("V4L device file selection");
 		mainPanel = new JPanel();
 		info = null;
 		
 		width = w;
 		height =h;
-		
-		if(dev == null)
-			deviceFiles = new JComboBox(listV4LDeviceFiles());
-		else 
-			deviceFiles = new JComboBox(new Object[] {dev});
-		
+		devList = DeviceList.createList();
+		devListBox = new JComboBox(devList.getNameList().toArray());
 		initGUI();
 		actionPerformed(null);
-		deviceFiles.addActionListener(this);
+		devListBox.addActionListener(this);
 		
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frame.pack();
@@ -94,17 +89,16 @@ public class DeviceChooser  extends WindowAdapter implements ActionListener{
 		frame.getContentPane().add(mainPanel);
 		frame.addWindowListener(this);
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
-		deviceFiles.setAlignmentX(Component.CENTER_ALIGNMENT);
+		devListBox.setAlignmentX(Component.CENTER_ALIGNMENT);
 		Dimension d = new Dimension(120,25);
-		deviceFiles.setMaximumSize(d);
-		mainPanel.add(deviceFiles);
+		devListBox.setMaximumSize(d);
+		mainPanel.add(devListBox);
 		d = new Dimension(600,500);
 		mainPanel.setMinimumSize(d);
 		mainPanel.setSize(d);
 		mainPanel.setPreferredSize(d);
 		mainPanel.setMaximumSize(d);
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(1, 0, 0, 0));
-
 	}
 	
     /**
@@ -114,35 +108,14 @@ public class DeviceChooser  extends WindowAdapter implements ActionListener{
 	public void windowClosing(WindowEvent e) {
 		if(info!=null)
 			info.close();
+		
+		devList.release();
 	}
 	
-	private Object[] listV4LDeviceFiles(){
-		Vector<String> dev = new Vector<String>();
-		File dir = new File(v4lSysfsPath);
-		String[] files = dir.list();
-		
-		for(String file: files)
-			//the following test the presence of "video" in 
-			//each file name - not very portable - relying on HAL
-			//would be much better ...
-			if(file.indexOf("video")!=-1)
-				dev.add("/dev/"+file);
-
-		if(dev.size()==0){
-			System.err.println("Unable to detect any V4L device file\n"+
-					"Run this program again with the correct V4L device file"
-					+" as sole argument");
-			System.exit(0);
-		}
-		
-		return dev.toArray();
-	}
-	
-
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		String dev = (String)deviceFiles.getSelectedItem();
+		String name = (String)devListBox.getSelectedItem();
 
 		if(info!=null){
 			info.close();
@@ -150,7 +123,7 @@ public class DeviceChooser  extends WindowAdapter implements ActionListener{
 		}
 		
 		try {
-			info = new DeviceInfoPane(dev, this);
+			info = new DeviceInfoPane(devList.getVideoDeviceForName(name), this);
 			info.getPanel().setAlignmentX(Component.CENTER_ALIGNMENT);
 			mainPanel.add(info.getPanel());
 		} catch (V4L4JException e1) {
@@ -169,12 +142,10 @@ public class DeviceChooser  extends WindowAdapter implements ActionListener{
 
 			@Override
 			public void run() {
-				if(argz.length==3)
-					new DeviceChooser(argz[0], Integer.parseInt(argz[1]), Integer.parseInt(argz[2]));
-				else if (argz.length == 2)
-					new DeviceChooser(null, Integer.parseInt(argz[0]), Integer.parseInt(argz[1]));
+				if (argz.length == 2)
+					new DeviceChooser(Integer.parseInt(argz[0]), Integer.parseInt(argz[1]));
 				else {
-					new DeviceChooser(null, 640, 480);
+					new DeviceChooser(640, 480);
 				}
 			}
 			
@@ -202,10 +173,10 @@ public class DeviceChooser  extends WindowAdapter implements ActionListener{
 		private DeviceChooser chooser;
 		
 		
-		public DeviceInfoPane(String d, DeviceChooser c) throws V4L4JException{
+		public DeviceInfoPane(VideoDevice d, DeviceChooser c) throws V4L4JException{
 			chooser = c;
 			String tmp ="";
-			vd = new VideoDevice(d);
+			vd = d;
 			try {
 				di = vd.getDeviceInfo();
 			} catch (V4L4JException e){

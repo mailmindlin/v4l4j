@@ -26,6 +26,7 @@ package au.edu.jcu.v4l4j.examples;
 
 import java.io.IOException;
 
+import au.edu.jcu.v4l4j.DeviceList;
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.ImageFormatList;
 import au.edu.jcu.v4l4j.V4L4JConstants;
@@ -69,7 +70,7 @@ public class GetFrameRate {
 		std = s;
 		intv = iv;
 		try {
-			vd = new VideoDevice(dev);
+			vd = DeviceList.getVideoDeviceFromDeviceFile(dev);
 			imfList = vd.getDeviceInfo().getFormatList();
 			if(outFmt==0)
 				getRawFg();

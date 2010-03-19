@@ -111,7 +111,7 @@ end:
 	return -1;
 }
 
-int qc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, int *val){
+int qc_get_ctrl(struct video_device *vdev, struct control *q, void *d, int *val){
 	int ret = LIBVIDEO_ERR_IOCTL;
 	switch (q->id) {
 		case 0:
@@ -140,7 +140,7 @@ int qc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, in
 	return ret;
 }
 
-int qc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val, void *d){
+int qc_set_ctrl(struct video_device *vdev, struct control *q, int *val, void *d){
 	int prev = 0, ret = LIBVIDEO_ERR_IOCTL;
 	switch (q->id) {
 		case 0:
@@ -192,63 +192,63 @@ int qc_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 
 		//
 		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "QC: Found quickcam private ioctl Brightness Settle\n");
-		c[i].v4l2_ctrl->id=i;
-		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
-		strcpy((char *) c[i].v4l2_ctrl->name,"Brightness Settle");
-		c[i].v4l2_ctrl->minimum =0;
-		c[i].v4l2_ctrl->maximum = 1;
-		c[i].v4l2_ctrl->step = 1;
-		c[i].v4l2_ctrl->default_value = 0;
-		c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
-		c[i].v4l2_ctrl->reserved[1]=QC_PROBE_INDEX;
+		c[i].id=i;
+		c[i].type = V4L2_CTRL_TYPE_INTEGER;
+		strcpy((char *) c[i].name,"Brightness Settle");
+		c[i].minimum =0;
+		c[i].maximum = 1;
+		c[i].step = 1;
+		c[i].default_value = 0;
+		c[i].reserved[0]=V4L2_PRIV_IOCTL;
+		c[i].reserved[1]=QC_PROBE_INDEX;
 		i++;
 
 		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "QC: Found quickcam private ioctl Compression mode\n");
-		c[i].v4l2_ctrl->id=i;
-		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
-		strcpy((char *) c[i].v4l2_ctrl->name,"Compression");
-		c[i].v4l2_ctrl->minimum =0;
-		c[i].v4l2_ctrl->maximum = 1;
-		c[i].v4l2_ctrl->step = 1;
-		c[i].v4l2_ctrl->default_value = 0;
-		c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
-		c[i].v4l2_ctrl->reserved[1]=QC_PROBE_INDEX;
+		c[i].id=i;
+		c[i].type = V4L2_CTRL_TYPE_INTEGER;
+		strcpy((char *) c[i].name,"Compression");
+		c[i].minimum =0;
+		c[i].maximum = 1;
+		c[i].step = 1;
+		c[i].default_value = 0;
+		c[i].reserved[0]=V4L2_PRIV_IOCTL;
+		c[i].reserved[1]=QC_PROBE_INDEX;
 		i++;
 
 		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "QC: Found quickcam private ioctl Interpolation\n");
-		c[i].v4l2_ctrl->id=i;
-		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
-		strcpy((char *) c[i].v4l2_ctrl->name,"Interpolation");
-		c[i].v4l2_ctrl->minimum =0;
-		c[i].v4l2_ctrl->maximum = 5;
-		c[i].v4l2_ctrl->step = 1;
-		c[i].v4l2_ctrl->default_value = 0;
-		c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
-		c[i].v4l2_ctrl->reserved[1]=QC_PROBE_INDEX;
+		c[i].id=i;
+		c[i].type = V4L2_CTRL_TYPE_INTEGER;
+		strcpy((char *) c[i].name,"Interpolation");
+		c[i].minimum =0;
+		c[i].maximum = 5;
+		c[i].step = 1;
+		c[i].default_value = 0;
+		c[i].reserved[0]=V4L2_PRIV_IOCTL;
+		c[i].reserved[1]=QC_PROBE_INDEX;
 		i++;
 
 		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "QC: Found quickcam private ioctl Auto Brightness\n");
-		c[i].v4l2_ctrl->id=i;
-		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
-		strcpy((char *) c[i].v4l2_ctrl->name,"Auto Brightness");
-		c[i].v4l2_ctrl->minimum =0;
-		c[i].v4l2_ctrl->maximum = 1;
-		c[i].v4l2_ctrl->step = 1;
-		c[i].v4l2_ctrl->default_value = 0;
-		c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
-		c[i].v4l2_ctrl->reserved[1]=QC_PROBE_INDEX;
+		c[i].id=i;
+		c[i].type = V4L2_CTRL_TYPE_INTEGER;
+		strcpy((char *) c[i].name,"Auto Brightness");
+		c[i].minimum =0;
+		c[i].maximum = 1;
+		c[i].step = 1;
+		c[i].default_value = 0;
+		c[i].reserved[0]=V4L2_PRIV_IOCTL;
+		c[i].reserved[1]=QC_PROBE_INDEX;
 		i++;
 
 		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "QC: Found quickcam private ioctl Equalise image\n");
-		c[i].v4l2_ctrl->id=i;
-		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
-		strcpy((char *) c[i].v4l2_ctrl->name,"Equalise image");
-		c[i].v4l2_ctrl->minimum =0;
-		c[i].v4l2_ctrl->maximum = 1;
-		c[i].v4l2_ctrl->step = 1;
-		c[i].v4l2_ctrl->default_value = 0;
-		c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
-		c[i].v4l2_ctrl->reserved[1]=QC_PROBE_INDEX;
+		c[i].id=i;
+		c[i].type = V4L2_CTRL_TYPE_INTEGER;
+		strcpy((char *) c[i].name,"Equalise image");
+		c[i].minimum =0;
+		c[i].maximum = 1;
+		c[i].step = 1;
+		c[i].default_value = 0;
+		c[i].reserved[0]=V4L2_PRIV_IOCTL;
+		c[i].reserved[1]=QC_PROBE_INDEX;
 		i++;
 	} else{
 			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "QC: QC not found\n");

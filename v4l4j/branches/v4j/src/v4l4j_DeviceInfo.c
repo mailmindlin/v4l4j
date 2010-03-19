@@ -207,7 +207,6 @@ static void create_formats_object(JNIEnv *e, jobject t, jclass this_class,
  * Get info about a v4l device given its device file
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobject t, jlong v4l4j_device){
-//void Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobject t, jlong v4l4j_device){
 
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) v4l4j_device;
@@ -223,10 +222,10 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobje
 		return;
 	}
 
-	name_field = (*e)->GetFieldID(e, this_class, "name", "Ljava/lang/String;");
+	name_field = (*e)->GetFieldID(e, this_class, "deviceFile", "Ljava/lang/String;");
 	if(name_field == NULL){
-		info("[V4L4J] Error looking up the name attribute\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the name attribute");
+		info("[V4L4J] Error looking up the deviceFile attribute\n");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the deviceFile attribute");
 		return;
 	}
 
@@ -235,8 +234,14 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobje
 	//get data from libvideo
 	if(get_device_info(vd)!=NULL){
 		//fill in values in DeviceInfo object
-		/* set the name field */
-		(*e)->SetObjectField(e, t, name_field, (*e)->NewStringUTF(e, vd->info->name));
+
+		if (getPlatform() == kLinuxPlatform) {
+			dprint(LOG_LIBVIDEO, "[V4L4J] setting device file name to '%s'\n"
+					, vd->id.device_handle);
+			/* set the name field */
+			(*e)->SetObjectField(e, t, name_field,
+					(*e)->NewStringUTF(e, vd->id.device_handle));
+		}
 
 		/* set the inputs field */
 		dprint(LOG_V4L4J, "[V4L4J] Creating inputInfo objects\n");
