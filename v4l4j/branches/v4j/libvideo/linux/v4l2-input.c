@@ -377,7 +377,7 @@ static int set_image_format(struct capture_device *c, int *palettes,
 		int nb, int fd){
 	int best_palette = -1, i;
 	struct convert_data* convert = c->convert;
-	
+
 	XMALLOC(convert->src_fmt,struct v4l2_format *,sizeof(struct v4l2_format));
 	XMALLOC(convert->dst_fmt,struct v4l2_format *,sizeof(struct v4l2_format));
 
@@ -549,7 +549,7 @@ int set_cap_param_v4l2(struct video_device *vdev, int *palettes, int nb) {
 	int def[NB_SUPPORTED_PALETTES] = DEFAULT_PALETTE_ORDER;
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-			"CAP: Setting capture parameters on device %s.\n", vdev->file);
+			"CAP: Setting capture parameters on device %s.\n", vdev->id.device_handle);
 
 	if(nb<0 || nb>=NB_SUPPORTED_PALETTES) {
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
@@ -609,7 +609,7 @@ int init_capture_v4l2(struct video_device *vdev) {
 	struct v4l2_buffer buf;
 	int i=0;
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-			"CAP: Initialising capture on device %s.\n", vdev->file);
+			"CAP: Initialising capture on device %s.\n", vdev->id.device_handle);
 
 	CLEAR(req);
 
@@ -684,7 +684,7 @@ int start_capture_v4l2(struct video_device *vdev) {
 	XMALLOC(b,struct v4l2_buffer *, sizeof(struct v4l2_buffer));
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-			"CAP: Starting capture on device %s.\n", vdev->file);
+			"CAP: Starting capture on device %s.\n", vdev->id.device_handle);
 
 	//Enqueue all buffers
 	for(i=0; i< vdev->capture->buffer_nr; i++) {
@@ -719,7 +719,7 @@ void *dequeue_buffer_v4l2_convert(struct video_device *vdev, int *len) {
 	*len = -1;
 	while(*len==-1){
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
-				"CAP: dequeuing buffer on device %s.\n", vdev->file);
+				"CAP: dequeuing buffer on device %s.\n", vdev->id.device_handle);
 
 		CLEAR(*b);
 
@@ -736,7 +736,7 @@ void *dequeue_buffer_v4l2_convert(struct video_device *vdev, int *len) {
 				"CAP: Passing buffer %d of len %d at %p with format %#x"
 				" to be stored in buffer at %p of length %d with format %#x\n",
 				b->index, b->bytesused,
-				vdev->capture->priv->mmap->buffers[b->index].start,
+				vdev->capture->backend->mmap->buffers[b->index].start,
 				conv->src_fmt->fmt.pix.pixelformat,
 				conv->frame, conv->dst_fmt->fmt.pix.sizeimage,
 				conv->dst_fmt->fmt.pix.pixelformat
@@ -772,7 +772,7 @@ void *dequeue_buffer_v4l2_convert(struct video_device *vdev, int *len) {
 void *dequeue_buffer_v4l2(struct video_device *vdev, int *len) {
 	struct v4l2_buffer *b = (struct v4l2_buffer *) vdev->capture->backend->mmap->tmp;
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
-			"CAP: dequeuing buffer on device %s.\n", vdev->file);
+			"CAP: dequeuing buffer on device %s.\n", vdev->id.device_handle);
 
 	CLEAR(*b);
 
@@ -794,7 +794,7 @@ void *dequeue_buffer_v4l2(struct video_device *vdev, int *len) {
 void enqueue_buffer_v4l2(struct video_device *vdev) {
 	struct v4l2_buffer *b = (struct v4l2_buffer *) vdev->capture->backend->mmap->tmp;
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
-			"CAP: queuing buffer on device %s.\n", vdev->file);
+			"CAP: queuing buffer on device %s.\n", vdev->id.device_handle);
 	if (-1 == ioctl(vdev->fd, VIDIOC_QBUF, b))
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
 					"CAP: error queuing buffer\n");
@@ -804,7 +804,7 @@ void enqueue_buffer_v4l2(struct video_device *vdev) {
 int stop_capture_v4l2(struct video_device *vdev) {
 	int i;
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-			"CAP: stopping capture on device %s.\n", vdev->file);
+			"CAP: stopping capture on device %s.\n", vdev->id.device_handle);
 
 	i = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	if( ioctl(vdev->fd, VIDIOC_STREAMOFF, &i ) < 0 ){
@@ -822,7 +822,7 @@ void free_capture_v4l2(struct video_device *vdev) {
 	struct v4l2_requestbuffers req;
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-			"CAP: freeing capture structure on device %s.\n", vdev->file);
+			"CAP: freeing capture structure on device %s.\n", vdev->id.device_handle);
 
 	// free temp frame buffer if required
 	if(vdev->capture->is_native!=1)
@@ -832,8 +832,8 @@ void free_capture_v4l2(struct video_device *vdev) {
 	for(i=0; i < vdev->capture->buffer_nr; i++){
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 				"CAP: unmmap %d bytes at %p\n",
-				vdev->capture->priv->mmap->buffers[i].length,
-				vdev->capture->priv->mmap->buffers[i].start);
+				vdev->capture->backend->mmap->buffers[i].length,
+				vdev->capture->backend->mmap->buffers[i].start);
 
 		if (-1 == munmap(vdev->capture->backend->mmap->buffers[i].start,
 				(size_t) vdev->capture->backend->mmap->buffers[i].length))

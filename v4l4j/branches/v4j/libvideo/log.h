@@ -35,6 +35,7 @@
 									__FILE__, __LINE__, ## __VA_ARGS__);\
 								 fflush(stderr); } while(0)
 
+#define CLEAR(x) memset(&x, 0x0, sizeof(x));
 #define CLEAR_ARR(x,s) memset((x), 0x0, (s));
 #define ARRAY_SIZE(x) ( ((x)==NULL)?0:((int)sizeof(x)/(int)sizeof((x)[0])) )
 
@@ -97,21 +98,21 @@
 		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1, \
 				"CTRL: control id: 0x%x - name: %s - min: %d - max: %d - "\
 				"step: %d - type: %d(%s) - flags: %d (%s%s%s%s%s%s)\n", \
-				qc->id, (char *) &qc->name, qc->minimum, qc->maximum,\
-				qc->step, qc->type, \
-				qc->type == V4L2_CTRL_TYPE_INTEGER ? "Integer" :  \
-				qc->type == V4L2_CTRL_TYPE_BOOLEAN ? "Boolean" :  \
-				qc->type == V4L2_CTRL_TYPE_MENU ? "Menu" :  \
-				qc->type == V4L2_CTRL_TYPE_BUTTON ? "Button" : \
-				qc->type == V4L2_CTRL_TYPE_INTEGER64 ? "Integer64" :  \
-				qc->type == V4L2_CTRL_TYPE_CTRL_CLASS ? "Class" : "", \
-				qc->flags, \
-				qc->flags & V4L2_CTRL_FLAG_DISABLED ? "Disabled " : "", \
-				qc->flags & V4L2_CTRL_FLAG_GRABBED ? "Grabbed " : "", \
-				qc->flags & V4L2_CTRL_FLAG_READ_ONLY ? "ReadOnly " : "", \
-				qc->flags & V4L2_CTRL_FLAG_UPDATE ? "Update " : "", \
-				qc->flags & V4L2_CTRL_FLAG_INACTIVE ? "Inactive " : "", \
-				qc->flags & V4L2_CTRL_FLAG_SLIDER ? "slider " : ""); \
+				(qc)->id, (char *) &(qc)->name, (qc)->minimum, (qc)->maximum,\
+				(qc)->step, (qc)->type, \
+				(qc)->type == V4L2_CTRL_TYPE_INTEGER ? "Integer" :  \
+				(qc)->type == V4L2_CTRL_TYPE_BOOLEAN ? "Boolean" :  \
+				(qc)->type == V4L2_CTRL_TYPE_MENU ? "Menu" :  \
+				(qc)->type == V4L2_CTRL_TYPE_BUTTON ? "Button" : \
+				(qc)->type == V4L2_CTRL_TYPE_INTEGER64 ? "Integer64" :  \
+				(qc)->type == V4L2_CTRL_TYPE_CTRL_CLASS ? "Class" : "", \
+				(qc)->flags, \
+				(qc)->flags & V4L2_CTRL_FLAG_DISABLED ? "Disabled " : "", \
+				(qc)->flags & V4L2_CTRL_FLAG_GRABBED ? "Grabbed " : "", \
+				(qc)->flags & V4L2_CTRL_FLAG_READ_ONLY ? "ReadOnly " : "", \
+				(qc)->flags & V4L2_CTRL_FLAG_UPDATE ? "Update " : "", \
+				(qc)->flags & V4L2_CTRL_FLAG_INACTIVE ? "Inactive " : "", \
+				(qc)->flags & V4L2_CTRL_FLAG_SLIDER ? "slider " : ""); \
 	} while(0);
 
 #define XMALLOC(var, type, size)	\

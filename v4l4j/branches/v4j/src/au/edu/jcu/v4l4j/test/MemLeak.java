@@ -25,6 +25,7 @@ package au.edu.jcu.v4l4j.test;
 
 import java.io.IOException;
 
+import au.edu.jcu.v4l4j.DeviceList;
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
@@ -50,7 +51,7 @@ public class MemLeak implements Runnable{
 		while(!stop){
 			count = 0;
 			try {
-				vd = new VideoDevice(dev);
+				vd = DeviceList.getVideoDeviceFromDeviceFile(dev);
 				vd.getControlList();
 				fg = vd.getJPEGFrameGrabber(640, 480, 1, 1, 80);
 				fg.startCapture();

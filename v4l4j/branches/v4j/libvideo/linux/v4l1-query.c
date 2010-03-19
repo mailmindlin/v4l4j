@@ -57,7 +57,7 @@ static int check_palettes_v4l1(struct video_device *vdev){
 				"QRY: Checking frame size.\n");
 	if (-1 == ioctl( vdev->fd, VIDIOCGCAP, &vc)) {
 		info("Error checking frame size of V4L1 video device %s\n",
-				vdev->file);
+				vdev->id.device_handle);
 		return 0;
 	}
 
@@ -185,7 +185,8 @@ int check_inputs_v4l1(struct video_device *vd){
 	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, "QRY: querying inputs\n");
 
 	if (-1 == ioctl( vd->fd, VIDIOCGCAP, &vc)) {
-		info("Error checking capabilities of V4L1 video device %s\n", vd->file);
+		info("Error checking capabilities of V4L1 video device %s\n",
+				vd->id.device_handle);
 		ret = LIBVIDEO_ERR_NOCAPS;
 		goto end;
 	}
@@ -199,7 +200,8 @@ int check_inputs_v4l1(struct video_device *vd){
 		CLEAR(di->inputs[i]);
 		chan.channel=i;
 		if (-1 == ioctl(vd->fd, VIDIOCGCHAN, &chan)) {
-			info("Failed to get details of input %d on device %s\n",i,vd->file);
+			info("Failed to get details of input %d on device %s\n",i,
+					vd->id.device_handle);
 			ret = LIBVIDEO_ERR_IOCTL;
 			free_video_inputs(di->inputs,i);
 			goto end;
@@ -237,7 +239,7 @@ int check_inputs_v4l1(struct video_device *vd){
 					"QRY: Querying tuner\n");
 			if (-1 == query_tuner(&di->inputs[i], vd->fd)) {
 				info("Failed to get details of tuner on input %d of device %s\n"
-						, i, vd->file);
+						, i, vd->id.device_handle);
 				ret = LIBVIDEO_ERR_IOCTL;
 				free_video_inputs(di->inputs,i);
 				goto end;
@@ -263,18 +265,9 @@ static int list_frame_intv(struct device_info *dinfo, int fmt, int width,
 
 int query_device_v4l1(struct video_device *vdev){
 	int ret = 0;
-	struct video_capability caps;
 
 	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
 			"QRY: Querying V4L1 device.\n");
-
-	if (check_v4l1(vdev->fd, &caps)==-1) {
-		info("Error checking capabilities of V4L1 video device");
-		ret = LIBVIDEO_ERR_NOCAPS;
-		goto end;
-	}
-	//fill name field
-	strncpy(vdev->info->name, caps.name, NAME_FIELD_LENGTH);
 
 	//fill input field
 	if(check_inputs_v4l1(vdev)==-1){

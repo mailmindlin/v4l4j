@@ -30,6 +30,7 @@ import java.util.Vector;
 
 import javax.swing.JOptionPane;
 
+import au.edu.jcu.v4l4j.DeviceList;
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.ImageFormat;
 import au.edu.jcu.v4l4j.VideoDevice;
@@ -123,6 +124,6 @@ public class RGBViewer implements ImageProcessor{
 			channel = 0;
 		}
 		
-		new RGBViewer(new VideoDevice(dev),w,h,std,channel);
+		new RGBViewer(DeviceList.getVideoDeviceFromDeviceFile(dev),w,h,std,channel);
 	}
 }

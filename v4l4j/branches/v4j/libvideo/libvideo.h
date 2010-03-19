@@ -25,6 +25,8 @@
 #ifndef H_COMMON
 #define H_COMMON
 
+#include <stdint.h>
+
 #ifdef __linux__
 #include <asm/types.h>		//for videodev2
 #include "videodev2.h"
@@ -33,7 +35,6 @@
 #include "libvideo-linux.h"
 #endif		// linux
 
-#define CLEAR(x) memset(&x, 0x0, sizeof(x));
 
 
 /*
@@ -227,7 +228,7 @@ enum {
 //all the fields in the following structure are read only
 struct capture_device {
 	struct capture_actions *actions;	//see def below
-	struct capture_backend *backend;		// platform-specific struct	
+	struct capture_backend *backend;		// platform-specific struct
 	struct convert_data* convert;	//do not touch - libv4lconvert stuff
 									//(used only when v4l2)
 									//only valid if is_native is 0
@@ -410,7 +411,6 @@ struct device_info {
 	struct video_input_info *inputs;
 	int nb_palettes;
 	struct palette_info *palettes;	// array of nb_palettes elements
-	char name[NAME_FIELD_LENGTH];
 	//this function enumerates the frame intervals for a given video format
 	//, width and height and modifies the pointer at p to point to either
 	//NULL, a struct frame_intv_discrete, struct frame_intv_continuous. It returns
@@ -432,16 +432,41 @@ struct device_info {
  *
  */
 
-//struct used to represent a single control.
+struct menu {	// based on v4l2_ctrlmenu
+	unsigned int		id;
+	unsigned int		index;
+	char				name[32];	/* Whatever */
+	unsigned int		reserved;
+};
+
+enum ctrl_type {
+	CTRL_TYPE_INTEGER	     = 1,
+	CTRL_TYPE_BOOLEAN	     = 2,
+	CTRL_TYPE_MENU	     = 3,
+	CTRL_TYPE_BUTTON	     = 4,
+	CTRL_TYPE_INTEGER64     = 5,
+	CTRL_TYPE_CTRL_CLASS    = 6,
+	CTRL_TYPE_STRING        = 7,
+};
+
+//struct used to represent a single control (based on v4l2_queryctrl)
 struct control {
-	struct v4l2_queryctrl *v4l2_ctrl;
-	struct v4l2_querymenu *v4l2_menu;//array of 'count_menu' v4l2_menus
-	int count_menu;
+	unsigned int		id;
+	enum ctrl_type		type;
+	char				name[32];	/* Whatever */
+	int					minimum;	/* Note signedness */
+	int					maximum;
+	int					step;
+	int					default_value;
+	unsigned int		flags;
+	unsigned int		reserved[2];
+	struct menu 		*menus;//array of 'count_menu'
+	int 				count_menu;
 };
 
 
 struct control_list {
-	struct control *controls;		//array of 'count' struct control's	
+	struct control *controls;		//array of 'count' struct control's
 	struct control_backend *backend;
 	int count;						//how many controls are available
 };
@@ -463,19 +488,31 @@ struct tuner_actions{
  * V I D E O   D E V I C E   I N T E R F A C E   S T R U C T S
  *
  */
-#define FILENAME_LENGTH				99 + 1
+
+#ifdef __linux__
+typedef char * pdevice_t;
+#endif
+
+#define kLinuxPlatform 		1
+#define kWindowsPlatform	2
+int getPlatform();
+
+// uniquely identifies a single video device
+struct device_id {
+	char *name;
+	pdevice_t device_handle;
+};
 
 struct video_device {
+	struct capture_device *capture;
+	struct device_info *info;
+	struct control_list *control;
+	struct tuner_actions *tuner_action;
+	struct device_id id;
 	int fd;
-
 #define V4L1_INTERFACE				1
 #define V4L2_INTERFACE				2
 	int interface_type;
-	char file[FILENAME_LENGTH];
-	struct device_info *info;
-	struct capture_device *capture;
-	struct control_list *control;
-	struct tuner_actions *tuner_action;
 };
 
 
@@ -487,10 +524,23 @@ struct video_device {
  *
  */
 
+
 //Put the version in string & return it. allocation and freeing
 //must be done by caller
 //passing a char[10] is enough.
 char *get_libvideo_version(char *);
+
+// returns an array of struct device_id, one for each detected video device
+struct device_id ** create_device_id_list();
+
+// frees a device_id list generated with the above method
+void release_device_id_list(struct device_id **);
+
+// returns a struct device_id from a device file(linux), or moniker (win)
+struct device_id *create_device_id(pdevice_t);
+
+void release_device_id(struct device_id *);
+
 
 /*
  *
@@ -498,7 +548,9 @@ char *get_libvideo_version(char *);
  *
  */
 //Creates a video_device (must call close_device() when done)
-struct video_device *open_device(char *);
+// (the device_id will be copied so it can safely be freed when open_device
+// returns)
+struct video_device *open_device(struct device_id *);
 int close_device(struct video_device *);
 
 /*
@@ -624,10 +676,10 @@ void release_device_info(struct video_device *);
  */
 struct control_list *get_control_list(struct video_device *);
 //returns 0, LIBVIDEO_ERR_WRONG_VERSION, LIBVIDEO_ERR_IOCTL
-int get_control_value(struct video_device *, struct v4l2_queryctrl *, int *);
+int get_control_value(struct video_device *, struct control *, int *);
 //returns 0, LIBVIDEO_ERR_WRONG_VERSION, LIBVIDEO_ERR_IOCTL or LIBVIDEO_ERR_STREAMING
 //the last argument (int *) will be set to the previous value of this control
-int set_control_value(struct video_device *, struct v4l2_queryctrl *,  int *);
+int set_control_value(struct video_device *, struct control *,  int *);
 void release_control_list(struct video_device *);
 
 /*

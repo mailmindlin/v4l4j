@@ -25,8 +25,8 @@ int count_v4l2_controls(struct video_device *);
 //and returns how many controls were created
 int create_v4l2_controls(struct video_device *, struct control *, int);
 //returns the value of a control
-int get_control_value_v4l2(struct video_device *, struct v4l2_queryctrl *, int *);
+int get_control_value_v4l2(struct video_device *, struct control *, int *);
 //sets the value of a control
-int set_control_value_v4l2(struct video_device *, struct v4l2_queryctrl *, int *);
+int set_control_value_v4l2(struct video_device *, struct control *, int *);
 
 #endif /*V4L2CTRL_H_*/

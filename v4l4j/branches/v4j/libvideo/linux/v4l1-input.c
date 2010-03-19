@@ -79,7 +79,7 @@ int set_cap_param_v4l1(struct video_device *vdev, int *palettes, int nb) {
 	int def[NB_SUPPORTED_PALETTES] = DEFAULT_PALETTE_ORDER;
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-			"CAP: Setting capture parameters on device %s.\n", vdev->file);
+			"CAP: Setting capture parameters on device %s.\n", vdev->id.device_handle);
 
 	if(nb<0 || nb>=NB_SUPPORTED_PALETTES) {
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
@@ -269,7 +269,7 @@ int set_cap_param_v4l1(struct video_device *vdev, int *palettes, int nb) {
 		list_cap_v4l1(vdev->fd);
 		return LIBVIDEO_ERR_FORMAT;
 	}
-	c->is_native=1;
+	c->is_native = 1;
 
 	win.x = win.y = 0;
 	win.width = c->width;
@@ -324,7 +324,7 @@ int init_capture_v4l1(struct video_device *vdev) {
 	struct video_mbuf vm;
 	CLEAR(vm);
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-			"CAP: initialising capture on device %s.\n", vdev->file);
+			"CAP: initialising capture on device %s.\n", vdev->id.device_handle);
 
 	if(-1 == ioctl(vdev->fd, VIDIOCGMBUF, &vm)){
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
@@ -394,7 +394,7 @@ int start_capture_v4l1(struct video_device *vdev) {
 	struct capture_device *c = vdev->capture;
 	struct video_mmap mm;
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-			"CAP: starting capture on device %s.\n", vdev->file);
+			"CAP: starting capture on device %s.\n", vdev->id.device_handle);
 
 	CLEAR(mm);
 	mm.frame = 0;
@@ -421,7 +421,7 @@ void *dequeue_buffer_v4l1(struct video_device *vdev, int *len) {
 	int next_frame = curr_frame ^ 1;
 	*len=c->imagesize;
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
-			"CAP: dequeuing buffer on device %s.\n", vdev->file);
+			"CAP: dequeuing buffer on device %s.\n", vdev->id.device_handle);
 
 	CLEAR(mm);
 
@@ -462,7 +462,7 @@ int stop_capture_v4l1(struct video_device *vdev) {
 //counterpart of init_capture, must be called it init_capture was successful
 void free_capture_v4l1(struct video_device *vdev) {
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-			"CAP: freeing capture structures on device %s.\n", vdev->file);
+			"CAP: freeing capture structures on device %s.\n", vdev->id.device_handle);
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: unmmap %d bytes at %p\n", vdev->capture->backend->mmap->v4l1_mmap_size,
 			vdev->capture->backend->mmap->buffers[0].start);

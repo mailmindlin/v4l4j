@@ -21,6 +21,7 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include "libvideo.h"
+#include "log.h"
 
 static void enum_image_fmt_v4l2(int fd) {
 	struct v4l2_fmtdesc fmtd;
