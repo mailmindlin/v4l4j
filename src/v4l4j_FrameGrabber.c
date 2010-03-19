@@ -99,7 +99,7 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 			return;
 		}
 
-		if(d->vdev->capture->is_native==1)
+		if(d->vdev->capture->is_native)
 			i = d->vdev->capture->palette;
 		else
 			i = d->vdev->capture->convert->src_palette;
@@ -182,7 +182,7 @@ static int init_format_converter(struct v4l4j_device *d){
 		} else if(d->output_fmt==OUTPUT_RGB24){
 			d->len = get_buffer_length(d);
 			//check who does it
-			if(d->vdev->capture->is_native==1){
+			if(d->vdev->capture->is_native){
 				dprint(LOG_V4L4J, "[V4L4J] Initialising RGB converter\n");
 				//we do it
 				ret = init_rgb_converter(d);
@@ -210,7 +210,7 @@ static void release_format_converter(struct v4l4j_device *d){
 		if(d->output_fmt==OUTPUT_JPG)
 			destroy_jpeg_compressor(d);
 		else if(d->output_fmt == OUTPUT_RGB24)
-			if(d->vdev->capture->is_native==1)
+			if(d->vdev->capture->is_native)
 				destroy_rgb_converter(d);
 	}
 }
@@ -326,7 +326,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doInit(
 		dprint(LOG_V4L4J, "[V4L4J] init_capture_device failed\n");
 		THROW_EXCEPTION(e, INIT_EXCP, "Error initialising device '%s'."
 							" Make sure it is a valid V4L device file and"
-							" check the file permissions.", d->vdev->file);
+							" check the file permissions.", d->vdev->id.name);
 		return 0;
 	}
 
@@ -373,8 +373,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doInit(
 	/*
 	 * i n i t _ c a p t u r e ( )
 	 */
-	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling 'init_capture(dev: %s)'\n",
-			d->vdev->file);
+	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling 'init_capture'\n");
 	if((i=(*c->actions->init_capture)(d->vdev))<0){
 		dprint(LOG_V4L4J, "[V4L4J] init_capture failed\n");
 		free_capture_device(d->vdev);
@@ -440,8 +439,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_start(
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
-	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling 'start_capture(dev: %s)'\n",
-			d->vdev->file);
+	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling 'start_capture'\n");
 	if((*d->vdev->capture->actions->start_capture)(d->vdev)<0){
 		dprint(LOG_V4L4J, "[V4L4J] start_capture failed\n");
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error starting the capture");
@@ -552,8 +550,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_stop(
 		JNIEnv *e, jobject t, jlong object){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
-	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling stop_capture(dev: %s)\n",
-			d->vdev->file);
+	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling stop_capture\n");
 	if((*d->vdev->capture->actions->stop_capture)(d->vdev)<0) {
 		dprint(LOG_V4L4J, "Error stopping capture\n");
 		//not sure whether we should throw an exception here...

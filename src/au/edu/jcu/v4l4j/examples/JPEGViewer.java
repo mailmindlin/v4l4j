@@ -30,6 +30,7 @@ import java.util.Vector;
 
 import javax.swing.JOptionPane;
 
+import au.edu.jcu.v4l4j.DeviceList;
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.ImageFormat;
 import au.edu.jcu.v4l4j.VideoDevice;
@@ -137,6 +138,6 @@ public class JPEGViewer implements ImageProcessor{
 			channel = 0;
 		}
 		
-		new JPEGViewer(new VideoDevice(dev),w,h,std,channel,80);
+		new JPEGViewer(DeviceList.getVideoDeviceFromDeviceFile(dev),w,h,std,channel,80);
 	}
 }

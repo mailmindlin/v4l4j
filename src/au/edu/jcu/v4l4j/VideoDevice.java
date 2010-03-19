@@ -24,7 +24,6 @@
 
 package au.edu.jcu.v4l4j;
 
-import java.io.File;
 import java.util.List;
 import java.util.Vector;
 
@@ -42,7 +41,7 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
 /**
  * An instance of a <code>VideoDevice</code> object represents an existing V4L 
  * video device. It is the starting point to use functionalities provided by 
- * v4l4j, which are divided in 3 categories:
+ * v4l4j, which are divided in 4 categories:
  * <ul>
  * <li>Information gathering about the video device,</li>
  * <li>Capturing frames from the video device,</li>
@@ -156,11 +155,17 @@ public class VideoDevice {
 	}
 	
 	/**
-	 * This JNI method initialises the libv4's struct video_device
-	 * @param device the name of the device file
+	 * This JNI method takes a JNI ptr to a struct device_id and creates
+	 * a struct video_device
+	 * @param object a JNI ptr to a struct device_id
+	 * @param shoudFreeObject whether or not to release the JNI ptr to struct 
+	 * device_id. If the ptr is part of an array, it must not be released here,
+	 * as it will be released when the array is released.
+	 * @return a struct video_device
 	 * @throws V4L4JException if there is an error
 	 */
-	private native long doInit(String device) throws V4L4JException;
+	private native long doInit(long object, boolean shouldFreeObject) 
+		throws V4L4JException;
 	
 	/**
 	 * This JNI method releases resources used by libvideo's struct 
@@ -208,6 +213,11 @@ public class VideoDevice {
 	private AbstractGrabber fg;
 	
 	/**
+	 * The name of the device ('Logitech Quickcam 9000')
+	 */
+	private String deviceName;
+	
+	/**
 	 * The DeviceInfo object associated with this video device
 	 */
 	private DeviceInfo deviceInfo;
@@ -221,11 +231,6 @@ public class VideoDevice {
 	 * The tuner list associated with this video device
 	 */
 	private TunerList tuners;
-	
-	/**
-	 * The name of the device file for this video device
-	 */
-	private String deviceFile;
 	
 	/**
 	 * The state of our VideoDevice (used for synchronisation)
@@ -246,19 +251,19 @@ public class VideoDevice {
 	private long v4l4jObject;
 	
 	/**
-	 * This constructor builds a <code>VideoDevice</code> using the full path to
-	 * its device file. When finished, resources must be released by calling 
+	 * This constructor builds a <code>VideoDevice</code> with the given device 
+	 * name and ptr to a struct video_device
+	 * When finished, resources must be released by calling 
 	 * {@link #release()}. 
-	 * @param dev the path to the device file
-	 * @throws V4L4JException if the device file is not accessible
+	 * @param object a JNI ptr to a struct device_id
+	 * @param shoudFreeObject whether or not to release the JNI ptr to struct 
+	 * device_id. If the ptr is part of an array, it must not be released here,
+	 * as it will be released when the array is released.
+	 * @throws V4L4JException if the device file is not present anymore
 	 */
-	public VideoDevice(String dev) throws V4L4JException{
-		if(!(new File(dev).canRead()))
-			throw new V4L4JException("The device file is not readable");
-
+	VideoDevice(long object, boolean shoudFreeObject) throws V4L4JException{
 		state = new State();		
-		deviceFile = dev;
-		v4l4jObject = doInit(deviceFile);
+		v4l4jObject = doInit(object, shoudFreeObject);
 		
 		try {
 			initDeviceInfo();
@@ -285,7 +290,7 @@ public class VideoDevice {
 	 */
 	private void initDeviceInfo() throws V4L4JException{		
 		//initialise deviceInfo
-		deviceInfo = new DeviceInfo(v4l4jObject, deviceFile);
+		deviceInfo = new DeviceInfo(v4l4jObject, deviceName);
 		ImageFormatList l = deviceInfo.getFormatList();
 		
 		supportJPEG = l.getJPEGEncodableFormats().size()==0?false:true;
@@ -374,12 +379,12 @@ public class VideoDevice {
 	}
 	
 	/**
-	 * This method returns the full path to the device file associated with this
+	 * This method returns the name of this
 	 * video device.
-	 * @return the full path to the device file
+	 * @return the name of this device
 	 */
-	public String getDevicefile() {
-		return deviceFile;
+	public String getDeviceName() {
+		return deviceName;
 	}
 	
 	/**
@@ -1493,7 +1498,6 @@ public class VideoDevice {
 		 * until all users have finished.
 		 * @return whether we can switch to the released state or not
 		 */
-		@SuppressWarnings("unused")
 		public synchronized void release(){
 			release(true);
 		}
@@ -1540,7 +1544,17 @@ public class VideoDevice {
 	}
 
 	public static void main(String args[]) throws V4L4JException{
-		VideoDevice vd = new VideoDevice(args[0]);
+		//  use first video device
+		DeviceList l = DeviceList.createList();
+		if (l.getNameList().size()==0) {
+			System.out.println("No video devices were found");
+			l.release();
+			return;
+		}
+		
+		VideoDevice vd = l.getVideoDeviceForName(l.getNameList().get(0));
+		l.release();
+		
 		DeviceInfo d = vd.getDeviceInfo(); 
 		System.out.println("name: "+d.getName());
 		System.out.println("Device file: "+d.getDeviceFile());

@@ -41,7 +41,7 @@ static void add_node(node **list, int id) {
 		(*list)->id = id;
 	}
 }
- 
+
 static  void empty_list(node *list){
 	node *t;
 	while(list) {
@@ -56,7 +56,7 @@ static int has_id(node *list, int id){
 
  	return 0;
  }
- 
+
  //returns the number of controls (standard and private V4L2 controls only)
 int count_v4l2_controls(struct video_device *vdev) {
 	struct v4l2_queryctrl qctrl;
@@ -126,33 +126,33 @@ int count_v4l2_controls(struct video_device *vdev) {
 	return count;
 }
 
-static void set_menu(struct v4l2_querymenu *q, int id, int idx, char *val){
+static void set_menu(struct menu *q, int id, int idx, char *val){
 	q->id = id;
 	q->index = idx;
 	snprintf((char *)q->name, 32, "%s", val);
 }
 
 static void set_query_menu(struct video_device *vd, struct control *c){
-	int i, count = 0, idx = 0, id = c->v4l2_ctrl->id;
-	struct v4l2_querymenu qm, *q;
+	int i, count = 0, idx = 0, id = c->id;
+	struct menu qm, *q;
 	CLEAR(qm);
 	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-			"CTRL: Setting menu for control %#x\n", c->v4l2_ctrl->id);
+			"CTRL: Setting menu for control %#x\n", c->id);
 
 	//check for known menu controls and put in some sensible menu items
 	if(id == V4L2_CID_POWER_LINE_FREQUENCY){
 		//populate struct control->v4l2_querymenu
-		XMALLOC(q, struct v4l2_querymenu *, 3*sizeof(struct v4l2_querymenu));
+		XMALLOC(q, struct menu *, 3*sizeof(struct menu));
 		set_menu(&q[count++], id, V4L2_CID_POWER_LINE_FREQUENCY_DISABLED, "Disabled");
 		set_menu(&q[count++], id, V4L2_CID_POWER_LINE_FREQUENCY_50HZ, "50 Hz");
 		set_menu(&q[count++], id, V4L2_CID_POWER_LINE_FREQUENCY_60HZ, "60 Hz");
 	} else if(id == V4L2_CID_COLORFX){
-		XMALLOC(q, struct v4l2_querymenu *, 3*sizeof(struct v4l2_querymenu));
+		XMALLOC(q, struct menu *, 3*sizeof(struct menu));
 		set_menu(&q[count++], id, V4L2_COLORFX_NONE, "None");
 		set_menu(&q[count++], id, V4L2_COLORFX_BW, "Black/White");
 		set_menu(&q[count++], id, V4L2_COLORFX_SEPIA, "Sepia");
 	} else if(id == V4L2_CID_MPEG_STREAM_TYPE){
-		XMALLOC(q, struct v4l2_querymenu *, 6*sizeof(struct v4l2_querymenu));
+		XMALLOC(q, struct menu *, 6*sizeof(struct menu));
 		set_menu(&q[count++], id, V4L2_MPEG_STREAM_TYPE_MPEG2_PS, "MPEG2 - Program stream");
 		set_menu(&q[count++], id, V4L2_MPEG_STREAM_TYPE_MPEG2_TS, "MPEG2 - Transport stream");
 		set_menu(&q[count++], id, V4L2_MPEG_STREAM_TYPE_MPEG1_SS, "MPEG1 - System stream");
@@ -160,7 +160,7 @@ static void set_query_menu(struct video_device *vd, struct control *c){
 		set_menu(&q[count++], id, V4L2_MPEG_STREAM_TYPE_MPEG1_VCD, "MPEG1 - VCD-compatible stream");
 		set_menu(&q[count++], id, V4L2_MPEG_STREAM_TYPE_MPEG2_SVCD, "MPEG2 - SVCD-compatible stream");
 	} else if(id == V4L2_CID_EXPOSURE_AUTO){
-		XMALLOC(q, struct v4l2_querymenu *, 4*sizeof(struct v4l2_querymenu));
+		XMALLOC(q, struct menu *, 4*sizeof(struct menu));
 		set_menu(&q[count++], id, V4L2_EXPOSURE_AUTO, "Auto");
 		set_menu(&q[count++], id, V4L2_EXPOSURE_MANUAL, "Manual");
 		set_menu(&q[count++], id, V4L2_EXPOSURE_SHUTTER_PRIORITY, "Shutter priority");
@@ -183,7 +183,7 @@ static void set_query_menu(struct video_device *vd, struct control *c){
 
 		//count how many menus there are
 		qm.id = id;
-		for(i = c->v4l2_ctrl->minimum; i==c->v4l2_ctrl->maximum; i++){
+		for(i = c->minimum; i==c->maximum; i++){
 			qm.index = i;
 			if(ioctl(vd->fd, VIDIOC_QUERYMENU, &qm) == 0){
 				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
@@ -196,10 +196,10 @@ static void set_query_menu(struct video_device *vd, struct control *c){
 				"CTRL: found %d menus\n", count);
 
 		if(count>0){
-			//populate struct control->v4l2_querymenu
-			XMALLOC(q, struct v4l2_querymenu *, count * sizeof(struct v4l2_querymenu));
+			//populate struct control->menus
+			XMALLOC(q, struct menu *, count * sizeof(struct menu));
 
-			for(i = c->v4l2_ctrl->minimum; i==c->v4l2_ctrl->maximum; i++){
+			for(i = c->minimum; i==c->maximum; i++){
 				q[idx].id = id;
 				q[idx].index = i;
 				if(ioctl(vd->fd, VIDIOC_QUERYMENU, &q[idx]) == 0)
@@ -209,80 +209,80 @@ static void set_query_menu(struct video_device *vd, struct control *c){
 			//sometimes, nothing is returned by the ioctl(VIDIOC_QUERYMENU),
 			//but the menu still exist and is
 			//made of contiguous values between minimum and maximum.
-			count = (c->v4l2_ctrl->maximum - c->v4l2_ctrl->minimum)/
-					c->v4l2_ctrl->step + 1;
+			count = (c->maximum - c->minimum)/
+					c->step + 1;
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
 					"CTRL: creating %d menus\n", count);
-			XMALLOC(q, struct v4l2_querymenu *,count*sizeof(struct v4l2_querymenu));
-			for(i = c->v4l2_ctrl->minimum;
-				i<=c->v4l2_ctrl->maximum;
-				i+=c->v4l2_ctrl->step){
+			XMALLOC(q, struct menu *,count*sizeof(struct menu));
+			for(i = c->minimum;
+				i<=c->maximum;
+				i+=c->step){
 				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
 						"CTRL: menu %d - val: %d\n", idx, i);
-				q[idx].id = c->v4l2_ctrl->id;
+				q[idx].id = c->id;
 				sprintf((char *) q[idx].name, "%d", i);
 				q[idx++].index = i;
 			}
 		}
 	}
 	c->count_menu = count;
-	c->v4l2_menu = q;
+	c->menus = q;
 
 }
 
-static void fix_quirky_struct(struct v4l2_queryctrl *v){
-	if(v->type==V4L2_CTRL_TYPE_INTEGER) {
-		if(v->step==0){
-			v->step = 1;
+static void fix_quirky_struct(struct control *c){
+	if(c->type==V4L2_CTRL_TYPE_INTEGER) {
+		if(c->step==0){
+			c->step = 1;
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
 					"CTRL: QUIRK: adjusted step value for INTEGER control '%s' "
-					"from 0 to 1\n", v->name);
+					"from 0 to 1\n", c->name);
 		}
-	} else if(v->type==V4L2_CTRL_TYPE_MENU) {
+	} else if(c->type==V4L2_CTRL_TYPE_MENU) {
 		//Not sure about this one...
-		if(v->step==0){
-			v->step = 1;
+		if(c->step==0){
+			c->step = 1;
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
 					"CTRL: QUIRK: adjusted step value for MENU control '%s' "
-					"from 0 to 1\n", v->name);
+					"from 0 to 1\n", c->name);
 		}
-	} else if(v->type==V4L2_CTRL_TYPE_BOOLEAN) {
-		if(v->step!=1){
+	} else if(c->type==V4L2_CTRL_TYPE_BOOLEAN) {
+		if(c->step!=1){
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
 					"CTRL: QUIRK: adjusted step value for BOOLEAN control '%s' "
-					"from %d to 1\n", v->name, v->step);
-			v->step = 1;
+					"from %d to 1\n", c->name, c->step);
+			c->step = 1;
 		}
-		if(v->minimum!=0){
+		if(c->minimum!=0){
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
 					"CTRL: QUIRK: adjusted minimum value for BOOLEAN control "
-					"'%s' from %d to 0\n", v->name, v->minimum);
-			v->minimum = 0;
+					"'%s' from %d to 0\n", c->name, c->minimum);
+			c->minimum = 0;
 		}
-		if(v->maximum!=1){
+		if(c->maximum!=1){
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
 					"CTRL: QUIRK: adjusted maximum value for BOOLEAN control "
-					"'%s' from %d to 1\n", v->name, v->maximum);
-			v->maximum = 1;
+					"'%s' from %d to 1\n", c->name, c->maximum);
+			c->maximum = 1;
 		}
-	} else if(v->type==V4L2_CTRL_TYPE_BUTTON) {
-		if(v->step!=0){
+	} else if(c->type==V4L2_CTRL_TYPE_BUTTON) {
+		if(c->step!=0){
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
 					"CTRL: QUIRK: adjusted step value for BUTTON control "
-					"'%s' from %d to 0\n", v->name, v->step);
-			v->step = 1;
+					"'%s' from %d to 0\n", c->name, c->step);
+			c->step = 1;
 		}
-		if(v->minimum!=0){
+		if(c->minimum!=0){
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
 					"CTRL: QUIRK: adjusted minimum value for BUTTON control "
-					"'%s' from %d to 0\n", v->name, v->minimum);
-			v->minimum = 0;
+					"'%s' from %d to 0\n", c->name, c->minimum);
+			c->minimum = 0;
 		}
-		if(v->maximum!=0){
+		if(c->maximum!=0){
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
 					"CTRL: QUIRK: adjusted maximum value for BUTTON control "
-					"'%s' from %d to 0\n", v->name, v->maximum);
-			v->maximum = 0;
+					"'%s' from %d to 0\n", c->name, c->maximum);
+			c->maximum = 0;
 		}
 	}
 }
@@ -299,14 +299,13 @@ int create_v4l2_controls(struct video_device *vdev, struct control *controls,
 			"CTRL: Creating std controls\n");
 	//create standard V4L controls
 	for( i = V4L2_CID_BASE; i< V4L2_CID_LASTP1 && count < max; i++) {
-		controls[count].v4l2_ctrl->id = i;
-		//if(ioctl(vdev->fd, VIDIOC_QUERYCTRL, controls[count].v4l2_ctrl) == 0) {
-		if(v4lconvert_vidioc_queryctrl(vdev->control->backend->convert, controls[count].v4l2_ctrl) == 0) {
-			dprint_v4l2_control(controls[count].v4l2_ctrl);
-			if ( !(controls[count].v4l2_ctrl->flags & V4L2_CTRL_FLAG_DISABLED)&&
-					controls[count].v4l2_ctrl->type!=V4L2_CTRL_TYPE_CTRL_CLASS){
-				fix_quirky_struct(controls[count].v4l2_ctrl);
-				if(controls[count].v4l2_ctrl->type == V4L2_CTRL_TYPE_MENU)
+		controls[count].id = i;
+		if(v4lconvert_vidioc_queryctrl(vdev->control->backend->convert, (struct v4l2_queryctrl *)&controls[count]) == 0) {
+			dprint_v4l2_control(&controls[count]);
+			if ( !(controls[count].flags & V4L2_CTRL_FLAG_DISABLED)&&
+					controls[count].type!=V4L2_CTRL_TYPE_CTRL_CLASS){
+				fix_quirky_struct(&controls[count]);
+				if(controls[count].type == V4L2_CTRL_TYPE_MENU)
 					set_query_menu(vdev, &controls[count]);
 				count++;
 				add_node(&list, i);
@@ -318,14 +317,13 @@ int create_v4l2_controls(struct video_device *vdev, struct control *controls,
 			"CTRL: Creating priv controls (found %d std ctrl)\n", count);
 	//create device-specific private V4L2 controls
 	for (i = V4L2_CID_PRIVATE_BASE;count < max; i++) {
-		controls[count].v4l2_ctrl->id = i;
-		//if (0 == ioctl (vdev->fd, VIDIOC_QUERYCTRL, controls[count].v4l2_ctrl)) {
-		if(v4lconvert_vidioc_queryctrl(vdev->control->backend->convert, controls[count].v4l2_ctrl) == 0) {
-			dprint_v4l2_control(controls[count].v4l2_ctrl);
-			if( ! (controls[count].v4l2_ctrl->flags & V4L2_CTRL_FLAG_DISABLED) &&
-					controls[count].v4l2_ctrl->type!=V4L2_CTRL_TYPE_CTRL_CLASS){
-				fix_quirky_struct(controls[count].v4l2_ctrl);
-				if(controls[count].v4l2_ctrl->type == V4L2_CTRL_TYPE_MENU)
+		controls[count].id = i;
+		if(v4lconvert_vidioc_queryctrl(vdev->control->backend->convert, (struct v4l2_queryctrl *)&controls[count]) == 0) {
+			dprint_v4l2_control(&controls[count]);
+			if( ! (controls[count].flags & V4L2_CTRL_FLAG_DISABLED) &&
+					controls[count].type!=V4L2_CTRL_TYPE_CTRL_CLASS){
+				fix_quirky_struct(&controls[count]);
+				if(controls[count].type == V4L2_CTRL_TYPE_MENU)
 					set_query_menu(vdev, &controls[count]);
 				count++;
 				add_node(&list, i);
@@ -357,10 +355,10 @@ int create_v4l2_controls(struct video_device *vdev, struct control *controls,
 		if(!has_id(list,qctrl.id ) && !(qctrl.flags & V4L2_CTRL_FLAG_DISABLED)
 				&& qctrl.type!=V4L2_CTRL_TYPE_CTRL_CLASS ){
 			dprint_v4l2_control((&qctrl));
-			CLEAR(*controls[count].v4l2_ctrl);
-			memcpy(controls[count].v4l2_ctrl, &qctrl,sizeof(struct v4l2_queryctrl));
-			fix_quirky_struct(controls[count].v4l2_ctrl);
-			if(controls[count].v4l2_ctrl->type == V4L2_CTRL_TYPE_MENU)
+			CLEAR(controls[count]);
+			memcpy(&controls[count], &qctrl,sizeof(struct control));
+			fix_quirky_struct(&controls[count]);
+			if(controls[count].type == V4L2_CTRL_TYPE_MENU)
 				set_query_menu(vdev, &controls[count]);
 			count++;
 		} else {
@@ -379,29 +377,29 @@ int create_v4l2_controls(struct video_device *vdev, struct control *controls,
 	empty_list(list);
 	return count;
 }
-static int fix_quirky_values(struct v4l2_queryctrl *qc, int v){
-	if(v < qc->minimum) {
+static int fix_quirky_values(struct control *c, int v){
+	if(v < c->minimum) {
 		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
 				"CTRL: QUIRK: fixed quirky control value %d below minimum %d\n",
-				v,qc->minimum);
-		return qc->minimum;
-	} else if (v>qc->maximum) {
+				v,c->minimum);
+		return c->minimum;
+	} else if (v>c->maximum) {
 		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
 				"CTRL: QUIRK: fixed quirky control value %d above maximum %d\n",
-				v,qc->maximum);
-		return qc->maximum;
+				v,c->maximum);
+		return c->maximum;
 	}
 	return v;
 
 }
 //returns the value of a control
 int get_control_value_v4l2(struct video_device *vdev,
-		struct v4l2_queryctrl *ctrl, int *val){
+		struct control *ctrl, int *val){
 	struct v4l2_control vc;
 	int ret = LIBVIDEO_ERR_IOCTL;
 	CLEAR(vc);
 	vc.id = ctrl->id;
-	//if( (ret = ioctl(vdev->fd, VIDIOC_G_CTRL, &vc)) == 0 ) {
+
 	if( (ret = v4lconvert_vidioc_g_ctrl(vdev->control->backend->convert, &vc)) == 0 ){
 		*val = fix_quirky_values(ctrl, vc.value);
 		ret = 0;
@@ -414,7 +412,7 @@ int get_control_value_v4l2(struct video_device *vdev,
 
 //sets the value of a control
 int set_control_value_v4l2(struct video_device *vdev,
-		struct v4l2_queryctrl *ctrl, int *i) {
+		struct control *ctrl, int *i) {
 	struct v4l2_control vc;
 	int prev = 0;
 

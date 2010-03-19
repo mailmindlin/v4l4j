@@ -288,7 +288,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
         try {
 			f.setTitle(fmtName+" capture from "+vd.getDeviceInfo().getName());
 		} catch (V4L4JException e1) {
-			f.setTitle(fmtName+" capture from "+vd.getDevicefile());
+			f.setTitle(fmtName+" capture from "+vd.getDeviceName());
 		}
         f.pack();
         f.setVisible(true);

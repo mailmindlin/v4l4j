@@ -78,7 +78,7 @@ end:
 	return -1;
 }
 
-int pwc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, int *val){
+int pwc_get_ctrl(struct video_device *vdev, struct control *q, void *d, int *val){
 	struct pwc_mpt_angles angles;
 	int ret = LIBVIDEO_ERR_IOCTL;
 
@@ -113,7 +113,7 @@ int pwc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, i
 	return ret;
 }
 
-int pwc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val, void *d){
+int pwc_set_ctrl(struct video_device *vdev, struct control *q, int *val, void *d){
 	struct pwc_mpt_angles angles;
 	int ret = LIBVIDEO_ERR_IOCTL, prev = 0;
 
@@ -186,40 +186,40 @@ int pwc_list_ctrl(struct video_device *vdev, struct control *c, void *data ){
 
 		//Pan/tilt reset
 		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: Found pwc private ioctl Pan/Tilt reset\n");
-		c[i].v4l2_ctrl->id=i;
-		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_BUTTON;
-		strcpy((char *) c[i].v4l2_ctrl->name,"Pan/Tilt reset");
-		c[i].v4l2_ctrl->minimum = c[i].v4l2_ctrl->maximum = c[i].v4l2_ctrl->step = c[i].v4l2_ctrl->default_value = 0;
-		c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
-		c[i].v4l2_ctrl->reserved[1]=PWC_PROBE_INDEX;
+		c[i].id=i;
+		c[i].type = V4L2_CTRL_TYPE_BUTTON;
+		strcpy((char *) c[i].name,"Pan/Tilt reset");
+		c[i].minimum = c[i].maximum = c[i].step = c[i].default_value = 0;
+		c[i].reserved[0]=V4L2_PRIV_IOCTL;
+		c[i].reserved[1]=PWC_PROBE_INDEX;
 		i++;
 
 		//Pan/tilt control
 		if(ioctl(vdev->fd, VIDIOCPWCMPTGRANGE, &range) ==0) {
 			//Pan control
 			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: Found pwc private ioctl Pan control\n");
-			c[i].v4l2_ctrl->id=i;
-			c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
-			strcpy((char *) c[i].v4l2_ctrl->name,"Pan");
-			c[i].v4l2_ctrl->minimum = range.pan_min;
-			c[i].v4l2_ctrl->maximum = range.pan_max;
-			c[i].v4l2_ctrl->step = 1;
-			c[i].v4l2_ctrl->default_value = 0;
-			c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
-			c[i].v4l2_ctrl->reserved[1]=PWC_PROBE_INDEX;
+			c[i].id=i;
+			c[i].type = V4L2_CTRL_TYPE_INTEGER;
+			strcpy((char *) c[i].name,"Pan");
+			c[i].minimum = range.pan_min;
+			c[i].maximum = range.pan_max;
+			c[i].step = 1;
+			c[i].default_value = 0;
+			c[i].reserved[0]=V4L2_PRIV_IOCTL;
+			c[i].reserved[1]=PWC_PROBE_INDEX;
 			i++;
 
 			//tilt control
 			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: Found pwc private ioctl Tilt control\n");
-			c[i].v4l2_ctrl->id=i;
-			c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
-			strcpy((char *) c[i].v4l2_ctrl->name,"Tilt");
-			c[i].v4l2_ctrl->minimum = range.tilt_min;
-			c[i].v4l2_ctrl->maximum = range.tilt_max;
-			c[i].v4l2_ctrl->step = 1;
-			c[i].v4l2_ctrl->default_value = 0;
-			c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
-			c[i].v4l2_ctrl->reserved[1]=PWC_PROBE_INDEX;
+			c[i].id=i;
+			c[i].type = V4L2_CTRL_TYPE_INTEGER;
+			strcpy((char *) c[i].name,"Tilt");
+			c[i].minimum = range.tilt_min;
+			c[i].maximum = range.tilt_max;
+			c[i].step = 1;
+			c[i].default_value = 0;
+			c[i].reserved[0]=V4L2_PRIV_IOCTL;
+			c[i].reserved[1]=PWC_PROBE_INDEX;
 
 		} else {
 			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "PWC: Error probing Pan/tilt range\n");

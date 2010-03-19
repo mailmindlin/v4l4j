@@ -97,7 +97,7 @@ static int lookup_frame_intv(struct v4lconvert_data *conv, int fmt, int width,
 				intv.pixel_format = fmt;
 				intv.width = width;
 				intv.height = height;
-		} else if((intv.type == V4L2_FRMIVAL_TYPE_CONTINUOUS) || 
+		} else if((intv.type == V4L2_FRMIVAL_TYPE_CONTINUOUS) ||
 					(intv.type == V4L2_FRMIVAL_TYPE_STEPWISE)) {
 				dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
 					"QRY: Found %s frame intv:\n",
@@ -154,7 +154,7 @@ static int lookup_frame_intv(struct v4lconvert_data *conv, int fmt, int width,
 					c->step.numerator = intv.stepwise.step.numerator;
 					c->step.denominator = intv.stepwise.step.denominator;
 				}
-				
+
 				// exit the while loop
 				break;
 		}
@@ -556,7 +556,7 @@ int check_inputs_v4l2(struct video_device *vdev){
 		vi.index = i;
 		if (-1 == ioctl(vdev->fd, VIDIOC_ENUMINPUT, &vi)) {
 			info("Failed to get details of input %d on device %s\n",
-					i, vdev->file);
+					i, vdev->id.device_handle);
 			ret = LIBVIDEO_ERR_IOCTL;
 			free_video_inputs(di->inputs,i);
 			goto end;
@@ -576,7 +576,7 @@ int check_inputs_v4l2(struct video_device *vdev){
 					"QRY: Querying tuner\n");
 			if (-1 == query_tuner(&di->inputs[i], vdev->fd, vi.tuner)) {
 				info("Failed to get details of tuner on input %d of device %s\n"
-						, i, vdev->file);
+						, i, vdev->id.device_handle);
 				ret = LIBVIDEO_ERR_IOCTL;
 				free_video_inputs(di->inputs,i);
 				goto end;
@@ -612,23 +612,14 @@ static int list_frame_intv(struct device_info *dinfo, int fmt, int width,
 
 int query_device_v4l2(struct video_device *vdev){
 	int ret = 0;
-	struct v4l2_capability caps;
 
 	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
 			"QRY: Querying V4L2 device.\n");
 
-	if (check_v4l2(vdev->fd, &caps)==-1) {
-		info("Error checking capabilities of V4L2 video device %s", vdev->file);
-		ret = LIBVIDEO_ERR_NOCAPS;
-		goto end;
-	}
-	//fill name field
-	strncpy(vdev->info->name, (char *) caps.card, NAME_FIELD_LENGTH);
-
 	//fill input field
 	if(check_inputs_v4l2(vdev)==-1){
 		info("Error checking available inputs on V4L2 video device %s",
-				vdev->file);
+				vdev->id.device_handle);
 		ret = LIBVIDEO_ERR_NOCAPS;
 		goto end;
 	}
@@ -637,7 +628,7 @@ int query_device_v4l2(struct video_device *vdev){
 	if((vdev->info->nb_palettes = check_palettes_v4l2(vdev))==LIBVIDEO_ERR_IOCTL){
 		free_video_inputs(vdev->info->inputs, vdev->info->nb_inputs);
 		info("Error checking supported palettes on V4L2 video device %s\n",
-				vdev->file);
+				vdev->id.device_handle);
 		ret = LIBVIDEO_ERR_NOCAPS;
 		goto end;
 	}

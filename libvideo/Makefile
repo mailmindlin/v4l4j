@@ -72,11 +72,12 @@ LIBV4LCONVERT_HELPERS := ov511-decomp ov518-decomp
 
 LIB_NAME := video
 LIB := lib$(LIB_NAME).so
-TESTOBJ := $(TEST_APP_DIR)/test-capture.o $(TEST_APP_DIR)/dump-capture.o \
-  $(TEST_APP_DIR)/list-caps.o
+TESTOBJ := $(TEST_APP_DIR)/list-devices.o\
+ $(TEST_APP_DIR)/test-capture.o\
+ $(TEST_APP_DIR)/dump-capture.o $(TEST_APP_DIR)/list-caps.o
 OBJ := $(LINUX_DIR)/v4l2-input.o $(LINUX_DIR)/v4l1-input.o libvideo.o  \
   $(LINUX_DIR)/pwc-probe.o $(LINUX_DIR)/gspca-probe.o $(LINUX_DIR)/qc-probe.o \
-  $(LINUX_DIR)/fps-param-probe.o $(LINUX_DIR)/v4l1-query.o \
+  $(LINUX_DIR)/v4l1-query.o  $(LINUX_DIR)/libvideo-linux.o\
   $(LINUX_DIR)/v4l1-ctrl.o $(LINUX_DIR)/v4l1-list.o \
   $(LINUX_DIR)/v4l2-query.o $(LINUX_DIR)/v4l1-tuner.o $(LINUX_DIR)/v4l2-tuner.o \
   $(LINUX_DIR)/v4l2-ctrl.o $(LINUX_DIR)/v4l2-list.o palettes.o
@@ -117,6 +118,7 @@ uninstall:
 	rm -f $(DESTDIR)$(LIBV4L_HELPERS_INSTALL_DIR)/libv4l/*-decomp
 
 test: $(LIB).$(LIB_RELEASE) $(TESTOBJ)
+	$(LD) $(TEST_APP_DIR)/list-devices.o -lm -lrt -L. -l$(LIB_NAME) -o list-devices
 	$(LD) $(TEST_APP_DIR)/test-capture.o -lm -lrt -L. -l$(LIB_NAME) -o test-capture
 	$(LD) $(TEST_APP_DIR)/list-caps.o -lm -lrt -L. -l$(LIB_NAME) -o list-caps
 	$(LD) $(TEST_APP_DIR)/dump-capture.o -lm -lrt -L. -l$(LIB_NAME) -o dump-capture
@@ -127,7 +129,7 @@ $(LINUX_DIR)/version.h:
 clean:
 	make -C $(LIBV4LCONVERT_DIR) clean
 	rm -f $(OBJ) $(BIN) $(LIB) $(LIB).$(LIB_RELEASE) $(TESTOBJ) \
-  $(LIBV4LCONVERT_AR) ./*.o list-caps test-capture dump-capture $(LINUX_DIR)/version.h ./*~
+  $(LIBV4LCONVERT_AR) ./*.o list-caps test-capture dump-capture list-devices $(LINUX_DIR)/version.h ./*~
 
 .PHONY: all install uninstall test clean
 

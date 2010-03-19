@@ -36,75 +36,75 @@ int create_v4l1_controls(struct video_device *vdev, struct control *controls,
 
 	//list standard V4L controls
 	//brightness
-	controls[count].v4l2_ctrl->id = V4L2_CID_BRIGHTNESS;
-	controls[count].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
-	strcpy((char *)controls[count].v4l2_ctrl->name, "Brightness\0");
-	controls[count].v4l2_ctrl->minimum = 0;
-	controls[count].v4l2_ctrl->maximum = 65535;
-	controls[count].v4l2_ctrl->step = 1;
-	controls[count].v4l2_ctrl->default_value = 32768;
-	controls[count].v4l2_ctrl->flags = 0;
+	controls[count].id = V4L2_CID_BRIGHTNESS;
+	controls[count].type = V4L2_CTRL_TYPE_INTEGER;
+	strcpy((char *)controls[count].name, "Brightness\0");
+	controls[count].minimum = 0;
+	controls[count].maximum = 65535;
+	controls[count].step = 1;
+	controls[count].default_value = 32768;
+	controls[count].flags = 0;
 	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
 			"CTRL: found control(id: %d - name: %s - min: %d - max: %d - "
-			"step: %d)\n", controls[count].v4l2_ctrl->id,
-			(char *) &controls[count].v4l2_ctrl->name,
-			controls[count].v4l2_ctrl->minimum,
-			controls[count].v4l2_ctrl->maximum,
-			controls[count].v4l2_ctrl->step);
+			"step: %d)\n", controls[count].id,
+			(char *) &controls[count].name,
+			controls[count].minimum,
+			controls[count].maximum,
+			controls[count].step);
 	count++;
 
 	//hue
-	controls[count].v4l2_ctrl->id = V4L2_CID_HUE;
-	controls[count].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
-	strcpy((char *)controls[count].v4l2_ctrl->name, "Hue\0");
-	controls[count].v4l2_ctrl->minimum = 0;
-	controls[count].v4l2_ctrl->maximum = 65535;
-	controls[count].v4l2_ctrl->step = 1;
-	controls[count].v4l2_ctrl->default_value = 32768;
-	controls[count].v4l2_ctrl->flags = 0;
+	controls[count].id = V4L2_CID_HUE;
+	controls[count].type = V4L2_CTRL_TYPE_INTEGER;
+	strcpy((char *)controls[count].name, "Hue\0");
+	controls[count].minimum = 0;
+	controls[count].maximum = 65535;
+	controls[count].step = 1;
+	controls[count].default_value = 32768;
+	controls[count].flags = 0;
 	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
 			"CTRL: found control(id: %d - name: %s - min: %d -max: %d - "
-			"step: %d)\n", controls[count].v4l2_ctrl->id,
-			(char *) &controls[count].v4l2_ctrl->name,
-			controls[count].v4l2_ctrl->minimum,
-			controls[count].v4l2_ctrl->maximum,
-			controls[count].v4l2_ctrl->step);
+			"step: %d)\n", controls[count].id,
+			(char *) &controls[count].name,
+			controls[count].minimum,
+			controls[count].maximum,
+			controls[count].step);
 	count++;
 
 	//color
-	controls[count].v4l2_ctrl->id = V4L2_CID_SATURATION;
-	controls[count].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
-	strcpy((char *)controls[count].v4l2_ctrl->name, "Saturation\0");
-	controls[count].v4l2_ctrl->minimum = 0;
-	controls[count].v4l2_ctrl->maximum = 65535;
-	controls[count].v4l2_ctrl->step = 1;
-	controls[count].v4l2_ctrl->default_value = 32768;
-	controls[count].v4l2_ctrl->flags = 0;
+	controls[count].id = V4L2_CID_SATURATION;
+	controls[count].type = V4L2_CTRL_TYPE_INTEGER;
+	strcpy((char *)controls[count].name, "Saturation\0");
+	controls[count].minimum = 0;
+	controls[count].maximum = 65535;
+	controls[count].step = 1;
+	controls[count].default_value = 32768;
+	controls[count].flags = 0;
 	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
 			"CTRL: found control(id: %d - name: %s - min: %d -max: %d - "
-			"step: %d)\n", controls[count].v4l2_ctrl->id,
-			(char *) &controls[count].v4l2_ctrl->name,
-			controls[count].v4l2_ctrl->minimum,
-			controls[count].v4l2_ctrl->maximum,
-			controls[count].v4l2_ctrl->step);
+			"step: %d)\n", controls[count].id,
+			(char *) &controls[count].name,
+			controls[count].minimum,
+			controls[count].maximum,
+			controls[count].step);
 	count++;
 
 	//contrast
-	controls[count].v4l2_ctrl->id = V4L2_CID_CONTRAST;
-	controls[count].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
-	strcpy((char *)controls[count].v4l2_ctrl->name, "Contrast\0");
-	controls[count].v4l2_ctrl->minimum = 0;
-	controls[count].v4l2_ctrl->maximum = 65535;
-	controls[count].v4l2_ctrl->step = 1;
-	controls[count].v4l2_ctrl->default_value = 32768;
-	controls[count].v4l2_ctrl->flags = 0;
+	controls[count].id = V4L2_CID_CONTRAST;
+	controls[count].type = V4L2_CTRL_TYPE_INTEGER;
+	strcpy((char *)controls[count].name, "Contrast\0");
+	controls[count].minimum = 0;
+	controls[count].maximum = 65535;
+	controls[count].step = 1;
+	controls[count].default_value = 32768;
+	controls[count].flags = 0;
 	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
 			"CTRL: found control(id: %d - name: %s - min: %d -max: %d - "
-			"step: %d)\n", controls[count].v4l2_ctrl->id,
-			(char *) &controls[count].v4l2_ctrl->name,
-			controls[count].v4l2_ctrl->minimum,
-			controls[count].v4l2_ctrl->maximum,
-			controls[count].v4l2_ctrl->step);
+			"step: %d)\n", controls[count].id,
+			(char *) &controls[count].name,
+			controls[count].minimum,
+			controls[count].maximum,
+			controls[count].step);
 	count++;
 
 	return count;
@@ -112,7 +112,7 @@ int create_v4l1_controls(struct video_device *vdev, struct control *controls,
 
 //returns the value of a control
 int get_control_value_v4l1(struct video_device *vdev,
-		struct v4l2_queryctrl *ctrl, int *val){
+		struct control *ctrl, int *val){
 	struct video_picture pict;
 	CLEAR(pict);
 	//query the current image format
@@ -146,7 +146,7 @@ int get_control_value_v4l1(struct video_device *vdev,
 
 //sets the value of a control
 int set_control_value_v4l1(struct video_device *vdev,
-		struct v4l2_queryctrl *ctrl, int *v){
+		struct control *ctrl, int *v){
 	struct video_picture pict;
 	int prev = 0;
 	CLEAR(pict);
