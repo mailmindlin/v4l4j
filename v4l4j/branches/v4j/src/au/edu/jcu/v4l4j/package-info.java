@@ -13,9 +13,16 @@
  * object, which represents a physical video input hardware. This includes webcams 
  * and capture / tuner cards. The only pre-requisite is that your hardware must be 
  * supported and its driver loaded. Creating a {@link au.edu.jcu.v4l4j.VideoDevice}
- * is simple. You only need the path to a valid device file to create this object:<br>
+ * is simple: create a {@link au.edu.jcu.v4l4j.DeviceList} which contains a list
+ * of names of currently connected video devices and allows you to create a
+ * {@link au.edu.jcu.v4l4j.VideoDevice}. The {@link au.edu.jcu.v4l4j.DeviceList}
+ * must be released once no longer used. The following code illustrates the 
+ * process:<br>
  * <code>
- * VideoDevice vd = new VideoDevice("/dev/video0");
+ * DeviceList list = DeviceList.createList();<br>
+ * //get a VideoDevice object for the first video device<br>
+ * VideoDevice vd = list.getVideoDeviceForName(list.getNameList().get(0));<br>
+ * list.release();
  * </code><br>
  * As it is the case most of the time when interacting with hardware, you must
  * release resources and data structures when finished. All v4l4j classes follow 

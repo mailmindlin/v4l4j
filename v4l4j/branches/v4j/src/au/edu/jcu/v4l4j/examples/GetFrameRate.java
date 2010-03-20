@@ -49,7 +49,7 @@ public class GetFrameRate {
 	/**
 	 * This method builds a new object to test the maximum FPS for a video 
 	 * device
-	 * @param dev the full path to the device file
+	 * @param devIndex the index of the device to use
 	 * @param ifmt the input format (-1, or a device-supported format)
 	 * @param ofmt the output format (0: raw - 1: JPEG - 2: RGB - 3: BGR - 
 	 * 4:YUV - 5:YVU)
@@ -60,7 +60,7 @@ public class GetFrameRate {
 	 * @param iv the frame rate (how many frame per second)
 	 * @throws V4L4JException if there is an error initialising the video device
 	 */
-	public GetFrameRate(String dev, int ifmt, int ofmt, int w, int h, int c, 
+	public GetFrameRate(int devIndex, int ifmt, int ofmt, int w, int h, int c, 
 			int s, int iv) throws V4L4JException{
 		inFmt = ifmt;
 		outFmt = ofmt;
@@ -69,8 +69,9 @@ public class GetFrameRate {
 		channel = c;
 		std = s;
 		intv = iv;
+		DeviceList list = DeviceList.createList();
 		try {
-			vd = DeviceList.getVideoDeviceFromDeviceFile(dev);
+			vd = list.getVideoDeviceForName(list.getNameList().get(devIndex));
 			imfList = vd.getDeviceInfo().getFormatList();
 			if(outFmt==0)
 				getRawFg();
@@ -91,9 +92,11 @@ public class GetFrameRate {
 			System.out.println("Input image format: "+fg.getImageFormat().getName());
 		} catch (V4L4JException e) {
 			e.printStackTrace();
-			System.out.println("Failed to instanciate the FrameGrabber ("+dev+")");
+			System.out.println("Failed to instanciate the FrameGrabber");
 			vd.release();
 			throw e;
+		} finally {
+			list.release();
 		}
 		width = fg.getWidth();
 		height = fg.getHeight();
@@ -249,14 +252,13 @@ public class GetFrameRate {
 	}
 	
 	public static void main(String[] args) throws V4L4JException, IOException {
-		String dev;
-		int w, h, std, channel, inFmt, outFmt, intv;
+		int devIndex, w, h, std, channel, inFmt, outFmt, intv;
 		//Check if we have the required args
 		//otherwise put sensible values in
 		try {
-			dev = args[0];
+			devIndex = Integer.parseInt(args[0]);
 		} catch (Exception e){
-			dev = "/dev/video0";
+			devIndex = 0;
 		}
 		try {
 			w = Integer.parseInt(args[1]);
@@ -296,10 +298,7 @@ public class GetFrameRate {
 		} catch (Exception e){
 			intv=-1;
 		}
-
-		System.out.println("This program will open "+dev+", capture frames for "
-					+ captureLength+ " seconds and print the FPS");
-		
-		new GetFrameRate(dev, inFmt, outFmt, w, h, channel, std, intv).startTest();
+	
+		new GetFrameRate(devIndex, inFmt, outFmt, w, h, channel, std, intv).startTest();
 	}
 }

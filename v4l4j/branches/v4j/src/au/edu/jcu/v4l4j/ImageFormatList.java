@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Vector;
 
 /**
- * ImageFormatList objects group together a list of native {@link ImageFormat}s
+ * ImageFormatList objects group together a list of native {@link ImageFormat}s,
  * capture resolutions and frame intervals supported by a {@link VideoDevice}. 
  * A native (or raw)
  * format is a format supported and used by the driver. This native 

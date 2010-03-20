@@ -3,6 +3,8 @@
  * This package contains simple example applications that demonstrate the use of
  * v4l4j. You will find the following:
  * <ul>
+ * <li><code>ListVideoDevices</code>: a small command line program that prints
+ * the names of currently connected video devices.</li>
  * <li><code>getFrameRate</code>: a small command line program that computes the
  * frame rate v4l4j can achieve using a given image format.</li>
  * <li><code>DeviceChooser</code>: this is a more complex program that allows
