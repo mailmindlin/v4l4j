@@ -39,7 +39,7 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
 
 /**
- * An instance of a <code>VideoDevice</code> object represents an existing V4L 
+ * An instance of a <code>VideoDevice</code> object represents an existing ... 
  * video device. It is the starting point to use functionalities provided by 
  * v4l4j, which are divided in 4 categories:
  * <ul>
@@ -50,11 +50,8 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * </ul>
  * Each of these categories is detailed in the following sections.
  * To use features provided in any of these category, a <code>VideoDevice</code>
- * object must first be instantiated. This is done simply by calling the 
- * constructor and giving it the full path to the associated device file:
- * <br><code>
- * VideoDevice vd = new VideoDevice("/dev/video0");
- * </code><br>
+ * object must first be instantiated. This is done through a {@link DeviceList} object.
+ * <br>
  * <b>It is important that, once the <code>VideoDevice</code> is no longer used,
  * its resources are freed. This is done by calling the {@link #release()}
  * method:</b>
@@ -270,7 +267,7 @@ public class VideoDevice {
 		} catch (V4L4JException e){
 			//error getting DeviceInfo
 			//keep going so v4l4j can be used with drivers which supports
-			//multiple simultaneuous open() calls.
+			//multiple simultaneous open() calls.
 			//However, set things accordingly
 			deviceInfo = null;
 			
@@ -1544,7 +1541,15 @@ public class VideoDevice {
 	}
 
 	public static void main(String args[]) throws V4L4JException{
-		//  use first video device
+		int devIndex;
+		try {
+			devIndex = Integer.parseInt(args[0]);
+		} catch (NumberFormatException e){
+			e.printStackTrace();
+			return;
+		}
+		
+		// create device list
 		DeviceList l = DeviceList.createList();
 		if (l.getNameList().size()==0) {
 			System.out.println("No video devices were found");
@@ -1552,7 +1557,8 @@ public class VideoDevice {
 			return;
 		}
 		
-		VideoDevice vd = l.getVideoDeviceForName(l.getNameList().get(0));
+		// get VideDevice object for given devIndex
+		VideoDevice vd = l.getVideoDeviceForName(l.getNameList().get(devIndex));
 		l.release();
 		
 		DeviceInfo d = vd.getDeviceInfo(); 

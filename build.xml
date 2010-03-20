@@ -49,9 +49,10 @@
 		<echo message="" />
 		<echo message=" The following targets will work ONLY if v4l4j has been" />
 		<echo message=" installed using the 'install' target." />
-		<echo message=" test-fps :         Check the FPS of a video source"/>
+		<echo message=" device-list :      List currently connected devices"/>
+		<echo message=" test-fps :         Check the FPS of a video device"/>
 		<echo message=" test-gui :         Display video stream in a window"/>
-		<echo message=" deviceInfo:        Display information about a video source"/>
+		<echo message=" deviceInfo:        Display information about a video device"/>
 
 		<echo message=""/>
 		<echo message=""/>
@@ -245,13 +246,22 @@
 		</java>
 	</target>
 	
-	<target name="deviceInfo" depends="jar,jnilib">
-		<java classname="au.edu.jcu.v4l4j.VideoDevice" fork="true" failonerror="true">
+	<target name="device-list" depends="jar,jnilib">
+		<java classname="au.edu.jcu.v4l4j.examples.ListVideoDevice" fork="true" failonerror="true">
 			<classpath>
 				<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
 			</classpath>
 			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
-			<arg value="${test.device}" /> <!-- device file -->
+		</java>
+	</target>
+	
+	<target name="deviceInfo" depends="jar,jnilib">
+		<java classname="au.edu.jcu.v4l4j.VideoDevices" fork="true" failonerror="true">
+			<classpath>
+				<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
+			</classpath>
+			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
+			<arg value="${test.device}" /> <!-- device index -->
 		</java>
 	</target>
 

@@ -37,13 +37,14 @@
 #include <arpa/inet.h>		//for inet_ntoa (convert strcut in_addr to char*)
 
 #include "libvideo.h"
-#include "palettes.h"
+#include "libvideo-palettes.h"
 #include "utils.h"
 #include "jpeg.h"
 #include "log.h"
 
 #define SUPPORTED_FORMATS		{JPEG, MJPEG, YUV420, RGB24, YUYV}
 #define NB_SUPPORTED_FORMATS	5
+#define CLEAR(x) memset(&x, 0x0, sizeof(x));
 
 
 #ifdef DEBUG
@@ -85,10 +86,11 @@ void catch_int (int sig) {
 
 int main(int argc, char **argv) {
 	/*Assumes args are in order !!!!
-	1: V4L2 dev name, 2: height, 3: width, 4: channel
+	1: video dev file, 2: height, 3: width, 4: channel
 	5: standard, 6: jpeg_quality, 7: verbosity, 8: log source, 9: log_level
 	*/
 	struct video_device *d;
+	struct device_id *id;
 	struct capture_device *cdev;
 	int sockfd, port;
 	jpeg_quality = JPEG_QUALITY;
@@ -113,12 +115,15 @@ int main(int argc, char **argv) {
 	log_source = atoi(argv[10]);
 	log_level = atoi(argv[11]);
 #endif
+	id = create_device_id(argv[1]);
 
-	d = open_device(argv[1]);
+	d = open_device(id);
 	if(d==NULL){
 		info(LOG_ERR, "Cant open device %s",argv[1]);
 		exit(1);
 	}
+
+	release_device_id(id);
 
 	//create capture device
 	cdev = init_capture_device(d, atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), 5);
@@ -278,20 +283,20 @@ void list_cap_param(int newsockfd,struct video_device *d) {
 	//outputs controls
 	l = d->control;
 	for(i = 0; i< l->count; i++) {
-		if(get_control_value(d, l->controls[i].v4l2_ctrl, &v) != 0) {
-			info(LOG_ERR, "Error getting value for control %s\n", l->controls[i].v4l2_ctrl->name);
+		if(get_control_value(d, &l->controls[i], &v) != 0) {
+			info(LOG_ERR, "Error getting value for control %s\n", l->controls[i].name);
 			v = 0;
 		}
-		ptr += sprintf(ptr,"<form method=\"get\"><h4>%s</h4>Value: %d (min: %d, max: %d", l->controls[i].v4l2_ctrl->name, v, l->controls[i].v4l2_ctrl->minimum, l->controls[i].v4l2_ctrl->maximum);
+		ptr += sprintf(ptr,"<form method=\"get\"><h4>%s</h4>Value: %d (min: %d, max: %d", l->controls[i].name, v, l->controls[i].minimum, l->controls[i].maximum);
 		if(l->controls[i].count_menu!=0) {
 			int j;
 			ptr += sprintf(ptr,"\n)<select name=\"val\">\n");
 			for(j=0; j<l->controls[i].count_menu; j++){
-				ptr += sprintf(ptr, "<option value=\"%d\"%s>%d</option>\n",l->controls[i].v4l2_menu[j].index, v == l->controls[i].v4l2_menu[j].index ? " selected" : "", l->controls[i].v4l2_menu[j].index);
+				ptr += sprintf(ptr, "<option value=\"%d\"%s>%d</option>\n",l->controls[i].menus[j].index, v == l->controls[i].menus[j].index ? " selected" : "", l->controls[i].menus[j].index);
 			}
 			ptr += sprintf(ptr, "</select>\n");
 		} else {
-			ptr += sprintf(ptr,", step: %d)<br>\n", l->controls[i].v4l2_ctrl->step);
+			ptr += sprintf(ptr,", step: %d)<br>\n", l->controls[i].step);
 			ptr += sprintf(ptr,"<input type=\"text\" name=\"val\" value=\"%d\" size=\"5\"> ", v);
 		}
 		ptr += sprintf(ptr, "&nbsp; <input type=\"submit\" name=\"%d\" value=\"update\"></form>\n", i);
@@ -342,8 +347,8 @@ int get_action(int sock, struct video_device *d) {
 					} else info(LOG_ERR, "Invalid frame rate %d\n", value);
 				} else {
 					assert(ctrl_index < l->count);
-					info(LOG_INFO, "Setting %s to %d\n", l->controls[ctrl_index].v4l2_ctrl->name, value);
-					set_control_value(d, l->controls[ctrl_index].v4l2_ctrl, &value);
+					info(LOG_INFO, "Setting %s to %d\n", l->controls[ctrl_index].name, value);
+					set_control_value(d, &l->controls[ctrl_index], &value);
 					info(LOG_INFO, "New value: %d\n", value);
 				}
 			} else
