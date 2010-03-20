@@ -90,7 +90,7 @@ public class DeviceChooser  extends WindowAdapter implements ActionListener{
 		frame.addWindowListener(this);
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
 		devListBox.setAlignmentX(Component.CENTER_ALIGNMENT);
-		Dimension d = new Dimension(120,25);
+		Dimension d = new Dimension(300,25);
 		devListBox.setMaximumSize(d);
 		mainPanel.add(devListBox);
 		d = new Dimension(600,500);
