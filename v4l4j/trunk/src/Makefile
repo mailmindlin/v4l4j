@@ -1,7 +1,8 @@
-# Edit the following line to point to the JDK directory
-# It must be a JDK, not a JRE !!!
-JDK_HOME := /usr/lib/jvm/java-6-sun
-#JDK_HOME := /usr/lib/j2sdk1.6-sun
+# If the env variable JDK_HOME is not defined,
+# use the following one (works on Ubuntu with OpenJDK).
+ifndef JDK_HOME
+JDK_HOME := /usr/lib/jvm/java-6-openjdk
+endif
 
 
 #
