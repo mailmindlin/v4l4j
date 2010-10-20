@@ -11,7 +11,7 @@
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# GNU Lesser General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program; if not, write to the Free Software
@@ -22,7 +22,7 @@
 #define __LIBV4LPROCESSING_H
 
 #include "../libv4lsyscall-priv.h"
-#include <linux/videodev2.h>
+#include "videodev2.h"
 
 struct v4lprocessing_data;
 struct v4lcontrol_data;

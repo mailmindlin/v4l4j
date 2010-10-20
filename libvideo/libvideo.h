@@ -90,20 +90,22 @@ enum {
 
 	// Grey formats
 	GREY,				//10
+	Y4,
+	Y6,
 	Y10,
-	Y16,				//12
+	Y16,
 
 	// palette formats
-	PAL8,				// 13
+	PAL8,
 
 	// YUV formats
-	YVU410,				// 14
+	YVU410,
 	YVU420,
 	YUYV,
 	YYUV,
-	YVYU,
+	YVYU,				//20
 	UYVY,
-	VYUY,				// 20
+	VYUY,
 	YUV422P,
 	YUV411P,
 	Y41P,
@@ -113,53 +115,57 @@ enum {
 	YUV32,
 	YUV410,
 	YUV420,
-	HI240,				// 30
+	HI240,
 	HM12,
 
 	// Two planes - Y and Cb/Cr interleaved
-	NV12,				// 32
+	NV12,
 	NV21,
 	NV16,
-	NV61,				// 35
+	NV61,
 
 	// Bayer formats
-	SBGGR8,				// 36
+	SBGGR8,
 	SGBRG8,
 	SGRBG8,
 	SRGGB8,
-	SBGGR10,			// 40
+	SBGGR10,
 	SGBRG10,
 	SGRBG10,
 	SRGGB10,
 	SGRBG10DPCM8,
-	SBGGR16,			// 45
+	SBGGR16,
 
 	// Compressed formats
-	MJPEG,				//46
+	MJPEG,
 	JPEG,
 	DV,
-	MPEG,				// 49
+	MPEG,
 
 	// Vendor-specific formats
-	WNVA,				// 50
+	CPIA1,
+	WNVA,
 	SN9C10X,
 	SN9C20X_I420,
 	PWC1,
 	PWC2,
-	ET61X251,			// 55
+	ET61X251,
 	SPCA501,
 	SPCA505,
 	SPCA508,
 	SPCA561,
-	PAC207,				// 60
+	PAC207,
 	MR97310A,
+	SN9C2028,
 	SQ905C,
 	PJPG,
 	OV511,
-	OV518,				// 65
+	OV518,
 	STV0680,
-	TM6000,				// 67
-	NB_SUPPORTED_PALETTES,	// 68
+	TM6000,
+	CIT_YYVYUY,
+	KONICA420,
+	NB_SUPPORTED_PALETTES,
 	/* Dont use the following three, use YUV420, YUYV or YUV411P instead !! */\
 	YUV420P,
 	YUV422,

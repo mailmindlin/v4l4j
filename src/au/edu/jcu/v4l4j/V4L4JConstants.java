@@ -169,243 +169,267 @@ public class V4L4JConstants {
 	 */
 	public static final int IMF_GREY=10;
 	/**
+	 * Y4 image format
+	 */
+	public static final int IMF_Y4=11;	
+	/**
+	 * Y6 image format
+	 */
+	public static final int IMF_Y6=12;
+	/**
 	 * Y10 image format
 	 */
-	public static final int IMF_Y10=11;	
+	public static final int IMF_Y10=13;	
 	/**
 	 * Y16 image format
 	 */
-	public static final int IMF_Y16=12;
+	public static final int IMF_Y16=14;
 	
 	// PAL 8 format
 	/**
 	 * PAL8 image format
 	 */
-	public static final int IMF_PAL8=13;
+	public static final int IMF_PAL8=15;
 	
 	// YUV formats
 	/**
 	 * YVU410 image format
 	 */
-	public static final int IMF_YVU410=14;
+	public static final int IMF_YVU410=16;
 	/**
 	 * YVU420 image format
 	 */
-	public static final int IMF_YVU420=15;	
+	public static final int IMF_YVU420=17;	
 	/**
 	 * YUYV image format
 	 */
-	public static final int IMF_YUYV=16;
+	public static final int IMF_YUYV=18;
 	/**
 	 * YYUV image format
 	 */
-	public static final int IMF_YYUV=17;
+	public static final int IMF_YYUV=19;
 	/**
 	 * YVYU image format
 	 */
-	public static final int IMF_YVYU=18;
+	public static final int IMF_YVYU=20;
 	/**
 	 * UYVY image format
 	 */
-	public static final int IMF_UYVY=19;
+	public static final int IMF_UYVY=21;
 	/**
 	 * VYUY image format
 	 */
-	public static final int IMF_VYUY=20;
+	public static final int IMF_VYUY=22;
 	/**
 	 * YUV422 planar image format
 	 */
-	public static final int IMF_YUV422P=21;
+	public static final int IMF_YUV422P=23;
 	/**
 	 * YUV411 planar image format
 	 */
-	public static final int IMF_YUV411P=22;
+	public static final int IMF_YUV411P=24;
 	/**
 	 * Y41P image format
 	 */
-	public static final int IMF_Y41P=23;
+	public static final int IMF_Y41P=25;
 	/**
 	 * YUV444 image format
 	 */
-	public static final int IMF_YUV444=24;
+	public static final int IMF_YUV444=26;
 	/**
 	 * YUV555 image format
 	 */
-	public static final int IMF_YUV555=25;
+	public static final int IMF_YUV555=27;
 	/**
 	 * YUV565 image format
 	 */
-	public static final int IMF_YUV565=26;
+	public static final int IMF_YUV565=28;
 	/**
 	 * YUV32 image format
 	 */
-	public static final int IMF_YUV32=27;
+	public static final int IMF_YUV32=29;
 	/**
 	 * YUV410 planar image format
 	 */
-	public static final int IMF_YUV410=28;
+	public static final int IMF_YUV410=30;
 	/**
 	 * YUV420 planar image format index
 	 */
-	public static final int IMF_YUV420=29;
+	public static final int IMF_YUV420=31;
 	/**
 	 * HI240 image format
 	 */
-	public static final int IMF_HI240=30;
+	public static final int IMF_HI240=32;
 	/**
 	 * HM12 image format
 	 */
-	public static final int IMF_HM12=31;
+	public static final int IMF_HM12=33;
 	
 	// two planes - Y and Cb/Cr interleaved
 	/**
 	 * NV12 image format
 	 */
-	public static final int IMF_NV12=32;
+	public static final int IMF_NV12=34;
 	/**
 	 * NV21 image format
 	 */
-	public static final int IMF_NV21=33;
+	public static final int IMF_NV21=35;
 	/**
 	 * NV16 image format
 	 */
-	public static final int IMF_NV16=34;
+	public static final int IMF_NV16=36;
 	/**
 	 * NV61 image format
 	 */
-	public static final int IMF_NV61=35;
+	public static final int IMF_NV61=37;
 	
 	// Bayer formats
 	/**
 	 * SBGGR8 bayer image format
 	 */
-	public static final int IMF_SBGGR8=36;
+	public static final int IMF_SBGGR8=38;
 	/**
 	 * SGBRG8 image format
 	 */
-	public static final int IMF_SGBRG8=37;
+	public static final int IMF_SGBRG8=39;
 	/**
 	 * SGRBG8 bayer image format
 	 */
-	public static final int IMF_SGRBG8=38;
+	public static final int IMF_SGRBG8=40;
 	/**
 	 * SRGGB8 bayer image format
 	 */
-	public static final int IMF_SRGGB8=39;
+	public static final int IMF_SRGGB8=41;
 	/**
 	 * SBGGR10 bayer image format
 	 */
-	public static final int IMF_SBGGR10=40;
+	public static final int IMF_SBGGR10=42;
 	/**
 	 * SGBRG10 bayer image format
 	 */
-	public static final int IMF_SGBRG10=41;
+	public static final int IMF_SGBRG10=43;
 	/**
 	 * SGRBG10 bayer image format
 	 */
-	public static final int IMF_SGRBG10=42;
+	public static final int IMF_SGRBG10=44;
 	/**
 	 * SRGGB10 bayer image format
 	 */
-	public static final int IMF_SRGGB10=43;
+	public static final int IMF_SRGGB10=45;
 	/**
 	 * SGRBG10_DPCM8 bayer image format
 	 */
-	public static final int IMF_SGRBG10DPCM8=44;
+	public static final int IMF_SGRBG10DPCM8=46;
 	/**
 	 * SBGGR16 bayer image format
 	 */
-	public static final int IMF_SBGGR16=45;
+	public static final int IMF_SBGGR16=47;
 
 	// compressed formats
 	/**
 	 * MJPEG image format
 	 */
-	public static final int IMF_MJPEG=46;
+	public static final int IMF_MJPEG=48;
 	/**
 	 * JPEG image format
 	 */
-	public static final int IMF_JPEG=47;
+	public static final int IMF_JPEG=49;
 	/**
 	 * DV image format
 	 */
-	public static final int IMF_DV=48;
+	public static final int IMF_DV=50;
 	/**
 	 * MPEG image format
 	 */
-	public static final int IMF_MPEG=49;
+	public static final int IMF_MPEG=51;
 	
 	// vendor specific
 	/**
+	 * CPIA1 image format
+	 */
+	public static final int IMF_CPIA1=52;
+	/**
 	 * WNVA image format
 	 */
-	public static final int IMF_WNVA=50;	
+	public static final int IMF_WNVA=53;	
 	/**
 	 * SN9C10X image format
 	 */
-	public static final int IMF_SN9C10X=51;
+	public static final int IMF_SN9C10X=54;
 	/**
 	 * SN9C20X_I420 image format
 	 */
-	public static final int IMF_SN9C20X_I420=52;
+	public static final int IMF_SN9C20X_I420=55;
 	/**
 	 * PWC1 image format
 	 */
-	public static final int IMF_PWC1=53;
+	public static final int IMF_PWC1=56;
 	/**
 	 * PWC2 image format
 	 */
-	public static final int IMF_PWC2=54;
+	public static final int IMF_PWC2=57;
 	/**
 	 * ET61X251 image format
 	 */
-	public static final int IMF_ET61X251=55;
+	public static final int IMF_ET61X251=58;
 	/**
 	 * SPCA501 image format
 	 */
-	public static final int IMF_SPCA501=56;
+	public static final int IMF_SPCA501=59;
 	/**
 	 * SPCA505 image format
 	 */
-	public static final int IMF_SPCA505=57;
+	public static final int IMF_SPCA505=60;
 	/**
 	 * SPCA508 image format
 	 */
-	public static final int IMF_SPCA508=58;
+	public static final int IMF_SPCA508=61;
 	/**
 	 * SPCA561 image format
 	 */
-	public static final int IMF_SPCA561=59;
+	public static final int IMF_SPCA561=62;
 	/**
 	 * PAC207 image format
 	 */
-	public static final int IMF_PAC207=60;
+	public static final int IMF_PAC207=63;
 	/**
 	 * MR97310A image format
 	 */
-	public static final int IMF_MR97310A=61;
+	public static final int IMF_MR97310A=64;
+	/**
+	 * SN9C2028 image format
+	 */
+	public static final int IMF_SN9C2028=65;
 	/**
 	 * SQ905C image format
 	 */
-	public static final int IMF_SQ905C=62;
+	public static final int IMF_SQ905C=66;
 	/**
 	 * PJPG image format
 	 */
-	public static final int IMF_PJPG=63;
+	public static final int IMF_PJPG=67;
 	/**
 	 * OV511 image format
 	 */
-	public static final int IMF_OV511=64;
+	public static final int IMF_OV511=68;
 	/**
 	 * OV518 image format
 	 */
-	public static final int IMF_OV518=65;
+	public static final int IMF_OV518=69;
 	/**
 	 * STV0680 image format
 	 */
-	public static final int IMF_STV0680=66;
+	public static final int IMF_STV0680=70;
 	/**
 	 * TM6000 image format
 	 */
-	public static final int IMF_TM6000=67;
+	public static final int IMF_TM6000=71;
+	/**
+	 * CIT_YYVYUY image format
+	 */
+	public static final int IMF_CIT_YYVYUY=72;
+	/**
+	 * KONICA420 image format
+	 */
+	public static final int IMF_KONICA420=73;
 }
