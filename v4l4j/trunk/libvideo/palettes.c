@@ -108,6 +108,20 @@ const struct libvideo_palette libvideo_palettes[] = {
 		"GREY"
 	},
 	{
+		Y4,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_Y4,
+		4,
+		"Y4"
+	},
+	{
+		Y6,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_Y6,
+		6,
+		"Y6"
+	},
+	{
 		Y10,
 		VIDEO_PALETTE_UNDEFINED_V4L1,
 		V4L2_PIX_FMT_Y10,
@@ -377,26 +391,33 @@ const struct libvideo_palette libvideo_palettes[] = {
 		"JPEG"
 	},
 	{
+		DV,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_DV,
+		COMPRESSED_FORMAT_DEPTH,
+		"DV"
+	},
+	{
 		MPEG,
 		VIDEO_PALETTE_UNDEFINED_V4L1,
 		V4L2_PIX_FMT_MPEG,
 		COMPRESSED_FORMAT_DEPTH,
 		"MPEG 1/2/4"
 	},
-/*	{
-		DV,
-		VIDEO_PALETTE_UNDEFINED_V4L1,
-		V4L2_PIX_FMT_DV,
-		, left out until more info
-		"DV"
-	}, */
 
 	// vendor-specific
+	{
+		CPIA1,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_CPIA1,
+		COMPRESSED_FORMAT_DEPTH,
+		"CPIA1"
+	},
 	{
 		WNVA,
 		VIDEO_PALETTE_UNDEFINED_V4L1,
 		V4L2_PIX_FMT_WNVA,
-		16,
+		COMPRESSED_FORMAT_DEPTH,
 		"WNVA"
 	},
 	{
@@ -438,21 +459,21 @@ const struct libvideo_palette libvideo_palettes[] = {
 		SPCA501,
 		VIDEO_PALETTE_UNDEFINED_V4L1,
 		V4L2_PIX_FMT_SPCA501,
-		16,
+		COMPRESSED_FORMAT_DEPTH,
 		"SPCA501"
 	},
 	{
 		SPCA505,
 		VIDEO_PALETTE_UNDEFINED_V4L1,
 		V4L2_PIX_FMT_SPCA505,
-		16,
+		COMPRESSED_FORMAT_DEPTH,
 		"SPCA505"
 	},
 	{
 		SPCA508,
 		VIDEO_PALETTE_UNDEFINED_V4L1,
 		V4L2_PIX_FMT_SPCA508,
-		16,
+		COMPRESSED_FORMAT_DEPTH,
 		"SPCA508"
 	},
 	{
@@ -475,6 +496,13 @@ const struct libvideo_palette libvideo_palettes[] = {
 		V4L2_PIX_FMT_MR97310A,
 		COMPRESSED_FORMAT_DEPTH,
 		"MR97310A"
+	},
+	{
+		SN9C2028,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_SN9C2028,
+		COMPRESSED_FORMAT_DEPTH,
+		"SN9C2028"
 	},
 	{
 		SQ905C,
@@ -517,6 +545,20 @@ const struct libvideo_palette libvideo_palettes[] = {
 		V4L2_PIX_FMT_TM6000,
 		COMPRESSED_FORMAT_DEPTH,
 		"TM6000"
+	},
+	{
+		CIT_YYVYUY,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_CIT_YYVYUY,
+		COMPRESSED_FORMAT_DEPTH,
+		"CIT_YYVYUY"
+	},
+	{
+		KONICA420,
+		VIDEO_PALETTE_UNDEFINED_V4L1,
+		V4L2_PIX_FMT_KONICA420,
+		COMPRESSED_FORMAT_DEPTH,
+		"KONICA420"
 	},
 
 
