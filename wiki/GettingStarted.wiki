@@ -3,7 +3,7 @@
 #sidebar v4l4jSideBar
 =Quick Start Guide=
 For the impatient, here are a few instructions that will get you started:
- * If you are using Ubuntu or Debian, check [DebianInstall this page to install v4l4j Debian packages]. You can run a test application with 
+ * If you are using Ubuntu or Debian, check [DebianInstall this page to install v4l4j Debian packages]. After that, you can run a test application with 
 {{{
 java -cp /usr/share/java/v4l4j.jar -Djava.library.path=/usr/lib/jni au.edu.jcu.v4l4j.examples.DeviceChooser
 }}}
@@ -13,7 +13,7 @@ java -cp /usr/share/java/v4l4j.jar -Djava.library.path=/usr/lib/jni au.edu.jcu.v
 svn co http://v4l4j.googlecode.com/svn/v4l4j/trunk v4l4j
 }}}
    * Install Sun JDK6 or OpenJDK6, libjpeg development files & Apache ant 
-   * Edit v4l4j/src/Makefile and point `JDK_HOME` to the where the JDK is installed
+   * Make sure your JDK_HOME environment variable is set and points to where the JDK is installed. You can also edit `JDK_HOME` at the top of v4l4j/src/Makefile.
    * Run `ant clean all` to compile v4l4j.
    * Run `sudo ant install` to install v4l4j (it can be uninstalled later on with `sudo ant uninstall`).
    * Run a test application with `ant test-gui`.
@@ -36,7 +36,7 @@ v4l4j requires the following:
  * a supported V4L video source (webcam, capture card, tuner card). 
  * Sun JAVA JDK 1.6 or OpenJDK6 (it wont compile with earlier versions and it *must* be a JDK !!!). Install the JDK somewhere and note the location. In Ubuntu/Debian, this can be done with:
 {{{
-sudo apt-get install sun-java6-jdk
+sudo apt-get install openjdk-6-jdk
 }}}
  * the development files of libjpeg, as well as libjpeg itself. In Ubuntu/Debian, this can be done using
 {{{
