@@ -1,0 +1,52 @@
+#!/bin/bash
+# 
+# This script uploads deb packages to the Downloads page
+#
+version_tag="@VERSION@"
+dir="/home/gilles/Downloads"
+
+# file name | description | labels
+package_details=(
+	"libv4l4j-java_${version_tag}-0ubuntu1~ppa1_i386.deb | v4l4j v${version_tag} - main package - x86 | Featured,Type-Package,OpSys-Linux" \
+	"libv4l4j-java_${version_tag}-0ubuntu1~ppa1_amd64.deb | v4l4j v${version_tag} - main package - amd64 | Featured,Type-Package,OpSys-Linux" \
+	"libvideo0_${version_tag}-0ubuntu1~ppa1_i386.deb | v4l4j v${version_tag} - libvideo package (REQUIRED) - x86 | Featured,Type-Package,OpSys-Linux" \
+	"libvideo0_${version_tag}-0ubuntu1~ppa1_amd64.deb | v4l4j v${version_tag} - libvideo package (REQUIRED) - amd64 | Featured,Type-Package,OpSys-Linux" \
+	"libv4l4j-bin_${version_tag}-0ubuntu1~ppa1_all.deb | v4l4j v${version_tag} - main menu shortcuts & icons package | Type-Package,OpSys-Linux" \
+	"libv4l4j-java-doc_${version_tag}-0ubuntu1~all.deb | v4l4j v${version_tag} - Javadoc package | Type-Package,OpSys-Linux")
+
+if [ $# -ne 1 -o "$1" = "-h" ]; then
+	echo "$0 <X.Y.Z>"
+	echo " where X.Y.Z represent the version number"
+	echo " packages must be in $dir"
+	exit 1
+fi
+
+version=$1
+shift
+
+for line in "${package_details[@]}"
+do
+	# Extract file name
+	file="${dir}/${line%% | *}"
+
+	# Substitute version
+	file="${file/${version_tag}/${version}}"
+	
+	if [ -f "$file" ]; then
+		# Get entry description
+		description="${line#* | }"
+		description="${description%% | *}"
+		
+		# Subsitute version
+		description="${description/${version_tag}/$version}"
+		
+		# Get labels
+		labels="${line##* | }"
+
+		#echo "file: $file - summary: $description - labels: $labels"
+		./googlecode-upload.py -s "$description" -p v4l4j -l "$labels" "$file"
+	else
+		echo "$file does not exist or is not readable."
+	fi
+done
+

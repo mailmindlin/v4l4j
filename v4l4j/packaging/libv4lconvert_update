@@ -1,7 +1,16 @@
+  * Copy libv4l/include/linux/videodev2.h to libvideo/
   * Copy libv4l/libv4lconvert to libvideo/
   * Copy libv4l/include/libv4lconvert.h to libvideo/
+  * Copy libv4l/Make.rules to libvideo/libv4lconvert
   * Edit libvideo/libv4lconvert/Makefile:
     * Replace first line with "override CPPFLAGS += -I.. -fvisibility=hidden"
     * Add "override CPPFLAGS += -fPIC" to "ifeq ($(LINKTYPE),static)" block
+    * change last line to "include ./Make.rules"
+  * Replace "#include <linux/videodev2.h>" with #include "videodev2.h"
+    in libvideo/libv4lconvert.h and
+    libvideo/libv4lconvert/processing/libv4lprocessing.h
+  * Check libv4l/lib/libv4lconvert/Makefile's install section to make sure
+    the installed items are the same as in libvideo's Makefile
+  * dont link ov51x helpers against libm and librt
   * fix v4l2-input.c
   * test compilation using "ant all-debug"
