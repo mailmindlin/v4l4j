@@ -1,4 +1,18 @@
-v4l4j (0.8.6-0ubuntu1~ppa1) hardy; urgency=low
+v4l4j (0.8.8-0ubuntu1~ppa4) lucid; urgency=low
+
+  * New upstream release with libv4l 0.8.1
+  * Updated packaging files for Lucid/Maverick
+  * Dropped packaging for Ubuntu releases prior to Lucid
+
+ -- Gilles Gigan <gilles.gigan@gmail.com>  Sun, 24 Oct 2010 10:37:16 +1100
+
+v4l4j (0.8.7-0ubuntu1~ppa3) jaunty; urgency=low
+
+  * New upstream release including an update to libv4l 0.6.3
+
+ -- gilles gigan <gilles.gigan@gmail.com>  Wed, 28 Oct 2009 20:04:19 +1100
+
+v4l4j (0.8.6-0ubuntu1~ppa3) jaunty; urgency=low
 
   * new upstream release with support for setting frame rate 
 

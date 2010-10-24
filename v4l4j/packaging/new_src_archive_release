@@ -5,3 +5,6 @@
   * prevent version.h from being deleted with 'make clean': edit 
     libvideo/Makefile and remove reference to version.h in clean target
   * edit libvideo/changelog
+  * commit changes to trunk
+  * create tag branch with
+svn cp https://v4l4j.googlecode.com/svn/v4l4j/trunk https://v4l4j.googlecode.com/svn/v4l4j/tags/vX.Y.Z

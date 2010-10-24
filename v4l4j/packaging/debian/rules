@@ -2,7 +2,7 @@
 build: build-stamp
 build-stamp:
 	#build v4l4j
-	JAVA_HOME=/usr/lib/jvm/java-6-sun ant all javadoc
+	JAVA_HOME=/usr/lib/jvm/java-6-openjdk ant all javadoc
 	touch $@
 
 clean:
@@ -31,7 +31,6 @@ binary-indep: build install
 	dh_installdocs -i
 	dh_installmenu -i
 	dh_install -i
-	dh_desktop -i
 	dh_fixperms -Nlibv4l4j-java -i
 	dh_compress -i
 	dh_installdeb -

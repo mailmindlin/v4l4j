@@ -6,19 +6,25 @@
     * v4l4j (X.Y.Z-0ubuntu1~ppa1) hardy; urgency=low
     * v4l4j (X.Y.Z-0ubuntu1~ppa2) intrepid; urgency=low
     * v4l4j (X.Y.Z-0ubuntu1~ppa3) jaunty; urgency=low
+    * v4l4j (X.Y.Z-0ubuntu1~ppa4) lucid; urgency=low
   * cd ..
   * test source package build with "debuild -S -sa"
   * check for lintian errors
-  * if build is successful, remove SVN files with "rm -Rf debian/.svn"
+  * if build is successful, commit changes and remove SVN files with "rm -Rf debian/.svn"
   * remove all source build files with "rm ../v4l4j_X.Y.Z-0ubuntu*"
   * rebuild with "debuild -S -sa"
-  * if successful, upload with "cd .. && dput LP-ppa v4l4j_X.Y.Z-0ubuntu1~ppaT_source.changes"
+  * if successful, upload with "cd .. && dput ppa:gillesg/ppa v4l4j_X.Y.Z-0ubuntu1~ppaT_source.changes"
  
   * For following versions of Ubuntu, update changelog (as per above), use "debuild -S -sd" to not re-upload .orig.tar.gz,
-    and upload with "dput LP-ppa v4l4j_X.Y.Z-0ubuntu1~ppaT_source.changes"
+    and upload with "dput ppa:gillesg/ppa v4l4j_X.Y.Z-0ubuntu1~ppaT_source.changes"
 
 
  * OR
  * from previous version directory, run uscan after uploading tarball to GC
  * run uupdate ../v4l4j_X.Y.Z.orig.tar.gz
  * then update the changelog and create source pkg as above
+
+Update the Downloads page:
+  * download packages from ppa and place them in ~/Downloads
+  * tag previous packages as deprecated
+  * run ./update_downloads_page X.Y.Z
