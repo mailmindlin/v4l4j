@@ -208,7 +208,7 @@ while(!stop) {
  //the captured frame size is returned by calling b.limit()
 }
 f.stopCapture()
-//dont forget to call f.remove() when done with f
+//dont forget to call f.release() when done with f
 }
 }}}
 
@@ -227,6 +227,8 @@ import javax.swing.JLabel;
 
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
+import au.edu.jcu.v4l4j.VideoDevice;
+import au.edu.jcu.v4l4j.V4L4JConstants;
 
 public class Viewer extends WindowAdapter implements Runnable {
 	private VideoDevice vd;
@@ -280,7 +282,7 @@ public class Viewer extends WindowAdapter implements Runnable {
 	 * @throws V4L4JException if any parameter if invalid
      */
     private void initFrameGrabber(String dev, int w, int h, int std, int channel, int qty) throws V4L4JException{
-	vd = new VideoDevice(dev)
+	vd = new VideoDevice(dev);
 	fg = vd.getJPEGFrameGrabber(w, h, channel, std, qty);
 	fg.startCapture();
 	System.out.println("Starting capture at "+fg.getWidth()+"x"+fg.getHeight());	    	
@@ -336,7 +338,7 @@ public class Viewer extends WindowAdapter implements Runnable {
 	public static void main(String[] args) throws V4L4JException, IOException {
 
 		String dev = "/dev/video0";
-		int w=640, h=480, std=FrameGrabber.STANDARD_WEBCAM, channel = 0, qty = 60;
+		int w=640, h=480, std=V4L4JConstants.STANDARD_WEBCAM, channel = 0, qty = 60;
 		new Viewer(dev,w,h,std,channel,qty);
 	}
 }
