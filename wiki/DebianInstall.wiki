@@ -12,19 +12,15 @@ v4l4j is made of four Debian packages:
 
 = Ubuntu =
 
+*Starting with version 0.8.8, the Debian packages only support Lucid and subsequent releases.*
 You have two options:
   * *Add v4l4j's APT repository* and let apt-get install v4l4j and handle its dependencies
   * *Manually download the v4l4j packages*, install the dependencies followed by the v4l4j packages,
 
 == APT repository ==
-  * Add the correct line to /etc/apt/sources.list, depending on your Ubuntu version:
-|| *Hardy* || deb http://ppa.launchpad.net/gillesg/ppa/ubuntu hardy main ||
-|| *Intrepid* || deb http://ppa.launchpad.net/gillesg/ppa/ubuntu intrepid main ||
-|| *Jaunty* || deb http://ppa.launchpad.net/gillesg/ppa/ubuntu jaunty main ||
-
-  * (Optional) Add the repository's OpenPGP key with:
+  * Add the v4l4j APT repository with
 {{{
-sudo apt-key adv --recv-keys --keyserver keyserver.ubuntu.com a580d05366101444040e1b52683cc7a81603f6c9
+sudo add-apt-repository ppa:gillesg/ppa-name
 }}}
   * Install libv4l4j-java with:
 {{{
