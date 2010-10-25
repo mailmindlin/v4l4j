@@ -20,7 +20,7 @@ You have two options:
 == APT repository ==
   * Add the v4l4j APT repository with
 {{{
-sudo add-apt-repository ppa:gillesg/ppa-name
+sudo add-apt-repository ppa:gillesg/ppa
 }}}
   * Install libv4l4j-java with:
 {{{
