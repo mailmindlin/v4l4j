@@ -1,0 +1,97 @@
+Video4Linux4Java (v4l4j) is a GPL'd java package providing a simple interface
+to capture frames  from Video4Linux devices. It consists of:
+- a v4l library (libvideo), which is a C wrapper library around the V4L API,
+- a set of java classes that provide access to the libvideo API, and
+- a JNI stub, which fills in the gap between JAVA and libvideo.
+
+
+FEATURES:
+- Captured frames handed out in a ByteBuffer object. Frames are handed in either
+  in raw format or converted to JPEG, RGB24, BGR24, YUV420 or YVU420.
+- Single frame or stream capture
+- Access to all V4L video source controls, even those accessible
+  only through private ioctls, which are exposed as (pseudo-) controls.
+  See TestedHardware in the libvideo directory for a list of detected drivers
+  and exported private ioctls
+
+
+DOCUMENTATION:
+The latest version of v4l4j and associated documentation (Howtos, API, ...) can
+always be found at http://v4l4j.googlecode.com
+
+
+QUICK START:
+The following installs the dependencies, compiles & install v4l4j and runs a
+test application, assuming you are running Ubuntu or Debian:
+
+sudo apt-get install openjdk-6-jdk libjpeg-dev build-essential ant
+ant clean all
+sudo ant install
+ant test-gui
+
+If you want to use v4l4j from your own code, jump to the INSTALLING section.
+
+
+REQUIREMENTS:
+v4l4j requires the following:
+- a supported V4L video source (webcam, capture card, tuner card).
+- Sun JAVA JDK 1.6 or OpenJDK6 (it wont compile with earlier versions).
+- the development files of libjpeg, as well as libjpeg itself
+- standard build tools (make, gcc, ld) & headers (libc)
+- Apache Ant
+
+
+COMPILING:
+To compile v4l4j, run "ant all" in the top-level directory. This will first 
+compile the libvideo shared library and the JNI library libv4l4j.so. It will 
+then compile the java classes and pack them in a JAR file. Both the JNI library
+libv4l4j.so and the JAR file v4l4j.jar are copied in the top-level directory. 
+libvideo is NOT copied in the top-level directory and remains in libvideo/ .
+
+
+INSTALLING:
+v4l4j can be installed by:
+- running "sudo ant install". This will copy libvideo's shared library in 
+  /usr/lib , the JNI library libv4l4j.so in /usr/lib/jni and v4l4j's JAR file 
+  in /usr/share/java. Any of these paths can be changed by modifying the right 
+  property in build.properties .
+- Make sure you run "sudo ldconfig" so libvideo's shared library is added to the
+  cache.
+  
+In order to use the v4l4j package from your own Java application, pass the 
+following arguments to the JVM:
+"-Djava.library.path=/usr/lib/jni -cp /usr/share/java/v4l4j.jar"
+(modify the above values if you have changed the default installation
+directories).
+
+TESTING:
+In order to use the following example applications, make sure you first install
+v4l4j (see above section). Three example applications are shipped with v4l4j:
+- The first one simply captures frames for 10 seconds and print the frame rate.
+  Run it with "ant test-fps"
+- The second one displays the video stream & video controls in a window. Run it
+  with "ant test-gui".
+- The last one displays information about the video device. Run it with 
+  "ant deviceInfo"  
+
+By default, tests will use /dev/video0 (assumed to be a webcam) as the video 
+device, and capture resolution will be set to 640x480. You can change any of 
+these settings by editing the values at the bottom of "build.properties",
+or provide those values on the ant command line (-Dtest.device=..., to change
+the device file, -Dtest.width=... the change the width, -Dtest.height=... for 
+the height and so on). 
+
+
+DEBUGGING:
+First, if you have already installed v4l4j (with "sudo ant install") then you 
+MUST uninstall it with "sudo ant uninstall", otherwise the previous jar file & 
+libraries (without debug statements) will take precedence over the new ones. 
+Then, compile v4l4j to produce extra debug output, useful to troubleshoot 
+issues, with "ant clean all-debug". Install it with "sudo ant install". 
+
+
+CONTACT:
+Feedback is is greatly appreciated to expand the list of platforms and video
+devices v4l4j has been successfully tested with. Feedback, issues and queries 
+can be emailed to v4l4j@googlegroups.com.
+
