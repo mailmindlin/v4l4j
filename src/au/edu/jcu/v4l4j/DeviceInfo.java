@@ -259,6 +259,8 @@ public class DeviceInfo {
 	 * This method releases the libvideo query interface
 	 */
 	synchronized void release() {
+		checkRelease();
+		released = true;
 		doRelease(object);
 	}
 	
