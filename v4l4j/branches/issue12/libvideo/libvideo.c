@@ -705,4 +705,6 @@ void release_tuner_actions(struct video_device *vdev){
 	dprint(LIBVIDEO_SOURCE_TUNER, LIBVIDEO_LOG_DEBUG,
 			"TUN: Releasing struct tuner actions\n");
 	XFREE(vdev->tuner_action);
+	dprint(LIBVIDEO_SOURCE_TUNER, LIBVIDEO_LOG_DEBUG,
+				"TUN: done releasing struct tuner actions\n");
 }
