@@ -253,6 +253,7 @@ public class DeviceInfo {
 		deviceFile = dev;
 		getInfo(object);
 		this.object = object;
+		released = false;
 	}
 	
 	/**
