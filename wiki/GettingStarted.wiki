@@ -34,17 +34,18 @@ svn co http://v4l4j.googlecode.com/svn/v4l4j/trunk v4l4j
 =Requirements=
 v4l4j requires the following:
  * a supported V4L video source (webcam, capture card, tuner card). 
- * Sun JAVA JDK 1.6 or OpenJDK6 (it wont compile with earlier versions and it *must* be a JDK !!!). Install the JDK somewhere and note the location. In Ubuntu/Debian, this can be done with:
+ * Sun JAVA JDK 1.6 or OpenJDK6 (it wont compile with earlier versions and it *must* be a JDK !!!). Install the JDK somewhere and note the location.
+ * the development files of libjpeg, as well as libjpeg itself.
+ * make, gcc and Apache Ant (to build the classes and JNI library).
+
+In Ubuntu/Debian, these can be installed with:
 {{{
-sudo apt-get install openjdk-6-jdk
+sudo apt-get install libjpeg-dev openjdk-6-jdk build-essential ant
 }}}
- * the development files of libjpeg, as well as libjpeg itself. In Ubuntu/Debian, this can be done using
+
+On Mandriva 2010, use:
 {{{
-sudo apt-get install libjpeg-dev
-}}}
- * make, gcc and Apache Ant (to build the classes and JNI library). In Ubuntu/Debian, this can be done using
-{{{
-sudo apt-get install build-essential ant
+sudo urpmi make ant libjpeg-devel gcc
 }}}
 
 =Build=
@@ -53,7 +54,9 @@ If you get this error:
 {{{
 v4l4j_FrameGrabber.c:25:17: error: jni.h: No such file or directory
 }}}
-edit v4l4j/src/Makefile and change the top line `JDK_HOME=/usr/lib/jvm/java-6-sun` to point to the directory where you previously installed the JDK.
+the JDK_HOME environment variable is not set or does not point to a valid JDK. Set it to the directory where you previously installed the JDK and try again.
+For example, on Mandriva, use `JDK_HOME=/usr/lib/jvm/java ant all`
+
 If you get this error:
 {{{
 v4l4j_FrameGrabber.c:27:21: error: jpeglib.h: No such file or directory
