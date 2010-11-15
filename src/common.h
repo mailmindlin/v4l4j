@@ -64,11 +64,8 @@ struct v4l4j_device {
 		struct rgb_data *r;
 	};
 	enum output_format output_fmt;	//the output format (see enum above)
-	unsigned char **bufs;		//the buffers holding the last JPEG  frame
 	int capture_len;			//the size of last captured frame by libvideo
 	int len;					//the size of the frame after conversion
-	int buf_id;					//the index of the buffer where the next
-								//frame goes
 	int need_conv;				//this flag is set by
 								//Java_au_edu_jcu_v4l4j_FrameGrabber_doInit
 								//and says whether v4l4j (1) or libvideo (0)

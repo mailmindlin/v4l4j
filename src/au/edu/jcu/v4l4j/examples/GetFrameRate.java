@@ -217,18 +217,18 @@ public class GetFrameRate {
 
 		try {
 			//discard the first frame to make sure device has settled
-			fg.getFrame();
+			fg.getVideoFrame().recycle();
 			
 			System.out.println("Starting test capture at "+
 					width+"x"+height+" for "+captureLength+" seconds");
 			now=start=System.currentTimeMillis();
 			//while(now<start+(captureLength*1000)){
-				fg.getFrame();
-				//Uncomment the following to dump the captured frame to a jpeg file
-				//also import java.io.FileOutputStream 
-				//new FileOutputStream("file"+n+".raw").getChannel().write(f.getFrame());
-				n++;
-				now=System.currentTimeMillis();
+			fg.getVideoFrame().recycle();
+			//Uncomment the following to dump the captured frame to a jpeg file
+			//also import java.io.FileOutputStream 
+			//new FileOutputStream("file"+n+".raw").getChannel().write(f.getFrame());
+			n++;
+			now=System.currentTimeMillis();
 			//}
 			
 			System.out.println(" =====  TEST RESULTS  =====");

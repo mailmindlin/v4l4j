@@ -24,8 +24,6 @@
 
 package au.edu.jcu.v4l4j;
 
-import java.nio.ByteBuffer;
-
 import au.edu.jcu.v4l4j.FrameInterval.DiscreteInterval;
 import au.edu.jcu.v4l4j.exceptions.InvalidValue;
 import au.edu.jcu.v4l4j.exceptions.NoTunerException;
@@ -43,7 +41,7 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * {@link #getHeight()}.<br>
  * A typical <code>FrameGrabber</code> use is as follows:<br><br>
  * <code><br>
- * Bytebuffer b;<br>
+ * VideoFrame frame;<br>
  * //create a new video device<br>
  * VideoDevice vd = new VideoDevice("/dev/video0");<br>
  * <br>//Create an instance of FrameGrabber
@@ -55,9 +53,10 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * <br> //Start the frame capture 
  * <br>f.startCapture();
  * <br>while (!stop) {
- * <br>&nbsp;&nbsp; b= f.getFrame(); //Get a frame
- * <br>&nbsp;&nbsp; //frame size is b.limit()
- * <br>&nbsp;&nbsp; //do something useful with b
+ * <br>&nbsp;&nbsp; frame = f.getFrame(); //Get a frame
+ * <br>&nbsp;&nbsp; //do something useful with frame, then recycle it
+ * <br>&nbsp;&nbsp; //when done with it, so v4l4j can re-use it later on
+ * <br>&nbsp;&nbsp; frame.recycle();
  * <br>}<br>
  * <br>//Stop the capture
  * <br>f.stopCapture();<br>
@@ -87,14 +86,28 @@ public interface FrameGrabber {
 
 	/**
 	 * This method returns the native image format used by this 
-	 * FrameGrabber. The returned format specifies the image format the capture
-	 * uses.
+	 * FrameGrabber. The returned format specifies the image format in which
+	 * frames are obtained from the device.
 	 * @return the native image format used by this FrameGrabber.
 	 * @throws StateException if this 
 	 * <code>FrameGrabber</code> has been already released, and therefore must
 	 * not be used anymore.
 	 */
 	public ImageFormat getImageFormat();
+	
+	/**
+	 * This method returns the number of buffers v4l4j has negotiated with
+	 * the driver. The driver store capture frames in these buffers and return
+	 * them to v4l4j. This number is an indication as to how many video
+	 * frames can be obtained from the driver through {@link #getVideoFrame()}
+	 * before the capture stops until a buffer is returned to the driver 
+	 * through {@link VideoFrame#recycle()}. Practically speaking, this number
+	 * specifies how many times you can call {@link #getVideoFrame()} before 
+	 * the method blocks, waiting for one of the previous frame to be recycled.
+	 * @return the number of frame buffers used to retrieve frames from 
+	 * the driver
+	 */
+	public int getNumberOfVideoFrames();
 	
 	/**
 	 * This method sets the frame interval used for capture. The frame interval
@@ -148,7 +161,7 @@ public interface FrameGrabber {
 
 	/**
 	 * This method starts the capture. After this call, frames can be retrieved
-	 * with {@link #getFrame()}.
+	 * with {@link #getVideoFrame()}.
 	 * @throws V4L4JException if the capture cant be started
 	 * @throws StateException if this <code>FrameGrabber</code> has been already
 	 * released, and therefore must not be used anymore
@@ -156,17 +169,25 @@ public interface FrameGrabber {
 	public void startCapture() throws V4L4JException;
 
 	/**
-	 * This method retrieves one frame from the video source. The ByteBuffer 
-	 * {@link ByteBuffer#limit() limit()} is set to the size of the captured
-	 * frame. Note that the returned ByteBuffer is not backed by an array.
-	 * This is a JNI limitation (not v4l4j).
-	 * @return a ByteBuffer containing frame data.
+	 * This method retrieves one frame from the video source. At the start 
+	 * of the capture, v4l4j creates a certain number of {@link VideoFrame}s
+	 * and places them in an "available" queue. You can retrieve the exact 
+	 * number of buffers by calling {@link #getNumberOfVideoFrames()}.
+	 * Each time this method is called, it retrieves a VideoFrame from the "available" queue,
+	 * captures an image from the device, places it in the VideoFrame object and
+	 * return it. When you have finished processing the VideoFrame, you must 
+	 * recycle it by calling {@link VideoFrame#recycle()}, so it returns to the
+	 * "available" queue and can be reused. If there are no 
+	 * VideoFrames in the available queue when this method is called, it will 
+	 * block until one gets recycled.
+	 * @return an {@link VideoFrame} containing the captured frame data.
 	 * @throws V4L4JException if there is an error capturing from the source.
-	 * @throws StateException if the capture has not been started or if this 
+	 * @throws StateException if either the capture has not been started, if this 
 	 * <code>FrameGrabber</code> has been already released, and therefore must 
-	 * not be used anymore.
+	 * not be used anymore or if we were interrupted while waiting for a frame
+	 * to be recycled.
 	 */
-	public ByteBuffer getFrame() throws V4L4JException;
+	public VideoFrame getVideoFrame() throws V4L4JException;
 
 	/**
 	 * This method stops the capture.

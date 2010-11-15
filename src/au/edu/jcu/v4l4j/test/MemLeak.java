@@ -52,10 +52,10 @@ public class MemLeak implements Runnable{
 			try {
 				vd = new VideoDevice(dev);
 				vd.getControlList();
-				fg = vd.getJPEGFrameGrabber(640, 480, 1, 1, 80);
+				fg = vd.getJPEGFrameGrabber(640, 480, 0, 0, 80);
 				fg.startCapture();
 				while(count++<200)
-					fg.getFrame();
+					fg.getVideoFrame().recycle();
 				fg.stopCapture();
 				vd.releaseFrameGrabber();	
 			} catch (V4L4JException e) {
@@ -65,10 +65,10 @@ public class MemLeak implements Runnable{
 
 			try {
 				count = 0;
-				fg = vd.getRGBFrameGrabber(640, 480, 1, 1);
+				fg = vd.getRGBFrameGrabber(640, 480, 0, 0);
 				fg.startCapture();
 				while(count++<200)
-					fg.getFrame();
+					fg.getVideoFrame().recycle();
 				fg.stopCapture();
 				vd.releaseFrameGrabber();	
 			} catch (V4L4JException e) {
@@ -78,10 +78,10 @@ public class MemLeak implements Runnable{
 
 			try {
 				count = 0;
-				fg = vd.getBGRFrameGrabber(640, 480, 1, 1);
+				fg = vd.getBGRFrameGrabber(640, 480, 0, 0);
 				fg.startCapture();
 				while(count++<200)
-					fg.getFrame();
+					fg.getVideoFrame().recycle();
 				fg.stopCapture();
 				vd.releaseFrameGrabber();	
 			} catch (V4L4JException e) {
@@ -91,10 +91,10 @@ public class MemLeak implements Runnable{
 
 			try {
 				count = 0;
-				fg = vd.getYUVFrameGrabber(640, 480, 1, 1);
+				fg = vd.getYUVFrameGrabber(640, 480, 0, 0);
 				fg.startCapture();
 				while(count++<200)
-					fg.getFrame();
+					fg.getVideoFrame().recycle();
 				fg.stopCapture();
 				vd.releaseFrameGrabber();	
 			} catch (V4L4JException e) {
@@ -104,10 +104,10 @@ public class MemLeak implements Runnable{
 
 			try {
 				count = 0;
-				fg = vd.getYVUFrameGrabber(640, 480, 1, 1);
+				fg = vd.getYVUFrameGrabber(640, 480, 0, 0);
 				fg.startCapture();
 				while(count++<200)
-					fg.getFrame();
+					fg.getVideoFrame().recycle();
 				fg.stopCapture();
 				vd.releaseFrameGrabber();	
 			} catch (V4L4JException e) {
