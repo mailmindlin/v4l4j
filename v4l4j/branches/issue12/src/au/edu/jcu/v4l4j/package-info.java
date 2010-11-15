@@ -19,8 +19,8 @@
  * </code><br>
  * As it is the case most of the time when interacting with hardware, you must
  * release resources and data structures when finished. All v4l4j classes follow 
- * this rule (with few exceptions clearly noted in their java documentation),
- * including {@link au.edu.jcu.v4l4j.VideoDevice}s:<br>
+ * this rule, including {@link au.edu.jcu.v4l4j.VideoDevice}s. The rare exceptions
+ * are clearly identified in their java documentation.<br>
  * <code>
  * vd.release();</code><br>
  * Once an object has been <code>release()</code>d, it must not be reused, and 
@@ -69,9 +69,8 @@
  * a given video device hardware-dependent and is embedded into a 
  * {@link au.edu.jcu.v4l4j.ControlList} object, which can be obtained by calling 
  * {@link au.edu.jcu.v4l4j.VideoDevice#getControlList()}. <strong>The 
- * {@link au.edu.jcu.v4l4j.ControlList} object and associated 
- * {@link au.edu.jcu.v4l4j.Control}s must be released when they are no longer 
- * needed.</strong> This is done by calling 
+ * {@link au.edu.jcu.v4l4j.ControlList} object must be released when controls 
+ * are no longer needed.</strong> This is done by calling 
  * {@link au.edu.jcu.v4l4j.VideoDevice#releaseControlList()}. Again, once released,
  * neither the {@link au.edu.jcu.v4l4j.ControlList} nor individual 
  * {@link au.edu.jcu.v4l4j.Control}s must be used, and any reference to them 
@@ -81,10 +80,11 @@
  * 
  * <h3>Video capture</h3>
  * Capture in v4l4j is extremely simple. v4l4j hands out captured frames in a
- * {@link java.nio.ByteBuffer} object, either in a native format (also called 
- * raw format) or one of the 5 convenience formats (JPEG, RGB24, BGR24, YUV420 
- * or YVU420). Each of these 6 output formats has its own frame grabber object,
- * which will grab frames and convert them if required. 
+ * {@link au.edu.jcu.v4l4j.VideoFrame} object, either in a native image format (
+ * referred to as raw format in v4l4j's documentation) or one of the 5 convenience
+ * image formats (JPEG, RGB24, BGR24, YUV420 or YVU420). Each of these 6 image
+ * formats is output by a dedicated frame grabber object, which will grab frames and 
+ * convert them to that format if required. 
  *    
  * The set of native {@link au.edu.jcu.v4l4j.ImageFormat}s supported by a video 
  * device can be obtained using the {@link au.edu.jcu.v4l4j.DeviceInfo} object
@@ -101,8 +101,8 @@
  * <li>Second, when ready to capture, start it by calling 
  * {@link au.edu.jcu.v4l4j.FrameGrabber#startCapture()}.</li>
  * <li>Get the last frame using 
- * {@link au.edu.jcu.v4l4j.FrameGrabber#getFrame()} and do something useful 
- * with it.</li>
+ * {@link au.edu.jcu.v4l4j.FrameGrabber#getVideoFrame()}, do something useful 
+ * with it, and recycle it when you are done using it.</li>
  * <li>When done capturing, stop the capture with 
  * {@link au.edu.jcu.v4l4j.FrameGrabber#stopCapture()}. If you need to start 
  * capturing again later, just call 

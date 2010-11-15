@@ -138,7 +138,13 @@
 	<target name="compile" depends="init">
 		<javac srcdir="${project.src}" destdir="${project.classes}" deprecation="on" source="${source}" debug="off">
 			<classpath refid="build.classpath"/>
-			<include name="**/*.java"/>
+			<include name="**/*.java" />
+			<exclude name="**/test/*.java" />
+			<exclude name="**/package-info.java" />
+		</javac>
+		<javac srcdir="${project.src}" destdir="${project.classes}" deprecation="on" source="${source}" debug="on">
+			<classpath refid="build.classpath"/>
+			<include name="**/test/*.java" />
 			<exclude name="**/package-info.java" />
 		</javac>
 	</target>
@@ -219,7 +225,7 @@
 		</jar>
 	</target>
 	
-	<target name="test-fps" depends="jar,jnilib">
+	<target name="test-fps">
 		<java classname="au.edu.jcu.v4l4j.examples.GetFrameRate" fork="true" failonerror="true">
 			<classpath>
 				<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
@@ -236,16 +242,15 @@
 		</java>
 	</target>
 	
-	<target name="test-gui" depends="jar,jnilib">
+	<target name="test-gui">
 		<java jar="${platform.standard.jar.location}/${project.jar.file}" fork="true" failonerror="true">
 			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
-			<arg value="${test.device}" /> <!-- device file -->
-			<arg value="${test.width}" /> <!-- width -->
-			<arg value="${test.height}" /> <!-- height -->
+			<arg value="-Dtest.width=${test.width}" /> <!-- width -->
+			<arg value="-Dtest.height=${test.height}" /> <!-- height -->
 		</java>
 	</target>
 	
-	<target name="deviceInfo" depends="jar,jnilib">
+	<target name="deviceInfo">
 		<java classname="au.edu.jcu.v4l4j.VideoDevice" fork="true" failonerror="true">
 			<classpath>
 				<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
@@ -255,15 +260,16 @@
 		</java>
 	</target>
 
-	<target name="test-junit" depends="jar-test,jnilib">
-		<junit fork="yes" haltonfailure="yes">
-			<jvmarg value="-Djava.library.path=."/>
+	<target name="test-junit" depends="jar-test">
+		<junit fork="yes" haltonfailure="yes" showoutput="yes">
+			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
 			<jvmarg value="-Dtest.device=${test.device}" />
 			<jvmarg value="-Dtest.width=${test.width}" />
 			<jvmarg value="-Dtest.height=${test.height}" /> 
 			<jvmarg value="-Dtest.standard=${test.standard}" /> 
 			<jvmarg value="-Dtest.channel=${test.channel}" />
-			<test name="${test.class.name.single}" />
+			<!--<test name="au.edu.jcu.v4l4j.test.FrameGrabberTest" />-->
+			<test name="au.edu.jcu.v4l4j.test.FrameGrabberThreadTest2" />
 			<formatter type="plain" usefile="false" />
 			<classpath refid="test.classpath" />
 		</junit>

@@ -24,12 +24,8 @@
 
 package au.edu.jcu.v4l4j;
 
-import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
 import au.edu.jcu.v4l4j.exceptions.ImageFormatException;
-import au.edu.jcu.v4l4j.exceptions.InitialisationException;
 import au.edu.jcu.v4l4j.exceptions.StateException;
-import au.edu.jcu.v4l4j.exceptions.V4L4JException;
-import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
 
 /**
  * This class provides methods to capture raw frames from a {@link VideoDevice}.
@@ -46,7 +42,7 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * <code>//create a new video device<br>
  * VideoDevice vd = new VideoDevice("/dev/video0");<br>
  * <br>//Create an instance of FrameGrabber
- * <br>FrameGrabber f = vd.getRawFrameGrabber(320, 240, 0, 0, 80);
+ * <br>FrameGrabber f = vd.getRawFrameGrabber(320, 240, 0, 0);
  * <br> //the framegrabber will use the first image format supported by the 
  * device, as returned by
  * <br> //<code>vd.getDeviceInfo().getFormatList().getList().get(0)</code>
@@ -54,9 +50,10 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * <br> //Start the frame capture 
  * <br>f.startCapture();
  * <br>while (!stop) {
- * <br>&nbsp;&nbsp; ByteBuffer b= f.getFrame(); //Get a frame
- * <br>&nbsp;&nbsp; //frame size is b.limit()
- * <br>&nbsp;&nbsp; //do something useful with b
+ * <br>&nbsp;&nbsp; VideoFrame frame= f.getFrame(); //Get a frame
+ * <br>&nbsp;&nbsp; //do something useful with it
+ * <br>&nbsp;&nbsp; //then recycle it with:
+ * <br>&nbsp;&nbsp; frame.recycle();
  * <br>}<br>
  * <br>//Stop the capture
  * <br>f.stopCapture();<br>
@@ -99,47 +96,6 @@ public class RawFrameGrabber extends AbstractGrabber {
 			int std, Tuner t, ImageFormat imf) throws ImageFormatException{
 		super(di, o,w,h,ch,std,t,imf, RAW_GRABBER);
 	}
-
-	/**
-	 * This method initialises the capture, and apply the capture parameters.
-	 * V4L may either adjust the height and width parameters to the closest 
-	 * valid values or reject them altogether. If the values were adjusted, 
-	 * they can be retrieved after calling {@link #init()} using 
-	 * {@link #getWidth()} and {@link #getHeight()}.
-	 * @throws VideoStandardException if the chosen video standard is not 
-	 * supported
-	 * @throws ImageFormatException this exception is thrown if the chosen image
-	 * format cannot be YUV420 encoded. If no image format was chosen, the video 
-	 * device does not have any image formats that can be YUV420 encoded
-	 * (let the author know, see README file)
-	 * @throws CaptureChannelException if the given channel number value is not 
-	 * valid
-	 * @throws ImageDimensionException if the given image dimensions are not 
-	 * supported
-	 * @throws InitialisationException if the video device file can not be 
-	 * initialised 
-	 * @throws StateException if the frame grabber is already initialised or 
-	 * released
-	 * @throws V4L4JException if there is an error applying capture parameters
-	 */
-	void init() throws V4L4JException{
-		try {
-			super.init();
-		} catch (ImageFormatException ife){
-			if(format == -1){
-				String msg = 
-					"v4l4j was unable to find image format supported by the"
-					+ " \nvideo device and that can be converted to YUV420.\n"
-					+ "Please let the author know about this, so that support\n"
-					+ "for this video device can be improved. See \nREADME file"
-					+ " on how to submit v4l4j reports.";
-				System.err.println(msg);
-				ife = new ImageFormatException(msg);
-			}
-			
-			throw ife;
-		}
-	}
 	
 	/**
 	 * This method returns the native image format used by this 
@@ -153,6 +109,14 @@ public class RawFrameGrabber extends AbstractGrabber {
 	public ImageFormat getImageFormat(){
 		state.checkReleased();
 		return dInfo.getFormatList().getNativeFormat(format);
+	}
+
+	@Override
+	protected void createBuffers(int bufferSize) {
+		int numberOfBuffers = nbV4LBuffers;
+		
+		while(numberOfBuffers-- > 0)
+			videoFrames.add( new UncompressedVideoFrame(this, bufferSize, null,null)	);
 	}
 }
 

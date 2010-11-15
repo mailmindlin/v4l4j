@@ -25,7 +25,7 @@ package au.edu.jcu.v4l4j.exceptions;
 
 /**
  * Exceptions of this type are thrown when calling an incorrect method on a 
- * control
+ * control or video frame
  * @author gilles
  *
  */
