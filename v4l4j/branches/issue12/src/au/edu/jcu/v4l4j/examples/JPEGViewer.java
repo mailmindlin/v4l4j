@@ -33,6 +33,7 @@ import javax.swing.JOptionPane;
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.ImageFormat;
 import au.edu.jcu.v4l4j.VideoDevice;
+import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 /**
@@ -100,8 +101,8 @@ public class JPEGViewer implements ImageProcessor{
 	}
 
 	@Override
-	public void processImage(byte[] b) {
-		viewer.setImageIcon(b);
+	public void processImage(VideoFrame frame) {
+		viewer.drawBufferedImage(frame.getBufferedImage());
 	}
  
 	public static void main(String[] args) throws V4L4JException, IOException {

@@ -56,9 +56,10 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * <br> //Start the frame capture 
  * <br>f.startCapture();
  * <br>while (!stop) {
- * <br>&nbsp;&nbsp; ByteBuffer b= f.getFrame(); //Get a frame
- * <br>&nbsp;&nbsp; //frame size is b.limit()
- * <br>&nbsp;&nbsp; //do something useful with b
+ * <br>&nbsp;&nbsp; VideoFrame frame= f.getFrame(); //Get a frame
+ * <br>&nbsp;&nbsp; //do something useful with it
+ * <br>&nbsp;&nbsp; //then recycle it with:
+ * <br>&nbsp;&nbsp; frame.recycle();
  * <br>}<br>
  * <br>//Stop the capture
  * <br>f.stopCapture();<br>
@@ -188,5 +189,12 @@ public class JPEGFrameGrabber extends AbstractGrabber {
 	public ImageFormat getImageFormat(){
 		state.checkReleased();
 		return dInfo.getFormatList().getJPEGEncodableFormat(format);
+	}
+	
+	@Override
+	protected void createBuffers(int bufferSize) {
+		int numberOfBuffers = nbV4LBuffers;
+		while(numberOfBuffers-- > 0)
+			videoFrames.add(new JPEGVideoFrame(this, bufferSize));
 	}
 }

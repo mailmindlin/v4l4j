@@ -130,8 +130,8 @@ public class DeviceChooser  extends WindowAdapter implements ActionListener{
 
 		if(dev.size()==0){
 			System.err.println("Unable to detect any V4L device file\n"+
-					"Run this program again with the correct V4L device file"
-					+" as sole argument");
+					"Set the 'test.device' property to a valid\nvideo "+
+					"device file and run this program again ");
 			System.exit(0);
 		}
 		
@@ -161,24 +161,6 @@ public class DeviceChooser  extends WindowAdapter implements ActionListener{
 
 		mainPanel.validate();
 		mainPanel.repaint();
-	}
-
-	public static void main(String[] args){
-		final String[] argz = args;
-		SwingUtilities.invokeLater(new Runnable(){
-
-			@Override
-			public void run() {
-				if(argz.length==3)
-					new DeviceChooser(argz[0], Integer.parseInt(argz[1]), Integer.parseInt(argz[2]));
-				else if (argz.length == 2)
-					new DeviceChooser(null, Integer.parseInt(argz[0]), Integer.parseInt(argz[1]));
-				else {
-					new DeviceChooser(null, 640, 480);
-				}
-			}
-			
-		});
 	}
 	
 	public void close(){
@@ -545,4 +527,20 @@ public class DeviceChooser  extends WindowAdapter implements ActionListener{
 			vd.release();
 		}
 	}
+	
+
+	public static void main(String[] args){
+		final String dev = System.getProperty("test.device"); 
+		final int w = (System.getProperty("test.width")!=null) ? Integer.parseInt(System.getProperty("test.width")) : 640;
+		final int h = (System.getProperty("test.height")!=null) ? Integer.parseInt(System.getProperty("test.height")) : 480;
+ 
+		SwingUtilities.invokeLater(new Runnable(){
+
+			@Override
+			public void run() {
+				new DeviceChooser(dev, w, h	);
+			}			
+		});
+	}
+
 }
