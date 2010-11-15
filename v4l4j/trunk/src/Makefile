@@ -27,7 +27,7 @@ V4L4J_LOG_SOURCE ?= 63
 
 
 ifneq ($(DEBUG),)
-DBG := -DDEBUG -Wall -DLOG_SOURCE=$(V4L4J_LOG_SOURCE)
+DBG := -DDEBUG -Wall -DLOG_SOURCE=$(V4L4J_LOG_SOURCE) -ggdb
 else
 OPTIMISATION := -O3
 endif
@@ -47,7 +47,7 @@ INCLUDES := -I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ \
 CFLAGS := $(INCLUDES) $(DBG) $(OPTIMISATION) -fPIC
 
 LD := gcc
-LDFLAGS := -shared  -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME)
+LDFLAGS := -shared -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME)
 
 all: $(LIB)
 
