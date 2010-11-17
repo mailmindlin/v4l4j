@@ -74,7 +74,7 @@ public class FrameGrabberThreadTest {
 			fg.startCapture();
 			System.out.println("RUN1: Starting capture");
 			while(System.currentTimeMillis() - t < 10000) {
-				fg.getFrame();
+				fg.getVideoFrame().recycle();
 			}
 			System.out.println("RUN1: Done capturing - Stopping capture");
 			fg.stopCapture();
@@ -94,7 +94,7 @@ public class FrameGrabberThreadTest {
 			fg.startCapture();
 			System.out.println("RUN3: Starting capture");
 			while(System.currentTimeMillis() - t < 10000) {
-				fg.getFrame();
+				fg.getVideoFrame().recycle();
 			}
 			System.out.println("RUN3: Done capturing - stopping capture");
 			fg.stopCapture();

@@ -43,7 +43,6 @@ import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
-import java.nio.ByteBuffer;
 import java.util.Hashtable;
 
 import javax.swing.BorderFactory;
@@ -71,13 +70,14 @@ import javax.swing.event.ChangeListener;
 import au.edu.jcu.v4l4j.Control;
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.FrameInterval;
+import au.edu.jcu.v4l4j.FrameInterval.DiscreteInterval;
+import au.edu.jcu.v4l4j.FrameInterval.Type;
 import au.edu.jcu.v4l4j.ImageFormat;
 import au.edu.jcu.v4l4j.Tuner;
 import au.edu.jcu.v4l4j.TunerInfo;
 import au.edu.jcu.v4l4j.V4L4JConstants;
 import au.edu.jcu.v4l4j.VideoDevice;
-import au.edu.jcu.v4l4j.FrameInterval.DiscreteInterval;
-import au.edu.jcu.v4l4j.FrameInterval.Type;
+import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.examples.VideoViewer.IntervalGUI.Interval;
 import au.edu.jcu.v4l4j.exceptions.ControlException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
@@ -341,7 +341,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
      * {@link Raster}. The image must be in RGB24 format.
      * @param b the image as a byte array
      */
-    public void setImageRaster(byte[] b) {
+    public void setImageRaster(Raster raster) {
     	// Computes the frame rate
     	if(start==0)
     		start = System.currentTimeMillis();
@@ -352,7 +352,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 			n = 0;
 		}
     	
-        raster.setDataElements(0, 0, width, height, b);
+        img.setData(raster);
         video.getGraphics().drawImage(img, 0, 0, width, height, null);
         n++;
 
@@ -361,18 +361,36 @@ public class VideoViewer extends WindowAdapter implements Runnable{
     }
     
     /**
+     * This method draws a new image as in a {@link JComponent} using a 
+     * {@link Raster}. The image must be in RGB24 format.
+     * @param b the image as a byte array
+     */
+    public void drawBufferedImage(BufferedImage image) {
+    	// Computes the frame rate
+    	if(start==0)
+    		start = System.currentTimeMillis();
+    	else if(System.currentTimeMillis()>start+FPS_REFRESH) {
+    		fps.setText(String.format("FPS: %5.2f", 
+    				(float) 1000*n/(System.currentTimeMillis()-start)));
+			start = System.currentTimeMillis();
+			n = 0;
+		}
+    	
+        video.getGraphics().drawImage(image, 0, 0, width, height, null);
+        n++;    	
+    }
+    
+    /**
      * Implements the capture thread: get a frame from the FrameGrabber, and 
      * send it for processing
      */
     public void run(){
-		ByteBuffer bb;
-		byte[] b;
+    	VideoFrame frame;
 		try {			
 			while(!stop){
-				bb = fg.getFrame();
-				b = new byte[bb.limit()];
-				bb.get(b);
-				processor.processImage(b);
+				frame = fg.getVideoFrame();
+				processor.processImage(frame);
+				frame.recycle();
 			}
 		} catch (V4L4JException e) {
 			e.printStackTrace();
@@ -406,6 +424,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
     		} catch (V4L4JException e){
     			JOptionPane.showMessageDialog(f, 
 						"Error obtaining the frame grabber");
+    			e.printStackTrace();
     			return;
     		}
     		

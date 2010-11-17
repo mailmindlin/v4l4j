@@ -33,6 +33,7 @@ import javax.swing.JOptionPane;
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.ImageFormat;
 import au.edu.jcu.v4l4j.VideoDevice;
+import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 public class RGBViewer implements ImageProcessor{
@@ -85,8 +86,8 @@ public class RGBViewer implements ImageProcessor{
 	}
 
 	@Override
-	public void processImage(byte[] b) {
-		viewer.setImageRaster(b);
+	public void processImage(VideoFrame frame) {
+		viewer.drawBufferedImage(frame.getBufferedImage());
 	}
   
 
