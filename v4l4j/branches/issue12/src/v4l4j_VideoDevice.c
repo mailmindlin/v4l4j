@@ -59,6 +59,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doRelease(JNIEnv *e, jo
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
 	int ret;
 
+	dprint(LOG_CALLS, "[LIBVIDEO] Calling close_device with d: %p d->vdev: %p\n",d, d->vdev);
 	if ((ret = close_device(d->vdev)) !=0 ) {
 		if (ret== LIBVIDEO_ERR_CAPTURE_IN_USE){
 			dprint(LOG_LIBVIDEO, "[V4L4J] Error closing video_device - capture in progress\n");
