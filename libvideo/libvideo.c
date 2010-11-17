@@ -145,6 +145,9 @@ int close_device(struct video_device *vdev) {
 		return LIBVIDEO_ERR_TUNER_IN_USE;
 	}
 
+	dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_DEBUG,
+					"VD: Close device file %s \n"
+					, vdev->file);
 	close(vdev->fd);
 	XFREE(vdev);
 	return 0;
