@@ -25,6 +25,7 @@ package au.edu.jcu.v4l4j.examples;
 
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.ImageFormat;
+import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 /**
@@ -52,7 +53,7 @@ public interface ImageProcessor {
 	/**
 	 * this method is called on this image processor whenever a new image is
 	 * available for processing
-	 * @param b the image data as a byte array
+	 * @param frame the video frame
 	 */
-	public void processImage(byte[] b);
+	public void processImage(VideoFrame frame);
 }

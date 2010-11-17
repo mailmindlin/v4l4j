@@ -35,7 +35,7 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * <ul>
  * <li>its device file,</li>
  * <li>the name of the video device,</li>
- * <li>a list of {@link InputInfo} object providing information about each 
+ * <li>a list of {@link InputInfo} objects providing information about each 
  * video input,</li>
  * <li>a list of {@link ImageFormat}s, capture resolutions 
  * ({@link ResolutionInfo}) and frame intervals supported by the video device.

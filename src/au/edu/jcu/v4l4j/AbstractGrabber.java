@@ -23,7 +23,7 @@
 */
 package au.edu.jcu.v4l4j;
 
-import java.nio.ByteBuffer;
+import java.util.Vector;
 
 import au.edu.jcu.v4l4j.FrameInterval.DiscreteInterval;
 import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
@@ -54,17 +54,18 @@ abstract class AbstractGrabber implements FrameGrabber {
 	protected final static int YUV_GRABBER = 4;
 	protected final static int YVU_GRABBER = 5;
 	
-	protected DeviceInfo dInfo;
-	private int width;
-	private int height;
-	private int channel;
-	private int standard;
-	private int nbV4LBuffers = 4;
-	private ByteBuffer[] bufs;
-	protected State state;
-	protected int format;
-	private Tuner tuner;
-	private int type;
+	protected DeviceInfo 				dInfo;
+	private int 						width;
+	private int 						height;
+	private int 						channel;
+	private int 						standard;
+	protected int 						nbV4LBuffers;
+	protected Vector<BaseVideoFrame> 	videoFrames;
+	private Vector<BaseVideoFrame> 		availableVideoFrames;
+	protected State 					state;
+	protected int 						format;
+	private Tuner 						tuner;
+	private int 						type;
 	
 	/*
 	 * JNI returns a long (which is really a pointer) when a device is allocated
@@ -82,9 +83,10 @@ abstract class AbstractGrabber implements FrameGrabber {
 	}
 	
 
-	private native ByteBuffer[] doInit(long o, int w, int h, int ch, int std,
-			int nbBuf, int requestedFormat, int output)
+	private native int doInit(long o, int w, int h, int ch, int std,
+			int requestedFormat, int output)
 		throws V4L4JException;
+	
 	private native void start(long o) throws V4L4JException;
 	/**
 	 * This method sets a new value for the JPEG quality
@@ -94,8 +96,8 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 * type of this frame grabber (not {@link #JPEG_GRABBER}).
 	 */
 	protected native void setQuality(long o, int i);
-	private native int getBuffer(long o) throws V4L4JException;
-	private native int getBufferLength(long o);
+	private native int getBufferSize(long o);
+	private native int fillBuffer(long o, byte array[]) throws V4L4JException;
 	private native void stop(long o);
 	private native void doRelease(long o);
 	private native void doSetFrameIntv(long o, int n, int d) throws InvalidValue;
@@ -137,6 +139,8 @@ abstract class AbstractGrabber implements FrameGrabber {
 		format = imf.getIndex();
 		tuner = t;
 		type = ty;
+		nbV4LBuffers = 0;
+		videoFrames = new Vector<BaseVideoFrame>();
 	}
 	
 	
@@ -161,9 +165,35 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 */
 	void init() throws V4L4JException{
 		state.init();
-		bufs = doInit(object, width, height, channel, standard, nbV4LBuffers,
-				format, type);
+		
+		// Initialise libvideo and setup capture parameters
+		// Return value is the number of buffers mmaped into the driver's memory
+		nbV4LBuffers = doInit(object, width, height, channel, standard, format, type);
+		int bufferSize = getBufferSize(object);
+		
+		// Create the V4L4J data buffer objects
+		createBuffers(bufferSize);
+		
+		// Copy the videoFrames vector into a new availableVideoFrames vector
+		availableVideoFrames = new Vector<BaseVideoFrame>(videoFrames);
+		
 		state.commit();
+	}
+	
+	/**
+	 * This abstract method is called when {@link #init()} succeeds and is
+	 * responsible for populating the {@link #videoFrames} member (vector of 
+	 * {@link #nbV4LBuffers}  {@link BaseVideoFrame}s).
+	 * @param bufferSize the size of each buffer
+	 */
+	protected abstract void createBuffers(int bufferSize);
+	
+	/* (non-Javadoc)
+	 * @see au.edu.jcu.v4l4j.FrameGrabber#getNumberOfBuffers()
+	 */
+	@Override
+	public int getNumberOfVideoFrames() {
+		return nbV4LBuffers;
 	}
 	
 	/* (non-Javadoc)
@@ -214,24 +244,80 @@ abstract class AbstractGrabber implements FrameGrabber {
 	@Override
 	public final void startCapture() throws V4L4JException {
 		state.start();
+		
+		// start video capture
 		start(object);
+				
 		state.commit();
 	}
 	
+	/**
+	 * This method is called as part of {@link #getVideoFrame()}. It retrieves a video
+	 * frame marked as available (recycled). if no frame is available, this method
+	 * will block. If interrupted while waiting, a {@link StateException} will
+	 * be thrown
+	 * @return an available video frame.
+	 * @thrown {@link StateException} if interrupted while waiting.
+	 */
+	private BaseVideoFrame	getAvailableVideoFrame() {
+		BaseVideoFrame frame = null;
+		
+		// block until a video frame is available
+		synchronized (availableVideoFrames) {
+			while (availableVideoFrames.size() == 0)
+				try {
+					availableVideoFrames.wait();
+				} catch (InterruptedException e) {
+					throw new StateException("Interrupted while waiting for a video frame", e);
+				}
+			
+			// get the video frame
+			frame = availableVideoFrames.remove(0);
+		}
+		
+		return frame;
+	}
+	
 	/* (non-Javadoc)
-	 * @see au.edu.jcu.v4l4j.FrameGrabber#getFrame()
+	 * @see au.edu.jcu.v4l4j.FrameGrabber#getVideoFrame()
 	 */
 	@Override
-	public final ByteBuffer getFrame() throws V4L4JException {
-		//we need the synchronized statement to serialise calls to getBuffer
-		//since libvideo is not reentrant. Also we dont want the frame grabber
-		//to be released in the middle of a getBuffer() call.
-		synchronized(state) {
-			if(!state.isStarted())
-				throw new StateException("Invalid method call");
-			ByteBuffer b = bufs[getBuffer(object)];
-			b.limit(getBufferLength(object)).position(0);
-			return b;
+	public final VideoFrame getVideoFrame() throws V4L4JException {
+		int frameSize;
+		BaseVideoFrame nextFrame;
+		
+		state.get();	
+		
+		try {
+			// get next available video frame object
+			nextFrame = getAvailableVideoFrame();
+
+			// get the latest frame and store it in the video frame 
+			frameSize = fillBuffer(object, nextFrame.getByteArray());
+
+			// mark the video frame as available for use
+			nextFrame.prepareForDelivery(frameSize);
+		} finally {
+			state.put();
+		}
+		
+		return nextFrame;
+		
+	}
+	
+	synchronized static void Log(String s){
+		System.out.println(Thread.currentThread().getName()+": "+s);
+		System.out.flush();
+	}
+	
+	/**
+	 * This method is called by a video frame, when it is being recycled.
+	 * @param frame the frame being recycled.
+	 */
+	final void recycleVideoBuffer(BaseVideoFrame frame) {
+		synchronized(availableVideoFrames){		
+			availableVideoFrames.add(frame);
+			availableVideoFrames.notifyAll();
 		}
 	}
 	
@@ -240,8 +326,25 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 */
 	@Override
 	public final void stopCapture(){
-		state.stop();		
+		state.stop();
+		// at this stage, we know that no one is waiting in getVideoFrame() anymore,
+		// and further calls to it will throw a StateException.
+		
+		// I dont think the following is required, so commented out for now
+		// we now wait for all VideoFrame objects to be recycled.
+//		for(AbstractVideoFrame frame : videoFrames)
+//			try {
+//				frame.waitTillRecycled();
+//			} catch (InterruptedException e) {
+//				System.err.println("Interrupted while waiting for frame to be recycled");
+//			}
+		
+		// Make sure all video frames are recycled
+		for(VideoFrame frame: videoFrames)
+			frame.recycle();
+		
 		stop(object);
+		
 		state.commit();
 	}
 	
@@ -257,7 +360,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 			//capture already stopped 
 		}
 		
-		state.remove();		
+		state.release();		
 		doRelease(object);
 		state.commit();
 	}
@@ -297,13 +400,12 @@ abstract class AbstractGrabber implements FrameGrabber {
 		state.checkReleased();
 		return standard;
 	}
-	
-	protected static class State {
 
+	protected static class State {
 		private int state;
 		private int temp;
 		private int users;
-		
+
 		private static int UNINIT=0;
 		private static int INIT=1;
 		private static int STARTED=2;
@@ -315,7 +417,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 			temp = UNINIT;
 			users = 0;
 		}
-		
+
 		public synchronized void init(){
 			if(state==UNINIT && temp!=INIT) {
 				temp=INIT;
@@ -323,7 +425,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 				throw new StateException("This FrameGrabber can not be "
 						+"initialised again");
 		}
-		
+
 		public synchronized void start(){
 			if(state==INIT || state==STOPPED && temp!=STARTED) {
 				temp=STARTED;
@@ -331,7 +433,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 				throw new StateException("This FrameGrabber is not initialised"
 						+" or stopped and can not be started");
 		}
-		
+
 		/**
 		 * Must be called with state object lock held.
 		 * @throws StateException if released
@@ -341,7 +443,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 			checkReleased();
 			return state==STARTED && temp!=STOPPED;
 		}
-		
+
 		/**
 		 * Must be called with state object lock held
 		 * @return
@@ -352,23 +454,32 @@ abstract class AbstractGrabber implements FrameGrabber {
 		}
 
 		public synchronized void get(){
-			if(state==INIT || state==STARTED && temp!=STOPPED) {
+			// if we are already started and not about to stop
+			// increment the number of users
+			if(state==STARTED && temp!=STOPPED) {
 				users++;
 			} else
-				throw new StateException("This FrameGrabber is neither "
-						+"initialised nor started and can not be used");
+				throw new StateException("This FrameGrabber is "
+						+"not started and can not be used");
 		}
-		
+
 		public synchronized void put(){
-			if(state==INIT || state==STARTED) {
-				if(--users==0  && temp==STOPPED)
+			// if we are started...
+			if(state==STARTED) {
+				// decrement the number of users and notify any blocked
+				// thread if there are no more users
+				if (--users==0)
 					notify();
+				// if we are about to stop, throw a state exception so
+				// the captured frame is not returned
+				if(temp==STOPPED)
+					throw new StateException("This framegrabber was stopped");
 			} else
-				throw new StateException("This FrameGrabber is neither "
-						+"initialised nor started and can not be used");
+				throw new StateException("This FrameGrabber is"
+						+" not started and can not be used");
 		}
-		
-		
+
+
 		public synchronized void stop(){
 			if(state==STARTED && temp!=STOPPED) {
 				temp=STOPPED;
@@ -386,15 +497,15 @@ abstract class AbstractGrabber implements FrameGrabber {
 				throw new StateException("This FrameGrabber is not started and "
 						+"can not be stopped");
 		}
-		
-		public synchronized void remove(){
+
+		public synchronized void release(){
 			if(state==INIT || state==STOPPED && temp!=RELEASED) {
 				temp=RELEASED;
 			} else
 				throw new StateException("This FrameGrabber is neither "
 						+"initialised nor stopped and can not be released");
 		}
-		
+
 		public synchronized void commit(){
 			state=temp;
 		}
