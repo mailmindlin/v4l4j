@@ -23,6 +23,10 @@
 */
 package au.edu.jcu.v4l4j;
 
+import java.awt.color.ColorSpace;
+import java.awt.image.DataBuffer;
+import java.awt.image.PixelInterleavedSampleModel;
+
 import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
 import au.edu.jcu.v4l4j.exceptions.ImageFormatException;
 import au.edu.jcu.v4l4j.exceptions.InitialisationException;
@@ -55,9 +59,10 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * <br> //Start the frame capture 
  * <br>f.startCapture();
  * <br>while (!stop) {
- * <br>&nbsp;&nbsp; ByteBuffer b= f.getFrame(); //Get a frame
- * <br>&nbsp;&nbsp; //frame size is b.limit()
- * <br>&nbsp;&nbsp; //do something useful with b
+ * <br>&nbsp;&nbsp; VideoFrame frame= f.getFrame(); //Get a frame
+ * <br>&nbsp;&nbsp; //do something useful with it
+ * <br>&nbsp;&nbsp; //then recycle it with:
+ * <br>&nbsp;&nbsp; frame.recycle();
  * <br>}<br>
  * <br>//Stop the capture
  * <br>f.stopCapture();<br>
@@ -151,5 +156,16 @@ public class BGRFrameGrabber extends AbstractGrabber {
 	public ImageFormat getImageFormat(){
 		state.checkReleased();
 		return dInfo.getFormatList().getBGREncodableFormat(format);
+	}
+	
+	@Override
+	protected void createBuffers(int bufferSize) {
+		int numberOfBuffers = nbV4LBuffers;
+		ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+		PixelInterleavedSampleModel sm = new PixelInterleavedSampleModel(
+				DataBuffer.TYPE_BYTE, getWidth(), getHeight(), 3, getWidth() * 3, new int[] {2,1,0});
+							
+		while(numberOfBuffers-- > 0)
+			videoFrames.add( new UncompressedVideoFrame(this, bufferSize, sm, cs) );
 	}
 }

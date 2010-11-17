@@ -27,33 +27,36 @@ package au.edu.jcu.v4l4j.test;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Vector;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.VideoDevice;
+import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 public class FrameGrabberTest {
 	private static VideoDevice vd;
 	private FrameGrabber fg;
-
+	int w,h, std, ch, repeats;
+	String dev;
 	
 	
 	@Before
 	public void setUp() throws Exception {
-		int w,h, std, ch;
-		String dev;
 		dev = (System.getProperty("test.device")!=null) ? System.getProperty("test.device") : "/dev/video0"; 
 		vd = new VideoDevice(dev);
-
 		w = (System.getProperty("test.width")!=null) ? Integer.parseInt(System.getProperty("test.width")) : 320;
 		h = (System.getProperty("test.height")!=null) ? Integer.parseInt(System.getProperty("test.height")) : 240;
 		std = (System.getProperty("test.standard")!=null) ? Integer.parseInt(System.getProperty("test.standard")) : 0;
 		ch = (System.getProperty("test.channel")!=null) ? Integer.parseInt(System.getProperty("test.channel")) : 0;
  
+		repeats = 10;
+		
 		fg = vd.getRawFrameGrabber(w, h, ch, std);
 	}
 
@@ -82,9 +85,8 @@ public class FrameGrabberTest {
 	public void testGetFrame() {
 		try {
 			fg.startCapture();
-			fg.getFrame();
+			fg.getVideoFrame().recycle();
 			fg.stopCapture();
-
 		} catch (V4L4JException e) {
 			fail("Error: Shouldnt be in exception handler here...");
 		}
@@ -122,17 +124,47 @@ public class FrameGrabberTest {
 		fg.stopCapture();
 	}
 	
+	@Test(expected=StateException.class)
+	public void testGetFrameAfterStopCapture() throws StateException{
+		try {
+			fg.startCapture();
+		} catch (V4L4JException e) {
+			fail("Error: Should be able to start the capture here");
+		}
+		fg.stopCapture();
+
+		try {
+			fg.getVideoFrame();
+		} catch (V4L4JException e) {
+			fail("Error: we shouldnt be here - a StateException should be thrown instead");
+		}
+	}
+	
+	@Test(expected=StateException.class)
+	public void testAccessVideoFrameAfterStartStopStartCapture() throws StateException{
+		VideoFrame frame = null;
+		try {
+			fg.startCapture();
+			frame = fg.getVideoFrame();
+			fg.stopCapture();
+			fg.startCapture();
+		} catch (V4L4JException e) {
+			fail("Error: Should be able to start the capture here");
+		}
+		frame.getBytes();	// this should throw a StateException
+	}
+	
 	@Test
 	public void testMultipleCapture(){
 		try {
 			fg.startCapture();
-			fg.getFrame();
+			fg.getVideoFrame().recycle();
 			fg.stopCapture();
 			fg.startCapture();
-			fg.getFrame();
+			fg.getVideoFrame().recycle();
 			fg.stopCapture();
 			fg.startCapture();
-			fg.getFrame();
+			fg.getVideoFrame().recycle();
 			fg.stopCapture();
 		} catch (V4L4JException e) {
 			fail("Error: Shouldnt be in exception handler here...");
@@ -141,48 +173,38 @@ public class FrameGrabberTest {
 	
 	@Test(expected=StateException.class)
 	public void testGetFrameWithoutStartCapture() throws V4L4JException {
-		fg.getFrame();
+		fg.getVideoFrame().recycle();
 	}
 
 
 	@Test
 	public void testMultipleInitRelease(){
-		int w, h, std, ch;
 		try {
-			vd.releaseFrameGrabber();
-			vd.release();
-
-			w = (System.getProperty("test.width")!=null) ? Integer.parseInt(System.getProperty("test.width")) : 320;
-			h = (System.getProperty("test.height")!=null) ? Integer.parseInt(System.getProperty("test.height")) : 240;
-			std = (System.getProperty("test.standard")!=null) ? Integer.parseInt(System.getProperty("test.standard")) : 0;
-			ch = (System.getProperty("test.channel")!=null) ? Integer.parseInt(System.getProperty("test.channel")) : 0;
-			fg = vd.getRawFrameGrabber(w, h, ch, std);
-			vd.releaseFrameGrabber();
-
-
-			fg = vd.getRawFrameGrabber(w, h, ch, std);
-			vd.releaseFrameGrabber();
-
-
-			fg = vd.getRawFrameGrabber(w, h, ch, std);
-			vd.releaseFrameGrabber();
-
-			fg = vd.getRawFrameGrabber(w, h, ch, std);
-			fg.startCapture();
-			fg.getFrame();
-			fg.getFrame();
-			fg.getFrame();
-			fg.stopCapture();
-			vd.releaseFrameGrabber();
-
-
-			fg = vd.getRawFrameGrabber(w, h, ch, std);
-			fg.startCapture();
-			fg.getFrame();
-			fg.getFrame();
-			fg.getFrame();
-			fg.stopCapture();
-			vd.releaseFrameGrabber();
+			Vector<VideoFrame> frames= new Vector<VideoFrame>();
+			int iteration = repeats;
+			
+			while (iteration-- > 0){
+				vd.releaseFrameGrabber();
+				vd.release();
+			
+				vd = new VideoDevice(dev);
+				fg = vd.getRawFrameGrabber(w, h, ch, std);
+			}
+			
+			iteration = repeats;
+			while(iteration-- > 0){				
+				fg.startCapture();
+				
+				for(int i = 0; i<fg.getNumberOfVideoFrames(); i++)
+					frames.add(fg.getVideoFrame());
+				
+				for(VideoFrame frame : frames)
+					frame.recycle();
+				
+				fg.stopCapture();
+				vd.releaseFrameGrabber();
+				fg = vd.getRawFrameGrabber(w, h, ch, std);
+			}
 		} catch (V4L4JException e) {
 			fail("Error: Shouldnt be in exception handler here...");
 		}
@@ -190,7 +212,7 @@ public class FrameGrabberTest {
 	}
 	
 	@Test
-	public void testRemoveWithoutStopCapture() {
+	public void testReleaseWithoutStopCapture() {
 		try {
 			fg.startCapture();
 		} catch (V4L4JException e) {

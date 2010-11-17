@@ -87,7 +87,7 @@ int fps_param_probe(struct video_device *vdev, void **data){
 	if (0 != ioctl(vdev->fd, VIDIOC_G_PARM, param))
 		goto end;
 
-	if(!param->parm.capture.capability & V4L2_CAP_TIMEPERFRAME)
+	if(!(param->parm.capture.capability & V4L2_CAP_TIMEPERFRAME))
 		goto end;
 
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "FPS-PARAM: .. .. \n");
