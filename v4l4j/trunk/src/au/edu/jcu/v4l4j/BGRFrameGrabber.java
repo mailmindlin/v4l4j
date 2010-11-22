@@ -46,39 +46,12 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * {@link VideoDevice#getBGRFrameGrabber(int, int, int, int)}
  * or 
  * {@link VideoDevice#getBGRFrameGrabber(int, int, int, int, ImageFormat)}
- * method must be called on the associated {@link VideoDevice}. Requested height
- * and width may be adjusted to the closest supported values. The adjusted
- * width and height can be retrieved by calling {@link #getWidth()} and 
- * {@link #getHeight()}.<br>
- * A typical <code>BGRFrameGrabber</code> use is as follows:<br><br>
- * <code>//create a new video device<br>
- * VideoDevice vd = new VideoDevice("/dev/video0");<br>
- * <br>//Create an instance of FrameGrabber
- * <br>FrameGrabber f = vd.getBGRFrameGrabber(320, 240, 0, 0, 80);
- * <br>
- * <br> //Start the frame capture 
- * <br>f.startCapture();
- * <br>while (!stop) {
- * <br>&nbsp;&nbsp; VideoFrame frame= f.getFrame(); //Get a frame
- * <br>&nbsp;&nbsp; //do something useful with it
- * <br>&nbsp;&nbsp; //then recycle it with:
- * <br>&nbsp;&nbsp; frame.recycle();
- * <br>}<br>
- * <br>//Stop the capture
- * <br>f.stopCapture();<br>
- * <br>//Free capture resources and release the FrameGrabber
- * <br>vd.releaseFrameGrabber();<br>
- * <br>//release VideoDevice
- * <br>vd.release();
- * </code><br><br>
+ * method must be called on the associated {@link VideoDevice}.
+ * BGR frame grabbers
+ * implement the {@link FrameGrabber} interface which provides methods to handle
+ * video capture. See {@link FrameGrabber its documentation} for more information.
  * 
- * Once the frame grabber is released with 
- * {@link VideoDevice#releaseFrameGrabber()}, it can NOT be re-initialised again
- * , and a new one must be obtained. 
- * However, when the capture is stopped with {@link #stopCapture()}, it can be
- * started again with {@link #startCapture()} without having to create a new 
- * <code>FrameGrabber</code>.
- * @see AbstractGrabber
+ * @see FrameGrabber {@link FrameGrabber} 
  * @author gilles
  *
  */

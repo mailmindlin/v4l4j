@@ -35,6 +35,11 @@
 #include "libvideo-palettes.h"
 #include "rgb.h"
 
+// static variables
+static jfieldID		last_captured_frame_sequence_fID = NULL;
+static jfieldID		last_captured_frame_time_usec_fID = NULL;
+
+
 /*
  * Updates the width, height, standard & format fields in a framegrabber object
  */
@@ -290,6 +295,49 @@ static int init_capture_format(struct v4l4j_device *d, int output, int input){
 	return ret;
 }
 
+
+/*
+ * Gets the fieldIDs for members that have to be updated every time a frame is captured
+ * return 0 if an exception is thrown, 1 otherwise
+ */
+static int get_lastFrame_field_ids(JNIEnv *e, jobject this, struct v4l4j_device *d){
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	jclass this_class;
+
+	//gets the fields of members updated every frame captured.
+	this_class = (*e)->GetObjectClass(e,this);
+	if(this_class==NULL) {
+		info("[V4L4J] error looking up FrameGrabber class\n");
+		THROW_EXCEPTION(e, JNI_EXCP, "error looking up FrameGrabber class");
+		return 0;
+	}
+
+	//last_captured_frame_sequence_fID
+	last_captured_frame_sequence_fID =
+			(*e)->GetFieldID(e, this_class, "lastCapturedFrameSequence", "J");
+	if(last_captured_frame_sequence_fID==NULL) {
+		info("[V4L4J] error looking up last_captured_frame_sequence_fID "
+				" in FrameGrabber class\n");
+		THROW_EXCEPTION(e, JNI_EXCP, "error looking up "
+				" last_captured_frame_sequence_fID field in FrameGrabber class");
+		return 0;
+	}
+
+	// last_captured_frame_time_usec_fID
+	last_captured_frame_time_usec_fID =
+			(*e)->GetFieldID(e, this_class, "lastCapturedFrameTimeuSec", "J");
+	if(last_captured_frame_time_usec_fID==NULL) {
+		info("[V4L4J] error looking up lastCapturedFrameTimeuSec field in "
+				"FrameGrabber class\n");
+		THROW_EXCEPTION(e, JNI_EXCP, "error looking up lastCapturedFrameTimeuSec"
+				" field in FrameGrabber class");
+		return 0;
+	}
+
+	return 1;
+}
+
+
 /*
  * initialise LIBVIDEO (open, set_cap_param, init_capture)
  * creates the Java ByteBuffers
@@ -308,6 +356,11 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doInit(
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 	struct capture_device *c;
 	int fmts;
+
+	// Get the field IDs if we dont have them already. If error getting them, return.
+	if ((! last_captured_frame_sequence_fID || ! last_captured_frame_time_usec_fID)
+			&& ! get_lastFrame_field_ids(e, t, d))
+			return 0;
 
 	/*
 	 * i n i t _ c a p t u r e _ d e v i c e ( )
@@ -488,16 +541,17 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetFrameIntv(
  * Get a new frame and return its size
  */
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(
-		JNIEnv *e, jobject t, jlong object, jarray byteArray) {
+		JNIEnv *e, jobject this, jlong object, jarray byteArray) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	void *frame;
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 	unsigned char *array = NULL;
+	unsigned long long captureTime, sequence;
 	jboolean isCopy;
 
 	//get frame from libvideo
 	if((frame = (*d->vdev->capture->actions->dequeue_buffer)
-			(d->vdev, &d->capture_len)) == NULL) {
+			(d->vdev, &d->capture_len, &captureTime, &sequence)) == NULL) {
 		dprint(LOG_V4L4J, "[V4L4J] Error dequeuing buffer for capture\n");
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error dequeuing buffer for capture");
 		return 0;
@@ -526,6 +580,12 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(
 
 	// enqueue v4l buffer
 	(*d->vdev->capture->actions->enqueue_buffer)(d->vdev);
+
+	// update class members
+	(*e)->SetLongField(e, this, last_captured_frame_sequence_fID,
+			sequence);
+	(*e)->SetLongField(e, this, last_captured_frame_time_usec_fID,
+			captureTime);
 
 	return d->len;
 }

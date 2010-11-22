@@ -69,7 +69,7 @@ int start_capture_v4l1(struct video_device *);
  */
 
 //dequeue the next buffer with available frame
-void *dequeue_buffer_v4l1(struct video_device *, int *);
+void *dequeue_buffer_v4l1(struct video_device *, int *, unsigned long long*, unsigned long long*	);
 // start the capture of next buffer VIDIOCMCAPTURE(x)
 // wait till the previous buffer is available VIDIOCSYNC(x-1)
 

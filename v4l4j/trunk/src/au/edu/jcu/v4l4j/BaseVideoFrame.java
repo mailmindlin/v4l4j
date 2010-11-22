@@ -20,6 +20,9 @@ class BaseVideoFrame implements VideoFrame{
 	protected AbstractGrabber 		frameGrabber;
 	protected byte					frameBuffer[];
 	
+	protected long					sequenceNumber;
+	protected long					captureTime;
+	
 	protected V4L4JDataBuffer		dataBuffer;
 	protected boolean				recycled;
 	protected V4L4JRaster			raster;
@@ -47,10 +50,14 @@ class BaseVideoFrame implements VideoFrame{
 	 * This method marks this frame as ready to be delivered to the user, as its
 	 * buffer has just been filled with a new frame of the given length. 
 	 * @param length the length of the new frame.
+	 * @param sequence this frame's sequence number
+	 * @param timeUs this frame capture timestamp in elapsed microseconds since startup
 	 */
-	final synchronized void prepareForDelivery(int length){
+	final synchronized void prepareForDelivery(int length, long sequence, long timeUs){
 		frameLength = length;
 		dataBuffer.setNewFrameSize(length);
+		sequenceNumber = sequence;
+		captureTime = timeUs;
 		recycled = false;
 	}
 	
@@ -102,6 +109,18 @@ class BaseVideoFrame implements VideoFrame{
 	public final synchronized BufferedImage getBufferedImage(){
 		checkIfRecycled();
 		return refreshBufferedImage();
+	}
+	
+	@Override
+	public final synchronized long getSequenceNumber(){
+		checkIfRecycled();
+		return sequenceNumber;
+	}
+	
+	@Override
+	public final synchronized long getCaptureTime(){
+		checkIfRecycled();
+		return captureTime;
 	}
 	
 	@Override

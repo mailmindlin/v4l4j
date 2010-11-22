@@ -34,42 +34,11 @@ import au.edu.jcu.v4l4j.exceptions.StateException;
  * which encodes frames in a specific format before handing them out.
  * <code>FrameGrabber</code> objects are not instantiated directly. Instead, the 
  * {@link VideoDevice#getRawFrameGrabber(int, int, int, int) getRawFrameGrabber()}
- * method must be called on the associated {@link VideoDevice}. Requested height
- * and width may be adjusted to the closest supported values. The adjusted width 
- * and height can be retrieved by calling {@link #getWidth()} and 
- * {@link #getHeight()}.<br>
- * A typical <code>FrameGrabber</code> use is as follows:<br><br>
- * <code>//create a new video device<br>
- * VideoDevice vd = new VideoDevice("/dev/video0");<br>
- * <br>//Create an instance of FrameGrabber
- * <br>FrameGrabber f = vd.getRawFrameGrabber(320, 240, 0, 0);
- * <br> //the framegrabber will use the first image format supported by the 
- * device, as returned by
- * <br> //<code>vd.getDeviceInfo().getFormatList().getList().get(0)</code>
- * <br>
- * <br> //Start the frame capture 
- * <br>f.startCapture();
- * <br>while (!stop) {
- * <br>&nbsp;&nbsp; VideoFrame frame= f.getFrame(); //Get a frame
- * <br>&nbsp;&nbsp; //do something useful with it
- * <br>&nbsp;&nbsp; //then recycle it with:
- * <br>&nbsp;&nbsp; frame.recycle();
- * <br>}<br>
- * <br>//Stop the capture
- * <br>f.stopCapture();<br>
- * <br>//Free capture resources and release the FrameGrabber
- * <br>vd.releaseFrameGrabber();<br>
- * <br>//release VideoDevice
- * <br>vd.release();
- * </code><br><br>
+ * method must be called on the associated {@link VideoDevice}. Raw frame grabbers
+ * implement the {@link FrameGrabber} interface which provides methods to handle
+ * video capture. See {@link FrameGrabber its documentation} for more information.
  * 
- * Once the frame grabber is released with 
- * {@link VideoDevice#releaseFrameGrabber()}, it can be re-initialised again 
- * with one of the <code>getFrameGrabber()</code> method again. Similarly,
- * when the capture is stopped with {@link #stopCapture()}, it can be started 
- * again with {@link #stopCapture()} without having to create a new 
- * <code>FrameGrabber</code>.
- * 
+ * @see FrameGrabber {@link FrameGrabber}
  * @see JPEGFrameGrabber {@link RGBFrameGrabber}
  * @author gilles
  *
@@ -99,8 +68,8 @@ public class RawFrameGrabber extends AbstractGrabber {
 	
 	/**
 	 * This method returns the native image format used by this 
-	 * FrameGrabber. The returned format specifies the image format the capture
-	 * uses
+	 * FrameGrabber. The returned format specifies the image format in
+	 * which frames captured by this grabber are.
 	 * @return the native image format used by this FrameGrabber.
 	 * @throws StateException if this 
 	 * <code>FrameGrabber</code> has been already released, and therefore must

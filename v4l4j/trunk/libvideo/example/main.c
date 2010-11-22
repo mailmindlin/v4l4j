@@ -470,7 +470,7 @@ void *send_stream_to(void *v) {
 		}
 
 		//get frame from v4l2
-		if((yuv_data = (*cdev->actions->dequeue_buffer)(d, &yuv_len)) != NULL) {
+		if((yuv_data = (*cdev->actions->dequeue_buffer)(d, &yuv_len, NULL, NULL)) != NULL) {
 
 			//encode in JPEG
 			jpeg_len = (*j.jpeg_encode)(yuv_data,yuv_len, cdev, &j, jpeg_data);
