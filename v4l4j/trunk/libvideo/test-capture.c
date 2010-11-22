@@ -175,7 +175,7 @@ int main(int argc, char** argv) {
 	while(now.tv_sec<=start.tv_sec+cap_length) {
 
 		//get frame from v4l2
-		if((d = (*c->actions->dequeue_buffer)(v, &size)) != NULL) {
+		if((d = (*c->actions->dequeue_buffer)(v, &size, NULL, NULL)) != NULL) {
 			//uncomment the following line to output raw captured frame
 			//to a file
 			//write_frame(d, size);

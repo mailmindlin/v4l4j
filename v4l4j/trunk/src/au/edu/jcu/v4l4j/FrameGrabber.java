@@ -39,7 +39,14 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * and width may be adjusted to the closest supported values. The adjusted width 
  * and height can be retrieved by calling {@link #getWidth()} and 
  * {@link #getHeight()}.<br>
- * A typical <code>FrameGrabber</code> use is as follows:<br><br>
+ * Frame grabbers operate in two modes: push or pull. In pull mode, v4l4j is given
+ * a object implementing the {@link PushSourceCallback} interface which will
+ * be delivered new captured frames as soon as they arrive. In push mode,
+ * frames are retrieved by successive calls to {@link #getVideoFrame()}. By
+ * default, a frame grabber operates in pull mode. Call 
+ * {@link #setPushSourceMode(PushSourceCallback)} to select the desired mode <b>before</b>
+ * starting the capture (with {@link #startCapture()}).<br>
+ * A typical <code>FrameGrabber</code> use (in pull mode) is as follows:<br><br>
  * <code><br>
  * VideoFrame frame;<br>
  * //create a new video device<br>
@@ -53,7 +60,7 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * <br> //Start the frame capture 
  * <br>f.startCapture();
  * <br>while (!stop) {
- * <br>&nbsp;&nbsp; frame = f.getFrame(); //Get a frame
+ * <br>&nbsp;&nbsp; frame = f.getVideoFrame(); // Get a frame
  * <br>&nbsp;&nbsp; //do something useful with frame, then recycle it
  * <br>&nbsp;&nbsp; //when done with it, so v4l4j can re-use it later on
  * <br>&nbsp;&nbsp; frame.recycle();
@@ -65,6 +72,11 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * <br>//release VideoDevice
  * <br>vd.release();
  * </code><br><br>
+ * In push mode, instead of calling {@link #getVideoFrame()}, frames are delivered
+ * as soon they are captured by v4l4j to the provided {@link PushSourceCallback}
+ * object via its {@link PushSourceCallback#nextFrame(VideoFrame) nextFrame()} method.
+ * In both pull and push modes, video frames must be recycled when they are no
+ * longer used.<br></br>
  * 
  * Once the frame grabber is released with 
  * {@link VideoDevice#releaseFrameGrabber()}, it can be re-initialised again 
@@ -97,7 +109,7 @@ public interface FrameGrabber {
 	
 	/**
 	 * This method returns the number of buffers v4l4j has negotiated with
-	 * the driver. The driver store capture frames in these buffers and return
+	 * the driver. The driver store captured frames in these buffers and return
 	 * them to v4l4j. This number is an indication as to how many video
 	 * frames can be obtained from the driver through {@link #getVideoFrame()}
 	 * before the capture stops until a buffer is returned to the driver 
@@ -158,6 +170,27 @@ public interface FrameGrabber {
 	 * not be used anymore.
 	 */
 	public Tuner getTuner() throws NoTunerException;
+	
+	/**
+	 * <code>setPushSourceMode</code> tells this frame grabber to work either
+	 * in push or pull mode. In push mode, the given {@link PushSourceCallback}
+	 * object will be notified by this grabber as soon as a new frame becomes
+	 * available. In pull mode, captured frames are obtained by calling 
+	 * {@link #getVideoFrame()}. When this method is called with a valid
+	 * <code>callback</code> argument (that is when, <code>callback != null</code>)
+	 * the push mode is activated. When <code>callback != null</code>, 
+	 * the pull mode is activated.<br>
+	 * This method cannot be called while the capture is active, ie. in between
+	 * a call to {@link #startCapture()} and {@link #stopCapture()}.
+	 * @param callback an object implementing the {@link PushSourceCallback}
+	 * interface which will notified when a new frame is available, or when 
+	 * an exception is triggered.
+	 * @throws StateException if this method is invoked while capture is active,
+	 * ie. after a call to {@link #startCapture()} and prior a call 
+	 * to {@link #stopCapture()}. 
+	 * @return whether in push mode (true) or pull mode (false) 
+	 */
+	public boolean setPushSourceMode(PushSourceCallback callback);
 
 	/**
 	 * This method starts the capture. After this call, frames can be retrieved

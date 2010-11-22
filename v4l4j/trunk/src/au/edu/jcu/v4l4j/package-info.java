@@ -91,7 +91,10 @@
  * (see paragraph "Video hardware information" above). 
  * When capturing in a native format, v4l4j simply hands out the 
  * captured frame without further processing. When capturing in a convenience 
- * format, v4l4j will transparently convert the image.
+ * format, v4l4j will transparently convert the image.<br>
+ * Frame grabbers operate in two modes: pull and push. In push mode, the grabber
+ * will deliver captured frames to a callback object you provide. In pull mode, 
+ * you are responsible for polling the frame grabber.  
  *  
  * Frame capture in v4l4j is done using objects implementing the
  * {@link au.edu.jcu.v4l4j.FrameGrabber} interface:
@@ -113,7 +116,8 @@
  * </strong> Do not use the frame grabber subsequently and set any stray 
  * reference to null.</li>
  * </ul>
- * More information on video capture is given in the documentation of the 
+ * The above example used a frame grabber in pull mode. More information on 
+ * video capture, including pull mode, is given in the documentation of the 
  * {@link au.edu.jcu.v4l4j.FrameGrabber} class.
  * 
  * <h3>Tuners</h3>

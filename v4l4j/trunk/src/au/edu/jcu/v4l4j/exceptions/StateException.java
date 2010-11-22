@@ -25,10 +25,12 @@
 package au.edu.jcu.v4l4j.exceptions;
 
 /**
- * This class of exception is thrown when a method is invoked on the framegrabber when its current state
- * forbids the execution of the method. For instance, calling <code>getFrame()</code> before calling
- * <code>init()</code>, <code>startCapture()</code> is illegal and <code>getFrame()</code> will throw
- * a StateException. 
+ * This class of exception is thrown when a unexpected method is invoked 
+ * on a v4l4j object the framegrabber when its current state forbids the 
+ * execution of that method. For instance, calling 
+ * <code>getVideoFrame()</code> before calling <code>init()</code>, 
+ * <code>startCapture()</code> is illegal and <code>getVideoFrame()</code> 
+ * will throw a StateException. 
  * @author gilles
  */
 public class StateException extends RuntimeException {

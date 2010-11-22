@@ -1,26 +1,26 @@
 /*
-* Copyright (C) 2007-2008 Gilles Gigan (gilles.gigan@gmail.com)
-* eResearch Centre, James Cook University (eresearch.jcu.edu.au)
-*
-* This program was developed as part of the ARCHER project
-* (Australian Research Enabling Environment) funded by a   
-* Systemic Infrastructure Initiative (SII) grant and supported by the Australian
-* Department of Innovation, Industry, Science and Research
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public  License as published by the
-* Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  
-* See the GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Copyright (C) 2007-2008 Gilles Gigan (gilles.gigan@gmail.com)
+ * eResearch Centre, James Cook University (eresearch.jcu.edu.au)
+ *
+ * This program was developed as part of the ARCHER project
+ * (Australian Research Enabling Environment) funded by a   
+ * Systemic Infrastructure Initiative (SII) grant and supported by the Australian
+ * Department of Innovation, Industry, Science and Research
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public  License as published by the
+ * Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 
 package au.edu.jcu.v4l4j.examples;
 
@@ -44,7 +44,7 @@ public class GetFrameRate {
 	private FrameGrabber fg;
 	private VideoDevice vd;
 	private ImageFormatList imfList;
-	
+
 	/**
 	 * This method builds a new object to test the maximum FPS for a video 
 	 * device
@@ -99,11 +99,11 @@ public class GetFrameRate {
 		std = fg.getStandard();
 		channel = fg.getChannel();
 	}
-	
+
 	private void getJPEGfg() throws V4L4JException{
 		if(inFmt==-1 ||	imfList.getJPEGEncodableFormat(inFmt)==null){
 			System.out.println("Invalid format / no capture format " +
-					"specified, let v4l4j find a suitable one");
+			"specified, let v4l4j find a suitable one");
 			fg= vd.getJPEGFrameGrabber(width, height, channel, std, 80);
 		} else{ 
 			System.out.println("Trying input format "+
@@ -113,11 +113,11 @@ public class GetFrameRate {
 		}				
 		System.out.println("Output image format: JPEG");		
 	}
-	
+
 	private void getRGBfg() throws V4L4JException{
 		if(inFmt==-1 || imfList.getRGBEncodableFormat(inFmt)==null){
 			System.out.println("Invalid format / no capture format " +
-					"specified, let v4l4j find a suitable one");
+			"specified, let v4l4j find a suitable one");
 			fg= vd.getRGBFrameGrabber(width, height, channel, std);
 		} else { 
 			System.out.println("Trying input format "+
@@ -127,11 +127,11 @@ public class GetFrameRate {
 		}
 		System.out.println("Output image format: RGB");		
 	}
-	
+
 	private void getBGRfg() throws V4L4JException{
 		if(inFmt==-1 || imfList.getBGREncodableFormat(inFmt)==null){
 			System.out.println("Invalid format / no capture format " +
-					"specified, let v4l4j find a suitable one");
+			"specified, let v4l4j find a suitable one");
 			fg= vd.getBGRFrameGrabber(width, height, channel, std);
 		} else { 
 			System.out.println("Trying input format "+
@@ -141,11 +141,11 @@ public class GetFrameRate {
 		}
 		System.out.println("Output image format: BGR");		
 	}
-	
+
 	private void getYUVfg() throws V4L4JException{
 		if(inFmt==-1 || imfList.getYUVEncodableFormat(inFmt)==null){
 			System.out.println("Invalid format / no capture format " +
-					"specified, let v4l4j find a suitable one");
+			"specified, let v4l4j find a suitable one");
 			fg= vd.getYUVFrameGrabber(width, height, channel, std);
 		} else { 
 			System.out.println("Trying input format "+
@@ -155,11 +155,11 @@ public class GetFrameRate {
 		}
 		System.out.println("Output image format: YUV");		
 	}
-	
+
 	private void getYVUfg() throws V4L4JException{
 		if(inFmt==-1 || imfList.getYVUEncodableFormat(inFmt)==null){
 			System.out.println("Invalid format / no capture format " +
-					"specified, let v4l4j find a suitable one");
+			"specified, let v4l4j find a suitable one");
 			fg= vd.getYVUFrameGrabber(width, height, channel, std);
 		} else { 
 			System.out.println("Trying input format "+
@@ -169,11 +169,11 @@ public class GetFrameRate {
 		}
 		System.out.println("Output image format: YVU");		
 	}
-	
+
 	private void getRawFg() throws V4L4JException{
 		if(inFmt==-1 || imfList.getNativeFormat(inFmt)==null){
 			System.out.println("Invalid format / no capture format " +
-					"specified, v4l4j will pick the first one");
+			"specified, v4l4j will pick the first one");
 			fg= vd.getRawFrameGrabber(width, height, channel, std);
 		} else {
 			System.out.println("Trying input format "+
@@ -183,7 +183,7 @@ public class GetFrameRate {
 		}
 		System.out.println("Output image format: RAW (same as input)");
 	}
-	
+
 	private void startCapture() throws V4L4JException{
 		if(intv!=-1){
 			//try setting the frame rate
@@ -204,7 +204,7 @@ public class GetFrameRate {
 			throw e;
 		}
 	}
-	
+
 	/**
 	 * This method starts the frame rate test. It will run for 10 seconds, and
 	 * then print the achieved FPS
@@ -218,24 +218,24 @@ public class GetFrameRate {
 		try {
 			//discard the first frame to make sure device has settled
 			fg.getVideoFrame().recycle();
-			
+
 			System.out.println("Starting test capture at "+
 					width+"x"+height+" for "+captureLength+" seconds");
 			now=start=System.currentTimeMillis();
 			while(now<start+(captureLength*1000)){
-			fg.getVideoFrame().recycle();
-			//Uncomment the following to dump the captured frame to a jpeg file
-			//also import java.io.FileOutputStream 
-			//new FileOutputStream("file"+n+".raw").getChannel().write(f.getFrame());
-			n++;
-			now=System.currentTimeMillis();
+				fg.getVideoFrame().recycle();
+				//Uncomment the following to dump the captured frame to a file
+				//also import java.io.FileOutputStream 
+				//new FileOutputStream("file"+n+".raw").getChannel().write(f.getVideoFrame());
+				n++;
+				now=System.currentTimeMillis();
 			}
-			
+
 			System.out.println(" =====  TEST RESULTS  =====");
 			System.out.println("\tFrames captured :"+n);
 			System.out.println("\tFPS: "+((float) n/(now/1000-start/1000)));
 			System.out.println(" =====  END  RESULTS  =====");
-			
+
 		} catch (V4L4JException e) {
 			e.printStackTrace();
 			System.out.println("Failed to perform test capture");
@@ -246,7 +246,7 @@ public class GetFrameRate {
 			vd.release();
 		}		
 	}
-	
+
 	public static void main(String[] args) throws V4L4JException, IOException {
 		String dev;
 		int w, h, std, channel, inFmt, outFmt, intv;
@@ -282,14 +282,14 @@ public class GetFrameRate {
 		} catch (Exception e){
 			inFmt = -1;
 		}
-		
+
 		//RAW: 0 , JPEG:1, RGB:2 , bgr=3, yuv=4, yvu=5
 		try {
 			outFmt = Integer.parseInt(args[6]);
 		} catch (Exception e){
 			outFmt = 0;
 		}
-		
+
 		try {
 			intv = Integer.parseInt(args[7]);
 		} catch (Exception e){
@@ -297,8 +297,8 @@ public class GetFrameRate {
 		}
 
 		System.out.println("This program will open "+dev+", capture frames for "
-					+ captureLength+ " seconds and print the FPS");
-		
+				+ captureLength+ " seconds and print the FPS");
+
 		new GetFrameRate(dev, inFmt, outFmt, w, h, channel, std, intv).startTest();
 	}
 }

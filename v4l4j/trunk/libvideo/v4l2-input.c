@@ -24,6 +24,7 @@
 
 #include <sys/ioctl.h>		//for ioctl
 #include <sys/mman.h>		//for mmap
+#include <sys/time.h>		//for struct timeval
 #include <errno.h>			//for errno
 #include <string.h>			//for memcpy
 #include <stdio.h>			// for perror
@@ -38,6 +39,10 @@
 //v4l2 will adjust them to the closest available
 #define V4L2_MAX_WIDTH 			4096
 #define V4L2_MAX_HEIGHT 		4096
+
+#ifndef USEC_PER_SEC
+#define USEC_PER_SEC			1000000
+#endif
 
 int check_v4l2(int fd, struct v4l2_capability* caps){
 	return ioctl(fd, VIDIOC_QUERYCAP, caps);
@@ -599,7 +604,7 @@ fail:
 
 //needed because this function adjusts the struct capture_action if
 //libv4l_convert is required.
-void *dequeue_buffer_v4l2_convert(struct video_device *, int *);
+void *dequeue_buffer_v4l2_convert(struct video_device *, int *, unsigned long long*, unsigned long long*);
 int init_capture_v4l2(struct video_device *vdev) {
 	struct capture_device *c = vdev->capture;
 	struct v4l2_requestbuffers req;
@@ -709,7 +714,8 @@ int start_capture_v4l2(struct video_device *vdev) {
 
 //needed because dequeue may need to re-enqueue if libv4lconvert fails
 void enqueue_buffer_v4l2(struct video_device *);
-void *dequeue_buffer_v4l2_convert(struct video_device *vdev, int *len) {
+void *dequeue_buffer_v4l2_convert(struct video_device *vdev, int *len,
+		unsigned long long *capture_time, unsigned long long *sequence) {
 	struct convert_data *conv = vdev->capture->convert;
 	struct v4l2_buffer *b = (struct v4l2_buffer *) vdev->capture->mmap->tmp;
 	int try = 2;
@@ -763,10 +769,15 @@ void *dequeue_buffer_v4l2_convert(struct video_device *vdev, int *len) {
 	}
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
 			"CAP: after conversion buffer length: %d\n", *len);
+	if (capture_time)
+		*capture_time = b->timestamp.tv_usec + b->timestamp.tv_sec * USEC_PER_SEC ;
+	if (sequence)
+		*sequence = b->sequence;
 	return conv->frame;
 }
 
-void *dequeue_buffer_v4l2(struct video_device *vdev, int *len) {
+void *dequeue_buffer_v4l2(struct video_device *vdev, int *len,
+		unsigned long long *capture_time, unsigned long long *sequence) {
 	struct v4l2_buffer *b = (struct v4l2_buffer *) vdev->capture->mmap->tmp;
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
 			"CAP: dequeuing buffer on device %s.\n", vdev->file);
@@ -783,8 +794,15 @@ void *dequeue_buffer_v4l2(struct video_device *vdev, int *len) {
 	}
 
 	*len = b->bytesused;
+	if (capture_time)
+		*capture_time = b->timestamp.tv_usec + b->timestamp.tv_sec * USEC_PER_SEC ;
+	if (sequence)
+		*sequence = b->sequence;
+
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
-			"CAP: buffer length: %d\n", *len);
+			"CAP: buffer length: %d - seq: %llu - time %llu\n", *len, *sequence,
+			*capture_time);
+
 	return vdev->capture->mmap->buffers[b->index].start;
 }
 
