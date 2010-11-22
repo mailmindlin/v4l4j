@@ -573,6 +573,7 @@ int close_device(struct video_device *);
 struct capture_device *init_capture_device(struct video_device *, int, int,
 		int, int, int);
 
+
 /*
  * functions pointed to by the members of this structure should be used
  * by the calling application, to capture frame from the video device.
@@ -629,7 +630,10 @@ struct capture_actions {
  */
 
 //dequeue the next buffer with available frame, or NULL if there is an error
-	void * (*dequeue_buffer)(struct video_device *, int *);
+//the second int * argument receive the frame length
+//the third argument receives the capture time in microseconds (for v4l2 devices only)
+// the last argument receives the capture frame sequence number (for v4l2 devices only)
+	void * (*dequeue_buffer)(struct video_device *, int * ,	unsigned long long *, unsigned long long *);
 
 //enqueue the buffer when done using the frame
 	void (*enqueue_buffer)(struct video_device *);

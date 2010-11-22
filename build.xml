@@ -269,7 +269,7 @@
 			<jvmarg value="-Dtest.standard=${test.standard}" /> 
 			<jvmarg value="-Dtest.channel=${test.channel}" />
 			<!--<test name="au.edu.jcu.v4l4j.test.FrameGrabberTest" />-->
-			<test name="au.edu.jcu.v4l4j.test.FrameGrabberThreadTest2" />
+			<test name="au.edu.jcu.v4l4j.test.PushSourceTest" />
 			<formatter type="plain" usefile="false" />
 			<classpath refid="test.classpath" />
 		</junit>

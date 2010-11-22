@@ -12,6 +12,11 @@ import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
  * They provide access to image data through various objects, including byte arrays
  * and {@link DataBuffer}s. <code>VideoFrame</code>s are returned by 
  * {@link FrameGrabber#getVideoFrame()}.<br>
+ * When accessing the image data as a byte array, as returned by {@link #getBytes()},
+ * note that the size of returned byte array can be longer than the actual image size.
+ * What this means is that you should use {@link #getFrameLength()} to figure out how
+ * many elements in the byte array are actually used by the image instead of relying
+ * on <code>byte[].length</code>.<br> 
  * From the moment a <code>VideoFrame</code> is returned by a frame grabber, the 
  * <code>VideoFrame</code> object itself as well as any of the objects obtained through 
  * its methods can be used. <b>When the <code>VideoFrame</code> and any of the objects
@@ -42,8 +47,33 @@ public interface VideoFrame {
 	public int				getFrameLength();
 	
 	/**
-	 * This method returns the image data as a byte array.
-	 * @return the image data as a byte array.
+	 * This method returns this video frame's sequence number (a monotically
+	 * increasing number for each captured frame). Thjis number can be used
+	 * to find out when a frame was dropped: if <code>currentSequenceNumber != 
+	 * (previousSequenceNumber + 1)</code> then <code>(currentSequenceNumber -
+	 * previousSequenceNumber(</code> frames were dropped.
+	 * @return this video frame's sequence number
+	 * @throws StateException if this video frame has been recycled already. 
+	 */
+	public long getSequenceNumber();
+
+	/**
+	 * This method returns the OS time (number of microseconds elapsed since
+	 * startup) at which this video frame was captured. 
+	 * @return the OS time (number of microseconds elapsed since
+	 * startup) at which this video frame was captured.
+	 * @throws StateException if this video frame has been recycled already.
+	 */
+	public long getCaptureTime();
+	
+	/**
+	 * This method returns the image data as a byte array.<b>Please note that
+	 * the size of the returned byte array can be greater than the actual frame
+	 * size. You should not use the byte array length (as returned by 
+	 * <code>byte[].length</code>) as the length of the image. Instead, use the
+	 * value returned from {@link #getFrameLength()}.</b>
+	 * @return the image data as a byte array. The array may be longer than
+	 * the actual frame length.
 	 * @throws StateException if this video frame has been recycled already.
 	 */
 	public byte[]			getBytes();
@@ -84,8 +114,8 @@ public interface VideoFrame {
 	 * This method marks this video frame as being no longer used, and ready
 	 * to be reused by v4l4j. After calling this method, do not use either 
 	 * this object or any of the objects obtained through it 
-	 * (byte array, data buffer, raster, buffered image, ...). 
+	 * (byte array, data buffer, raster, buffered image, ...) <b> or bad things
+	 * WILL happen</b>. 
 	 */
 	public void 			recycle();
-
 }
