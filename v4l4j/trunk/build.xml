@@ -51,6 +51,7 @@
 		<echo message=" installed using the 'install' target." />
 		<echo message=" test-fps :         Check the FPS of a video source"/>
 		<echo message=" test-gui :         Display video stream in a window"/>
+		<echo message=" test-server :      Runs a TCP server to and MJPEG video stream to a web browser"/>
 		<echo message=" deviceInfo:        Display information about a video source"/>
 
 		<echo message=""/>
@@ -249,6 +250,18 @@
 			<arg value="-Dtest.height=${test.height}" /> <!-- height -->
 		</java>
 	</target>
+	
+	<target name="test-server">
+			<java classname="au.edu.jcu.v4l4j.examples.server.CamServer" fork="true" failonerror="true">
+				<classpath>
+					<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
+				</classpath>
+				<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
+				<arg value="-Dtest.device=${test.device}" /> <!-- device file -->
+				<arg value="-Dtest.width=${test.width}" /> <!-- height -->
+				<arg value="-Dtest.height=${test.height}" /> <!-- height -->
+			</java>
+		</target>
 	
 	<target name="deviceInfo">
 		<java classname="au.edu.jcu.v4l4j.VideoDevice" fork="true" failonerror="true">
