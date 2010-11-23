@@ -14,6 +14,31 @@ import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
+/**
+ * This class creates a tcp server socket and waits for incoming connections frm a web browser
+ * video streaming apps such as VLC and ffplay. It uses two threads: a  server threads to handle
+ * incoming tcp connections and figure out what to sent, and a capture thread to retrieve a video
+ * frame, and send it to all connected client in the form of an MJPEG stream.
+ * When a connection is made, the server thread parses the first line it receives to decide what 
+ * to send back:
+ * If the line contains no recognisable keywords (such as when a browser requests "GET / HTTP/1.1")
+ * a simple html page with two frames is sent back. One frame asks for the "control" page, the
+ * other asks for the "webcam" page. 
+ * If the line contains the keyword "control", a basic html page with a table containing a row
+ * for each control. Each row is an HTML form displaying the current control value, and allowing
+ * the user to change it.
+ * If the line contains the keyword "webcam", a basic page with an img tag is sent. The img tag
+ * has a url pointing to "stream.jpg".
+ * If the line contains the keyword "stream", this client is added to a client list.
+ * The capture thread continuously retrieves frame and sends it to all currently-connected clients.
+ * <br>
+ * To use this class, run it, and point your browser to "localhost:8080". You can also view the
+ * video stream in VLC (Select "Media"->"Open network stream...", then select "HTTP" as the 
+ * protocol and enter "localhost:8080/stream" as the address). You can also use ffplay to view
+ * the stream (Run <code>ffplay -f mjpeg http://localhost:8080/stream</code>).
+ * @author gilles
+ *
+ */
 public class CamServer implements Runnable{
 	private ServerSocket 				serverSocket;
 	private VideoDevice					videoDevice;
@@ -341,7 +366,11 @@ public class CamServer implements Runnable{
 	}
 
 	public static void main(String[] args) throws V4L4JException, IOException{
-		CamServer server = new CamServer("/dev/video0", 640, 640, 8080);
+		String dev = (System.getProperty("test.device") != null) ? System.getProperty("test.device") : "/dev/video0"; 
+		int w = (System.getProperty("test.width")!=null) ? Integer.parseInt(System.getProperty("test.width")) : 640;
+		int h = (System.getProperty("test.height")!=null) ? Integer.parseInt(System.getProperty("test.height")) : 480;
+ 
+		CamServer server = new CamServer(dev, w, h, 8080);
 		server.start();
 		System.out.println("Press enter to exit.");
 		System.in.read();
