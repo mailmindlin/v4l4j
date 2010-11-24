@@ -1,6 +1,6 @@
 #summary Examples of video capture using v4l4j.
-#sidebar v4l4jSideBar
 #labels Featured
+#sidebar v4l4jSideBar
 
 This page shows a few examples in Java on how to use v4l4j. It assumes you have successfully compiled and installed v4l4j (see GettingStarted page for detailed instructions). Here, video source refers to any video-capture device supported by the Linux kernel, and accessible through the Video4Linux API using the associated device file (usually /dev/video0). The v4l4j API has many more methods and classes than presented here. Be sure to check the Java documentation for a more complete reference.
 Below, you will find the following examples:
@@ -199,20 +199,23 @@ vd.getControlList().getControl("Pan Reset").setValue(1);
 = Display video in a GUI (JFrame) =
 Assuming the `FrameGrabber` object `f` has been successfully initialised, to start capturing frames, do the following:
 {{{
-ByteBuffer b;
+VideoFrame frame;
 int stop=0;
 f.startCapture();
 while(!stop) {
- b = f.getFrame();
- //do something useful with b
- //the captured frame size is returned by calling b.limit()
+ frame = f.getVideoFrame();
+ //do something useful with frame
+ //the captured frame size is returned by calling frame.getFrameLength()
+ //a byte array with the image data is obtained with frame.getBytes()
+ //When no longer needed, you must recycle the frame
+ frame.recycle();
 }
 f.stopCapture()
 //dont forget to call f.release() when done with f
 }
 }}}
 
-The following example shows you how to capture JPEG-encoded frames from your video device and display them in a JFrame object. Note that this approach uses a JLabel and its `setIcon()` method to display the images of the video stream, which is not optimal. A better way would be to create a `BufferedImage`, update its raster and draw it onto the component instead. Refer to the `RGBViewer` class in the `au.edu.jcu.v4l4j.examples` package where this technique is used.
+The following example shows you how to capture JPEG-encoded frames from your video device and display them in a JFrame object through using a BufferedImage object.
 {{{
 package v4l4jTest;
 
@@ -239,6 +242,7 @@ public class Viewer extends WindowAdapter implements Runnable {
 	private FrameGrabber fg;
 	private Thread captureThread;
 	private boolean stop;
+        private int width, height;
 	
 	/**
 	 * Builds a WebcamViewer object
@@ -268,7 +272,7 @@ public class Viewer extends WindowAdapter implements Runnable {
         f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         f.addWindowListener(this);
         f.setVisible(true);
-        f.setSize(fg.getWidth(), fg.getHeight());    	
+        f.setSize(width, height);    	
     }
     
     /**
@@ -285,6 +289,8 @@ public class Viewer extends WindowAdapter implements Runnable {
 	vd = new VideoDevice(dev);
 	fg = vd.getJPEGFrameGrabber(w, h, channel, std, qty);
 	fg.startCapture();
+        width = fg.getWidth();
+        height = fg.getHeight();
 	System.out.println("Starting capture at "+fg.getWidth()+"x"+fg.getHeight());	    	
     }
     
@@ -292,22 +298,20 @@ public class Viewer extends WindowAdapter implements Runnable {
      * Updates the image shown in the JLabel
      * @param b
      */
-    public void setImage(byte[] b) {
-    	l.setIcon(new ImageIcon(b));
+    public void setImage(BufferedImage image) {
+    	l.getGraphics().drawImage(image, 0, 0, width, height, null);
     }
     
     /**
      * Implements the capture thread: get a frame from the FrameGrabber, and display it
      */
     public void run(){
-	ByteBuffer bb;
-	byte[] b;
+	VideoFrame frame;
 	try {			
 		while(!stop){
-			bb = fg.getFrame();
-			b = new byte[bb.limit()];
-			bb.get(b);
-			setImage(b);
+			frame = fd.getVideoFrame();
+			setImage(frame.getBufferedImage());
+                        frame.recycle();
 		}
 	} catch (V4L4JException e) {
 		e.printStackTrace();
