@@ -1,7 +1,7 @@
 /**
  * <h1>Video4Linux4java Main Package</h1>
  * <h2>Introduction</h2>
- * The Video4Linux (V4L) API provides data structure & methods to access and control
+ * The Video4Linux (V4L) API provides data structures & methods to access and control
  * video input & output hardware, as well as radio tuners. The API is divided into
  * several interfaces, including video capture, video overlay, video output & 
  * teletext interfaces. v4l4j provides access to the video capture 
@@ -10,7 +10,7 @@
  * <h2>Usage</h2>
  * <h3>Video device object</h3>
  * To use v4l4j, the first step is to create a {@link au.edu.jcu.v4l4j.VideoDevice}
- * object, which represents a physical video input hardware. This includes webcams 
+ * object, which represents a physical video input hardware device. This includes webcams 
  * and capture / tuner cards. The only pre-requisite is that your hardware must be 
  * supported and its driver loaded. Creating a {@link au.edu.jcu.v4l4j.VideoDevice}
  * is simple. You only need the path to a valid device file to create this object:<br>
@@ -117,7 +117,7 @@
  * reference to null.</li>
  * </ul>
  * The above example used a frame grabber in pull mode. More information on 
- * video capture, including pull mode, is given in the documentation of the 
+ * video capture, including push mode, is given in the documentation of the 
  * {@link au.edu.jcu.v4l4j.FrameGrabber} class.
  * 
  * <h3>Tuners</h3>
