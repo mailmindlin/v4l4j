@@ -39,9 +39,9 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * and width may be adjusted to the closest supported values. The adjusted width 
  * and height can be retrieved by calling {@link #getWidth()} and 
  * {@link #getHeight()}.<br>
- * Frame grabbers operate in two modes: push or pull. In pull mode, v4l4j is given
- * a object implementing the {@link PushSourceCallback} interface which will
- * be delivered new captured frames as soon as they arrive. In push mode,
+ * Frame grabbers operate in two modes: push or pull. In push mode, v4l4j is given
+ * an object implementing the {@link PushSourceCallback} interface which will
+ * be delivered new captured frames as soon as they arrive. In pull mode,
  * frames are retrieved by successive calls to {@link #getVideoFrame()}. By
  * default, a frame grabber operates in pull mode. Call 
  * {@link #setPushSourceMode(PushSourceCallback)} to select the desired mode <b>before</b>
@@ -182,9 +182,11 @@ public interface FrameGrabber {
 	 * the pull mode is activated.<br>
 	 * This method cannot be called while the capture is active, ie. in between
 	 * a call to {@link #startCapture()} and {@link #stopCapture()}.
-	 * @param callback an object implementing the {@link PushSourceCallback}
-	 * interface which will notified when a new frame is available, or when 
-	 * an exception is triggered.
+	 * @param callback if not null, tell the frame grabber to work in push mode.
+	 * The given object implementing the {@link PushSourceCallback}
+	 * interface gets notified when a new frame is available, or when 
+	 * an exception is triggered. If null, tell the frame grabber to work in
+	 * pull mode. Frames must be obtained by calling {@link #getVideoFrame()}.
 	 * @throws StateException if this method is invoked while capture is active,
 	 * ie. after a call to {@link #startCapture()} and prior a call 
 	 * to {@link #stopCapture()}. 
