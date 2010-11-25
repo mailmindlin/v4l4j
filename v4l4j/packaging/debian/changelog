@@ -1,3 +1,12 @@
+v4l4j (0.8.9-0ubuntu1~ppa4) lucid; urgency=low
+
+  * Improved number of copies from v4l to java
+  * Implemented VideoFrame class, push/pull mode, sequence and capture time 
+    features
+  * Added CamServer class
+
+ -- Gilles Gigan <gilles.gigan@gmail.com>  Thu, 25 Nov 2010 19:09:37 +1100
+
 v4l4j (0.8.8-0ubuntu1~ppa4) lucid; urgency=low
 
   * New upstream release with libv4l 0.8.1
