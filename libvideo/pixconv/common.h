@@ -50,7 +50,7 @@ typedef unsigned long long	ticks;
 		do{\
 				struct timespec ts;\
 				clock_gettime(CLOCK_MONOTONIC, &ts);\
-				t = (ticks) (ts.tv_sec * 1000000000 + ts.tv_nsec);\
+				t = (ticks) (ts.tv_sec * 1000000000LL + (ticks)ts.tv_nsec);\
 		} while(0)
 	//	struct timeval tv;
 	//	gettimeofday(&tv, NULL);
