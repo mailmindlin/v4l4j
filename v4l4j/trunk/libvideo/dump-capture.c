@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
 
 	while(nb_frames-->0){
 		//get frame from v4l2
-		if((d = (*c->actions->dequeue_buffer)(v, &size)) != NULL) {
+		if((d = (*c->actions->dequeue_buffer)(v, &size, NULL, NULL)) != NULL) {
 			write_frame(d, size);
 			//Put frame
 			(*c->actions->enqueue_buffer)(v);
