@@ -311,7 +311,7 @@ public class Viewer extends WindowAdapter implements Runnable {
 	VideoFrame frame;
 	try {			
 		while(!stop){
-			frame = fd.getVideoFrame();
+			frame = fg.getVideoFrame();
 			setImage(frame.getBufferedImage());
                         frame.recycle();
 		}
