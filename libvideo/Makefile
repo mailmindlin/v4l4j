@@ -64,19 +64,16 @@ LIBV4LCONVERT_AR := libv4lconvert.a
 LIBV4LCONVERT_NAME := v4lconvert
 LIBV4LCONVERT_HELPERS := ov511-decomp ov518-decomp
 
-PIXCONV_DIR := pixconv
-PIXCONV_AR := libpixconv.a
-
 LIB_NAME := video
 LIB := lib$(LIB_NAME).so
 TESTOBJ := test-capture.o dump-capture.o list-caps.o
 OBJ := v4l2-input.o v4l1-input.o libvideo.o pwc-probe.o gspca-probe.o \
   qc-probe.o fps-param-probe.o v4l1-query.o v4l2-query.o v4l1-tuner.o \
-  v4l2-tuner.o palettes.o $(PIXCONV_DIR)/$(PIXCONV_AR)
+  v4l2-tuner.o palettes.o
 
 CC := gcc
 CFLAGS := $(DBG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) \
-  $(OPTIMISATION) -fPIC -I. -Ipixconv
+  $(OPTIMISATION) -fPIC -I.
 
 LD := gcc
 LDFLAGS := -lm -lrt -shared
@@ -92,9 +89,6 @@ $(LIBV4LCONVERT_AR):
 	LINKTYPE=static LIBDIR=$(LIBV4L_HELPERS_INSTALL_DIR) \
 		make -C $(LIBV4LCONVERT_DIR)
 	cp $(LIBV4LCONVERT_DIR)/$(LIBV4LCONVERT_AR) .
-	
-$(PIXCONV_DIR)/$(PIXCONV_AR):
-	make -C $(PIXCONV_DIR) all
 
 install: $(LIB).$(LIB_RELEASE)
 	mkdir -p $(DESTDIR)$(INC_INSTALL_DIR)
@@ -122,7 +116,6 @@ version.h:
 
 clean:
 	make -C $(LIBV4LCONVERT_DIR) clean
-	make -C $(PIXCONV_DIR) clean
 	rm -f $(OBJ) $(BIN) $(LIB) $(LIB).$(LIB_RELEASE) $(TESTOBJ) \
   $(LIBV4LCONVERT_AR) ./*.o list-caps test-capture dump-capture version.h ./*~
 
