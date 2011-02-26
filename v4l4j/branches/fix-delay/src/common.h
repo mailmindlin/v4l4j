@@ -58,6 +58,7 @@ enum output_format {
 
 struct v4l4j_device {
 	void (*convert) (struct v4l4j_device *, unsigned char *, unsigned char *);
+	unsigned char *temp_conv_buffer;
 	struct video_device *vdev;	//the libvideo struct
 	union {
 		struct jpeg_data *j;	//the converter's data
