@@ -386,8 +386,9 @@ public class CamServer implements Runnable{
 		String dev = (System.getProperty("test.device") != null) ? System.getProperty("test.device") : "/dev/video0"; 
 		int w = (System.getProperty("test.width")!=null) ? Integer.parseInt(System.getProperty("test.width")) : 640;
 		int h = (System.getProperty("test.height")!=null) ? Integer.parseInt(System.getProperty("test.height")) : 480;
+		int port = (System.getProperty("test.port")!=null) ? Integer.parseInt(System.getProperty("test.port")) : 8080;
  
-		CamServer server = new CamServer(dev, w, h, 8080);
+		CamServer server = new CamServer(dev, w, h, port);
 		server.start();
 		System.out.println("Press enter to exit.");
 		System.in.read();

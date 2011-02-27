@@ -676,14 +676,15 @@ int init_capture_v4l2(struct video_device *vdev) {
 		vdev->capture->actions->dequeue_buffer = dequeue_buffer_v4l2_convert;
 	}
 
+	XMALLOC(vdev->capture->mmap->tmp, void *, sizeof(struct v4l2_buffer));
+
 	return 0;
 }
 
 int start_capture_v4l2(struct video_device *vdev) {
 
 	int i;
-	struct v4l2_buffer *b;
-	XMALLOC(b,struct v4l2_buffer *, sizeof(struct v4l2_buffer));
+	struct v4l2_buffer *b = (struct v4l2_buffer *) vdev->capture->mmap->tmp;
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: Starting capture on device %s.\n", vdev->file);
@@ -707,7 +708,6 @@ int start_capture_v4l2(struct video_device *vdev) {
 				"CAP: cannot start capture\n");
 		return LIBVIDEO_ERR_IOCTL;
 	}
-	vdev->capture->mmap->tmp = (void *) b;
 
 	return 0;
 }
@@ -800,8 +800,8 @@ void *dequeue_buffer_v4l2(struct video_device *vdev, int *len,
 		*sequence = b->sequence;
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
-			"CAP: buffer length: %d - seq: %llu - time %llu\n", *len, *sequence,
-			*capture_time);
+			"CAP: buffer length: %d - seq: %llu - time %llu\n", *len, (b->sequence),
+			(b->timestamp.tv_usec + b->timestamp.tv_sec * USEC_PER_SEC ));
 
 	return vdev->capture->mmap->buffers[b->index].start;
 }
@@ -827,7 +827,6 @@ int stop_capture_v4l2(struct video_device *vdev) {
 				"CAP: cannot stop capture\n");
 		return LIBVIDEO_ERR_IOCTL;
 	}
-	XFREE(vdev->capture->mmap->tmp);
 
 	return 0;
 }
@@ -838,6 +837,8 @@ void free_capture_v4l2(struct video_device *vdev) {
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: freeing capture structure on device %s.\n", vdev->file);
+
+	XFREE(vdev->capture->mmap->tmp);
 
 	// free temp frame buffer if required
 	if(vdev->capture->is_native!=1)

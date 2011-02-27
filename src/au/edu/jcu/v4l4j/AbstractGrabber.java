@@ -1,26 +1,26 @@
 /*
-* Copyright (C) 2007-2008 Gilles Gigan (gilles.gigan@gmail.com)
-* eResearch Centre, James Cook University (eresearch.jcu.edu.au)
-*
-* This program was developed as part of the ARCHER project
-* (Australian Research Enabling Environment) funded by a   
-* Systemic Infrastructure Initiative (SII) grant and supported by the Australian
-* Department of Innovation, Industry, Science and Research
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public  License as published by the
-* Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  
-* See the GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Copyright (C) 2007-2008 Gilles Gigan (gilles.gigan@gmail.com)
+ * eResearch Centre, James Cook University (eresearch.jcu.edu.au)
+ *
+ * This program was developed as part of the ARCHER project
+ * (Australian Research Enabling Environment) funded by a   
+ * Systemic Infrastructure Initiative (SII) grant and supported by the Australian
+ * Department of Innovation, Industry, Science and Research
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public  License as published by the
+ * Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 package au.edu.jcu.v4l4j;
 
 import java.util.Vector;
@@ -54,7 +54,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	protected final static int BGR24_GRABBER = 3;
 	protected final static int YUV_GRABBER = 4;
 	protected final static int YVU_GRABBER = 5;
-	
+
 	protected DeviceInfo 				dInfo;
 	private int 						width;
 	private int 						height;
@@ -71,13 +71,13 @@ abstract class AbstractGrabber implements FrameGrabber {
 	private long						lastCapturedFrameTimeuSec;	// these two names are changed
 	private PushSource					pushSource;
 	private long						pushSourceThreadId;
-	
+
 	/*
 	 * JNI returns a long (which is really a pointer) when a device is allocated
 	 * for use. This field is read-only (!!!) 
 	 */
 	protected long object;
-	
+
 	static {
 		try {
 			System.loadLibrary("v4l4j");
@@ -86,12 +86,12 @@ abstract class AbstractGrabber implements FrameGrabber {
 			throw e;
 		}
 	}
-	
+
 
 	private native int doInit(long o, int w, int h, int ch, int std,
 			int requestedFormat, int output)
-		throws V4L4JException;
-	
+	throws V4L4JException;
+
 	private native void start(long o) throws V4L4JException;
 	/**
 	 * This method sets a new value for the JPEG quality
@@ -108,7 +108,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	private native void doSetFrameIntv(long o, int n, int d) throws InvalidValue;
 	private native int doGetFrameIntv(long o, int what);
 
-	
+
 	/**
 	 * This constructor builds a FrameGrabber object used to capture frames from
 	 * a video source.
@@ -149,8 +149,8 @@ abstract class AbstractGrabber implements FrameGrabber {
 		pushSource = null;
 		pushSourceThreadId = 0;
 	}
-	
-	
+
+
 	/**
 	 * This method initialises the capture, and apply the capture parameters.
 	 * V4L may either adjust the height and width parameters to the closest 
@@ -172,21 +172,21 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 */
 	void init() throws V4L4JException{
 		state.init();
-		
+
 		// Initialise libvideo and setup capture parameters
 		// Return value is the number of buffers mmaped into the driver's memory
 		nbV4LBuffers = doInit(object, width, height, channel, standard, format, type);
 		int bufferSize = getBufferSize(object);
-		
+
 		// Create the V4L4J data buffer objects
 		createBuffers(bufferSize);
-		
+
 		// Copy the videoFrames vector into a new availableVideoFrames vector
 		availableVideoFrames = new Vector<BaseVideoFrame>(videoFrames);
-		
+
 		state.commit();
 	}
-	
+
 	/**
 	 * This abstract method is called when {@link #init()} succeeds and is
 	 * responsible for populating the {@link #videoFrames} member (vector of 
@@ -194,7 +194,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 * @param bufferSize the size of each buffer
 	 */
 	protected abstract void createBuffers(int bufferSize);
-	
+
 	/* (non-Javadoc)
 	 * @see au.edu.jcu.v4l4j.FrameGrabber#getNumberOfBuffers()
 	 */
@@ -202,7 +202,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	public int getNumberOfVideoFrames() {
 		return nbV4LBuffers;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see au.edu.jcu.v4l4j.FrameGrabber#setFrameInterval()
 	 */
@@ -214,7 +214,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 			doSetFrameIntv(object, num, denom);
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see au.edu.jcu.v4l4j.FrameGrabber#getFrameInterval()
 	 */
@@ -232,7 +232,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 			);
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see au.edu.jcu.v4l4j.FrameGrabber#getTuner()
 	 */
@@ -240,11 +240,11 @@ abstract class AbstractGrabber implements FrameGrabber {
 	public final Tuner getTuner() throws NoTunerException{
 		if(tuner==null)
 			throw new NoTunerException("This input does not have a tuner");
-		
+
 		state.checkReleased();
 		return tuner;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see au.edu.jcu.v4l4j.FrameGrabber#setPushSourceMode()
 	 */
@@ -264,27 +264,38 @@ abstract class AbstractGrabber implements FrameGrabber {
 				pushSourceThreadId = pushSource.getThreadId();
 			}
 		}
-		
+
 		return (callback != null);
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see au.edu.jcu.v4l4j.FrameGrabber#startCapture()
 	 */
 	@Override
 	public final void startCapture() throws V4L4JException {
 		state.start();
-		
-		// start video capture
-		start(object);
-				
-		state.commit();
-		
-		// if we are in push mode, start the push source
-		if (pushSource != null)
+
+		// if we are in push mode, start the push source and wait until 
+		// it's blocked on getVideoFrame()
+		if (pushSource != null) {
 			pushSource.startCapture();
+			state.waitForAtLeastOneUser();
+		}
+
+		try {
+			// start video capture
+			start(object);
+
+			// change state to STARTED
+			state.commit();
+		} catch (V4L4JException e) {
+			// Error starting the capture...
+			// stop the capture thread and return to previous state
+			pushSource.stopCapture();
+			state.rollback();
+		}
 	}
-	
+
 	/**
 	 * This method is called as part of {@link #getVideoFrame()}. It retrieves a video
 	 * frame marked as available (recycled). if no frame is available, this method
@@ -295,7 +306,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 */
 	private BaseVideoFrame	getAvailableVideoFrame() {
 		BaseVideoFrame frame = null;
-		
+
 		// block until a video frame is available
 		synchronized (availableVideoFrames) {
 			while (availableVideoFrames.size() == 0)
@@ -304,14 +315,14 @@ abstract class AbstractGrabber implements FrameGrabber {
 				} catch (InterruptedException e) {
 					throw new StateException("Interrupted while waiting for a video frame", e);
 				}
-			
-			// get the video frame
-			frame = availableVideoFrames.remove(0);
+
+				// get the video frame
+				frame = availableVideoFrames.remove(0);
 		}
-		
+
 		return frame;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see au.edu.jcu.v4l4j.FrameGrabber#getVideoFrame()
 	 */
@@ -319,9 +330,16 @@ abstract class AbstractGrabber implements FrameGrabber {
 	public final VideoFrame getVideoFrame() throws V4L4JException {
 		int frameSize;
 		BaseVideoFrame nextFrame;
-				
+
 		state.get();
-			
+
+		// if we are in push mode, make sure the calling thread is
+		// our pushSource's thread
+		if ((pushSource != null) &&  (Thread.currentThread().getId() != pushSourceThreadId)) {
+			state.put();
+			throw new UnsupportedMethod("This frame grabber is set to push mode");
+		}
+
 		try {
 			// get next available video frame object
 			nextFrame = getAvailableVideoFrame();
@@ -335,21 +353,16 @@ abstract class AbstractGrabber implements FrameGrabber {
 		} finally {
 			state.put();
 		}
-		
-		// if we are in push mode, make sure the calling thread is
-		// our pushSource's thread
-		if ((pushSource != null) &&  (Thread.currentThread().getId() != pushSourceThreadId))
-				throw new UnsupportedMethod("This frame grabber is set to push mode");
-		
+
 		return nextFrame;
-		
+
 	}
-	
+
 	synchronized static void Log(String s){
 		System.out.println(Thread.currentThread().getName()+": "+s);
 		System.out.flush();
 	}
-	
+
 	/**
 	 * This method is called by a video frame, when it is being recycled.
 	 * @param frame the frame being recycled.
@@ -360,7 +373,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 			availableVideoFrames.notify();
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see au.edu.jcu.v4l4j.FrameGrabber#stopCapture()
 	 */
@@ -370,33 +383,33 @@ abstract class AbstractGrabber implements FrameGrabber {
 
 		// at this stage, we know that no one is waiting in getVideoFrame() anymore,
 		// and further calls to it will throw a StateException.
-		
+
 
 		// if we re started and in push mode, stop the push source
 		if (pushSource != null)
-				pushSource.stopCapture();
-		
+			pushSource.stopCapture();
+
 		// I dont think the following is required, so commented out for now
 		// we now wait for all VideoFrame objects to be recycled.
-//		for(AbstractVideoFrame frame : videoFrames)
-//			try {
-//				frame.waitTillRecycled();
-//			} catch (InterruptedException e) {
-//				System.err.println("Interrupted while waiting for frame to be recycled");
-//			}
-		
+		//		for(AbstractVideoFrame frame : videoFrames)
+		//			try {
+		//				frame.waitTillRecycled();
+		//			} catch (InterruptedException e) {
+		//				System.err.println("Interrupted while waiting for frame to be recycled");
+		//			}
+
 		// Make sure all video frames are recycled
 		for(VideoFrame frame: videoFrames)
 			frame.recycle();
-		
+
 		// stop jni code
 		stop(object);
-		
+
 		// commit new state
 		state.commit();
-		
+
 	}
-	
+
 	/**
 	 * This method releases resources used by the FrameCapture object.
 	 * @throws StateException if if this 
@@ -408,12 +421,12 @@ abstract class AbstractGrabber implements FrameGrabber {
 		catch (StateException se) {
 			//capture already stopped 
 		}
-		
+
 		state.release();		
 		doRelease(object);
 		state.commit();
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see au.edu.jcu.v4l4j.FrameGrabber#getHeight()
 	 */
@@ -422,7 +435,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 		state.checkReleased();
 		return height;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see au.edu.jcu.v4l4j.FrameGrabber#getWidth()
 	 */
@@ -431,7 +444,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 		state.checkReleased();
 		return width;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see au.edu.jcu.v4l4j.FrameGrabber#getChannel()
 	 */
@@ -440,7 +453,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 		state.checkReleased();
 		return channel;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see au.edu.jcu.v4l4j.FrameGrabber#getStandard()
 	 */
@@ -449,7 +462,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 		state.checkReleased();
 		return standard;
 	}
-	
+
 	/**
 	 * be careful when using this method to not introduce race conditions
 	 * @return if this grabber is started
@@ -469,12 +482,19 @@ abstract class AbstractGrabber implements FrameGrabber {
 		private static int STOPPED=3;
 		private static int RELEASED=4;
 
+		/**
+		 * Start the state machine with state == temp == UNINIT
+		 */
 		public State() {
 			state = UNINIT;
 			temp = UNINIT;
 			users = 0;
 		}
 
+		/**
+		 * From state = UNINIT and not about to move to INIT, move to INIT state
+		 * otherwise throw StateException
+		 */
 		public synchronized void init(){
 			if(state==UNINIT && temp!=INIT) {
 				temp=INIT;
@@ -483,6 +503,10 @@ abstract class AbstractGrabber implements FrameGrabber {
 						+"initialised again");
 		}
 
+		/**
+		 * From state = INIT or (state = STOPPED and not about to start),
+		 * move to state = STARTED
+		 */
 		public synchronized void start(){
 			if(state==INIT || state==STOPPED && temp!=STARTED) {
 				temp=STARTED;
@@ -510,30 +534,47 @@ abstract class AbstractGrabber implements FrameGrabber {
 				throw new StateException("This FrameGrabber has been released");
 		}
 
+		/**
+		 * Increase number of users by one.
+		 */
 		public synchronized void get(){
-			// if we are already started and not about to stop
-			// increment the number of users
-			if(state==STARTED && temp!=STOPPED) {
-				users++;
-			} else
-				throw new StateException("This FrameGrabber is "
-						+"not started and can not be used");
+			// If there were no user, now there is one,
+			// notify any thread waiting for at least one user.
+			if (users == 0)
+				notify();
+
+			users++;
 		}
 
+		/**
+		 * Block until there is at least one user
+		 */
+		public synchronized void waitForAtLeastOneUser() {
+			while (users == 0) {
+				try {
+					wait();
+				} catch (InterruptedException e) {
+					System.err.println("Interrupted while waiting for "
+							+"push thread to start");
+					e.printStackTrace();
+					throw new StateException("Interrupted while waiting for"
+							+"push thread to start");
+				}
+			}
+		}
+
+		/**
+		 * Decrease the number of users by one
+		 */
 		public synchronized void put(){
-			// if we are started...
-			if(state==STARTED) {
-				// decrement the number of users and notify any blocked
-				// thread if there are no more users
-				if (--users==0)
-					notify();
-				// if we are about to stop, throw a state exception so
-				// the captured frame is not returned
-				if(temp==STOPPED)
-					throw new StateException("This framegrabber was stopped");
-			} else
-				throw new StateException("This FrameGrabber is"
-						+" not started and can not be used");
+			// decrement the number of users and notify any blocked
+			// thread if there are no more users
+			if (--users==0)
+				notify();
+			// if we are about to stop, throw a state exception so
+			// the captured frame is not returned
+			if(temp==STOPPED)
+				throw new StateException("This framegrabber was stopped");
 		}
 
 
@@ -564,7 +605,10 @@ abstract class AbstractGrabber implements FrameGrabber {
 		}
 
 		public synchronized void commit(){
-			state=temp;
+			state = temp;
+		}
+		public synchronized void rollback(){
+			temp = state;
 		}
 	}
 }
