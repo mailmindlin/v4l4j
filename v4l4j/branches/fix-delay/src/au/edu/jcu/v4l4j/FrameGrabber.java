@@ -25,6 +25,7 @@
 package au.edu.jcu.v4l4j;
 
 import au.edu.jcu.v4l4j.FrameInterval.DiscreteInterval;
+import au.edu.jcu.v4l4j.examples.PushModeCaptureApp;
 import au.edu.jcu.v4l4j.exceptions.InvalidValue;
 import au.edu.jcu.v4l4j.exceptions.NoTunerException;
 import au.edu.jcu.v4l4j.exceptions.StateException;
@@ -41,30 +42,42 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * {@link #getHeight()}.<br>
  * Frame grabbers operate in two modes: push or pull. In push mode, v4l4j is given
  * an object implementing the {@link PushSourceCallback} interface which will
- * be delivered new captured frames as soon as they arrive. In pull mode,
- * frames are retrieved by successive calls to {@link #getVideoFrame()}. By
+ * be given new captured frames as soon as they arrive. In pull mode,
+ * frames are retrieved by repeated calls to {@link #getVideoFrame()}. By
  * default, a frame grabber operates in pull mode. Call 
  * {@link #setPushSourceMode(PushSourceCallback)} to select the desired mode <b>before</b>
  * starting the capture (with {@link #startCapture()}).<br>
- * A typical <code>FrameGrabber</code> use (in pull mode) is as follows:<br><br>
- * <code><br>
- * VideoFrame frame;<br>
+ * A typical <code>FrameGrabber</code> use (in pull mode) is as follows:
+ * <br>
+ * In the main thread, create the video device and frame grabber:
+ * <code><br><br>
  * //create a new video device<br>
  * VideoDevice vd = new VideoDevice("/dev/video0");<br>
  * <br>//Create an instance of FrameGrabber
  * <br>FrameGrabber f = vd.getRawFrameGrabber(320, 240, 0, 0, 80);
  * <br> //the framegrabber will use the first image format supported by the 
  * device, as returned by
- * <br> //<code>vd.getDeviceInfo().getFormatList().getNativeFormats().get(0)</code>
+ * <br> //vd.getDeviceInfo().getFormatList().getNativeFormats().get(0)
  * <br>
- * <br> //Start the frame capture 
- * <br>f.startCapture();
+ * </code><br>
+ * Create and run a capture thread which runs the following loop:<br>
+ * <code> 
+ * <br>VideoFrame frame;
  * <br>while (!stop) {
- * <br>&nbsp;&nbsp; frame = f.getVideoFrame(); // Get a frame
+ * <br>&nbsp;&nbsp; frame = f.getVideoFrame(); // block until a frame is ready
  * <br>&nbsp;&nbsp; //do something useful with frame, then recycle it
  * <br>&nbsp;&nbsp; //when done with it, so v4l4j can re-use it later on
  * <br>&nbsp;&nbsp; frame.recycle();
  * <br>}<br>
+ * </code>
+ * Back in the main thread, start the capture:<br>
+ * <code> 
+ * <br>f.startCapture();
+ * <br>//At this point, the capture thread will be unblocked each time a frame 
+ * <br>//is ready.
+ * <br>//
+ * <br>//When done, stop the capture thread
+ * <br>stop = true;
  * <br>//Stop the capture
  * <br>f.stopCapture();<br>
  * <br>//Free capture resources and release the FrameGrabber
@@ -75,7 +88,8 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * In push mode, instead of calling {@link #getVideoFrame()}, frames are delivered
  * as soon they are captured by v4l4j to the provided {@link PushSourceCallback}
  * object via its {@link PushSourceCallback#nextFrame(VideoFrame) nextFrame()} method.
- * In both pull and push modes, video frames must be recycled when they are no
+ * For an example of push mode capture, see {@link PushModeCaptureApp}.
+ * <br>In both pull and push modes, video frames must be recycled when they are no
  * longer used.<br></br>
  * 
  * Once the frame grabber is released with 

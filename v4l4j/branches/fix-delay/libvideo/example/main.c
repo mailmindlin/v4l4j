@@ -37,7 +37,7 @@
 #include <arpa/inet.h>		//for inet_ntoa (convert strcut in_addr to char*)
 
 #include "libvideo.h"
-#include "palettes.h"
+#include "libvideo-palettes.h"
 #include "utils.h"
 #include "jpeg.h"
 #include "log.h"
