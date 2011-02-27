@@ -21,6 +21,7 @@ public class PushSourceTest implements PushSourceCallback{
 	private int w,h, std, ch;
 	private String dev;
 	private int numCapturedFrames;
+	private boolean hasSeenFrame0;
 
 	@Before
 	public void setUp() throws Exception {
@@ -34,6 +35,7 @@ public class PushSourceTest implements PushSourceCallback{
 
 		fg = vd.getRawFrameGrabber(w, h, ch, std);
 		numCapturedFrames = 0;
+		hasSeenFrame0 = false;
 	}
 
 	@After
@@ -105,6 +107,9 @@ public class PushSourceTest implements PushSourceCallback{
 
 			@Override
 			public void nextFrame(VideoFrame frame) {
+				if (frame.getSequenceNumber() == 0)
+					hasSeenFrame0 = true;
+				
 				numCapturedFrames++;
 				frame.recycle();
 
@@ -125,6 +130,7 @@ public class PushSourceTest implements PushSourceCallback{
 			vd.wait(5000);	//wait up to 5 seconds for a frame to arrive
 		}
 
+		assertTrue(hasSeenFrame0);
 		assertTrue(numCapturedFrames > 0);
 		fg.stopCapture();
 	}

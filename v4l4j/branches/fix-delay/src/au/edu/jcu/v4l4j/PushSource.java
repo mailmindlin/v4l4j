@@ -53,7 +53,7 @@ class PushSource implements Runnable {
 			throw new StateException("The capture has already been started");
 		
 		// Update our state and start the thread
-		state = STATE_RUNNING;		
+		state = STATE_RUNNING;
 		thread.start();
 	}
 	
@@ -118,7 +118,7 @@ class PushSource implements Runnable {
 				Thread.currentThread().interrupt();
 			}
 		}
-		AbstractGrabber.Log("exiting");
+
 		// update state
 		state = STATE_STOPPED;
 	}
