@@ -212,6 +212,7 @@
 		<javadoc sourcepath="${project.src}" packagenames="au.edu.jcu.v4l4j.*" destdir="${project.javadoc.dir}" public="true" use="true">
 			<excludepackage name="au.edu.jcu.v4l4j.test" />
 			<excludepackage name="au.edu.jcu.v4l4j.examples" />
+			<excludepackage name="au.edu.jcu.v4l4j.examples.server" />
 		</javadoc>
 	</target>
 	

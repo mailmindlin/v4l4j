@@ -49,7 +49,7 @@ public class PushModeCaptureApp  implements PushSourceCallback{
 	@Override
 	public void exceptionReceived(V4L4JException e) {
 		// This method is called by v4l4j if an exception
-		// has occured while waiting for a new frame to be ready.
+		// has occurred while waiting for a new frame to be ready.
 		// The exception is available through
 		// e.getCause()
 	}
@@ -57,7 +57,7 @@ public class PushModeCaptureApp  implements PushSourceCallback{
 	@Override
 	public synchronized void nextFrame(VideoFrame frame) {
 		// This method is called when a new frame is ready.
-		//  Dont forget to recycle it when done dealing with the frame.
+		// Don't forget to recycle it when done dealing with the frame.
 		// Here we just count how many frames we have received.
 		numFrames++;
 		frame.recycle();
