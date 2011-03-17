@@ -32,7 +32,7 @@ class BaseVideoFrame implements VideoFrame{
 	/** 
 	 * This method creates the base for a video frame. It will instantiate
 	 * and initialise all members except raster and bufferedImage, which
-	 * falls under the responsiblity of the subclass.
+	 * falls under the responsibility of the subclass.
 	 * @param grabber the frame grabber to which this frame must be
 	 * returned to when recycled.
 	 * @param bufferSize the size of the byte array to create for this frame.
@@ -133,7 +133,7 @@ class BaseVideoFrame implements VideoFrame{
 	}
 
 	/**
-	 * Sublclasses can override this method to either
+	 * Subclasses can override this method to either
 	 * return a {@link WritableRaster} for this video frame, or throw
 	 * a {@link UnsupportedMethod} exception if this video frame cannot
 	 * generate a {@link WritableRaster}.
@@ -150,7 +150,7 @@ class BaseVideoFrame implements VideoFrame{
 	}
 
 	/**
-	 * Sublclasses can override this method to either
+	 * Subclasses can override this method to either
 	 * return a {@link BufferedImage} for this video frame, or throw
 	 * a {@link UnsupportedMethod} exception if this video frame cannot
 	 * generate a {@link BufferedImage}.
