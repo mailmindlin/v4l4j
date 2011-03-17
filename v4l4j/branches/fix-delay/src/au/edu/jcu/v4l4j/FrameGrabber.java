@@ -42,7 +42,7 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * {@link #getHeight()}.<br>
  * Frame grabbers operate in two modes: push or pull. In push mode, v4l4j is given
  * an object implementing the {@link PushSourceCallback} interface which will
- * be given new captured frames as soon as they arrive. In pull mode,
+ * be handed new captured frames as soon as they arrive. In pull mode,
  * frames are retrieved by repeated calls to {@link #getVideoFrame()}. By
  * default, a frame grabber operates in pull mode. Call 
  * {@link #setPushSourceMode(PushSourceCallback)} to select the desired mode <b>before</b>
@@ -70,7 +70,8 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * <br>&nbsp;&nbsp; frame.recycle();
  * <br>}<br>
  * </code>
- * Back in the main thread, start the capture:<br>
+ * Back in the main thread, start the capture (make sure the capture thread is
+ * running before starting the capture):<br>
  * <code> 
  * <br>f.startCapture();
  * <br>//At this point, the capture thread will be unblocked each time a frame 
@@ -85,9 +86,11 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * <br>//release VideoDevice
  * <br>vd.release();
  * </code><br><br>
- * In push mode, instead of calling {@link #getVideoFrame()}, frames are delivered
- * as soon they are captured by v4l4j to the provided {@link PushSourceCallback}
- * object via its {@link PushSourceCallback#nextFrame(VideoFrame) nextFrame()} method.
+ * In push mode, instead of creating a capture thread which continuously calls 
+ * {@link #getVideoFrame()}, v4l4j creates and runs a capture thread for you.
+ * You only need to provide a {@link PushSourceCallback} object which will 
+ * receive frames via its 
+ * {@link PushSourceCallback#nextFrame(VideoFrame) nextFrame()} method.
  * For an example of push mode capture, see {@link PushModeCaptureApp}.
  * <br>In both pull and push modes, video frames must be recycled when they are no
  * longer used.<br></br>
@@ -123,7 +126,7 @@ public interface FrameGrabber {
 	
 	/**
 	 * This method returns the number of buffers v4l4j has negotiated with
-	 * the driver. The driver store captured frames in these buffers and return
+	 * the driver. The driver stores captured frames in these buffers and returns
 	 * them to v4l4j. This number is an indication as to how many video
 	 * frames can be obtained from the driver through {@link #getVideoFrame()}
 	 * before the capture stops until a buffer is returned to the driver 
@@ -145,7 +148,7 @@ public interface FrameGrabber {
 	 * supported.
 	 * As a guide, you can check the {@link ResolutionInfo} objects associated
 	 * with the video device to find out whether frame intervals are at all 
-	 * supported, and if they are, what values (or range of values) is accepted.
+	 * supported, and if they are, what values (or range of values) are accepted.
 	 * {@link ResolutionInfo} objects can be obtained for each 
 	 * {@link ImageFormat}. See the {@link ImageFormat} and 
 	 * {@link ResolutionInfo} documentation for more information.
@@ -209,26 +212,31 @@ public interface FrameGrabber {
 	public boolean setPushSourceMode(PushSourceCallback callback);
 
 	/**
-	 * This method starts the capture. After this call, frames can be retrieved
-	 * with {@link #getVideoFrame()}.
-	 * @throws V4L4JException if the capture cant be started
+	 * This method starts the capture. In pull mode, make sure a separate 
+	 * thread (the capture thread) has called {@link #getVideoFrame()} prior to
+	 * calling this method. In push mode, after calling this method, frames will
+	 * be delivered to the provided {@link PushSourceCallback} object.
+	 * @throws V4L4JException if the capture cannot be started
 	 * @throws StateException if this <code>FrameGrabber</code> has been already
 	 * released, and therefore must not be used anymore
 	 */
 	public void startCapture() throws V4L4JException;
 
 	/**
-	 * This method retrieves one frame from the video source. At the start 
+	 * In pull mode, this method retrieves one frame from the video source. 
+	 * At the start 
 	 * of the capture, v4l4j creates a certain number of {@link VideoFrame}s
 	 * and places them in an "available" queue. You can retrieve the exact 
 	 * number of buffers by calling {@link #getNumberOfVideoFrames()}.
 	 * Each time this method is called, it retrieves a VideoFrame from the "available" queue,
 	 * captures an image from the device, places it in the VideoFrame object and
-	 * return it. When you have finished processing the VideoFrame, you must 
+	 * returns it. When you have finished processing the VideoFrame, you must 
 	 * recycle it by calling {@link VideoFrame#recycle()}, so it returns to the
-	 * "available" queue and can be reused. If there are no 
+	 * "available" queue and can be reused again. If there are no 
 	 * VideoFrames in the available queue when this method is called, it will 
-	 * block until one gets recycled.
+	 * block until one gets recycled.<br>
+	 * Do not call this method if you have set the frame grabber to work in push
+	 * mode.
 	 * @return an {@link VideoFrame} containing the captured frame data.
 	 * @throws V4L4JException if there is an error capturing from the source.
 	 * @throws StateException if either the capture has not been started, if this 
