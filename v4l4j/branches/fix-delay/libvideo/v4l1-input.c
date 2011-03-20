@@ -414,7 +414,7 @@ int start_capture_v4l1(struct video_device *vdev) {
 
 //dequeue the next buffer with available frame
 // start the capture of next buffer VIDIOCMCAPTURE(x)
-void *dequeue_buffer_v4l1(struct video_device *vdev, int *len,
+void *dequeue_buffer_v4l1(struct video_device *vdev, int *len, unsigned int *index,
 		unsigned long long *capture_time, unsigned long long *sequence) {
 	struct capture_device *c = vdev->capture;
 	struct video_mmap mm;
@@ -457,7 +457,7 @@ void *dequeue_buffer_v4l1(struct video_device *vdev, int *len,
 }
 
 //enqueue the buffer when done using the frame
-void enqueue_buffer_v4l1(struct video_device *vdev) {}
+void enqueue_buffer_v4l1(struct video_device *v, unsigned int i) {}
 
 //counterpart of start_capture, must be called it start_capture was successful
 int stop_capture_v4l1(struct video_device *vdev) {

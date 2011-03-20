@@ -604,7 +604,7 @@ fail:
 
 //needed because this function adjusts the struct capture_action if
 //libv4l_convert is required.
-void *dequeue_buffer_v4l2_convert(struct video_device *, int *, unsigned long long*, unsigned long long*);
+void *dequeue_buffer_v4l2_convert(struct video_device *, int *, unsigned int *, unsigned long long*, unsigned long long*);
 int init_capture_v4l2(struct video_device *vdev) {
 	struct capture_device *c = vdev->capture;
 	struct v4l2_requestbuffers req;
@@ -676,31 +676,29 @@ int init_capture_v4l2(struct video_device *vdev) {
 		vdev->capture->actions->dequeue_buffer = dequeue_buffer_v4l2_convert;
 	}
 
-	XMALLOC(vdev->capture->mmap->tmp, void *, sizeof(struct v4l2_buffer));
-
 	return 0;
 }
 
 int start_capture_v4l2(struct video_device *vdev) {
-
 	int i;
-	struct v4l2_buffer *b = (struct v4l2_buffer *) vdev->capture->mmap->tmp;
+	struct v4l2_buffer b;
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: Starting capture on device %s.\n", vdev->file);
 
 	//Enqueue all buffers
 	for(i=0; i< vdev->capture->mmap->buffer_nr; i++) {
-		CLEAR(*b);
-		b->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		b->memory = V4L2_MEMORY_MMAP;
-		b->index = i;
-		if(-1 == ioctl(vdev->fd, VIDIOC_QBUF, b)) {
-			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
-					"CAP: cannot enqueue initial buffers\n");
-			return LIBVIDEO_ERR_IOCTL;
+		CLEAR(b);
+		b.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		b.memory = V4L2_MEMORY_MMAP;
+		b.index = i;
+		if(-1 == ioctl(vdev->fd, VIDIOC_QBUF, &b)) {
+				dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
+								"CAP: cannot enqueue initial buffers\n");
+				return LIBVIDEO_ERR_IOCTL;
 		}
 	}
+
 
 	i = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	if( ioctl(vdev->fd, VIDIOC_STREAMON, &i) < 0 ){
@@ -713,23 +711,24 @@ int start_capture_v4l2(struct video_device *vdev) {
 }
 
 //needed because dequeue may need to re-enqueue if libv4lconvert fails
-void enqueue_buffer_v4l2(struct video_device *);
+void enqueue_buffer_v4l2(struct video_device *, unsigned int);
 void *dequeue_buffer_v4l2_convert(struct video_device *vdev, int *len,
-		unsigned long long *capture_time, unsigned long long *sequence) {
+		unsigned int *index, unsigned long long *capture_time,
+		unsigned long long *sequence) {
 	struct convert_data *conv = vdev->capture->convert;
-	struct v4l2_buffer *b = (struct v4l2_buffer *) vdev->capture->mmap->tmp;
+	struct v4l2_buffer b;
 	int try = 2;
 	*len = -1;
 	while(*len==-1){
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
 				"CAP: dequeuing buffer on device %s.\n", vdev->file);
 
-		CLEAR(*b);
+		CLEAR(b);
 
-		b->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		b->memory = V4L2_MEMORY_MMAP;
+		b.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		b.memory = V4L2_MEMORY_MMAP;
 
-		if (-1 == ioctl(vdev->fd, VIDIOC_DQBUF, b)) {
+		if (-1 == ioctl(vdev->fd, VIDIOC_DQBUF, &b)) {
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
 					"CAP: Error dequeuing buffer (%d)\n", errno);
 			return NULL;
@@ -738,15 +737,15 @@ void *dequeue_buffer_v4l2_convert(struct video_device *vdev, int *len,
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
 				"CAP: Passing buffer %d of len %d at %p with format %#x"
 				" to be stored in buffer at %p of length %d with format %#x\n",
-				b->index, b->bytesused,
-				vdev->capture->mmap->buffers[b->index].start,
+				b.index, b.bytesused,
+				vdev->capture->mmap->buffers[b.index].start,
 				conv->src_fmt->fmt.pix.pixelformat,
 				conv->frame, conv->dst_fmt->fmt.pix.sizeimage,
 				conv->dst_fmt->fmt.pix.pixelformat
 				);
 
 		*len=v4lconvert_convert(conv->priv, conv->src_fmt, conv->dst_fmt,
-				vdev->capture->mmap->buffers[b->index].start, b->bytesused,
+				vdev->capture->mmap->buffers[b.index].start, b.bytesused,
 				conv->frame, conv->dst_fmt->fmt.pix.sizeimage);
 
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
@@ -758,7 +757,7 @@ void *dequeue_buffer_v4l2_convert(struct video_device *vdev, int *len,
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
 						"CAP: libv4lconvert error: %s\n",
 						v4lconvert_get_error_message(conv->priv));
-			enqueue_buffer_v4l2(vdev);
+			enqueue_buffer_v4l2(vdev, b.index);
 			if(try--==0){
 				dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
 						"CAP: unable to libv4l_convert frame\n");
@@ -769,48 +768,65 @@ void *dequeue_buffer_v4l2_convert(struct video_device *vdev, int *len,
 	}
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
 			"CAP: after conversion buffer length: %d\n", *len);
+
 	if (capture_time)
-		*capture_time = b->timestamp.tv_usec + b->timestamp.tv_sec * USEC_PER_SEC ;
+		*capture_time = b.timestamp.tv_usec + b.timestamp.tv_sec * USEC_PER_SEC ;
 	if (sequence)
-		*sequence = b->sequence;
+		*sequence = b.sequence;
+
+	// return buffer index
+	*index = b.index; // it is an error if index is NULL
+
 	return conv->frame;
 }
 
 void *dequeue_buffer_v4l2(struct video_device *vdev, int *len,
-		unsigned long long *capture_time, unsigned long long *sequence) {
-	struct v4l2_buffer *b = (struct v4l2_buffer *) vdev->capture->mmap->tmp;
+		unsigned int *index, unsigned long long *capture_time,
+		unsigned long long *sequence) {
+	struct v4l2_buffer b;
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
 			"CAP: dequeuing buffer on device %s.\n", vdev->file);
 
-	CLEAR(*b);
+	CLEAR(b);
 
-	b->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	b->memory = V4L2_MEMORY_MMAP;
+	b.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	b.memory = V4L2_MEMORY_MMAP;
 
-	if (-1 == ioctl(vdev->fd, VIDIOC_DQBUF, b)) {
+	if (-1 == ioctl(vdev->fd, VIDIOC_DQBUF, &b)) {
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
 				"CAP: error dequeuing buffer\n");
 		return NULL;
 	}
 
-	*len = b->bytesused;
+	// return buffer metadata
+	*len = b.bytesused; // it is an error if len or index are NULL
+	*index = b.index;
 	if (capture_time)
-		*capture_time = b->timestamp.tv_usec + b->timestamp.tv_sec * USEC_PER_SEC ;
+		*capture_time = b.timestamp.tv_usec + b.timestamp.tv_sec * USEC_PER_SEC ;
 	if (sequence)
-		*sequence = b->sequence;
+		*sequence = b.sequence;
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
-			"CAP: buffer length: %d - seq: %llu - time %llu\n", *len, (b->sequence),
-			(b->timestamp.tv_usec + b->timestamp.tv_sec * USEC_PER_SEC ));
+			"CAP: dequeued buffer %d length: %d - seq: %lu - time %llu\n",
+			*index,	*len, (unsigned long) b.sequence,
+			(unsigned long long)(b.timestamp.tv_usec + b.timestamp.tv_sec * USEC_PER_SEC ));
 
-	return vdev->capture->mmap->buffers[b->index].start;
+
+	return vdev->capture->mmap->buffers[b.index].start;
 }
 
-void enqueue_buffer_v4l2(struct video_device *vdev) {
-	struct v4l2_buffer *b = (struct v4l2_buffer *) vdev->capture->mmap->tmp;
+void enqueue_buffer_v4l2(struct video_device *vdev, unsigned int index) {
+	struct v4l2_buffer b;
+
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
 			"CAP: queuing buffer on device %s.\n", vdev->file);
-	if (-1 == ioctl(vdev->fd, VIDIOC_QBUF, b))
+
+	CLEAR(b);
+	b.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	b.memory = V4L2_MEMORY_MMAP;
+	b.index = index;
+
+	if (-1 == ioctl(vdev->fd, VIDIOC_QBUF, &b))
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
 					"CAP: error queuing buffer\n");
 }
@@ -818,6 +834,7 @@ void enqueue_buffer_v4l2(struct video_device *vdev) {
 
 int stop_capture_v4l2(struct video_device *vdev) {
 	int i;
+
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: stopping capture on device %s.\n", vdev->file);
 
@@ -837,8 +854,6 @@ void free_capture_v4l2(struct video_device *vdev) {
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: freeing capture structure on device %s.\n", vdev->file);
-
-	XFREE(vdev->capture->mmap->tmp);
 
 	// free temp frame buffer if required
 	if(vdev->capture->is_native!=1)

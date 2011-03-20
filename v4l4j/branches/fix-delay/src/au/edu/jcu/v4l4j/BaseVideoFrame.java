@@ -22,6 +22,7 @@ class BaseVideoFrame implements VideoFrame{
 	
 	protected long					sequenceNumber;
 	protected long					captureTime;
+	protected int					bufferIndex;
 	
 	protected V4L4JDataBuffer		dataBuffer;
 	protected boolean				recycled;
@@ -43,6 +44,7 @@ class BaseVideoFrame implements VideoFrame{
 		dataBuffer = new V4L4JDataBuffer(frameBuffer);
 		raster = null;
 		bufferedImage = null;
+		bufferIndex = 0;
 		recycled = true;
 	}
 	
@@ -53,11 +55,13 @@ class BaseVideoFrame implements VideoFrame{
 	 * @param sequence this frame's sequence number
 	 * @param timeUs this frame capture timestamp in elapsed microseconds since startup
 	 */
-	final synchronized void prepareForDelivery(int length, long sequence, long timeUs){
+	final synchronized void prepareForDelivery(int length, int index, 
+			long sequence, long timeUs){
 		frameLength = length;
 		dataBuffer.setNewFrameSize(length);
 		sequenceNumber = sequence;
 		captureTime = timeUs;
+		bufferIndex = index;
 		recycled = false;
 	}
 	
@@ -79,6 +83,15 @@ class BaseVideoFrame implements VideoFrame{
 	 */
 	final byte[] getByteArray() {
 		return frameBuffer;
+	}
+	
+	/**
+	 * This method is used by the owning frame grabber to get the V4L2 buffer
+	 * index
+	 * @return the V4L2 buffer index
+	 */
+	final int getBufferInex() {
+		return bufferIndex;
 	}
 	
 	@Override
