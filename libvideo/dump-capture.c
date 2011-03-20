@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
 	struct capture_device *c;
 	struct video_device *v;
 	void *d;
-	int size, std=0, channel=0, width=0, height=0, nb_frames = 0, fmt=-1;
+	int size, std=0, channel=0, width=0, height=0, nb_frames = 0, fmt=-1, index;
 
 	if(argc!=7 && argc!=8) {
 		printf("Usage: %s <video_device_file> <number_of_frames> <standard> "
@@ -151,10 +151,10 @@ int main(int argc, char** argv) {
 
 	while(nb_frames-->0){
 		//get frame from v4l2
-		if((d = (*c->actions->dequeue_buffer)(v, &size, NULL, NULL)) != NULL) {
+		if((d = (*c->actions->dequeue_buffer)(v, &size, &index, NULL, NULL)) != NULL) {
 			write_frame(d, size);
 			//Put frame
-			(*c->actions->enqueue_buffer)(v);
+			(*c->actions->enqueue_buffer)(v, index);
 		} else {
 			printf("Cant get buffer ");
 			break;

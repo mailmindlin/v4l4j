@@ -68,7 +68,8 @@ abstract class AbstractGrabber implements FrameGrabber {
 	private Tuner 						tuner;
 	private int 						type;
 	private long						lastCapturedFrameSequence;	// update v4l4j_FrameGrabber.c if
-	private long						lastCapturedFrameTimeuSec;	// these two names are changed
+	private long						lastCapturedFrameTimeuSec;	// these three names are changed
+	private int							lastCapturedFrameBufferIndex;//
 	private PushSource					pushSource;
 	private long						pushSourceThreadId;
 
@@ -102,6 +103,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 */
 	protected native void setQuality(long o, int i);
 	private native int getBufferSize(long o);
+	private native int enqueueBuffer(long o, int index);
 	private native int fillBuffer(long o, byte array[]) throws V4L4JException;
 	private native void stop(long o);
 	private native void doRelease(long o);
@@ -146,6 +148,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 		type = ty;
 		nbV4LBuffers = 0;
 		videoFrames = new Vector<BaseVideoFrame>();
+		availableVideoFrames = new Vector<BaseVideoFrame>();
 		pushSource = null;
 		pushSourceThreadId = 0;
 	}
@@ -180,9 +183,6 @@ abstract class AbstractGrabber implements FrameGrabber {
 
 		// Create the V4L4J data buffer objects
 		createBuffers(bufferSize);
-
-		// Copy the videoFrames vector into a new availableVideoFrames vector
-		availableVideoFrames = new Vector<BaseVideoFrame>(videoFrames);
 
 		state.commit();
 	}
@@ -283,16 +283,29 @@ abstract class AbstractGrabber implements FrameGrabber {
 		}
 
 		try {
-			// start video capture
+			// start video capture and enqueue all buffers
 			start(object);
-
-			// change state to STARTED
-			state.commit();
 		} catch (V4L4JException e) {
 			// Error starting the capture...
-			// stop the capture thread and return to previous state
-			pushSource.stopCapture();
+			
+			// stop the capture thread
+			if (pushSource != null)
+				pushSource.stopCapture();
+			
+			// return to previous state
 			state.rollback();
+			
+			// propagate exception
+			throw e;
+		}
+		
+		// change state to STARTED
+		state.commit();
+		
+		// put all frames into the available queue and wake up push source thread
+		synchronized(availableVideoFrames){
+			availableVideoFrames.addAll(videoFrames);
+			availableVideoFrames.notifyAll();
 		}
 	}
 
@@ -348,8 +361,8 @@ abstract class AbstractGrabber implements FrameGrabber {
 			frameSize = fillBuffer(object, nextFrame.getByteArray());
 
 			// mark the video frame as available for use
-			nextFrame.prepareForDelivery(frameSize,	lastCapturedFrameSequence,
-					lastCapturedFrameTimeuSec);
+			nextFrame.prepareForDelivery(frameSize,	lastCapturedFrameBufferIndex,
+					lastCapturedFrameSequence, lastCapturedFrameTimeuSec);
 		} finally {
 			state.put();
 		}
@@ -368,7 +381,9 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 * @param frame the frame being recycled.
 	 */
 	final void recycleVideoBuffer(BaseVideoFrame frame) {
-		synchronized(availableVideoFrames){		
+		enqueueBuffer(object, frame.getBufferInex());
+		
+		synchronized(availableVideoFrames){
 			availableVideoFrames.add(frame);
 			availableVideoFrames.notify();
 		}
@@ -389,25 +404,20 @@ abstract class AbstractGrabber implements FrameGrabber {
 		if (pushSource != null)
 			pushSource.stopCapture();
 
-		// I dont think the following is required, so commented out for now
-		// we now wait for all VideoFrame objects to be recycled.
-		//		for(AbstractVideoFrame frame : videoFrames)
-		//			try {
-		//				frame.waitTillRecycled();
-		//			} catch (InterruptedException e) {
-		//				System.err.println("Interrupted while waiting for frame to be recycled");
-		//			}
-
 		// Make sure all video frames are recycled
 		for(VideoFrame frame: videoFrames)
 			frame.recycle();
 
 		// stop jni code
 		stop(object);
+		
+		// remove all frames from available queue
+		synchronized(availableVideoFrames) {
+			availableVideoFrames.removeAllElements();
+		}
 
 		// commit new state
 		state.commit();
-
 	}
 
 	/**

@@ -451,14 +451,6 @@ static struct v4l_driver_probe known_driver_probes[] = {
 		.priv = NULL,
 	},
 	{NULL, NULL, NULL, NULL, NULL}
-	//commented out until fixed
-//	{
-//		.probe 		= fps_param_probe,
-//		.list_ctrl 	= fps_param_list_ctrl,
-//		.get_ctrl	= fps_param_get_ctrl,
-//		.set_ctrl	= fps_param_set_ctrl,
-//		.priv = NULL,
-//	},
 };
 
 static void add_node(driver_probe **list, struct v4l_driver_probe *probe) {

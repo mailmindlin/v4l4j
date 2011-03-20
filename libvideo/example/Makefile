@@ -21,15 +21,12 @@ CFLAGS=$(DBG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) $(OPTIMISATI
 
 LD=gcc
 LIBPATH=-L$(PATH_TO_LIBVIDEO)
-LIB=-ljpeg -lvideo -lv4lconvert -pthread
+LIB=-ljpeg -pthread -lvideo
 LDFLAGS=$(LIBPATH) $(LIB)
 
 
-all: $(OBJ) libvideo.a
+all: $(OBJ)
 	$(LD) $(OBJ) $(LDFLAGS) -o $(BIN)
-
-libvideo.a:
-	make -C $(PATH_TO_LIBVIDEO) all
 
 main.o: main.c utils.h log.h
 	$(CC) $(CFLAGS) -c main.c
