@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
 
 	info(LOG_INFO, "Capturing at %dx%d\n", cdev->width, cdev->height);
 
-	//Prepare capture:Allocates v4l2 buffers, mmap buffers, enqueue buffers
+	//Prepare capture:Allocates v4l2 buffers, mmap buffers
 	if ((*cdev->actions->init_capture)(d)) {
 		info(LOG_ERR, "Failed to setup capture\n");
 		free_capture_device(d);
@@ -379,6 +379,7 @@ void start_thread_client(int sock, struct video_device *d) {
 				XFREE(td);
 			}
 		}
+
 		//create new thread
 		if (pthread_create(&tid, &attr, send_stream_to, (void *)td) == 0) {
 			client_nr++;
@@ -405,6 +406,7 @@ void *send_stream_to(void *v) {
 	struct timeval start, now;
 	struct timespec sleep_length, sleep_rem;
 	struct jpeg j;
+	unsigned int buf_index;
 	struct thread_data *td = (struct thread_data *)v;
 	struct video_device *d = td->vdev;
 	struct capture_device *cdev = d->capture;
@@ -470,13 +472,13 @@ void *send_stream_to(void *v) {
 		}
 
 		//get frame from v4l2
-		if((yuv_data = (*cdev->actions->dequeue_buffer)(d, &yuv_len, NULL, NULL)) != NULL) {
+		if((yuv_data = (*cdev->actions->dequeue_buffer)(d, &yuv_len, &buf_index, NULL, NULL)) != NULL) {
 
 			//encode in JPEG
 			jpeg_len = (*j.jpeg_encode)(yuv_data,yuv_len, cdev, &j, jpeg_data);
 
 			//return buffer to v4l2
-			(*cdev->actions->enqueue_buffer)(d);
+			(*cdev->actions->enqueue_buffer)(d, buf_index);
 
 			//send in multipart_jpeg stream
 			retval = send_frame(sock, jpeg_data, jpeg_len);
