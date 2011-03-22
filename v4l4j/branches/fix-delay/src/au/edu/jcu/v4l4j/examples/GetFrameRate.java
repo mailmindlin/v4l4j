@@ -24,12 +24,12 @@
 
 package au.edu.jcu.v4l4j.examples;
 
-import java.io.IOException;
-
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.ImageFormatList;
+import au.edu.jcu.v4l4j.PushSourceCallback;
 import au.edu.jcu.v4l4j.V4L4JConstants;
 import au.edu.jcu.v4l4j.VideoDevice;
+import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 /**
@@ -38,36 +38,42 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * @author gilles
  *
  */
-public class GetFrameRate {
-	public static final int captureLength = 10;
-	private int inFmt, outFmt, width, height, channel, std, intv;
-	private FrameGrabber fg;
-	private VideoDevice vd;
+public class GetFrameRate implements PushSourceCallback{
+	public static final int 	captureLength = 10;	// seconds
+	private static String 		dev;
+	private static int 			inFmt, outFmt, width, height, channel, std, intv;
+
+	private FrameGrabber 	fg;
+	private VideoDevice 	vd;
 	private ImageFormatList imfList;
+	private int 			numFrames;
+	private long			startTime, currentTime;
+	private boolean			seenFirstFrame;
+
+
+	public static void main(String[] args) throws Exception {
+		dev = (System.getProperty("test.device") != null) ? System.getProperty("test.device") : "/dev/video0"; 
+		width = (System.getProperty("test.width")!=null) ? Integer.parseInt(System.getProperty("test.width")) : 640;
+		height = (System.getProperty("test.height")!=null) ? Integer.parseInt(System.getProperty("test.height")) : 480;
+		std = (System.getProperty("test.standard")!=null) ? Integer.parseInt(System.getProperty("test.standard")) : V4L4JConstants.STANDARD_WEBCAM;
+		channel = (System.getProperty("test.channel")!=null) ? Integer.parseInt(System.getProperty("test.channel")) : 0;
+		inFmt = (System.getProperty("test.inFormat")!=null) ? Integer.parseInt(System.getProperty("test.inFormat")) : -1;
+		//outformat: RAW: 0 , JPEG:1, RGB:2 , bgr=3, yuv=4, yvu=5
+		outFmt = (System.getProperty("test.outFormat")!=null) ? Integer.parseInt(System.getProperty("test.outFormat")) : 0;
+		intv = (System.getProperty("test.fps")!=null) ? Integer.parseInt(System.getProperty("test.fps")) : -1;
+
+		System.out.println("This program will open "+dev+", capture frames for "
+				+ captureLength+ " seconds and print the FPS");
+
+		new GetFrameRate().startTest();
+	}
 
 	/**
 	 * This method builds a new object to test the maximum FPS for a video 
 	 * device
-	 * @param dev the full path to the device file
-	 * @param ifmt the input format (-1, or a device-supported format)
-	 * @param ofmt the output format (0: raw - 1: JPEG - 2: RGB - 3: BGR - 
-	 * 4:YUV - 5:YVU)
-	 * @param w the desired capture width
-	 * @param h the desired capture height
-	 * @param c the input index
-	 * @param s the video standard (0: webcam - 1: PAL - 2:SECAM - 3:NTSC)
-	 * @param iv the frame rate (how many frame per second)
 	 * @throws V4L4JException if there is an error initialising the video device
 	 */
-	public GetFrameRate(String dev, int ifmt, int ofmt, int w, int h, int c, 
-			int s, int iv) throws V4L4JException{
-		inFmt = ifmt;
-		outFmt = ofmt;
-		width = w;
-		height = h;
-		channel = c;
-		std = s;
-		intv = iv;
+	public GetFrameRate() throws V4L4JException{
 		try {
 			vd = new VideoDevice(dev);
 			imfList = vd.getDeviceInfo().getFormatList();
@@ -84,8 +90,8 @@ public class GetFrameRate {
 			else if(outFmt==5 && vd.supportYVUConversion())
 				getYVUfg();
 			else {
-				System.out.println("Unknown output format: "+outFmt);
-				throw new V4L4JException("unknown output format");
+				System.out.println("Unknown / unsupported output format: "+outFmt);
+				throw new V4L4JException("unknown / unsupported output format");
 			}
 			System.out.println("Input image format: "+fg.getImageFormat().getName());
 		} catch (V4L4JException e) {
@@ -185,8 +191,8 @@ public class GetFrameRate {
 	}
 
 	private void startCapture() throws V4L4JException{
+		//set the frame rate
 		if(intv!=-1){
-			//try setting the frame rate
 			try {
 				System.out.println("setting frame rate to "+intv);
 				fg.setFrameInterval(1, intv);
@@ -194,6 +200,11 @@ public class GetFrameRate {
 				System.out.println("Couldnt set the frame interval");
 			}
 		}
+
+		// enable push mode
+		fg.setPushSourceMode(this);
+
+		// start capture
 		try {
 			fg.startCapture();
 		} catch (V4L4JException e) {
@@ -209,96 +220,73 @@ public class GetFrameRate {
 	 * This method starts the frame rate test. It will run for 10 seconds, and
 	 * then print the achieved FPS
 	 * @throws V4L4JException if there is an error capturing frames
+	 * @throws InterruptedException 
 	 */
-	public void startTest() throws V4L4JException{
-		long start=0, now=0;
-		int n=0;
+	public void startTest() throws V4L4JException, InterruptedException{
+		startTime = 0;
+		currentTime = 0;
+		numFrames = 0;
+		seenFirstFrame = false;
+
+		System.out.println("Starting test capture at "+
+				width+"x"+height+" for "+captureLength+" seconds");
+
 		startCapture();
 
-		try {
-			//discard the first frame to make sure device has settled
-			fg.getVideoFrame().recycle();
+		// block until 'captureLength' seconds have passed
+		synchronized(this){
+			wait();
+		}
+		fg.stopCapture();
+		
+		System.out.println("End time: "+currentTime);
 
-			System.out.println("Starting test capture at "+
-					width+"x"+height+" for "+captureLength+" seconds");
-			now=start=System.currentTimeMillis();
-			while(now<start+(captureLength*1000)){
-				fg.getVideoFrame().recycle();
-				//Uncomment the following to dump the captured frame to a file
-				//also import java.io.FileOutputStream 
-				//new FileOutputStream("file"+n+".raw").getChannel().write(f.getVideoFrame());
-				n++;
-				now=System.currentTimeMillis();
-			}
+		System.out.println(" =====  TEST RESULTS  =====");
+		System.out.println("\tFrames captured :"+numFrames);
+		System.out.println("\tFPS: "+((float) numFrames/(currentTime/1000-startTime/1000)));
+		System.out.println(" =====  END  RESULTS  =====");
 
-			System.out.println(" =====  TEST RESULTS  =====");
-			System.out.println("\tFrames captured :"+n);
-			System.out.println("\tFPS: "+((float) n/(now/1000-start/1000)));
-			System.out.println(" =====  END  RESULTS  =====");
-
-		} catch (V4L4JException e) {
-			e.printStackTrace();
-			System.out.println("Failed to perform test capture");
-			throw e;
-		} finally {
-			fg.stopCapture();
-			vd.releaseFrameGrabber();
-			vd.release();
-		}		
+		vd.releaseFrameGrabber();
+		vd.release();	
 	}
 
-	public static void main(String[] args) throws V4L4JException, IOException {
-		String dev;
-		int w, h, std, channel, inFmt, outFmt, intv;
-		//Check if we have the required args
-		//otherwise put sensible values in
-		try {
-			dev = args[0];
-		} catch (Exception e){
-			dev = "/dev/video0";
-		}
-		try {
-			w = Integer.parseInt(args[1]);
-		} catch (Exception e){
-			w = V4L4JConstants.MAX_WIDTH;
-		}
-		try{			
-			h = Integer.parseInt(args[2]);
-		} catch  (Exception e) {
-			h = V4L4JConstants.MAX_HEIGHT;
-		}
-		try {
-			std = Integer.parseInt(args[3]);
-		} catch (Exception e) {
-			std = 0;
-		}
-		try {
-			channel = Integer.parseInt(args[4]);
-		} catch (Exception e){
-			channel = 0;
-		}
-		try {
-			inFmt = Integer.parseInt(args[5]);
-		} catch (Exception e){
-			inFmt = -1;
-		}
+	@Override
+	public void nextFrame(VideoFrame frame) {
 
-		//RAW: 0 , JPEG:1, RGB:2 , bgr=3, yuv=4, yvu=5
-		try {
-			outFmt = Integer.parseInt(args[6]);
-		} catch (Exception e){
-			outFmt = 0;
+		// Some drivers take a long time to start the capture and we dont
+		// want to include the time it takes to start the capture when we 
+		// calculate the FPS. So, we start counting only once we have 
+		// received the first frame
+		if (! seenFirstFrame) {
+			// This is the first frame we receive, note the start time
+			startTime = System.currentTimeMillis();
+		} else {
+			// This is not the first frame we receive, increment frame count
+			numFrames++;
+			
+			// Check how much time has passed since the start time
+			currentTime = System.currentTimeMillis();
+			if (currentTime >= startTime + (captureLength * 1000)) {
+				// 'captureLength' seconds have passed, wake up main thread 
+				// which will stop the capture
+				synchronized(this) {
+					notify();
+				}
+			}			
 		}
+		
+		seenFirstFrame = true;
+		frame.recycle();
+	}
 
-		try {
-			intv = Integer.parseInt(args[7]);
-		} catch (Exception e){
-			intv=-1;
+	@Override
+	public void exceptionReceived(V4L4JException e) {
+		e.printStackTrace();
+		System.out.println("Failed to perform test capture");
+		
+		// wake up main thread
+		synchronized(this) {
+			notify();
 		}
-
-		System.out.println("This program will open "+dev+", capture frames for "
-				+ captureLength+ " seconds and print the FPS");
-
-		new GetFrameRate(dev, inFmt, outFmt, w, h, channel, std, intv).startTest();
 	}
 }

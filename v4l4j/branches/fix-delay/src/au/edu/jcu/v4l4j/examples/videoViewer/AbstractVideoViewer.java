@@ -21,13 +21,11 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
-package au.edu.jcu.v4l4j.examples;
+package au.edu.jcu.v4l4j.examples.videoViewer;
 
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
-import java.awt.Transparency;
-import java.awt.color.ColorSpace;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -37,12 +35,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
-import java.awt.image.ComponentColorModel;
-import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferByte;
 import java.awt.image.Raster;
-import java.awt.image.WritableRaster;
 import java.util.Hashtable;
 
 import javax.swing.BorderFactory;
@@ -73,29 +66,24 @@ import au.edu.jcu.v4l4j.FrameInterval;
 import au.edu.jcu.v4l4j.FrameInterval.DiscreteInterval;
 import au.edu.jcu.v4l4j.FrameInterval.Type;
 import au.edu.jcu.v4l4j.ImageFormat;
+import au.edu.jcu.v4l4j.PushSourceCallback;
 import au.edu.jcu.v4l4j.Tuner;
 import au.edu.jcu.v4l4j.TunerInfo;
 import au.edu.jcu.v4l4j.V4L4JConstants;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.VideoFrame;
-import au.edu.jcu.v4l4j.examples.VideoViewer.IntervalGUI.Interval;
+import au.edu.jcu.v4l4j.examples.videoViewer.AbstractVideoViewer.IntervalGUI.Interval;
 import au.edu.jcu.v4l4j.exceptions.ControlException;
+import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 /**
  * This class builds a GUI to display a video stream and video controls from
- * a {@link VideoDevice}. The video device is created from its device name,
- * and frame capture and processing is done using an {@link ImageProcessor}.
- * This class offers two methods for drawing a frame on the screen: 
- * {@link #setImageIcon(byte[])} & {@link #setImageRaster(byte[])}.
- * The former can be used with TIFF, PNG & JPEG images but is slower than the 
- * latter, which can be used with RGB images and is substantially faster, and
- * less CPU-intensive. With little modification, the latter can be adjusted
- * to accept more image formats.
+ * a {@link VideoDevice}.
  * @author gilles
  *
  */
-public class VideoViewer extends WindowAdapter implements Runnable{
+public abstract class AbstractVideoViewer extends WindowAdapter implements PushSourceCallback{
 	private JLabel video, fps, freq;
 	private JFrame f;
 	private JComboBox formats;
@@ -111,12 +99,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 	private int n, width, height;
 	private FrameGrabber fg;
 	private Hashtable<String,Control> controls; 
-	private Thread captureThread;
-	private boolean stop;
-	private VideoDevice vd;
-	private ImageProcessor processor;
-	private BufferedImage img;
-	private WritableRaster raster;
+	protected VideoDevice vd;
 	private static ImageIcon v4l4jIcon = createImageIcon("resources/v4l4j.png");
 	private static int FPS_REFRESH = 1000; //in  msecs
 	
@@ -126,13 +109,10 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 	 * @param p the image processor to which we will send frames as they are
 	 * captured
 	 */
-    public VideoViewer(VideoDevice d, ImageProcessor p) {
+    public AbstractVideoViewer(VideoDevice d) {
     	vd = d;
 		fg = null;
-		processor = p;
-    	controls = vd.getControlList().getTable();
-        stop = false;
-        captureThread = null;      
+    	controls = vd.getControlList().getTable();     
     }
     
     /**
@@ -141,7 +121,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
      * @return the {@link ImageIcon}
      */
     public static ImageIcon createImageIcon(String path) {
-	    java.net.URL imgURL = VideoViewer.class.getClassLoader().getResource(path);
+	    java.net.URL imgURL = AbstractVideoViewer.class.getClassLoader().getResource(path);
 	    if (imgURL != null)
 	        return new ImageIcon(imgURL);
 	    
@@ -317,55 +297,11 @@ public class VideoViewer extends WindowAdapter implements Runnable{
     }
         
     /**
-     * This method draws a new image as an {@link ImageIcon} in a JLabel.
-     * The image must be either in TIFF, PNG or JPEG format.
-     * @param b the image as a byte array
-     */
-    public void setImageIcon(byte[] b) {
-    	// Computes the frame rate
-    	if(start==0)
-    		start = System.currentTimeMillis();
-    	else if(System.currentTimeMillis()>start+FPS_REFRESH) {
-    		fps.setText(String.format("FPS: %5.2f", 
-    				(float) 1000*n/(System.currentTimeMillis()-start)));
-			start = System.currentTimeMillis();
-			n = 0;
-		}
-    	
-    	video.setIcon(new ImageIcon(b));
-    	n++;
-    }
-    
-    /**
      * This method draws a new image as in a {@link JComponent} using a 
      * {@link Raster}. The image must be in RGB24 format.
      * @param b the image as a byte array
      */
-    public void setImageRaster(Raster raster) {
-    	// Computes the frame rate
-    	if(start==0)
-    		start = System.currentTimeMillis();
-    	else if(System.currentTimeMillis()>start+FPS_REFRESH) {
-    		fps.setText(String.format("FPS: %5.2f", 
-    				(float) 1000*n/(System.currentTimeMillis()-start)));
-			start = System.currentTimeMillis();
-			n = 0;
-		}
-    	
-        img.setData(raster);
-        video.getGraphics().drawImage(img, 0, 0, width, height, null);
-        n++;
-
-    	
-    	
-    }
-    
-    /**
-     * This method draws a new image as in a {@link JComponent} using a 
-     * {@link Raster}. The image must be in RGB24 format.
-     * @param b the image as a byte array
-     */
-    public void drawBufferedImage(BufferedImage image) {
+    private void drawBufferedImage(BufferedImage image) {
     	// Computes the frame rate
     	if(start==0)
     		start = System.currentTimeMillis();
@@ -381,148 +317,111 @@ public class VideoViewer extends WindowAdapter implements Runnable{
     }
     
     /**
-     * Implements the capture thread: get a frame from the FrameGrabber, and 
-     * send it for processing
+     * This abstract method must be implemented by subclasses and return
+     * and frame grabber which captures frames in the given native image format 
+     * @param imf the native image format the returned frame grabber must use
+     * @return a frame grabber
+     * @throws V4L4JException if a frame grabber cant be created
      */
-    public void run(){
-    	VideoFrame frame;
-		try {			
-			while(!stop){
-				frame = fg.getVideoFrame();
-				processor.processImage(frame);
-				frame.recycle();
-			}
-		} catch (V4L4JException e) {
-			e.printStackTrace();
-			System.out.println("Failed to capture image");
-			JOptionPane.showMessageDialog(f, 
-					"Failed to capture image:\n"+e.getMessage());
-		} catch(Throwable t){
-			t.printStackTrace();
-			System.out.println("Failed to capture image");
-			JOptionPane.showMessageDialog(f, 
-					"Failed to capture image:\n"+t.getMessage());
-		}
-    }
+    abstract protected FrameGrabber getFrameGrabber(ImageFormat imf) throws V4L4JException;
     
+    /**
+     * This method is called when the Start capture button is hit.
+     * It creates a frame grabber, resizes the UI and start the capture
+     */
     private void startCapture(){    	
-    	if(captureThread == null){
-    		
-    		//get the frame interval value
-    	   	Interval i = null;
-        	try {
-        		i = intervals.getInterval();
-        	} catch (Exception e){
-        		//incorrect frame interval entered
-        		return;
-        	}
-        	
-    		try {
-    			//create the frame grabber
-    			fg = processor.getGrabber(
-    					(ImageFormat) formats.getSelectedItem());
-    		} catch (V4L4JException e){
-    			JOptionPane.showMessageDialog(f, 
-						"Error obtaining the frame grabber");
-    			e.printStackTrace();
-    			return;
-    		}
-    		
-    		
-    		try {
-    			//set the frame interval if not null
-				if(i!=null)
-					fg.setFrameInterval(i.num, i.denom);
-    		} catch (Exception e){
-    			//cant set the frame interval, keep going
-    		}
-    		
-    		try {
-				fg.startCapture();
-			} catch (V4L4JException e) {
-				JOptionPane.showMessageDialog(f, 
-						"Failed to start capture:\n"+e.getMessage());
-				e.printStackTrace();
-				processor.releaseGrabber();
-				return;
-			}
-	
-			//Update GUI:
-			width = fg.getWidth();
-			height = fg.getHeight();
-			
-			//set the size of the video label & control pane
-			video.setMaximumSize(new Dimension(width, height));
-			video.setSize(new Dimension(width, height));			
-			controlScrollPane.setPreferredSize(
-					new Dimension(300, height));
-			formats.setEnabled(false);
-			intervals.setEnabled(false);
-			startCap.setEnabled(false);
-			stopCap.setEnabled(true);
-			
-			//show tuner frequency adjust if there s a tuner			
-			try {
-				tuner = fg.getTuner();
-				tinfo = vd.getDeviceInfo().getInputs()
-					.get(fg.getChannel()).getTunerInfo();
-				freqSpinner.setModel(new SpinnerNumberModel(
-						new Double(tuner.getFrequency()), 
-						new Double(tinfo.getRangeLow()),
-						new Double(tinfo.getRangeHigh()),
-						new Double(1)));
-				freq.setVisible(true);
-				freqSpinner.setVisible(true);
-			} catch (V4L4JException nte){}//No tuner for input
-			f.pack();
-			
-			//Create the BufferedImage
-			//Thanks to Sergio Blanco for sharing the BufferedImage related code 
-			//below and in setImageRaster()
-	        raster = Raster.createInterleavedRaster(
-	        		new DataBufferByte(new byte[width*height*3] ,width*height*3),
-	        		width,
-	        		height,
-	        		3 * width,
-	        		3, new int[]{0, 1, 2},null);
-	        
-	        ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
-	        ColorModel cm = new ComponentColorModel(cs,
-	        		false,
-	        		false,
-	        		Transparency.OPAQUE,
-	        		DataBuffer.TYPE_BYTE);
-	        img = new BufferedImage(cm,raster,false,null);
-			
-			stop = false;
-	    	captureThread = new Thread(this, "Capture Thread");
-	        captureThread.start();
-			System.out.println("Input format: "+fg.getImageFormat().getName());
-	        
+    	//get the frame interval value
+    	Interval i = intervals.getInterval();
+
+    	//create the frame grabber
+    	try {
+    		fg = getFrameGrabber( (ImageFormat) formats.getSelectedItem());
+    	} catch (V4L4JException e){
+    		JOptionPane.showMessageDialog(f, 
+    				"Error obtaining the frame grabber");
+    		e.printStackTrace();
+    		return;
     	}
+
+    	// enable push mode
+    	fg.setPushSourceMode(this);
+    	
+    	//set the frame interval if not null
+    	try {
+    		if(i!=null)
+    			fg.setFrameInterval(i.num, i.denom);
+    	} catch (Exception e){
+    		//cant set the frame interval, keep going
+    		JOptionPane.showMessageDialog(f, 
+			"Error setting the frame rate");
+    	}
+
+
+    	//Update UI
+    	width = fg.getWidth();
+    	height = fg.getHeight();
+
+    	//set the size of the video label & control pane
+    	video.setMaximumSize(new Dimension(width, height));
+    	video.setSize(new Dimension(width, height));			
+    	controlScrollPane.setPreferredSize(
+    			new Dimension(300, height));
+
+    	// start capture
+    	try {
+    		fg.startCapture();
+    	} catch (V4L4JException e) {
+    		JOptionPane.showMessageDialog(f, 
+    				"Failed to start capture:\n"+e.getMessage());
+    		e.printStackTrace();
+    		vd.releaseFrameGrabber();
+    		return;
+    	}
+
+    	// more UI update
+    	formats.setEnabled(false);
+    	intervals.setEnabled(false);
+    	startCap.setEnabled(false);
+    	stopCap.setEnabled(true);
+
+    	//show tuner frequency adjust if there s a tuner			
+    	try {
+    		tuner = fg.getTuner();
+    		tinfo = vd.getDeviceInfo().getInputs()
+    		.get(fg.getChannel()).getTunerInfo();
+    		freqSpinner.setModel(new SpinnerNumberModel(
+    				new Double(tuner.getFrequency()), 
+    				new Double(tinfo.getRangeLow()),
+    				new Double(tinfo.getRangeHigh()),
+    				new Double(1)));
+    		freq.setVisible(true);
+    		freqSpinner.setVisible(true);
+    	} catch (V4L4JException nte){}//No tuner for input
+    	f.pack();
+
+    	System.out.println("Input format: "+fg.getImageFormat().getName());
     }
     
+    /**
+     * This method is called when the Stop capture button is hit.
+     * It terminates the capture, releases resources and reset the UI
+     */
     private void stopCapture(){
-    	if(captureThread != null) {
-    		if(captureThread.isAlive()){
-    			stop = true;
-    			try {
-    				captureThread.join();
-    			} catch (InterruptedException e1) {}
-    		}
-			fg.stopCapture();
-			vd.releaseFrameGrabber();
-			captureThread = null;
-			formats.setEnabled(true);
-			intervals.setEnabled(true);
-			freq.setVisible(false);
-			freqSpinner.setVisible(false);
-			video.setIcon(v4l4jIcon);
-			startCap.setEnabled(true);
-			stopCap.setEnabled(false);
-			video.validate();
-			video.repaint();
-    	}
+    	try {
+    		fg.stopCapture();
+    	} catch (StateException e){} 
+    	// the frame grabber may be already stopped
+    	
+    	vd.releaseFrameGrabber();
+    	formats.setEnabled(true);
+    	intervals.setEnabled(true);
+    	freq.setVisible(false);
+    	freqSpinner.setVisible(false);
+    	video.setIcon(v4l4jIcon);
+    	startCap.setEnabled(true);
+    	stopCap.setEnabled(false);
+    	video.validate();
+    	video.repaint();
     }
     
     /**
@@ -537,6 +436,33 @@ public class VideoViewer extends WindowAdapter implements Runnable{
     	f.dispose();		
 	}
 	
+	/*
+	 * (non-Javadoc)
+	 * @see au.edu.jcu.v4l4j.PushSourceCallback#nextFrame(au.edu.jcu.v4l4j.VideoFrame)
+	 * 
+	 * this method is called by v4l4j during capture when a new frame is available
+	 */
+	@Override
+	public void nextFrame(VideoFrame frame) {
+		// every time a frame arrives, get the BufferedImage and draw it
+		drawBufferedImage(frame.getBufferedImage());
+		// then recycle the frame
+		frame.recycle();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see au.edu.jcu.v4l4j.PushSourceCallback#exceptionReceived(au.edu.jcu.v4l4j.exceptions.V4L4JException)
+	 */
+	@Override
+	public void exceptionReceived(V4L4JException e) {
+		JOptionPane.showMessageDialog(null, "Error getting next frame.\n"+e.getMessage());
+	}
+
+	
+	/*
+	 * The classes beyond this point are for UI support
+	 */
 	public interface ControlGUI{
 		public JPanel getPanel();
 	}
@@ -629,7 +555,7 @@ public class VideoViewer extends WindowAdapter implements Runnable{
 					throw e;
 				}
 				
-				//chec the int values are within the boundaries
+				//make sure the int values are within the boundaries
 				if(num<0 || denom <0) {
 					String msg = "The frame interval is invalid.";
 					JOptionPane.showMessageDialog(null, msg);

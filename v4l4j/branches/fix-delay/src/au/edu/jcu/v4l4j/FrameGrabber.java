@@ -25,7 +25,7 @@
 package au.edu.jcu.v4l4j;
 
 import au.edu.jcu.v4l4j.FrameInterval.DiscreteInterval;
-import au.edu.jcu.v4l4j.examples.PushModeCaptureApp;
+import au.edu.jcu.v4l4j.examples.SimpleViewer;
 import au.edu.jcu.v4l4j.exceptions.InvalidValue;
 import au.edu.jcu.v4l4j.exceptions.NoTunerException;
 import au.edu.jcu.v4l4j.exceptions.StateException;
@@ -91,7 +91,7 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * You only need to provide a {@link PushSourceCallback} object which will 
  * receive frames via its 
  * {@link PushSourceCallback#nextFrame(VideoFrame) nextFrame()} method.
- * For an example of push mode capture, see {@link PushModeCaptureApp}.
+ * For an example of push mode capture, see {@link SimpleViewer}.
  * <br>In both pull and push modes, video frames must be recycled when they are no
  * longer used.<br></br>
  * 
