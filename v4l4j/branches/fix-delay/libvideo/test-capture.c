@@ -170,6 +170,9 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 
+	// discard the first frame
+	(*c->actions->dequeue_buffer)(v, &size, &index, NULL, NULL);
+
 	gettimeofday(&start, NULL);
 	gettimeofday(&now, NULL);
 	while(now.tv_sec<=start.tv_sec+cap_length) {
