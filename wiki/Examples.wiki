@@ -166,8 +166,15 @@ public class Viewer extends WindowAdapter implements Runnable {
 	private FrameGrabber fg;
 	private Thread captureThread;
 	private boolean stop;
-        private int width, height;
-	
+	private int width, height;
+
+	public static void main(String[] args) throws V4L4JException, IOException {
+
+		String dev = "/dev/video0";
+		int w=640, h=480, std=V4L4JConstants.STANDARD_WEBCAM, channel = 0, qty = 60;
+		new Viewer(dev,w,h,std,channel,qty);
+	}
+
 	/**
 	 * Builds a WebcamViewer object
 	 * @param dev the video device file to capture from
@@ -178,29 +185,29 @@ public class Viewer extends WindowAdapter implements Runnable {
 	 * @param qty the JPEG compression quality
 	 * @throws V4L4JException if any parameter if invalid
 	 */
-    public Viewer(String dev, int w, int h, int std, int channel, int qty) throws V4L4JException{
-        initFrameGrabber(dev, w, h, std, channel, qty);
-        initGUI();
-        stop = false;
-        captureThread = new Thread(this, "Capture Thread");
-        captureThread.start();
-    }
-    
-    /** 
-     * Creates the graphical interface components and initialises them
-     */
-    private void initGUI(){
-        f = new JFrame();
-        l = new JLabel();
-        f.getContentPane().add(l);
-        f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        f.addWindowListener(this);
-        f.setVisible(true);
-        f.setSize(width, height);    	
-    }
-    
-    /**
-     * Initialises the FrameGrabber object with the given parameters
+	public Viewer(String dev, int w, int h, int std, int channel, int qty) throws V4L4JException{
+		initFrameGrabber(dev, w, h, std, channel, qty);
+		initGUI();
+		stop = false;
+		captureThread = new Thread(this, "Capture Thread");
+		captureThread.start();
+	}
+
+	/** 
+	 * Creates the graphical interface components and initialises them
+	 */
+	private void initGUI(){
+		f = new JFrame();
+		l = new JLabel();
+		f.getContentPane().add(l);
+		f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		f.addWindowListener(this);
+		f.setVisible(true);
+		f.setSize(width, height);    	
+	}
+
+	/**
+	 * Initialises the FrameGrabber object with the given parameters
 	 * @param dev the video device file to capture from
 	 * @param w the desired capture width
 	 * @param h the desired capture height
@@ -208,67 +215,59 @@ public class Viewer extends WindowAdapter implements Runnable {
 	 * @param channel the capture channel
 	 * @param qty the JPEG compression quality
 	 * @throws V4L4JException if any parameter if invalid
-     */
-    private void initFrameGrabber(String dev, int w, int h, int std, int channel, int qty) throws V4L4JException{
-	vd = new VideoDevice(dev);
-	fg = vd.getJPEGFrameGrabber(w, h, channel, std, qty);
-	fg.startCapture();
-        width = fg.getWidth();
-        height = fg.getHeight();
-	System.out.println("Starting capture at "+fg.getWidth()+"x"+fg.getHeight());	    	
-    }
-    
-    /**
-     * Updates the image shown in the JLabel
-     * @param b
-     */
-    public void setImage(BufferedImage image) {
-    	l.getGraphics().drawImage(image, 0, 0, width, height, null);
-    }
-    
-    /**
-     * Implements the capture thread: get a frame from the FrameGrabber, and display it
-     */
-    public void run(){
-	VideoFrame frame;
-	try {			
-		while(!stop){
-			frame = fg.getVideoFrame();
-			setImage(frame.getBufferedImage());
-                        frame.recycle();
-		}
-	} catch (V4L4JException e) {
-		e.printStackTrace();
-		System.out.println("Failed to capture image");
+	 */
+	private void initFrameGrabber(String dev, int w, int h, int std, int channel, int qty) throws V4L4JException{
+		vd = new VideoDevice(dev);
+		fg = vd.getJPEGFrameGrabber(w, h, channel, std, qty);
+		fg.startCapture();
+		width = fg.getWidth();
+		height = fg.getHeight();
+		System.out.println("Starting capture at "+fg.getWidth()+"x"+fg.getHeight());	    	
 	}
-    }
 
-    /**
-     * Catch window closing event so we can free up resources before exiting
-     * @param e
-     */
+	/**
+	 * Updates the image shown in the JLabel
+	 * @param b
+	 */
+	public void setImage(BufferedImage image) {
+		l.getGraphics().drawImage(image, 0, 0, width, height, null);
+	}
+
+	/**
+	 * Implements the capture thread: get a frame from the FrameGrabber, and display it
+	 */
+	public void run(){
+		VideoFrame frame;
+		try {			
+			while(!stop){
+				frame = fg.getVideoFrame();
+				setImage(frame.getBufferedImage());
+				frame.recycle();
+			}
+		} catch (V4L4JException e) {
+			e.printStackTrace();
+			System.out.println("Failed to capture image");
+		}
+	}
+
+	/**
+	 * Catch window closing event so we can free up resources before exiting
+	 * @param e
+	 */
 	public void windowClosing(WindowEvent e) {
 		if(captureThread.isAlive()){
-    			stop = true;
-    			try {
+			stop = true;
+			try {
 				captureThread.join();
 			} catch (InterruptedException e1) {}
-    		}
-		
+		}
+
 		fg.stopCapture();
 		vd.releaseFrameGrabber();
-		
-    		f.dispose();		
-	}
-	
-	
 
-	public static void main(String[] args) throws V4L4JException, IOException {
-
-		String dev = "/dev/video0";
-		int w=640, h=480, std=V4L4JConstants.STANDARD_WEBCAM, channel = 0, qty = 60;
-		new Viewer(dev,w,h,std,channel,qty);
+		f.dispose();		
 	}
+
 }
 
 }}}
