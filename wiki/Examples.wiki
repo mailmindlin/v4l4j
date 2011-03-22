@@ -55,37 +55,25 @@ Each `InputInfo` object contains:
     * the index of the tuner,
     * and the lowest and highest tunable frequencies.
 
-Lastly, the `ImageFormatList` object details the native image formats & resolutions supported by the video device. This object also lists native image formats that can be encoded into more convenient formats: JPEG, RGB24, BGR24, YUV420 and YVU420.
+Last, the `ImageFormatList` object details
+    * the native image formats supported by the video device,
+    * the subset of native image formats that can be encoded into more convenient formats: JPEG, RGB24, BGR24, YUV420 and YVU420,
+    * a list of supported resolutions and frame rates for each image format.
+
+
+= Dealing with controls =
+A call to `VideoDevice.getControlList()` will return a `ControlList` object. This object encapsulates (among other things) a `List<Control>` accessible through the `getList()` method. The following code loops over all controls and prints their name, range of acceptable values, and current value.
 {{{
-//get the ImageFormatList object
-ImageFormatList l = vd.getDeviceInfo().getFormatList();
-
-
-//List all supported image formats & resolutions
-for(ImageFormat f : l.getList()) {
-  System.out.println("\t"+f.getName()+" - "+f.getIndex());
-  System.out.println("\t\tResolutions: "+f.getResolutionInfo());
-}
-
-
-//List all supported image formats that can be JPEG-encoded
-System.out.println("Some formats can be JPEG-encoded? "+(vd.supportJPEGConversion()?"Yes":"No"));
-if(vd.supportJPEGConversion()){
-  System.out.println("List of Formats that can be JPEG-encoded:");
-  for(ImageFormat f: d.getFormatList().getJPEGEncodableFormats())
-    System.out.println("\t"+f.getName()+" - "+f.getIndex());
-}
-
-
-//List all supported image formats that can be RGB24-converted
-System.out.println("Some formats can be RGB-converted? "+(vd.supportRGBConversion()?"Yes":"No"));
-if(vd.supportRGBConversion()){
-  System.out.println("List of Formats that can be converted to RGB:");
-  for(ImageFormat f: d.getFormatList().getRGBEncodableFormats())
-    System.out.println("\t"+f.getName()+" - "+f.getIndex());
-}
+List<Control> controls = vd.getControlList().getList();
+for(Control c: controls)
+ System.out.println("control name: "+c.getName()+" - min: "+c.getMinValue()+" - max: "+c.getMaxValue()+" - step: "+c.getStepValue()+" - value: "+c.getValue());
+vd.releaseControlList();
 }}}
-
+Resetting the Pan angle on a Logitech Quickcam Sphere can be done using:
+{{{
+vd.getControlList().getControl("Pan Reset").setValue(1);
+}}}
+Here also, when the `ControlList` is no longer needed, it MUST be released by calling `releaseControlList()` on the `VideoDevice`.
 
 
 = Capturing frames =
@@ -114,64 +102,9 @@ ImageFormat imf = fg.getImageFormat()
 
 vd.releaseFrameGrabber();
 }}}
-The above code will create a frame grabber object capturing frames in the first image format supported by the device, as returned by:
-{{{
-vd.getDeviceInfo().getFormatList().getNativeFormats().get(0);
-}}}
-Alternatively, you can use specify the desired image format: 
-{{{
-ImageFormat imf = null;
-for(ImageFormat i: vd.getDeviceInfo().getFormats().getList())
-  if(i.getName().equals(IMF_YUYV)
-    imf = i;
-if(img==null)
-  throw new Exception(IMF_YUYV +" format not supported");
 
-fg = vd.getRawFrameGrabber(width, height, input, channel, imf);
-}}}
-
-
-A JPEG frame grabber is instantiated by calling:
-{{{
-FrameGrabber fg;
-int width = 640, height = 480, input = 1, standard = V4L4JConstants.STANDARD_PAL, quality = 80;
-fg = vd.getJPEGFrameGrabber(width, height, input, channel, quality);
-
-...
-
-vd.releaseFrameGrabber();
-}}}
-The `quality` argument is the JPEG compression parameter (between 0 and 100 inclusive), the lower the value, the lower the picture quality. The previous code creates a jpeg `FrameGrabber` object. The requested capture resolution is 640x480, from input 1 using PAL video standard and a JPEG compression factor of 80. As with raw frame grabbers, you can also specify the capture image format (ie the format images should be captured in before being JPEG-encoded) with:
-{{{
-ImageFormat imf = vd.getDeviceInfo().getFormatList().getJPEGEncodableFormats().get(0);
-fg = vd.getJPEGFrameGrabber(width, height, input, channel, quality, imf);
-
-...
-
-vd.releaseFrameGrabber();
-}}}
-
-An RGB frame grabber is instantiated by calling:
-{{{
-FrameGrabber fg;
-int width = 640, height = 480, input = 1, standard = V4L4JConstants.STANDARD_NTSC;
-fg = vd.getRGBFrameGrabber(width, height, input, channel);
-
-...
-
-vd.releaseFrameGrabber();
-}}}
-Here again,  you can also specify the capture image format (ie the format images should be captured in before being converted to RGB24) with:
-{{{
-ImageFormat imf = vd.getDeviceInfo().getFormatList().getRGBEncodableFormats().get(0);
-fg = vd.getRGBFrameGrabber(width, height, input, channel, quality, imf);
-
-...
-
-vd.releaseFrameGrabber();
-}}}
-
-
+Other frame grabbers are created with `VideoDevice.getJPEGFrameGrabber()`, `VideoDevice.getRGBFrameGrabber()`, `VideoDevice.getBGRFrameGrabber()`, 
+`VideoDevice.getYUVFrameGrabber()` and `VideoDevice.getYVUFrameGrabber()`.
 
 Regardless of the kind of frame grabber, the requested capture resolution given in the constructor is simply an indication and can be adjusted by V4L to the closest resolution supported by the video device. The actual width and height that will be used can be retrieved using:
 {{{
@@ -179,26 +112,7 @@ int actualWidth = f.getwidth();
 int actualHeight = f.getHeight();
 }}}
 
-When the `FrameGrabber` is no longer used, resources must be released by calling
-{{{
-vd.releaseFrameGrabber();
-}}}
 
-= Dealing with controls =
-Once the `VideoDevice` is intialised, a call to `getControlList()` will return a `ControlList` object. This object encapsulates (among other things) a `List<Control>` accessible through the `getList()` method. The following code loops over all controls and prints their name, range of acceptable values, and current value.
-{{{
-List<Control> controls = vd.getControlsList().getList();
-for(Control c: controls)
- System.out.println("control name: "+c.getName()+" - min: "+c.getMin()+" - max: "+c.getMax()+" - step: "+c.getStep()+" - value: "+c.getValue());
-vd.releaseControlList();
-}}}
-Resetting the Pan angle on a Logitech Quickcam Sphere can be done using:
-{{{
-vd.getControlList().getControl("Pan Reset").setValue(1);
-}}}
-*Once again, when the `ControlList` is no longer needed, it MUST be released by calling `releaseControlList()` on the `VideoDevice`.*
-
-= Display video in a GUI (JFrame) =
 Assuming the `FrameGrabber` object `f` has been successfully initialised, to start capturing frames, do the following:
 {{{
 VideoFrame frame;
@@ -213,9 +127,17 @@ while(!stop) {
  frame.recycle();
 }
 f.stopCapture()
-//dont forget to call f.release() when done with f
+//dont forget to call f.release() when done with the frame grabber
 }
 }}}
+
+
+When the `FrameGrabber` is no longer used, resources must be released by calling
+{{{
+vd.releaseFrameGrabber();
+}}}
+
+= Display video in a GUI (JFrame) =
 
 The following example shows you how to capture JPEG-encoded frames from your video device and display them in a JFrame object through using a BufferedImage object.
 {{{
