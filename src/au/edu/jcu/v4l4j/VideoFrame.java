@@ -47,8 +47,8 @@ public interface VideoFrame {
 	public int				getFrameLength();
 	
 	/**
-	 * This method returns this video frame's sequence number (a monotically
-	 * increasing number for each captured frame). Thjis number can be used
+	 * This method returns this video frame's sequence number (a monotonically
+	 * increasing number for each captured frame). This number can be used
 	 * to find out when a frame was dropped: if <code>currentSequenceNumber != 
 	 * (previousSequenceNumber + 1)</code> then <code>(currentSequenceNumber -
 	 * previousSequenceNumber(</code> frames were dropped.

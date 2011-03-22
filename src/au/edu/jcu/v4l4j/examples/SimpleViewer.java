@@ -1,0 +1,125 @@
+package au.edu.jcu.v4l4j.examples;
+
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+
+import au.edu.jcu.v4l4j.FrameGrabber;
+import au.edu.jcu.v4l4j.PushSourceCallback;
+import au.edu.jcu.v4l4j.V4L4JConstants;
+import au.edu.jcu.v4l4j.VideoDevice;
+import au.edu.jcu.v4l4j.VideoFrame;
+import au.edu.jcu.v4l4j.exceptions.StateException;
+import au.edu.jcu.v4l4j.exceptions.V4L4JException;
+
+/**
+ * This class demonstrates how to perform a simple push-mode capture.
+ * It starts the capture and display the video stream in a JLabel
+ * @author gilles
+ *
+ */
+public class SimpleViewer extends WindowAdapter implements PushSourceCallback{
+	private static int		width, height, std, channel;
+	private static String	device;
+
+	private VideoDevice		videoDevice;
+	private FrameGrabber	frameGrabber;
+
+	private JLabel 			label;
+	private JFrame 			frame;
+
+
+
+	public static void main(String args[]) throws V4L4JException, InterruptedException{
+		device = (System.getProperty("test.device") != null) ? System.getProperty("test.device") : "/dev/video0"; 
+		width = (System.getProperty("test.width")!=null) ? Integer.parseInt(System.getProperty("test.width")) : 640;
+		height = (System.getProperty("test.height")!=null) ? Integer.parseInt(System.getProperty("test.height")) : 480;
+		std = (System.getProperty("test.standard")!=null) ? Integer.parseInt(System.getProperty("test.standard")) : V4L4JConstants.STANDARD_WEBCAM;
+		channel = (System.getProperty("test.channel")!=null) ? Integer.parseInt(System.getProperty("test.channel")) : 0;
+
+		new SimpleViewer();
+	}
+
+	/**
+	 * Builds a WebcamViewer object
+	 * @throws V4L4JException if any parameter if invalid
+	 */
+	public SimpleViewer() throws V4L4JException{
+		initFrameGrabber();
+		initGUI();
+		try {
+			frameGrabber.startCapture();
+		} catch (V4L4JException e){
+			videoDevice.releaseFrameGrabber();
+			videoDevice.release();
+		}
+	}
+
+	/**
+	 * Initialises the FrameGrabber object
+	 * @throws V4L4JException if any parameter if invalid
+	 */
+	private void initFrameGrabber() throws V4L4JException{
+		videoDevice = new VideoDevice(device);
+		frameGrabber = videoDevice.getJPEGFrameGrabber(width, height, channel, std, 80);
+		frameGrabber.setPushSourceMode(this);
+		width = frameGrabber.getWidth();
+		height = frameGrabber.getHeight();
+		System.out.println("Starting capture at "+width+"x"+height);
+	}
+
+	/** 
+	 * Creates the UI components and initialises them
+	 */
+	private void initGUI(){
+		frame = new JFrame();
+		label = new JLabel();
+		frame.getContentPane().add(label);
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frame.addWindowListener(this);
+		frame.setVisible(true);
+		frame.setSize(width, height);       
+	}
+
+	/**
+	 * Catch window closing event so we can free up resources before exiting
+	 * @param e
+	 */
+	public void windowClosing(WindowEvent e) {
+		try {
+			frameGrabber.stopCapture();
+		} catch (StateException ex) {
+			// the frame grabber may be already stopped, so we just ignore
+			// any exception and simply continue.
+		}
+
+		// release the frame grabber
+		videoDevice.releaseFrameGrabber();
+
+		// close window
+		frame.dispose();            
+	}
+
+
+	@Override
+	public void exceptionReceived(V4L4JException e) {
+		// This method is called by v4l4j if an exception
+		// occurs while waiting for a new frame to be ready.
+		// The exception is available through e.getCause()
+		e.printStackTrace();
+	}
+
+	@Override
+	public synchronized void nextFrame(VideoFrame frame) {
+		// This method is called when a new frame is ready.
+		// Don't forget to recycle it when done dealing with the frame.
+		
+		// draw the new frame onto the JLabel
+		label.getGraphics().drawImage(frame.getBufferedImage(), 0, 0, width, height, null);
+		
+		// recycle the frame
+		frame.recycle();
+	}
+}

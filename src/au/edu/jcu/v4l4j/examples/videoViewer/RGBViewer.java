@@ -22,9 +22,8 @@
 *
 */
 
-package au.edu.jcu.v4l4j.examples;
+package au.edu.jcu.v4l4j.examples.videoViewer;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Vector;
 
@@ -33,13 +32,11 @@ import javax.swing.JOptionPane;
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.ImageFormat;
 import au.edu.jcu.v4l4j.VideoDevice;
-import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
-public class RGBViewer implements ImageProcessor{
+public class RGBViewer extends AbstractVideoViewer{
 	private int width, height, std, channel;
-	private VideoDevice vd;
-	private VideoViewer viewer;
+
 	
 	/**
 	 * Builds a WebcamViewer object
@@ -52,8 +49,8 @@ public class RGBViewer implements ImageProcessor{
 	 */
     public RGBViewer(VideoDevice v, int w, int h, int s, int c)
     	throws V4L4JException{
-    	viewer = new VideoViewer(v, this);
-    	vd = v;
+    	super(v);
+
     	List<ImageFormat> fmts;
 		if(!vd.supportRGBConversion()){
 			String msg = "Image from this video device cannot be converted\n"
@@ -71,59 +68,12 @@ public class RGBViewer implements ImageProcessor{
 		std = s;
 		channel = c;
 
-        viewer.initGUI(fmts.toArray(),w,h,"RGB");
+        initGUI(fmts.toArray(),w,h,"RGB");
       
     }
   
 	@Override
-	public FrameGrabber getGrabber(ImageFormat i) throws V4L4JException {
+	protected FrameGrabber getFrameGrabber(ImageFormat i) throws V4L4JException {
 		return vd.getRGBFrameGrabber(width, height, channel, std, i);
-	}
-	
-	@Override
-	public void releaseGrabber() {
-		vd.releaseFrameGrabber();
-	}
-
-	@Override
-	public void processImage(VideoFrame frame) {
-		viewer.drawBufferedImage(frame.getBufferedImage());
-	}
-  
-
-	public static void main(String[] args) throws V4L4JException, IOException {
-
-		String dev;
-		int w, h, std, channel;
-
-		//Check if we have the required args
-		//otherwise put sensible values in
-		try {
-			dev = args[0];
-		} catch (Exception e){
-			dev = "/dev/video0";
-		}
-		try {
-			w = Integer.parseInt(args[1]);
-		} catch (Exception e){
-			w = 640;
-		}
-		try{			
-			h = Integer.parseInt(args[2]);
-		} catch  (Exception e) {
-			h = 480;
-		}
-		try {
-			std = Integer.parseInt(args[3]);
-		} catch (Exception e) {
-			std = 0;
-		}
-		try {
-			channel = Integer.parseInt(args[4]);
-		} catch (Exception e){
-			channel = 0;
-		}
-		
-		new RGBViewer(new VideoDevice(dev),w,h,std,channel);
 	}
 }

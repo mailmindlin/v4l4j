@@ -233,14 +233,14 @@
 				<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
 			</classpath>
 			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
-			<arg value="${test.device}" /> <!-- device file -->
-			<arg value="${test.width}" /> <!-- width -->
-			<arg value="${test.height}" /> <!-- height -->
-			<arg value="${test.standard}" /> <!-- standard -->
-			<arg value="${test.channel}" /> <!-- channel -->
-			<arg value="${test.inFormat}" /> <!-- capture image format -->
-			<arg value="${test.outFormat}" /> <!-- output image format -->
-			<arg value="${test.fps}" /> <!-- FPS -->
+			<arg value="-Dtest.device=${test.device}" /> <!-- device file -->
+			<arg value="-Dtest.width=${test.width}" /> <!-- width -->
+			<arg value="-Dtest.height=${test.height}" /> <!-- height -->
+			<arg value="-Dtest.standard=${test.standard}" /> <!-- standard -->
+			<arg value="-Dtest.channel=${test.channel}" /> <!-- channel -->
+			<arg value="-Dtest.inFormat=${test.inFormat}" /> <!-- capture image format -->
+			<arg value="-Dtest.outFormat=${test.outFormat}" /> <!-- output image format -->
+			<arg value="-Dtest.fps=${test.fps}" /> <!-- FPS -->
 		</java>
 	</target>
 	
@@ -253,16 +253,32 @@
 	</target>
 	
 	<target name="test-server">
-			<java classname="au.edu.jcu.v4l4j.examples.server.CamServer" fork="true" failonerror="true">
-				<classpath>
-					<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
-				</classpath>
-				<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
-				<arg value="-Dtest.device=${test.device}" /> <!-- device file -->
-				<arg value="-Dtest.width=${test.width}" /> <!-- height -->
-				<arg value="-Dtest.height=${test.height}" /> <!-- height -->
-			</java>
-		</target>
+		<java classname="au.edu.jcu.v4l4j.examples.server.CamServer" fork="true" failonerror="true">
+			<classpath>
+				<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
+			</classpath>
+			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
+			<arg value="-Dtest.device=${test.device}" /> <!-- device file -->
+			<arg value="-Dtest.width=${test.width}" /> <!-- height -->
+			<arg value="-Dtest.height=${test.height}" /> <!-- height -->
+			<arg value="-Dtest.standard=${test.standard}" /> <!-- standard -->
+			<arg value="-Dtest.channel=${test.channel}" /> <!-- channel -->
+		</java>
+	</target>
+	
+	<target name="test-getsnapshot">
+		<java classname="au.edu.jcu.v4l4j.examples.GetSnapshotApp" fork="true" failonerror="true">
+			<classpath>
+				<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
+			</classpath>
+			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
+			<arg value="-Dtest.device=${test.device}" /> <!-- device file -->
+			<arg value="-Dtest.width=${test.width}" /> <!-- height -->
+			<arg value="-Dtest.height=${test.height}" /> <!-- height -->
+			<arg value="-Dtest.standard=${test.standard}" /> <!-- standard -->
+			<arg value="-Dtest.channel=${test.channel}" /> <!-- channel -->
+		</java>
+	</target>
 	
 	<target name="deviceInfo">
 		<java classname="au.edu.jcu.v4l4j.VideoDevice" fork="true" failonerror="true">
@@ -270,7 +286,7 @@
 				<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
 			</classpath>
 			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
-			<arg value="${test.device}" /> <!-- device file -->
+			<arg value="-Dtest.device=${test.device}" /> <!-- device file -->
 		</java>
 	</target>
 
