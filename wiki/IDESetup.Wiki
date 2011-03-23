@@ -1,12 +1,16 @@
-#summary this page explains how to import v4l4j in eclipse
+#summary this page explains how to import v4l4j in Eclipse and NetBeans
 #labels Featured
 #sidebar v4l4jSideBar
 
-This page explains how to import v4l4j in Eclipse, whether you want to make use of v4l4j in an existing project or you want to improve or tweak v4l4j.
+This page explains how to import v4l4j in Eclipse and Netbeans.
 
-= Using v4l4j in an Eclipse project =
+= Using v4l4j in your own project =
+Follow these steps if you want to use v4l4j in your own application. First, you must install v4l4j by following the installation instructions on the [GettingStarted] page.
+Then follow the instructions for your IDE below.
 
-Follow these steps if you want to use v4l4j in your own application.First, you must install v4l4j by following the installation instructions on the [GettingStarted] page. Then, assuming you have already created your Eclipse project, do the following to import the v4l4j JAR file, JNI library and JavaDoc:
+== Eclipse project ==
+
+Assuming you have already created your Eclipse project, do the following to import the v4l4j JAR file, JNI library and JavaDoc:
  * In the Project Explorer pane, right-click on your project and select Build Path -> Configure build path.
  * Select the Libraries tab, and click Add external JARs...
  * Select /usr/share/java/v4l4j.jar
@@ -18,9 +22,25 @@ Follow these steps if you want to use v4l4j in your own application.First, you m
 
 Your project is now setup to use v4l4j.
 
-= Creating an Eclipse project for v4l4j =
+== NetBeans project ==
+Create a new library entry for v4l4j: (The following steps should be done only once)
+ * Go to Tools -> Libraries
+ * Select New Library
+ * Use v4l4j as the name and Class Library as the type
+ * Under the Classpath tab, click Add Jar... and add /usr/share/java/v4l4j.jar
+ * If you have installed the JavaDoc, select the JavaDoc tab, click Add ZIP/Folder, add /usr/share/doc/libv4l4j-doc/api and click OK
+ * Select OK
+
+Include v4l4j in your project:
+ * Right-click on your project and select Properties
+ * In the Libraries category, under the Compile tab, click Add Library...
+ * Select v4l4j from the list and click Add Library
+ * In the Run category, add -Djava.library.path=/usr/lib/jni in the VM Options textbox
+ * Click OK
+
+= Creating an Eclipse project to work on v4l4j =
 Follow these steps if you are planning to work on v4l4j itself. There are two ways to create a project for v4l4j in Eclipse:
- *  by checking out a copy of v4l4j from the subversion repository and creating a new project, or
+ * by checking out a copy of v4l4j from the subversion repository and creating a new project, or
  * by downloading the source tarball, unpacking it and importing it in Eclipse.
 Both of these are explained in the following sections. I have tested them with Eclipse Ganymede version 3.4.1
 
