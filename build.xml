@@ -161,7 +161,7 @@
 	<target name="jar" depends="compile">
 		<jar jarfile="${project.dir}/${project.jar.file}">
 			<manifest>
-				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.DeviceChooser"/>
+				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.videoViewer.DeviceChooser"/>
 			</manifest>
 			<fileset dir="${project.classes}">
 				<include name="**"/>
@@ -176,7 +176,7 @@
 	<target name="jar-debug" depends="compile-debug">
 		<jar jarfile="${project.dir}/${project.jar.file}">
 		        <manifest>
-				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.DeviceChooser"/>
+				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.videoViewer.DeviceChooser"/>
 			</manifest>
 			<fileset dir="${project.classes}">
 				<include name="**"/>
@@ -191,7 +191,7 @@
 	<target name="jar-src" depends="compile">
 		<jar jarfile="${project.dir}/${project.jar.file}">
 			<manifest>
-				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.DeviceChooser"/>
+				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.videoViewer.DeviceChooser"/>
 			</manifest>
 			<fileset dir="${project.classes}">
 				<include name="**"/>
