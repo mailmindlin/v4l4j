@@ -2,7 +2,7 @@
   * [DebianInstall Installing Debian packages]
   * [TestedHardware Tested hardware]
   * [Troubleshooting Troubleshoot issues]
-  * [EclipseSetup Using v4l4j in eclipse]
+  * [IDESetup Using v4l4j in your IDE]
   * [Examples Programming with v4l4j]
   * [FrameInterval Adjusting the frame rate]
   * [DebuggingJNI Debugging JNI code]
