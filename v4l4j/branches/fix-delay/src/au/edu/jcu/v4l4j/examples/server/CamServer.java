@@ -27,6 +27,7 @@ import java.util.Vector;
 
 import au.edu.jcu.v4l4j.ControlList;
 import au.edu.jcu.v4l4j.JPEGFrameGrabber;
+import au.edu.jcu.v4l4j.PushSourceCallback;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
@@ -56,12 +57,11 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * @author gilles
  *
  */
-public class CamServer implements Runnable{
+public class CamServer implements Runnable, PushSourceCallback{
 	private ServerSocket 				serverSocket;
 	private VideoDevice					videoDevice;
 	private JPEGFrameGrabber			frameGrabber;
 	private ControlList					controlList;
-	private Thread						captureThread;
 	private Thread						serverThread;
 	private Vector<ClientConnection> 	clients;
 	private String 						httpLineFromClient;
@@ -71,6 +71,20 @@ public class CamServer implements Runnable{
 	private static final int			CONTROL_PAGE = 2;
 	private static final int			VIDEO_STREAM = 3;
 	private static final int			UPDATE_CONTROL_VALUE = 4;
+
+
+	public static void main(String[] args) throws V4L4JException, IOException{
+		String dev = (System.getProperty("test.device") != null) ? System.getProperty("test.device") : "/dev/video0"; 
+		int w = (System.getProperty("test.width")!=null) ? Integer.parseInt(System.getProperty("test.width")) : 640;
+		int h = (System.getProperty("test.height")!=null) ? Integer.parseInt(System.getProperty("test.height")) : 480;
+		int port = (System.getProperty("test.port")!=null) ? Integer.parseInt(System.getProperty("test.port")) : 8080;
+ 
+		CamServer server = new CamServer(dev, w, h, port);
+		server.start();
+		System.out.println("Press enter to exit.");
+		System.in.read();
+		server.stop();
+	}
 
 	/**
 	 * Builds a camera server object capturing frames from the given device
@@ -86,6 +100,7 @@ public class CamServer implements Runnable{
 	public CamServer(String dev, int width, int height, int port) throws V4L4JException, IOException {
 		videoDevice = new VideoDevice(dev);
 		frameGrabber = videoDevice.getJPEGFrameGrabber(width, height, 0, 0, 80);
+		frameGrabber.setPushSourceMode(this);
 		controlList = videoDevice.getControlList();
 		clients = new Vector<ClientConnection>();
 
@@ -95,80 +110,24 @@ public class CamServer implements Runnable{
 		System.out.println("Server listening at "+
 				serverSocket.getInetAddress().getHostAddress() + ":"+ serverSocket.getLocalPort());
 
-		// create capture and server threads
-		captureThread = new Thread(this, "Capture thread");
-		serverThread = new Thread(new Runnable() {
-
-			/**
-			 * implements the server thread: while we are not interrupted
-			 * and the capture thread is running, we run the main loop.
-			 * Before exiting, we close all client connections
-			 */
-			@Override
-			public void run() {
-				Vector<ClientConnection> copyClients = null;
-				try {
-					// run the main loop only until either the capture thread exits
-					// or we are interrupted 
-					while ((! Thread.interrupted()) && captureThread.isAlive()) {
-						serverMainLoop();
-					}
-				} catch (IOException e){
-					// error accepting new client connection over server socket
-					// or closing connection with a client
-				} catch (V4L4JException e){
-					// error starting the capture when the first client connected
-					e.printStackTrace();
-				}
-
-				// Stop all client connections
-				synchronized(clients){
-					copyClients = new Vector<ClientConnection>(clients);
-				}
-
-				for(ClientConnection client:copyClients)
-					client.stop();
-
-				System.out.println("Server thread exiting");
-			}
-		}, "Server thread");
-
+		// create server thread
+		serverThread = new Thread(this, "Server thread");
 	}
 
 	public void start() {
-		// start the video capture thread
-		captureThread.start();
-		// wait until the capture thread has started
-		while (! captureThread.isAlive())
-			try {
-				Thread.sleep(50);
-			} catch (InterruptedException e) {
-				// we shouldnt be here really...
-				e.printStackTrace();
-			}
-			
 		// start the tcp server thread
 		serverThread.start();
 	}
 
 	public void stop() {
-		// if the capture thread is alive interrupt it and close it 
-		if (captureThread.isAlive()){
-			captureThread.interrupt();
-			try {
-				captureThread.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-
-		// same with the server thread, but this time, to interrupt it
 		// close the server socket first
 		try {
 			serverSocket.close();
 		} catch (IOException e) {
 			// error closing the server socket
-		}		
+		}
+		
+		// now interrupt the server thread				
 		if (serverThread.isAlive()){
 			serverThread.interrupt();
 			try {
@@ -176,7 +135,19 @@ public class CamServer implements Runnable{
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-		}	
+		}		
+		
+		// stop the capture
+		try {
+			frameGrabber.stopCapture();
+		} catch (Exception e){}// the capture is already stopped
+
+		// Stop all client connections
+		// no need for the lock - the capture is already stopped which means
+		// no more calls to nextFrame(), so we are the only one to access 
+		// the client list
+		for(ClientConnection client:clients)
+			client.stop();
 
 		// release v4l4j frame grabber, control list and video device
 		videoDevice.releaseFrameGrabber();
@@ -229,15 +200,9 @@ public class CamServer implements Runnable{
 				synchronized (clients){
 					clients.add(new ClientConnection(clientSocket, inStream, outStream));
 
-					// if first client
-					if (clients.size() == 1) {
-						// start the capture
+					// if this is the first client, start the capture
+					if (clients.size() == 1)
 						frameGrabber.startCapture();
-						
-						// and wake up the capture thread to start 
-						// sending mpjeg frames
-						clients.notifyAll();
-					}
 				}
 			} catch (IOException e) {
 				// error connecting with client
@@ -318,80 +283,61 @@ public class CamServer implements Runnable{
 	}
 
 	/**
-	 * Implements the capture thread: make sure there is at least
-	 * one client connected, get a video frame, and send it to all clients. Then
-	 * repeat until we are interrupted.
+	 * Implements the server thread.
 	 */
 	@Override
 	public void run() {
-		Vector<ClientConnection> copyClients = null;
-		VideoFrame frame = null; 
-
 		try {
-			while(! Thread.interrupted()){
-				// make sure there is at least one client
-				waitForAtLeast1Client();
+			// run the main loop only until we are interrupted 
+			while (! Thread.interrupted())
+				serverMainLoop();
 
-				// get latest frame
-				frame = frameGrabber.getVideoFrame();
+		} catch (V4L4JException e){
+			// error starting the capture when the first client connected
+		} catch (Exception e){
+			// error accepting new client connection over server socket
+			// or closing connection with a client
+		}
+		System.out.println("Server thread exiting");
+	}
 
-				// copy client vector
+	@Override
+	public void nextFrame(VideoFrame frame) {
+		Vector<ClientConnection> copyClients = null;
+
+		// copy client vector
+		synchronized(clients){
+			copyClients = new Vector<ClientConnection>(clients);
+		}
+
+		// send the frame to each client
+		for(ClientConnection client: copyClients){
+			try {
+				client.sendNextFrame(frame);
+			} catch (IOException e) {
+				// error sending frame to this client
+				
+				// close the connection
+				client.stop();
+				
+				// remove client from list
 				synchronized(clients){
-					copyClients = new Vector<ClientConnection>(clients);
+					clients.remove(client);
+
+					// stop capture if there are no more clients
+					if (clients.size() == 0)
+						frameGrabber.stopCapture();
 				}
-
-				// send it to each client
-				for(ClientConnection client: copyClients){
-					try {
-						client.sendNextFrame(frame);
-					} catch (IOException e) {
-						// error sending frame to this client, remove it from list
-						synchronized(clients){
-							client.stop();
-							clients.remove(client);
-
-							// stop capture if last client
-							if (clients.size() == 0)
-								frameGrabber.stopCapture();
-						}
-					}
-				}
-
-				// recycle frame
-				frame.recycle();
 			}
-		} catch (InterruptedException e) {
-			// We were told to exit
-		} catch (V4L4JException e) {
-			// v4l4j capture error
-			e.printStackTrace();
 		}
-		
-		System.out.println("Capture thread exiting");
 
+		// recycle frame
+		frame.recycle();
 	}
 
-	/**
-	 * Wait until a client is connected
-	 * @throws InterruptedException 
-	 */
-	public void waitForAtLeast1Client() throws InterruptedException {
-		synchronized (clients) {
-			while(clients.size() == 0)
-				clients.wait();
-		}
-	}
-
-	public static void main(String[] args) throws V4L4JException, IOException{
-		String dev = (System.getProperty("test.device") != null) ? System.getProperty("test.device") : "/dev/video0"; 
-		int w = (System.getProperty("test.width")!=null) ? Integer.parseInt(System.getProperty("test.width")) : 640;
-		int h = (System.getProperty("test.height")!=null) ? Integer.parseInt(System.getProperty("test.height")) : 480;
-		int port = (System.getProperty("test.port")!=null) ? Integer.parseInt(System.getProperty("test.port")) : 8080;
- 
-		CamServer server = new CamServer(dev, w, h, port);
-		server.start();
-		System.out.println("Press enter to exit.");
-		System.in.read();
-		server.stop();
+	@Override
+	public void exceptionReceived(V4L4JException e) {
+		// Error capturing frames, stop the frame grabber
+		frameGrabber.stopCapture();
 	}
 }
