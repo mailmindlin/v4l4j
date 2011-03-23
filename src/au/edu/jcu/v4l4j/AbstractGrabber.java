@@ -395,14 +395,28 @@ abstract class AbstractGrabber implements FrameGrabber {
 	@Override
 	public final void stopCapture(){
 		state.stop();
-
-		// at this stage, we know that no one is waiting in getVideoFrame() anymore,
-		// and further calls to it will throw a StateException.
-
-
+		// At this stage, further calls to getVideoFrame() will throw an exception..
+		// However, the push thread might still be blocked in getVideoFrame().
+		
+		// The push thread blocked in getVideoFrame() can be blocked either:
+		// 1) in getAvailableVideoFrame(), waiting for an available frame
+		// OR
+		// 2) in fillBuffer(), waiting for a V4L buffer
+		
+		// If the push thread is blocked in 1) we can wake it up by interrupting
+		// it, but we cannot wake it up if blocked in 2), although
+		// we know it will unblock in the near future so we can just wait for it
+		
+		// unblock thread in 1)
 		// if we re started and in push mode, stop the push source
 		if (pushSource != null)
 			pushSource.stopCapture();
+		
+		// wait for thread blocked in 2)
+		state.waitTillNoMoreUsers();
+		
+		// at this stage, we know that no one is waiting in getVideoFrame() anymore,
+		// and further calls to it will throw a StateException.		
 
 		// Make sure all video frames are recycled
 		for(VideoFrame frame: videoFrames)
@@ -591,19 +605,29 @@ abstract class AbstractGrabber implements FrameGrabber {
 		public synchronized void stop(){
 			if(state==STARTED && temp!=STOPPED) {
 				temp=STOPPED;
-				while(users!=0)
-					try {
-						wait();
-					} catch (InterruptedException e) {
-						System.err.println("Interrupted while waiting for "
-								+"FrameGrabber users to complete");
-						e.printStackTrace();
-						throw new StateException("There are remaining users of "
-								+"this FrameGrabber and it can not be stopped");
-					}
 			} else
 				throw new StateException("This FrameGrabber is not started and "
 						+"can not be stopped");
+		}
+		
+		/**
+		 * This method unblocks when there are no more users.
+		 * It is the caller's responsibility to ensure before the call that the
+		 * current state does not allow any more users to join, but only to exit 
+		 */
+		public synchronized void waitTillNoMoreUsers(){
+			while(users!=0)
+				try {
+					wait();
+				} catch (InterruptedException e) {
+					// a thread called stopCapture() while another was 
+					// blocked in getVideoFrame()
+//					System.err.println("Interrupted while waiting for "
+//							+"FrameGrabber users to complete");
+//					e.printStackTrace();
+//					throw new StateException("There are remaining users of "
+//							+"this FrameGrabber and it can not be stopped");
+				}
 		}
 
 		public synchronized void release(){
