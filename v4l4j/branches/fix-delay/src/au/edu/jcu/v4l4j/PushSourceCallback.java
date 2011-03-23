@@ -30,7 +30,8 @@ public interface PushSourceCallback {
 	
 	/**
 	 * During a capture, this method is called if an exception is
-	 * raised. 
+	 * raised. If this method is called, {@link #nextFrame(VideoFrame)} will not
+	 * be called anymore.
 	 * @param e the exception that was raised during the capture.
 	 */
 	public void exceptionReceived(V4L4JException e);

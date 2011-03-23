@@ -75,16 +75,25 @@ class PushSource implements Runnable {
 		
 		if (thread.isAlive()) {
 			thread.interrupt();
-			try {
-				// wait for thread to exit
-				if (! Thread.currentThread().equals(thread))
-					thread.join();
-				thread = null;
-			} catch (InterruptedException e) {
-				System.err.println("interrupted while waiting for frame pusher thread to complete");
-				e.printStackTrace();
-				throw new StateException("interrupted while waiting for frame pusher thread to complete", e);
+			
+			// wait for thread to exit if the push thread is not the one
+			// trying to join
+			if (! Thread.currentThread().equals(thread)) {
+				while (state == STATE_ABOUT_TO_STOP) {
+					try {
+						// wait for thread to exit
+						thread.join();
+						thread = null;
+					} catch (InterruptedException e) {
+						// interrupted while waiting for the thread to join
+						// keep waiting
+						// System.err.println("interrupted while waiting for frame pusher thread to complete");
+						// e.printStackTrace();
+						// throw new StateException("interrupted while waiting for frame pusher thread to complete", e);
+					}
+				}
 			}
+			
 		}
 	}
 	
@@ -110,7 +119,7 @@ class PushSource implements Runnable {
 				try {
 					if(frameGrabber.isStarted())
 						callback.exceptionReceived(new V4L4JException("Exception received while grabbing next frame", e));
-				} catch (Exception e2) {
+				} catch (Throwable t) {
 					// either the frame grabber has been released or the callback raised
 					// an exception. do nothing, just exit.
 				}

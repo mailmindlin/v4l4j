@@ -247,7 +247,7 @@ public interface FrameGrabber {
 	public VideoFrame getVideoFrame() throws V4L4JException;
 
 	/**
-	 * This method stops the capture.
+	 * This method stops the capture and recycles all video frames.
 	 * @throws StateException if the capture has not been started or if this 
 	 * <code>FrameGrabber</code> has been already released, and therefore must
 	 * not be used anymore.
