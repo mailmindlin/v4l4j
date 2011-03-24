@@ -66,7 +66,7 @@ import au.edu.jcu.v4l4j.FrameInterval;
 import au.edu.jcu.v4l4j.FrameInterval.DiscreteInterval;
 import au.edu.jcu.v4l4j.FrameInterval.Type;
 import au.edu.jcu.v4l4j.ImageFormat;
-import au.edu.jcu.v4l4j.PushSourceCallback;
+import au.edu.jcu.v4l4j.CaptureCallback;
 import au.edu.jcu.v4l4j.Tuner;
 import au.edu.jcu.v4l4j.TunerInfo;
 import au.edu.jcu.v4l4j.V4L4JConstants;
@@ -83,7 +83,7 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * @author gilles
  *
  */
-public abstract class AbstractVideoViewer extends WindowAdapter implements PushSourceCallback{
+public abstract class AbstractVideoViewer extends WindowAdapter implements CaptureCallback{
 	private JLabel video, fps, freq;
 	private JFrame f;
 	private JComboBox formats;
@@ -106,8 +106,6 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements PushS
 	/**
 	 * The method builds a new VideoViewer object
 	 * @param d the video device
-	 * @param p the image processor to which we will send frames as they are
-	 * captured
 	 */
     public AbstractVideoViewer(VideoDevice d) {
     	vd = d;
@@ -145,7 +143,6 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements PushS
 	 * be started 
 	 * @param width the capture width
 	 * @param height the capture height
-	 * @param intv the frame interval for this resolution
      */
     public void initGUI(Object[] i, final int width, final int height, String fmtName){
         f = new JFrame();
@@ -344,7 +341,7 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements PushS
     	}
 
     	// enable push mode
-    	fg.setPushSourceMode(this);
+    	fg.setCaptureCallback(this);
     	
     	//set the frame interval if not null
     	try {
@@ -436,10 +433,7 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements PushS
     	f.dispose();		
 	}
 	
-	/*
-	 * (non-Javadoc)
-	 * @see au.edu.jcu.v4l4j.PushSourceCallback#nextFrame(au.edu.jcu.v4l4j.VideoFrame)
-	 * 
+	/** 
 	 * this method is called by v4l4j during capture when a new frame is available
 	 */
 	@Override
@@ -450,9 +444,8 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements PushS
 		frame.recycle();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see au.edu.jcu.v4l4j.PushSourceCallback#exceptionReceived(au.edu.jcu.v4l4j.exceptions.V4L4JException)
+	/**
+	 * This method is called by v4l4j during capture if there is an error
 	 */
 	@Override
 	public void exceptionReceived(V4L4JException e) {

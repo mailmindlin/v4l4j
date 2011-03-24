@@ -6,7 +6,13 @@
  * several interfaces, including video capture, video overlay, video output & 
  * teletext interfaces. v4l4j provides access to the video capture 
  * interface of V4L only. v4l4j allows you to retrieve information about a video
- * device, access its video controls & tuners and grab images from it.  
+ * device, access its video controls & tuners and grab images from it.<br> 
+ * 
+ * <h2>Examples</h2>
+ * v4l4j comes with many simple, easy-to-follow example applications in the
+ * au.edu.jcu.v4l4j.examples package. It is strongly suggested you take a look
+ * at them as you read these JavaDoc pages as they help illustrate concepts 
+ * crucial to a correct use of this API.
  * <h2>Usage</h2>
  * <h3>Video device object</h3>
  * To use v4l4j, the first step is to create a {@link au.edu.jcu.v4l4j.VideoDevice}

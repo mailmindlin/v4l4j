@@ -1,3 +1,20 @@
+/*
+* Copyright (C) 2011 Gilles Gigan (gilles.gigan@gmail.com)
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public  License as published by the
+* Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+* or FITNESS FOR A PARTICULAR PURPOSE.  
+* See the GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+*/
 package au.edu.jcu.v4l4j;
 
 import java.awt.image.BufferedImage;
@@ -47,7 +64,7 @@ class BaseVideoFrame implements VideoFrame{
 		bufferIndex = 0;
 		recycled = true;
 	}
-	
+
 	/**
 	 * This method marks this frame as ready to be delivered to the user, as its
 	 * buffer has just been filled with a new frame of the given length. 
@@ -92,6 +109,61 @@ class BaseVideoFrame implements VideoFrame{
 	 */
 	final int getBufferInex() {
 		return bufferIndex;
+	}
+	
+	/**
+	 * Subclasses can override this method to either
+	 * return a {@link WritableRaster} for this video frame, or throw
+	 * a {@link UnsupportedMethod} exception if this video frame cannot
+	 * generate a {@link WritableRaster}.
+	 * @return  a {@link WritableRaster}.
+	 * @throws UnsupportedMethod exception if a raster cannot be generated
+	 * for this video frame (because of its image format for instance) 
+	 */
+	protected WritableRaster refreshRaster() {
+		if (raster == null)
+			throw new UnsupportedMethod("A raster can not be generated for this "
+					+ "image format ("+frameGrabber.getImageFormat().toString()+")");
+
+		return raster;
+	}
+
+	/**
+	 * Subclasses can override this method to either
+	 * return a {@link BufferedImage} for this video frame, or throw
+	 * a {@link UnsupportedMethod} exception if this video frame cannot
+	 * generate a {@link BufferedImage}.
+	 * @return  a {@link BufferedImage}.
+	 * @throws UnsupportedMethod exception if a buffered image cannot be generated
+	 * for this video frame (because of its image format for instance) 
+	 */
+	protected BufferedImage refreshBufferedImage() {
+		if (bufferedImage == null)
+			throw new UnsupportedMethod("A Bufferedimage can not be generated for this "
+					+ "image format ("+frameGrabber.getImageFormat().toString()+")");
+
+		return bufferedImage;
+	}
+	
+	/**
+	 * This method must be called with this video frame lock held, and
+	 * throws a {@link StateException} if it is recycled.
+	 * @throws StateException if this video frame is recycled.
+	 */
+	private final void checkIfRecycled() throws StateException {
+		if (recycled)
+			throw new StateException("This video frame has been recycled");
+	}
+	
+	
+	/*
+	 * 
+	 * Video Frame interface methods
+	 * 
+	 */	
+	@Override
+	public final FrameGrabber getFrameGrabber() {
+		return frameGrabber;
 	}
 	
 	@Override
@@ -143,49 +215,5 @@ class BaseVideoFrame implements VideoFrame{
 			recycled = true;
 			notifyAll();
 		}
-	}
-
-	/**
-	 * Subclasses can override this method to either
-	 * return a {@link WritableRaster} for this video frame, or throw
-	 * a {@link UnsupportedMethod} exception if this video frame cannot
-	 * generate a {@link WritableRaster}.
-	 * @return  a {@link WritableRaster}.
-	 * @throws UnsupportedMethod exception if a raster cannot be generated
-	 * for this video frame (because of its image format for instance) 
-	 */
-	protected WritableRaster refreshRaster() {
-		if (raster == null)
-			throw new UnsupportedMethod("A raster can not be generated for this "
-					+ "image format ("+frameGrabber.getImageFormat().toString()+")");
-
-		return raster;
-	}
-
-	/**
-	 * Subclasses can override this method to either
-	 * return a {@link BufferedImage} for this video frame, or throw
-	 * a {@link UnsupportedMethod} exception if this video frame cannot
-	 * generate a {@link BufferedImage}.
-	 * @return  a {@link BufferedImage}.
-	 * @throws UnsupportedMethod exception if a buffered image cannot be generated
-	 * for this video frame (because of its image format for instance) 
-	 */
-	protected BufferedImage refreshBufferedImage() {
-		if (bufferedImage == null)
-			throw new UnsupportedMethod("A Bufferedimage can not be generated for this "
-					+ "image format ("+frameGrabber.getImageFormat().toString()+")");
-
-		return bufferedImage;
-	}
-	
-	/**
-	 * This method must be called with this video frame lock held, and
-	 * throws a {@link StateException} if it is recycled.
-	 * @throws StateException if this video frame is recycled.
-	 */
-	private final void checkIfRecycled() throws StateException {
-		if (recycled)
-			throw new StateException("This video frame has been recycled");
 	}
 }

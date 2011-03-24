@@ -25,7 +25,6 @@
 package au.edu.jcu.v4l4j;
 
 import au.edu.jcu.v4l4j.FrameInterval.DiscreteInterval;
-import au.edu.jcu.v4l4j.examples.SimpleViewer;
 import au.edu.jcu.v4l4j.exceptions.InvalidValue;
 import au.edu.jcu.v4l4j.exceptions.NoTunerException;
 import au.edu.jcu.v4l4j.exceptions.StateException;
@@ -36,71 +35,62 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * Objects implementing this interface provide methods to capture frames from 
  * a {@link VideoDevice}. <code>FrameGrabber</code>s are not instantiated 
  * directly. Instead, one of the <code>getXXXFrameGrabber()</code> methods
- * must be called on a {@link VideoDevice} to obtain one. Requested height
+ * must be called on a {@link VideoDevice} to obtain one. The requested height
  * and width may be adjusted to the closest supported values. The adjusted width 
  * and height can be retrieved by calling {@link #getWidth()} and 
  * {@link #getHeight()}.<br>
- * Frame grabbers operate in two modes: push or pull. In push mode, v4l4j is given
- * an object implementing the {@link PushSourceCallback} interface which will
- * be handed new captured frames as soon as they arrive. In pull mode,
- * frames are retrieved by repeated calls to {@link #getVideoFrame()}. By
- * default, a frame grabber operates in pull mode. Call 
- * {@link #setPushSourceMode(PushSourceCallback)} to select the desired mode <b>before</b>
- * starting the capture (with {@link #startCapture()}).<br>
- * A typical <code>FrameGrabber</code> use (in pull mode) is as follows:
+ * Frame grabbers operate in push mode: you must give v4l4j
+ * an object implementing the {@link CaptureCallback} interface by calling
+ * {@link #setCaptureCallback(CaptureCallback)}. During capture,
+ * v4l4j will deliver frames to this object as soon as they arrive.<br>
+ * A typical <code>FrameGrabber</code> use case is as follows:
  * <br>
- * In the main thread, create the video device and frame grabber:
+ * Create the video device and frame grabber:
  * <code><br><br>
  * //create a new video device<br>
  * VideoDevice vd = new VideoDevice("/dev/video0");<br>
  * <br>//Create an instance of FrameGrabber
- * <br>FrameGrabber f = vd.getRawFrameGrabber(320, 240, 0, 0, 80);
- * <br> //the framegrabber will use the first image format supported by the 
- * device, as returned by
- * <br> //vd.getDeviceInfo().getFormatList().getNativeFormats().get(0)
+ * <br>FrameGrabber f = vd.getJPEGFrameGrabber(320, 240, 0, 0, 80);
+ * <br>//If supported, this frame grabber will capture frames and convert them
+ * <br>//to JPEG before delivering them to your application. 
  * <br>
- * </code><br>
- * Create and run a capture thread which runs the following loop:<br>
- * <code> 
- * <br>VideoFrame frame;
- * <br>while (!stop) {
- * <br>&nbsp;&nbsp; frame = f.getVideoFrame(); // block until a frame is ready
- * <br>&nbsp;&nbsp; //do something useful with frame, then recycle it
- * <br>&nbsp;&nbsp; //when done with it, so v4l4j can re-use it later on
+ * <br>//Instantiate an object that implements the {@link CaptureCallback}
+ * <br>//interface which will receive captured frame, and pass it to the frame grabber.
+ * <br>f.setCaptureCallback(myCallbackObject);
+ * <br>
+ * <br>//Now start the capture
+ * <br>f.startCapture();
+ * <br>
+ * <br>//At this stage, myCallbackObject.nextFrame() will be called every time
+ * <br>//a new frame is available (see next paragraph).
+ * <br>
+ * <br>//When appropriate, stop the capture
+ * <br>f.stopCapture();
+ * <br>//Release the frame grabber
+ * <br>vd.releaseFrameGrabber();
+ * <br>//Release the video device
+ * <br>vd.release();
+ * </code><br><br>
+ * In myCallbackObject :<br>
+ * <code>
+ * <br>public void nextFrame(VideoFrame frame) {
+ * <br>&nbsp;&nbsp; //do something useful with frame. But make sure you recycle
+ * <br>&nbsp;&nbsp; //it when dealt with, so v4l4j can re-use it later on
  * <br>&nbsp;&nbsp; frame.recycle();
  * <br>}<br>
  * </code>
- * Back in the main thread, start the capture (make sure the capture thread is
- * running before starting the capture):<br>
- * <code> 
- * <br>f.startCapture();
- * <br>//At this point, the capture thread will be unblocked each time a frame 
- * <br>//is ready.
- * <br>//
- * <br>//When done, stop the capture thread
- * <br>stop = true;
- * <br>//Stop the capture
- * <br>f.stopCapture();<br>
- * <br>//Free capture resources and release the FrameGrabber
- * <br>vd.releaseFrameGrabber();<br>
- * <br>//release VideoDevice
- * <br>vd.release();
- * </code><br><br>
- * In push mode, instead of creating a capture thread which continuously calls 
- * {@link #getVideoFrame()}, v4l4j creates and runs a capture thread for you.
- * You only need to provide a {@link PushSourceCallback} object which will 
- * receive frames via its 
- * {@link PushSourceCallback#nextFrame(VideoFrame) nextFrame()} method.
- * For an example of push mode capture, see {@link SimpleViewer}.
- * <br>In both pull and push modes, video frames must be recycled when they are no
+
+ * For a concrete example of push mode capture which displays the video 
+ * stream, see the au.edu.jcu.v4l4j.examples.SimpleViewer example application.
+ * <br>Again, you must recycle video frames when they are no
  * longer used.<br></br>
  * 
- * Once the frame grabber is released with 
- * {@link VideoDevice#releaseFrameGrabber()}, it can be re-initialised again 
- * with one of the <code>getXXXFrameGrabber()</code> methods again. Similarly,
- * when the capture is stopped with {@link #stopCapture()}, it can be started 
- * again with {@link #stopCapture()} without having to create a new 
- * <code>FrameGrabber</code>.
+ * Only one frame grabber can be used at any one time on a given video device.
+ * Once a frame grabber is released with 
+ * {@link VideoDevice#releaseFrameGrabber()}, another one can be obtained. 
+ * However, when the capture is stopped with {@link #stopCapture()}, it can be 
+ * started again with {@link #stopCapture()} without having to create a new 
+ * frame grabber.
  * 
  * @see RawFrameGrabber
  * @see JPEGFrameGrabber
@@ -127,7 +117,9 @@ public interface FrameGrabber {
 	/**
 	 * This method returns the number of buffers v4l4j has negotiated with
 	 * the driver. The driver stores captured frames in these buffers and returns
-	 * them to v4l4j. This number is an indication as to how many video
+	 * them to v4l4j. A {@link VideoFrame} represents (and encapsulates) one of 
+	 * these buffers.
+	 * Hence, this number is an indication as to how many video
 	 * frames can be obtained from the driver through {@link #getVideoFrame()}
 	 * before the capture stops until a buffer is returned to the driver 
 	 * through {@link VideoFrame#recycle()}. Practically speaking, this number
@@ -137,6 +129,16 @@ public interface FrameGrabber {
 	 * the driver
 	 */
 	public int getNumberOfVideoFrames();
+	
+	/**
+	 * This method returns the number of recycled video frames, ie. the number 
+	 * of video frames are currently available to v4l4j (and the driver) to 
+	 * store new incoming frames.
+	 * This number indicates how many more frames can be captured by v4l4j 
+	 * before the capture stops until one of the previous frame gets recycled.
+	 * @return the number of video frames currently recycled.
+	 */
+	public int getNumberOfRecycledVideoFrames();
 	
 	/**
 	 * This method sets the frame interval used for capture. The frame interval
@@ -189,33 +191,22 @@ public interface FrameGrabber {
 	public Tuner getTuner() throws NoTunerException;
 	
 	/**
-	 * <code>setPushSourceMode</code> tells this frame grabber to work either
-	 * in push or pull mode. In push mode, the given {@link PushSourceCallback}
-	 * object will be notified by this grabber as soon as a new frame becomes
-	 * available. In pull mode, captured frames are obtained by calling 
-	 * {@link #getVideoFrame()}. When this method is called with a valid
-	 * <code>callback</code> argument (that is when, <code>callback != null</code>)
-	 * the push mode is activated. When <code>callback != null</code>, 
-	 * the pull mode is activated.<br>
+	 * <code>setCaptureCallback</code> sets the {@link CaptureCallback} object
+	 * which will be notified by this grabber as soon as new frames become
+	 * available.<br>
 	 * This method cannot be called while the capture is active, ie. in between
 	 * a call to {@link #startCapture()} and {@link #stopCapture()}.
-	 * @param callback if not null, tell the frame grabber to work in push mode.
-	 * The given object implementing the {@link PushSourceCallback}
-	 * interface gets notified when a new frame is available, or when 
-	 * an exception is triggered. If null, tell the frame grabber to work in
-	 * pull mode. Frames must be obtained by calling {@link #getVideoFrame()}.
+	 * @param callback an object implementing the {@link CaptureCallback}
+	 * interface which will receive new frames and capture exceptions.
 	 * @throws StateException if this method is invoked while capture is active,
 	 * ie. after a call to {@link #startCapture()} and prior a call 
-	 * to {@link #stopCapture()}. 
-	 * @return whether in push mode (true) or pull mode (false) 
+	 * to {@link #stopCapture()}.  
 	 */
-	public boolean setPushSourceMode(PushSourceCallback callback);
+	public void setCaptureCallback(CaptureCallback callback);
 
 	/**
-	 * This method starts the capture. In pull mode, make sure a separate 
-	 * thread (the capture thread) has called {@link #getVideoFrame()} prior to
-	 * calling this method. In push mode, after calling this method, frames will
-	 * be delivered to the provided {@link PushSourceCallback} object.
+	 * This method starts the capture. Frames will
+	 * be delivered to the provided {@link CaptureCallback} object.
 	 * @throws V4L4JException if the capture cannot be started
 	 * @throws StateException if this <code>FrameGrabber</code> has been already
 	 * released, and therefore must not be used anymore
@@ -223,34 +214,30 @@ public interface FrameGrabber {
 	public void startCapture() throws V4L4JException;
 
 	/**
-	 * In pull mode, this method retrieves one frame from the video source. 
-	 * At the start 
-	 * of the capture, v4l4j creates a certain number of {@link VideoFrame}s
-	 * and places them in an "available" queue. You can retrieve the exact 
-	 * number of buffers by calling {@link #getNumberOfVideoFrames()}.
-	 * Each time this method is called, it retrieves a VideoFrame from the "available" queue,
-	 * captures an image from the device, places it in the VideoFrame object and
-	 * returns it. When you have finished processing the VideoFrame, you must 
-	 * recycle it by calling {@link VideoFrame#recycle()}, so it returns to the
-	 * "available" queue and can be reused again. If there are no 
-	 * VideoFrames in the available queue when this method is called, it will 
-	 * block until one gets recycled.<br>
-	 * Do not call this method if you have set the frame grabber to work in push
-	 * mode.
+	 * This is a legacy method, it will be removed. Do not use it.<br>
+	 * This method blocks and waits for a frame, then returns it. If you call 
+	 * this method, make sure either {@link #startCapture()} has already been
+	 * called, or another thread will call it in the near future, as 
+	 * {@link #getVideoFrame()} will block if capture is not started.
 	 * @return an {@link VideoFrame} containing the captured frame data.
 	 * @throws V4L4JException if there is an error capturing from the source.
 	 * @throws StateException if either the capture has not been started, if this 
 	 * <code>FrameGrabber</code> has been already released, and therefore must 
 	 * not be used anymore or if we were interrupted while waiting for a frame
 	 * to be recycled.
+	 * @deprecated This method has been deprecated and will be removed in a 
+	 * future release. Instead of using this method, you should use this frame
+	 * grabber in push mode. See @link {@link FrameGrabber} for more information
+	 * on how to enable push mode.
+
 	 */
 	public VideoFrame getVideoFrame() throws V4L4JException;
 
 	/**
-	 * This method stops the capture and recycles all video frames.
-	 * @throws StateException if the capture has not been started or if this 
-	 * <code>FrameGrabber</code> has been already released, and therefore must
-	 * not be used anymore.
+	 * This method stops the capture, and recycles all @link {@link VideoFrame}s.
+	 * @throws StateException if the capture has not been started, is already 
+	 * stopped, or if this <code>FrameGrabber</code> has been already released, 
+	 * and therefore must not be used anymore.
 	 */
 	public void stopCapture();
 

@@ -27,7 +27,7 @@ import java.util.Vector;
 
 import au.edu.jcu.v4l4j.ControlList;
 import au.edu.jcu.v4l4j.JPEGFrameGrabber;
-import au.edu.jcu.v4l4j.PushSourceCallback;
+import au.edu.jcu.v4l4j.CaptureCallback;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
@@ -57,7 +57,7 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * @author gilles
  *
  */
-public class CamServer implements Runnable, PushSourceCallback{
+public class CamServer implements Runnable, CaptureCallback{
 	private ServerSocket 				serverSocket;
 	private VideoDevice					videoDevice;
 	private JPEGFrameGrabber			frameGrabber;
@@ -100,7 +100,7 @@ public class CamServer implements Runnable, PushSourceCallback{
 	public CamServer(String dev, int width, int height, int port) throws V4L4JException, IOException {
 		videoDevice = new VideoDevice(dev);
 		frameGrabber = videoDevice.getJPEGFrameGrabber(width, height, 0, 0, 80);
-		frameGrabber.setPushSourceMode(this);
+		frameGrabber.setCaptureCallback(this);
 		controlList = videoDevice.getControlList();
 		clients = new Vector<ClientConnection>();
 
