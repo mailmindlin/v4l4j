@@ -209,10 +209,9 @@
 	</target>
 	
 	<target name="javadoc">
-		<javadoc sourcepath="${project.src}" packagenames="au.edu.jcu.v4l4j.*" destdir="${project.javadoc.dir}" public="true" use="true">
+		<javadoc sourcepath="${project.src}" packagenames="au.edu.jcu.v4l4j.*" destdir="${project.javadoc.dir}" public="true" use="true" nodeprecated="true">
 			<excludepackage name="au.edu.jcu.v4l4j.test" />
-			<excludepackage name="au.edu.jcu.v4l4j.examples" />
-			<excludepackage name="au.edu.jcu.v4l4j.examples.server" />
+			<excludepackage name="au.edu.jcu.v4l4j.examples.*" />
 		</javadoc>
 	</target>
 	
@@ -298,7 +297,7 @@
 			<jvmarg value="-Dtest.height=${test.height}" /> 
 			<jvmarg value="-Dtest.standard=${test.standard}" /> 
 			<jvmarg value="-Dtest.channel=${test.channel}" />
-			<!--<test name="au.edu.jcu.v4l4j.test.FrameGrabberTest" />-->
+			<test name="au.edu.jcu.v4l4j.test.FrameGrabberTest" />
 			<test name="au.edu.jcu.v4l4j.test.PushSourceTest" />
 			<formatter type="plain" usefile="false" />
 			<classpath refid="test.classpath" />

@@ -50,7 +50,7 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * <li>and Adjusting values of available video controls.</li>
  * </ul>
  * Each of these categories is detailed in the following sections.
- * To use features provided in any of these category, a <code>VideoDevice</code>
+ * To use features provided in any of these categories, a <code>VideoDevice</code>
  * object must first be instantiated. This is done simply by calling the 
  * constructor and giving it the full path to the associated device file:
  * <br><code>
@@ -78,11 +78,20 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  * different ways. One of them is {@link #getDeviceInfo()} will throw a
  * {@link V4L4JException} if a process is already using the device.
  * <h2>Capturing frames</h2>
- * In order to capture frames from a video device, an object implementing the 
- * {@link FrameGrabber} interface must be obtained. The 
+ * In order to capture frames from a video device, you must first obtain an 
+ * object implementing the {@link FrameGrabber} interface. The 
  * {@link VideoDevice} objects provides several methods for that, 
  * depending on the image format required:
  * <ul>
+ * 
+ * <li>The <code>getJPEGFrameGrabber()</code>
+ * method returns a {@link JPEGFrameGrabber} 
+ * object capable of capturing frames and converting  them to JPEG
+ * before handing them out. This frame grabber cannot be used with
+ * all video sources. It requires images from the video source to 
+ * be in some pre-defined formats in order to be converted to JPEG. If
+ * the video source is not capable of handing out images in one of the supported
+ * formats, then no <code>JPEGFrameGrabber</code> can be created.</li>
  *  
  * <li>The <code>getRGBFrameGrabber()</code> & <code>getBGRFrameGrabber()</code>
  * methods return either an {@link RGBFrameGrabber} or {@link BGRFrameGrabber} 
@@ -265,7 +274,7 @@ public class VideoDevice {
 		} catch (V4L4JException e){
 			//error getting DeviceInfo
 			//keep going so v4l4j can be used with drivers which supports
-			//multiple simultaneuous open() calls.
+			//multiple simultaneous open() calls.
 			//However, set things accordingly
 			deviceInfo = null;
 			

@@ -1,3 +1,20 @@
+/*
+* Copyright (C) 2011 Gilles Gigan (gilles.gigan@gmail.com)
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public  License as published by the
+* Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+* or FITNESS FOR A PARTICULAR PURPOSE.  
+* See the GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+*/
 package au.edu.jcu.v4l4j.examples;
 
 import java.awt.Component;
@@ -14,7 +31,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 
 import au.edu.jcu.v4l4j.FrameGrabber;
-import au.edu.jcu.v4l4j.PushSourceCallback;
+import au.edu.jcu.v4l4j.CaptureCallback;
 import au.edu.jcu.v4l4j.V4L4JConstants;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.VideoFrame;
@@ -26,7 +43,7 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * @author gilles
  *
  */
-public class GetSnapshotApp  extends WindowAdapter implements PushSourceCallback{
+public class GetSnapshotApp  extends WindowAdapter implements CaptureCallback{
 	private static int		width, height, std, channel;
 	private static String	device;
 
@@ -70,7 +87,7 @@ public class GetSnapshotApp  extends WindowAdapter implements PushSourceCallback
 		frameGrabber = videoDevice.getJPEGFrameGrabber(width, height, channel, std, 80);
 		width = frameGrabber.getWidth();
 		height = frameGrabber.getHeight();
-		frameGrabber.setPushSourceMode(this);
+		frameGrabber.setCaptureCallback(this);
 		frameGrabber.startCapture();
 	}
 
