@@ -39,7 +39,7 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
 
 /**
  * This abstract class implements the core functionalities found in all frame 
- * grabbers, intialisation, starting the capture, capturing frames, stopping
+ * grabbers, initialisation, starting the capture, capturing frames, stopping
  * the capture and releasing resources. It must be subclassed.<br>
  * Subclasses must implement {@link FrameGrabber#getImageFormat()} to return the
  * correct image format used for capture. {@link #init()} may also be overridden
@@ -202,6 +202,17 @@ abstract class AbstractGrabber implements FrameGrabber {
 	public int getNumberOfVideoFrames() {
 		return nbV4LBuffers;
 	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see au.edu.jcu.v4l4j.FrameGrabber#getNumberOfRecycledVideoFrames()
+	 */
+	@Override
+	public int getNumberOfRecycledVideoFrames(){
+		synchronized(availableVideoFrames) {
+			return availableVideoFrames.size();
+		}
+	}
 
 	/* (non-Javadoc)
 	 * @see au.edu.jcu.v4l4j.FrameGrabber#setFrameInterval()
@@ -246,26 +257,22 @@ abstract class AbstractGrabber implements FrameGrabber {
 	}
 
 	/* (non-Javadoc)
-	 * @see au.edu.jcu.v4l4j.FrameGrabber#setPushSourceMode()
+	 * @see au.edu.jcu.v4l4j.FrameGrabber#setCaptureCallback()
 	 */
 	@Override
-	public final boolean setPushSourceMode(PushSourceCallback callback) {
+	public final void setCaptureCallback(CaptureCallback callback) {
+		if (callback == null)
+			throw new NullPointerException("The callback object cannot be null");
+
 		synchronized (state){
 			// make sure we are in the right state.
 			if (state.isStarted())
 				throw new StateException("This frame grabber is already started");
 
-			// set new push source
-			if (callback == null) {
-				pushSource = null;
-				pushSourceThreadId = 0;
-			} else {
-				pushSource = new  PushSource(this, callback);
-				pushSourceThreadId = pushSource.getThreadId();
-			}
+			//FIXME: when transitioned to push mode only, instantiate
+			pushSource = new  PushSource(this, callback);
+			pushSourceThreadId = pushSource.getThreadId();
 		}
-
-		return (callback != null);
 	}
 
 	/* (non-Javadoc)
@@ -275,6 +282,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	public final void startCapture() throws V4L4JException {
 		state.start();
 
+		//FIXME: no need to check pushSource when transitioned to push mode only
 		// if we are in push mode, start the push source and wait until 
 		// it's blocked on getVideoFrame()
 		if (pushSource != null) {
@@ -287,21 +295,22 @@ abstract class AbstractGrabber implements FrameGrabber {
 			start(object);
 		} catch (V4L4JException e) {
 			// Error starting the capture...
-			
+
+			//FIXME: no need to check pushSource when transitioned to push mode only 
 			// stop the capture thread
 			if (pushSource != null)
 				pushSource.stopCapture();
-			
+
 			// return to previous state
 			state.rollback();
-			
+
 			// propagate exception
 			throw e;
 		}
-		
+
 		// change state to STARTED
 		state.commit();
-		
+
 		// put all frames into the available queue and wake up push source thread
 		synchronized(availableVideoFrames){
 			availableVideoFrames.addAll(videoFrames);
@@ -341,11 +350,17 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 */
 	@Override
 	public final VideoFrame getVideoFrame() throws V4L4JException {
+		//FIXME: remove this method when transitioned to push mode only
+		return getNextVideoFrame();
+	}
+
+	final VideoFrame getNextVideoFrame() throws V4L4JException {
 		int frameSize;
 		BaseVideoFrame nextFrame;
 
 		state.get();
 
+		//FIXME: no need to check pushSource when transitioned to push mode only
 		// if we are in push mode, make sure the calling thread is
 		// our pushSource's thread
 		if ((pushSource != null) &&  (Thread.currentThread().getId() != pushSourceThreadId)) {
@@ -368,7 +383,6 @@ abstract class AbstractGrabber implements FrameGrabber {
 		}
 
 		return nextFrame;
-
 	}
 
 	synchronized static void Log(String s){
@@ -382,7 +396,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 */
 	final void recycleVideoBuffer(BaseVideoFrame frame) {
 		enqueueBuffer(object, frame.getBufferInex());
-		
+
 		synchronized(availableVideoFrames){
 			availableVideoFrames.add(frame);
 			availableVideoFrames.notify();
@@ -397,24 +411,24 @@ abstract class AbstractGrabber implements FrameGrabber {
 		state.stop();
 		// At this stage, further calls to getVideoFrame() will throw an exception..
 		// However, the push thread might still be blocked in getVideoFrame().
-		
+
 		// The push thread blocked in getVideoFrame() can be blocked either:
 		// 1) in getAvailableVideoFrame(), waiting for an available frame
 		// OR
 		// 2) in fillBuffer(), waiting for a V4L buffer
-		
+
 		// If the push thread is blocked in 1) we can wake it up by interrupting
 		// it, but we cannot wake it up if blocked in 2), although
 		// we know it will unblock in the near future so we can just wait for it
-		
+
 		// unblock thread in 1)
 		// if we re started and in push mode, stop the push source
 		if (pushSource != null)
 			pushSource.stopCapture();
-		
+
 		// wait for thread blocked in 2)
 		state.waitTillNoMoreUsers();
-		
+
 		// at this stage, we know that no one is waiting in getVideoFrame() anymore,
 		// and further calls to it will throw a StateException.		
 
@@ -424,7 +438,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 
 		// stop jni code
 		stop(object);
-		
+
 		// remove all frames from available queue
 		synchronized(availableVideoFrames) {
 			availableVideoFrames.removeAllElements();
@@ -609,7 +623,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 				throw new StateException("This FrameGrabber is not started and "
 						+"can not be stopped");
 		}
-		
+
 		/**
 		 * This method unblocks when there are no more users.
 		 * It is the caller's responsibility to ensure before the call that the
@@ -622,11 +636,11 @@ abstract class AbstractGrabber implements FrameGrabber {
 				} catch (InterruptedException e) {
 					// a thread called stopCapture() while another was 
 					// blocked in getVideoFrame()
-//					System.err.println("Interrupted while waiting for "
-//							+"FrameGrabber users to complete");
-//					e.printStackTrace();
-//					throw new StateException("There are remaining users of "
-//							+"this FrameGrabber and it can not be stopped");
+					//					System.err.println("Interrupted while waiting for "
+					//							+"FrameGrabber users to complete");
+					//					e.printStackTrace();
+					//					throw new StateException("There are remaining users of "
+					//							+"this FrameGrabber and it can not be stopped");
 				}
 		}
 

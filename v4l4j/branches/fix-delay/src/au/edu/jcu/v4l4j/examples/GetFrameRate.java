@@ -26,7 +26,7 @@ package au.edu.jcu.v4l4j.examples;
 
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.ImageFormatList;
-import au.edu.jcu.v4l4j.PushSourceCallback;
+import au.edu.jcu.v4l4j.CaptureCallback;
 import au.edu.jcu.v4l4j.V4L4JConstants;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.VideoFrame;
@@ -38,7 +38,7 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * @author gilles
  *
  */
-public class GetFrameRate implements PushSourceCallback{
+public class GetFrameRate implements CaptureCallback{
 	public static final int 	captureLength = 10;	// seconds
 	private static String 		dev;
 	private static int 			inFmt, outFmt, width, height, channel, std, intv;
@@ -202,7 +202,7 @@ public class GetFrameRate implements PushSourceCallback{
 		}
 
 		// enable push mode
-		fg.setPushSourceMode(this);
+		fg.setCaptureCallback(this);
 
 		// start capture
 		try {

@@ -123,23 +123,7 @@ public class FrameGrabberTest {
 
 		fg.stopCapture();
 	}
-	
-	@Test(expected=StateException.class)
-	public void testGetFrameAfterStopCapture() throws StateException{
-		try {
-			fg.startCapture();
-		} catch (V4L4JException e) {
-			fail("Error: Should be able to start the capture here");
-		}
-		fg.stopCapture();
-
-		try {
-			fg.getVideoFrame();
-		} catch (V4L4JException e) {
-			fail("Error: we shouldnt be here - a StateException should be thrown instead");
-		}
-	}
-	
+		
 	@Test(expected=StateException.class)
 	public void testAccessVideoFrameAfterStartStopStartCapture() throws StateException{
 		VideoFrame frame = null;
@@ -171,12 +155,6 @@ public class FrameGrabberTest {
 		}
 	}
 	
-	@Test(expected=StateException.class)
-	public void testGetFrameWithoutStartCapture() throws V4L4JException {
-		fg.getVideoFrame().recycle();
-	}
-
-
 	@Test
 	public void testMultipleInitRelease(){
 		try {
