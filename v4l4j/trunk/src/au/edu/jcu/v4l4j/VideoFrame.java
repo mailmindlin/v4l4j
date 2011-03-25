@@ -1,3 +1,20 @@
+/*
+* Copyright (C) 2011 Gilles Gigan (gilles.gigan@gmail.com)
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public  License as published by the
+* Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+* or FITNESS FOR A PARTICULAR PURPOSE.  
+* See the GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+*/
 package au.edu.jcu.v4l4j;
 
 import java.awt.image.BufferedImage;
@@ -10,8 +27,9 @@ import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
 /**
  * Objects implementing this interface represent a single video frame captured by v4l4j.
  * They provide access to image data through various objects, including byte arrays
- * and {@link DataBuffer}s. <code>VideoFrame</code>s are returned by 
- * {@link FrameGrabber#getVideoFrame()}.<br>
+ * and {@link DataBuffer}s. During capture, v4l4j creates <code>VideoFrame</code>s 
+ * and passes them the registered {@link CaptureCallback} object. Check the 
+ * {@link FrameGrabber} class for more information on how to perform a capture.<br>
  * When accessing the image data as a byte array, as returned by {@link #getBytes()},
  * note that the size of returned byte array can be longer than the actual image size.
  * What this means is that you should use {@link #getFrameLength()} to figure out how
@@ -38,24 +56,29 @@ import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
  *
  */
 public interface VideoFrame {
+	/**
+	 * This method returns the frame grabber object which captured this frame
+	 * @return the frame grabber object which captured this frame.
+	 */
+	public FrameGrabber	getFrameGrabber();
 	
 	/**
 	 * This method returns the length of this video frame in bytes.
 	 * @return the length of this video frame in bytes.
 	 * @throws StateException if this video frame has been recycled already.
 	 */
-	public int				getFrameLength();
+	public int		getFrameLength();
 	
 	/**
-	 * This method returns this video frame's sequence number (a monotically
-	 * increasing number for each captured frame). Thjis number can be used
+	 * This method returns this video frame's sequence number (a monotonically
+	 * increasing number for each captured frame). This number can be used
 	 * to find out when a frame was dropped: if <code>currentSequenceNumber != 
 	 * (previousSequenceNumber + 1)</code> then <code>(currentSequenceNumber -
 	 * previousSequenceNumber(</code> frames were dropped.
 	 * @return this video frame's sequence number
 	 * @throws StateException if this video frame has been recycled already. 
 	 */
-	public long getSequenceNumber();
+	public long 	getSequenceNumber();
 
 	/**
 	 * This method returns the OS time (number of microseconds elapsed since
@@ -64,7 +87,7 @@ public interface VideoFrame {
 	 * startup) at which this video frame was captured.
 	 * @throws StateException if this video frame has been recycled already.
 	 */
-	public long getCaptureTime();
+	public long 	getCaptureTime();
 	
 	/**
 	 * This method returns the image data as a byte array.<b>Please note that
@@ -76,7 +99,7 @@ public interface VideoFrame {
 	 * the actual frame length.
 	 * @throws StateException if this video frame has been recycled already.
 	 */
-	public byte[]			getBytes();
+	public byte[]	getBytes();
 	
 	/**
 	 * This method returns the image data encapsulated in a {@link DataBuffer}

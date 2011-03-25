@@ -21,39 +21,28 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
-package au.edu.jcu.v4l4j.examples;
+package au.edu.jcu.v4l4j.examples.videoViewer;
 
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.ImageFormat;
 import au.edu.jcu.v4l4j.VideoDevice;
-import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
-public class ControlViewer implements ImageProcessor{
+public class ControlViewer extends AbstractVideoViewer{
 	
 	/**
 	 * Builds a WebcamViewer object
 	 * @param v the video device 
 	 */
     public ControlViewer(VideoDevice v) {
-    	new VideoViewer(v, this).initGUI(new Object[] {},640,480,"");    	      
+    	super(v);
+    	
+    	initGUI(new Object[] {},640,480,"");    	      
     }
 
 	@Override
-	public FrameGrabber getGrabber(ImageFormat i) throws V4L4JException {
+	protected FrameGrabber getFrameGrabber(ImageFormat i) throws V4L4JException {
 		// we shouldnt be called
-		return null;
+		throw new V4L4JException("Control-only viewer");
 	}
-
-	@Override
-	public void processImage(VideoFrame frame) {
-		// we shouldnt be called
-		
-	}
-
-	@Override
-	public void releaseGrabber() {
-		// we shouldnt be called
-	}
-
 }

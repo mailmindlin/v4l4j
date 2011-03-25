@@ -21,7 +21,7 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
-package au.edu.jcu.v4l4j.examples;
+package au.edu.jcu.v4l4j.examples.videoViewer;
 
 import java.awt.Component;
 import java.awt.Container;

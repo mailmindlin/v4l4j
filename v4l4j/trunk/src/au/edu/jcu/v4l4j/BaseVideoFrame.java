@@ -1,3 +1,20 @@
+/*
+* Copyright (C) 2011 Gilles Gigan (gilles.gigan@gmail.com)
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public  License as published by the
+* Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+* or FITNESS FOR A PARTICULAR PURPOSE.  
+* See the GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+*/
 package au.edu.jcu.v4l4j;
 
 import java.awt.image.BufferedImage;
@@ -22,6 +39,7 @@ class BaseVideoFrame implements VideoFrame{
 	
 	protected long					sequenceNumber;
 	protected long					captureTime;
+	protected int					bufferIndex;
 	
 	protected V4L4JDataBuffer		dataBuffer;
 	protected boolean				recycled;
@@ -32,7 +50,7 @@ class BaseVideoFrame implements VideoFrame{
 	/** 
 	 * This method creates the base for a video frame. It will instantiate
 	 * and initialise all members except raster and bufferedImage, which
-	 * falls under the responsiblity of the subclass.
+	 * falls under the responsibility of the subclass.
 	 * @param grabber the frame grabber to which this frame must be
 	 * returned to when recycled.
 	 * @param bufferSize the size of the byte array to create for this frame.
@@ -43,9 +61,10 @@ class BaseVideoFrame implements VideoFrame{
 		dataBuffer = new V4L4JDataBuffer(frameBuffer);
 		raster = null;
 		bufferedImage = null;
+		bufferIndex = 0;
 		recycled = true;
 	}
-	
+
 	/**
 	 * This method marks this frame as ready to be delivered to the user, as its
 	 * buffer has just been filled with a new frame of the given length. 
@@ -53,11 +72,13 @@ class BaseVideoFrame implements VideoFrame{
 	 * @param sequence this frame's sequence number
 	 * @param timeUs this frame capture timestamp in elapsed microseconds since startup
 	 */
-	final synchronized void prepareForDelivery(int length, long sequence, long timeUs){
+	final synchronized void prepareForDelivery(int length, int index, 
+			long sequence, long timeUs){
 		frameLength = length;
 		dataBuffer.setNewFrameSize(length);
 		sequenceNumber = sequence;
 		captureTime = timeUs;
+		bufferIndex = index;
 		recycled = false;
 	}
 	
@@ -79,6 +100,70 @@ class BaseVideoFrame implements VideoFrame{
 	 */
 	final byte[] getByteArray() {
 		return frameBuffer;
+	}
+	
+	/**
+	 * This method is used by the owning frame grabber to get the V4L2 buffer
+	 * index
+	 * @return the V4L2 buffer index
+	 */
+	final int getBufferInex() {
+		return bufferIndex;
+	}
+	
+	/**
+	 * Subclasses can override this method to either
+	 * return a {@link WritableRaster} for this video frame, or throw
+	 * a {@link UnsupportedMethod} exception if this video frame cannot
+	 * generate a {@link WritableRaster}.
+	 * @return  a {@link WritableRaster}.
+	 * @throws UnsupportedMethod exception if a raster cannot be generated
+	 * for this video frame (because of its image format for instance) 
+	 */
+	protected WritableRaster refreshRaster() {
+		if (raster == null)
+			throw new UnsupportedMethod("A raster can not be generated for this "
+					+ "image format ("+frameGrabber.getImageFormat().toString()+")");
+
+		return raster;
+	}
+
+	/**
+	 * Subclasses can override this method to either
+	 * return a {@link BufferedImage} for this video frame, or throw
+	 * a {@link UnsupportedMethod} exception if this video frame cannot
+	 * generate a {@link BufferedImage}.
+	 * @return  a {@link BufferedImage}.
+	 * @throws UnsupportedMethod exception if a buffered image cannot be generated
+	 * for this video frame (because of its image format for instance) 
+	 */
+	protected BufferedImage refreshBufferedImage() {
+		if (bufferedImage == null)
+			throw new UnsupportedMethod("A Bufferedimage can not be generated for this "
+					+ "image format ("+frameGrabber.getImageFormat().toString()+")");
+
+		return bufferedImage;
+	}
+	
+	/**
+	 * This method must be called with this video frame lock held, and
+	 * throws a {@link StateException} if it is recycled.
+	 * @throws StateException if this video frame is recycled.
+	 */
+	private final void checkIfRecycled() throws StateException {
+		if (recycled)
+			throw new StateException("This video frame has been recycled");
+	}
+	
+	
+	/*
+	 * 
+	 * Video Frame interface methods
+	 * 
+	 */	
+	@Override
+	public final FrameGrabber getFrameGrabber() {
+		return frameGrabber;
 	}
 	
 	@Override
@@ -130,49 +215,5 @@ class BaseVideoFrame implements VideoFrame{
 			recycled = true;
 			notifyAll();
 		}
-	}
-
-	/**
-	 * Sublclasses can override this method to either
-	 * return a {@link WritableRaster} for this video frame, or throw
-	 * a {@link UnsupportedMethod} exception if this video frame cannot
-	 * generate a {@link WritableRaster}.
-	 * @return  a {@link WritableRaster}.
-	 * @throws UnsupportedMethod exception if a raster cannot be generated
-	 * for this video frame (because of its image format for instance) 
-	 */
-	protected WritableRaster refreshRaster() {
-		if (raster == null)
-			throw new UnsupportedMethod("A raster can not be generated for this "
-					+ "image format ("+frameGrabber.getImageFormat().toString()+")");
-
-		return raster;
-	}
-
-	/**
-	 * Sublclasses can override this method to either
-	 * return a {@link BufferedImage} for this video frame, or throw
-	 * a {@link UnsupportedMethod} exception if this video frame cannot
-	 * generate a {@link BufferedImage}.
-	 * @return  a {@link BufferedImage}.
-	 * @throws UnsupportedMethod exception if a buffered image cannot be generated
-	 * for this video frame (because of its image format for instance) 
-	 */
-	protected BufferedImage refreshBufferedImage() {
-		if (bufferedImage == null)
-			throw new UnsupportedMethod("A Bufferedimage can not be generated for this "
-					+ "image format ("+frameGrabber.getImageFormat().toString()+")");
-
-		return bufferedImage;
-	}
-	
-	/**
-	 * This method must be called with this video frame lock held, and
-	 * throws a {@link StateException} if it is recycled.
-	 * @throws StateException if this video frame is recycled.
-	 */
-	private final void checkIfRecycled() throws StateException {
-		if (recycled)
-			throw new StateException("This video frame has been recycled");
 	}
 }
