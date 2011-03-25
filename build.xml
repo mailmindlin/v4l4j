@@ -52,6 +52,8 @@
 		<echo message=" test-fps :         Check the FPS of a video source"/>
 		<echo message=" test-gui :         Display video stream in a window"/>
 		<echo message=" test-server :      Runs a TCP server to and MJPEG video stream to a web browser"/>
+		<echo message=" test-dual :        Display video streams from two webcams in a windows"/>
+		<echo message=" test-getsnapshot :        Get snapshots from a camera"/>
 		<echo message=" deviceInfo:        Display information about a video source"/>
 
 		<echo message=""/>
@@ -278,6 +280,15 @@
 			<arg value="-Dtest.channel=${test.channel}" /> <!-- channel -->
 		</java>
 	</target>
+	
+	<target name="test-dual">
+			<java classname="au.edu.jcu.v4l4j.examples.DualViewer" fork="true" failonerror="true">
+				<classpath>
+					<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
+				</classpath>
+				<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
+			</java>
+		</target>
 	
 	<target name="deviceInfo">
 		<java classname="au.edu.jcu.v4l4j.VideoDevice" fork="true" failonerror="true">
