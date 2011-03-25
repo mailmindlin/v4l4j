@@ -52,6 +52,8 @@
 		<echo message=" test-fps :         Check the FPS of a video source"/>
 		<echo message=" test-gui :         Display video stream in a window"/>
 		<echo message=" test-server :      Runs a TCP server to and MJPEG video stream to a web browser"/>
+		<echo message=" test-dual :        Display video streams from two webcams in a windows"/>
+		<echo message=" test-getsnapshot :        Get snapshots from a camera"/>
 		<echo message=" deviceInfo:        Display information about a video source"/>
 
 		<echo message=""/>
@@ -161,7 +163,7 @@
 	<target name="jar" depends="compile">
 		<jar jarfile="${project.dir}/${project.jar.file}">
 			<manifest>
-				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.DeviceChooser"/>
+				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.videoViewer.DeviceChooser"/>
 			</manifest>
 			<fileset dir="${project.classes}">
 				<include name="**"/>
@@ -176,7 +178,7 @@
 	<target name="jar-debug" depends="compile-debug">
 		<jar jarfile="${project.dir}/${project.jar.file}">
 		        <manifest>
-				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.DeviceChooser"/>
+				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.videoViewer.DeviceChooser"/>
 			</manifest>
 			<fileset dir="${project.classes}">
 				<include name="**"/>
@@ -191,7 +193,7 @@
 	<target name="jar-src" depends="compile">
 		<jar jarfile="${project.dir}/${project.jar.file}">
 			<manifest>
-				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.DeviceChooser"/>
+				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.videoViewer.DeviceChooser"/>
 			</manifest>
 			<fileset dir="${project.classes}">
 				<include name="**"/>
@@ -209,9 +211,9 @@
 	</target>
 	
 	<target name="javadoc">
-		<javadoc sourcepath="${project.src}" packagenames="au.edu.jcu.v4l4j.*" destdir="${project.javadoc.dir}" public="true" use="true">
+		<javadoc sourcepath="${project.src}" packagenames="au.edu.jcu.v4l4j.*" destdir="${project.javadoc.dir}" public="true" use="true" nodeprecated="true">
 			<excludepackage name="au.edu.jcu.v4l4j.test" />
-			<excludepackage name="au.edu.jcu.v4l4j.examples" />
+			<excludepackage name="au.edu.jcu.v4l4j.examples.*" />
 		</javadoc>
 	</target>
 	
@@ -232,14 +234,14 @@
 				<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
 			</classpath>
 			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
-			<arg value="${test.device}" /> <!-- device file -->
-			<arg value="${test.width}" /> <!-- width -->
-			<arg value="${test.height}" /> <!-- height -->
-			<arg value="${test.standard}" /> <!-- standard -->
-			<arg value="${test.channel}" /> <!-- channel -->
-			<arg value="${test.inFormat}" /> <!-- capture image format -->
-			<arg value="${test.outFormat}" /> <!-- output image format -->
-			<arg value="${test.fps}" /> <!-- FPS -->
+			<arg value="-Dtest.device=${test.device}" /> <!-- device file -->
+			<arg value="-Dtest.width=${test.width}" /> <!-- width -->
+			<arg value="-Dtest.height=${test.height}" /> <!-- height -->
+			<arg value="-Dtest.standard=${test.standard}" /> <!-- standard -->
+			<arg value="-Dtest.channel=${test.channel}" /> <!-- channel -->
+			<arg value="-Dtest.inFormat=${test.inFormat}" /> <!-- capture image format -->
+			<arg value="-Dtest.outFormat=${test.outFormat}" /> <!-- output image format -->
+			<arg value="-Dtest.fps=${test.fps}" /> <!-- FPS -->
 		</java>
 	</target>
 	
@@ -252,14 +254,39 @@
 	</target>
 	
 	<target name="test-server">
-			<java classname="au.edu.jcu.v4l4j.examples.server.CamServer" fork="true" failonerror="true">
+		<java classname="au.edu.jcu.v4l4j.examples.server.CamServer" fork="true" failonerror="true">
+			<classpath>
+				<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
+			</classpath>
+			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
+			<arg value="-Dtest.device=${test.device}" /> <!-- device file -->
+			<arg value="-Dtest.width=${test.width}" /> <!-- height -->
+			<arg value="-Dtest.height=${test.height}" /> <!-- height -->
+			<arg value="-Dtest.standard=${test.standard}" /> <!-- standard -->
+			<arg value="-Dtest.channel=${test.channel}" /> <!-- channel -->
+		</java>
+	</target>
+	
+	<target name="test-getsnapshot">
+		<java classname="au.edu.jcu.v4l4j.examples.GetSnapshotApp" fork="true" failonerror="true">
+			<classpath>
+				<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
+			</classpath>
+			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
+			<arg value="-Dtest.device=${test.device}" /> <!-- device file -->
+			<arg value="-Dtest.width=${test.width}" /> <!-- height -->
+			<arg value="-Dtest.height=${test.height}" /> <!-- height -->
+			<arg value="-Dtest.standard=${test.standard}" /> <!-- standard -->
+			<arg value="-Dtest.channel=${test.channel}" /> <!-- channel -->
+		</java>
+	</target>
+	
+	<target name="test-dual">
+			<java classname="au.edu.jcu.v4l4j.examples.DualViewer" fork="true" failonerror="true">
 				<classpath>
 					<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
 				</classpath>
 				<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
-				<arg value="-Dtest.device=${test.device}" /> <!-- device file -->
-				<arg value="-Dtest.width=${test.width}" /> <!-- height -->
-				<arg value="-Dtest.height=${test.height}" /> <!-- height -->
 			</java>
 		</target>
 	
@@ -269,7 +296,7 @@
 				<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
 			</classpath>
 			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
-			<arg value="${test.device}" /> <!-- device file -->
+			<arg value="-Dtest.device=${test.device}" /> <!-- device file -->
 		</java>
 	</target>
 
@@ -281,7 +308,7 @@
 			<jvmarg value="-Dtest.height=${test.height}" /> 
 			<jvmarg value="-Dtest.standard=${test.standard}" /> 
 			<jvmarg value="-Dtest.channel=${test.channel}" />
-			<!--<test name="au.edu.jcu.v4l4j.test.FrameGrabberTest" />-->
+			<test name="au.edu.jcu.v4l4j.test.FrameGrabberTest" />
 			<test name="au.edu.jcu.v4l4j.test.PushSourceTest" />
 			<formatter type="plain" usefile="false" />
 			<classpath refid="test.classpath" />
