@@ -65,6 +65,7 @@ public class DualViewer extends WindowAdapter implements CaptureCallback {
 			initFrameGrabber(devLeft, devRight, w, h, std, channel, qty);
 		} catch (Exception e) {
 			System.err.println("Error starting the capture on one of the video devices");
+			e.printStackTrace();
 			windowClosing(null);
 		}
 	}
