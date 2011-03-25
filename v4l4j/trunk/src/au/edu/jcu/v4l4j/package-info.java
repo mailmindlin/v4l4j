@@ -6,7 +6,13 @@
  * several interfaces, including video capture, video overlay, video output & 
  * teletext interfaces. v4l4j provides access to the video capture 
  * interface of V4L only. v4l4j allows you to retrieve information about a video
- * device, access its video controls & tuners and grab images from it.  
+ * device, access its video controls & tuners and grab images from it.<br> 
+ * 
+ * <h2>Examples</h2>
+ * v4l4j comes with many simple, easy-to-follow example applications in the
+ * au.edu.jcu.v4l4j.examples package. It is strongly suggested you take a look
+ * at them as you read these JavaDoc pages as they help illustrate concepts 
+ * crucial to a correct use of this API.
  * <h2>Usage</h2>
  * <h3>Video device object</h3>
  * To use v4l4j, the first step is to create a {@link au.edu.jcu.v4l4j.VideoDevice}
@@ -90,27 +96,33 @@
  * device can be obtained using the {@link au.edu.jcu.v4l4j.DeviceInfo} object
  * (see paragraph "Video hardware information" above). 
  * When capturing in a native format, v4l4j simply hands out the 
- * captured frame without further processing. When capturing in a convenience 
- * format, v4l4j will transparently convert the image.<br>
+ * captured frame without further processing. When capturing in one of the 
+ * convenience formats, v4l4j will transparently convert the image.<br>
  * Frame grabbers operate in two modes: pull and push. In push mode, the grabber
  * will deliver captured frames to a callback object you provide. In pull mode, 
  * you are responsible for polling the frame grabber.  
  *  
  * Frame capture in v4l4j is done using objects implementing the
- * {@link au.edu.jcu.v4l4j.FrameGrabber} interface:
+ * {@link au.edu.jcu.v4l4j.FrameGrabber} interface. The following describes a 
+ * capture in pull mode:
  * <ul>
  * <li>First, get a frame grabber object from a video device, by invoking
  * one of the <code>getXXXFrameGrabber()</code> methods on the video device.</li>
- * <li>Second, when ready to capture, start it by calling 
- * {@link au.edu.jcu.v4l4j.FrameGrabber#startCapture()}.</li>
- * <li>Get the last frame using 
- * {@link au.edu.jcu.v4l4j.FrameGrabber#getVideoFrame()}, do something useful 
- * with it, and recycle it when you are done using it.</li>
+ * <li>Second, create a capture thread which blocks until a frame is ready and then
+ * dispatches it. This done by creating a loop that calls 
+ * {@link au.edu.jcu.v4l4j.FrameGrabber#getVideoFrame()}, does something useful 
+ * with it and then recycles it.</li>
+ * <li>Third, when ready to capture, start it by calling 
+ * {@link au.edu.jcu.v4l4j.FrameGrabber#startCapture()}. At this stage, the 
+ * capture thread (blocked in {@link au.edu.jcu.v4l4j.FrameGrabber#getVideoFrame()})
+ * will wake up as soon as a frame is ready.
+ * </li>
  * <li>When done capturing, stop the capture with 
  * {@link au.edu.jcu.v4l4j.FrameGrabber#stopCapture()}. If you need to start 
  * capturing again later, just call 
- * {@link au.edu.jcu.v4l4j.FrameGrabber#startCapture()} again.</li>
- * <li><strong>Again, when finished with the 
+ * {@link au.edu.jcu.v4l4j.FrameGrabber#startCapture()} again. Don't forget
+ * to terminate your capture thread too.</li>
+ * <li><strong>When finished with the 
  * {@link au.edu.jcu.v4l4j.FrameGrabber} object, you must release it with a 
  * call to {@link au.edu.jcu.v4l4j.VideoDevice#releaseFrameGrabber()}.
  * </strong> Do not use the frame grabber subsequently and set any stray 

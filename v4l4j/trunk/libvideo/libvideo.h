@@ -631,12 +631,13 @@ struct capture_actions {
 
 //dequeue the next buffer with available frame, or NULL if there is an error
 //the second int * argument receive the frame length
-//the third argument receives the capture time in microseconds (for v4l2 devices only)
-// the last argument receives the capture frame sequence number (for v4l2 devices only)
-	void * (*dequeue_buffer)(struct video_device *, int * ,	unsigned long long *, unsigned long long *);
+//the third argument receives the index of the buffer which contains the returned frame
+//the fourth argument receives the capture time in microseconds (for v4l2 devices only)
+//the last argument receives the capture frame sequence number (for v4l2 devices only)
+	void * (*dequeue_buffer)(struct video_device *, int * ,	unsigned int *, unsigned long long *, unsigned long long *);
 
-//enqueue the buffer when done using the frame
-	void (*enqueue_buffer)(struct video_device *);
+//enqueue the buffer (given its index) when done using the frame
+	void (*enqueue_buffer)(struct video_device *, unsigned int);
 
 
 /*

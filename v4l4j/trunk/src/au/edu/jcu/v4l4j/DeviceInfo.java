@@ -271,4 +271,41 @@ public class DeviceInfo {
 		if(released)
 			throw new StateException("The video device object has been released");
 	}
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((deviceFile == null) ? 0 : deviceFile.hashCode());
+		return result;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (!(obj instanceof DeviceInfo)) {
+			return false;
+		}
+		DeviceInfo other = (DeviceInfo) obj;
+		if (deviceFile == null) {
+			if (other.deviceFile != null) {
+				return false;
+			}
+		} else if (!deviceFile.equals(other.deviceFile)) {
+			return false;
+		}
+		return true;
+	}
 }

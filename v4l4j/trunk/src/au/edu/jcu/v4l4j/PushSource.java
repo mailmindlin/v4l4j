@@ -1,3 +1,20 @@
+/*
+* Copyright (C) 2011 Gilles Gigan (gilles.gigan@gmail.com)
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public  License as published by the
+* Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+* or FITNESS FOR A PARTICULAR PURPOSE.  
+* See the GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+*/
 package au.edu.jcu.v4l4j;
 
 import au.edu.jcu.v4l4j.exceptions.StateException;
@@ -7,13 +24,13 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 /**
  * PushSource instances create their own thread which polls
  * a frame grabber and notify the 
- * {@link PushSourceCallback} object given in the constructor
+ * {@link CaptureCallback} object given in the constructor
  * each time a new frame is available.
  * @author gilles
  *
  */
 class PushSource implements Runnable {
-	private PushSourceCallback 		callback;
+	private CaptureCallback 		callback;
 	private AbstractGrabber			frameGrabber;
 	private Thread					thread;
 	
@@ -28,11 +45,11 @@ class PushSource implements Runnable {
 	 * pass them to the given callback object.
 	 * @param grabber the {@link FrameGrabber} instance on which
 	 * this push source will repeatedly call {@link FrameGrabber#getVideoFrame()}.
-	 * @param callback an object implementing the {@link PushSourceCallback}
+	 * @param callback an object implementing the {@link CaptureCallback}
 	 * interface to which the frames will be delivered through the 
-	 * {@link PushSourceCallback#nextFrame(VideoFrame)}.
+	 * {@link CaptureCallback#nextFrame(VideoFrame)}.
 	 */
-	public PushSource(AbstractGrabber grabber, PushSourceCallback callback) {
+	public PushSource(AbstractGrabber grabber, CaptureCallback callback) {
 		if ((grabber == null) || (callback == null))
 			throw new NullPointerException("the frame grabber and callback cannot be null");
 		
@@ -45,7 +62,7 @@ class PushSource implements Runnable {
 	/**
 	 * This method instructs this source to start the capture and to push
 	 * to the captured frame to the  
-	 * {@link PushSourceCallback}. 
+	 * {@link CaptureCallback}. 
 	 * @throws StateException if the capture has already been started
 	 */
 	public synchronized final void startCapture() throws V4L4JException{
@@ -53,13 +70,13 @@ class PushSource implements Runnable {
 			throw new StateException("The capture has already been started");
 		
 		// Update our state and start the thread
-		state = STATE_RUNNING;		
+		state = STATE_RUNNING;
 		thread.start();
 	}
 	
 	/**
 	 * This method instructs this source to stop frame delivery
-	 * to the {@link PushSourceCallback} object.
+	 * to the {@link CaptureCallback} object.
 	 * @throws StateException if the capture has already been stopped
 	 */
 	public final void stopCapture() {
@@ -75,16 +92,25 @@ class PushSource implements Runnable {
 		
 		if (thread.isAlive()) {
 			thread.interrupt();
-			try {
-				// wait for thread to exit
-				if (! Thread.currentThread().equals(thread))
-					thread.join();
-				thread = null;
-			} catch (InterruptedException e) {
-				System.err.println("interrupted while waiting for frame pusher thread to complete");
-				e.printStackTrace();
-				throw new StateException("interrupted while waiting for frame pusher thread to complete", e);
+			
+			// wait for thread to exit if the push thread is not the one
+			// trying to join
+			if (! Thread.currentThread().equals(thread)) {
+				while (state == STATE_ABOUT_TO_STOP) {
+					try {
+						// wait for thread to exit
+						thread.join();
+						thread = null;
+					} catch (InterruptedException e) {
+						// interrupted while waiting for the thread to join
+						// keep waiting
+						// System.err.println("interrupted while waiting for frame pusher thread to complete");
+						// e.printStackTrace();
+						// throw new StateException("interrupted while waiting for frame pusher thread to complete", e);
+					}
+				}
 			}
+			
 		}
 	}
 	
@@ -101,16 +127,16 @@ class PushSource implements Runnable {
 		while (! Thread.interrupted()){
 			try {
 				// Get the next frame and deliver it to the callback object
-				callback.nextFrame(frameGrabber.getVideoFrame());
-			} catch (Exception e) {
+				callback.nextFrame(frameGrabber.getNextVideoFrame());
+			} catch (Throwable t) {
 				// Received an exception. If we are in the middle of a capture (ie. it does not
 				// happen as the result of the capture having been stopped or the frame 
 				// grabber released), then pass it on to the callback object.
 				//e.printStackTrace();
 				try {
 					if(frameGrabber.isStarted())
-						callback.exceptionReceived(new V4L4JException("Exception received while grabbing next frame", e));
-				} catch (Exception e2) {
+						callback.exceptionReceived(new V4L4JException("Exception received while grabbing next frame", t));
+				} catch (Throwable t2) {
 					// either the frame grabber has been released or the callback raised
 					// an exception. do nothing, just exit.
 				}
@@ -118,7 +144,7 @@ class PushSource implements Runnable {
 				Thread.currentThread().interrupt();
 			}
 		}
-		AbstractGrabber.Log("exiting");
+
 		// update state
 		state = STATE_STOPPED;
 	}

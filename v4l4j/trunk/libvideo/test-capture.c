@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
 	void *d;
 	struct timeval start, now;
 	int size, count=0, std=0, channel=0, width=0, height=0, cap_length = 0,
-		fmt=-1;
+		fmt=-1, index = 0;
 
 	if(argc!=7 && argc!=8) {
 		printf("Usage: %s <video_device_file> <single_frame> <standard> <input>"
@@ -170,18 +170,21 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 
+	// discard the first frame
+	(*c->actions->dequeue_buffer)(v, &size, &index, NULL, NULL);
+
 	gettimeofday(&start, NULL);
 	gettimeofday(&now, NULL);
 	while(now.tv_sec<=start.tv_sec+cap_length) {
 
 		//get frame from v4l2
-		if((d = (*c->actions->dequeue_buffer)(v, &size, NULL, NULL)) != NULL) {
+		if((d = (*c->actions->dequeue_buffer)(v, &size, &index, NULL, NULL)) != NULL) {
 			//uncomment the following line to output raw captured frame
 			//to a file
 			//write_frame(d, size);
 			count++;
 			//Put frame
-			(*c->actions->enqueue_buffer)(v);
+			(*c->actions->enqueue_buffer)(v, index);
 		} else {
 			printf("Cant get buffer ");
 			break;

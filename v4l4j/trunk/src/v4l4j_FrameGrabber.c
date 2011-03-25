@@ -38,6 +38,7 @@
 // static variables
 static jfieldID		last_captured_frame_sequence_fID = NULL;
 static jfieldID		last_captured_frame_time_usec_fID = NULL;
+static jfieldID		last_captured_frame_buffer_index_fID = NULL;
 
 
 /*
@@ -334,6 +335,16 @@ static int get_lastFrame_field_ids(JNIEnv *e, jobject this, struct v4l4j_device 
 		return 0;
 	}
 
+	// last_captured_frame_buffer_index_fID
+	last_captured_frame_buffer_index_fID =
+			(*e)->GetFieldID(e, this_class, "lastCapturedFrameBufferIndex", "I");
+	if(last_captured_frame_buffer_index_fID==NULL) {
+		info("[V4L4J] error looking up lastCapturedFrameBufferIndex field in "
+				"FrameGrabber class\n");
+		THROW_EXCEPTION(e, JNI_EXCP, "error looking up lastCapturedFrameBufferIndex"
+				" field in FrameGrabber class");
+		return 0;
+	}
 	return 1;
 }
 
@@ -538,7 +549,18 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetFrameIntv(
 }
 
 /*
- * Get a new frame and return its size
+ * enqueue a buffer
+ */
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_enqueueBuffer(
+		JNIEnv *e, jobject t, jlong object, jint buffer_index){
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
+
+	(*d->vdev->capture->actions->enqueue_buffer)(d->vdev, buffer_index);
+}
+
+/*
+ * dequeue a buffer, perform conversion if required and return frame
  */
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(
 		JNIEnv *e, jobject this, jlong object, jarray byteArray) {
@@ -547,11 +569,12 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 	unsigned char *array = NULL;
 	unsigned long long captureTime, sequence;
+	unsigned int buffer_index;
 	jboolean isCopy;
 
 	//get frame from libvideo
 	if((frame = (*d->vdev->capture->actions->dequeue_buffer)
-			(d->vdev, &d->capture_len, &captureTime, &sequence)) == NULL) {
+			(d->vdev, &d->capture_len, &buffer_index, &captureTime, &sequence)) == NULL) {
 		dprint(LOG_V4L4J, "[V4L4J] Error dequeuing buffer for capture\n");
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error dequeuing buffer for capture");
 		return 0;
@@ -565,7 +588,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(
 	// check we have a valid pointer
 	if (! array)
 	{
-		(*d->vdev->capture->actions->enqueue_buffer)(d->vdev);
+		(*d->vdev->capture->actions->enqueue_buffer)(d->vdev, buffer_index);
 		dprint(LOG_V4L4J, "[V4L4J] Error getting the byte array\n");
 		THROW_EXCEPTION(e, GENERIC_EXCP,
 				"Error getting the byte array");
@@ -578,14 +601,13 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(
 	// release pointer to java byte array
 	(*e)->ReleasePrimitiveArrayCritical(e, byteArray, array, 0);
 
-	// enqueue v4l buffer
-	(*d->vdev->capture->actions->enqueue_buffer)(d->vdev);
-
 	// update class members
 	(*e)->SetLongField(e, this, last_captured_frame_sequence_fID,
 			sequence);
 	(*e)->SetLongField(e, this, last_captured_frame_time_usec_fID,
 			captureTime);
+	(*e)->SetIntField(e, this, last_captured_frame_buffer_index_fID,
+				buffer_index);
 
 	return d->len;
 }
@@ -603,8 +625,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_stop(
 		dprint(LOG_V4L4J, "Error stopping capture\n");
 		//dont throw an exception here...
 		//if we do, FrameGrabber wont let us call delete
-		//(free_capture,free_capture_device2)
-		//because its state will be stuck in capture...
+		//free_capture because its state will be stuck in capture...
 	}
 }
 
