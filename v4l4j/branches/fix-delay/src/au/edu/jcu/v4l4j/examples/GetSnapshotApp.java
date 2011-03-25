@@ -29,6 +29,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
 
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.CaptureCallback;
@@ -56,25 +57,50 @@ public class GetSnapshotApp  extends WindowAdapter implements CaptureCallback{
 	private VideoFrame		lastVideoFrame;
 
 
-	public static void main(String args[]) throws V4L4JException{
+	public static void main(String args[]){
 		device = (System.getProperty("test.device") != null) ? System.getProperty("test.device") : "/dev/video0"; 
 		width = (System.getProperty("test.width")!=null) ? Integer.parseInt(System.getProperty("test.width")) : 640;
 		height = (System.getProperty("test.height")!=null) ? Integer.parseInt(System.getProperty("test.height")) : 480;
 		std = (System.getProperty("test.standard")!=null) ? Integer.parseInt(System.getProperty("test.standard")) : V4L4JConstants.STANDARD_WEBCAM;
 		channel = (System.getProperty("test.channel")!=null) ? Integer.parseInt(System.getProperty("test.channel")) : 0;
 
-		new GetSnapshotApp();
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				new GetSnapshotApp();
+			}
+		});
 	}
 
 	/**
 	 * Start a new GetSnapshot UI
 	 * @throws V4L4JException if there is a problem capturing from the given device
 	 */
-	public GetSnapshotApp() throws V4L4JException {
+	public GetSnapshotApp(){
 		lastVideoFrame = null;
 
-		initFrameGrabber();
+		// initialise the video device and frame grabber
+		try {
+			initFrameGrabber();
+		} catch (V4L4JException e) {
+			System.err.println("Error setting up capture");
+			e.printStackTrace();
+			
+			// cleanup and exit
+			cleanupCapture();
+			return;
+		}
+		
+		// Create and initialise UI
 		initGUI();
+		
+		// start capture
+		try {
+			frameGrabber.startCapture();
+		} catch (V4L4JException e) {
+			System.err.println("Error starting the capture");
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -88,7 +114,6 @@ public class GetSnapshotApp  extends WindowAdapter implements CaptureCallback{
 		width = frameGrabber.getWidth();
 		height = frameGrabber.getHeight();
 		frameGrabber.setCaptureCallback(this);
-		frameGrabber.startCapture();
 	}
 
 	/**
@@ -150,22 +175,30 @@ public class GetSnapshotApp  extends WindowAdapter implements CaptureCallback{
 			lastFrameCopy.recycle();
 		}
 	}
-
-	@Override
-	public void windowClosing(WindowEvent e) {
+	
+	/**
+	 * This method stop the capture and releases the frame grabber and video device
+	 */
+	private void cleanupCapture() {
+		// stop capture
 		try {
 			frameGrabber.stopCapture();
 		} catch (Exception ex) {
 			// frame grabber may be already stopped, so ignore this
 		}
 		
+		// release frame grabber and video device
 		try {
 			videoDevice.releaseFrameGrabber();
 			videoDevice.release();
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
+	}
 
+	@Override
+	public void windowClosing(WindowEvent e) {
+		cleanupCapture();		
 		frame.dispose();
 	}
 
