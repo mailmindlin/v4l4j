@@ -122,7 +122,7 @@ public class TunerInfo {
 	 * This method returns the V4L index of this tuner.
 	 * @return the V4L index of this tuner.
 	 */
-	int getIndex(){
+	public int getIndex(){
 		return index;
 	}
 }

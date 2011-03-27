@@ -25,7 +25,6 @@
 package au.edu.jcu.v4l4j;
 
 import java.io.File;
-import java.util.List;
 import java.util.Vector;
 
 import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
@@ -262,6 +261,9 @@ public class VideoDevice {
 	 * @throws V4L4JException if the device file is not accessible
 	 */
 	public VideoDevice(String dev) throws V4L4JException{
+		if (dev == null)
+			throw new NullPointerException("the device file cannot be null");
+		
 		if(!(new File(dev).canRead()))
 			throw new V4L4JException("The device file is not readable");
 
@@ -1546,93 +1548,5 @@ public class VideoDevice {
 		public synchronized void commit(){
 			state=temp;
 		}
-	}
-
-	public static void main(String args[]) throws V4L4JException{
-		VideoDevice vd = new VideoDevice(args[0]);
-		DeviceInfo d = vd.getDeviceInfo(); 
-		System.out.println("name: "+d.getName());
-		System.out.println("Device file: "+d.getDeviceFile());
-		System.out.println("Supported formats:");
-		for(ImageFormat f : d.getFormatList().getNativeFormats())
-			System.out.println("\t"+f.toNiceString());
-		
-		System.out.println("\tFormats that can be RGB24-converted: "
-				+(vd.supportRGBConversion()?"":"None"));
-		if(vd.supportRGBConversion())
-			for(ImageFormat f: d.getFormatList().getRGBEncodableFormats())
-				System.out.println("\t\t"+f.toNiceString());
-		
-		System.out.println("\tFormats that can be BGR24-converted: "
-				+(vd.supportBGRConversion()?"":"None"));
-		if(vd.supportBGRConversion())
-			for(ImageFormat f: d.getFormatList().getBGREncodableFormats())
-				System.out.println("\t\t"+f.toNiceString());
-		
-		System.out.println("\tFormats that can be YUV420-converted: "
-				+(vd.supportYUVConversion()?"":"None"));
-		if(vd.supportYUVConversion())
-			for(ImageFormat f: d.getFormatList().getYUVEncodableFormats())
-				System.out.println("\t\t"+f.toNiceString());
-		
-		System.out.println("\tFormats that can be YVU420-converted: "
-				+(vd.supportYVUConversion()?"":"None"));
-		if(vd.supportYVUConversion())
-			for(ImageFormat f: d.getFormatList().getYVUEncodableFormats())
-				System.out.println("\t\t"+f.toNiceString());
-		
-		System.out.println("\tFormats that can be JPEG-encoded: "
-				+(vd.supportJPEGConversion()?"":"None"));
-		if(vd.supportJPEGConversion())
-			for(ImageFormat f: d.getFormatList().getJPEGEncodableFormats())
-				System.out.println("\t\t"+f.toNiceString());
-		
-				
-		System.out.println("Inputs:");
-		for(InputInfo i: d.getInputs()){
-			System.out.println("\tName: "+i.getName());
-			System.out.println("\tType: "+i.getType()+"("+(i.getType() == 
-				V4L4JConstants.INPUT_TYPE_CAMERA ? "Camera" : "Tuner")+")");
-			System.out.println("\tIndex: "+i.getIndex());
-			System.out.println("\tSupported standards:");
-			for(Integer s: i.getSupportedStandards()){
-				System.out.print("\t\t"+s);
-				if(s==V4L4JConstants.STANDARD_PAL)
-					System.out.println("(PAL)");
-				else if(s==V4L4JConstants.STANDARD_NTSC)
-					System.out.println("(NTSC)");
-				else if(s==V4L4JConstants.STANDARD_SECAM)
-					System.out.println("(SECAM)");
-				else
-					System.out.println("(None/Webcam)");
-			}
-			if(i.getType() == V4L4JConstants.INPUT_TYPE_TUNER) {
-				TunerInfo t = i.getTunerInfo();
-				System.out.println("\tTuner");
-				System.out.println("\t\tname: "+t.getName());
-				System.out.println("\t\tIndex: "+t.getIndex());
-				System.out.println("\t\tRange high: "+t.getRangeHigh());
-				System.out.println("\t\tRange low: "+t.getRangeLow());
-				System.out.println("\t\tUnit: "+t.getUnit()+"("+(t.getUnit() == 
-					V4L4JConstants.FREQ_MHZ ? "MHz" : "kHz")+")");
-				System.out.println("\t\tType: "+t.getType()+"("+(t.getType() == 
-					V4L4JConstants.TUNER_TYPE_RADIO ? "Radio" : "TV")+")");				
-			}
-		}
-		
-		List<Control> ctrls = vd.getControlList().getList();
-		for(Control c: ctrls){
-			System.out.print("Control: "+c.getName()+" - min: "+c.getMinValue()+
-					" - max: "+c.getMaxValue()+" - step: "+c.getStepValue()+
-					" - value: ");
-			try {
-				System.out.println(c.getValue());
-			} catch (V4L4JException ve){
-				//ve.printStackTrace();
-				System.out.println(" ERROR");
-			}
-		}
-		vd.releaseControlList();
-		vd.release();
 	}
 }
