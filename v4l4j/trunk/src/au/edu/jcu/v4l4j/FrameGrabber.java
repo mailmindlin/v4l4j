@@ -55,7 +55,10 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * <br>//to JPEG before delivering them to your application. 
  * <br>
  * <br>//Instantiate an object that implements the {@link CaptureCallback}
- * <br>//interface which will receive captured frame, and pass it to the frame grabber.
+ * <br>//interface which will receive captured frame
+ * <br>myCallbackObject = new MyCallbackObjectclass();
+ * <br>
+ * <br>//pass it to the frame grabber.
  * <br>f.setCaptureCallback(myCallbackObject);
  * <br>
  * <br>//Now start the capture
@@ -71,7 +74,8 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * <br>//Release the video device
  * <br>vd.release();
  * </code><br><br>
- * In myCallbackObject :<br>
+ * In myCallbackObject, when the capture is started, the following method is
+ * called every time a new frame is available :<br>
  * <code>
  * <br>public void nextFrame(VideoFrame frame) {
  * <br>&nbsp;&nbsp; //do something useful with frame. But make sure you recycle

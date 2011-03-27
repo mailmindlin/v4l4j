@@ -47,7 +47,7 @@
  * <li>an interface to control any tuners, using {@link au.edu.jcu.v4l4j.TunerList}
  * objects.
  * </ul>
- * Each of these can be obtained independently from the other, by calling 
+ * Each of these can be obtained independently from each other, by calling 
  * the appropriate method on a {@link au.edu.jcu.v4l4j.VideoDevice} instance.
  * This flexibility allows an application to create a GUI which provides access
  * to video controls, while another application is streaming video from the 
@@ -87,7 +87,7 @@
  * <h3>Video capture</h3>
  * Capture in v4l4j is extremely simple. v4l4j hands out captured frames in a
  * {@link au.edu.jcu.v4l4j.VideoFrame} object, either in a native image format (
- * referred to as raw format in v4l4j's documentation) or one of the 5 convenience
+ * also referred to as raw format in v4l4j's documentation) or one of the 5 convenience
  * image formats (JPEG, RGB24, BGR24, YUV420 or YVU420). Each of these 6 image
  * formats is output by a dedicated frame grabber object, which will grab frames and 
  * convert them to that format if required. 
@@ -98,39 +98,12 @@
  * When capturing in a native format, v4l4j simply hands out the 
  * captured frame without further processing. When capturing in one of the 
  * convenience formats, v4l4j will transparently convert the image.<br>
- * Frame grabbers operate in two modes: pull and push. In push mode, the grabber
- * will deliver captured frames to a callback object you provide. In pull mode, 
- * you are responsible for polling the frame grabber.  
+ * Frame grabbers operate in push mode: the frame grabber
+ * delivers captured frames to a callback object you provide.  
  *  
  * Frame capture in v4l4j is done using objects implementing the
- * {@link au.edu.jcu.v4l4j.FrameGrabber} interface. The following describes a 
- * capture in pull mode:
- * <ul>
- * <li>First, get a frame grabber object from a video device, by invoking
- * one of the <code>getXXXFrameGrabber()</code> methods on the video device.</li>
- * <li>Second, create a capture thread which blocks until a frame is ready and then
- * dispatches it. This done by creating a loop that calls 
- * {@link au.edu.jcu.v4l4j.FrameGrabber#getVideoFrame()}, does something useful 
- * with it and then recycles it.</li>
- * <li>Third, when ready to capture, start it by calling 
- * {@link au.edu.jcu.v4l4j.FrameGrabber#startCapture()}. At this stage, the 
- * capture thread (blocked in {@link au.edu.jcu.v4l4j.FrameGrabber#getVideoFrame()})
- * will wake up as soon as a frame is ready.
- * </li>
- * <li>When done capturing, stop the capture with 
- * {@link au.edu.jcu.v4l4j.FrameGrabber#stopCapture()}. If you need to start 
- * capturing again later, just call 
- * {@link au.edu.jcu.v4l4j.FrameGrabber#startCapture()} again. Don't forget
- * to terminate your capture thread too.</li>
- * <li><strong>When finished with the 
- * {@link au.edu.jcu.v4l4j.FrameGrabber} object, you must release it with a 
- * call to {@link au.edu.jcu.v4l4j.VideoDevice#releaseFrameGrabber()}.
- * </strong> Do not use the frame grabber subsequently and set any stray 
- * reference to null.</li>
- * </ul>
- * The above example used a frame grabber in pull mode. More information on 
- * video capture, including push mode, is given in the documentation of the 
- * {@link au.edu.jcu.v4l4j.FrameGrabber} class.
+ * {@link au.edu.jcu.v4l4j.FrameGrabber} interface. Check the documentation 
+ * of the {@link au.edu.jcu.v4l4j.FrameGrabber} class for more information.
  * 
  * <h3>Tuners</h3>
  * v4l4j provides access to tuners if present in the video device. A 
