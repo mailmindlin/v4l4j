@@ -1,0 +1,68 @@
+libvideo has been compiled and tested successfully on the following platforms:
+- Ubuntu 7.10 - x86
+- Ubuntu 8.04 - x86 & x86_64
+- Debian Etch - x86
+- Debian Lenny - Neo FreeRunner
+- Gentoo 2008.0 - x86_64
+- openSUSE 10.3 - x86
+- Fedora release 10 - x86 
+
+Tested video devices and drivers:
+- USB - 046d:08b2 Logitech, Inc. QuickCam Pro 4000 (pwc driver)
+- USB - 046d:0840 Logitech, Inc. QuickCam Express (qc-usb driver)
+- USB - 046d:08b5 Logitech, Inc. QuickCam Sphere (pwc driver)
+- USB - 041e:401c Creative Technology, Ltd WebCam NX [PD1110] (gspca driver)
+- USB - 046d:0992 Logitech, Inc. Quickcam Communicate Deluxe (linux uvc driver)
+- PCI - 109e:036e BT848 4-channel PCI capture card (bttv driver)
+- USB - 046d:0990 Logitech Quickcam Pro 9000 (bcdDevice 0.08 -Linux UVC)
+  (This webcam comes in several different versions, see [1]. The one
+  tested suffers from a bug reported on the v4l4j mailing list, see [2].
+  This bug has been fixed in kernel 2.6.28. In the meanwhile, switching
+  between YUV and MJPEG will cause the next capture to hang.)
+- USB - 0471:0311 Philips PCVC740K ToUcam Pro (pwc 10.0.13) 	
+- PCI - 0070:9600 Hauppauge WinTV-HVR-1300 DVB-T (cx88_blackbird & family)
+  (This is a hybrid Analogue TV / DVB-T with S-Video and composite inputs.
+  The card has an MPEG encoder chip (NOT decoder). As of now, v4l4j only
+  supports the Video4Linux API, not the DVB API. This means that only analogue
+  signals from this card (Analogue TV, S-Video and Composite signals) can be 
+  captured with v4l4j, ie nothing from DVB-T.)
+- USB - 0471:0332 Philips SPC 1000NC PC Camera (uvcvideo)
+- USB - 046d:0994 Logitech QuickCam Orbit/Sphere AF (uvcvideo)
+- USB - 093a:2460 Pixart Imaging, Inc. - Q-TEC WEBCAM 100 (gspca_pac207) 	
+- USB - 04f2:b071 Chicony - CNF7129 (eee pc webcam) uvcvideo 
+- USB - 045e:074a Microsoft LifeCam - (uvcvideo) 
+- USB -	Logitech C600 	uvcvideo (Ubuntu 10.10) 	
+- USB -	Logitech C910 	uvcvideo (Ubuntu 10.10) 	
+
+
+
+Currently, libvideo will probe and detect the following drivers:
+- PWC 		v10.0.13
+  PWC is already a V4L2 driver. Most of its private ioctls are already
+  exported as V4L2 controls, except for the following three (which should be
+  exported as extended controls in the camera control class in the future ?)
+  Exported private ioctls:
+    VIDIOCPWCMPTRESET (Pan/Tilt reset))
+    VIDIOCPWCMPTGANGLE (Get Pan/Tilt angle)
+    VIDIOCPWCMPTSANGLE (Set Pan/Tilt angle)
+
+- gspca 	v01.00.20
+  gspca in its current version is still a V4L1 driver although the author
+  is actively working on porting it to V4L2. But for now, a few private
+  ioctls dont have a V4L1 control counterpart, so libvideo exports the
+  following private ioctls:
+    SPCASVIDIOPARAM / SPCAGVIDIOPARAM (Set and Get autobrightness, quality,
+    frame interval and image flicker)
+
+- qc-usb	v0.6.6
+  qc-usb (Quickcam driver) is V4L1 driver and many private ioctls are not
+  available as V4L1 control. libvideo exposes the following ioctls:
+    VIDIOCQCSSETTLE / VIDIOCQCGSETTLE (Let Brigthness settle ???)
+    VIDIOCQCSCOMPRESS / VIDIOCQCGCOMPRESS (compression factor)
+    VIDIOCQCSQUALITY / VIDIOCQCGQUALITY (interpolation)
+    VIDIOCQCSADAPTIVE / VIDIOCQCGADAPTIVE (autobrightness)
+    VIDIOCQCSEQUALIZE / VIDIOCQCGEQUALIZE (equalise image)
+
+ [1] http://www.quickcamteam.net/documentation/faq/how-many-versions-of-the-quickcam-pro-9000-are-there
+ [2] http://groups.google.com/group/v4l4j/browse_thread/thread/f1d0c175ffb34a4b
+ 
