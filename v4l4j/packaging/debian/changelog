@@ -1,3 +1,11 @@
+v4l4j (0.8.10-0ubuntu1~ppa4) lucid; urgency=low
+
+  * new upstream release
+  * JPEG frame grabber fixes
+  * deprecated pull mode
+
+ -- Gilles gigan <gilles.gigan@gmail.com>  Sun, 27 Mar 2011 16:25:00 +1100
+
 v4l4j (0.8.9-0ubuntu1~ppa4) lucid; urgency=low
 
   * Improved number of copies from v4l to java
