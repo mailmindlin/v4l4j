@@ -7,7 +7,6 @@
     * v4l4j (X.Y.Z-0ubuntu1~ppa2) intrepid; urgency=low
     * v4l4j (X.Y.Z-0ubuntu1~ppa3) jaunty; urgency=low
     * v4l4j (X.Y.Z-0ubuntu1~ppa4) lucid; urgency=low
-  * cd ..
   * test source package build with "debuild -S -sa"
   * check for lintian errors
   * if build is successful, commit changes and remove SVN files with "rm -Rf debian/.svn"
