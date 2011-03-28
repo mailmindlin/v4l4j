@@ -145,6 +145,7 @@ package v4l4jTest;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -155,6 +156,7 @@ import javax.swing.JLabel;
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 import au.edu.jcu.v4l4j.VideoDevice;
+import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.V4L4JConstants;
 
 public class Viewer extends WindowAdapter implements Runnable {
