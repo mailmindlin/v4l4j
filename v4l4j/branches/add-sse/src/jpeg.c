@@ -194,54 +194,42 @@ static void jpeg_encode_mjpeg(struct v4l4j_device *d, unsigned char *src, unsign
  * must be initialised correctly by the caller
  */
 static void jpeg_encode_yuyv(struct v4l4j_device *d, unsigned char *src, unsigned char *dst){
-	//Optimise me !!!
-	//it should be possible to send a YUYV frame straight to the jpeg compressor without converting to RGB first
+	JSAMPROW yRows[16],cbRows[16],crRows[16];
+	JSAMPARRAY data[3];
+	unsigned char *y, *cb, *cr;
+	int i, line, width, height;
 	struct jpeg_compress_struct *cinfo = d->j->cinfo;
-	JSAMPROW row[1] = {d->temp_conv_buffer};
-	int a=0, width = d->vdev->capture->width, height = d->vdev->capture->height, x, rgb_size;
-	int r, g, b;
-	int y, u, v;
-	unsigned char *ptr;
+	width = d->vdev->capture->width;
+	height = d->vdev->capture->height ;
 
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	data[0] = yRows;
+	data[1] = cbRows;
+	data[2] = crRows;
 
 	//init JPEG dest mgr
-	rgb_size = width * height * 3;
 	d->j->destmgr->next_output_byte = dst;
-	d->j->destmgr->free_in_buffer = rgb_size;
+	d->j->destmgr->free_in_buffer = d->vdev->capture->imagesize;
 	jpeg_set_quality(cinfo, d->j->jpeg_quality,TRUE);
 
-	jpeg_start_compress(cinfo, TRUE );
 	dprint(LOG_JPEG, "[JPEG] Starting compression (%d bytes)\n", d->vdev->capture->imagesize);
-	while (cinfo->next_scanline < height) {
-		ptr = d->temp_conv_buffer;
-
-		for (x = 0; x < width; x++) {
-			if (!a)
-				y = src[0] << 8;
-			else
-				y = src[2] << 8;
-			u = src[1] - 128;
-			v = src[3] - 128;
-
-			r = (y + (359 * v)) >> 8;
-			g = (y - (88 * u) - (183 * v)) >> 8;
-			b = (y + (454 * u)) >> 8;
-
-			*(ptr++) = CLIP(r);
-			*(ptr++) = CLIP(g);
-			*(ptr++) = CLIP(b);
-
-			if (a++) {
-				a = 0;
-				src += 4;
+	yRows[0] = d->temp_conv_buffer;
+	cbRows[0] = yRows[0] + width;
+	crRows[0] = cbRows[0] + width / 2;
+	jpeg_start_compress(cinfo, TRUE );
+	for (line=0; line<height; line++) {
+		y = yRows[0];
+		cb = cbRows[0];
+		cr = crRows[0];
+		for (i=0; i<width; i++) {
+			*y++ = *src++;
+			*cb++ = *src++;
+			*y++ = *src++;
+			*cr++ = *src++;
 			}
+		jpeg_write_raw_data(cinfo, data, 1);
 		}
-		jpeg_write_scanlines (cinfo, row, 1);
-	}
-
 	jpeg_finish_compress (cinfo);
-	d->len =  rgb_size - cinfo->dest->free_in_buffer;
+	d->len = d->vdev->capture->imagesize - cinfo->dest->free_in_buffer;
 	dprint(LOG_JPEG, "[JPEG] Finished compression (%d bytes)\n", d->len);
 }
 
@@ -495,31 +483,39 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 		d->j->cinfo->dct_method = JDCT_FASTEST;
 		d->j->jpeg_quality = q;
 
-		if(d->vdev->capture->palette == YUV420) {
-			dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for YUV420\n");
+		if ((d->vdev->capture->palette == YUV420) || (d->vdev->capture->palette == YUYV)
+				|| (d->vdev->capture->palette == YVYU) || (d->vdev->capture->palette == UYVY)){
+			// Set up the JPEG converter for YUV ->JPEG conversion
 
 			jpeg_set_defaults(d->j->cinfo);
 			jpeg_set_colorspace(d->j->cinfo, JCS_YCbCr);
 			d->j->cinfo->raw_data_in = TRUE; // supply downsampled data
 			d->j->cinfo->comp_info[0].h_samp_factor = 2;
-			d->j->cinfo->comp_info[0].v_samp_factor = 2;
+			d->j->cinfo->comp_info[0].v_samp_factor = 1;
 			d->j->cinfo->comp_info[1].h_samp_factor = 1;
 			d->j->cinfo->comp_info[1].v_samp_factor = 1;
 			d->j->cinfo->comp_info[2].h_samp_factor = 1;
 			d->j->cinfo->comp_info[2].v_samp_factor = 1;
+
+			if (d->vdev->capture->palette == YUV420) {
+				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for YUV420\n");
+				d->j->cinfo->comp_info[0].v_samp_factor = 2;
 			d->convert = jpeg_encode_yuv420;
-		} else {
-			d->j->cinfo->in_color_space = JCS_RGB;
-			jpeg_set_defaults(d->j->cinfo) ;
-			if(d->vdev->capture->palette == YUYV) {
+			} else if(d->vdev->capture->palette == YUYV) {
 				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for YUYV\n");
+				XMALLOC(d->temp_conv_buffer, unsigned char *, (d->vdev->capture->width*2));
 				d->convert = jpeg_encode_yuyv;
-				XMALLOC(d->temp_conv_buffer, unsigned char *, (d->vdev->capture->width*3));
 			} else if (d->vdev->capture->palette == YVYU) {
 				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for YVYU\n");
 				d->convert = jpeg_encode_yvyu;
-				XMALLOC(d->temp_conv_buffer, unsigned char *, (d->vdev->capture->width*3));
-			} else if (d->vdev->capture->palette == RGB24){
+			} else if (d->vdev->capture->palette == UYVY) {
+				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for UYVY\n");
+				d->convert = jpeg_encode_uyvy;
+			}
+		} else {
+			d->j->cinfo->in_color_space = JCS_RGB;
+			jpeg_set_defaults(d->j->cinfo) ;
+			if (d->vdev->capture->palette == RGB24){
 				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for RGB24\n");
 				d->convert = jpeg_encode_rgb24;
 			} else if (d->vdev->capture->palette == RGB32){
@@ -530,10 +526,6 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 				XMALLOC(d->temp_conv_buffer, unsigned char *, (d->vdev->capture->width*3));
 				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for BGR24\n");
 				d->convert = jpeg_encode_bgr24;
-			} else if (d->vdev->capture->palette == UYVY) {
-				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for UYVY\n");
-				d->convert = jpeg_encode_uyvy;
-				XMALLOC(d->temp_conv_buffer, unsigned char *, (d->vdev->capture->width*3));
 			} else if (d->vdev->capture->palette == BGR32){
 				XMALLOC(d->temp_conv_buffer, unsigned char *, (d->vdev->capture->width*3));
 				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for BGR32\n");
@@ -563,9 +555,8 @@ void destroy_jpeg_compressor(struct v4l4j_device *d){
 		d->vdev->capture->palette == UYVY || d->vdev->capture->palette == BGR32) {
 
 		// free temp buffer if required
-		if(d->vdev->capture->palette == YUYV || d->vdev->capture->palette == YVYU ||
-			d->vdev->capture->palette == RGB32 || d->vdev->capture->palette == BGR24 ||
-			d->vdev->capture->palette == UYVY || d->vdev->capture->palette == BGR32)
+		if(	d->vdev->capture->palette == RGB32 || d->vdev->capture->palette == BGR24 ||
+				d->vdev->capture->palette == BGR32 || d->vdev->capture->palette == YUYV)
 			XFREE(d->temp_conv_buffer);
 
 		// free JPEG compressor & data structs
@@ -587,32 +578,56 @@ void destroy_jpeg_compressor(struct v4l4j_device *d){
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/time.h>
-void *read_frame(void * d, int s, char *file){
-	int f, l=0;
+#include <sys/stat.h>
+#include <stdint.h>
+void *read_frame(struct capture_device *c, char *file){
+	int fd, len=0;
+	void *data;
+	struct stat file_stat;
 
 	//open file
-	if ((f = open(file, O_RDONLY)) < 0) {
+	if ((fd = open(file, O_RDONLY)) < 0) {
 		printf( "FILE: can't open file\n");
 		return NULL;
 	}
 
-	while((l += read(f, (d+l), 65536))<s);
+	// get file size
+	if (fstat(fd, &file_stat) != 0) {
+		printf("Error stat'ing file\n");
+		close(fd);
+		return NULL;
+	}
 
+	c->imagesize = file_stat.st_size;
 
-	close(f);
-	return d;
+	// allocate buffer
+	data = (void *) malloc(file_stat.st_size);
+	if (data == NULL) {
+		printf("Error allocating image buffer\n");
+		close(fd);
+		return NULL;
+	}
+
+	// read file contents
+	while((len += read(fd, (data + len), (c->imagesize - len))) < c->imagesize);
+
+	close(fd);
+
+	return data;
 }
 
 void write_frame(void *d, int size, char *file) {
 	int outfile, len = 0;
-	char filename[50];
-	struct timeval tv;
-
-
+	char filename[200];
+	
 	//Construct the filename
-	gettimeofday(&tv, NULL);
-	sprintf(filename,"%s.jpg", file);
-
+	if (file != NULL)
+		sprintf(filename,"%s.jpg", file);
+	else {
+		struct timeval tv;
+		gettimeofday(&tv, NULL);
+		sprintf(filename, "%d-%d.jpg", (int) tv.tv_sec, (int) tv.tv_usec);
+	}
 
 	//open file
 	if ((outfile = open(filename, O_WRONLY | O_TRUNC | O_CREAT, 0644)) < 0) {
@@ -620,42 +635,155 @@ void write_frame(void *d, int size, char *file) {
 		return;
 	}
 
-	while((len+=write(outfile, (d+len), (size-len)))<size);
+	while((len += write(outfile, (d + len), (size - len))) < size);
 
 	close(outfile);
 }
 
+static const uint32_t  yuyv_pattern[] = {
+	0xFF4B544C,	// 2 red pixels		255 0	0
+	0xB6B21BB2, // 2 orange pixels	255	175	0
+	0x15942B95, // 2 green pixels	0	255 0
+	0x07A983A9, // 2 blue-green pix	0	255	175
+	0x6B1CFF1D, // 2 blue pixels	0	0	255
+	0xC552E152, // 2 purple pixels	180	0	255
+	0x80FE80FF, // 2 white pixels	255 255 255
+	0x80508050, // 2 grey pixels	80	80	80
+};
+
+static const uint32_t  uyvy_pattern[] = {
+	0x4BFF4C54,	// 2 red pixels		255 0	0
+	0xB2B6B21B, // 2 orange pixels	255	175	0
+	0x9415952B, // 2 green pixels	0	255 0
+	0xA907A983, // 2 blue-green pix	0	255	175
+	0x1C6B1DFF, // 2 blue pixels	0	0	255
+	0x52C552E1, // 2 purple pixels	180	0	255
+	0xFE80FF80, // 2 white pixels	255 255 255
+	0x50805080, // 2 grey pixels	80	80	80
+};
+static const uint32_t  yvyu_pattern[] = {
+	0x544BFF4C,	// 2 red pixels		255 0	0
+	0x1BB2B6B2, // 2 orange pixels	255	175	0
+	0x2B941595, // 2 green pixels	0	255 0
+	0x83A907A9, // 2 blue-green pix	0	255	175
+	0xFF1C6B1D, // 2 blue pixels	0	0	255
+	0xE152C552, // 2 purple pixels	180	0	255
+	0x80FE80FF, // 2 white pixels	255 255 255
+	0x80508050, // 2 grey pixels	80	80	80
+};
+
+void *generate_buffer(struct capture_device *c) {
+	void *buffer = NULL;
+	uint32_t *ptr = NULL, *pattern = NULL;
+	int x, y;
+
+	// select the correct palette and image size
+	switch (c->palette) {
+		case YUV420:
+			c->imagesize = c->width * c->height * 3 / 2;
+			break;
+		case YUYV:
+			pattern = (uint32_t *)yuyv_pattern;
+			c->imagesize = c->width * c->height * 2;
+			break;
+		case UYVY:
+			pattern = (uint32_t *)uyvy_pattern;
+			c->imagesize = c->width * c->height * 2;
+			break;
+		case YVYU:
+			pattern = (uint32_t *)yvyu_pattern;
+			c->imagesize = c->width * c->height * 2;
+			break;
+		default:
+			printf("Unknown palette %d\n", c->palette);
+			fflush(stdout);
+			return NULL;
+	}
+
+	// allocate buffer
+	ptr = buffer = malloc(c->imagesize);
+
+	// fill buffer
+	if (c->palette == YUYV || c->palette == UYVY || c->palette == YVYU) {
+		for (y = 0; y < c->height; y++)
+			for (x = 0; x < c->width ; x+=2)
+				*ptr++ = pattern[sizeof(pattern) / sizeof(pattern[0]) * x / c->width];
+	} else if (c->palette == YUV420) {
+		unsigned char *py = (unsigned char *)ptr;
+		unsigned char *pu = (unsigned char *)py + c->width * c->height;
+		unsigned char *pv = (unsigned char *)pu + c->width * c->height / 4;
+		unsigned char *src;
+
+		for (y = 0; y < c->height; y++)
+			for (x = 0; x < c->width ; x+=2) {
+				// select the right pattern in the array
+				pattern = (uint32_t *)&yuyv_pattern[sizeof(yuyv_pattern) / sizeof(yuyv_pattern[0]) * x / c->width];
+				src = (unsigned char *)pattern;
+
+				// copy first and third bytes (Y1 Y2)
+				*py++ = *src;
+				*py++ = *(src + 2);
+
+				// copy second and fourth byte (U & V) if line number is even
+				if ((y & 0x1) == 0) {
+					*pu++ = *(src + 1);
+					*pv++ = *(src + 3);
+				}
+			}
+	
+	}
+ 
+	return buffer;
+}
+
 int main(int argc, char **argv){
-	int nb = 0;
-	void *data, *jpeg;
+	void *input = NULL, *jpeg;
 	struct v4l4j_device d;
 	struct video_device v;
 	struct capture_device c;
 	struct timeval start, now;
+	char *filename = NULL;
+
+	// make sure we have required args
+	if ((argc != 4) && (argc != 5)){
+		printf("Usage: %s <width> <height> <format> [input_file]\n", argv[0]);
+		printf("Formats: YUYV: %d - UYVY: %d - YVYU: %d - YUV420: %d\n", YUYV, UYVY, YVYU, YUV420);
+		return -1;
+	}
+
+	// parse args:
+	c.width = atoi(argv[1]);
+	c.height = atoi(argv[2]);
+	c.palette = atoi(argv[3]);
+	if (argc == 5)
+		filename = argv[4];
+
+	// struct setup
 	d.vdev=&v;
 	v.capture = &c;
-	//Image format
-	c.palette = RGB32;
-	c.width = 640;
-	c.height = 480;
-	//size of v4l buffer
-	c.imagesize = 1228800;
-	//actual size of frame
-	d.capture_len = c.imagesize;
+
+	// fill buffer either from file or with generated pattern
+	if (filename != NULL)
+		input = read_frame(&c, filename);
+	else
+		input = generate_buffer(&c);
+
+	// setup JPEG compressor
 	init_jpeg_compressor( &d, 80);
-	//size of dest buffer (JPEG)
-	jpeg = (void *) malloc(640*480*3);
-	//size of source buffer - ADJUST ACCORDING TO FORMAT
-	data = (void *) malloc(640*480*4);
+
+	//size of dest buffer (JPEG) - use the same size as uncompressed frame - should be enough !
+	jpeg = (void *) malloc(c.imagesize);
+
+	// time conversion	
 	gettimeofday(&start, NULL);
-	while(nb++<(argc-1)){
-		read_frame(data, c.imagesize, argv[nb]);
-		d.convert(&d, data, jpeg);
-		write_frame(jpeg, d.len, argv[nb]);
-	}
+	d.convert(&d, input, jpeg);
 	gettimeofday(&now, NULL);
-	printf("fps: %.1f\n", (nb/((now.tv_sec - start.tv_sec) + ((float) (now.tv_usec - start.tv_usec)/1000000))));
-	free(data);
+
+	// save converted frame
+	write_frame(jpeg, d.len, filename);
+
+	printf("Conversion time: %.1f\n ms", ((float)(now.tv_sec - start.tv_sec)*1000 + ((float) (now.tv_usec - start.tv_usec)/1000)));
+	free(input);
 	free(jpeg);
 	destroy_jpeg_compressor(&d);
 	return 0;
