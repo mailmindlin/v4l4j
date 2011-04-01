@@ -234,22 +234,22 @@
 				<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
 			</classpath>
 			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
-			<arg value="-Dtest.device=${test.device}" /> <!-- device file -->
-			<arg value="-Dtest.width=${test.width}" /> <!-- width -->
-			<arg value="-Dtest.height=${test.height}" /> <!-- height -->
-			<arg value="-Dtest.standard=${test.standard}" /> <!-- standard -->
-			<arg value="-Dtest.channel=${test.channel}" /> <!-- channel -->
-			<arg value="-Dtest.inFormat=${test.inFormat}" /> <!-- capture image format -->
-			<arg value="-Dtest.outFormat=${test.outFormat}" /> <!-- output image format -->
-			<arg value="-Dtest.fps=${test.fps}" /> <!-- FPS -->
+			<jvmarg value="-Dtest.device=${test.device}" /> <!-- device file -->
+			<jvmarg value="-Dtest.width=${test.width}" /> <!-- width -->
+			<jvmarg value="-Dtest.height=${test.height}" /> <!-- height -->
+			<jvmarg value="-Dtest.standard=${test.standard}" /> <!-- standard -->
+			<jvmarg value="-Dtest.channel=${test.channel}" /> <!-- channel -->
+			<jvmarg value="-Dtest.inFormat=${test.inFormat}" /> <!-- capture image format -->
+			<jvmarg value="-Dtest.outFormat=${test.outFormat}" /> <!-- output image format -->
+			<jvmarg value="-Dtest.fps=${test.fps}" /> <!-- FPS -->
 		</java>
 	</target>
 	
 	<target name="test-gui">
 		<java jar="${platform.standard.jar.location}/${project.jar.file}" fork="true" failonerror="true">
 			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
-			<arg value="-Dtest.width=${test.width}" /> <!-- width -->
-			<arg value="-Dtest.height=${test.height}" /> <!-- height -->
+			<jvmarg value="-Dtest.width=${test.width}" /> <!-- width -->
+			<jvmarg value="-Dtest.height=${test.height}" /> <!-- height -->
 		</java>
 	</target>
 	
@@ -259,11 +259,11 @@
 				<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
 			</classpath>
 			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
-			<arg value="-Dtest.device=${test.device}" /> <!-- device file -->
-			<arg value="-Dtest.width=${test.width}" /> <!-- height -->
-			<arg value="-Dtest.height=${test.height}" /> <!-- height -->
-			<arg value="-Dtest.standard=${test.standard}" /> <!-- standard -->
-			<arg value="-Dtest.channel=${test.channel}" /> <!-- channel -->
+			<jvmarg value="-Dtest.device=${test.device}" /> <!-- device file -->
+			<jvmarg value="-Dtest.width=${test.width}" /> <!-- height -->
+			<jvmarg value="-Dtest.height=${test.height}" /> <!-- height -->
+			<jvmarg value="-Dtest.standard=${test.standard}" /> <!-- standard -->
+			<jvmarg value="-Dtest.channel=${test.channel}" /> <!-- channel -->
 		</java>
 	</target>
 	
@@ -273,11 +273,11 @@
 				<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
 			</classpath>
 			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
-			<arg value="-Dtest.device=${test.device}" /> <!-- device file -->
-			<arg value="-Dtest.width=${test.width}" /> <!-- height -->
-			<arg value="-Dtest.height=${test.height}" /> <!-- height -->
-			<arg value="-Dtest.standard=${test.standard}" /> <!-- standard -->
-			<arg value="-Dtest.channel=${test.channel}" /> <!-- channel -->
+			<jvmarg value="-Dtest.device=${test.device}" /> <!-- device file -->
+			<jvmarg value="-Dtest.width=${test.width}" /> <!-- height -->
+			<jvmarg value="-Dtest.height=${test.height}" /> <!-- height -->
+			<jvmarg value="-Dtest.standard=${test.standard}" /> <!-- standard -->
+			<jvmarg value="-Dtest.channel=${test.channel}" /> <!-- channel -->
 		</java>
 	</target>
 	
@@ -296,7 +296,7 @@
 				<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
 			</classpath>
 			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
-			<arg value="-Dtest.device=${test.device}" /> <!-- device file -->
+			<jvmarg value="-Dtest.device=${test.device}" /> <!-- device file -->
 		</java>
 	</target>
 
