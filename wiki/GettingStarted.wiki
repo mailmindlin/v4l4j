@@ -5,7 +5,7 @@
 For the impatient, here are a few instructions that will get you started:
  * If you are using Ubuntu or Debian, check [DebianInstall this page to install v4l4j Debian packages]. After that, you can run a test application with 
 {{{
-java -cp /usr/share/java/v4l4j.jar -Djava.library.path=/usr/lib/jni au.edu.jcu.v4l4j.examples.DeviceChooser
+java -cp /usr/share/java/v4l4j.jar -Djava.library.path=/usr/lib/jni au.edu.jcu.v4l4j.examples.videoViewer.DeviceChooser
 }}}
  * Otherwise, use the following these steps to install from source:
    * Either download the latest stable tarball from [http://code.google.com/p/v4l4j/downloads/list Downloads tab] above, or the latest SVN version using
@@ -61,7 +61,7 @@ If you get this error:
 {{{
 v4l4j_FrameGrabber.c:27:21: error: jpeglib.h: No such file or directory
 }}}
-you havent installed the development files on libjpeg. See the previous paragraph on how to fix this.
+you have not installed the development files on libjpeg. See the previous paragraph on how to fix this.
 
 The JavaDoc can be generated with `ant javadoc` and is located in doc/.
 
