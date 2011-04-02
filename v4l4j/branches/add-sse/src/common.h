@@ -29,16 +29,18 @@
 #include <jpeglib.h>
 
 #include "libvideo.h"
+#include "pixfmt-conv.h"
 
 struct v4l4j_device;
 
 struct jpeg_data {
-	int mcu;
-	JSAMPROW y[16],cb[16],cr[16];
+	JSAMPROW *y,*cb,*cr;
 	JSAMPARRAY data[3];
+	convert_to_yuv420_fn	to_yuv420_fn;
 	struct jpeg_compress_struct *cinfo;
 	struct jpeg_destination_mgr *destmgr;
 	struct jpeg_error_mgr *jerr;
+	int mcu;
 	int jpeg_quality;			//the jpeg quality, set to -1 if disable
 };
 

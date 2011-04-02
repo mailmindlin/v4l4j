@@ -39,7 +39,7 @@ LIBVIDEO_PATH := ../libvideo
 LIB := libv4l4j.so
 OBJ := jpeg.o rgb.o v4l4j_FrameGrabber.o v4l4j_ImageFormatList.o \
   v4l4j_DeviceInfo.o v4l4j_VideoDevice.o v4l4j_Control.o v4l4j_Tuner.o \
-  v4l4j_ResolutionInfo.o v4l4j_FrameInterval.o
+  v4l4j_ResolutionInfo.o v4l4j_FrameInterval.o pixfmt-conv.o
 
 CC := gcc
 INCLUDES := -I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ \
@@ -55,10 +55,11 @@ $(LIB): $(OBJ)
 	$(LD) $(LDFLAGS) $(OBJ) -o $(LIB)
 
 test:
-	$(CC) $(INCLUDES) -DDEBUG -Wall -ggdb -DMAKETEST -c rgb.c
-	$(CC) $(INCLUDES) -DDEBUG -Wall -ggdb -DMAKETEST -c jpeg.c
+	$(CC) $(INCLUDES) -O3 -DDEBUG -Wall -ggdb -DMAKETEST -c rgb.c
+	$(CC) $(INCLUDES) -O3 -DDEBUG -Wall -ggdb -DMAKETEST -c jpeg.c
+	$(CC) $(INCLUDES) -O3 -DDEBUG -Wall -ggdb -DMAKETEST -c pixfmt-conv.c
 	$(LD) rgb.o -ljpeg -o rgb
-	$(LD) jpeg.o -ljpeg -o jpeg
+	$(LD) jpeg.o pixfmt-conv.o -ljpeg -o jpeg
 
 clean:
 	rm -f $(OBJ) $(LIB) ./*~ jpeg rgb
