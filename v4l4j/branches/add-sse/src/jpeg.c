@@ -153,7 +153,7 @@ static void jpeg_encode_yuv420(struct v4l4j_device *d, unsigned char *src, unsig
 	dprint(LOG_JPEG, "[JPEG] Finished compression (%d bytes)\n", d->len);
 }
 
-static void jpeg_encode_yuv422(struct v4l4j_device *d, unsigned char *src, unsigned char *dst){
+static inline void jpeg_encode_yuv422p(struct v4l4j_device *d, unsigned char *dst){
 	struct jpeg_compress_struct *cinfo = d->j->cinfo;
 	uint32_t 					line = 0, i;
 	uint32_t					width = d->vdev->capture->width;
@@ -167,9 +167,6 @@ static void jpeg_encode_yuv422(struct v4l4j_device *d, unsigned char *src, unsig
 	dprint(LOG_JPEG, "[JPEG] Starting compression (%d bytes)\n", d->vdev->capture->imagesize);
 
 	jpeg_start_compress(cinfo, TRUE );
-
-	// reorganise YUV422 pixels into YUV420 suitable to give to the jpeg compressor
-	(*d->j->to_yuv420_fn)(src, d->conversion_buffer, width, height);
 
 	while(line < d->vdev->capture->height){
 		// setup pointers in the JSAMPIMAGE array
@@ -188,6 +185,27 @@ static void jpeg_encode_yuv422(struct v4l4j_device *d, unsigned char *src, unsig
 	jpeg_finish_compress (cinfo);
 	d->len = d->vdev->capture->imagesize - cinfo->dest->free_in_buffer;
 	dprint(LOG_JPEG, "[JPEG] Finished compression (%d bytes)\n", d->len);
+}
+
+static void jpeg_encode_yuyv(struct v4l4j_device *d, unsigned char *src, unsigned char *dst){
+	// reorganise YUYV pixels into YUV420 suitable to give to the jpeg compressor
+	convert_yuyv_to_yuv422p_ssse3(src, d->conversion_buffer, d->vdev->capture->width, d->vdev->capture->height);
+
+	jpeg_encode_yuv422p(d, dst);
+}
+
+static void jpeg_encode_uyvy(struct v4l4j_device *d, unsigned char *src, unsigned char *dst){
+	// reorganise UYVY pixels into YUV420 suitable to give to the jpeg compressor
+	convert_uyvy_to_yuv422p(src, d->conversion_buffer, d->vdev->capture->width, d->vdev->capture->height);
+
+	jpeg_encode_yuv422p(d, dst);
+}
+
+static void jpeg_encode_yvyu(struct v4l4j_device *d, unsigned char *src, unsigned char *dst){
+	// reorganise YVYU pixels into YUV420 suitable to give to the jpeg compressor
+	convert_yvyu_to_yuv422p(src, d->conversion_buffer, d->vdev->capture->width, d->vdev->capture->height);
+
+	jpeg_encode_yuv422p(d, dst);
 }
 
 static void jpeg_encode_rgb32(struct v4l4j_device *d, unsigned char *src, unsigned char *dst){
@@ -370,20 +388,19 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 			} else {
 				d->j->cinfo->comp_info[0].v_samp_factor = 1;
 				d->j->mcu = 8;
-				d->convert = jpeg_encode_yuv422;
-				XMALLOC(d->conversion_buffer, unsigned char *, (d->vdev->capture->width * d->vdev->capture->height * 2));
+				XMALLOC_ALIGNED(d->conversion_buffer, unsigned char *, (d->vdev->capture->width * d->vdev->capture->height * 2));
 				switch (d->vdev->capture->palette) {
 				case YUYV:
 					dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for YUYV\n");
-					d->j->to_yuv420_fn = convert_yuyv_to_yuv420;
+					d->convert = jpeg_encode_yuyv;
 					break;
 				case YVYU:
 					dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for YVYU\n");
-					d->j->to_yuv420_fn = convert_yvyu_to_yuv420;
+					d->convert = jpeg_encode_yvyu;
 					break;
 				case UYVY:
 					dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for UYVY\n");
-					d->j->to_yuv420_fn = convert_uyvy_to_yuv420;
+					d->convert = jpeg_encode_uyvy;
 					break;
 				}
 			}
@@ -487,7 +504,7 @@ void *read_frame(struct capture_device *c, char *file){
 	c->imagesize = file_stat.st_size;
 
 	// allocate buffer
-	data = (void *) malloc(file_stat.st_size);
+	posix_memalign(&data, 16, file_stat.st_size);
 	if (data == NULL) {
 		printf("Error allocating image buffer\n");
 		close(fd);
@@ -590,7 +607,8 @@ void *generate_buffer(struct capture_device *c) {
 	}
 
 	// allocate buffer
-	ptr = buffer = malloc(c->imagesize);
+	posix_memalign(&buffer, 16, c->imagesize);
+	ptr = buffer;
 
 	// fill buffer
 	if (c->palette == YUYV || c->palette == UYVY || c->palette == YVYU) {
@@ -626,26 +644,29 @@ void *generate_buffer(struct capture_device *c) {
 }
 
 int main(int argc, char **argv){
-	void *input = NULL, *jpeg;
-	struct v4l4j_device d;
-	struct video_device v;
-	struct capture_device c;
-	struct timeval start, now;
-	char *filename = NULL;
+	struct v4l4j_device 	d;
+	struct video_device 	v;
+	struct capture_device 	c;
+	struct timeval 			start, now;
+	char 					*filename = NULL;
+	int 					iter;
+	uint64_t				total_us = 0;
+	void 					*input = NULL, *jpeg;
 
 	// make sure we have required args
-	if ((argc != 4) && (argc != 5)){
-		printf("Usage: %s <width> <height> <format> [input_file]\n", argv[0]);
+	if ((argc != 5) && (argc != 6)){
+		printf("Usage: %s <num_iter> <width> <height> <format> [input_file]\n", argv[0]);
 		printf("Formats: YUYV: %d - UYVY: %d - YVYU: %d - YUV420: %d\n", YUYV, UYVY, YVYU, YUV420);
 		return -1;
 	}
 
 	// parse args:
-	c.width = atoi(argv[1]);
-	c.height = atoi(argv[2]);
-	c.palette = atoi(argv[3]);
-	if (argc == 5)
-		filename = argv[4];
+	iter = atoi(argv[1]);
+	c.width = atoi(argv[2]);
+	c.height = atoi(argv[3]);
+	c.palette = atoi(argv[4]);
+	if (argc == 6)
+		filename = argv[5];
 
 	// struct setup
 	d.vdev=&v;
@@ -661,15 +682,18 @@ int main(int argc, char **argv){
 	init_jpeg_compressor( &d, 80);
 
 	//size of dest buffer (JPEG) - use the same size as uncompressed frame - should be enough !
-	jpeg = (void *) malloc(c.imagesize);
+	posix_memalign(&jpeg, 16, c.imagesize);
 
-	// time conversion	
-	gettimeofday(&start, NULL);
-	d.convert(&d, input, jpeg);
-	gettimeofday(&now, NULL);
+	while(iter-- > 0){
+		// time conversion
+		gettimeofday(&start, NULL);
+		d.convert(&d, input, jpeg);
+		gettimeofday(&now, NULL);
 
-	printf("Conversion time: %.1f\n ms", ((float)(now.tv_sec - start.tv_sec)*1000 + ((float) (now.tv_usec - start.tv_usec)/1000)));
+		total_us += (now.tv_sec - start.tv_sec)*1000000 + (now.tv_usec - start.tv_usec);
+	}
 
+	printf("Average conversion time: %.1f ms\n", (float)total_us / (1000.0 * atoi(argv[1])));
 	// save converted frame
 	write_frame(jpeg, d.len, filename);
 
