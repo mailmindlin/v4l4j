@@ -36,7 +36,6 @@ struct v4l4j_device;
 struct jpeg_data {
 	JSAMPROW *y,*cb,*cr;
 	JSAMPARRAY data[3];
-	convert_to_yuv420_fn	to_yuv420_fn;
 	struct jpeg_compress_struct *cinfo;
 	struct jpeg_destination_mgr *destmgr;
 	struct jpeg_error_mgr *jerr;
