@@ -113,24 +113,33 @@ int actualHeight = f.getHeight();
 }}}
 
 
-Assuming the `FrameGrabber` object `f` has been successfully initialised, to start capturing frames, do the following:
+Assuming the `FrameGrabber` object `f` has been successfully initialised, to start capturing frames, you need to instantiate an object which implements the CaptureCallback interface, and pass it to the frame grabber. This object will receive frames during capture
 {{{
-VideoFrame frame;
-int stop=0;
+//Instantiate an object that implements the CaptureCallback
+//interface which will receive captured frame
+myCallbackObject = new MyCallbackObjectclass();
+
+//pass it to the frame grabber.
+f.setCaptureCallback(myCallbackObject);
+
+//Now start the capture
 f.startCapture();
-while(!stop) {
- frame = f.getVideoFrame();
- //do something useful with frame
- //the captured frame size is returned by calling frame.getFrameLength()
- //a byte array with the image data is obtained with frame.getBytes()
- //When no longer needed, you must recycle the frame
- frame.recycle();
-}
-f.stopCapture()
-//dont forget to call f.release() when done with the frame grabber
-}
+
+//At this stage, myCallbackObject.nextFrame() will be called every time
+//a new frame is available (see next paragraph).
+
+//When appropriate, stop the capture
+f.stopCapture();
 }}}
 
+In `myCallbackObject`, when the capture is started, the following method is called every time a new frame is available :
+{{{
+public void nextFrame(VideoFrame frame) {
+   //do something useful with frame. But make sure you recycle
+   //it when dealt with, so v4l4j can re-use it later on
+   frame.recycle();
+}
+}}}
 
 When the `FrameGrabber` is no longer used, resources must be released by calling
 {{{
