@@ -1,4 +1,4 @@
-override CPPFLAGS += -I.. -fvisibility=hidden
+override CPPFLAGS += -I.. -I../pixfc-sse -fvisibility=hidden
 
 LIBS_libv4lconvert = -lrt -lm
 
