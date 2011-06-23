@@ -64,6 +64,12 @@ LIBV4LCONVERT_AR := libv4lconvert.a
 LIBV4LCONVERT_NAME := v4lconvert
 LIBV4LCONVERT_HELPERS := ov511-decomp ov518-decomp
 
+ifeq ($(shell arch), x86_64)
+	LIBPIXFC := pixfc-sse/libpixfc-sse64.a
+else 
+	LIBPIXFC := pixfc-sse/libpixfc-sse32.a
+endif
+
 LIB_NAME := video
 LIB := lib$(LIB_NAME).so
 TESTOBJ := test-capture.o dump-capture.o list-caps.o
@@ -81,7 +87,7 @@ LDFLAGS := -lm -lrt -shared
 all: $(LIB).$(LIB_RELEASE)
 
 $(LIB).$(LIB_RELEASE): version.h $(OBJ) $(LIBV4LCONVERT_AR)
-	$(LD) $(OBJ) $(LIBV4LCONVERT_AR) -Wl,-soname,$(LIB).$(LIB_RELEASE) \
+	$(LD) $(OBJ) $(LIBV4LCONVERT_AR) $(LIBPIXFC) -Wl,-soname,$(LIB).$(LIB_RELEASE) \
   $(LDFLAGS) -o $(LIB).$(LIB_RELEASE)
 	ln -f -s $(LIB).$(LIB_RELEASE) $(LIB)
 

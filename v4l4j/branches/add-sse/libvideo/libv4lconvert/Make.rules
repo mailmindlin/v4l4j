@@ -32,7 +32,7 @@ LIB_RELEASE = 0
 	ln -f -s $@.$(LIB_RELEASE) $@
 
 %.a:
-	$(AR) cqs $@ $^
+	$(AR) cqs $@ $^  
 
 clean::
 	rm -f core core.[0123456789]* *~ *.o *.d *.a *.so* DEADJOE *.orig *.rej $(TARGETS)

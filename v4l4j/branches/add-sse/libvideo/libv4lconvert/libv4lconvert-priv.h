@@ -25,6 +25,7 @@
 #include "control/libv4lcontrol.h"
 #include "processing/libv4lprocessing.h"
 #include "tinyjpeg.h"
+#include "pixfc-sse.h"
 
 #define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
 
@@ -50,6 +51,7 @@ struct v4lconvert_data {
 	int supported_src_formats; /* bitfield */
 	unsigned int no_formats;
 	char error_msg[V4LCONVERT_ERROR_MSG_SIZE];
+	struct PixFcSSE	*pixfc;
 	struct jdec_private *jdec;
 	struct v4l2_frmsizeenum framesizes[V4LCONVERT_MAX_FRAMESIZES];
 	unsigned int no_framesizes;
