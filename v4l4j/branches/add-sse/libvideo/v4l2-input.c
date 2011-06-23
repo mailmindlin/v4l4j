@@ -717,6 +717,8 @@ void *dequeue_buffer_v4l2_convert(struct video_device *vdev, int *len,
 		unsigned long long *sequence) {
 	struct convert_data *conv = vdev->capture->convert;
 	struct v4l2_buffer b;
+	struct timeval start, end;
+	unsigned long long ns = 0;
 	int try = 2;
 	*len = -1;
 	while(*len==-1){
@@ -744,14 +746,17 @@ void *dequeue_buffer_v4l2_convert(struct video_device *vdev, int *len,
 				conv->dst_fmt->fmt.pix.pixelformat
 				);
 
+		gettimeofday(&start, NULL);
 		*len=v4lconvert_convert(conv->priv, conv->src_fmt, conv->dst_fmt,
 				vdev->capture->mmap->buffers[b.index].start, b.bytesused,
 				conv->frame, conv->dst_fmt->fmt.pix.sizeimage);
+		gettimeofday(&end, NULL);
+		timersub(&end, &start, &start);
 
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
-								"CAP: dest buffer has %d bytes after conv\n",
-						*len
-						);
+				"CAP: dest buffer has %d bytes after conv (%llu us)\n",
+				*len, (start.tv_sec*1000000 + start.tv_usec)
+		);
 
 		if(*len==-1){
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
