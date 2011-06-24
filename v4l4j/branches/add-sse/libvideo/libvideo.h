@@ -636,6 +636,10 @@ struct capture_actions {
 //the last argument receives the capture frame sequence number (for v4l2 devices only)
 	void * (*dequeue_buffer)(struct video_device *, int * ,	unsigned int *, unsigned long long *, unsigned long long *);
 
+//convert the previously dequeued buffer at the given index. Call me only if
+//the conversion is needed (if the requested format is not native)
+	unsigned int (*convert_buffer)(struct video_device *vdev, int index, unsigned int src_len, void *dest_buffer);
+
 //enqueue the buffer (given its index) when done using the frame
 	void (*enqueue_buffer)(struct video_device *, unsigned int);
 
