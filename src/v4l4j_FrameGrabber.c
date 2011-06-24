@@ -595,6 +595,11 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(
 		return 0;
 	}
 
+	// do lib4lconvert if required
+	if (d->vdev->capture->is_native!=1) {
+		(*d->vdev->capture->actions->convert_buffer)(d->vdev, buffer_index, d->capture_len, )
+	}
+
 	// convert frame
 	(*d->convert)(d, frame, array);
 
