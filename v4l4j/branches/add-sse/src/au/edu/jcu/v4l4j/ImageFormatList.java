@@ -119,12 +119,16 @@ public class ImageFormatList {
 	 */
 	private void sortLists(){
 		//sort RGBformats
-		//put native formats first and libvideo converted ones next
-		moveNativeFirst(RGBformats);
+		//if native YUYV / UYVY are supported place them second/third
+		moveToFirst(RGBformats, V4L4JConstants.IMF_UYVY);
+		moveToFirst(RGBformats, V4L4JConstants.IMF_YUYV);
 		//if native RGB24 is supported, put it first
 		moveToFirst(RGBformats, V4L4JConstants.IMF_RGB24);
 		
 		//sort BGRformats
+		//if native YUYV / UYVY are supported place them second/third
+		moveToFirst(BGRformats, V4L4JConstants.IMF_UYVY);
+		moveToFirst(BGRformats, V4L4JConstants.IMF_YUYV);
 		//if native BGR24 is supported, put it first
 		moveToFirst(BGRformats, V4L4JConstants.IMF_BGR24);
 		
