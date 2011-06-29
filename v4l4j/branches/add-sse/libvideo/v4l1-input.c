@@ -69,29 +69,16 @@ int check_capture_capabilities_v4l1(int fd, char *file) {
 // set picture format 	VIDIOCSPICT -
 // set window 		VIDIOCSWIN
 // get window format	VIDIOCGWIN  (to double check)
-int set_cap_param_v4l1(struct video_device *vdev, int *palettes, int nb) {
+int set_cap_param_v4l1(struct video_device *vdev, int unused, int palette) {
 	struct capture_device *c = vdev->capture;
 	struct video_channel chan;
 	struct video_picture pict;
 	struct video_window win;
 	struct video_capability vc;
 	int i;
-	int def[NB_SUPPORTED_PALETTES] = DEFAULT_PALETTE_ORDER;
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: Setting capture parameters on device %s.\n", vdev->file);
-
-	if(nb<0 || nb>=NB_SUPPORTED_PALETTES) {
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
-				"CAP: Incorrect number of palettes (%d)\n", nb);
-		return LIBVIDEO_ERR_FORMAT;
-	}
-	if(nb==0 || palettes==NULL) {
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
-				"CAP: No palettes supplied, trying default order.\n");
-		palettes = def;
-		nb = NB_SUPPORTED_PALETTES;
-	}
 
 	CLEAR(chan);
 	CLEAR(pict);
@@ -167,108 +154,92 @@ int set_cap_param_v4l1(struct video_device *vdev, int *palettes, int nb) {
 	}
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-			"CAP: trying palettes (%d to try in total)\n", nb);
-	for(i=0; i<nb; i++) {
-		if(palettes[i]==VIDEO_PALETTE_UNDEFINED_V4L1) {
-			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1,
-					"CAP: palette %s not V4L1-compatible, skipping\n",
-					libvideo_palettes[palettes[i]].name);
-			continue;
-		}
-		pict.palette = libvideo_palettes[palettes[i]].v4l1_palette;
-		pict.depth = libvideo_palettes[palettes[i]].depth;
+			"CAP: applying image format\n");
+
+	if(palette==VIDEO_PALETTE_UNDEFINED_V4L1) {
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
+				"CAP: palette %s not V4L1-compatible\n",
+				libvideo_palettes[palette].name);
+		return LIBVIDEO_ERR_FORMAT;
+	}
+
+	pict.palette = libvideo_palettes[palette].v4l1_palette;
+	pict.depth = libvideo_palettes[palette].depth;
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1,
+			"CAP: trying palette %s (%d) - depth %d...\n",
+			libvideo_palettes[palette].name, pict.palette, pict.depth);
+
+	/*
+	 * V4L1 weirdness
+	 */
+	if(palette == YUV420) {
+		pict.palette = VIDEO_PALETTE_YUV420P;
+		pict.depth = libvideo_palettes[palette].depth;
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1,
 				"CAP: trying palette %s (%d) - depth %d...\n",
-				libvideo_palettes[palettes[i]].name, pict.palette, pict.depth);
+				"YUV420-workaround", YUV420, pict.depth);
 
 		if(0 == ioctl(vdev->fd, VIDIOCSPICT, &pict)){
-			c->palette = palettes[i];
-			c->real_v4l1_palette = palettes[i];
+			c->palette = YUV420;
+			c->real_v4l1_palette = YUV420P;
 			c->imagesize  = c->width*c->height*pict.depth / 8;
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 					"CAP: palette %s (%d) accepted - image size: %d\n",
-				libvideo_palettes[palettes[i]].name, palettes[i], c->imagesize);
-			break;
+				"YUV420-workaround", YUV420, c->imagesize);
+		} else {
+			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "Palette not supported\n");
+			return LIBVIDEO_ERR_FORMAT;
 		}
-
-		/*
-		 * V4L1 weirdness
-		 */
-		if(palettes[i] == YUV420) {
-			pict.palette = VIDEO_PALETTE_YUV420P;
-			pict.depth = libvideo_palettes[palettes[i]].depth;
-			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1,
-					"CAP: trying palette %s (%d) - depth %d...\n",
-					"YUV420-workaround", YUV420, pict.depth);
-
-			if(0 == ioctl(vdev->fd, VIDIOCSPICT, &pict)){
-				c->palette = YUV420;
-				c->real_v4l1_palette = YUV420P;
-				c->imagesize  = c->width*c->height*pict.depth / 8;
-				dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-						"CAP: palette %s (%d) accepted - image size: %d\n",
-					"YUV420-workaround", YUV420, c->imagesize);
-				break;
-			}
-		}
-
-		/*
-		 * More V4L1 weirdness
-		 */
-		if(palettes[i] == YUYV) {
-			pict.palette = VIDEO_PALETTE_YUV422;
-			pict.depth = libvideo_palettes[palettes[i]].depth;
-			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1,
-					"CAP: trying palette %s (%d) - depth %d...\n",
-					"YUYV-workaround", YUYV, pict.depth);
-
-			if(0 == ioctl(vdev->fd, VIDIOCSPICT, &pict)){
-				c->palette = YUYV;
-				c->real_v4l1_palette = YUV422;
-				c->imagesize  = c->width*c->height*pict.depth / 8;
-				dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-						"CAP: palette %s (%d) accepted - image size: %d\n",
-						"YUYV-workaround", YUYV, c->imagesize);
-				break;
-			}
-		}
-
-		/*
-		 * More V4L1 weirdness
-		 */
-		if(palettes[i] == YUV411) {
-			pict.palette = VIDEO_PALETTE_YUV411P;
-			pict.depth = libvideo_palettes[palettes[i]].depth;
-			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1,
-					"CAP: trying palette %s (%d) - depth %d...\n",
-					"YUV411-workaround", YUV411, pict.depth);
-
-			if(0 == ioctl(vdev->fd, VIDIOCSPICT, &pict)){
-				c->palette = YUV411;
-				c->real_v4l1_palette = YUV411P;
-				c->imagesize  = c->width*c->height*pict.depth / 8;
-				dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-						"CAP: palette %s (%d) accepted - image size: %d\n",
-						"YUYV-workaround", YUYV, c->imagesize);
-				break;
-			}
-		}
-
+	} else if(palette == YUYV) {
+		pict.palette = VIDEO_PALETTE_YUV422;
+		pict.depth = libvideo_palettes[palette].depth;
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1,
-				"CAP: palette %s rejected\n",
-				libvideo_palettes[palettes[i]].name);
+				"CAP: trying palette %s (%d) - depth %d...\n",
+				"YUYV-workaround", YUYV, pict.depth);
+
+		if(0 == ioctl(vdev->fd, VIDIOCSPICT, &pict)){
+			c->palette = YUYV;
+			c->real_v4l1_palette = YUV422;
+			c->imagesize  = c->width*c->height*pict.depth / 8;
+			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
+					"CAP: palette %s (%d) accepted - image size: %d\n",
+					"YUYV-workaround", YUYV, c->imagesize);
+		}  else {
+			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "Palette not supported\n");
+			return LIBVIDEO_ERR_FORMAT;
+		}
+	} else	if(palette == YUV411) {
+		pict.palette = VIDEO_PALETTE_YUV411P;
+		pict.depth = libvideo_palettes[palette].depth;
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1,
+				"CAP: trying palette %s (%d) - depth %d...\n",
+				"YUV411-workaround", YUV411, pict.depth);
+
+		if(0 == ioctl(vdev->fd, VIDIOCSPICT, &pict)){
+			c->palette = YUV411;
+			c->real_v4l1_palette = YUV411P;
+			c->imagesize  = c->width*c->height*pict.depth / 8;
+			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
+					"CAP: palette %s (%d) accepted - image size: %d\n",
+					"YUYV-workaround", YUYV, c->imagesize);
+		} else {
+			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "Palette not supported\n");
+			return LIBVIDEO_ERR_FORMAT;
+		}
+	} else {
+		if(0 == ioctl(vdev->fd, VIDIOCSPICT, &pict)){
+			c->palette = palette;
+			c->real_v4l1_palette = palette;
+			c->imagesize  = c->width*c->height*pict.depth / 8;
+			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
+					"CAP: palette %s (%d) accepted - image size: %d\n",
+				libvideo_palettes[palette].name, palette, c->imagesize);
+		}  else {
+			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "Palette not supported\n");
+			return LIBVIDEO_ERR_FORMAT;
+		}
 	}
-	if(i==nb) {
-		info("libvideo was unable to find a suitable palette. "
-				"The following palettes have been tried and failed:\n");
-		for(i=0; i<nb;i++)
-			info("%s\n",libvideo_palettes[palettes[i]].name);
-		info("Please let the author know about this error.\n");
-		info("See the ISSUES section in the libvideo README file.\n");
-		info("Listing the reported capabilities:\n");
-		list_cap_v4l1(vdev->fd);
-		return LIBVIDEO_ERR_FORMAT;
-	}
+
 	c->is_native=1;
 
 	win.x = win.y = 0;

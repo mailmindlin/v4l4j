@@ -99,7 +99,6 @@ static int create_RGB_list(JNIEnv *e, struct v4l4j_device *d,
 		jmethodID format_ctor ){
 	int i, j;
 	struct device_info *di = d->vdev->info;
-	int v4l4j_rgb24_conv_formats[] = RGB24_CONVERTIBLE_FORMATS;
 
 	dprint(LOG_V4L4J, "[V4L4J] Creating RGB encodable format list\n");
 
@@ -128,23 +127,6 @@ static int create_RGB_list(JNIEnv *e, struct v4l4j_device *d,
 					return -1;
 			}
 
-		} else {
-			//check if v4l4j can convert it
-			for(j=0; j<ARRAY_SIZE(v4l4j_rgb24_conv_formats); j++){
-
-				//if it is a native format AND v4l4j knows how to convert it
-				if(!di->palettes[i].raw_palettes &&
-						di->palettes[i].index==v4l4j_rgb24_conv_formats[j]){
-
-					dprint(LOG_V4L4J, "[V4L4J] Found v4l4j provided RGB24 "
-							"format from %s format - add it\n",
-							libvideo_palettes[v4l4j_rgb24_conv_formats[j]].name);
-
-					if(add_format(e,formats,add_method,format_class,
-							format_ctor, v4l4j_rgb24_conv_formats[j], d)==-1)
-						return -1;
-				}
-			} //end for v4l4j rgv24 convertible formats
 		}
 	}//end for all supported formats
 

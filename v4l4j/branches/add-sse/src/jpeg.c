@@ -457,10 +457,15 @@ void destroy_jpeg_compressor(struct v4l4j_device *d){
 		d->vdev->capture->palette == RGB32 || d->vdev->capture->palette == BGR24 ||
 		d->vdev->capture->palette == UYVY || d->vdev->capture->palette == BGR32) {
 
-		XFREE(d->conversion_buffer);
-		XFREE(d->j->y);
-		XFREE(d->j->cb);
-		XFREE(d->j->cr);
+		if ((d->vdev->capture->palette != RGB24) && (d->vdev->capture->palette != YUV420))
+			XFREE(d->conversion_buffer);
+
+		if ((d->vdev->capture->palette == YUV420) || (d->vdev->capture->palette == YUYV)
+			|| (d->vdev->capture->palette == YVYU) || (d->vdev->capture->palette == UYVY)){
+			XFREE(d->j->y);
+			XFREE(d->j->cb);
+			XFREE(d->j->cr);
+		}
 
 		// free JPEG compressor & data structs
 		jpeg_destroy_compress(d->j->cinfo);
