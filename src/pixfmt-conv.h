@@ -32,10 +32,16 @@
 #include <emmintrin.h>
 #endif
 
+#ifdef DEBUG
+#define EXTERN_INLINE
+#else
+#define EXTERN_INLINE extern inline
+#endif
+
 /*
  * converts 'height' lines in YUV formats into Y, U, V planes.
  */
-extern inline void	convert_yuyv_to_yuv422p(uint8_t* yuyv_src, uint8_t* yuv422p_dst, uint32_t width, uint32_t height) {
+EXTERN_INLINE void	convert_yuyv_to_yuv422p(uint8_t* yuyv_src, uint8_t* yuv422p_dst, uint32_t width, uint32_t height) {
 	uint32_t 	nb_pixels = width * height;
 	uint8_t		*y, *u, *v;
 
@@ -69,7 +75,7 @@ static void print_m128(char *name, __m128i *reg) {
  * The following SSSE3 routine offers very little performance gain compared to its non-SSE counterpart above.
  * Left here for reference, but unused.
  */
-extern inline void	convert_yuyv_to_yuv422p_ssse3(uint8_t* yuyv_src, uint8_t* yuv422p_dst, uint32_t width, uint32_t height) {
+EXTERN_INLINE void	convert_yuyv_to_yuv422p_ssse3(uint8_t* yuyv_src, uint8_t* yuv422p_dst, uint32_t width, uint32_t height) {
 	uint32_t	nb_pixels = width * height;
 	__m128i*	src = (__m128i *) yuyv_src;
 	__m128i*	y_dst = (__m128i *) yuv422p_dst;
@@ -134,7 +140,7 @@ extern inline void	convert_yuyv_to_yuv422p_ssse3(uint8_t* yuyv_src, uint8_t* yuv
 #endif
 
 #ifdef __SSE2__
-extern inline void	convert_yuyv_to_yuv422p_sse2(uint8_t* yuyv_src, uint8_t* yuv422p_dst, uint32_t width, uint32_t height) {
+EXTERN_INLINE void	convert_yuyv_to_yuv422p_sse2(uint8_t* yuyv_src, uint8_t* yuv422p_dst, uint32_t width, uint32_t height) {
 	uint32_t	nb_pixels = width * height;
 	__m128i*	src = (__m128i *) yuyv_src;
 	__m128i*	y_dst = (__m128i *) yuv422p_dst;
@@ -194,7 +200,7 @@ extern inline void	convert_yuyv_to_yuv422p_sse2(uint8_t* yuyv_src, uint8_t* yuv4
 }
 #endif
 
-extern inline void	convert_uyvy_to_yuv422p(uint8_t* uyvy_src, uint8_t* yuv422p_dst, uint32_t width, uint32_t height) {
+EXTERN_INLINE void	convert_uyvy_to_yuv422p(uint8_t* uyvy_src, uint8_t* yuv422p_dst, uint32_t width, uint32_t height) {
 	uint32_t 	nb_pixels = width * height;
 	uint8_t		*y, *u, *v;
 
@@ -211,7 +217,7 @@ extern inline void	convert_uyvy_to_yuv422p(uint8_t* uyvy_src, uint8_t* yuv422p_d
 	}
 }
 
-extern inline void	convert_yvyu_to_yuv422p(uint8_t* yvyu_src, uint8_t* yuv422p_dst, uint32_t width, uint32_t height) {
+EXTERN_INLINE void	convert_yvyu_to_yuv422p(uint8_t* yvyu_src, uint8_t* yuv422p_dst, uint32_t width, uint32_t height) {
 	uint32_t 	nb_pixels = width * height;
 	uint8_t		*y, *u, *v;
 

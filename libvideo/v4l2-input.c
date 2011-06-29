@@ -346,41 +346,8 @@ static int try_image_format(struct capture_device *c, struct v4l2_format *src,
 	return index;
 }
 
-static int find_best_palette(struct capture_device *c, int *palettes,
-		int nb, int fd){
-	int best_palette=-1, best_width =-1, best_height=-1, i;
-	struct v4l2_format src, dst;
-
-	for(i=0; i<nb; i++) {
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1,
-				"CAP: trying palette %#x (%s) %dx%d - ...\n",
-				libvideo_palettes[palettes[i]].v4l2_palette,
-				libvideo_palettes[palettes[i]].name, c->width, c->height);
-
-		if(try_image_format(c, &src, &dst, palettes[i])!=-1){
-
-				if( (best_palette == -1) ||
-				  (abs(c->width*c->height - dst.fmt.pix.width*dst.fmt.pix.height) <
-							 abs(c->width*c->height - best_width*best_height)) ){
-					best_palette = palettes[i];
-					best_width = dst.fmt.pix.width;
-					best_height = dst.fmt.pix.height;
-					dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-							"CAP: palette (%s) is best palette so far\n",
-							libvideo_palettes[palettes[i]].name);
-				}
-
-		} //else
-		//palette rejected
-	}
-
-	return best_palette;
-}
-
-
-static int set_image_format(struct capture_device *c, int *palettes,
-		int nb, int fd){
-	int best_palette = -1, i;
+static int set_image_format(struct capture_device *c, int native_palette,
+		int output_palette, int fd){
 	XMALLOC(c->convert->src_fmt,struct v4l2_format *,sizeof(struct v4l2_format));
 	XMALLOC(c->convert->dst_fmt,struct v4l2_format *,sizeof(struct v4l2_format));
 
@@ -390,41 +357,31 @@ static int set_image_format(struct capture_device *c, int *palettes,
 		c->height=V4L2_MAX_HEIGHT;
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-			"CAP: trying palettes (%d to try in total)\n", nb);
+			"CAP: Applying palette %s...\n",
+			libvideo_palettes[output_palette].name);
 
-	//we try all the supplied palettes and find the best one that gives us
-	//a resolution closest to the desired one
-	best_palette = find_best_palette(c, palettes, nb, fd);
+	c->convert->src_palette = try_image_format(
+			c, c->convert->src_fmt, c->convert->dst_fmt, output_palette);
+	if ((native_palette != -1) && (c->convert->src_palette != native_palette)) {
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1, "Asked to use native palette"
+				" '%s' instead - Overriding libv4lconvert's choice\n", libvideo_palettes[native_palette].name);
+		c->convert->src_palette = native_palette;
+		c->convert->src_fmt->fmt.pix.pixelformat = libvideo_palettes[native_palette].v4l2_palette;
+	}
 
-	if(best_palette == -1) {
-		info("libvideo was unable to find a suitable palette. The following "
-				"palettes have been tried and failed:\n");
-		for(i=0; i<nb;i++)
-			info("%s\n",libvideo_palettes[palettes[i]].name);
+	if (0 == apply_image_format(c->convert->src_fmt, fd)) {
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1,
+				"CAP: setting src palette (%s) accepted\n",
+				libvideo_palettes[c->convert->src_palette].name);
+		c->palette = output_palette;
+	} else {
+		info("Unable to set the palette: %s\n",
+				libvideo_palettes[c->convert->src_palette].name);
 		info("Please let the author know about this error.\n");
 		info("See the ISSUES section in the libvideo README file.\n");
 		return -1;
-	} else {
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-				"CAP: Setting to best palette %s...\n",
-				libvideo_palettes[best_palette].name);
-
-		c->convert->src_palette = try_image_format(
-				c, c->convert->src_fmt, c->convert->dst_fmt, best_palette);
-
-		if (0 == apply_image_format(c->convert->src_fmt, fd)) {
-			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1,
-					"CAP: setting src palette (%s) accepted\n",
-					libvideo_palettes[c->convert->src_palette].name);
-			c->palette = best_palette;
-		} else {
-			info("Unable to set the best detected palette: %s\n",
-					libvideo_palettes[best_palette].name);
-			info("Please let the author know about this error.\n");
-			info("See the ISSUES section in the libvideo README file.\n");
-			return -1;
-		}
 	}
+
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: capturing (src) using width: %d, "
@@ -546,25 +503,12 @@ int get_frame_intv_v4l2(struct video_device *vdev, int *num, int *denom) {
 		return LIBVIDEO_ERR_IOCTL;
 }
 
-int set_cap_param_v4l2(struct video_device *vdev, int *palettes, int nb) {
+int set_cap_param_v4l2(struct video_device *vdev, int src_palette, int dest_palette) {
 	struct capture_device *c = vdev->capture;
 	int ret = 0;
-	int def[NB_SUPPORTED_PALETTES] = DEFAULT_PALETTE_ORDER;
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: Setting capture parameters on device %s.\n", vdev->file);
-
-	if(nb<0 || nb>=NB_SUPPORTED_PALETTES) {
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
-				"CAP: Incorrect number of palettes (%d)\n", nb);
-		return LIBVIDEO_ERR_FORMAT;
-	}
-	if(nb==0 || palettes==NULL) {
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-				"CAP: No palettes supplied, trying default order.\n");
-		palettes = def;
-		nb = NB_SUPPORTED_PALETTES;
-	}
 
 	//set desired standard
 	if (set_std(c, vdev->fd) !=0 ) {
@@ -579,7 +523,15 @@ int set_cap_param_v4l2(struct video_device *vdev, int *palettes, int nb) {
 	}
 
 	//Set image format
-	if (set_image_format(c, palettes, nb, vdev->fd) != 0) {
+	if (src_palette != -1) {
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
+					"Native format '%s' requested\n", libvideo_palettes[src_palette].name);
+	}
+
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
+					"Output format '%s' requested\n", libvideo_palettes[dest_palette].name);
+
+	if (set_image_format(c, src_palette, dest_palette, vdev->fd) != 0) {
 		ret = LIBVIDEO_ERR_FORMAT;
 		goto fail;
 	}
@@ -707,24 +659,20 @@ unsigned int convert_buffer_v4l2(struct video_device *vdev, int index,
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
 			"CAP: Passing buffer %d of len %d at %p with format %#x"
 			" to be stored in buffer at %p of length %d with format %#x\n",
-			index, len,
+			index, src_len,
 			vdev->capture->mmap->buffers[index].start,
 			conv->src_fmt->fmt.pix.pixelformat,
-			buffer, conv->dst_fmt->fmt.pix.sizeimage,
+			dest_buffer, conv->dst_fmt->fmt.pix.sizeimage,
 			conv->dst_fmt->fmt.pix.pixelformat
 			);
 
-	gettimeofday(&start, NULL);
 	dest_buffer_len=v4lconvert_convert(conv->priv, conv->src_fmt, conv->dst_fmt,
 			vdev->capture->mmap->buffers[index].start, src_len,
 			dest_buffer, conv->dst_fmt->fmt.pix.sizeimage);
-	gettimeofday(&end, NULL);
-	timersub(&end, &start, &start);
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
 			"CAP: dest buffer has %d bytes after conv\n",dest_buffer_len
 	);
-	printf("%llu us\n",(long long unsigned int)(start.tv_sec*1000000 + start.tv_usec));
 
 	return dest_buffer_len;
 }
@@ -768,7 +716,7 @@ void enqueue_buffer_v4l2(struct video_device *vdev, unsigned int index) {
 	struct v4l2_buffer b;
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
-			"CAP: queuing buffer on device %s.\n", vdev->file);
+			"CAP: queuing buffer %d on device %s.\n", index, vdev->file);
 
 	CLEAR(b);
 	b.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;

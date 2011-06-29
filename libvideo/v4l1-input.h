@@ -43,8 +43,8 @@ int check_v4l1(int fd, struct video_capability *);
 // get capabilities VIDIOCGCAP - check max height and width
 int check_capture_capabilities_v4l1(int, char *);
 
-// set the capture parameters trying the nb(last arg) palettes(second arg) in order
-int set_cap_param_v4l1(struct video_device *, int *, int);
+// set the capture parameters trying the capturing in the native palette (last arg ignored)
+int set_cap_param_v4l1(struct video_device *, int , int);
 // set video channel 	VIDIOCSCHAN -
 // set picture format 	VIDIOCSPICT -
 // set window 		VIDIOCSWIN
