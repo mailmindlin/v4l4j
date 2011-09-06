@@ -335,6 +335,20 @@ static int try_format(int index, int w, int h, struct v4l2_format *dst,
 	return v4lconvert_try_format(conv,dst,src);
 }
 
+static int get_current_resolution(int *width, int *height) {
+	struct v4l2_format fmt;
+
+	memset(&fmt, 0, sizeof(fmt));
+	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	if (ioctl(fd, VIDIOC_G_FMT, &fmt) == 0) {
+		*width = fmt.fmt.pix.width;
+		*height = fmt.fmt.pix.height;
+		return 0;
+	}
+
+	return -1;
+}
+
 //this function adds the given palette fmt to the list of
 //supported palettes in struct device_info. It also
 //checks with libv4l_convert if it is converted from another palette
@@ -342,7 +356,7 @@ static int try_format(int index, int w, int h, struct v4l2_format *dst,
 static int add_supported_palette(struct device_info *di, int fmt){
 	struct v4l2_format dst, src;
 	struct palette_info *curr;
-	int i = 0, src_palette;
+	int i = 0, src_palette, w = 640, h = 480;
 	struct v4l2_frmsizeenum s;
 
 	di->nb_palettes++;
@@ -354,12 +368,10 @@ static int add_supported_palette(struct device_info *di, int fmt){
 	curr->index = fmt;
 	curr->size_type=FRAME_SIZE_UNSUPPORTED;
 
-
-	//check if this format is the result of a conversion form another format
+	//check if this format is the result of a conversion from another format
 	//by libv4l_convert
-	//arbitrary values - enough since it conversion happens at this resolution
-	//it is safe to assume it will happen at other as well
-	if(try_format(fmt,640,480,&dst,&src,di->convert)!=0){
+	get_current_resolution(&w, &h);
+	if(try_format(fmt,w,h,&dst,&src,di->convert)!=0){
 		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_ERR,
 				"QRY: Error checking palette %s (libv4l convert says: %s)\n",
 				libvideo_palettes[fmt].name,
