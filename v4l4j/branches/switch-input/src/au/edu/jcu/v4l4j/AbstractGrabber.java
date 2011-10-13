@@ -109,6 +109,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	private native void doRelease(long o);
 	private native void doSetFrameIntv(long o, int n, int d) throws InvalidValue;
 	private native int doGetFrameIntv(long o, int what);
+	private native void doSetVideoInputNStandard(long o, int input, int std);
 
 
 	/**
@@ -244,6 +245,14 @@ abstract class AbstractGrabber implements FrameGrabber {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see au.edu.jcu.v4l4j.FrameGrabber#setVideoInputNStandard()
+	 */
+	@Override
+	public void setVideoInputNStandard(int input, int standard) throws VideoStandardException, CaptureChannelException {
+		state.checkReleased();
+		doSetVideoInputNStandard(object, input, standard);
+	}
 	/* (non-Javadoc)
 	 * @see au.edu.jcu.v4l4j.FrameGrabber#getTuner()
 	 */
