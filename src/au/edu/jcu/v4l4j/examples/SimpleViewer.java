@@ -166,5 +166,10 @@ public class SimpleViewer extends WindowAdapter implements CaptureCallback{
 		
 		// recycle the frame
 		frame.recycle();
+
+		try {
+			frameGrabber.setVideoInputNStandard(1, 0);
+		} catch (Exception e) {
+		}
 	}
 }

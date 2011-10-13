@@ -521,6 +521,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doSetFrameIntv(
 				"Setting frame interval not supported");
 		return;
 	}
+
 }
 
 /*
@@ -546,6 +547,32 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetFrameIntv(
 		return num;
 	else
 		return denom;
+}
+
+/*
+ * sets the video input and standard
+ */
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doSetInputNStandard(
+		JNIEnv *e, jobject t, jlong object, jint input_num, jint standard){
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	int ret = 0;
+	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
+
+	dprint(LOG_V4L4J, "[LIBVIDEO] Setting input to %d and standard to %d\n", input_num, standard);
+	ret = d->vdev->capture->actions->set_video_input_std(d->vdev, input_num, standard);
+
+	switch(ret){
+	case LIBVIDEO_ERR_CHANNEL:
+		dprint(LOG_V4L4J, "[V4L4J] Invalid input\n");
+		THROW_EXCEPTION(e, CHANNEL_EXCP, "Error setting new input %d", input_num);
+		break;
+	case LIBVIDEO_ERR_STD:
+		dprint(LOG_V4L4J, "[V4L4J] Setting standard to %d\n", standard);
+		THROW_EXCEPTION(e, STD_EXCP, "The requested standard (%d) is invalid", standard);
+		break;
+	}
+
+
 }
 
 /*
