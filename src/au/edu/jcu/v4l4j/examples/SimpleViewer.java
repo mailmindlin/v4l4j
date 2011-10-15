@@ -39,6 +39,8 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  *
  */
 public class SimpleViewer extends WindowAdapter implements CaptureCallback{
+	private static int		channel_count = 2;	// how many inputs do we cycle over
+	private static int		captured_frames_per_channel = 5; // how many frames we capture per input before switching to the next input
 	private static int		width, height, std, channel;
 	private static String	device;
 
@@ -47,6 +49,7 @@ public class SimpleViewer extends WindowAdapter implements CaptureCallback{
 
 	private JLabel 			label;
 	private JFrame 			frame;
+	private int			frames_captured; // how many we have captured so far on the current input
 
 
 
@@ -104,6 +107,7 @@ public class SimpleViewer extends WindowAdapter implements CaptureCallback{
 		frameGrabber.setCaptureCallback(this);
 		width = frameGrabber.getWidth();
 		height = frameGrabber.getHeight();
+		frames_captured = 0;
 		System.out.println("Starting capture at "+width+"x"+height);
 	}
 
@@ -167,9 +171,18 @@ public class SimpleViewer extends WindowAdapter implements CaptureCallback{
 		// recycle the frame
 		frame.recycle();
 
-		try {
-			frameGrabber.setVideoInputNStandard(1, 0);
-		} catch (Exception e) {
+		// if we have captured the max number of frames for this input ...
+		if (++frames_captured == captured_frames_per_channel) {
+			// switch to the next input
+			if (++channel == channel_count) 
+				channel = 0;
+			try {
+				frameGrabber.setVideoInputNStandard(channel, 0);
+			} catch (Exception e) {
+			}
+			
+			// reset the number of frames captured
+			frames_captured = 0;
 		}
 	}
 }

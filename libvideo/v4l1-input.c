@@ -326,6 +326,11 @@ int set_video_input_std_v4l1(struct video_device *vdev, int input_num, int std) 
 	return LIBVIDEO_ERR_IOCTL;
 }
 
+void get_video_input_std_v4l1(struct video_device *vdev, int *input_num, int *std) {
+	// TODO: implement me if anyone wants this feature
+	info("This function is not implemented.\n");
+}
+
 // get streaming cap details VIDIOCGMBUF, initialise streaming and
 // create mmap'ed buffers
 int init_capture_v4l1(struct video_device *vdev) {
