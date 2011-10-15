@@ -50,6 +50,7 @@ int get_frame_intv_v4l2(struct video_device *, int *, int*);
 
 // Change the input and standard during capture using this function
 int set_video_input_std_v4l2(struct video_device *vdev, int input_num, int std);
+void get_video_input_std_v4l2(struct video_device *vdev, int *input_num, int *std);
 
 //initialise streaming, request V4L2 buffers and create mmap'ed buffers
 int init_capture_v4l2(struct video_device *);

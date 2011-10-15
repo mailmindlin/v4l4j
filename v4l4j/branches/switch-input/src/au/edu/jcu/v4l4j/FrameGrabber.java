@@ -194,6 +194,18 @@ public interface FrameGrabber {
 	public void setVideoInputNStandard(int inputNumber, int standard) throws VideoStandardException, CaptureChannelException;
 
 	/**
+	 * This method retrieves the current video input channel number.
+	 * @return the current input number
+	 */
+	public int getVideoInput();
+
+	/**
+	 * This method retrieves the current video standard used by the current video input.
+	 * @return the current standard
+	 */
+	public int getVideoStandard();
+
+	/**
 	 * This method returns the {@link Tuner} associated with the input of this 
 	 * <code>FrameGrabber</code>, or throws a {@link NoTunerException} if there
 	 * is none.   
