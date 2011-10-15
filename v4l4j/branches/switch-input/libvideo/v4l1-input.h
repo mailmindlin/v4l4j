@@ -55,6 +55,7 @@ int set_frame_intv_v4l1(struct video_device *, int , int);
 int get_frame_intv_v4l1(struct video_device *, int *, int*);
 
 int set_video_input_std_v4l1(struct video_device *, int, int);
+void get_video_input_std_v4l1(struct video_device *vdev, int *input_num, int *std);
 
 //initialise streaming, request V4L2 buffers and create mmap'ed buffers
 int init_capture_v4l1(struct video_device *);

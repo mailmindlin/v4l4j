@@ -552,7 +552,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetFrameIntv(
 /*
  * sets the video input and standard
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doSetInputNStandard(
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doSetVideoInputNStandard(
 		JNIEnv *e, jobject t, jlong object, jint input_num, jint standard){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	int ret = 0;
@@ -567,13 +567,42 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doSetInputNStandard
 		THROW_EXCEPTION(e, CHANNEL_EXCP, "Error setting new input %d", input_num);
 		break;
 	case LIBVIDEO_ERR_STD:
-		dprint(LOG_V4L4J, "[V4L4J] Setting standard to %d\n", standard);
+		dprint(LOG_V4L4J, "[V4L4J] Error setting standard to %d\n", standard);
 		THROW_EXCEPTION(e, STD_EXCP, "The requested standard (%d) is invalid", standard);
 		break;
 	}
 
 
 }
+
+/*
+ * gets the video input
+ */
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoInput(
+		JNIEnv *e, jobject t, jlong object){
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
+	int input_num, standard;
+
+	d->vdev->capture->actions->get_video_input_std(d->vdev, &input_num, &standard);
+
+	return (jint)input_num;
+}
+
+/*
+ * gets the video standard
+ */
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoStandard(
+		JNIEnv *e, jobject t, jlong object){
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
+	int input_num, standard;
+
+	d->vdev->capture->actions->get_video_input_std(d->vdev, &input_num, &standard);
+
+	return (jint)standard;
+}
+
 
 /*
  * enqueue a buffer
