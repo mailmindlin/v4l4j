@@ -688,10 +688,10 @@ void release_device_info(struct video_device *);
  */
 struct control_list *get_control_list(struct video_device *);
 //returns 0, LIBVIDEO_ERR_WRONG_VERSION, LIBVIDEO_ERR_IOCTL
-int get_control_value(struct video_device *, struct v4l2_queryctrl *, int *);
+int get_control_value(struct video_device *, struct v4l2_queryctrl *, void *, int);
 //returns 0, LIBVIDEO_ERR_WRONG_VERSION, LIBVIDEO_ERR_IOCTL or LIBVIDEO_ERR_STREAMING
-//the last argument (int *) will be set to the previous value of this control
-int set_control_value(struct video_device *, struct v4l2_queryctrl *,  int *);
+int set_control_value(struct video_device *, struct v4l2_queryctrl *,  void *, int);
+
 void release_control_list(struct video_device *);
 
 /*

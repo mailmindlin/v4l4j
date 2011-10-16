@@ -580,7 +580,7 @@ struct control_list *get_control_list(struct video_device *vdev){
 }
 
 int get_control_value(struct video_device *vdev,
-		struct v4l2_queryctrl *ctrl, int *val){
+		struct v4l2_queryctrl *ctrl, void *val, int size){
 
 	int ret = 0;
 	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
@@ -591,7 +591,7 @@ int get_control_value(struct video_device *vdev,
 		ret = s->get_ctrl(vdev, ctrl, s->priv, val);
 	} else {
 		if(vdev->v4l_version==V4L2_VERSION)
-			ret = get_control_value_v4l2(vdev, ctrl, val);
+			ret = get_control_value_v4l2(vdev, ctrl, val, size);
 		else if(vdev->v4l_version==V4L1_VERSION)
 			ret =  get_control_value_v4l1(vdev, ctrl, val);
 		else {
@@ -604,26 +604,39 @@ int get_control_value(struct video_device *vdev,
 }
 
 int set_control_value(struct video_device *vdev,
-		struct v4l2_queryctrl *ctrl, int *i){
+		struct v4l2_queryctrl *ctrl, void *value, int size){
 
 	int ret = 0;
 	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-			"CTRL: setting value (%d) for control %s\n",*i, ctrl->name);
+			"CTRL: setting value for control %s\n", ctrl->name);
 
-	if(*i<ctrl->minimum || *i > ctrl->maximum){
-		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-				"CTRL: control value out of range\n");
-		return LIBVIDEO_ERR_OUT_OF_RANGE;
+	// Ensure the value is within the bounds
+	if ((ctrl->type == V4L2_CTRL_TYPE_INTEGER) || (ctrl->type == V4L2_CTRL_TYPE_BOOLEAN) ||
+			(ctrl->type == V4L2_CTRL_TYPE_MENU) || (ctrl->type == V4L2_CTRL_TYPE_BUTTON)) {
+		if(*(int32_t*)value<ctrl->minimum || *(int32_t*)value > ctrl->maximum){
+			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
+					"CTRL: control value (%d) out of range (%d - %d)\n",
+					*(int32_t*)value, ctrl->minimum, ctrl->maximum);
+			return LIBVIDEO_ERR_OUT_OF_RANGE;
+		}
+	} else if (ctrl->type == V4L2_CTRL_TYPE_STRING) {
+		// Ensure the string size is within the bounds
+		if (size < ctrl->minimum || size > ctrl->maximum) {
+			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
+					"CTRL: string control length (%d) out of range (%d - %d)\n",
+					size, ctrl->minimum, ctrl->maximum);
+			return LIBVIDEO_ERR_OUT_OF_RANGE;
+		}
 	}
 
 	if(ctrl->reserved[0]==V4L2_PRIV_IOCTL){
 		struct v4l_driver_probe *s = &known_driver_probes[ctrl->reserved[1]];
-		ret = s->set_ctrl(vdev, ctrl, i,s->priv);
+		ret = s->set_ctrl(vdev, ctrl, value,s->priv);
 	} else {
 		if(vdev->v4l_version==V4L2_VERSION)
-			ret = set_control_value_v4l2(vdev, ctrl, i);
+			ret = set_control_value_v4l2(vdev, ctrl, value, size);
 		else if(vdev->v4l_version==V4L1_VERSION)
-			ret = set_control_value_v4l1(vdev, ctrl, i);
+			ret = set_control_value_v4l1(vdev, ctrl, (int *)value);
 		else {
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
 					"CTRL: Weird V4L version (%d)...\n", vdev->v4l_version);
