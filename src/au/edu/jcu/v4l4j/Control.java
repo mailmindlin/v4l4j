@@ -542,7 +542,7 @@ public class Control {
 	 * @throws UnsupportedMethod if this control is of type {@link V4L4JConstants#CTRL_TYPE_STRING}
 	 * @throws StateException if this control has been released and must not be used anymore
 	 */
-	public int getDefaultValue() throws ControlException{
+	public int getDefaultValue() {
 		if(type==V4L4JConstants.CTRL_TYPE_STRING)
 			throw new UnsupportedMethod("This control is a string control and does not support calls to getDefaultValue()");
 		if(type==V4L4JConstants.CTRL_TYPE_LONG)
