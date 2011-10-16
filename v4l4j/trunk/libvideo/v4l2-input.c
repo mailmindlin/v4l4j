@@ -1172,11 +1172,21 @@ static void fix_quirky_struct(struct v4l2_queryctrl *v){
 					"'%s' from %d to 0\n", v->name, v->maximum);
 			v->maximum = 0;
 		}
+	} else if(v->type==V4L2_CTRL_TYPE_INTEGER64) {
+		// The step, min and max cannot be queried, so hardcode them to sensible values
+		v->step == 1;
+		v->minimum = 0;
+		v->maximum = 0;
+	} else if(v->type==V4L2_CTRL_TYPE_BITMASK) {
+		// The step, min and max cannot be queried, so hardcode them to sensible values
+		v->step == 1;
+		v->minimum = 0;
+		v->maximum = 2^32-1;
 	}
 }
 
 //Populate the control_list with reported V4L2 controls
-//and returns how many controls were created
+//and return how many controls were created
 int create_v4l2_controls(struct video_device *vdev, struct control *controls,
 		int max){
 	struct v4l2_queryctrl qctrl;
@@ -1185,10 +1195,11 @@ int create_v4l2_controls(struct video_device *vdev, struct control *controls,
 
 	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
 			"CTRL: Creating std controls\n");
+
 	//create standard V4L controls
 	for( i = V4L2_CID_BASE; i< V4L2_CID_LASTP1 && count < max; i++) {
 		controls[count].v4l2_ctrl->id = i;
-		//if(ioctl(vdev->fd, VIDIOC_QUERYCTRL, controls[count].v4l2_ctrl) == 0) {
+
 		if(v4lconvert_vidioc_queryctrl(vdev->control->priv, controls[count].v4l2_ctrl) == 0) {
 			dprint_v4l2_control(controls[count].v4l2_ctrl);
 			if ( !(controls[count].v4l2_ctrl->flags & V4L2_CTRL_FLAG_DISABLED)&&
@@ -1240,7 +1251,7 @@ int create_v4l2_controls(struct video_device *vdev, struct control *controls,
 	//checking extended controls
 	CLEAR(qctrl);
 	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
-	// while (0 == ioctl (vdev->fd, VIDIOC_QUERYCTRL, &qctrl)) {
+
 	while (v4lconvert_vidioc_queryctrl(vdev->control->priv, &qctrl) == 0) {
 		if(!has_id(list,qctrl.id ) && !(qctrl.flags & V4L2_CTRL_FLAG_DISABLED)
 				&& qctrl.type!=V4L2_CTRL_TYPE_CTRL_CLASS ){
@@ -1284,48 +1295,146 @@ static int fix_quirky_values(struct v4l2_queryctrl *qc, int v){
 }
 //returns the value of a control
 int get_control_value_v4l2(struct video_device *vdev,
-		struct v4l2_queryctrl *ctrl, int *val){
-	struct v4l2_control vc;
+		struct v4l2_queryctrl *qctrl, void *val, int size){
+
 	int ret = LIBVIDEO_ERR_IOCTL;
-	CLEAR(vc);
-	vc.id = ctrl->id;
-	//if( (ret = ioctl(vdev->fd, VIDIOC_G_CTRL, &vc)) == 0 ) {
-	if( (ret = v4lconvert_vidioc_g_ctrl(vdev->control->priv, &vc)) == 0 ){
-		*val = fix_quirky_values(ctrl, vc.value);
-		ret = 0;
-	} else
-		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-				"CTRL: Error getting current value (%d)\n", errno);
+
+	// Check the class of the control
+	if(V4L2_CTRL_ID2CLASS(qctrl->id)==V4L2_CID_USER_CLASS) {
+		struct v4l2_control vc;
+		CLEAR(vc);
+		vc.id = qctrl->id;
+
+		if( (ret = v4lconvert_vidioc_g_ctrl(vdev->control->priv, &vc)) == 0 )
+			*(int32_t*)val = fix_quirky_values(qctrl, vc.value);
+		else
+			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
+					"CTRL: Error getting current value (%d)\n", errno);
+	} else {
+		struct v4l2_ext_controls ext_ctrl;
+		struct v4l2_ext_control ctrl;
+
+		// Reset control structs and set members
+		CLEAR(ext_ctrl);
+		CLEAR(ctrl);
+
+		ext_ctrl.count = 1;
+		ext_ctrl.ctrl_class = V4L2_CTRL_ID2CLASS(qctrl->id);
+		ext_ctrl.controls = &ctrl;
+
+		ctrl.id = qctrl->id;
+
+		if (qctrl->type == V4L2_CTRL_TYPE_STRING) {
+			ctrl.size = size;
+			ctrl.string = val;
+		} else
+			ctrl.size = 0;
+
+		if( (ret = ioctl(vdev->fd, VIDIOC_G_EXT_CTRLS, &ext_ctrl)) == 0 ) {
+			if (qctrl->type == V4L2_CTRL_TYPE_INTEGER64) {
+				*((int64_t*)val) = ctrl.value64;
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
+					"CTRL: Read 64-bit val: %lld\n", ctrl.value64);
+			} else if (qctrl->type != V4L2_CTRL_TYPE_STRING) {
+				*((int32_t*)val) = fix_quirky_values(qctrl, ctrl.value);
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
+					"CTRL: Read 32-bit val: %d\n", ctrl.value);
+			} else
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
+					"CTRL: Read string val: %s\n", ctrl.string);
+		} else {
+			if (errno == ENOSPC) {
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
+					"CTRL: Error getting current value: not enough space"
+						" to store result - need %d bytes, got %d\n", ctrl.size,
+						size);
+			} else {
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
+					"CTRL: Error getting current value (%d) for ext ctrl\n", errno);
+			}
+
+			ret = LIBVIDEO_ERR_IOCTL;
+		}
+	}
 
 	return ret;
 }
 
 //sets the value of a control
 int set_control_value_v4l2(struct video_device *vdev,
-		struct v4l2_queryctrl *ctrl, int *i) {
-	struct v4l2_control vc;
-	int prev = 0;
+		struct v4l2_queryctrl *qctrl, void *val, int size) {
 
-	get_control_value_v4l2(vdev,ctrl, &prev);
-	vc.id = ctrl->id;
-	vc.value = *i;
+	// Check the class of the control
+	if(V4L2_CTRL_ID2CLASS(qctrl->id)==V4L2_CID_USER_CLASS) {
+		struct v4l2_control vc;
 
-	//if(ioctl(vdev->fd, VIDIOC_S_CTRL, &vc)!= 0) {
-	if( v4lconvert_vidioc_s_ctrl(vdev->control->priv, &vc) != 0 ){
-		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-				"CTRL: Error setting value\n");
-		if(errno == EINVAL)
+		vc.id = qctrl->id;
+		vc.value = *(int32_t*)val;
+
+		if( v4lconvert_vidioc_s_ctrl(vdev->control->priv, &vc) != 0 ){
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: einval\n");
-		else if(errno == ERANGE)
+					"CTRL: Error setting value\n");
+			if(errno == EINVAL)
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
+						"CTRL: einval\n");
+			else if(errno == ERANGE)
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
+						"CTRL: erange\n");
+			else
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
+						"CTRL: unknown error %d\n", errno);
+			return LIBVIDEO_ERR_IOCTL;
+		}
+	} else {
+		struct v4l2_ext_controls ext_ctrl;
+		struct v4l2_ext_control ctrl;
+
+		// Reset control structs and set members
+		CLEAR(ext_ctrl);
+		CLEAR(ctrl);
+
+		ext_ctrl.count = 1;
+		ext_ctrl.ctrl_class = V4L2_CTRL_ID2CLASS(qctrl->id);
+		ext_ctrl.controls = &ctrl;
+
+		ctrl.id = qctrl->id;
+
+		if (qctrl->type == V4L2_CTRL_TYPE_STRING) {
+			ctrl.size = size;
+			ctrl.string = (char *)val;
+
+			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
+					"CTRL: Writing string val: %s\n", ctrl.string);
+		} else {
+			ctrl.size = 0;
+
+			if (qctrl->type == V4L2_CTRL_TYPE_INTEGER64) {
+				ctrl.value64 = *(int64_t*) val;
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
+						"CTRL: Writing 64-bit val: %lld\n", ctrl.value64);
+			} else {
+				ctrl.value = *(int32_t*) val;
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
+						"CTRL: Writing 32-bit val: %d\n", ctrl.value);
+			}
+		}
+
+		if( (ioctl(vdev->fd, VIDIOC_S_EXT_CTRLS, &ext_ctrl)) != 0 ) {
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: erange\n");
-		else
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: unknown error %d\n", errno);
-		return LIBVIDEO_ERR_IOCTL;
+					"CTRL: Error setting value\n");
+			if(errno == EINVAL)
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
+						"CTRL: einval\n");
+			else if(errno == ERANGE)
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
+						"CTRL: erange\n");
+			else
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
+						"CTRL: unknown error %d\n", errno);
+			return LIBVIDEO_ERR_IOCTL;
+		}
 	}
-	*i=prev;
+
 	return 0;
 }
 
@@ -1491,7 +1600,8 @@ static void print_v4l2_control(struct v4l2_queryctrl *qc) {
 			qc->type == V4L2_CTRL_TYPE_MENU ? "Menu" :
 			qc->type == V4L2_CTRL_TYPE_BUTTON ? "Button" :
 			qc->type == V4L2_CTRL_TYPE_INTEGER64 ? "Integer64" :
-			qc->type == V4L2_CTRL_TYPE_CTRL_CLASS ? "Class" : "",
+			qc->type == V4L2_CTRL_TYPE_CTRL_CLASS ? "Class" :
+			qc->type == V4L2_CTRL_TYPE_BITMASK ? "Bitmask" : "",
 			qc->flags,
 			qc->flags & V4L2_CTRL_FLAG_DISABLED ? "Disabled " : "",
 			qc->flags & V4L2_CTRL_FLAG_GRABBED ? "Grabbed " : "",

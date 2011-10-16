@@ -157,6 +157,27 @@ static int translate_type(JNIEnv *e, int t){
 			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the DISCRETE field in V4L4JConstants class");
 			return -1;
 		}
+	} else if(t == V4L2_CTRL_TYPE_STRING){
+		fid = (*e)->GetStaticFieldID(e, constants, "CTRL_TYPE_STRING", "I");
+		if(fid == NULL){
+			info( "[V4L4J] Error looking up the STRING field in V4L4JConstants class\n");
+			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the STRING field in V4L4JConstants class");
+			return -1;
+		}
+	} else if(t == V4L2_CTRL_TYPE_INTEGER64){
+		fid = (*e)->GetStaticFieldID(e, constants, "CTRL_TYPE_LONG", "I");
+		if(fid == NULL){
+			info("[V4L4J] Error looking up the CTRL_TYPE_LONG field in V4L4JConstants class\n");
+			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the CTRL_TYPE_LONG field in V4L4JConstants class");
+			return -1;
+		}
+	} else if(t == V4L2_CTRL_TYPE_BITMASK){
+		fid = (*e)->GetStaticFieldID(e, constants, "CTRL_TYPE_BITMASK", "I");
+		if(fid == NULL){
+			info("[V4L4J] Error looking up the CTRL_TYPE_BITMASK field in V4L4JConstants class\n");
+			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the CTRL_TYPE_BITMASK field in V4L4JConstants class");
+			return -1;
+		}
 	} else {
 		info("[V4L4J] Unknown control type: %d\n", t);
 		THROW_EXCEPTION(e, JNI_EXCP, "Unknown control type: %d\n", t);

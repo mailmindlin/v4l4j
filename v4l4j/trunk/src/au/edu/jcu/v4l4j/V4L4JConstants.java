@@ -99,6 +99,29 @@ public class V4L4JConstants {
 	 * applicable.
 	 */
 	public final static int CTRL_TYPE_DISCRETE=3;
+	/**
+	 * If a control has a type equal to CTRL_TYPE_STRING, it only accepts / 
+	 * returns strings.
+	 * {@link Control#getMinValue()} and {@link Control#getMaxValue()} return 
+	 * the minimum and maximum string length. The actual value is set / retrieved
+	 * with {@link Control#setStringValue()} and {@link Control#getStringValue()}.  
+	 */
+	public final static int CTRL_TYPE_STRING=4;
+	/**
+	 * If a control has a type equal to CTRL_TYPE_LONG, it only accepts long values,
+	 * between {@link Long#MIN_VALUE} and {@link Long#MAX_VALUE} with a step value
+	 * of 1. The actual value is set / retrieved
+	 * with {@link Control#setLongValue()} and {@link Control#getLongValue()}.  
+	 */
+	public final static int CTRL_TYPE_LONG=5;
+	/**
+	 * If a control has a type equal to CTRL_TYPE_BITMASK, it only accepts integer values,
+	 * between 0 and {@link Integer#MAX_VALUE} with a step value
+	 * of 1. The actual value is set / retrieved
+	 * with {@link Control#setValue()} and {@link Control#getValue()}.  
+	 */
+	public final static int CTRL_TYPE_BITMASK=6;
+	
 	
 	/**
 	 * A tuner with a type (as returned by {@link TunerInfo#getType()}) equal to
