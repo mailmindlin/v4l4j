@@ -567,7 +567,7 @@ public class Control {
 	 * @throws StateException if this control has been released and must not be used anymore
 	 */
 	public List<Integer> getDiscreteValues(){
-		if(type!=V4L4JConstants.CTRL_TYPE_DISCRETE || values!=null)
+		if(type!=V4L4JConstants.CTRL_TYPE_DISCRETE || values==null)
 			throw new UnsupportedMethod("This control does not accept discrete values");
 		state.get();
 		Vector<Integer> v = new Vector<Integer>();
@@ -589,7 +589,7 @@ public class Control {
 	 * @throws StateException if this control has been released and must not be used anymore
 	 */
 	public List<String> getDiscreteValueNames(){
-		if(type!=V4L4JConstants.CTRL_TYPE_DISCRETE || names!=null)
+		if(type!=V4L4JConstants.CTRL_TYPE_DISCRETE || names==null)
 			throw new UnsupportedMethod("This control does not have discrete values");
 		state.get();
 		Vector<String> v = new Vector<String>(names);
@@ -605,7 +605,7 @@ public class Control {
 	 * @throws StateException if this control has been released and must not be used anymore
 	 */
 	public Map<String, Integer> getDiscreteValuesMap(){
-		if(type!=V4L4JConstants.CTRL_TYPE_DISCRETE || names!=null)
+		if(type!=V4L4JConstants.CTRL_TYPE_DISCRETE || names==null)
 			throw new UnsupportedMethod("This control does not have discrete values");
 		state.get();
 		Hashtable<String,Integer> t = new Hashtable<String,Integer>();
