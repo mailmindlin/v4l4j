@@ -16,7 +16,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
  */
 
 #include <sys/types.h>
@@ -46,11 +46,17 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 	{ 0x0471, 0x0326, 0, NULL, NULL, V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	/* Philips SPC210NC */
 	{ 0x0471, 0x032d, 0, NULL, NULL, V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	/* Philips SPC315NC */
+	{ 0x0471, 0x032e, 0, NULL, NULL, V4LCONTROL_VFLIPPED },
 	/* Genius E-M 112 (also want whitebalance by default) */
 	{ 0x093a, 0x2476, 0, NULL, NULL,
 		V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED | V4LCONTROL_WANTS_WB, 1500 },
 
 	/* Laptops (and all in one PC's) */
+	{ 0x0402, 0x5606, 0,
+		"CLEVO CO.                       ",
+		"M570TU                          ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x0402, 0x5606, 0, "AOpen", "i45GMt-HR R1.02 Dec.21.2009",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
 		"RM plc", "RM ONE ECOQUIET 300" },
@@ -107,7 +113,13 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb012, 0, "PACKARD BELL BV              ", "EasyNote_BG46",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb012, 0, "PACKARD BELL BV              ", "EasyNote_BS45       ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb034, 0, "ASUSTeK Computer Inc.        ", "G70S      ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb034, 0, "ASUSTeK Computer Inc.        ", "G70Sg     ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb036, 0, "ASUSTeK Computer Inc.        ", "U6E       ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb036, 0, "ASUSTeK Computer Inc.        ", "U6S       ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
@@ -122,6 +134,10 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 	{ 0x04f2, 0xb036, 0, "ASUSTeK Computer Inc.        ", "UL50Ag    ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb036, 0, "ASUSTeK Computer Inc.        ", "UL50VT    ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb071, 0, "ASUSTeK Computer Inc.        ", "F3Ke      ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb071, 0, "ASUSTeK Computer Inc.        ", "F52A      ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb071, 0, "ASUSTeK Computer Inc.        ", "F52Q      ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
@@ -138,6 +154,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 	{ 0x04f2, 0xb071, 0, "ASUSTeK Computer Inc.        ", "K50IJ     ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb071, 0, "ASUSTeK Computer Inc.        ", "K50IN      ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb071, 0, "ASUSTeK Computer Inc.        ", "K51AC     ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb071, 0, "ASUSTeK Computer Inc.        ", "K51AE     ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
@@ -186,6 +204,10 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb071, 0, "ASUSTeK Computer INC.", "N5051Tp",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb071, 0, "AXIOO", "PICO DJH Model",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb071, 0, "PEGATRON CORPORATION", "H54",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb071, 0, "PEGATRON CORP.", NULL,
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
 		"Philco", "S\202rie PHN10050" },
@@ -203,27 +225,85 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb106, 0, "ASUSTeK Computer INC.", "N5051Tp",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb169, 0, "FUJITSU", "FJNB206",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
+		"FUJITSU", "LifeBook T4410" },
+	{ 0x04f2, 0xb169, 0, "FUJITSU", "FJNB219",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
+		"FUJITSU", "LIFEBOOK T730" },
 	{ 0x04f2, 0xb16b, 0, "ASUSTeK Computer Inc.        ", "U20A      ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb16b, 0, "ASUSTeK Computer Inc.        ", "U80A     ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	/* HDG: not sure if this one is needed, the one above is */
 	{ 0x04f2, 0xb16b, 0, "ASUSTeK Computer Inc.        ", "U80A      ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb16b, 0, "ASUSTeK Computer Inc.        ", "U80V      ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	/* 1 report:
+	   Unknown laptop model -> System Vendor: "  IDEALMAX"
+	   But given that the System Vendor is "unstable" for the other
+	   H34 entry, we put NULL in the dmi_system_vendor field. */
+	{ 0x04f2, 0xb16b, 0, "To be filled by O.E.M.", "H34",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
+		NULL, "H34" },
+	{ 0x04f2, 0xb186, 0, "FUJITSU", "FJNB206",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
+		"FUJITSU SIEMENS", "LifeBook T4310" },
+	{ 0x04f2, 0xb186, 0, "FUJITSU", "FJNB206",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
+		"FUJITSU", "LifeBook T4310" },
+	{ 0x04f2, 0xb1b9, 0, "ASUSTeK Computer Inc.        ", "U31F",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb1b9, 0, "ASUSTeK Computer Inc.        ", "U31Jg",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb1b9, 0, "ASUSTeK Computer Inc.        ", "U36JC",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb1b9, 0, "ASUSTeK Computer Inc.        ", "U52F",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb1bb, 0, "ASUSTeK Computer Inc.        ", "N61Da",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb1bb, 0, "ASUSTeK Computer INC.", "N61Jv",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb1bb, 0, "ASUSTeK Computer Inc.        ", "N82JV",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb1bb, 0, "ASUSTeK Computer Inc.        ", "N82JQ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb1bb, 0, "ASUSTeK Computer Inc.        ", "U53Jc",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb1be, 0, "ASUSTeK Computer Inc.        ", "UL30A     ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb1be, 0, "ASUSTeK Computer Inc.        ", "UL30JT",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb1be, 0, "ASUSTeK Computer Inc.        ", "UL30VT    ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb1be, 0, "ASUSTeK Computer Inc.        ", "U35JC",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb1be, 0, "ASUSTeK Computer Inc.        ", "UL50VT    ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb1e5, 0, "ASUSTeK Computer Inc.        ", "K50IE     ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb1e5, 0, "ASUSTeK Computer Inc.        ", "K52De",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb1e5, 0, "ASUSTeK Computer Inc.        ", "K52Dr",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb1e5, 0, "ASUSTeK Computer Inc.        ", "K52F",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb1e5, 0, "ASUSTeK Computer Inc.        ", "K52Jc",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb1e5, 0, "ASUSTeK Computer Inc.        ", "K52JT",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb1e5, 0, "ASUSTeK Computer Inc.        ", "K52N",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb1e5, 0, "ASUSTeK Computer Inc.        ", "P52F",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb1e5, 0, "ASUSTeK Computer Inc.        ", "P52Jc",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x064e, 0xa111, 0, "ASUSTeK Computer Inc.", "F5RL      ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x064e, 0xa111, 0, "ASUSTeK Computer Inc.        ", "F5SL    ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x064e, 0xa111, 0, "PEGATRON CORPORATION         ", "F5C     ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x064e, 0xa111, 0, "PEGATRON CORPORATION         ", "F5SR    ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
@@ -235,7 +315,11 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "K40IN      ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "K50ID     ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "K50IJ     ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "K50IN      ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "K51AC     ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
@@ -279,6 +363,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x064e, 0xa116, 0, "ASUS CORPORATION            ", "N90SV     ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "U6Vc      ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "U80V      ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "X58LE     ",
@@ -288,12 +374,20 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x064e, 0xa116, 0, "ASUSTeK Computer INC.", "K50AD",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	/* 2 reports:
+	   Unknown laptop model -> System Vendor: "  IDEALMAX"
+	   Síragon SL-6120      -> System Vendor: "PEGA PC"
+	   So we just put NULL in the dmi_system_vendor field. */
 	{ 0x064e, 0xa116, 0, "To be filled by O.E.M.", "H34",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
-		"  IDEALMAX", "H34" },
+		NULL, "H34" },
 	{ 0x064e, 0xa136, 0, "ASUSTeK Computer Inc.        ", "UL30A     ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x064e, 0xa136, 0, "ASUSTeK Computer Inc.        ", "UL30VT    ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x064e, 0xa136, 0, "ASUSTeK Computer Inc.        ", "U35F",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x064e, 0xa136, 0, "ASUSTeK Computer Inc.        ", "U35JC",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x064e, 0xa136, 0, "ASUSTeK Computer Inc.        ", "UL50A     ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
@@ -304,6 +398,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 	{ 0x064e, 0xa136, 0, "ASUSTeK Computer Inc.        ", "UL50Vg    ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x064e, 0xa136, 0, "ASUSTeK Computer Inc.        ", "UL50VT    ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x064e, 0xa212, 0, "MEDIONAG", "WeTab ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x090c, 0xe370, 0, "ASUSTeK Computer Inc.        ", "U6S       ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
@@ -317,11 +413,27 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x13d3, 0x5094, 0, "ASUSTeK Computer Inc.        ", "K52F",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5094, 0, "ASUSTeK Computer Inc.        ", "K60IJ     ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x13d3, 0x5094, 0, "ASUSTeK Computer Inc.        ", "P50IJ     ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x13d3, 0x5094, 0, "ASUSTeK Computer Inc.        ", "P81IJ     ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x13d3, 0x5111, 0, "ASUSTeK Computer INC.", "T101MT",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5120, 0, "ASUSTeK Computer Inc.", "K53E",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5120, 0, "ASUSTeK Computer Inc.", "K53SJ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5120, 0, "ASUSTeK Computer Inc.", "K53SV",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5120, 0, "ASUSTeK Computer Inc.        ", "N73JG",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5122, 0, "ASUSTeK Computer Inc.        ", "N43JF",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5122, 0, "ASUSTeK Computer Inc.", "N43SL",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5122, 0, "ASUSTeK Computer Inc.        ", "N61Da",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x13d3, 0x5122, 0, "ASUSTeK Computer Inc.        ", "N61Ja",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
@@ -329,27 +441,75 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x13d3, 0x5122, 0, "ASUSTeK Computer INC.", "N61Jv",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5122, 0, "ASUSTeK Computer Inc.        ", "N73JF",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5122, 0, "ASUSTeK Computer Inc.        ", "N73JQ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5122, 0, "ASUSTeK Computer Inc.", "N73SV",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5122, 0, "ASUSTeK Computer Inc.        ", "U33Jc",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5122, 0, "ASUSTeK Computer Inc.        ", "U53Jc",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5126, 0, "ASUSTeK Computer INC.", "T101MT",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer INC.", "K40AE",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer INC.", "K40AF",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer INC.", "K50AF",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5130, 0, "ASUS CORPORATION            ", "K50C      ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer Inc.        ", "K50ID     ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer Inc.        ", "K50IE     ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer Inc.        ", "K50IJ     ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer Inc.        ", "K50IP      ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer Inc.        ", "K52F",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer Inc.        ", "K52De",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer Inc.        ", "K52Dr",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer Inc.        ", "K52Jc",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer Inc.        ", "K52JB",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer Inc.        ", "K52Je",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer Inc.        ", "K52JK",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer Inc.        ", "K52Jr",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer Inc.        ", "K52JT",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer Inc.        ", "K52JU",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer Inc.        ", "K52N",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer Inc.        ", "K60IJ     ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer Inc.        ", "K70AF     ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer Inc.        ", "K70ID     ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer Inc.        ", "P50IJ     ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer Inc.        ", "P52F",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5130, 0, "ASUSTeK Computer Inc.        ", "P81IJ     ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5702, 0, "ASUSTeK Computer INC.", "900AX",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x174f, 0x1120, 0, "ASUSTeK Computer Inc.        ", "K50ID     ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x174f, 0x1120, 0, "ASUSTeK Computer Inc.        ", "K50IE     ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x174f, 0x1120, 0, "ASUSTeK Computer Inc.        ", "K52Je",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x174f, 0x1408, 0, "ASUSTeK Computer Inc.        ", "K40IN      ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
@@ -386,15 +546,17 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "G2S       ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x174f, 0x5a35, 0, "PEGATRON CORPORATION         ", "F5SL    ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x174f, 0x6a51, 0, NULL, "S96S",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
+		"MicroLink", "S96S" },
 	{ 0x174f, 0x8a31, 0, "ASUSTeK Computer Inc.        ", "F9E       ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x174f, 0xa311, 0, "ASUSTeK Computer Inc.        ", "A3F       ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x174f, 0xa311, 0, "ASUSTeK Computer Inc.        ", "A3V       ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
-	{ 0x17ef, 0x4816, 0, "LENOVO", "3093W11",
-		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL,
-		"ThinkPad X201 Tablet" },
 	{ 0x1d4d, 0x1002, 0, "ASUSTeK Computer Inc.        ", "B50A      ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x5986, 0x0200, 0, "LENOVO", "SPEEDY    ",
@@ -457,6 +619,20 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 	/* stv0680 based cams */
 	{ 0x0553, 0x0202, 0,    NULL, NULL, V4LCONTROL_WANTS_WB },
 	{ 0x041e, 0x4007, 0,    NULL, NULL, V4LCONTROL_WANTS_WB },
+	/* vicam based cams */
+	{ 0x04c1, 0x009d, 0,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN, 1500 },
+	{ 0x0602, 0x1001, 0,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN, 1500 },
+	/* se401 cams, mirrored and need wb + autogain */
+	{ 0x03e8, 0x0004, 0,    NULL, NULL,
+		V4LCONTROL_HFLIPPED | V4LCONTROL_WANTS_WB_AUTOGAIN },
+	{ 0x0471, 0x030b, 0,    NULL, NULL,
+		V4LCONTROL_HFLIPPED | V4LCONTROL_WANTS_WB_AUTOGAIN },
+	{ 0x047d, 0x5001, 0,    NULL, NULL,
+		V4LCONTROL_HFLIPPED | V4LCONTROL_WANTS_WB_AUTOGAIN },
+	{ 0x047d, 0x5002, 0,    NULL, NULL,
+		V4LCONTROL_HFLIPPED | V4LCONTROL_WANTS_WB_AUTOGAIN },
+	{ 0x047d, 0x5003, 0,    NULL, NULL,
+		V4LCONTROL_HFLIPPED | V4LCONTROL_WANTS_WB_AUTOGAIN },
 };
 
 static const struct v4l2_queryctrl fake_controls[];
@@ -488,8 +664,9 @@ static void v4lcontrol_get_dmi_string(const char *string, char *buf, int size)
 	fclose(f);
 }
 
-static int v4lcontrol_get_usb_ids(struct v4lcontrol_data *data,
-		unsigned short *vendor_id, unsigned short *product_id)
+static int v4lcontrol_get_usb_info(struct v4lcontrol_data *data,
+		unsigned short *vendor_id, unsigned short *product_id,
+		int *speed)
 {
 	FILE *f;
 	int i, minor;
@@ -503,7 +680,7 @@ static int v4lcontrol_get_usb_ids(struct v4lcontrol_data *data,
 	/* <Sigh> find ourselve in sysfs */
 	for (i = 0; i < 256; i++) {
 		snprintf(sysfs_name, sizeof(sysfs_name),
-				"/sys/class/video4linux/video%d/dev", i);
+			 "/sys/class/video4linux/video%d/dev", i);
 		f = fopen(sysfs_name, "r");
 		if (!f)
 			continue;
@@ -511,8 +688,8 @@ static int v4lcontrol_get_usb_ids(struct v4lcontrol_data *data,
 		s = fgets(buf, sizeof(buf), f);
 		fclose(f);
 
-		if (s && sscanf(buf, "%*d:%d%c", &minor, &c) == 2 && c == '\n' &&
-				minor == minor(st.st_rdev))
+		if (s && sscanf(buf, "%*d:%d%c", &minor, &c) == 2 &&
+		    c == '\n' && minor == minor(st.st_rdev))
 			break;
 	}
 	if (i == 256)
@@ -520,23 +697,26 @@ static int v4lcontrol_get_usb_ids(struct v4lcontrol_data *data,
 
 	/* Get vendor and product ID */
 	snprintf(sysfs_name, sizeof(sysfs_name),
-			"/sys/class/video4linux/video%d/device/modalias", i);
+		 "/sys/class/video4linux/video%d/device/modalias", i);
 	f = fopen(sysfs_name, "r");
 	if (f) {
 		s = fgets(buf, sizeof(buf), f);
 		fclose(f);
 
-		if (!s || sscanf(s, "usb:v%4hxp%4hx%c", vendor_id, product_id, &c) != 3 ||
-				c != 'd')
+		if (!s || sscanf(s, "usb:v%4hxp%4hx%c", vendor_id, product_id,
+				 &c) != 3 || c != 'd')
 			return 0; /* Not an USB device */
+
+		snprintf(sysfs_name, sizeof(sysfs_name),
+			 "/sys/class/video4linux/video%d/device/../speed", i);
 	} else {
 		/* Try again assuming the device link points to the usb
 		   device instead of the usb interface (bug in older versions
 		   of gspca) */
 
-		/* Get product ID */
+		/* Get vendor ID */
 		snprintf(sysfs_name, sizeof(sysfs_name),
-				"/sys/class/video4linux/video%d/device/idVendor", i);
+			 "/sys/class/video4linux/video%d/device/idVendor", i);
 		f = fopen(sysfs_name, "r");
 		if (!f)
 			return 0; /* Not an USB device (or no sysfs) */
@@ -544,12 +724,13 @@ static int v4lcontrol_get_usb_ids(struct v4lcontrol_data *data,
 		s = fgets(buf, sizeof(buf), f);
 		fclose(f);
 
-		if (!s || sscanf(s, "%04hx%c", vendor_id, &c) != 2 || c != '\n')
+		if (!s || sscanf(s, "%04hx%c", vendor_id, &c) != 2 ||
+		    c != '\n')
 			return 0; /* Should never happen */
 
 		/* Get product ID */
 		snprintf(sysfs_name, sizeof(sysfs_name),
-				"/sys/class/video4linux/video%d/device/idProduct", i);
+			 "/sys/class/video4linux/video%d/device/idProduct", i);
 		f = fopen(sysfs_name, "r");
 		if (!f)
 			return 0; /* Should never happen */
@@ -557,9 +738,23 @@ static int v4lcontrol_get_usb_ids(struct v4lcontrol_data *data,
 		s = fgets(buf, sizeof(buf), f);
 		fclose(f);
 
-		if (!s || sscanf(s, "%04hx%c", product_id, &c) != 2 || c != '\n')
+		if (!s || sscanf(s, "%04hx%c", product_id, &c) != 2 ||
+		    c != '\n')
 			return 0; /* Should never happen */
+
+		snprintf(sysfs_name, sizeof(sysfs_name),
+			 "/sys/class/video4linux/video%d/device/speed", i);
 	}
+
+	f = fopen(sysfs_name, "r");
+	if (!f)
+		return 0; /* Should never happen */
+
+	s = fgets(buf, sizeof(buf), f);
+	fclose(f);
+
+	if (!s || sscanf(s, "%d%c", speed, &c) != 2 || (c != '\n' && c != '.'))
+		return 0; /* Should never happen */
 
 	return 1;
 }
@@ -613,7 +808,7 @@ static void v4lcontrol_get_flags_from_db(struct v4lcontrol_data *data,
 struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 {
 	int shm_fd;
-	int i, rc, got_usb_ids, init = 0;
+	int i, rc, got_usb_info, speed, init = 0;
 	char *s, shm_name[256], pwd_buf[1024];
 	struct v4l2_capability cap;
 	struct v4l2_queryctrl ctrl;
@@ -640,9 +835,26 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 			data->flags |= V4LCONTROL_VFLIPPED;
 	}
 
-	got_usb_ids = v4lcontrol_get_usb_ids(data, &vendor_id, &product_id);
-	if (got_usb_ids)
+	got_usb_info = v4lcontrol_get_usb_info(data, &vendor_id, &product_id,
+					       &speed);
+	if (got_usb_info) {
 		v4lcontrol_get_flags_from_db(data, vendor_id, product_id);
+		switch (speed) {
+		case 12:
+			data->bandwidth = 1023 * 1000;
+			break;
+		case 480:
+			data->bandwidth = 3 * 1024 * 8000;
+			break;
+		case 5000:
+			data->bandwidth = 48 * 1024 * 8000;
+			break;
+		default:
+			/* heuh, low speed device, or ... ? */
+			data->bandwidth = speed / 20;
+		}
+	} else
+		data->bandwidth = 0;
 
 	/* Allow overriding through environment */
 	s = getenv("LIBV4LCONTROL_FLAGS");
@@ -703,7 +915,7 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 	}
 
 	if (getpwuid_r(geteuid(), &pwd, pwd_buf, sizeof(pwd_buf), &pwd_p) == 0) {
-		if (got_usb_ids)
+		if (got_usb_info)
 			snprintf(shm_name, 256, "/libv4l-%s:%s:%04x:%04x:%s", pwd.pw_name,
 					cap.bus_info, (int)vendor_id, (int)product_id, cap.card);
 		else
@@ -711,7 +923,7 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 					cap.bus_info, cap.card);
 	} else {
 		perror("libv4lcontrol: error getting username using uid instead");
-		if (got_usb_ids)
+		if (got_usb_info)
 			snprintf(shm_name, 256, "/libv4l-%lu:%s:%04x:%04x:%s",
 					(unsigned long)geteuid(), cap.bus_info,
 					(int)vendor_id, (int)product_id, cap.card);
@@ -942,6 +1154,11 @@ int v4lcontrol_vidioc_s_ctrl(struct v4lcontrol_data *data, void *arg)
 		}
 
 	return SYS_IOCTL(data->fd, VIDIOC_S_CTRL, arg);
+}
+
+int v4lcontrol_get_bandwidth(struct v4lcontrol_data *data)
+{
+	return data->bandwidth;
 }
 
 int v4lcontrol_get_flags(struct v4lcontrol_data *data)

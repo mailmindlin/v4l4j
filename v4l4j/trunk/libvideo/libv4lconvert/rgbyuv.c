@@ -18,7 +18,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
 
  */
 
@@ -574,4 +574,114 @@ void v4lconvert_rgb565_to_yuv420(const unsigned char *src, unsigned char *dest,
 		}
 		src += 2 * src_fmt->fmt.pix.bytesperline - 2 * src_fmt->fmt.pix.width;
 	}
+}
+
+void v4lconvert_grey_to_rgb24(const unsigned char *src, unsigned char *dest,
+		int width, int height)
+{
+	int j;
+	while (--height >= 0) {
+		for (j = 0; j < width; j++) {
+			*dest++ = *src;
+			*dest++ = *src;
+			*dest++ = *src;
+			src++;
+		}
+	}
+}
+
+void v4lconvert_grey_to_yuv420(const unsigned char *src, unsigned char *dest,
+		const struct v4l2_format *src_fmt)
+{
+	int x, y;
+
+	/* Y */
+	for (y = 0; y < src_fmt->fmt.pix.height; y++)
+		for (x = 0; x < src_fmt->fmt.pix.width; x++)
+			*dest++ = *src++;
+
+	/* Clear U/V */
+	memset(dest, 0x80, src_fmt->fmt.pix.width * src_fmt->fmt.pix.height / 2);
+}
+
+/* Unpack buffer of (vw bit) data into padded 16bit buffer. */
+static inline void convert_packed_to_16bit(uint8_t *raw, uint16_t *unpacked,
+					   int vw, int unpacked_len)
+{
+	int mask = (1 << vw) - 1;
+	uint32_t buffer = 0;
+	int bitsIn = 0;
+	while (unpacked_len--) {
+		while (bitsIn < vw) {
+			buffer = (buffer << 8) | *(raw++);
+			bitsIn += 8;
+		}
+		bitsIn -= vw;
+		*(unpacked++) = (buffer >> bitsIn) & mask;
+	}
+}
+
+int v4lconvert_y10b_to_rgb24(struct v4lconvert_data *data,
+	const unsigned char *src, unsigned char *dest, int width, int height)
+{
+	unsigned char *unpacked_buffer;
+
+	unpacked_buffer = v4lconvert_alloc_buffer(width * height * 2,
+					&data->convert_pixfmt_buf,
+					&data->convert_pixfmt_buf_size);
+	if (!unpacked_buffer)
+		return v4lconvert_oom_error(data);
+
+	convert_packed_to_16bit((uint8_t *)src, (uint16_t *)unpacked_buffer,
+				10, width * height);
+
+	int j;
+	unsigned short *tmp = (unsigned short *)unpacked_buffer;
+	while (--height >= 0) {
+		for (j = 0; j < width; j++) {
+
+			/* Only 10 useful bits, so we discard the LSBs */
+			*dest++ = (*tmp & 0x3ff) >> 2;
+			*dest++ = (*tmp & 0x3ff) >> 2;
+			*dest++ = (*tmp & 0x3ff) >> 2;
+
+			/* +1 means two bytes as we are dealing with (unsigned short) */
+			tmp += 1;
+		}
+	}
+	return 0;
+}
+
+int v4lconvert_y10b_to_yuv420(struct v4lconvert_data *data,
+	const unsigned char *src, unsigned char *dest, int width, int height)
+{
+	unsigned char *unpacked_buffer;
+
+	unpacked_buffer = v4lconvert_alloc_buffer(width * height * 2,
+					&data->convert_pixfmt_buf,
+					&data->convert_pixfmt_buf_size);
+	if (!unpacked_buffer)
+		return v4lconvert_oom_error(data);
+
+	convert_packed_to_16bit((uint8_t *)src, (uint16_t *)unpacked_buffer,
+				10, width * height);
+
+	int x, y;
+	unsigned short *tmp = (unsigned short *)unpacked_buffer;
+
+	/* Y */
+	for (y = 0; y < height; y++)
+		for (x = 0; x < width; x++) {
+
+			/* Only 10 useful bits, so we discard the LSBs */
+			*dest++ = (*tmp & 0x3ff) >> 2;
+
+			/* +1 means two bytes as we are dealing with (unsigned short) */
+			tmp += 1;
+		}
+
+	/* Clear U/V */
+	memset(dest, 0x80, width * height / 2);
+
+	return 0;
 }
