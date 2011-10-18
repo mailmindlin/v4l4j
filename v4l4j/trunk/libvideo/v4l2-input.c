@@ -22,6 +22,7 @@
 *
 */
 
+#include <limits.h>
 #include <sys/ioctl.h>		//for ioctl
 #include <sys/mman.h>		//for mmap
 #include <sys/time.h>		//for struct timeval
@@ -1094,8 +1095,8 @@ static void set_query_menu(struct video_device *vd, struct control *c){
 					idx++;
 			}
 		} else {
-			//sometimes, nothing is returned by the ioctl(VIDIOC_QUERYMENU),
-			//but the menu still exist and is
+			//sometimes, nothing is returned by ioctl(VIDIOC_QUERYMENU),
+			//but the menu still exists and is
 			//made of contiguous values between minimum and maximum.
 			count = (c->v4l2_ctrl->maximum - c->v4l2_ctrl->minimum)/
 					c->v4l2_ctrl->step + 1;
@@ -1174,14 +1175,14 @@ static void fix_quirky_struct(struct v4l2_queryctrl *v){
 		}
 	} else if(v->type==V4L2_CTRL_TYPE_INTEGER64) {
 		// The step, min and max cannot be queried, so hardcode them to sensible values
-		v->step == 1;
+		v->step = 1;
 		v->minimum = 0;
 		v->maximum = 0;
 	} else if(v->type==V4L2_CTRL_TYPE_BITMASK) {
 		// The step, min and max cannot be queried, so hardcode them to sensible values
-		v->step == 1;
+		v->step = 1;
 		v->minimum = 0;
-		v->maximum = 2^32-1;
+		v->maximum = UINT_MAX;
 	}
 }
 
