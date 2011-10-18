@@ -13,14 +13,17 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
  */
 
 #ifndef __LIBV4LCONVERT_PRIV_H
 #define __LIBV4LCONVERT_PRIV_H
 
 #include <stdio.h>
+#include <stdint.h>
 #include <sys/types.h>
+#include <jpeglib.h>
+#include <setjmp.h>
 #include "libv4lconvert.h"
 #include "control/libv4lcontrol.h"
 #include "processing/libv4lprocessing.h"
@@ -37,22 +40,25 @@
 
 /* Card flags */
 #define V4LCONVERT_IS_UVC                0x01
-
-/* Pixformat flags */
-#define V4LCONVERT_COMPRESSED            0x01 /* Compressed format */
-#define V4LCONVERT_NEEDS_CONVERSION      0x02 /* Apps likely wont know this */
-#define V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION 0x03
+#define V4LCONVERT_USE_TINYJPEG          0x02
 
 struct v4lconvert_data {
 	int fd;
 	int flags; /* bitfield */
 	int control_flags; /* bitfield */
-	int supported_src_formats; /* bitfield */
 	unsigned int no_formats;
+	int64_t supported_src_formats; /* bitfield */
 	char error_msg[V4LCONVERT_ERROR_MSG_SIZE];
-	struct jdec_private *jdec;
+	struct jdec_private *tinyjpeg;
+	struct jpeg_error_mgr jerr;
+	int jerr_errno;
+	jmp_buf jerr_jmp_state;
+	struct jpeg_decompress_struct cinfo;
+	int cinfo_initialized;
 	struct v4l2_frmsizeenum framesizes[V4LCONVERT_MAX_FRAMESIZES];
 	unsigned int no_framesizes;
+	int bandwidth;
+	int fps;
 	int convert1_buf_size;
 	int convert2_buf_size;
 	int rotate90_buf_size;
@@ -79,14 +85,19 @@ struct v4lconvert_data {
 };
 
 struct v4lconvert_pixfmt {
-	unsigned int fmt;
-	int flags;
+	unsigned int fmt;	/* v4l2 fourcc */
+	int bpp;		/* bits per pixel, 0 for compressed formats */
+	int rgb_rank;		/* rank for converting to rgb32 / bgr32 */
+	int yuv_rank;		/* rank for converting to yuv420 / yvu420 */
+	int needs_conversion;
 };
 
 void v4lconvert_fixup_fmt(struct v4l2_format *fmt);
 
 unsigned char *v4lconvert_alloc_buffer(int needed,
 		unsigned char **buf, int *buf_size);
+
+int v4lconvert_oom_error(struct v4lconvert_data *data);
 
 void v4lconvert_rgb24_to_yuv420(const unsigned char *src, unsigned char *dest,
 		const struct v4l2_format *src_fmt, int bgr, int yvu);
@@ -127,6 +138,18 @@ void v4lconvert_swap_rgb(const unsigned char *src, unsigned char *dst,
 void v4lconvert_swap_uv(const unsigned char *src, unsigned char *dst,
 		const struct v4l2_format *src_fmt);
 
+void v4lconvert_grey_to_rgb24(const unsigned char *src, unsigned char *dest,
+		int width, int height);
+
+void v4lconvert_grey_to_yuv420(const unsigned char *src, unsigned char *dest,
+		const struct v4l2_format *src_fmt);
+
+int v4lconvert_y10b_to_rgb24(struct v4lconvert_data *data,
+	const unsigned char *src, unsigned char *dest, int width, int height);
+
+int v4lconvert_y10b_to_yuv420(struct v4lconvert_data *data,
+	const unsigned char *src, unsigned char *dest, int width, int height);
+
 void v4lconvert_rgb565_to_rgb24(const unsigned char *src, unsigned char *dest,
 		int width, int height);
 
@@ -153,12 +176,31 @@ void v4lconvert_konica_yuv420_to_yuv420(const unsigned char *src,
 		unsigned char *ydest,
 		int width, int height, int yvu);
 
+void v4lconvert_m420_to_yuv420(const unsigned char *src,
+		unsigned char *ydest,
+		int width, int height, int yvu);
+
 int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data,
 		const unsigned char *src, int src_size,
 		unsigned char *dst, int width, int height, int yvu);
 
 void v4lconvert_sn9c20x_to_yuv420(const unsigned char *src, unsigned char *dst,
 		int width, int height, int yvu);
+
+int v4lconvert_se401_to_rgb24(struct v4lconvert_data *data,
+		const unsigned char *src, int src_size,
+		unsigned char *dest, int width, int height);
+
+int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data,
+	unsigned char *src, int src_size, unsigned char *dest,
+	struct v4l2_format *fmt, unsigned int dest_pix_fmt, int flags);
+
+int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data,
+	unsigned char *src, int src_size, unsigned char *dest,
+	struct v4l2_format *fmt, unsigned int dest_pix_fmt);
+
+int v4lconvert_decode_jpgl(const unsigned char *src, int src_size,
+	unsigned int dest_pix_fmt, unsigned char *dest, int width, int height);
 
 void v4lconvert_decode_spca561(const unsigned char *src, unsigned char *dst,
 		int width, int height);

@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
 */
 
 #ifndef __LIBV4LCONVERT_H
@@ -114,6 +114,11 @@ LIBV4L_PUBLIC int v4lconvert_vidioc_s_ctrl(struct v4lconvert_data *data,
 
 /* Is the passed in pixelformat supported as destination format? */
 LIBV4L_PUBLIC int v4lconvert_supported_dst_format(unsigned int pixelformat);
+
+/* Get/set the no fps libv4lconvert uses to decide if a compressed format
+   must be used as src fmt to stay within the bus bandwidth */
+LIBV4L_PUBLIC int v4lconvert_get_fps(struct v4lconvert_data *data);
+LIBV4L_PUBLIC void v4lconvert_set_fps(struct v4lconvert_data *data, int fps);
 
 #ifdef __cplusplus
 }

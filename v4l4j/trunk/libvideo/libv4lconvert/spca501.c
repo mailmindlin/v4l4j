@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
  */
 
 #include <string.h>
@@ -215,5 +215,37 @@ void v4lconvert_konica_yuv420_to_yuv420(const unsigned char *src,
 		memcpy(vdest, src, 64);
 		src += 64;
 		vdest += 64;
+	}
+}
+
+/* And another not a spca specific format, but fitting in this file in that
+   it is another funny yuv format */
+/* Two lines of Y then 1 line of UV */
+void v4lconvert_m420_to_yuv420(const unsigned char *src,
+		unsigned char *ydest,
+		int width, int height, int yvu)
+{
+	int x, y;
+	unsigned char *udest, *vdest;
+
+	if (yvu) {
+		vdest = ydest + width * height;
+		udest = vdest + (width * height) / 4;
+	} else {
+		udest = ydest + width * height;
+		vdest = udest + (width * height) / 4;
+	}
+
+	for (y = 0; y < height; y += 2) {
+		/* copy 2 lines of Y */
+		memcpy(ydest, src, 2 * width);
+		src += 2 * width;
+		ydest += 2 * width;
+
+		/* Split one line of UV */
+		for (x = 0; x < width; x += 2) {
+			*udest++ = *src++;
+			*vdest++ = *src++;
+		}
 	}
 }
