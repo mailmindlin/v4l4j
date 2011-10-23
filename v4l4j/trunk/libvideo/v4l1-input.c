@@ -269,7 +269,7 @@ int set_cap_param_v4l1(struct video_device *vdev, int *palettes, int nb) {
 		list_cap_v4l1(vdev->fd);
 		return LIBVIDEO_ERR_FORMAT;
 	}
-	c->is_native=1;
+	c->needs_conversion=0;
 
 	win.x = win.y = 0;
 	win.width = c->width;
