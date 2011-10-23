@@ -382,6 +382,7 @@ static int find_best_palette(struct capture_device *c, int *palettes,
 static int set_image_format(struct capture_device *c, int *palettes,
 		int nb, int fd){
 	int best_palette = -1, i;
+	int force_native_fmt = 0;
 	XMALLOC(c->convert->src_fmt,struct v4l2_format *,sizeof(struct v4l2_format));
 	XMALLOC(c->convert->dst_fmt,struct v4l2_format *,sizeof(struct v4l2_format));
 
@@ -406,12 +407,37 @@ static int set_image_format(struct capture_device *c, int *palettes,
 		info("See the ISSUES section in the libvideo README file.\n");
 		return -1;
 	} else {
+		struct v4l2_format test_fmt;
+
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 				"CAP: Setting to best palette %s...\n",
 				libvideo_palettes[best_palette].name);
 
 		c->convert->src_palette = try_image_format(
 				c, c->convert->src_fmt, c->convert->dst_fmt, best_palette);
+
+		// copy the source format we have to use in order to produce 'best_palette'
+		// and try to use this format through libv4lconvert.
+		// Sometimes libv4lconvert will refuse to use this format for capture (even
+		// though we are about to tell the driver to use it), because libv4lconvert
+		// cannot return captured images in this format. For instance:
+		// PAC7311-based cameras produces images in Pixart JPEG (PJPG) format. when
+		// enumerating supported formats, libv4lconvert will advertises RGB24,
+		// BGR24, YUV420 and YVU420 but not PJPG. In other words, we (libvideo)
+		// would not have heard of PJPG if it was not for the fact that
+		// v4lconvert_try_format(dest=RGB24, src=...) does indeed return PJGP as
+		// the src format to be used in order to get RGB24. In other words, PJPG is not
+		// advertised at all as a native format and v4l2-query.c picked up on that
+		// and did not advertise PJPG at all. Instead, RGB24, BGR24, YUV420 and YVU420
+		// are all advertised as native formats (which is not entirely true, but as
+		// a user of libv4lconvert, that's what we are told). So we need to implement
+		// this logic here (as we did in v4l2-query.c):
+		// Try to use the source format for capture and see if it is possible
+		// If it isnt, 'best_palette' is considered a native format.
+		test_fmt = *c->convert->src_fmt;
+		v4lconvert_try_format(c->convert->priv, &test_fmt, NULL);
+		if(test_fmt.fmt.pix.pixelformat != c->convert->src_fmt->fmt.pix.pixelformat)
+			force_native_fmt = 1;
 
 		if (0 == apply_image_format(c->convert->src_fmt, fd)) {
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1,
@@ -437,27 +463,29 @@ static int set_image_format(struct capture_device *c, int *palettes,
 			c->convert->src_palette,
 			libvideo_palettes[c->convert->src_palette].name
 			);
-	c->is_native = v4lconvert_needs_conversion(
-			c->convert->priv,c->convert->src_fmt, c->convert->dst_fmt)==1?0:1;
+	c->needs_conversion = v4lconvert_needs_conversion(
+			c->convert->priv,c->convert->src_fmt, c->convert->dst_fmt);
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: libv4lconvert required ? %s\n",
-			(c->is_native==0?"Yes":"No"));
+			(c->needs_conversion==1?"Yes":"No"));
 
+	c->is_native = ((force_native_fmt!=0) || (c->needs_conversion==0)) ? 1 : 0;
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: conv to (dst) width: %d, "
-			"height: %d, bytes/line %d, image size: %d - palette: %d (%s)\n",
+			"height: %d, bytes/line %d, image size: %d - palette: %d (%s) - native format: %s\n",
 			c->convert->dst_fmt->fmt.pix.width,
 			c->convert->dst_fmt->fmt.pix.height,
 			c->convert->dst_fmt->fmt.pix.bytesperline,
 			c->convert->dst_fmt->fmt.pix.sizeimage,
 			c->palette,
-			libvideo_palettes[c->palette].name
+			libvideo_palettes[c->palette].name,
+			(c->is_native==1?"Yes":"No")
 	);
 
 	//Store actual width & height
 	c->width = c->convert->dst_fmt->fmt.pix.width;
 	c->height= c->convert->dst_fmt->fmt.pix.height;
-	if(c->is_native==1){
+	if(c->needs_conversion==0){
 		//if no need for conversion, libv4lconvert sometimes returns 0 in
 		//sizeimage and bytesperline fields, so get values from src palette
 		c->imagesize = c->convert->src_fmt->fmt.pix.sizeimage;
@@ -668,7 +696,7 @@ int init_capture_v4l2(struct video_device *vdev) {
 				c->mmap->buffers[i].start);
 	}
 
-	if(vdev->capture->is_native!=1){
+	if(vdev->capture->needs_conversion==1){
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 				"CAP: need conversion, create temp buffer (%d bytes)\n",
 				vdev->capture->convert->dst_fmt->fmt.pix.sizeimage);
@@ -857,7 +885,7 @@ void free_capture_v4l2(struct video_device *vdev) {
 			"CAP: freeing capture structure on device %s.\n", vdev->file);
 
 	// free temp frame buffer if required
-	if(vdev->capture->is_native!=1)
+	if(vdev->capture->needs_conversion==1)
 		XFREE(vdev->capture->convert->frame);
 
 	// unmmap v4l2 buffers

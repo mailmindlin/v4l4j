@@ -268,13 +268,11 @@ struct capture_device {
 	int tuner_nb;					//the index of the tuner associated with
 									//this capture_device, -1 if not tuner input
 	struct capture_actions *actions;	//see def below
-	int is_native;					//this field is meaningful only with v4l2.
-									//for v4l1, it is always set to 1.
-									//it specifies whether or not the palette is
-									//native, ie, whether it is converted from
-									//a native format or it actually is a native
-									//format. if it is converted (by libv4l
-									//convert), then the convert member is valid
+	int is_native;					// 1 if the selected image format is native, or
+									// or if the selected format is not native,
+									// but is still reported as a native format
+									// because libv4lconvert cannot handle capture
+									// in the actual native format. 0 oterhwise.
 
 	int real_v4l1_palette;			//v4l1 weirdness: v4l1 defines 2 distinct
 									//palettes YUV420 and YUV420P but they are
@@ -283,6 +281,12 @@ struct capture_device {
 									//used by v4l1. In the palette field above,
 									//we store what the application should know
 									//(YUYV instead of YUV422)
+	int needs_conversion;			//this field is meaningful only with v4l2.
+									//for v4l1, it is always set to 0.
+									//it specifies whether or not captured frames
+									//needs to be passed to libv4lconvert after
+									//being captured to be converted.if set to 1,
+									//then the convert member is valid
 	struct convert_data* convert;	//do not touch - libv4lconvert stuff
 									//(used only when v4l2)
 									//only valid if is_native is 0
