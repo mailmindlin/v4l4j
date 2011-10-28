@@ -736,13 +736,6 @@ int start_capture_v4l2(struct video_device *vdev) {
 	return 0;
 }
 
-void print_buffer_details(struct v4l2_buffer *b) {
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
-		"Index: %u\nInput Flag: %s\nInput: %u\n",
-		b->index, (b->flags & V4L2_BUF_FLAG_INPUT) ? "yes" : "no",
-		b->input);
-}
-
 //needed because dequeue may need to re-enqueue if libv4lconvert fails
 void enqueue_buffer_v4l2(struct video_device *, unsigned int);
 void *dequeue_buffer_v4l2_convert(struct video_device *vdev, int *len,
@@ -767,7 +760,6 @@ void *dequeue_buffer_v4l2_convert(struct video_device *vdev, int *len,
 			return NULL;
 		}
 
-		print_buffer_details(&b);
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
 				"CAP: Passing buffer %d of len %d at %p with format %#x"
 				" to be stored in buffer at %p of length %d with format %#x\n",
@@ -844,7 +836,7 @@ void *dequeue_buffer_v4l2(struct video_device *vdev, int *len,
 			"CAP: dequeued buffer %d length: %d - seq: %lu - time %llu\n",
 			*index,	*len, (unsigned long) b.sequence,
 			(unsigned long long)(b.timestamp.tv_usec + b.timestamp.tv_sec * USEC_PER_SEC ));
-	print_buffer_details(&b);
+
 
 	return vdev->capture->mmap->buffers[b.index].start;
 }
@@ -859,8 +851,6 @@ void enqueue_buffer_v4l2(struct video_device *vdev, unsigned int index) {
 	b.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	b.memory = V4L2_MEMORY_MMAP;
 	b.index = index;
-	b.flags = V4L2_BUF_FLAG_INPUT;
-	b.input = vdev->capture->channel;
 
 	if (-1 == ioctl(vdev->fd, VIDIOC_QBUF, &b))
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
