@@ -165,6 +165,8 @@ static void setup_capture_actions(struct video_device *vdev) {
 		c->actions->init_capture = init_capture_v4l1;
 		c->actions->set_frame_interval = set_frame_intv_v4l1;
 		c->actions->get_frame_interval = get_frame_intv_v4l1;
+		c->actions->set_video_input_std = set_video_input_std_v4l1;
+		c->actions->get_video_input_std = get_video_input_std_v4l1;
 		c->actions->start_capture = start_capture_v4l1;
 		c->actions->dequeue_buffer = dequeue_buffer_v4l1;
 		c->actions->enqueue_buffer = enqueue_buffer_v4l1;
@@ -176,6 +178,8 @@ static void setup_capture_actions(struct video_device *vdev) {
 		c->actions->init_capture = init_capture_v4l2;
 		c->actions->set_frame_interval = set_frame_intv_v4l2;
 		c->actions->get_frame_interval = get_frame_intv_v4l2;
+		c->actions->set_video_input_std = set_video_input_std_v4l2;
+		c->actions->get_video_input_std = get_video_input_std_v4l2;
 		c->actions->start_capture = start_capture_v4l2;
 		c->actions->dequeue_buffer = dequeue_buffer_v4l2;
 		c->actions->enqueue_buffer = enqueue_buffer_v4l2;

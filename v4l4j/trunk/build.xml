@@ -280,7 +280,21 @@
 			<jvmarg value="-Dtest.channel=${test.channel}" /> <!-- channel -->
 		</java>
 	</target>
-	
+
+	<target name="test-simpleViewer">
+		<java classname="au.edu.jcu.v4l4j.examples.SimpleViewer" fork="true" failonerror="true">
+			<classpath>
+				<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
+			</classpath>
+			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
+			<jvmarg value="-Dtest.device=${test.device}" /> <!-- device file -->
+			<jvmarg value="-Dtest.width=${test.width}" /> <!-- height -->
+			<jvmarg value="-Dtest.height=${test.height}" /> <!-- height -->
+			<jvmarg value="-Dtest.standard=${test.standard}" /> <!-- standard -->
+			<jvmarg value="-Dtest.channel=${test.channel}" /> <!-- channel -->
+		</java>
+	</target>
+
 	<target name="test-dual">
 			<java classname="au.edu.jcu.v4l4j.examples.DualViewer" fork="true" failonerror="true">
 				<classpath>
