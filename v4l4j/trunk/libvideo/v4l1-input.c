@@ -309,11 +309,26 @@ int set_cap_param_v4l1(struct video_device *vdev, int *palettes, int nb) {
 }
 
 int set_frame_intv_v4l1(struct video_device *vdev, int num, int denom) {
+	// TODO: implement me if anyone wants this feature
+	info("This function is not implemented.\n");
 	return LIBVIDEO_ERR_IOCTL;
 }
 
 int get_frame_intv_v4l1(struct video_device *vdev, int *num, int *denom) {
-		return LIBVIDEO_ERR_IOCTL;
+	// TODO: implement me if anyone wants this feature
+	info("This function is not implemented.\n");
+	return LIBVIDEO_ERR_IOCTL;
+}
+
+int set_video_input_std_v4l1(struct video_device *vdev, int input_num, int std) {
+	// TODO: implement me if anyone wants this feature
+	info("This function is not implemented.\n");
+	return LIBVIDEO_ERR_IOCTL;
+}
+
+void get_video_input_std_v4l1(struct video_device *vdev, int *input_num, int *std) {
+	// TODO: implement me if anyone wants this feature
+	info("This function is not implemented.\n");
 }
 
 // get streaming cap details VIDIOCGMBUF, initialise streaming and
