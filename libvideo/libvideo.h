@@ -617,6 +617,12 @@ struct capture_actions {
 //everything went fine
 	int (*get_frame_interval)(struct video_device *, int *, int *);
 
+
+//Change the current video input and standard during capture
+	int (*set_video_input_std)(struct video_device*, int, int);
+//Get the current video input and standard during capture
+	void (*get_video_input_std)(struct video_device*, int*, int*);
+
 //initialise streaming, request create mmap'ed buffers
 //returns 0 if ok, LIBVIDEO_ERR_REQ_MMAP if error negotiating mmap params,
 //LIBVIDEO_ERR_INVALID_BUF_NB if the number of requested buffers is incorrect

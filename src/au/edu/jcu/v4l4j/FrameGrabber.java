@@ -25,6 +25,8 @@
 package au.edu.jcu.v4l4j;
 
 import au.edu.jcu.v4l4j.FrameInterval.DiscreteInterval;
+import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
+import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
 import au.edu.jcu.v4l4j.exceptions.InvalidValue;
 import au.edu.jcu.v4l4j.exceptions.NoTunerException;
 import au.edu.jcu.v4l4j.exceptions.StateException;
@@ -181,6 +183,27 @@ public interface FrameGrabber {
 	 * not be used anymore.
 	 */
 	public DiscreteInterval getFrameInterval();
+
+	/**
+	 * This method adjusts the current video input number and video standard.
+	 * @throws VideoStandardException if the chosen video standard is not 
+         * supported
+         * @throws CaptureChannelException if the given channel number value is not 
+         * valid
+	 */
+	public void setVideoInputNStandard(int inputNumber, int standard) throws VideoStandardException, CaptureChannelException;
+
+	/**
+	 * This method retrieves the current video input channel number.
+	 * @return the current input number
+	 */
+	public int getVideoInput();
+
+	/**
+	 * This method retrieves the current video standard used by the current video input.
+	 * @return the current standard
+	 */
+	public int getVideoStandard();
 
 	/**
 	 * This method returns the {@link Tuner} associated with the input of this 

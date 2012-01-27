@@ -518,6 +518,32 @@ static int set_crop(struct capture_device *c, int fd) {
 	return 0;
 }
 
+void get_video_input_std_v4l2(struct video_device *vdev, int *input_num, int *std) {
+	*input_num = vdev->capture->channel;
+	*std = vdev->capture->std;
+}
+
+int set_video_input_std_v4l2(struct video_device *vdev, int input_num, int std) {
+	if(-1 == ioctl(vdev->fd, VIDIOC_S_INPUT, &input_num)) {
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, 
+			"The desired input (%d) cannot be selected.\n", input_num);
+		return LIBVIDEO_ERR_CHANNEL;
+	}
+
+	vdev->capture->channel = input_num;
+
+	if (try_std(vdev->fd, std) != 0) {
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, 
+			"The desired standard (%d) cannot be used.\n", std);
+		return LIBVIDEO_ERR_STD;
+
+	}
+
+	vdev->capture->std = std;
+
+	return 0;
+}
+
 int set_frame_intv_v4l2(struct video_device *vdev, int num, int denom) {
 	struct v4l2_streamparm param;
 	int ret;
