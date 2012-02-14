@@ -33,6 +33,9 @@
 struct v4l4j_device;
 
 struct jpeg_data {
+	int mcu;
+	JSAMPROW y[16],cb[16],cr[16];
+	JSAMPARRAY data[3];
 	struct jpeg_compress_struct *cinfo;
 	struct jpeg_destination_mgr *destmgr;
 	struct jpeg_error_mgr *jerr;
@@ -58,7 +61,7 @@ enum output_format {
 
 struct v4l4j_device {
 	void (*convert) (struct v4l4j_device *, unsigned char *, unsigned char *);
-	unsigned char *temp_conv_buffer;
+	unsigned char *conversion_buffer;
 	struct video_device *vdev;	//the libvideo struct
 	union {
 		struct jpeg_data *j;	//the converter's data
