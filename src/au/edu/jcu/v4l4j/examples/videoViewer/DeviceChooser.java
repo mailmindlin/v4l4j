@@ -75,6 +75,7 @@ public class DeviceChooser  extends WindowAdapter implements ActionListener{
 		
 		width = w;
 		height =h;
+		System.out.println("w x h:"+w+" "+h);
 		
 		if(dev == null)
 			deviceFiles = new JComboBox(listV4LDeviceFiles());
@@ -531,8 +532,8 @@ public class DeviceChooser  extends WindowAdapter implements ActionListener{
 
 	public static void main(String[] args){
 		final String dev = System.getProperty("test.device"); 
-		final int w = (System.getProperty("test.width")!=null) ? Integer.parseInt(System.getProperty("test.width")) : 640;
-		final int h = (System.getProperty("test.height")!=null) ? Integer.parseInt(System.getProperty("test.height")) : 480;
+		final int w = (System.getProperty("test.width")!=null) ? Integer.parseInt(System.getProperty("test.width")) : 1600;
+		final int h = (System.getProperty("test.height")!=null) ? Integer.parseInt(System.getProperty("test.height")) : 1200;
  
 		SwingUtilities.invokeLater(new Runnable(){
 

@@ -1054,7 +1054,15 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	case V4L2_PIX_FMT_YUYV:
 		switch (dest_pix_fmt) {
 		case V4L2_PIX_FMT_RGB24:
-			v4lconvert_yuyv_to_rgb24(src, dest, width, height);
+			if (data->pixfc == NULL) {
+				if (create_pixfc(&data->pixfc, PixFcYUYV, PixFcRGB24, width, height, PixFcFlag_SSE2Only) != PIXFC_OK)
+					data->pixfc = NULL;
+			}
+
+			if (data->pixfc)
+				(*data->pixfc->convert)(data->pixfc, src, dest);
+			else
+				v4lconvert_yuyv_to_rgb24(src, dest, width, height);
 			break;
 		case V4L2_PIX_FMT_BGR24:
 			v4lconvert_yuyv_to_bgr24(src, dest, width, height);
