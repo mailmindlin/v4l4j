@@ -189,7 +189,7 @@ static inline void jpeg_encode_yuv422p(struct v4l4j_device *d, unsigned char *ds
 
 static void jpeg_encode_yuyv(struct v4l4j_device *d, unsigned char *src, unsigned char *dst){
 	// reorganise YUYV pixels into YUV420 suitable to give to the jpeg compressor
-	convert_yuyv_to_yuv422p_ssse3(src, d->conversion_buffer, d->vdev->capture->width, d->vdev->capture->height);
+	convert_yuyv_to_yuv422p_sse2(src, d->conversion_buffer, d->vdev->capture->width, d->vdev->capture->height);
 
 	jpeg_encode_yuv422p(d, dst);
 }
