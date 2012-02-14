@@ -221,9 +221,8 @@ static void release_format_converter(struct v4l4j_device *d){
  * input is a libvideo palette index, output is enum output_format in common.h
  * the returned value is a libvideo palette index
  */
-static int init_capture_format(struct v4l4j_device *d, int output, int input){
+static int init_capture_format(struct v4l4j_device *d, int output, int input, int width, int height){
 	int ret=-1, i;
-	int rgb_conv_formats[] = RGB24_CONVERTIBLE_FORMATS;
 
 	dprint(LOG_LIBVIDEO, "[V4L4J] Setting output to %s - input format: %s\n",
 						output==OUTPUT_RAW?"RAW":
@@ -245,22 +244,33 @@ static int init_capture_format(struct v4l4j_device *d, int output, int input){
 		break;
 
 	case OUTPUT_RGB24:
-		//check who does it
-		for(i=0; i<ARRAY_SIZE(rgb_conv_formats);i++){
-			if(rgb_conv_formats[i]==input){
-				//we do it
-				dprint(LOG_LIBVIDEO,
-						"[V4L4J] RGB24 conversion done by v4l4j\n");
-				d->need_conv=1;
-				return input;
+	{
+		int index = 0;
+		int input;
+
+		while((input = is_output_format_supported_by_pixfc(OUTPUT_RGB24, width, height, index++)) != -2) {
+			// if we have a valid input format
+			if (input >= 0){
+				// try to set it as an input format to make sure it is a native format
+				if((*d->vdev->capture->actions->set_cap_param)(d->vdev, &input, 1) == 0){
+					if (d->vdev->capture->is_native == 1) {
+						//we do the conversion
+						dprint(LOG_LIBVIDEO,
+								"[V4L4J] RGB24 conversion done by v4l4j\n");
+						//d->need_conv=1;
+						return input;
+					}
+				}
 			}
 		}
+
 		//libvideo does it
 		dprint(LOG_LIBVIDEO,
 				"[V4L4J] RGB24 conversion done by libvideo\n");
 		ret=RGB24;
 		d->need_conv=0;
-		break;
+	}
+	break;
 
 	case OUTPUT_RAW:
 		ret=input;
@@ -392,7 +402,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doInit(
 	 * s e t _ c a p _ p a r a m
 	 */
 	d->output_fmt=output;
-	if((fmts = init_capture_format(d, output, fmt))==-1){
+	if((fmts = init_capture_format(d, output, fmt, w, h))==-1){
 		free_capture_device(d->vdev);
 		THROW_EXCEPTION(e, INIT_EXCP, "unknown output format %d\n", output);
 		return 0;
