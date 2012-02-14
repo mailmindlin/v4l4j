@@ -64,7 +64,7 @@ static void print_m128(char *name, __m128i *reg) {
 	                        array[12], array[13], array[14], array[15]);
 
 }
-
+*/
 /*
  * The following SSSE3 routine offers very little performance gain compared to its non-SSE counterpart above.
  * Left here for reference, but unused.
