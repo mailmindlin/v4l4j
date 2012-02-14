@@ -62,7 +62,7 @@ test-debug:
 
 test:
 	$(CC) $(INCLUDES) -O3 -Wall -DMAKETEST -c rgb.c
-	$(CC) $(INCLUDES) -mssse3 -O3 -Wall -DMAKETEST -c jpeg.c
+	$(CC) $(INCLUDES) -mssse3 -msse2 -O3 -Wall -DMAKETEST -c jpeg.c
 	$(LD) rgb.o -ljpeg -o rgb
 	$(LD) jpeg.o -ljpeg -o jpeg
 
