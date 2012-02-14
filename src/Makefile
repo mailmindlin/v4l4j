@@ -39,7 +39,7 @@ LIBVIDEO_PATH := ../libvideo
 LIB := libv4l4j.so
 OBJ := jpeg.o rgb.o v4l4j_FrameGrabber.o v4l4j_ImageFormatList.o \
   v4l4j_DeviceInfo.o v4l4j_VideoDevice.o v4l4j_Control.o v4l4j_Tuner.o \
-  v4l4j_ResolutionInfo.o v4l4j_FrameInterval.o
+  v4l4j_ResolutionInfo.o v4l4j_FrameInterval.o pixfc_conversion.o
 
 CC := gcc
 INCLUDES := -I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ \
