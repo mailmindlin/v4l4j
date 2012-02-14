@@ -64,13 +64,11 @@ static void print_m128(char *name, __m128i *reg) {
 	                        array[12], array[13], array[14], array[15]);
 
 }
-*/
 
 /*
- * The method does not offer any significant speed improvement compared to its
- * non-SSE counterpart above. So I left it out for future reference.
+ * The following SSSE3 routine offers very little performance gain compared to its non-SSE counterpart above.
+ * Left here for reference, but unused.
  */
-
 extern inline void	convert_yuyv_to_yuv422p_ssse3(uint8_t* yuyv_src, uint8_t* yuv422p_dst, uint32_t width, uint32_t height) {
 	uint32_t	nb_pixels = width * height;
 	__m128i*	src = (__m128i *) yuyv_src;
