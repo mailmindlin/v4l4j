@@ -657,9 +657,6 @@ fail:
 	return ret;
 }
 
-//needed because this function adjusts the struct capture_action if
-//libv4l_convert is required.
-void *dequeue_buffer_v4l2_convert(struct video_device *, int *, unsigned int *, unsigned long long*, unsigned long long*);
 int init_capture_v4l2(struct video_device *vdev) {
 	struct capture_device *c = vdev->capture;
 	struct v4l2_requestbuffers req;
@@ -722,15 +719,6 @@ int init_capture_v4l2(struct video_device *vdev) {
 				c->mmap->buffers[i].start);
 	}
 
-	if(vdev->capture->needs_conversion==1){
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-				"CAP: need conversion, create temp buffer (%d bytes)\n",
-				vdev->capture->convert->dst_fmt->fmt.pix.sizeimage);
-		XMALLOC(vdev->capture->convert->frame, void *,
-				vdev->capture->convert->dst_fmt->fmt.pix.sizeimage);
-		vdev->capture->actions->dequeue_buffer = dequeue_buffer_v4l2_convert;
-	}
-
 	return 0;
 }
 
@@ -765,79 +753,35 @@ int start_capture_v4l2(struct video_device *vdev) {
 	return 0;
 }
 
-//needed because dequeue may need to re-enqueue if libv4lconvert fails
-void enqueue_buffer_v4l2(struct video_device *, unsigned int);
-void *dequeue_buffer_v4l2_convert(struct video_device *vdev, int *len,
-		unsigned int *index, unsigned long long *capture_time,
-		unsigned long long *sequence) {
+unsigned int convert_buffer_v4l2(struct video_device *vdev, int index,
+		unsigned int src_len, void *dest_buffer) {
 	struct convert_data *conv = vdev->capture->convert;
-	struct v4l2_buffer b;
 	struct timeval start, end;
-	unsigned long long ns = 0;
-	int try = 2;
-	*len = -1;
-	while(*len==-1){
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
-				"CAP: dequeuing buffer on device %s.\n", vdev->file);
+	unsigned int dest_buffer_len = -1;
 
-		CLEAR(b);
-
-		b.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		b.memory = V4L2_MEMORY_MMAP;
-
-		if (-1 == ioctl(vdev->fd, VIDIOC_DQBUF, &b)) {
-			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
-					"CAP: Error dequeuing buffer (%d)\n", errno);
-			return NULL;
-		}
-
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
-				"CAP: Passing buffer %d of len %d at %p with format %#x"
-				" to be stored in buffer at %p of length %d with format %#x\n",
-				b.index, b.bytesused,
-				vdev->capture->mmap->buffers[b.index].start,
-				conv->src_fmt->fmt.pix.pixelformat,
-				conv->frame, conv->dst_fmt->fmt.pix.sizeimage,
-				conv->dst_fmt->fmt.pix.pixelformat
-				);
-
-		gettimeofday(&start, NULL);
-		*len=v4lconvert_convert(conv->priv, conv->src_fmt, conv->dst_fmt,
-				vdev->capture->mmap->buffers[b.index].start, b.bytesused,
-				conv->frame, conv->dst_fmt->fmt.pix.sizeimage);
-		gettimeofday(&end, NULL);
-		timersub(&end, &start, &start);
-
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
-				"CAP: dest buffer has %d bytes after conv (%llu us)\n",
-				*len, (start.tv_sec*1000000 + start.tv_usec)
-		);
-
-		if(*len==-1){
-			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
-						"CAP: libv4lconvert error: %s\n",
-						v4lconvert_get_error_message(conv->priv));
-			enqueue_buffer_v4l2(vdev, b.index);
-			if(try--==0){
-				dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
-						"CAP: unable to libv4l_convert frame\n");
-				//give up
-				return NULL;
-			}
-		}
-	}
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
-			"CAP: after conversion buffer length: %d\n", *len);
+			"CAP: Passing buffer %d of len %d at %p with format %#x"
+			" to be stored in buffer at %p of length %d with format %#x\n",
+			index, len,
+			vdev->capture->mmap->buffers[index].start,
+			conv->src_fmt->fmt.pix.pixelformat,
+			buffer, conv->dst_fmt->fmt.pix.sizeimage,
+			conv->dst_fmt->fmt.pix.pixelformat
+			);
 
-	if (capture_time)
-		*capture_time = b.timestamp.tv_usec + b.timestamp.tv_sec * USEC_PER_SEC ;
-	if (sequence)
-		*sequence = b.sequence;
+	gettimeofday(&start, NULL);
+	dest_buffer_len=v4lconvert_convert(conv->priv, conv->src_fmt, conv->dst_fmt,
+			vdev->capture->mmap->buffers[index].start, src_len,
+			dest_buffer, conv->dst_fmt->fmt.pix.sizeimage);
+	gettimeofday(&end, NULL);
+	timersub(&end, &start, &start);
 
-	// return buffer index
-	*index = b.index; // it is an error if index is NULL
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
+			"CAP: dest buffer has %d bytes after conv\n",dest_buffer_len
+	);
+	printf("%llu us\n",(long long unsigned int)(start.tv_sec*1000000 + start.tv_usec));
 
-	return conv->frame;
+	return dest_buffer_len;
 }
 
 void *dequeue_buffer_v4l2(struct video_device *vdev, int *len,
@@ -914,10 +858,6 @@ void free_capture_v4l2(struct video_device *vdev) {
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: freeing capture structure on device %s.\n", vdev->file);
-
-	// free temp frame buffer if required
-	if(vdev->capture->needs_conversion==1)
-		XFREE(vdev->capture->convert->frame);
 
 	// unmmap v4l2 buffers
 	for(i=0; i < vdev->capture->mmap->buffer_nr; i++){
