@@ -154,17 +154,6 @@ static int get_buffer_length(struct v4l4j_device *d){
 	return 0;
 }
 
-
-/*
- * Copy d->capture_len bytes from s to dst, and sets the size of image in
- * dst accordingly
- */
-static inline void raw_copy(struct v4l4j_device *d, unsigned char *s,
-		unsigned char *dst){
-	memcpy(dst, s, d->capture_len);
-	d->len = d->capture_len;
-}
-
 /*
  * Call init routines of RGB, JPEG or raw depending on requested
  * output image format
@@ -179,26 +168,14 @@ static int init_format_converter(struct v4l4j_device *d){
 			ret = init_jpeg_compressor(d, 80);
 			if(ret!=0)
 				dprint(LOG_V4L4J, "[V4L4J] Error initialising JPEG converter\n");
-		} else if(d->output_fmt==OUTPUT_RGB24){
-			d->len = get_buffer_length(d);
-			//check who does it
-			if(d->vdev->capture->is_native==1){
-				dprint(LOG_V4L4J, "[V4L4J] Initialising RGB converter\n");
-				//we do it
-				ret = init_rgb_converter(d);
-				if(ret!=0)
-					dprint(LOG_V4L4J,
-							"[V4L4J] Error initialising the RGB converter\n");
-			} else {
-				//libvideo convert does it
-				dprint(LOG_V4L4J, "[V4L4J] libvideo does it\n");
-				d->convert = raw_copy;
-			}
+		}
+
+		if (d->vdev->capture->is_native==0){
+			dprint(LOG_V4L4J, "[V4L4J] Setting up double conversion\n");
+			XMALLOC(d->double_conversion_buffer, unsigned char *, d->vdev->capture->imagesize);
 		}
 	} else {
 		dprint(LOG_LIBVIDEO, "[V4L4J] no conversion done by v4l4j - raw copy\n");
-		d->len = get_buffer_length(d);
-		d->convert = raw_copy;
 	}
 
 	return ret;
@@ -209,9 +186,9 @@ static void release_format_converter(struct v4l4j_device *d){
 	if(d->need_conv==1){
 		if(d->output_fmt==OUTPUT_JPG)
 			destroy_jpeg_compressor(d);
-		else if(d->output_fmt == OUTPUT_RGB24)
-			if(d->vdev->capture->is_native==1)
-				destroy_rgb_converter(d);
+
+		if (d->vdev->capture->is_native==0)
+			XFREE(d->double_conversion_buffer);
 	}
 }
 
@@ -221,79 +198,68 @@ static void release_format_converter(struct v4l4j_device *d){
  * input is a libvideo palette index, output is enum output_format in common.h
  * the returned value is a libvideo palette index
  */
-static int init_capture_format(struct v4l4j_device *d, int output, int input){
-	int ret=-1, i;
-	int rgb_conv_formats[] = RGB24_CONVERTIBLE_FORMATS;
-
+static int init_capture_format(struct v4l4j_device *d, int fg_out_fmt, int* src_fmt, int* dest_fmt){
 	dprint(LOG_LIBVIDEO, "[V4L4J] Setting output to %s - input format: %s\n",
-						output==OUTPUT_RAW?"RAW":
-						output==OUTPUT_JPG?"JPEG":
-						output==OUTPUT_RGB24?"RGB24":
-						output==OUTPUT_BGR24?"BGR24":
-						output==OUTPUT_YUV420?"YUV420":
-						output==OUTPUT_YVU420?"YVU420":"UNKNOWN",
-						libvideo_palettes[input].name);
+			fg_out_fmt==OUTPUT_RAW?"RAW":
+			fg_out_fmt==OUTPUT_JPG?"JPEG":
+			fg_out_fmt==OUTPUT_RGB24?"RGB24":
+			fg_out_fmt==OUTPUT_BGR24?"BGR24":
+			fg_out_fmt==OUTPUT_YUV420?"YUV420":
+			fg_out_fmt==OUTPUT_YVU420?"YVU420":"UNKNOWN",
+			libvideo_palettes[*src_fmt].name);
 
 	//check if libvideo does the conv
-	switch(output){
+	switch(fg_out_fmt){
 	case OUTPUT_JPG:
 		//for JPEG, v4l4j always does the conv
 		dprint(LOG_LIBVIDEO,
 				"[V4L4J] JPEG conversion done by v4l4j\n");
-		ret=input;
+		*dest_fmt = *src_fmt;
+		*src_fmt = -1;
 		d->need_conv=1;
-		break;
+		return 0;
 
 	case OUTPUT_RGB24:
-		//check who does it
-		for(i=0; i<ARRAY_SIZE(rgb_conv_formats);i++){
-			if(rgb_conv_formats[i]==input){
-				//we do it
-				dprint(LOG_LIBVIDEO,
-						"[V4L4J] RGB24 conversion done by v4l4j\n");
-				d->need_conv=1;
-				return input;
-			}
-		}
-		//libvideo does it
+		*dest_fmt = RGB24;
+		// leave native capture format in src_fmt
 		dprint(LOG_LIBVIDEO,
 				"[V4L4J] RGB24 conversion done by libvideo\n");
-		ret=RGB24;
 		d->need_conv=0;
-		break;
+		return 0;
 
 	case OUTPUT_RAW:
-		ret=input;
+		*dest_fmt = *src_fmt;
+		*src_fmt = -1;
 		dprint(LOG_LIBVIDEO,
 				"[V4L4J] raw format - no conversion\n");
 		d->need_conv=0;
-		break;
+		return 0;
 
-		//for all other output formats,
-		//let libvideo handle it
 	case OUTPUT_BGR24:
+		*dest_fmt = BGR24;
+		// leave native capture format in src_fmt
 		dprint(LOG_LIBVIDEO,
 				"[V4L4J] BGR24 conversion done by libvideo\n");
-		ret=BGR24;
 		d->need_conv=0;
-		break;
+		return 0;
 	case OUTPUT_YUV420:
-		ret=YUV420;
+		*dest_fmt = YUV420;
+		// leave native capture format in src_fmt
 		dprint(LOG_LIBVIDEO,
 				"[V4L4J] YUV420 conversion done by libvideo\n");
 		d->need_conv=0;
-		break;
+		return 0;
 	case OUTPUT_YVU420:
-		ret=YVU420;
+		*dest_fmt = YVU420;
+		// leave native capture format in src_fmts
 		dprint(LOG_LIBVIDEO,
 				"[V4L4J] YVU420 conversion done by libvideo\n");
 		d->need_conv=0;
-		break;
+		return 0;
 	default:
-		info("[V4L4J] Error: unknown output format %d\n", output);
-		break;
+		info("[V4L4J] Error: unknown output format %d\n", fg_out_fmt);
+		return -1;
 	}
-	return ret;
 }
 
 
@@ -360,13 +326,13 @@ static int get_lastFrame_field_ids(JNIEnv *e, jobject this, struct v4l4j_device 
  */
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doInit(
 		JNIEnv *e, jobject t, jlong object, jint w, jint h, jint ch, jint std,
-		jint fmt, jint output){
+		jint in_fmt, jint fg_out_fmt){
 
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	int i=0;
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 	struct capture_device *c;
-	int fmts;
+	int src_fmt = in_fmt, dest_fmt;
 
 	// Get the field IDs if we dont have them already. If error getting them, return.
 	if ((! last_captured_frame_sequence_fID || ! last_captured_frame_time_usec_fID)
@@ -391,18 +357,21 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doInit(
 	/*
 	 * s e t _ c a p _ p a r a m
 	 */
-	d->output_fmt=output;
-	if((fmts = init_capture_format(d, output, fmt))==-1){
+	d->output_fmt=fg_out_fmt;
+	if(init_capture_format(d, fg_out_fmt, &src_fmt, &dest_fmt)==-1){
 		free_capture_device(d->vdev);
-		THROW_EXCEPTION(e, INIT_EXCP, "unknown output format %d\n", output);
+		THROW_EXCEPTION(e, INIT_EXCP, "unknown output format %d\n", fg_out_fmt);
 		return 0;
 	}
 
-	dprint(LOG_LIBVIDEO, "[V4L4J] input format: %s\n",
-						libvideo_palettes[fmts].name);
+	dprint(LOG_LIBVIDEO, "[V4L4J] src format: %s\n",
+						(src_fmt != -1) ? libvideo_palettes[src_fmt].name : "'chosen by libvideo'");
+
+	dprint(LOG_LIBVIDEO, "[V4L4J] dest format: %s\n",
+							libvideo_palettes[dest_fmt].name);
 
 	dprint(LOG_LIBVIDEO, "[LIBVIDEO] calling 'set_cap_param'\n");
-	if((i=(*c->actions->set_cap_param)(d->vdev, &fmts, 1))!=0){
+	if((i=(*c->actions->set_cap_param)(d->vdev, src_fmt, dest_fmt))!=0){
 		dprint(LOG_V4L4J, "[V4L4J] set_cap_param failed\n");
 		free_capture_device(d->vdev);
 		if(i==LIBVIDEO_ERR_DIMENSIONS)
@@ -415,7 +384,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doInit(
 		else if(i==LIBVIDEO_ERR_FORMAT)
 			THROW_EXCEPTION(e, FORMAT_EXCP,
 					"Image format %s not supported",
-					libvideo_palettes[fmt].name);
+					libvideo_palettes[in_fmt].name);
 		else if(i==LIBVIDEO_ERR_STD)
 			THROW_EXCEPTION(e, STD_EXCP,
 					"The requested standard (%d) is invalid", c->std);
@@ -627,6 +596,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(
 	unsigned long long captureTime, sequence;
 	unsigned int buffer_index;
 	jboolean isCopy;
+	struct timeval start, end;
 
 	//get frame from libvideo
 	if((frame = (*d->vdev->capture->actions->dequeue_buffer)
@@ -651,13 +621,35 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(
 		return 0;
 	}
 
-	// do lib4lconvert if required
-	if (d->vdev->capture->is_native!=1) {
-		(*d->vdev->capture->actions->convert_buffer)(d->vdev, buffer_index, d->capture_len, )
+	gettimeofday(&start, NULL);
+	// Perform required conversion
+	if(d->vdev->capture->is_native!=1) {
+		// Check whether we can convert directly to the byte[] memory
+		if(d->need_conv!=1) {
+			// Only libv4l conversion is required
+			(*d->vdev->capture->actions->convert_buffer)(d->vdev, buffer_index, d->capture_len, array);
+		} else {
+			// both libv4l and v4l4j conversions required
+			(*d->vdev->capture->actions->convert_buffer)(d->vdev, buffer_index, d->capture_len, d->double_conversion_buffer);
+			(*d->convert)(d, d->double_conversion_buffer, array);
+		}
+	} else {
+		// No libv4l conversion required. Check if v4l4j conversion is required
+		if (d->need_conv!=1) {
+			// No v4l4j conversion required. So copy the frame to byte[] memory. This
+			// is definitely NOT an optimal solution, but I cant see any other way to do it:
+			// We could mmap the byte[] memory and used it as the buffer, but the JVM specs
+			// clearly says the memory can go at anytime, or be moved to somewhere else.
+			// And we can only hold on to it (between GetPrimitiveArrayCritical() and
+			// ReleasePrimitiveArrayCritical() ) for a short amount of time. If you
+			// find yourself reading this comment and you have a better idea, let me know.
+			memcpy(array, frame, d->capture_len);
+			d->len = d->capture_len;
+		} else {
+			(*d->convert)(d, frame, array);
+		}
 	}
-
-	// convert frame
-	(*d->convert)(d, frame, array);
+	gettimeofday(&end, NULL);
 
 	// release pointer to java byte array
 	(*e)->ReleasePrimitiveArrayCritical(e, byteArray, array, 0);
@@ -668,8 +660,11 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(
 	(*e)->SetLongField(e, this, last_captured_frame_time_usec_fID,
 			captureTime);
 	(*e)->SetIntField(e, this, last_captured_frame_buffer_index_fID,
-				buffer_index);
+			buffer_index);
 
+	timersub(&end, &start, &start);
+	printf("Conversion took %llu us\n", (unsigned long long) (start.tv_sec * 1000000 + start.tv_usec));
+	fflush(stdout);
 	return d->len;
 }
 

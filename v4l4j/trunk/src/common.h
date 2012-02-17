@@ -29,7 +29,6 @@
 #include <jpeglib.h>
 
 #include "libvideo.h"
-#include "pixfmt-conv.h"
 
 struct v4l4j_device;
 
@@ -63,6 +62,7 @@ enum output_format {
 struct v4l4j_device {
 	void (*convert) (struct v4l4j_device *, unsigned char *, unsigned char *);
 	unsigned char *conversion_buffer;
+	unsigned char *double_conversion_buffer;
 	struct video_device *vdev;	//the libvideo struct
 	union {
 		struct jpeg_data *j;	//the converter's data
@@ -85,10 +85,6 @@ struct v4l4j_device {
 
 
 
-//WHEN ADDING NEW CONVERSION ROUTINES,
-//DO NOT CONVERT NATIVE FORMATS THAT CAN ALREADY BE CONVERTED BY LIB4L_CONVERT
-//OR BAD THINGS WILL HAPPEN !!
-#define RGB24_CONVERTIBLE_FORMATS		{BGR32, RGB32}
 
 #define BYTEBUFER_CLASS			"java/nio/ByteBuffer"
 #define V4L4J_PACKAGE			"au/edu/jcu/v4l4j/"

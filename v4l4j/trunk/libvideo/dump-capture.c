@@ -61,11 +61,13 @@ int main(int argc, char** argv) {
 	struct capture_device *c;
 	struct video_device *v;
 	void *d;
-	int size, std=0, channel=0, width=0, height=0, nb_frames = 0, fmt=-1, index;
+	int size, std=0, channel=0, width=0, height=0, nb_frames = 0, native_fmt=-1, converted_fmt=-1;
+	unsigned int index;
+	void *converted_buffer = NULL;
 
-	if(argc!=7 && argc!=8) {
+	if(argc!=8 && argc!=9) {
 		printf("Usage: %s <video_device_file> <number_of_frames> <standard> "
-				"<input> <width> <height> [ format ]\n", argv[0]);
+				"<input> <width> <height> <native format> [ converted format ]\n", argv[0]);
 		printf("This program captures a number of frames from a video device "
 				"and saves them in separate files");
 		printf("The following arguments are required in this order:\n");
@@ -74,7 +76,10 @@ int main(int argc, char** argv) {
 		printf("The video standard and input number.\n");
 		printf("Video standards: webcam:0 - PAL:1 - SECAM:2 - NTSC:3\n");
 		printf("The capture resolution (width and height)\n");
-		printf("The last argument is optional and is an image format index. "
+		printf("The last two arguments are image format indexes.\n"
+				"The first one is the format the device is set to capture in.\n"
+				"The second one is optional and specifies the format in which the"
+				"native format should be converted to.\n"
 				"To see what formats are supported by a video device, run "
 				"'./list-caps /dev/videoXX' and check the "
 				"'Printing device info' section at the bottom.\n");
@@ -91,9 +96,15 @@ int main(int argc, char** argv) {
 	height = atoi(argv[6]);
 	printf("Trying %dx%d standard %d, channel %d",width,height,std, channel);
 
-	if(argc==8){
-		fmt = atoi(argv[7]);
-		printf(", image format %s (%d)",libvideo_palettes[fmt].name, fmt);
+	native_fmt = atoi(argv[7]);
+	printf(", native image format %s (%d)",libvideo_palettes[native_fmt].name, native_fmt);
+
+	if (argc==9){
+		converted_fmt = atoi(argv[8]);
+		printf(", converted to %s (%d)", libvideo_palettes[converted_fmt].name, converted_fmt);
+	} else {
+		converted_fmt = native_fmt;
+		native_fmt = -1;
 	}
 
 	printf("\nMake sure your video source is connected, and press <Enter>, or Ctrl-C to abort now.");
@@ -112,18 +123,19 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 
-	if(fmt!=-1){
-		if((*c->actions->set_cap_param)(v, &fmt, 1)){
+	if((*c->actions->set_cap_param)(v, native_fmt, converted_fmt)){
+		free_capture_device(v);
+		close_device(v);
+		printf("Cant set capture parameters\n");
+		return -1;
+	}
+
+	if (c->is_native != 1) {
+		converted_buffer = malloc(c->imagesize);
+		if (converted_buffer == NULL) {
+			printf("Error allocating converted buffer\n");
 			free_capture_device(v);
 			close_device(v);
-			printf("Cant set capture parameters\n");
-			return -1;
-		}
-	}else {
-		if((*c->actions->set_cap_param)(v, NULL, 0)){
-			free_capture_device(v);
-			close_device(v);
-			printf("Cant set capture parameters\n");
 			return -1;
 		}
 	}
@@ -152,7 +164,11 @@ int main(int argc, char** argv) {
 	while(nb_frames-->0){
 		//get frame from v4l2
 		if((d = (*c->actions->dequeue_buffer)(v, &size, &index, NULL, NULL)) != NULL) {
-			write_frame(d, size);
+			if (c->is_native != 1) {
+				(*c->actions->convert_buffer)(v, index, size, converted_buffer);
+				write_frame(converted_buffer, c->imagesize);
+			} else
+				write_frame(d, size);
 			//Put frame
 			(*c->actions->enqueue_buffer)(v, index);
 		} else {
@@ -163,6 +179,9 @@ int main(int argc, char** argv) {
 
 	if((*c->actions->stop_capture)(v)<0)
 		fprintf(stderr, "Error stopping capture\n");
+
+	if (converted_buffer != NULL)
+		free(converted_buffer);
 
 	(*c->actions->free_capture)(v);
 	free_capture_device(v);

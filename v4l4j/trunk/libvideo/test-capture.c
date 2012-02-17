@@ -67,24 +67,28 @@ void write_frame(void *d, int size) {
 int main(int argc, char** argv) {
 	struct capture_device *c;
 	struct video_device *v;
-	void *d;
+	void *d, *converted_buffer = NULL;
 	struct timeval start, now;
 	int size, count=0, std=0, channel=0, width=0, height=0, cap_length = 0,
-		fmt=-1, index = 0;
+		src_fmt=-1, dest_fmt=-1;
+	unsigned int index = 0;
 
-	if(argc!=7 && argc!=8) {
+	if(argc!=8 && argc!=9) {
 		printf("Usage: %s <video_device_file> <single_frame> <standard> <input>"
-				" <width> <height> [ format ]\n", argv[0]);
+				" <width> <height> <native format> [converted format]\n", argv[0]);
 		printf("This program requires the following arguments in this order:\n");
 		printf("The video device file to be tested.\n");
 		printf("Single frame capture (1), or 10 second capture (0)\n");
 		printf("The video standard and input number.\n");
 		printf("Video standards: webcam:0 - PAL:1 - SECAM:2 - NTSC:3\n");
 		printf("The capture resolution (width and height)\n");
-		printf("The last argument is optional and is an image format index. "
-				"To see what formats are supported by a video device, run "
-				"'./list-caps /dev/videoXX' and check the "
-				"'Printing device info' section at the bottom.\n");
+		printf("The last two arguments are image format indexes.\n"
+						"The first one is the format the device is set to capture in.\n"
+						"The second one is optional and specifies the format in which the"
+						"native format should be converted to.\n"
+						"To see what formats are supported by a video device, run "
+						"'./list-caps /dev/videoXX' and check the "
+						"'Printing device info' section at the bottom.\n");;
 		printf("Arguments must be in the specified order !!!\n");
 		return -1;
 	}
@@ -105,9 +109,15 @@ int main(int argc, char** argv) {
 	height = atoi(argv[6]);
 	printf("Trying %dx%d standard %d, channel %d\n",width,height,std, channel);
 
-	if(argc==8){
-		fmt = atoi(argv[7]);
-		printf("Trying image format %s (%d)\n",libvideo_palettes[fmt].name, fmt);
+	src_fmt = atoi(argv[7]);
+	printf("Trying native image format %s (%d)\n",libvideo_palettes[src_fmt].name, src_fmt);
+
+	if(argc==9){
+		dest_fmt = atoi(argv[8]);
+		printf("Converted to %s (%d)\n",libvideo_palettes[dest_fmt].name, dest_fmt);
+	} else {
+		dest_fmt = src_fmt;
+		src_fmt = -1;
 	}
 
 	printf("Make sure your video source is connected, and press <Enter>, or "
@@ -128,27 +138,24 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 
-	if(fmt!=-1){
-		if((*c->actions->set_cap_param)(v, &fmt, 1)){
-			free_capture_device(v);
-			close_device(v);
-			printf("Cant set capture parameters\n");
-			return -1;
-		}
-	}else {
-		if((*c->actions->set_cap_param)(v, NULL, 0)){
-			free_capture_device(v);
-			close_device(v);
-			printf("Cant set capture parameters\n");
-			return -1;
-		}
-	}
 
+	if((*c->actions->set_cap_param)(v, src_fmt, dest_fmt)){
+		free_capture_device(v);
+		close_device(v);
+		printf("Cant set capture parameters\n");
+		return -1;
+	}
 
 	printf("Capturing from %s at %dx%d.\n", argv[1], c->width,c->height);
 	width = c->width;
 	height = c->height;
-	printf("Image format %s, size: %d\n", libvideo_palettes[c->palette].name, c->imagesize);
+	printf("Using image format %s, size: %d\n", libvideo_palettes[c->palette].name, c->imagesize);
+
+	if (c->is_native != 1) {
+		printf("Creating conversion buffer\n");
+		converted_buffer = malloc(c->imagesize);
+	}
+
 
 	if((*c->actions->init_capture)(v)<0){
 		free_capture_device(v);
@@ -156,11 +163,6 @@ int main(int argc, char** argv) {
 		printf("Cant initialise capture ");
 		return -1;
 	}
-//
-//	if((*c->actions->set_frame_interval)(v, 1, 15)<0){
-//		printf("Cant set the frame interval");
-//		fflush(stdout);
-//	}
 
 	if((*c->actions->start_capture)(v)<0){
 		(*c->actions->free_capture)(v);
@@ -172,6 +174,7 @@ int main(int argc, char** argv) {
 
 	// discard the first frame
 	(*c->actions->dequeue_buffer)(v, &size, &index, NULL, NULL);
+	(*c->actions->enqueue_buffer)(v, index);
 
 	gettimeofday(&start, NULL);
 	gettimeofday(&now, NULL);
@@ -179,9 +182,9 @@ int main(int argc, char** argv) {
 
 		//get frame from v4l2
 		if((d = (*c->actions->dequeue_buffer)(v, &size, &index, NULL, NULL)) != NULL) {
-			//uncomment the following line to output raw captured frame
-			//to a file
-			//write_frame(d, size);
+			if (c->is_native != 1)
+				(*c->actions->convert_buffer)(v, index, size, converted_buffer);
+
 			count++;
 			//Put frame
 			(*c->actions->enqueue_buffer)(v, index);
@@ -190,6 +193,7 @@ int main(int argc, char** argv) {
 			break;
 		}
 		gettimeofday(&now, NULL);
+
 		if(cap_length==0)
 			break;
 	}
@@ -197,6 +201,9 @@ int main(int argc, char** argv) {
 
 	if((*c->actions->stop_capture)(v)<0)
 		fprintf(stderr, "Error stopping capture\n");
+
+	if (converted_buffer != NULL)
+		free(converted_buffer);
 
 	(*c->actions->free_capture)(v);
 	free_capture_device(v);
