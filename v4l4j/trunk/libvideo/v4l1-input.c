@@ -75,7 +75,6 @@ int set_cap_param_v4l1(struct video_device *vdev, int unused, int palette) {
 	struct video_picture pict;
 	struct video_window win;
 	struct video_capability vc;
-	int i;
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
 			"CAP: Setting capture parameters on device %s.\n", vdev->file);

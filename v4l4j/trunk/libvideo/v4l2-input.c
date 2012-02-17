@@ -707,7 +707,6 @@ int start_capture_v4l2(struct video_device *vdev) {
 unsigned int convert_buffer_v4l2(struct video_device *vdev, int index,
 		unsigned int src_len, void *dest_buffer) {
 	struct convert_data *conv = vdev->capture->convert;
-	struct timeval start, end;
 	unsigned int dest_buffer_len = -1;
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
