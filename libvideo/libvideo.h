@@ -173,77 +173,6 @@ enum {
 #define		IDENTICAL_FORMATS		3
 };
 
-//the default order in which palettes are tried if "set_cap_param(c, NULL, 0)"
-//is used
-#define		DEFAULT_PALETTE_ORDER {\
-		JPEG,\
-		YUV420,\
-		MJPEG,\
-		RGB24,\
-		RGB32,\
-		RGB332,\
-		RGB444,\
-		RGB555,\
-		RGB565,\
-		RGB555X,\
-		RGB565X,\
-		BGR24,\
-		BGR32,\
-		GREY,\
-		Y10,\
-		Y16,\
-		PAL8,\
-		YVU410,\
-		YVU420,\
-		YUYV,\
-		YYUV,\
-		YVYU,\
-		UYVY,\
-		VYUY,\
-		YUV422P,\
-		YUV411P,\
-		Y41P,\
-		YUV444,\
-		YUV555,\
-		YUV565,\
-		YUV32,\
-		YUV410,\
-		HI240,\
-		HM12,\
-		NV12,\
-		NV21,\
-		NV16,\
-		NV61,\
-		SBGGR8,\
-		SGBRG8,\
-		SGRBG8,\
-		SRGGB8,\
-		SBGGR10,\
-		SGBRG10,\
-		SGRBG10,\
-		SRGGB10,\
-		SGRBG10DPCM8,\
-		SBGGR16,\
-		MPEG,\
-		WNVA,\
-		SN9C10X,\
-		SN9C20X_I420,\
-		PWC1,\
-		PWC2,\
-		ET61X251,\
-		SPCA501,\
-		SPCA505,\
-		SPCA508,\
-		SPCA561,\
-		PAC207,\
-		MR97310A,\
-		SQ905C,\
-		PJPG,\
-		OV511,\
-		OV518,\
-		STV0680,\
-		TM6000\
-	}
 
 struct convert_data {
 	struct v4lconvert_data *priv;//the libv4l convert struct (used only if V4L2)
@@ -597,7 +526,7 @@ struct capture_actions {
 // LIBVIDEO_ERR_CHANNEL (the supplied channel is invalid)
 // LIBVIDEO_ERR_CROP (error applying cropping parameters)
 // or LIBVIDEO_ERR_NOCAPS (error checking capabilities)
-	int (*set_cap_param)(struct video_device *, int *, int);
+	int (*set_cap_param)(struct video_device *, int , int);
 
 //set the frame interval for capture, ie the number of seconds in between
 //each captured frame. This function is available only for V4L2 devices

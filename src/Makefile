@@ -37,7 +37,7 @@ LIBVIDEO_PATH := ../libvideo
 
 
 LIB := libv4l4j.so
-OBJ := jpeg.o rgb.o v4l4j_FrameGrabber.o v4l4j_ImageFormatList.o \
+OBJ := jpeg.o v4l4j_FrameGrabber.o v4l4j_ImageFormatList.o \
   v4l4j_DeviceInfo.o v4l4j_VideoDevice.o v4l4j_Control.o v4l4j_Tuner.o \
   v4l4j_ResolutionInfo.o v4l4j_FrameInterval.o
 
@@ -57,17 +57,15 @@ $(LIB): $(OBJ)
 test-debug:
 	$(CC) $(INCLUDES) -DDEBUG -Wall -ggdb -DMAKETEST -c rgb.c
 	$(CC) $(INCLUDES) -mssse3 -DDEBUG -Wall -ggdb -DMAKETEST -c jpeg.c
-	$(LD) rgb.o -ljpeg -o rgb
 	$(LD) jpeg.o -ljpeg -o jpeg
 
 test:
 	$(CC) $(INCLUDES) -O3 -Wall -DMAKETEST -c rgb.c
 	$(CC) $(INCLUDES) -mssse3 -msse2 -O3 -Wall -DMAKETEST -c jpeg.c
-	$(LD) rgb.o -ljpeg -o rgb
 	$(LD) jpeg.o -ljpeg -o jpeg
 
 
 clean:
-	rm -f $(OBJ) $(LIB) ./*~ jpeg rgb
+	rm -f $(OBJ) $(LIB) ./*~ jpeg
 
 .PHONY: all test clean
