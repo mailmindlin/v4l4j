@@ -640,7 +640,7 @@ static void refresh_pixfc(struct v4lconvert_data *data, unsigned int width,
 	// Create a struct pixfc if we dont have one
 	if (data->pixfc == NULL) {
 		if (create_pixfc(&data->pixfc, src_fmt, dst_fmt, width, height,
-				PixFcFlag_SSE2Only | PixFcFlag_NNbResampling) != PIXFC_OK)
+				PixFcFlag_SSE2Only | PixFcFlag_NNbResamplingOnly) != PIXFC_OK)
 			data->pixfc = NULL;
 	}
 }
@@ -993,10 +993,14 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			memcpy(dest, src, width * height * 3);
 			break;
 		case V4L2_PIX_FMT_BGR24:
-			v4lconvert_swap_rgb(src, dest, width, height);
+				v4lconvert_swap_rgb(src, dest, width, height);
 			break;
 		case V4L2_PIX_FMT_YUV420:
-			v4lconvert_rgb24_to_yuv420(src, dest, fmt, 0, 0);
+			refresh_pixfc(data, width, height, PixFcRGB24, PixFcYUV420P);
+			if (data->pixfc)
+				(*data->pixfc->convert)(data->pixfc, src, dest);
+			else
+				v4lconvert_rgb24_to_yuv420(src, dest, fmt, 0, 0);
 			break;
 		case V4L2_PIX_FMT_YVU420:
 			v4lconvert_rgb24_to_yuv420(src, dest, fmt, 0, 1);
@@ -1018,7 +1022,11 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			memcpy(dest, src, width * height * 3);
 			break;
 		case V4L2_PIX_FMT_YUV420:
-			v4lconvert_rgb24_to_yuv420(src, dest, fmt, 1, 0);
+			refresh_pixfc(data, width, height, PixFcBGR24, PixFcYUV420P);
+			if (data->pixfc)
+				(*data->pixfc->convert)(data->pixfc, src, dest);
+			else
+				v4lconvert_rgb24_to_yuv420(src, dest, fmt, 1, 0);
 			break;
 		case V4L2_PIX_FMT_YVU420:
 			v4lconvert_rgb24_to_yuv420(src, dest, fmt, 1, 1);
@@ -1034,11 +1042,19 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	case V4L2_PIX_FMT_YUV420:
 		switch (dest_pix_fmt) {
 		case V4L2_PIX_FMT_RGB24:
-			v4lconvert_yuv420_to_rgb24(src, dest, width,
+			refresh_pixfc(data, width, height, PixFcYUV420P, PixFcRGB24);
+			if (data->pixfc)
+				(*data->pixfc->convert)(data->pixfc, src, dest);
+			else
+				v4lconvert_yuv420_to_rgb24(src, dest, width,
 					height, 0);
 			break;
 		case V4L2_PIX_FMT_BGR24:
-			v4lconvert_yuv420_to_bgr24(src, dest, width,
+			refresh_pixfc(data, width, height, PixFcYUV420P, PixFcBGR24);
+			if (data->pixfc)
+				(*data->pixfc->convert)(data->pixfc, src, dest);
+			else
+				v4lconvert_yuv420_to_bgr24(src, dest, width,
 					height, 0);
 			break;
 		case V4L2_PIX_FMT_YUV420:

@@ -719,9 +719,11 @@ unsigned int convert_buffer_v4l2(struct video_device *vdev, int index,
 			conv->dst_fmt->fmt.pix.pixelformat
 			);
 
+	START_TIMING;
 	dest_buffer_len=v4lconvert_convert(conv->priv, conv->src_fmt, conv->dst_fmt,
 			vdev->capture->mmap->buffers[index].start, src_len,
 			dest_buffer, conv->dst_fmt->fmt.pix.sizeimage);
+	END_TIMING("libvideo conversion took ");
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
 			"CAP: dest buffer has %d bytes after conv\n",dest_buffer_len
