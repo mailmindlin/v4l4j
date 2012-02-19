@@ -78,6 +78,7 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
 	{ V4L2_PIX_FMT_SN9C2028,	 0,	 9,	 9,	1 },
 	{ V4L2_PIX_FMT_PAC207,		 0,	 9,	 9,	1 },
 	{ V4L2_PIX_FMT_MR97310A,	 0,	 9,	 9,	1 },
+	{ V4L2_PIX_FMT_JL2005BCD,	 0,	 9,	 9,	1 },
 	{ V4L2_PIX_FMT_SQ905C,		 0,	 9,	 9,	1 },
 	/* special */
 	{ V4L2_PIX_FMT_SE401,		 0,	 8,	 9,	1 },
@@ -160,8 +161,10 @@ struct v4lconvert_data *v4lconvert_create(int fd)
 		free(data);
 		return NULL;
 	}
-	data->control_flags = v4lcontrol_get_flags(data->control);
 	data->bandwidth = v4lcontrol_get_bandwidth(data->control);
+	data->control_flags = v4lcontrol_get_flags(data->control);
+	if (data->control_flags & V4LCONTROL_FORCE_TINYJPEG)
+		data->flags |= V4LCONVERT_USE_TINYJPEG;
 
 	data->processing = v4lprocessing_create(fd, data->control);
 	if (!data->processing) {
@@ -185,10 +188,6 @@ void v4lconvert_destroy(struct v4lconvert_data *data)
 	}
 	if (data->cinfo_initialized)
 		jpeg_destroy_decompress(&data->cinfo);
-	if (data->pixfc) {
-		destroy_pixfc(data->pixfc);
-		data->pixfc = NULL;
-	}
 	v4lconvert_helper_cleanup(data);
 	free(data->convert1_buf);
 	free(data->convert2_buf);
@@ -581,6 +580,7 @@ static int v4lconvert_processing_needs_double_conversion(
 	case V4L2_PIX_FMT_SN9C10X:
 	case V4L2_PIX_FMT_PAC207:
 	case V4L2_PIX_FMT_MR97310A:
+	case V4L2_PIX_FMT_JL2005BCD:
 	case V4L2_PIX_FMT_SN9C2028:
 	case V4L2_PIX_FMT_SQ905C:
 	case V4L2_PIX_FMT_SBGGR8:
@@ -619,30 +619,6 @@ int v4lconvert_oom_error(struct v4lconvert_data *data)
 	V4LCONVERT_ERR("could not allocate memory\n");
 	errno = ENOMEM;
 	return -1;
-}
-
-static void refresh_pixfc(struct v4lconvert_data *data, unsigned int width,
-		unsigned int height, PixFcPixelFormat src_fmt, PixFcPixelFormat dst_fmt) {
-
-	// If the width, height, source or destination pixel format in the current
-	// struct pixfc is different from the new ones (given as args), release struct.
-	if ((data->pixfc != NULL) &&
-			(data->pixfc->width != width
-			|| data->pixfc->height != height
-			|| data->pixfc->source_fmt != src_fmt
-			|| data->pixfc->dest_fmt != dst_fmt)
-		)
-	{
-		destroy_pixfc(data->pixfc);
-		data->pixfc = NULL;
-	}
-
-	// Create a struct pixfc if we dont have one
-	if (data->pixfc == NULL) {
-		if (create_pixfc(&data->pixfc, src_fmt, dst_fmt, width, height,
-				PixFcFlag_SSE2Only | PixFcFlag_NNbResamplingOnly) != PIXFC_OK)
-			data->pixfc = NULL;
-	}
 }
 
 static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
@@ -801,6 +777,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	case V4L2_PIX_FMT_SN9C10X:
 	case V4L2_PIX_FMT_PAC207:
 	case V4L2_PIX_FMT_MR97310A:
+	case V4L2_PIX_FMT_JL2005BCD:
 	case V4L2_PIX_FMT_SN9C2028:
 	case V4L2_PIX_FMT_SQ905C:
 	case V4L2_PIX_FMT_STV0680: { /* Not compressed but needs some shuffling */
@@ -838,6 +815,16 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 				return -1;
 			}
 			tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR8;
+			break;
+		case V4L2_PIX_FMT_JL2005BCD:
+			if (v4lconvert_decode_jl2005bcd(data, src, src_size,
+							tmpbuf,
+							width, height)) {
+				/* Corrupt frame, better get another one */
+				errno = EAGAIN;
+				return -1;
+			}
+			tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SRGGB8;
 			break;
 		case V4L2_PIX_FMT_SN9C2028:
 			v4lconvert_decode_sn9c2028(src, tmpbuf, width, height);
@@ -993,14 +980,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			memcpy(dest, src, width * height * 3);
 			break;
 		case V4L2_PIX_FMT_BGR24:
-				v4lconvert_swap_rgb(src, dest, width, height);
+			v4lconvert_swap_rgb(src, dest, width, height);
 			break;
 		case V4L2_PIX_FMT_YUV420:
-			refresh_pixfc(data, width, height, PixFcRGB24, PixFcYUV420P);
-			if (data->pixfc)
-				(*data->pixfc->convert)(data->pixfc, src, dest);
-			else
-				v4lconvert_rgb24_to_yuv420(src, dest, fmt, 0, 0);
+			v4lconvert_rgb24_to_yuv420(src, dest, fmt, 0, 0);
 			break;
 		case V4L2_PIX_FMT_YVU420:
 			v4lconvert_rgb24_to_yuv420(src, dest, fmt, 0, 1);
@@ -1022,11 +1005,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			memcpy(dest, src, width * height * 3);
 			break;
 		case V4L2_PIX_FMT_YUV420:
-			refresh_pixfc(data, width, height, PixFcBGR24, PixFcYUV420P);
-			if (data->pixfc)
-				(*data->pixfc->convert)(data->pixfc, src, dest);
-			else
-				v4lconvert_rgb24_to_yuv420(src, dest, fmt, 1, 0);
+			v4lconvert_rgb24_to_yuv420(src, dest, fmt, 1, 0);
 			break;
 		case V4L2_PIX_FMT_YVU420:
 			v4lconvert_rgb24_to_yuv420(src, dest, fmt, 1, 1);
@@ -1042,19 +1021,11 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	case V4L2_PIX_FMT_YUV420:
 		switch (dest_pix_fmt) {
 		case V4L2_PIX_FMT_RGB24:
-			refresh_pixfc(data, width, height, PixFcYUV420P, PixFcRGB24);
-			if (data->pixfc)
-				(*data->pixfc->convert)(data->pixfc, src, dest);
-			else
-				v4lconvert_yuv420_to_rgb24(src, dest, width,
+			v4lconvert_yuv420_to_rgb24(src, dest, width,
 					height, 0);
 			break;
 		case V4L2_PIX_FMT_BGR24:
-			refresh_pixfc(data, width, height, PixFcYUV420P, PixFcBGR24);
-			if (data->pixfc)
-				(*data->pixfc->convert)(data->pixfc, src, dest);
-			else
-				v4lconvert_yuv420_to_bgr24(src, dest, width,
+			v4lconvert_yuv420_to_bgr24(src, dest, width,
 					height, 0);
 			break;
 		case V4L2_PIX_FMT_YUV420:
@@ -1098,18 +1069,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	case V4L2_PIX_FMT_YUYV:
 		switch (dest_pix_fmt) {
 		case V4L2_PIX_FMT_RGB24:
-			refresh_pixfc(data, width, height, PixFcYUYV, PixFcRGB24);
-			if (data->pixfc)
-				(*data->pixfc->convert)(data->pixfc, src, dest);
-			else
-				v4lconvert_yuyv_to_rgb24(src, dest, width, height);
+			v4lconvert_yuyv_to_rgb24(src, dest, width, height);
 			break;
 		case V4L2_PIX_FMT_BGR24:
-			refresh_pixfc(data, width, height, PixFcYUYV, PixFcBGR24);
-			if (data->pixfc)
-				(*data->pixfc->convert)(data->pixfc, src, dest);
-			else
-				v4lconvert_yuyv_to_bgr24(src, dest, width, height);
+			v4lconvert_yuyv_to_bgr24(src, dest, width, height);
 			break;
 		case V4L2_PIX_FMT_YUV420:
 			v4lconvert_yuyv_to_yuv420(src, dest, width, height, 0);
@@ -1152,18 +1115,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	case V4L2_PIX_FMT_UYVY:
 		switch (dest_pix_fmt) {
 		case V4L2_PIX_FMT_RGB24:
-			refresh_pixfc(data, width, height, PixFcUYVY, PixFcRGB24);
-			if (data->pixfc)
-				(*data->pixfc->convert)(data->pixfc, src, dest);
-			else
-				v4lconvert_uyvy_to_rgb24(src, dest, width, height);
+			v4lconvert_uyvy_to_rgb24(src, dest, width, height);
 			break;
 		case V4L2_PIX_FMT_BGR24:
-			refresh_pixfc(data, width, height, PixFcUYVY, PixFcBGR24);
-			if (data->pixfc)
-				(*data->pixfc->convert)(data->pixfc, src, dest);
-			else
-				v4lconvert_uyvy_to_bgr24(src, dest, width, height);
+			v4lconvert_uyvy_to_bgr24(src, dest, width, height);
 			break;
 		case V4L2_PIX_FMT_YUV420:
 			v4lconvert_uyvy_to_yuv420(src, dest, width, height, 0);

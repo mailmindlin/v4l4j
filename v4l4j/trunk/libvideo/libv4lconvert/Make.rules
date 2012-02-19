@@ -1,4 +1,4 @@
-V4L_UTILS_VERSION=0.8.5
+V4L_UTILS_VERSION=0.8.6
 
 # These ones can be overriden from the cmdline
 
@@ -34,7 +34,7 @@ LIB_RELEASE = 0
 	ln -f -s $@.$(LIB_RELEASE) $@
 
 %.a:
-	$(AR) cqs $@ $^  
+	$(AR) cqs $@ $^
 
 clean::
 	rm -f core core.[0123456789]* *~ *.o *.d *.a *.so* DEADJOE *.orig *.rej $(TARGETS)
