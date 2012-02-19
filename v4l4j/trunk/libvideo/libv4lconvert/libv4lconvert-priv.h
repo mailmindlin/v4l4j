@@ -28,6 +28,7 @@
 #include "control/libv4lcontrol.h"
 #include "processing/libv4lprocessing.h"
 #include "tinyjpeg.h"
+#include "pixfc-sse/pixfc-sse.h"
 
 #define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
 
@@ -55,6 +56,7 @@ struct v4lconvert_data {
 	jmp_buf jerr_jmp_state;
 	struct jpeg_decompress_struct cinfo;
 	int cinfo_initialized;
+	struct PixFcSSE *pixfc;
 	struct v4l2_frmsizeenum framesizes[V4LCONVERT_MAX_FRAMESIZES];
 	unsigned int no_framesizes;
 	int bandwidth;
