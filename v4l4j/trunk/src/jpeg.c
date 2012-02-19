@@ -24,7 +24,6 @@
 #include "common.h"
 #include "debug.h"
 #include "libvideo.h"
-#include "pixfmt-conv.h"
 
 #define DHT_SIZE		420
 static uint8_t huffman_table[] =
@@ -119,14 +118,17 @@ static void jpeg_encode_mjpeg(struct v4l4j_device *d, unsigned char *src, unsign
 }
 
 static void jpeg_encode_yuv420(struct v4l4j_device *d, unsigned char *src, unsigned char *dst) {
-	//Code for this function is adapted from a similar one found in Motion
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 
 	struct jpeg_compress_struct*	cinfo = d->j->cinfo;
-	int 							i, line, rgb_size, width, height;
+	uint32_t						i, line, rgb_size, width, height;
+	uint32_t						y_stride, uv_stride;
 
 	width = d->vdev->capture->width;
-	height = d->vdev->capture->height ;
+	height = d->vdev->capture->height;
+
+	y_stride = width * d->j->mcu;
+	uv_stride = width * d->j->mcu / 4;
 
 	//init JPEG dest mgr
 	rgb_size = width * height * 3;
@@ -134,19 +136,28 @@ static void jpeg_encode_yuv420(struct v4l4j_device *d, unsigned char *src, unsig
 	d->j->destmgr->free_in_buffer = rgb_size;
 	jpeg_set_quality(cinfo,d->j->jpeg_quality,TRUE);
 
+	// setup pointers in the JSAMPIMAGE array
+	for (line = 0; line < d->j->mcu; line++) {
+		d->j->y[line] = src + width * line;
+		if (line % 2 == 0) {
+			d->j->cb[line/2] = src + width * height + width * line / 4;
+			d->j->cr[line/2] = d->j->cb[line/2] + width * height / 4;
+		}
+	}
+
 	dprint(LOG_JPEG, "[JPEG] Starting compression (%d bytes)\n", d->vdev->capture->imagesize);
 	jpeg_start_compress(cinfo, TRUE );
 	for (line = 0; line < height; line += d->j->mcu) {
-		// setup pointers in the JSAMPIMAGE array
+		jpeg_write_raw_data(cinfo, d->j->data, d->j->mcu);
+
+		// Update pointers in the JSAMPIMAGE array for the next iteration
 		for (i = 0; i < d->j->mcu; i++) {
-			d->j->y[i] = src + width * (i + line);
+			d->j->y[i] += y_stride;
 			if (i % 2 == 0) {
-				d->j->cb[i/2] = src + width * height + width / 2 * ((i + line) / 2);
-				d->j->cr[i/2] = d->j->cb[i/2] + width * height / 4;
+				d->j->cb[i/2] += uv_stride;
+				d->j->cr[i/2] += uv_stride;
 			}
 		}
-
-		jpeg_write_raw_data(cinfo, d->j->data, d->j->mcu);
 	}
 	jpeg_finish_compress(cinfo);
 	d->len = rgb_size - cinfo->dest->free_in_buffer;
@@ -158,6 +169,8 @@ static inline void jpeg_encode_yuv422p(struct v4l4j_device *d, unsigned char *ds
 	uint32_t 					line = 0, i;
 	uint32_t					width = d->vdev->capture->width;
 	uint32_t					height = d->vdev->capture->height;
+	uint32_t					y_stride = width * d->j->mcu;
+	uint32_t					uv_stride = width * d->j->mcu / 2;
 
 	// init JPEG dest mgr
 	d->j->destmgr->next_output_byte = dst;
@@ -166,21 +179,28 @@ static inline void jpeg_encode_yuv422p(struct v4l4j_device *d, unsigned char *ds
 
 	dprint(LOG_JPEG, "[JPEG] Starting compression (%d bytes)\n", d->vdev->capture->imagesize);
 
+	// Setup pointers in the JSAMPIMAGE array
+	for (line = 0; line < d->j->mcu; line++) {
+		d->j->y[line] = d->conversion_buffer + width * line;
+		d->j->cb[line] = d->conversion_buffer + width * height + width * line / 2;
+		d->j->cr[line] = d->j->cb[line] + width * height / 2;
+	}
+
 	jpeg_start_compress(cinfo, TRUE );
 
 	while(line < d->vdev->capture->height){
-		// setup pointers in the JSAMPIMAGE array
-		for (i = 0; i < d->j->mcu; i++) {
-			d->j->y[i] = d->conversion_buffer + width * (i + line);
-			d->j->cb[i] = d->conversion_buffer + width * height + width * ((i + line) / 2);
-			d->j->cr[i] = d->j->cb[i] + width * height / 2;
-		}
-
 		// pass the YUV planes to the jpeg compressor
 		jpeg_write_raw_data(cinfo, d->j->data, d->j->mcu);
 
 		// move on to next block of lines
 		line += d->j->mcu;
+
+		// update pointers in the JSAMPIMAGE array for next iteration
+		for (i = 0; i < d->j->mcu; i++) {
+			d->j->y[i] += y_stride;
+			d->j->cb[i] += uv_stride;
+			d->j->cr[i] += uv_stride;
+		}
 	}
 	jpeg_finish_compress (cinfo);
 	d->len = d->vdev->capture->imagesize - cinfo->dest->free_in_buffer;
@@ -188,23 +208,21 @@ static inline void jpeg_encode_yuv422p(struct v4l4j_device *d, unsigned char *ds
 }
 
 static void jpeg_encode_yuyv(struct v4l4j_device *d, unsigned char *src, unsigned char *dst){
-	// reorganise YUYV pixels into YUV420 suitable to give to the jpeg compressor
-	convert_yuyv_to_yuv422p(src, d->conversion_buffer, d->vdev->capture->width, d->vdev->capture->height);
-
+	// reorganise YUYV pixels into YUV422P suitable to give to the jpeg compressor
+	d->pixfc->convert(d->pixfc, src, d->conversion_buffer);
 	jpeg_encode_yuv422p(d, dst);
 }
 
 static void jpeg_encode_uyvy(struct v4l4j_device *d, unsigned char *src, unsigned char *dst){
-	// reorganise UYVY pixels into YUV420 suitable to give to the jpeg compressor
-	convert_uyvy_to_yuv422p(src, d->conversion_buffer, d->vdev->capture->width, d->vdev->capture->height);
-
+	// reorganise UYVY pixels into YUV422P suitable to give to the jpeg compressor
+	d->pixfc->convert(d->pixfc, src, d->conversion_buffer);
 	jpeg_encode_yuv422p(d, dst);
 }
 
 static void jpeg_encode_yvyu(struct v4l4j_device *d, unsigned char *src, unsigned char *dst){
-	// reorganise YVYU pixels into YUV420 suitable to give to the jpeg compressor
+	// reorganise YVYU pixels into YUV422P suitable to give to the jpeg compressor
+	// PixFC doesnt have support for YVYU, so our lame non see conversion for now
 	convert_yvyu_to_yuv422p(src, d->conversion_buffer, d->vdev->capture->width, d->vdev->capture->height);
-
 	jpeg_encode_yuv422p(d, dst);
 }
 
@@ -392,6 +410,11 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 				switch (d->vdev->capture->palette) {
 				case YUYV:
 					dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for YUYV\n");
+					if (create_pixfc(&d->pixfc, PixFcYUYV, PixFcYUV422P, d->vdev->capture->width, d->vdev->capture->height, PixFcFlag_Default) != PIXFC_OK)
+					{
+						info("Error creating PixFC struct\n");
+						return -1;
+					}
 					d->convert = jpeg_encode_yuyv;
 					break;
 				case YVYU:
@@ -400,6 +423,11 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 					break;
 				case UYVY:
 					dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for UYVY\n");
+					if (create_pixfc(&d->pixfc, PixFcUYVY, PixFcYUV422P, d->vdev->capture->width, d->vdev->capture->height, PixFcFlag_Default) != PIXFC_OK)
+					{
+						info("Error creating PixFC struct\n");
+						return -1;
+					}
 					d->convert = jpeg_encode_uyvy;
 					break;
 				}
@@ -462,6 +490,8 @@ void destroy_jpeg_compressor(struct v4l4j_device *d){
 
 		if ((d->vdev->capture->palette == YUV420) || (d->vdev->capture->palette == YUYV)
 			|| (d->vdev->capture->palette == YVYU) || (d->vdev->capture->palette == UYVY)){
+			if (d->pixfc)
+				destroy_pixfc(d->pixfc);
 			XFREE(d->j->y);
 			XFREE(d->j->cb);
 			XFREE(d->j->cr);

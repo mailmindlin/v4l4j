@@ -119,32 +119,53 @@ public class ImageFormatList {
 	 */
 	private void sortLists(){
 		//sort RGBformats
-		//if native YUYV / UYVY are supported place them second/third
-		moveToFirst(RGBformats, V4L4JConstants.IMF_UYVY);
-		moveToFirst(RGBformats, V4L4JConstants.IMF_YUYV);
 		//if native RGB24 is supported, put it first
-		moveToFirst(RGBformats, V4L4JConstants.IMF_RGB24);
+		moveToFirstIfNative(RGBformats, V4L4JConstants.IMF_RGB24);
 		
 		//sort BGRformats
-		//if native YUYV / UYVY are supported place them second/third
-		moveToFirst(BGRformats, V4L4JConstants.IMF_UYVY);
-		moveToFirst(BGRformats, V4L4JConstants.IMF_YUYV);
 		//if native BGR24 is supported, put it first
-		moveToFirst(BGRformats, V4L4JConstants.IMF_BGR24);
+		moveToFirstIfNative(BGRformats, V4L4JConstants.IMF_BGR24);
 		
 		//sort YUV420formats
 		//if native YUV420 is supported, put it first
-		moveToFirst(YUV420formats, V4L4JConstants.IMF_YUV420);
+		moveToFirstIfNative(YUV420formats, V4L4JConstants.IMF_YUV420);
 		
 		//sort YVU420formats
 		//if native YVU420 is supported, put it first
-		moveToFirst(YVU420formats, V4L4JConstants.IMF_YVU420);
+		moveToFirstIfNative(YVU420formats, V4L4JConstants.IMF_YVU420);
 		
 		//sort JPEGformats
 		//put native formats first and libvideo converted ones next
-		moveNativeFirst(JPEGformats);		
+		moveNativeFirst(JPEGformats);
+		//if native RGB32 is supported, put it first
+		moveToFirstIfNative(JPEGformats, V4L4JConstants.IMF_RGB32);
+		//if native RGB24 is supported, put it first
+		moveToFirstIfNative(JPEGformats, V4L4JConstants.IMF_RGB24);
+		//if native UYVY is supported, put it first
+		moveToFirstIfNative(JPEGformats, V4L4JConstants.IMF_UYVY);
+		//if native YUYV is supported, put it first
+		moveToFirstIfNative(JPEGformats, V4L4JConstants.IMF_YUYV);
+		//if native YUV420P is supported, put it first
+		moveToFirstIfNative(JPEGformats, V4L4JConstants.IMF_YUV420);
+		//if native MJPEG is supported, put it first
+		moveToFirstIfNative(JPEGformats, V4L4JConstants.IMF_MJPEG);
 		//if native JPEG is supported, put it first
-		moveToFirst(JPEGformats, V4L4JConstants.IMF_JPEG);
+		moveToFirstIfNative(JPEGformats, V4L4JConstants.IMF_JPEG);
+	}
+	
+	/**
+	 * This method moves the given image format <code>format</code>
+	 * in the first position of the vector.
+	 * @param v the vector if image format
+	 * @param format the index of the format to be moved in first position
+	 */
+	private void moveToFirstIfNative(List<ImageFormat> v, int format){
+		for(ImageFormat i : v)
+			if((i.getIndex()==format) && (formats.contains(i))){
+				v.remove(i);
+				v.add(0, i);
+				break;
+			}
 	}
 	
 	/**

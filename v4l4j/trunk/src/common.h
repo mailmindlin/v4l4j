@@ -29,6 +29,7 @@
 #include <jpeglib.h>
 
 #include "libvideo.h"
+#include "pixfc-sse.h"
 
 struct v4l4j_device;
 
@@ -63,6 +64,7 @@ struct v4l4j_device {
 	void (*convert) (struct v4l4j_device *, unsigned char *, unsigned char *);
 	unsigned char *conversion_buffer;
 	unsigned char *double_conversion_buffer;
+	struct PixFcSSE	 *pixfc;
 	struct video_device *vdev;	//the libvideo struct
 	union {
 		struct jpeg_data *j;	//the converter's data
@@ -81,7 +83,7 @@ struct v4l4j_device {
 #define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
 
 #define JPEG_CONVERTIBLE_FORMATS \
-	{JPEG, MJPEG, YUV420, YUYV, RGB24, RGB32, BGR24, YVYU, UYVY, BGR32}
+	{JPEG, MJPEG, YUV420, YUYV, YVYU, UYVY, RGB24, BGR24, RGB32, BGR32}
 
 
 

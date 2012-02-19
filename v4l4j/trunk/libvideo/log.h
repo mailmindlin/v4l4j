@@ -28,6 +28,7 @@
 #include <stdio.h>		//for fprintf
 #include <stdlib.h>		//for malloc
 #include <string.h>		//for memset
+#include <sys/time.h>
 
 #include "libvideo.h"
 
@@ -87,9 +88,36 @@
 		}\
 	} while(0)
 
+#define START_TIMING	\
+	struct timeval start, end;\
+	gettimeofday(&start, NULL);
+
+#define END_TIMING(str_prefix)	\
+	gettimeofday(&end, NULL);\
+	timersub(&end, &start, &start);\
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2, str_prefix " %llu us\n",\
+	(unsigned long long) (start.tv_sec * 1000000 + start.tv_usec));
 
 #else  //if not DEBUG
+
 #define dprint(source, level, format, ...)
+
+//#define SHOW_CONVERSION_TIMGING
+#ifdef SHOW_CONVERSION_TIMGING
+#define START_TIMING	\
+	struct timeval start, end;\
+	gettimeofday(&start, NULL);
+
+#define END_TIMING(str_prefix)	\
+	gettimeofday(&end, NULL);\
+	timersub(&end, &start, &start);\
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2, str_prefix " %llu us\n",\
+	(unsigned long long) (start.tv_sec * 1000000 + start.tv_usec));
+#else
+#define START_TIMING
+#define END_TIMING
+#endif
+
 #endif // if DEBUG
 
 #define dprint_v4l2_control(qc)\
