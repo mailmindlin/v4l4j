@@ -405,7 +405,8 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
      */
     private void stopCapture(){
     	try {
-    		fg.stopCapture();
+    		if (fg != null)
+    			fg.stopCapture();
     	} catch (StateException e){} 
     	// the frame grabber may be already stopped
     	
