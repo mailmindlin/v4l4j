@@ -1,16 +1,16 @@
-override CPPFLAGS += -I.. -I../pixfc-sse -fvisibility=hidden
+override CPPFLAGS += -I.. -fvisibility=hidden
 
 LIBS_libv4lconvert = -lrt -lm -ljpeg
 
 ifeq ($(LINKTYPE),static)
 CONVERT_LIB   = libv4lconvert.a
-override CPPFLAGS += -fPIC
 else
 CONVERT_LIB   = libv4lconvert.so
 override CPPFLAGS += -fPIC
 endif
 
 CONVERT_OBJS  = libv4lconvert.o tinyjpeg.o sn9c10x.o sn9c20x.o pac207.o \
+		jl2005bcd.o \
 		mr97310a.o flip.o crop.o jidctflt.o spca561-decompress.o \
 		rgbyuv.o sn9c2028-decomp.o spca501.o sq905c.o bayer.o hm12.o \
 		stv0680.o cpia1.o se401.o jpgl.o jpeg.o jpeg_memsrcdest.o \
