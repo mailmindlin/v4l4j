@@ -4,6 +4,7 @@ LIBS_libv4lconvert = -lrt -lm -ljpeg
 
 ifeq ($(LINKTYPE),static)
 CONVERT_LIB   = libv4lconvert.a
+override CPPFLAGS += -fPIC
 else
 CONVERT_LIB   = libv4lconvert.so
 override CPPFLAGS += -fPIC
