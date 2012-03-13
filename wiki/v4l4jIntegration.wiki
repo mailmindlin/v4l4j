@@ -1,0 +1,13 @@
+#summary Integrating v4l4j with existing frameworks
+#labels Featured
+
+On this page, you will find sample code showing how to integrate v4l4j with other video-related frameworks and APIs
+
+
+= Monte Media Library =
+
+The Monte Media Library is a Java library for accessing and processing media data. You can find it at [http://www.randelshofer.ch/monte/index.html] .
+
+Daniel Morales Salas has put together a sample Java package to show how to capture video from your webcam using v4l4j and encode it into an AVI file using the Monte Media Library. You can download the package [http://v4l4j.googlecode.com/files/SimpleWebcamViewerAndRecorder.tar.gz here]. The package contains a Netbeans project that can be opened and built straight away. Thanks to Daniel for providing the source code for his example app.
+
+If you have successfully integrated v4l4j with other APIs / frameworks and would like to share some code, dont hesitate to email me.
