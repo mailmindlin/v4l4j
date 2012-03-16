@@ -52,7 +52,7 @@ LDFLAGS := -shared -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME)
 all: $(LIB)
 
 $(LIB): $(OBJ)
-	$(LD) $(LDFLAGS) $(OBJ) -o $(LIB)
+	$(LD) $(OBJ) $(LDFLAGS) -o $(LIB)
 
 test-debug:
 	$(CC) $(INCLUDES) -DDEBUG -Wall -ggdb -DMAKETEST -c rgb.c
