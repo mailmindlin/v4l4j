@@ -302,7 +302,6 @@ abstract class AbstractGrabber implements FrameGrabber {
 
 			//FIXME: when transitioned to push mode only, instantiate
 			pushSource = new  PushSource(this, callback);
-			pushSourceThreadId = pushSource.getThreadId();
 		}
 	}
 
@@ -317,7 +316,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 		// if we are in push mode, start the push source and wait until 
 		// it's blocked on getVideoFrame()
 		if (pushSource != null) {
-			pushSource.startCapture();
+			pushSourceThreadId = pushSource.startCapture();
 			state.waitForAtLeastOneUser();
 		}
 

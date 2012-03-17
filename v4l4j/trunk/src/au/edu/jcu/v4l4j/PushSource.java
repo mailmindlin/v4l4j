@@ -55,7 +55,6 @@ class PushSource implements Runnable {
 		
 		this.callback = callback;
 		frameGrabber = grabber;
-		thread = new Thread(this, "Frame pusher");
 		state = STATE_STOPPED;
 	}
 	
@@ -65,13 +64,16 @@ class PushSource implements Runnable {
 	 * {@link CaptureCallback}. 
 	 * @throws StateException if the capture has already been started
 	 */
-	public synchronized final void startCapture() throws V4L4JException{
+	public synchronized final long startCapture() throws V4L4JException{
 		if (state != STATE_STOPPED)
 			throw new StateException("The capture has already been started");
 		
 		// Update our state and start the thread
 		state = STATE_RUNNING;
+		thread = new Thread(this, "Frame pusher");
 		thread.start();
+
+		return thread.getId();
 	}
 	
 	/**
@@ -100,7 +102,7 @@ class PushSource implements Runnable {
 					try {
 						// wait for thread to exit
 						thread.join();
-						thread = null;
+						//thread = null;
 					} catch (InterruptedException e) {
 						// interrupted while waiting for the thread to join
 						// keep waiting
@@ -112,14 +114,6 @@ class PushSource implements Runnable {
 			}
 			
 		}
-	}
-	
-	/**
-	 * This method return the thread ID of the thread used by this source
-	 * @return the thread id of the thread used by this source
-	 */
-	public long getThreadId() {
-		return thread.getId();
 	}
 
 	@Override
