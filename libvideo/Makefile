@@ -66,8 +66,10 @@ LIBV4LCONVERT_HELPERS := ov511-decomp ov518-decomp
 
 ifeq ($(shell arch), x86_64)
 	LIBPIXFC := pixfc-sse/libpixfc-sse64.a
-else 
+else ifeq ($(shell arch), i386)
 	LIBPIXFC := pixfc-sse/libpixfc-sse32.a
+else
+	LIBPIXFC :=
 endif
 
 LIB_NAME := video
