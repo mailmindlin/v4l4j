@@ -188,12 +188,9 @@ static inline void jpeg_encode_yuv422p(struct v4l4j_device *d, unsigned char *ds
 
 	jpeg_start_compress(cinfo, TRUE );
 
-	while(line < d->vdev->capture->height){
+	for(line = 0; line < height; line += d->j->mcu) {
 		// pass the YUV planes to the jpeg compressor
 		jpeg_write_raw_data(cinfo, d->j->data, d->j->mcu);
-
-		// move on to next block of lines
-		line += d->j->mcu;
 
 		// update pointers in the JSAMPIMAGE array for next iteration
 		for (i = 0; i < d->j->mcu; i++) {
