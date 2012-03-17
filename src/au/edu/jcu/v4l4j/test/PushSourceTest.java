@@ -204,6 +204,64 @@ public class PushSourceTest implements CaptureCallback{
 		fg.stopCapture();
 	}
 	
+	@Test
+	public void testMulitpleStartStop() throws V4L4JException, InterruptedException {
+		fg.setCaptureCallback(new CaptureCallback() {
+		
+			@Override
+			public void nextFrame(VideoFrame frame) {
+				frame.recycle();
+				numCapturedFrames++;
+				// Capture 5 frames then interrupt main thread
+				if (numCapturedFrames == 5 ) {
+					synchronized(vd) {
+						vd.notifyAll();
+					}
+				}
+			}
+
+			@Override
+			public void exceptionReceived(V4L4JException e) {
+				e.printStackTrace();
+				fail("Received exception when we were not expecting one");
+			}
+		});
+
+
+		numCapturedFrames = 0;
+		synchronized(vd) {
+			fg.startCapture();
+			vd.wait(5000);
+		}
+
+		fg.stopCapture();
+
+		numCapturedFrames = 0;
+		synchronized(vd) {
+			fg.startCapture();
+			vd.wait(5000);
+		}
+
+		fg.stopCapture();
+
+		numCapturedFrames = 0;
+		synchronized(vd) {
+			fg.startCapture();
+			vd.wait(5000);
+		}
+
+		fg.stopCapture();
+
+		numCapturedFrames = 0;
+		synchronized(vd) {
+			fg.startCapture();
+			vd.wait(5000);
+		}
+
+		fg.stopCapture();
+
+	}
+	
 	@Override
 	public void nextFrame(VideoFrame frame) {
 		numCapturedFrames++;
