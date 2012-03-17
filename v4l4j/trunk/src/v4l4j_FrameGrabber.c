@@ -596,7 +596,6 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(
 	unsigned long long captureTime, sequence;
 	unsigned int buffer_index;
 	jboolean isCopy;
-	struct timeval start, end;
 
 	//get frame from libvideo
 	if((frame = (*d->vdev->capture->actions->dequeue_buffer)
@@ -621,7 +620,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(
 		return 0;
 	}
 
-	gettimeofday(&start, NULL);
+	START_TIMING;
 	// Perform required conversion
 	if(d->vdev->capture->is_native!=1) {
 		// Check whether we can convert directly to the byte[] memory
@@ -649,7 +648,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(
 			(*d->convert)(d, frame, array);
 		}
 	}
-	gettimeofday(&end, NULL);
+	END_TIMING("JNI Conversion took ");
 
 	// release pointer to java byte array
 	(*e)->ReleasePrimitiveArrayCritical(e, byteArray, array, 0);
@@ -662,9 +661,6 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(
 	(*e)->SetIntField(e, this, last_captured_frame_buffer_index_fID,
 			buffer_index);
 
-	timersub(&end, &start, &start);
-	printf("Conversion took %llu us\n", (unsigned long long) (start.tv_sec * 1000000 + start.tv_usec));
-	fflush(stdout);
 	return d->len;
 }
 
