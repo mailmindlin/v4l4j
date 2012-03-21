@@ -64,10 +64,9 @@ LIBV4LCONVERT_AR := libv4lconvert.a
 LIBV4LCONVERT_NAME := v4lconvert
 LIBV4LCONVERT_HELPERS := ov511-decomp ov518-decomp
 
-ARCH := $(shell arch)
-ifeq ($(ARCH), x86_64)
+ifeq ($(shell arch), x86_64)
 	LIBPIXFC ?= pixfc-sse/libpixfc-sse64.a
-else ifeq ($(ARCH), i386)
+else ifeq ($(shell arch | grep -Eic "^i?.86"), 1)
 	LIBPIXFC ?= pixfc-sse/libpixfc-sse32.a
 else ifeq ($(shell arch | grep -ic "arm"), 1) 
 	LIBPIXFC ?= pixfc-sse/libpixfc-sse-armv7.a
