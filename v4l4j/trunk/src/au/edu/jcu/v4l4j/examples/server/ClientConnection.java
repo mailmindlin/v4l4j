@@ -35,8 +35,7 @@ public class ClientConnection{
 	private static String mjpegHeader = "HTTP/1.0 200 OK\r\nExpires: 0\r\nPragma: no-cache\r\nCache-Control: no-cache\r\nContent-Type: multipart/x-mixed-replace;boundary=\"boundary\"\r\n\r\n";
 	private static String mjpegFrameheader = "--boundary\r\nContent-Type: image/jpeg\r\nContent-Length: ";
 
-	private static String mainPageHTML = "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Frameset//EN\"" +
-	" http://www.w3.org/TR/html4/frameset.dtd>" +
+	private static String mainPageHTML = "HTTP/1.0 200 OK\r\nLocation: http://v4l4j_mini_server\r\nExpires: 0\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Frameset//EN\" http://www.w3.org/TR/html4/frameset.dtd>" +
 	"<html>" +
 	"<head>" +
 	"<title>v4l4j mini server</title>" +
@@ -47,7 +46,8 @@ public class ClientConnection{
 	"</frameset>" +
 	"</html>";
 
-	private static String webcamPageHTML= "<html>" +
+	private static String webcamPageHTML= "HTTP/1.0 200 OK\r\nLocation: http://v4l4j_mini_server\r\nExpires: 0\r\nContent-Type: text/html\r\n\r\n" +
+	"<html>" +
 	"<body>" +
 	"<table>" +
 	"<td>" +
@@ -59,7 +59,8 @@ public class ClientConnection{
 	"</body>" +
 	"</html>";
 
-	private static String controlPageHTMLHeader = "<html>" +
+	private static String controlPageHTMLHeader = "HTTP/1.0 200 OK\r\nLocation: http://v4l4j_mini_server\r\nExpires: 0\r\nContent-Type: text/html\r\n\r\n" +
+	"<html>" +
 	"<body>" +
 	"<table>";
 
