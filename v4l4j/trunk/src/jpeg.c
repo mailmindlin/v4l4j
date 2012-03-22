@@ -684,7 +684,11 @@ int main(int argc, char **argv){
 	char 					*filename = NULL;
 	int 					iter;
 	uint64_t				total_us = 0;
-	void 					*input = NULL, *jpeg;
+	void 					*input = NULL, *jpeg = NULL;
+
+	memset(&d, 0x0, sizeof(d));
+	memset(&v, 0x0, sizeof(v));
+	memset(&c, 0x0, sizeof(c));
 
 	// make sure we have required args
 	if ((argc != 5) && (argc != 6)){
@@ -705,19 +709,24 @@ int main(int argc, char **argv){
 	d.vdev=&v;
 	v.capture = &c;
 
-	// fill buffer either from file or with generated pattern
-	if (filename != NULL)
-		input = read_frame(&c, filename);
-	else
-		input = generate_buffer(&c);
-
 	// setup JPEG compressor
 	init_jpeg_compressor( &d, 80);
 
-	//size of dest buffer (JPEG) - use the same size as uncompressed frame - should be enough !
-	posix_memalign(&jpeg, 16, c.imagesize);
-
 	while(iter-- > 0){
+		if (input)
+			free(input);
+		if(jpeg)
+			free(jpeg);
+
+		// fill buffer either from file or with generated pattern
+		if (filename != NULL)
+			input = read_frame(&c, filename);
+		else
+			input = generate_buffer(&c);
+
+		//size of dest buffer (JPEG) - use the same size as uncompressed frame - should be enough !
+		posix_memalign(&jpeg, 16, c.imagesize);
+
 		// time conversion
 		gettimeofday(&start, NULL);
 		d.convert(&d, input, jpeg);
