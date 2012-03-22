@@ -6,7 +6,8 @@ For the impatient, here are a few instructions that will get you started:
  * If you are using Ubuntu or Debian, check [DebianInstall this page to install v4l4j Debian packages]. After that, you can run a test application with 
 {{{
 java -cp /usr/share/java/v4l4j.jar -Djava.library.path=/usr/lib/jni au.edu.jcu.v4l4j.examples.videoViewer.DeviceChooser
-}}} (more examples apps can be found in the `au.edu.jcu.v4l4j.examples` package)
+}}}
+(more examples apps can be found in the `au.edu.jcu.v4l4j.examples` package)
  * Otherwise, use the following these steps to install from source:
    * Either download the latest stable tarball from [http://code.google.com/p/v4l4j/downloads/list Downloads tab] above, or the latest SVN version using
 {{{
