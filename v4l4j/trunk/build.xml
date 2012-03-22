@@ -62,7 +62,7 @@
         <echo message="the JNI library in ${platform.standard.jni.location} and the JavaDoc in ${platform.standard.javadoc.location}"/>
 		<echo message="By default, '${test.device}' is used as the video source. Capture resolution is set to " />
 		<echo message="${test.width}x${test.height}, using input ${test.channel} and video standard ${test.standard}."/>
-		<echo message="See the REAME file to change these default values." />
+		<echo message="See the README file to change these default values." />
 	</target>
 	
 	<target name="init">
