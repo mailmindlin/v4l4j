@@ -1,6 +1,6 @@
   * [GettingStarted Installing v4l4j]
   * [DebianInstall Installing Debian packages]
-  * [v4l4jIntegration Integrating v4l4j other APIs]
+  * [v4l4jIntegration Integrating v4l4j with other APIs]
   * [TestedHardware Tested hardware]
   * [Troubleshooting Troubleshoot issues]
   * [IDESetup Using v4l4j in your IDE]
