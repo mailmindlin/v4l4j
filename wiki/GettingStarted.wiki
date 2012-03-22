@@ -79,10 +79,15 @@ You can later on uninstall v4l4j using `sudo ant uninstall`
 
 =Testing=
 In order to use the following example applications, make sure you first install
-v4l4j (see above section). Three example applications are shipped with v4l4j:
- * The first one simply captures frames for 10 seconds and print the frame rate. Run it with `ant test-fps`
- * The second one displays the video stream in a window. Run it with `ant test-gui`.
- * The third one prints information about the video device itself. Run it with `ant deviceInfo`
+v4l4j (see above section). Many example applications are shipped with v4l4j:
+ * `ant test-fps` captures frames for 10 seconds and print the frame rate.
+ * `ant test-gui` displays the video stream in a window.
+ * `ant test-server` starts a video server. The video stream and control list can be accessed via a web browser at `http://ip_address_of_server:8080` or through ffplay using `ffplay -f mjpeg http://ip_address_of_server:8080/stream`
+ * `ant deviceInfo` prints information about the video device itself.
+ * `ant test-dual` will only run if you have two video devices connected and will display both video streams side by side in a JFrame.
+ * `ant test-getsnapshot` will take a snapshot from a video device and will
+  display it.
+
 
 By default, these tests will use /dev/video0 as the video device (assumed to be a webcam), and the capture resolution is set to 640x480 . You can change any of these settings by editing the values at the end of the "build.properties" file, or provide those values on the ant command line:
   * `-Dtest.device=` changes the video device,
