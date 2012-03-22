@@ -78,7 +78,11 @@ v4l4j (see above section). Many example applications are shipped with v4l4j:
 - "ant deviceInfo" displays information about the video device.
 - "ant test-server" runs a webcam server. The video stream and control list
   can be accessed from a web browser (use http://ip_address_of_server:8080), or
-  from ffplay   
+  from ffplay using "ffplay -f mjpeg http://ip_address_of_server:8080"
+- "ant test-dual" will only run if you have two video devices connected and
+  will display them side by side in a JFrame.
+- "ant test-getsnapshot" will take a snapshot from a video device and will
+  display it.
 
 By default, tests will use /dev/video0 (assumed to be a webcam) as the video 
 device, and capture resolution will be set to 640x480. You can change any of 
