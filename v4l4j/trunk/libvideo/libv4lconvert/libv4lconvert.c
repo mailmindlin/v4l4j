@@ -629,7 +629,6 @@ int v4lconvert_oom_error(struct v4lconvert_data *data)
 
 static void refresh_pixfc(struct v4lconvert_data *data, unsigned int width,
 		unsigned int height, PixFcPixelFormat src_fmt, PixFcPixelFormat dst_fmt) {
-#if defined(__i386__) || defined(__x86_64)
        // If the width, height, source or destination pixel format in the current
        // struct pixfc is different from the new ones (given as args), release struct.
        if ((data->pixfc != NULL) &&
@@ -649,7 +648,6 @@ static void refresh_pixfc(struct v4lconvert_data *data, unsigned int width,
                                PixFcFlag_SSE2Only | PixFcFlag_NNbResamplingOnly) != PIXFC_OK)
                        data->pixfc = NULL;
        }
-#endif
 }
 
 static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
