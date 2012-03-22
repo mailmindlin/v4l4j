@@ -42,7 +42,7 @@ v4l4j requires the following:
 - a supported V4L video source (webcam, capture card, tuner card).
 - Sun JAVA JDK 1.6 or OpenJDK6 (it wont compile with earlier versions).
 - the development files of libjpeg, as well as libjpeg itself. It is 
-  recommanded to use libjpeg-turbo over libjpeg if possible.
+  recommended to use libjpeg-turbo over libjpeg if possible.
 - standard build tools (make, gcc, ld) & headers (libc)
 - Apache Ant
 
