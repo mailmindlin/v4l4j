@@ -24,6 +24,7 @@
 #include "common.h"
 #include "debug.h"
 #include "libvideo.h"
+#include "pixfmt-conv.h"
 
 #define DHT_SIZE		420
 static uint8_t huffman_table[] =
