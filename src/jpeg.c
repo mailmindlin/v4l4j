@@ -128,8 +128,8 @@ static void jpeg_encode_yuv420(struct v4l4j_device *d, unsigned char *src, unsig
 	width = d->vdev->capture->width;
 	height = d->vdev->capture->height;
 
-	y_stride = width * d->j->mcu;
-	uv_stride = width * d->j->mcu / 4;
+	y_stride = width * d->j->lines_written_per_loop;
+	uv_stride = width * d->j->lines_written_per_loop / 4;
 
 	//init JPEG dest mgr
 	rgb_size = width * height * 3;
@@ -138,7 +138,7 @@ static void jpeg_encode_yuv420(struct v4l4j_device *d, unsigned char *src, unsig
 	jpeg_set_quality(cinfo,d->j->jpeg_quality,TRUE);
 
 	// setup pointers in the JSAMPIMAGE array
-	for (line = 0; line < d->j->mcu; line++) {
+	for (line = 0; line < d->j->lines_written_per_loop; line++) {
 		d->j->y[line] = src + width * line;
 		if (line % 2 == 0) {
 			d->j->cb[line/2] = src + width * height + width * line / 4;
@@ -148,11 +148,11 @@ static void jpeg_encode_yuv420(struct v4l4j_device *d, unsigned char *src, unsig
 
 	dprint(LOG_JPEG, "[JPEG] Starting compression (%d bytes)\n", d->vdev->capture->imagesize);
 	jpeg_start_compress(cinfo, TRUE );
-	for (line = 0; line < height; line += d->j->mcu) {
-		jpeg_write_raw_data(cinfo, d->j->data, d->j->mcu);
+	for (line = 0; line < height; line += d->j->lines_written_per_loop) {
+		jpeg_write_raw_data(cinfo, d->j->data, d->j->lines_written_per_loop);
 
 		// Update pointers in the JSAMPIMAGE array for the next iteration
-		for (i = 0; i < d->j->mcu; i++) {
+		for (i = 0; i < d->j->lines_written_per_loop; i++) {
 			d->j->y[i] += y_stride;
 			if (i % 2 == 0) {
 				d->j->cb[i/2] += uv_stride;
@@ -170,8 +170,8 @@ static inline void jpeg_encode_yuv422p(struct v4l4j_device *d, unsigned char *ds
 	uint32_t 					line = 0, i;
 	uint32_t					width = d->vdev->capture->width;
 	uint32_t					height = d->vdev->capture->height;
-	uint32_t					y_stride = width * d->j->mcu;
-	uint32_t					uv_stride = width * d->j->mcu / 2;
+	uint32_t					y_stride = width * d->j->lines_written_per_loop;
+	uint32_t					uv_stride = width * d->j->lines_written_per_loop / 2;
 
 	// init JPEG dest mgr
 	d->j->destmgr->next_output_byte = dst;
@@ -181,7 +181,7 @@ static inline void jpeg_encode_yuv422p(struct v4l4j_device *d, unsigned char *ds
 	dprint(LOG_JPEG, "[JPEG] Starting compression (%d bytes)\n", d->vdev->capture->imagesize);
 
 	// Setup pointers in the JSAMPIMAGE array
-	for (line = 0; line < d->j->mcu; line++) {
+	for (line = 0; line < d->j->lines_written_per_loop; line++) {
 		d->j->y[line] = d->conversion_buffer + width * line;
 		d->j->cb[line] = d->conversion_buffer + width * height + width * line / 2;
 		d->j->cr[line] = d->j->cb[line] + width * height / 2;
@@ -189,12 +189,12 @@ static inline void jpeg_encode_yuv422p(struct v4l4j_device *d, unsigned char *ds
 
 	jpeg_start_compress(cinfo, TRUE );
 
-	for(line = 0; line < height; line += d->j->mcu) {
+	for(line = 0; line < height; line += d->j->lines_written_per_loop) {
 		// pass the YUV planes to the jpeg compressor
-		jpeg_write_raw_data(cinfo, d->j->data, d->j->mcu);
+		jpeg_write_raw_data(cinfo, d->j->data, d->j->lines_written_per_loop);
 
 		// update pointers in the JSAMPIMAGE array for next iteration
-		for (i = 0; i < d->j->mcu; i++) {
+		for (i = 0; i < d->j->lines_written_per_loop; i++) {
 			d->j->y[i] += y_stride;
 			d->j->cb[i] += uv_stride;
 			d->j->cr[i] += uv_stride;
@@ -399,11 +399,15 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 			if (d->vdev->capture->palette == YUV420) {
 				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for YUV420\n");
 				d->j->cinfo->comp_info[0].v_samp_factor = 2;
-				d->j->mcu = 16;
+				// According to libjpeg's documentation, "there must be a multiple of 8 sample rows for each component".
+				// For YUV420, this means a multiple of 8 U and V rows, which means a multiple of 16 Y rows since there
+				// are two Y rows for 1 U / V line. This means 1920x1080 wont work (unless there is some padding) because
+				// 1080 is not a multiple of 16
+				d->j->lines_written_per_loop = 16; 
 				d->convert = jpeg_encode_yuv420;
 			} else {
 				d->j->cinfo->comp_info[0].v_samp_factor = 1;
-				d->j->mcu = 8;
+				d->j->lines_written_per_loop = 8;
 				XMALLOC_ALIGNED(d->conversion_buffer, unsigned char *, (d->vdev->capture->width * d->vdev->capture->height * 2));
 				switch (d->vdev->capture->palette) {
 				case YUYV:
@@ -432,9 +436,9 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 			}
 
 			// Allocate JSAMPROW arrays
-			XMALLOC(d->j->y, JSAMPROW *, sizeof(JSAMPROW) * d->j->mcu);
-			XMALLOC(d->j->cb, JSAMPROW *, sizeof(JSAMPROW) * d->j->mcu);
-			XMALLOC(d->j->cr, JSAMPROW *, sizeof(JSAMPROW) * d->j->mcu);
+			XMALLOC(d->j->y, JSAMPROW *, sizeof(JSAMPROW) * d->j->lines_written_per_loop);
+			XMALLOC(d->j->cb, JSAMPROW *, sizeof(JSAMPROW) * d->j->lines_written_per_loop);
+			XMALLOC(d->j->cr, JSAMPROW *, sizeof(JSAMPROW) * d->j->lines_written_per_loop);
 
 			// set up JSAMPIMAGE
 			d->j->data[0] = d->j->y;
