@@ -39,7 +39,7 @@ struct jpeg_data {
 	struct jpeg_compress_struct *cinfo;
 	struct jpeg_destination_mgr *destmgr;
 	struct jpeg_error_mgr *jerr;
-	int mcu;
+	int lines_written_per_loop;
 	int jpeg_quality;			//the jpeg quality, set to -1 if disable
 };
 
