@@ -224,6 +224,12 @@ static void jpeg_encode_yvyu(struct v4l4j_device *d, unsigned char *src, unsigne
 	jpeg_encode_yuv422p(d, dst);
 }
 
+static void fast_jpeg_encode_rgb(struct v4l4j_device *d, unsigned char *src, unsigned char *dst){
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	d->pixfc->convert(d->pixfc, src, d->conversion_buffer);
+	jpeg_encode_yuv420(d, d->conversion_buffer, dst);
+}
+
 static void jpeg_encode_rgb32(struct v4l4j_device *d, unsigned char *src, unsigned char *dst){
 	struct jpeg_compress_struct*	cinfo = d->j->cinfo;
 	uint32_t 						width = d->vdev->capture->width;
@@ -244,9 +250,9 @@ static void jpeg_encode_rgb32(struct v4l4j_device *d, unsigned char *src, unsign
 	while (cinfo->next_scanline < height) {
 		ptr = d->conversion_buffer;
 			for (x = 0; x < width; x++) {
-				*(ptr++) = src[0];
 				*(ptr++) = src[1];
 				*(ptr++) = src[2];
+				*(ptr++) = src[3];
 				src += 4;
 			}
 		jpeg_write_scanlines (cinfo, row, 1);
@@ -360,14 +366,20 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 	XMALLOC(d->j, struct jpeg_data *, sizeof(struct jpeg_data));
 
 	if(d->vdev->capture->palette == YUV420 || d->vdev->capture->palette == YUYV ||
-			d->vdev->capture->palette == YVYU || d->vdev->capture->palette == RGB24 ||
-			d->vdev->capture->palette == RGB32 || d->vdev->capture->palette == BGR24 ||
-			d->vdev->capture->palette == UYVY || d->vdev->capture->palette == BGR32) {
+		d->vdev->capture->palette == YVYU || d->vdev->capture->palette == RGB24 ||
+		d->vdev->capture->palette == RGB32 || d->vdev->capture->palette == BGR24 ||
+		d->vdev->capture->palette == UYVY || d->vdev->capture->palette == BGR32) {
+
+		//
+		// RGB32 / BGR32 / RGB24 / BGR24 are converted to YUV420 first then to JPEG
+		// YUYV / YVYU / UYVY are converted to YUV422P first then to JPEG
+
 		//JPEG param common to YUV420, YUYV, YVYU, RGB24, RGB32, BGR24, UYVY & BGR32
 		XMALLOC(d->j->cinfo, struct jpeg_compress_struct *, sizeof(struct jpeg_compress_struct));
 		XMALLOC(d->j->jerr, struct jpeg_error_mgr *, sizeof(struct jpeg_error_mgr));
 		XMALLOC(d->j->destmgr, struct jpeg_destination_mgr *, sizeof(struct jpeg_destination_mgr));
 
+		// Set up the JPEG converter for YUV -> JPEG conversion
 		d->j->cinfo->err = jpeg_std_error(d->j->jerr);
 		jpeg_create_compress(d->j->cinfo);
 		d->j->destmgr->init_destination = init_destination;
@@ -381,90 +393,122 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 		d->j->cinfo->dct_method = JDCT_FASTEST;
 		d->j->jpeg_quality = q;
 
-		if ((d->vdev->capture->palette == YUV420) || (d->vdev->capture->palette == YUYV)
-				|| (d->vdev->capture->palette == YVYU) || (d->vdev->capture->palette == UYVY)){
+		jpeg_set_defaults(d->j->cinfo);
+		jpeg_set_colorspace(d->j->cinfo, JCS_YCbCr);
 
-			// Set up the JPEG converter for YUV ->JPEG conversion
-			jpeg_set_defaults(d->j->cinfo);
-			jpeg_set_colorspace(d->j->cinfo, JCS_YCbCr);
+		d->j->cinfo->raw_data_in = TRUE; // supply downsampled data
+		d->j->cinfo->comp_info[0].h_samp_factor = 2;
+		// d->j->cinfo->comp_info[0].v_samp_factor set below depending on source format
+		d->j->cinfo->comp_info[1].h_samp_factor = 1;
+		d->j->cinfo->comp_info[1].v_samp_factor = 1;
+		d->j->cinfo->comp_info[2].h_samp_factor = 1;
+		d->j->cinfo->comp_info[2].v_samp_factor = 1;
 
-			d->j->cinfo->raw_data_in = TRUE; // supply downsampled data
-			d->j->cinfo->comp_info[0].h_samp_factor = 2;
-			// d->j->cinfo->comp_info[0].v_samp_factor set below depending on source format
-			d->j->cinfo->comp_info[1].h_samp_factor = 1;
-			d->j->cinfo->comp_info[1].v_samp_factor = 1;
-			d->j->cinfo->comp_info[2].h_samp_factor = 1;
-			d->j->cinfo->comp_info[2].v_samp_factor = 1;
+		if ((d->vdev->capture->palette == YUV420) || (d->vdev->capture->palette == RGB32) || 
+			(d->vdev->capture->palette == RGB24) || (d->vdev->capture->palette == BGR32) || 
+			(d->vdev->capture->palette == BGR24)) {
+			d->j->cinfo->comp_info[0].v_samp_factor = 2;
+			// According to libjpeg's documentation, "there must be a multiple of 8 sample rows for each component".
+			// For YUV420, this means a multiple of 8 U and V rows, which means a multiple of 16 Y rows since there
+			// are two Y rows for 1 U / V line. This means 1920x1080 wont work (unless there is some padding) because
+			// 1080 is not a multiple of 16
+			d->j->lines_written_per_loop = 16;
 
-			if (d->vdev->capture->palette == YUV420) {
+			switch(d->vdev->capture->palette) {
+			case YUV420:
 				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for YUV420\n");
-				d->j->cinfo->comp_info[0].v_samp_factor = 2;
-				// According to libjpeg's documentation, "there must be a multiple of 8 sample rows for each component".
-				// For YUV420, this means a multiple of 8 U and V rows, which means a multiple of 16 Y rows since there
-				// are two Y rows for 1 U / V line. This means 1920x1080 wont work (unless there is some padding) because
-				// 1080 is not a multiple of 16
-				d->j->lines_written_per_loop = 16; 
 				d->convert = jpeg_encode_yuv420;
-			} else {
-				d->j->cinfo->comp_info[0].v_samp_factor = 1;
-				d->j->lines_written_per_loop = 8;
-				XMALLOC_ALIGNED(d->conversion_buffer, unsigned char *, (d->vdev->capture->width * d->vdev->capture->height * 2));
-				switch (d->vdev->capture->palette) {
-				case YUYV:
-					dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for YUYV\n");
-					if (create_pixfc(&d->pixfc, PixFcYUYV, PixFcYUV422P, d->vdev->capture->width, d->vdev->capture->height, PixFcFlag_Default) != PIXFC_OK)
-					{
-						info("Error creating PixFC struct\n");
-						return -1;
-					}
-					d->convert = jpeg_encode_yuyv;
-					break;
-				case YVYU:
-					dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for YVYU\n");
-					d->convert = jpeg_encode_yvyu;
-					break;
-				case UYVY:
-					dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for UYVY\n");
-					if (create_pixfc(&d->pixfc, PixFcUYVY, PixFcYUV422P, d->vdev->capture->width, d->vdev->capture->height, PixFcFlag_Default) != PIXFC_OK)
-					{
-						info("Error creating PixFC struct\n");
-						return -1;
-					}
-					d->convert = jpeg_encode_uyvy;
-					break;
-				}
-			}
-
-			// Allocate JSAMPROW arrays
-			XMALLOC(d->j->y, JSAMPROW *, sizeof(JSAMPROW) * d->j->lines_written_per_loop);
-			XMALLOC(d->j->cb, JSAMPROW *, sizeof(JSAMPROW) * d->j->lines_written_per_loop);
-			XMALLOC(d->j->cr, JSAMPROW *, sizeof(JSAMPROW) * d->j->lines_written_per_loop);
-
-			// set up JSAMPIMAGE
-			d->j->data[0] = d->j->y;
-			d->j->data[1] = d->j->cb;
-			d->j->data[2] = d->j->cr;
-
-		} else {
-			d->j->cinfo->in_color_space = JCS_RGB;
-			jpeg_set_defaults(d->j->cinfo) ;
-			if (d->vdev->capture->palette == RGB24){
-				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for RGB24\n");
-				d->convert = jpeg_encode_rgb24;
-			} else if (d->vdev->capture->palette == RGB32){
-				XMALLOC(d->conversion_buffer, unsigned char *, (d->vdev->capture->width*3));
+				break;
+			case RGB32:
 				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for RGB32\n");
-				d->convert = jpeg_encode_rgb32;
-			}  else if (d->vdev->capture->palette == BGR24){
-				XMALLOC(d->conversion_buffer, unsigned char *, (d->vdev->capture->width*3));
-				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for BGR24\n");
-				d->convert = jpeg_encode_bgr24;
-			} else if (d->vdev->capture->palette == BGR32){
-				XMALLOC(d->conversion_buffer, unsigned char *, (d->vdev->capture->width*3));
+				XMALLOC(d->conversion_buffer, unsigned char *, (d->vdev->capture->width*d->vdev->capture->height*3/2));
+				if (create_pixfc(&d->pixfc, PixFcARGB, PixFcYUV420P, d->vdev->capture->width, d->vdev->capture->height, PixFcFlag_NNbResamplingOnly) == PIXFC_OK) {
+					d->convert = fast_jpeg_encode_rgb;
+				} else  	{
+					dprint(LOG_JPEG, "Error creating PixFC struct for RGB32 to YUV420 conversion - using scalar conversion\n");
+					d->j->cinfo->in_color_space = JCS_RGB;
+					jpeg_set_defaults(d->j->cinfo) ;
+					d->convert = jpeg_encode_rgb32;
+
+				}
+				break;
+			case RGB24:
+				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for RGB24\n");
+				XMALLOC(d->conversion_buffer, unsigned char *, (d->vdev->capture->width*d->vdev->capture->height*3/2));
+				if (create_pixfc(&d->pixfc, PixFcRGB24, PixFcYUV420P, d->vdev->capture->width, d->vdev->capture->height, PixFcFlag_NNbResamplingOnly) == PIXFC_OK) {
+					d->convert = fast_jpeg_encode_rgb;
+				} else 	{
+					dprint(LOG_JPEG, "Error creating PixFC struct for RGB24 to YUV420 conversion - using scalar conversion\n");
+					d->j->cinfo->in_color_space = JCS_RGB;
+					jpeg_set_defaults(d->j->cinfo);
+					d->convert = jpeg_encode_rgb24;
+				}
+				break;
+			case BGR32:
 				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for BGR32\n");
-				d->convert = jpeg_encode_bgr32;
+				XMALLOC(d->conversion_buffer, unsigned char *, (d->vdev->capture->width*d->vdev->capture->height*3/2));
+				if (create_pixfc(&d->pixfc, PixFcBGRA, PixFcYUV420P, d->vdev->capture->width, d->vdev->capture->height, PixFcFlag_NNbResamplingOnly) == PIXFC_OK) {
+					d->convert = fast_jpeg_encode_rgb;
+				} else {
+					dprint(LOG_JPEG, "Error creating PixFC struct for BGR32 to YUV420 conversion - using scalar conversion\n");
+					d->j->cinfo->in_color_space = JCS_RGB;
+					jpeg_set_defaults(d->j->cinfo);
+					d->convert = jpeg_encode_bgr32;
+				}
+				break;
+			case BGR24:
+				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for BGR24\n");
+				XMALLOC(d->conversion_buffer, unsigned char *, (d->vdev->capture->width*d->vdev->capture->height*3/2));
+				if (create_pixfc(&d->pixfc, PixFcBGR24, PixFcYUV420P, d->vdev->capture->width, d->vdev->capture->height, PixFcFlag_NNbResamplingOnly) == PIXFC_OK) {
+					d->convert = fast_jpeg_encode_rgb;
+				} else {
+					dprint(LOG_JPEG, "Error creating PixFC struct for BGR24 to YUV420 conversion - using scalar conversion\n");
+					d->j->cinfo->in_color_space = JCS_RGB;
+					jpeg_set_defaults(d->j->cinfo);
+					d->convert = jpeg_encode_bgr24;
+				}
+				break;
+			}
+		} else {
+			d->j->cinfo->comp_info[0].v_samp_factor = 1;
+			d->j->lines_written_per_loop = 8;
+			XMALLOC_ALIGNED(d->conversion_buffer, unsigned char *, (d->vdev->capture->width * d->vdev->capture->height * 2));
+			switch (d->vdev->capture->palette) {
+			case YUYV:
+				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for YUYV\n");
+				if (create_pixfc(&d->pixfc, PixFcYUYV, PixFcYUV422P, d->vdev->capture->width, d->vdev->capture->height, PixFcFlag_Default) != PIXFC_OK)
+				{
+					info("Error creating PixFC struct for YUYV to YUV422P conversion\n");
+					return -1;
+				}
+				d->convert = jpeg_encode_yuyv;
+				break;
+			case YVYU:
+				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for YVYU\n");
+				d->convert = jpeg_encode_yvyu;
+				break;
+			case UYVY:
+				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for UYVY\n");
+				if (create_pixfc(&d->pixfc, PixFcUYVY, PixFcYUV422P, d->vdev->capture->width, d->vdev->capture->height, PixFcFlag_Default) != PIXFC_OK)
+				{
+					info("Error creating PixFC struct for UYVY to YUV422P conversion\n");
+					return -1;
+				}
+				d->convert = jpeg_encode_uyvy;
+				break;
 			}
 		}
+
+		// Allocate JSAMPROW arrays
+		XMALLOC(d->j->y, JSAMPROW *, sizeof(JSAMPROW) * d->j->lines_written_per_loop);
+		XMALLOC(d->j->cb, JSAMPROW *, sizeof(JSAMPROW) * d->j->lines_written_per_loop);
+		XMALLOC(d->j->cr, JSAMPROW *, sizeof(JSAMPROW) * d->j->lines_written_per_loop);
+
+		// set up JSAMPIMAGE
+		d->j->data[0] = d->j->y;
+		d->j->data[1] = d->j->cb;
+		d->j->data[2] = d->j->cr;
+
 		jpeg_set_quality(d->j->cinfo, d->j->jpeg_quality,TRUE);
 	} else if(d->vdev->capture->palette == MJPEG) {
 		dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for MJPEG\n");
@@ -487,17 +531,14 @@ void destroy_jpeg_compressor(struct v4l4j_device *d){
 		d->vdev->capture->palette == RGB32 || d->vdev->capture->palette == BGR24 ||
 		d->vdev->capture->palette == UYVY || d->vdev->capture->palette == BGR32) {
 
-		if ((d->vdev->capture->palette != RGB24) && (d->vdev->capture->palette != YUV420))
+		if (d->vdev->capture->palette != YUV420)
 			XFREE(d->conversion_buffer);
 
-		if ((d->vdev->capture->palette == YUV420) || (d->vdev->capture->palette == YUYV)
-			|| (d->vdev->capture->palette == YVYU) || (d->vdev->capture->palette == UYVY)){
-			if (d->pixfc)
-				destroy_pixfc(d->pixfc);
-			XFREE(d->j->y);
-			XFREE(d->j->cb);
-			XFREE(d->j->cr);
-		}
+		if (d->pixfc)
+			destroy_pixfc(d->pixfc);
+		XFREE(d->j->y);
+		XFREE(d->j->cb);
+		XFREE(d->j->cr);
 
 		// free JPEG compressor & data structs
 		jpeg_destroy_compress(d->j->cinfo);
@@ -541,8 +582,7 @@ void *read_frame(struct capture_device *c, char *file){
 	c->imagesize = file_stat.st_size;
 
 	// allocate buffer
-	posix_memalign(&data, 16, file_stat.st_size);
-	if (data == NULL) {
+	if ((posix_memalign(&data, 16, file_stat.st_size) != 0) || (data == NULL)) {
 		printf("Error allocating image buffer\n");
 		close(fd);
 		return NULL;
@@ -612,10 +652,102 @@ static const uint32_t  yvyu_pattern[] = {
 	0x80508050, // 2 grey pixels	80	80	80
 };
 
+static const uint32_t	rgb32_pattern[] = {
+	0x0000FF00, // 1 red pixel	255 	0	0
+	0x00AFFF00, // 1 orange pixel	255	175	0
+	0x00FF0000, // 1 green pixel	0	255 0
+	0xAFFF0000, // 1 blue-green pix	0	255	175
+	0xFF000000, // 1 blue pixel	0	0	255
+	0xFF00AF00, // 1 purple pixel	180	0	255
+	0xFFFFFF00, // 1 white pixel	255 255 255
+	0x50505000, // 1 grey pixel	80	80	80
+
+};
+
+static const uint32_t	bgr32_pattern[] = {
+	0x00FF0000, // 1 red pixel	255 	0	0
+	0x00FFAF00, // 1 orange pixel	255	175	0
+	0x0000FF00, // 1 green pixel	0	255 0
+	0x0000FFAF, // 1 blue-green pix	0	255	175
+	0x000000FF, // 1 blue pixel	0	0	255
+	0x00AF00FF, // 1 purple pixel	180	0	255
+	0x00FFFFFF, // 1 white pixel	255 255 255
+	0x00505050, // 1 grey pixel	80	80	80
+};
+
+static const uint32_t	rgb24_pattern[] = {
+	0xFF0000FF,	// 4 red pixels	255	0	0
+	0x00FF0000,
+	0x0000FF00,
+
+	0xFF00AFFF,	// 4 orange pixels	255	175	0 
+	0xAFFF00AF,
+	0x00AFFF00,
+
+	0x0000FF00,	// 4 green pixels	0	255	0
+	0xFF0000FF,
+	0x00FF0000,
+
+	0x00AFFF00,	// 4 blue green pix	0	255	175
+	0xFF00AFFF,
+	0xAFFF00AF,
+
+	0x00FF0000,	// 4 blue pixels	0	0	255
+	0x0000FF00,
+	0xFF0000FF,
+
+	0xAFFF00AF,	// 4 purple pix		180	0	255
+	0x00AFFF00,
+	0xFF00AFFF,
+
+	0xFFFFFFFF,	// 4 white pix		255	255	255
+	0xFFFFFFFF,
+	0xFFFFFFFF,
+
+	0x50505050,
+	0x50505050,
+	0x50505050,	 // 1 grey pixel	80	80	80
+};
+
+static const uint32_t	bgr24_pattern[] = {
+
+	0x00FF0000,	// 4 red pix	255	0	0
+	0x0000FF00,
+	0xFF0000FF,
+
+	0x00FFAF00,	// 4 orange pix	255	175	0
+	0xAF00FFAF,
+	0xFFAF00FF,
+
+	0x0000FF00,	// 4 green pix	0	255	0
+	0xFF0000FF,
+	0x00FF0000,
+
+	0xAF00FFAF,	// 4 blue green pix	0	255	175
+	0xFFAF00FF,
+	0x00FFAF00,
+
+	0xFF0000FF,	// 4 blue pix	0	0	255
+	0x00FF0000,
+	0x0000FF00,
+
+	0xFFAF00FF,	// 4 purple pix	180	0	255
+	0x00FFAF00,
+	0xAF00FFAF,
+
+	0xFFFFFFFF,	// 4 white pix	255	255	255
+	0xFFFFFFFF,
+	0xFFFFFFFF,
+
+	0x50505050,	// 4 grey pix	80	80	80
+	0x50505050,
+	0x50505050,
+};
+
 void *generate_buffer(struct capture_device *c) {
 	void 		*buffer = NULL;
 	uint32_t 	*ptr = NULL, *pattern = NULL;
-	uint32_t 	x, y, num_elem;
+	uint32_t 	x, y, num_patterns = 0, num_pix_per_pattern = 0;
 
 	// select the correct palette and image size
 	switch (c->palette) {
@@ -624,18 +756,43 @@ void *generate_buffer(struct capture_device *c) {
 			break;
 		case YUYV:
 			pattern = (uint32_t *)yuyv_pattern;
-			num_elem = sizeof(yuyv_pattern) / sizeof(yuyv_pattern[0]);
+			num_patterns = sizeof(yuyv_pattern) / sizeof(yuyv_pattern[0]);
 			c->imagesize = c->width * c->height * 2;
+			num_pix_per_pattern = 2;
 			break;
 		case UYVY:
 			pattern = (uint32_t *)uyvy_pattern;
 			c->imagesize = c->width * c->height * 2;
-			num_elem = sizeof(uyvy_pattern) / sizeof(uyvy_pattern[0]);
+			num_patterns = sizeof(uyvy_pattern) / sizeof(uyvy_pattern[0]);
+			num_pix_per_pattern = 2;
 			break;
 		case YVYU:
 			pattern = (uint32_t *)yvyu_pattern;
 			c->imagesize = c->width * c->height * 2;
-			num_elem = sizeof(yvyu_pattern) / sizeof(yvyu_pattern[0]);
+			num_patterns = sizeof(yvyu_pattern) / sizeof(yvyu_pattern[0]);
+			num_pix_per_pattern = 2;
+			break;
+		case RGB32:
+			pattern = (uint32_t *)rgb32_pattern;
+			c->imagesize = c->width * c->height *4;
+			num_patterns = sizeof(rgb32_pattern) / sizeof(rgb32_pattern[0]);
+			num_pix_per_pattern = 1;
+			break;
+		case BGR32:
+			pattern = (uint32_t *)bgr32_pattern;
+			c->imagesize = c->width * c->height *4;
+			num_patterns = sizeof(bgr32_pattern) / sizeof(bgr32_pattern[0]);
+			num_pix_per_pattern = 1;
+			break;
+		case RGB24:
+			c->imagesize = c->width * c->height * 3;
+			pattern = (uint32_t *)rgb24_pattern;
+			num_patterns = 8;
+			break;
+		case BGR24:
+			c->imagesize = c->width * c->height * 3;
+			pattern = (uint32_t *)bgr24_pattern;
+			num_patterns = 8;
 			break;
 		default:
 			printf("Unknown palette %d\n", c->palette);
@@ -644,14 +801,18 @@ void *generate_buffer(struct capture_device *c) {
 	}
 
 	// allocate buffer
-	posix_memalign(&buffer, 16, c->imagesize);
+	if (posix_memalign(&buffer, 16, c->imagesize) != 0) {
+		printf("Error allocating buffer\n");
+		fflush(stdout);
+		return NULL;
+	}
 	ptr = buffer;
 
 	// fill buffer
-	if (c->palette == YUYV || c->palette == UYVY || c->palette == YVYU) {
+	if (c->palette == YUYV || c->palette == UYVY || c->palette == YVYU || c->palette == RGB32 || c->palette == BGR32) {
 		for (y = 0; y < c->height; y++)
-			for (x = 0; x < c->width ; x+=2)
-				*ptr++ = pattern[num_elem * x / c->width];
+			for (x = 0; x < c->width ; x+=num_pix_per_pattern)
+				*ptr++ = pattern[num_patterns * x / c->width];
 	} else if (c->palette == YUV420) {
 		unsigned char *py = (unsigned char *)ptr;
 		unsigned char *pu = (unsigned char *)py + c->width * c->height;
@@ -675,6 +836,18 @@ void *generate_buffer(struct capture_device *c) {
 				}
 			}
 	
+	} else if (c->palette == RGB24 || c->palette == BGR24) {
+		if (c->width % 4 != 0) {
+			printf("width not multiple of 4\n");
+			return NULL;
+		}
+		for (y = 0; y < c->height; y++) {
+			for(x = 0; x < c->width; x += 4) {
+				*ptr++ = pattern[(num_patterns * x / c->width) * 3];
+				*ptr++ = pattern[(num_patterns * x / c->width) * 3 + 1];
+				*ptr++ = pattern[(num_patterns * x / c->width) * 3 + 2];
+			}
+		}
 	}
  
 	return buffer;
@@ -698,6 +871,7 @@ int main(int argc, char **argv){
 	if ((argc != 5) && (argc != 6)){
 		printf("Usage: %s <num_iter> <width> <height> <format> [input_file]\n", argv[0]);
 		printf("Formats: YUYV: %d - UYVY: %d - YVYU: %d - YUV420: %d\n", YUYV, UYVY, YVYU, YUV420);
+		printf("Formats: RGB32: %d - RGB24: %d - BGR32: %d - BGR24: %d\n", RGB32,  RGB24, BGR32, BGR24);
 		return -1;
 	}
 
@@ -729,7 +903,10 @@ int main(int argc, char **argv){
 			input = generate_buffer(&c);
 
 		//size of dest buffer (JPEG) - use the same size as uncompressed frame - should be enough !
-		posix_memalign(&jpeg, 16, c.imagesize);
+		if (posix_memalign(&jpeg, 16, c.imagesize) != 0) {
+			printf("error allocating buffer\n");
+			return -1;
+		}
 
 		// time conversion
 		gettimeofday(&start, NULL);
