@@ -1,3 +1,14 @@
+v0.9:
+- add set/get methods to switch input
+- add support for integer64, strings and bitmask V4L controls
+- updated libv4l to v0.8.6
+- make libv4lconvert use SSE conversion routines from PixFC for some pixel 
+  format conversions
+- fix NullPointerException bug with PAC webcams
+- fix Makefile so linking works with later versions of gcc
+- fix issue when stopping / starting the capture without re-setting the 
+  CaptureCallback object
+- experimental ARM support (armv7 only for now)
 v0.8.10:
 - fix nasty bug reported by Florent and Eric on the ML causing JPEG frame
   grabbers to segfault on release, and lines from different frame grabbers to
