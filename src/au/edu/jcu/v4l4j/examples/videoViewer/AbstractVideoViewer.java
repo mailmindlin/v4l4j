@@ -274,6 +274,7 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
     private void initControlPane(){
     	ControlGUI gui;
     	for(Control c: controls.values()) {
+		System.out.println("Creating UI for control "+c.getName());
     		gui = getControlGUI(c);
     		if(gui!=null)
     			controlPanel.add(gui.getPanel());
@@ -290,6 +291,11 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
     		ctrl = new SwitchControl(c);
     	else if (c.getType() == V4L4JConstants.CTRL_TYPE_DISCRETE)
     		ctrl = new MenuControl(c);
+	else if (c.getType() == V4L4JConstants.CTRL_TYPE_STRING)
+		ctrl = new TextControl(c);
+	else {
+		System.out.println("Control '" + c.getName() + "' has an unknown type: " + c.getType());
+	}
     	return ctrl;
     }
         
@@ -641,10 +647,35 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
 			if(value!=null)
 				value.setText("Value: "+ String.valueOf(v));
 		}
+
+		public final void updateValue(String v) {
+			value.setText(v);
+		}
 		
 		public final JPanel getPanel(){
 			return contentPanel;
 		}	 
+	}
+
+	public class TextControl extends ControlModelGUI implements ActionListener{
+		private JTextField textField;
+
+		public TextControl(Control c) {
+			super(c);
+			textField = new JTextField(10);
+			try { textField.setText(c.getStringValue()); } 
+			catch (V4L4JException e){}
+			textField.addActionListener(this);
+			contentPanel.add(textField);
+		}
+
+		public void actionPerformed(ActionEvent evt) {
+			String value = "";
+			try { value = ctrl.setStringValue(textField.getText());}
+			catch(Exception e){}
+			updateValue(value);
+			textField.setText("");
+		}
 	}
 	
 	public class SliderControl extends ControlModelGUI implements ChangeListener{
@@ -654,6 +685,7 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
 			super(c);
 			int v = c.getDefaultValue();
 			try {v = c.getValue();} catch (ControlException e) {}
+			System.out.println("min: "+c.getMinValue()+" Max: "+c.getMaxValue() + " val: "+v);
 			slider = new JSlider(JSlider.HORIZONTAL, c.getMinValue(), c.getMaxValue(), v);
 
 			setSlider();
@@ -665,25 +697,29 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
 			Hashtable<Integer, JLabel> labels = new Hashtable<Integer, JLabel>();
 			int length = (ctrl.getMaxValue() - ctrl.getMinValue()) / ctrl.getStepValue() + 1;
 			int middle = ctrl.getDefaultValue();
+			System.out.println("Length: "+length + " middle: "+middle);
 			
 			slider.setSnapToTicks(true);
 			slider.setPaintTicks(false);
 			slider.setMinorTickSpacing(ctrl.getStepValue());
 			labels.put(ctrl.getMinValue(), new JLabel(String.valueOf(ctrl.getMinValue())));
 			labels.put(ctrl.getMaxValue(), new JLabel(String.valueOf(ctrl.getMaxValue())));
-			labels.put(middle, new JLabel(String.valueOf(middle)));
 			
 			if(length < 100 && length >10) {
 				slider.setMajorTickSpacing(middle/2);
 				slider.setPaintTicks(true);
-			} else  if (length < 10){
+				labels.put(middle, new JLabel(String.valueOf(middle)));
+			} else  if (length > 0 && length < 10){
 				slider.setMajorTickSpacing(middle);
 				slider.setPaintTicks(true);
+				labels.put(middle, new JLabel(String.valueOf(middle)));
 			}
-			slider.setLabelTable(labels);
-			slider.setPaintLabels(true);
-			
+			if (length > 0) {
+				slider.setLabelTable(labels);
+				slider.setPaintLabels(true);
+			}
 			slider.addChangeListener(this);
+			
 		}
 		
 		@Override

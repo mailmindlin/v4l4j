@@ -124,7 +124,7 @@
 	do { \
 		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1, \
 				"CTRL: control id: 0x%x - name: %s - min: %d - max: %d - "\
-				"step: %d - type: %d(%s) - flags: %d (%s%s%s%s%s%s)\n", \
+				"step: %d - type: %d(%s) - flags: %d (%s%s%s%s%s%s%s)\n", \
 				qc->id, (char *) &qc->name, qc->minimum, qc->maximum,\
 				qc->step, qc->type, \
 				qc->type == V4L2_CTRL_TYPE_INTEGER ? "Integer" :  \
@@ -132,14 +132,17 @@
 				qc->type == V4L2_CTRL_TYPE_MENU ? "Menu" :  \
 				qc->type == V4L2_CTRL_TYPE_BUTTON ? "Button" : \
 				qc->type == V4L2_CTRL_TYPE_INTEGER64 ? "Integer64" :  \
-				qc->type == V4L2_CTRL_TYPE_CTRL_CLASS ? "Class" : "", \
+				qc->type == V4L2_CTRL_TYPE_CTRL_CLASS ? "Class" :\
+				qc->type == V4L2_CTRL_TYPE_STRING ? "String" :\
+				qc->type == V4L2_CTRL_TYPE_BITMASK ? "Bitmask" : "", \
 				qc->flags, \
 				qc->flags & V4L2_CTRL_FLAG_DISABLED ? "Disabled " : "", \
 				qc->flags & V4L2_CTRL_FLAG_GRABBED ? "Grabbed " : "", \
 				qc->flags & V4L2_CTRL_FLAG_READ_ONLY ? "ReadOnly " : "", \
 				qc->flags & V4L2_CTRL_FLAG_UPDATE ? "Update " : "", \
 				qc->flags & V4L2_CTRL_FLAG_INACTIVE ? "Inactive " : "", \
-				qc->flags & V4L2_CTRL_FLAG_SLIDER ? "slider " : ""); \
+				qc->flags & V4L2_CTRL_FLAG_SLIDER ? "slider " : "",\
+				qc->flags & V4L2_CTRL_FLAG_WRITE_ONLY ? "write-only" : ""); \
 	} while(0);
 
 #define XMALLOC(var, type, size)	\
