@@ -81,7 +81,7 @@
 #define END_TIMING(str_prefix)  \
         gettimeofday(&end, NULL);\
         timersub(&end, &start, &start);\
-        dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2, str_prefix " %llu us\n",\
+        dprint(LOG_V4L4J, str_prefix " %llu us\n",\
         (unsigned long long) (start.tv_sec * 1000000 + start.tv_usec));
 
 
