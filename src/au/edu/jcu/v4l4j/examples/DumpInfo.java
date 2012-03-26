@@ -146,8 +146,11 @@ public class DumpInfo {
 						" - value: ");
 				try {
 					System.out.println(c.getStringValue());
+					c.setStringValue("ab");
+					System.out.println(c.getStringValue());
 				} catch (V4L4JException ve){
 					System.out.println(" ERROR");
+					ve.printStackTrace();
 				}
 			} else if (c.getType() == V4L4JConstants.CTRL_TYPE_LONG) {
 				System.out.print("Long control: "+c.getName() + " - value: ");

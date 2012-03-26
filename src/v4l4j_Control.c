@@ -116,7 +116,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_Control_doSetStringValue(JNIEnv *e,
 	const char * value = (*e)->GetStringUTFChars(e, jvalue, 0);
 
 	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling set_control_value(dev: %s, ctrl name:%s, val: %s - byte size: %d)\n", d->vdev->file,d->vdev->control->controls[id].v4l2_ctrl->name, value, size);
-	ret = set_control_value(d->vdev, d->vdev->control->controls[id].v4l2_ctrl, &value, size);
+	ret = set_control_value(d->vdev, d->vdev->control->controls[id].v4l2_ctrl, value, size);
 	(*e)->ReleaseStringUTFChars(e, jvalue, value);
 
 	if(ret != 0) {

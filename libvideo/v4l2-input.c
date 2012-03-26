@@ -1106,7 +1106,7 @@ static void fix_quirky_struct(struct v4l2_queryctrl *v){
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
 					"CTRL: QUIRK: adjusted step value for BUTTON control "
 					"'%s' from %d to 0\n", v->name, v->step);
-			v->step = 1;
+			v->step = 0;
 		}
 		if(v->minimum!=0){
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
@@ -1126,10 +1126,11 @@ static void fix_quirky_struct(struct v4l2_queryctrl *v){
 		v->minimum = 0;
 		v->maximum = 0;
 	} else if(v->type==V4L2_CTRL_TYPE_BITMASK) {
-		// The step, min and max cannot be queried, so hardcode them to sensible values
-		v->step = 1;
-		v->minimum = 0;
-		v->maximum = UINT_MAX;
+		if (v->minimum != 0) {
+			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
+				"CTRL: QUIRK: adjusted minimum for BITMASK control\n");
+			v->minimum = 0;
+		}
 	}
 }
 
@@ -1227,16 +1228,26 @@ int create_v4l2_controls(struct video_device *vdev, struct control *controls,
 	return count;
 }
 static int fix_quirky_values(struct v4l2_queryctrl *qc, int v){
-	if(v < qc->minimum) {
-		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-				"CTRL: QUIRK: fixed quirky control value %d below minimum %d\n",
-				v,qc->minimum);
-		return qc->minimum;
-	} else if (v>qc->maximum) {
-		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-				"CTRL: QUIRK: fixed quirky control value %d above maximum %d\n",
-				v,qc->maximum);
-		return qc->maximum;
+	if ((qc->type == V4L2_CTRL_TYPE_INTEGER) || (qc->type == V4L2_CTRL_TYPE_BOOLEAN)
+			|| (qc->type == V4L2_CTRL_TYPE_MENU) || (qc->type ==  V4L2_CTRL_TYPE_BUTTON)) {
+		if(v < qc->minimum) {
+			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
+					"CTRL: QUIRK: fixed quirky control value %d below minimum %d\n",
+					v,qc->minimum);
+			return qc->minimum;
+		} else if (v>qc->maximum) {
+			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
+					"CTRL: QUIRK: fixed quirky control value %d above maximum %d\n",
+					v,qc->maximum);
+			return qc->maximum;
+		}
+	} else if (qc->type == V4L2_CTRL_TYPE_BITMASK) {
+		if ((unsigned int) v > (unsigned int) qc->maximum) {
+			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
+					"CTRL: QUIRK: fixed quirky bitmask value %u above max %u\n",
+					(unsigned int)v, (unsigned int) qc->maximum);
+			return qc->maximum;
+		}
 	}
 	return v;
 
@@ -1275,6 +1286,9 @@ int get_control_value_v4l2(struct video_device *vdev,
 		if (qctrl->type == V4L2_CTRL_TYPE_STRING) {
 			ctrl.size = size;
 			ctrl.string = val;
+			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
+					"CTRL: getting string @ 0x%p- max size: %d\n", ctrl.string, ctrl.size);
+
 		} else
 			ctrl.size = 0;
 
@@ -1352,7 +1366,7 @@ int set_control_value_v4l2(struct video_device *vdev,
 			ctrl.string = (char *)val;
 
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
-					"CTRL: Writing string val: %s\n", ctrl.string);
+					"CTRL: Writing string val: %s - size: %d\n", ctrl.string, ctrl.size);
 		} else {
 			ctrl.size = 0;
 

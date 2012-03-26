@@ -77,9 +77,14 @@ public class DeviceChooser  extends WindowAdapter implements ActionListener{
 		height =h;
 		System.out.println("w x h:"+w+" "+h);
 		
-		if(dev == null)
-			deviceFiles = new JComboBox(listV4LDeviceFiles());
-		else 
+		if(dev == null) {
+			Object[] deviceList = listV4LDeviceFiles();
+			if (deviceList == null) {
+				System.out.println("No video devices detected");
+				return;
+			}
+			deviceFiles = new JComboBox(deviceList);
+		} else 
 			deviceFiles = new JComboBox(new Object[] {dev});
 		
 		initGUI();
@@ -121,6 +126,9 @@ public class DeviceChooser  extends WindowAdapter implements ActionListener{
 		Vector<String> dev = new Vector<String>();
 		File dir = new File(v4lSysfsPath);
 		String[] files = dir.list();
+	
+		if (files == null)
+			return null;
 		
 		for(String file: files)
 			//the following test the presence of "video" in 
