@@ -160,7 +160,7 @@ public class JPEGFrameGrabber extends AbstractGrabber {
 	 */
 	public ImageFormat getImageFormat(){
 		state.checkReleased();
-		return dInfo.getFormatList().getJPEGEncodableFormat(format);
+		return dInfo.getFormatList().getNativeFormat(format);
 	}
 	
 	@Override
