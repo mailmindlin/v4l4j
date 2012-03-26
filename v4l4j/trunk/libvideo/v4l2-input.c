@@ -1540,7 +1540,7 @@ static void query_frame_sizes_v4l2(int fd){
 
 static void print_v4l2_control(struct v4l2_queryctrl *qc) {
 	printf( "Control: id: 0x%x - name: %s - min: %d -max: %d - step: %d - "
-			"type: %d(%s) - flags: %d (%s%s%s%s%s%s)\n", \
+			"type: %d(%s) - flags: %d (%s%s%s%s%s%s%s)\n", \
 			qc->id, (char *) &qc->name, qc->minimum, qc->maximum, qc->step,
 			qc->type,
 			qc->type == V4L2_CTRL_TYPE_INTEGER ? "Integer" :
@@ -1549,14 +1549,17 @@ static void print_v4l2_control(struct v4l2_queryctrl *qc) {
 			qc->type == V4L2_CTRL_TYPE_BUTTON ? "Button" :
 			qc->type == V4L2_CTRL_TYPE_INTEGER64 ? "Integer64" :
 			qc->type == V4L2_CTRL_TYPE_CTRL_CLASS ? "Class" :
-			qc->type == V4L2_CTRL_TYPE_BITMASK ? "Bitmask" : "",
+			qc->type == V4L2_CTRL_TYPE_BITMASK ? "Bitmask" :
+			qc->type == V4L2_CTRL_TYPE_STRING ? "String" : "",
 			qc->flags,
 			qc->flags & V4L2_CTRL_FLAG_DISABLED ? "Disabled " : "",
 			qc->flags & V4L2_CTRL_FLAG_GRABBED ? "Grabbed " : "",
 			qc->flags & V4L2_CTRL_FLAG_READ_ONLY ? "ReadOnly " : "",
 			qc->flags & V4L2_CTRL_FLAG_UPDATE ? "Update " : "",
 			qc->flags & V4L2_CTRL_FLAG_INACTIVE ? "Inactive " : "",
-			qc->flags & V4L2_CTRL_FLAG_SLIDER ? "slider " : "");
+			qc->flags & V4L2_CTRL_FLAG_SLIDER ? "slider " : "",
+			qc->flags & V4L2_CTRL_FLAG_WRITE_ONLY ? "write-only" : ""
+			);
 }
 
 static void query_controls_v4l2(int fd) {

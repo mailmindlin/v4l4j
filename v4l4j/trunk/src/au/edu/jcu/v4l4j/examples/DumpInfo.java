@@ -140,13 +140,31 @@ public class DumpInfo {
 		
 		List<Control> ctrls = videoDevice.getControlList().getList();
 		for(Control c: ctrls){
-			System.out.print("Control: "+c.getName()+" - min: "+c.getMinValue()+
-					" - max: "+c.getMaxValue()+" - step: "+c.getStepValue()+
-					" - value: ");
-			try {
-				System.out.println(c.getValue());
-			} catch (V4L4JException ve){
-				System.out.println(" ERROR");
+			if (c.getType() == V4L4JConstants.CTRL_TYPE_STRING) {
+				System.out.print("String control: "+c.getName()+" - min: "+c.getMinValue()+
+						" - max: "+c.getMaxValue()+" - step: "+c.getStepValue()+
+						" - value: ");
+				try {
+					System.out.println(c.getStringValue());
+				} catch (V4L4JException ve){
+					System.out.println(" ERROR");
+				}
+			} else if (c.getType() == V4L4JConstants.CTRL_TYPE_LONG) {
+				System.out.print("Long control: "+c.getName() + " - value: ");
+				try {
+					System.out.println(c.getLongValue());
+				} catch (V4L4JException ve){
+					System.out.println(" ERROR");
+				}
+			} else {
+				System.out.print("Control: "+c.getName()+" - min: "+c.getMinValue()+
+						" - max: "+c.getMaxValue()+" - step: "+c.getStepValue()+
+						" - value: ");
+				try {
+					System.out.println(c.getValue());
+				} catch (V4L4JException ve){
+					System.out.println(" ERROR");
+				}
 			}
 		}		
 	}

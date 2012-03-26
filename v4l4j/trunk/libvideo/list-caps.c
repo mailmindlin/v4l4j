@@ -72,14 +72,17 @@ int main(int argc, char** argv) {
 				qc->type == V4L2_CTRL_TYPE_MENU ? "Menu" :
 				qc->type == V4L2_CTRL_TYPE_BUTTON ? "Button" :
 				qc->type == V4L2_CTRL_TYPE_INTEGER64 ? "Integer64" :
-				qc->type == V4L2_CTRL_TYPE_CTRL_CLASS ? "Class" : "",
+				qc->type == V4L2_CTRL_TYPE_CTRL_CLASS ? "Class" :
+				qc->type == V4L2_CTRL_TYPE_STRING ? "String" :
+				qc->type == V4L2_CTRL_TYPE_BITMASK ? "Bitmask" : "",
 				qc->flags,
 				qc->flags & V4L2_CTRL_FLAG_DISABLED ? "Disabled " : "",
 				qc->flags & V4L2_CTRL_FLAG_GRABBED ? "Grabbed " : "",
 				qc->flags & V4L2_CTRL_FLAG_READ_ONLY ? "ReadOnly " : "",
 				qc->flags & V4L2_CTRL_FLAG_UPDATE ? "Update " : "",
 				qc->flags & V4L2_CTRL_FLAG_INACTIVE ? "Inactive " : "",
-				qc->flags & V4L2_CTRL_FLAG_SLIDER ? "slider " : "");
+				qc->flags & V4L2_CTRL_FLAG_SLIDER ? "slider " : "",
+				qc->flags & V4L2_CTRL_FLAG_WRITE_ONLY ? "Write only" : "");
 
 		if(l->controls[i].count_menu!=0){
 			printf("Menu items (%d) %s\n", l->controls[i].count_menu, l->controls[i].v4l2_ctrl->step==1?"contiguous":"non-contiguous");
