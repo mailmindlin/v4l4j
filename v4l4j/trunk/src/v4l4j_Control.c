@@ -88,7 +88,7 @@ JNIEXPORT jstring JNICALL Java_au_edu_jcu_v4l4j_Control_doGetStringValue(JNIEnv 
 	XMALLOC(val, char*, d->vdev->control->controls[id].v4l2_ctrl->maximum + 1); // "+ 1" as per spec
 
 	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling get_control_value(dev: %s, ctrl name:%s)\n", d->vdev->file,d->vdev->control->controls[id].v4l2_ctrl->name);
-	ret = get_control_value(d->vdev,d->vdev->control->controls[id].v4l2_ctrl, val, d->vdev->control->controls[id].v4l2_ctrl->maximum);
+	ret = get_control_value(d->vdev,d->vdev->control->controls[id].v4l2_ctrl, val, d->vdev->control->controls[id].v4l2_ctrl->maximum + 1);
 	if(ret != 0) {
 		XFREE(val);
 		THROW_EXCEPTION(e, CTRL_EXCP, "Error getting current value for string control '%s'", d->vdev->control->controls[id].v4l2_ctrl->name);
@@ -114,6 +114,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_Control_doSetStringValue(JNIEnv *e,
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
 	const char * value = (*e)->GetStringUTFChars(e, jvalue, 0);
+	size++;
 
 	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling set_control_value(dev: %s, ctrl name:%s, val: %s - byte size: %d)\n", d->vdev->file,d->vdev->control->controls[id].v4l2_ctrl->name, value, size);
 	ret = set_control_value(d->vdev, d->vdev->control->controls[id].v4l2_ctrl, value, size);

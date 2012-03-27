@@ -306,10 +306,13 @@ public class Control {
 		
 		state.get();
 		
-		try { doSetStringValue(v4l4jObject,id, value, value.getBytes().length);}
-		finally{ state.put(); }
-		try {v = getStringValue();} catch (ControlException ce){}
-		state.put();
+		try { 
+			doSetStringValue(v4l4jObject,id, value, value.getBytes().length);
+			v = doGetStringValue( v4l4jObject, id);
+		} finally {
+			state.put();
+		}
+
 		return v;
 	}
 	
@@ -355,10 +358,13 @@ public class Control {
 		
 		state.get();
 		
-		try { doSetLongValue(v4l4jObject,id, value);}
-		finally{ state.put(); }
-		try {v = getLongValue();} catch (ControlException ce){}
-		state.put();
+		try {
+			doSetLongValue(v4l4jObject,id, value);
+			v = doGetLongValue(v4l4jObject, id);
+		} finally {
+			state.put();
+		}
+
 		return v;
 	}
 
@@ -658,7 +664,7 @@ public class Control {
 				users++;
 			else
 				throw new StateException("This Control has been released and must not be used");
-			//System.out.println("GET "+(users-1)+"->"+users);
+			// System.out.println("GET "+(users-1)+"->"+users);
 		}
 		
 		public synchronized void put(){
@@ -667,7 +673,7 @@ public class Control {
 					notify();
 			} else
 				throw new StateException("This Control has been released and must not be used");
-			//System.out.println("PUT "+(users+1)+"->"+users);
+			// System.out.println("PUT "+(users+1)+"->"+users);
 		}
 		
 		/**
@@ -682,7 +688,7 @@ public class Control {
 		public synchronized void release(){
 			if(state==INIT && temp!=RELEASED) {
 				temp=RELEASED;
-				//System.out.println("RELEASE "+name+" - "+users);
+				// System.out.println("RELEASE "+name+" - "+users);
 				while(users!=0)
 					try {
 						wait();

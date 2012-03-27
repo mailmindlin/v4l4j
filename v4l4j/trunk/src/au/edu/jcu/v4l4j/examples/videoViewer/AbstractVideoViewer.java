@@ -252,7 +252,7 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
         controlScrollPane = new JScrollPane(controlPanel);
         controlScrollPane.getVerticalScrollBar().setBlockIncrement(40);
         controlScrollPane.getVerticalScrollBar().setUnitIncrement(25);
-        controlScrollPane.setPreferredSize(new Dimension(300, height));
+        controlScrollPane.setPreferredSize(new Dimension(400, height));
         controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.PAGE_AXIS));
         
         f.getContentPane().add(videoPanel);
@@ -274,7 +274,6 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
     private void initControlPane(){
     	ControlGUI gui;
     	for(Control c: controls.values()) {
-		System.out.println("Creating UI for control "+c.getName());
     		gui = getControlGUI(c);
     		if(gui!=null)
     			controlPanel.add(gui.getPanel());
@@ -293,9 +292,11 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
     		ctrl = new MenuControl(c);
 	else if (c.getType() == V4L4JConstants.CTRL_TYPE_STRING)
 		ctrl = new TextControl(c);
-	else {
+	else if (c.getType() == V4L4JConstants.CTRL_TYPE_LONG)
+		ctrl = new LongControl(c);
+	else 
 		System.out.println("Control '" + c.getName() + "' has an unknown type: " + c.getType());
-	}
+
     	return ctrl;
     }
         
@@ -649,12 +650,38 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
 		}
 
 		public final void updateValue(String v) {
-			value.setText(v);
+			value.setText("Value: "+v);
 		}
 		
 		public final JPanel getPanel(){
 			return contentPanel;
 		}	 
+	}
+
+	public class LongControl extends ControlModelGUI implements ChangeListener {
+		private JSpinner spinner;
+
+		public LongControl(Control c) {
+			super(c);
+			spinner = new JSpinner(new SpinnerNumberModel(new Long(0), Long.valueOf(Long.MIN_VALUE), Long.valueOf(Long.MAX_VALUE), new Long(1)));
+			spinner.addChangeListener(this);
+			contentPanel.add(spinner);
+		}
+
+                @Override
+                public void stateChanged(ChangeEvent e) {
+			long v = 0;
+			try {
+				v = ctrl.setLongValue(((Long)spinner.getValue()).longValue());
+			} catch (Exception e2) {
+				JOptionPane.showMessageDialog(null, "Error setting value.\n"+e2.getMessage());
+				try {v = ctrl.getLongValue();} catch (Exception e1){}
+			}
+			updateValue(Long.toString(v));
+			spinner.removeChangeListener(this);
+			spinner.setValue(Long.valueOf(v));
+			spinner.addChangeListener(this);
+		}
 	}
 
 	public class TextControl extends ControlModelGUI implements ActionListener{
@@ -672,7 +699,10 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
 		public void actionPerformed(ActionEvent evt) {
 			String value = "";
 			try { value = ctrl.setStringValue(textField.getText());}
-			catch(Exception e){}
+			catch(Exception e){
+				JOptionPane.showMessageDialog(null, "Error setting value.\n"+e.getMessage());
+				try {value = ctrl.getStringValue();} catch (Exception e1){}
+			}
 			updateValue(value);
 			textField.setText("");
 		}
@@ -685,7 +715,6 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
 			super(c);
 			int v = c.getDefaultValue();
 			try {v = c.getValue();} catch (ControlException e) {}
-			System.out.println("min: "+c.getMinValue()+" Max: "+c.getMaxValue() + " val: "+v);
 			slider = new JSlider(JSlider.HORIZONTAL, c.getMinValue(), c.getMaxValue(), v);
 
 			setSlider();
@@ -697,7 +726,6 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
 			Hashtable<Integer, JLabel> labels = new Hashtable<Integer, JLabel>();
 			int length = (ctrl.getMaxValue() - ctrl.getMinValue()) / ctrl.getStepValue() + 1;
 			int middle = ctrl.getDefaultValue();
-			System.out.println("Length: "+length + " middle: "+middle);
 			
 			slider.setSnapToTicks(true);
 			slider.setPaintTicks(false);
