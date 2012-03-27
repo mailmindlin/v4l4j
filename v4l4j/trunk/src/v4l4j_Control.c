@@ -108,17 +108,36 @@ JNIEXPORT jstring JNICALL Java_au_edu_jcu_v4l4j_Control_doGetStringValue(JNIEnv 
 /*
  * Set a new value on a v4l2 string control
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_Control_doSetStringValue(JNIEnv *e, jobject t, jlong object, jint id, jstring jvalue, jint size){
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_Control_doSetStringValue(JNIEnv *e, jobject t, jlong object, jint id, jstring jvalue){
 	int ret;
+	char *copy;
+	int size;
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
 	const char * value = (*e)->GetStringUTFChars(e, jvalue, 0);
-	size++;
+	if (value == NULL) {
+		// OOM exception already thrown
+		dprint(LOG_V4L4J, " error getting string\n");
+		return;
+	}
 
-	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling set_control_value(dev: %s, ctrl name:%s, val: %s - byte size: %d)\n", d->vdev->file,d->vdev->control->controls[id].v4l2_ctrl->name, value, size);
-	ret = set_control_value(d->vdev, d->vdev->control->controls[id].v4l2_ctrl, value, size);
+	// copy the java string value in case it gets modified by the driver
+	copy = strdup(value);
+	if (copy == NULL) {
+		dprint(LOG_V4L4J, "Error copying string value\n");
+		THROW_EXCEPTION(e, CTRL_EXCP, "Error copying new string value");
+		return;
+	}
+
 	(*e)->ReleaseStringUTFChars(e, jvalue, value);
+	
+	size = strlen(copy) + 1;
+
+	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling set_control_value(dev: %s, ctrl name:%s, val: %s - byte size: %d)\n", d->vdev->file,d->vdev->control->controls[id].v4l2_ctrl->name, copy, size);
+	ret = set_control_value(d->vdev, d->vdev->control->controls[id].v4l2_ctrl, copy, size);
+
+	free(copy);
 
 	if(ret != 0) {
 		if(ret == LIBVIDEO_ERR_OUT_OF_RANGE){

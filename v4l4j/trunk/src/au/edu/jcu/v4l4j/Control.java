@@ -113,10 +113,9 @@ public class Control {
 	 * @param o a C pointer to a struct v4l4j_device
 	 * @param id the id of the stirng control
 	 * @param v the new value
-	 * @param size the byte size of v
 	 * @throws ControlException if the value cant be set.
 	 */
-	private native void doSetStringValue(long o, int id, String v, int size)  throws ControlException;
+	private native void doSetStringValue(long o, int id, String v)  throws ControlException;
 	
 	/**
 	 * This JNI method returns the value of a control given its id.
@@ -307,7 +306,7 @@ public class Control {
 		state.get();
 		
 		try { 
-			doSetStringValue(v4l4jObject,id, value, value.getBytes().length);
+			doSetStringValue(v4l4jObject,id, value);
 			v = doGetStringValue( v4l4jObject, id);
 		} finally {
 			state.put();
