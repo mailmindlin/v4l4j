@@ -627,10 +627,10 @@ int set_control_value(struct video_device *vdev,
 		}
 	} else if (ctrl->type == V4L2_CTRL_TYPE_STRING) {
 		// Ensure the string size is within the bounds
-		if (size < ctrl->minimum || size > ctrl->maximum) {
+		if (size <= ctrl->minimum || size > (ctrl->maximum + 1)) {
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
 					"CTRL: string control length (%d) out of range (%d - %d)\n",
-					size, ctrl->minimum, ctrl->maximum);
+					size, ctrl->minimum, ctrl->maximum + 1);
 			return LIBVIDEO_ERR_OUT_OF_RANGE;
 		}
 	}
