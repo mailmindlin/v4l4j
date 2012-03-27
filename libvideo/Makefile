@@ -56,7 +56,7 @@ endif
 USER_INCLUDES := libvideo.h libvideo-err.h libvideo-palettes.h
 
 VERSION_MAJOR := 0
-VERSION_MINOR := 8
+VERSION_MINOR := 9
 LIB_RELEASE := 0
 
 LIBV4LCONVERT_DIR := libv4lconvert
