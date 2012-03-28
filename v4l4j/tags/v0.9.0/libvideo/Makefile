@@ -129,7 +129,7 @@ version.h:
 clean:
 	make -C $(LIBV4LCONVERT_DIR) clean
 	rm -f $(OBJ) $(BIN) $(LIB) $(LIB).$(LIB_RELEASE) $(TESTOBJ) \
-  $(LIBV4LCONVERT_AR) ./*.o list-caps test-capture dump-capture version.h ./*~
+  $(LIBV4LCONVERT_AR) ./*.o list-caps test-capture dump-capture ./*~
 
 .PHONY: all install uninstall test clean
 
