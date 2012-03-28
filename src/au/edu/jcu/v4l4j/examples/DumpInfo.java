@@ -146,8 +146,6 @@ public class DumpInfo {
 						" - value: ");
 				try {
 					System.out.println(c.getStringValue());
-					c.setStringValue("ab");
-					System.out.println(c.getStringValue());
 				} catch (V4L4JException ve){
 					System.out.println(" ERROR");
 					ve.printStackTrace();
