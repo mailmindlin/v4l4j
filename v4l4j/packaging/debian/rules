@@ -1,8 +1,15 @@
 #!/usr/bin/make -f
-build: build-stamp
+build: build-arch build-indep
+
+build-arch: build-stamp
+
+build-indep: build-stamp
+
 build-stamp:
 	#build v4l4j
-	JAVA_HOME=/usr/lib/jvm/java-6-openjdk ant all javadoc
+	ls -la /usr/lib/jvm/
+	JDK_HOME=/usr/lib/jvm/java-6-openjdk ant all javadoc
+	#ant all
 	touch $@
 
 clean:
