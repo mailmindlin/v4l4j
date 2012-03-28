@@ -3,7 +3,7 @@ Section: libs
 Priority: extra
 Maintainer: Ubuntu MOTU Developers <ubuntu-motu@lists.ubuntu.com>
 XSBC-Original-Maintainer: Gilles Gigan <gilles.gigan@gmail.com>
-Build-Depends: openjdk-6-jdk, debhelper (>= 5), libjpeg62-dev, ant (>=1.7.0)
+Build-Depends: java6-sdk, debhelper (>= 5), libjpeg-dev, ant (>=1.7.0)
 Standards-Version: 3.8.4
 Homepage: http://v4l4j.googlecode.com
 Vcs-Browser: http://v4l4j.googlecode.com/svn/v4l4j/trunk
@@ -32,7 +32,7 @@ Description: Simple access to V4L
 
 Package: libv4l4j-java
 Architecture: any
-Depends: openjdk-6-jre, ${shlibs:Depends}, ${misc:Depends}
+Depends: java6-runtime-headless, ${shlibs:Depends}, ${misc:Depends}
 Suggests: libv4l4j-java-doc
 Description: Java V4L capture API (Java & JNI library)
  v4l4j is a simple Java package providing access to the capture interface
@@ -44,7 +44,7 @@ Description: Java V4L capture API (Java & JNI library)
 
 Package: libv4l4j-bin
 Architecture: all
-Depends: libv4l4j-java (>= ${binary:Version}), jarwrapper, ${misc:Depends}
+Depends: libv4l4j-java (>= ${binary:Version}), java6-runtime, jarwrapper, ${misc:Depends}
 Description: Java V4L capture API (Java test application)
  v4l4j is a simple Java package providing access to the capture interface
  of the Video4Linux API. v4l4j allows Java applications to retrieve 
