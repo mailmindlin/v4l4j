@@ -3,8 +3,8 @@ Section: libs
 Priority: extra
 Maintainer: Ubuntu MOTU Developers <ubuntu-motu@lists.ubuntu.com>
 XSBC-Original-Maintainer: Gilles Gigan <gilles.gigan@gmail.com>
-Build-Depends: java6-sdk, debhelper (>= 5), libjpeg-dev, ant (>=1.7.0)
-Standards-Version: 3.8.4
+Build-Depends: default-jdk, debhelper (>= 5), libjpeg-dev, ant (>=1.7.0)
+Standards-Version: 3.9.3
 Homepage: http://v4l4j.googlecode.com
 Vcs-Browser: http://v4l4j.googlecode.com/svn/v4l4j/trunk
 Vcs-Svn: http://v4l4j.googlecode.com/svn/v4l4j/trunk
