@@ -7,6 +7,10 @@
     * v4l4j (X.Y.Z-0ubuntu1~ppa2) intrepid; urgency=low
     * v4l4j (X.Y.Z-0ubuntu1~ppa3) jaunty; urgency=low
     * v4l4j (X.Y.Z-0ubuntu1~ppa4) lucid; urgency=low
+    * v4l4j (x.Y.Z-0ubuntu1~ppa5) maverick; urgency=low
+    * v4l4j (x.Y.Z-0ubuntu1~ppa6) natty; urgency=low
+    * v4l4j (x.Y.Z-0ubuntu1~ppa7) oneiric; urgency=low
+    * v4l4j (x.Y.Z-0ubuntu1~ppa8) precise; urgency=low
   * test source package build with "debuild -S -sa"
   * check for lintian errors
   * if build is successful, commit changes and remove SVN files with "rm -Rf debian/.svn"
