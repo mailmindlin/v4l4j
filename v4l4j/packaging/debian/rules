@@ -1,11 +1,13 @@
 #!/usr/bin/make -f
 
-ifeq ($(shell dpkg-architecture -qDEB_HOST_ARCH), x86_64)
+ifeq ($(shell dpkg-architecture -qDEB_BUILD_ARCH | grep -Eic "(x86_64|amd64)"), 1)
         LIBPIXFC ?= pixfc-sse/libpixfc-sse64.a
 else ifeq ($(shell dpkg-architecture -qDEB_HOST_ARCH | grep -Eic "^i?.86"), 1)
         LIBPIXFC ?= pixfc-sse/libpixfc-sse32.a
 else ifeq ($(shell dpkg-architecture -qDEB_HOST_ARCH | grep -ic "arm"), 1)
         LIBPIXFC ?= pixfc-sse/libpixfc-sse-armv7.a
+else
+        $(error unknown target architecture $(shell dpkg-architecture -qDEB_BUILD_ARCH))
 endif
 
 
