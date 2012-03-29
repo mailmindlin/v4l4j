@@ -1,4 +1,14 @@
 #!/usr/bin/make -f
+
+ifeq ($(shell dpkg-architecture -qDEB_HOST_ARCH), x86_64)
+        LIBPIXFC ?= pixfc-sse/libpixfc-sse64.a
+else ifeq ($(shell dpkg-architecture -qDEB_HOST_ARCH | grep -Eic "^i?.86"), 1)
+        LIBPIXFC ?= pixfc-sse/libpixfc-sse32.a
+else ifeq ($(shell dpkg-architecture -qDEB_HOST_ARCH | grep -ic "arm"), 1)
+        LIBPIXFC ?= pixfc-sse/libpixfc-sse-armv7.a
+endif
+
+
 build: build-arch build-indep
 
 build-arch: build-stamp
@@ -7,9 +17,7 @@ build-indep: build-stamp
 
 build-stamp:
 	#build v4l4j
-	ls -la /usr/lib/jvm/
-	JDK_HOME=/usr/lib/jvm/java-6-openjdk ant all javadoc
-	#ant all
+	LIBPIXFC=$(LIBPIXFC) JDK_HOME=/usr/lib/jvm/java-6-openjdk ant all
 	touch $@
 
 clean:
