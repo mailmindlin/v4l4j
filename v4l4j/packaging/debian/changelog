@@ -1,3 +1,8 @@
+v4l4j (0.9.0-0ubuntu2~ppa4) lucid; urgency=low
+  * fix broken amd64 packaging
+
+ -- Gilles Gigan <gilles.gigan@gmail.com>  Fri, 30 Mar 2012 12:03:03 +1100
+
 v4l4j (0.9.0-0ubuntu1~ppa4) lucid; urgency=low
   * new upstream release
   * dropped pre-lucid packages
