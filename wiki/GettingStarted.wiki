@@ -88,7 +88,10 @@ In order to use the following example applications, make sure you first install
 v4l4j (see above section). Many example applications are shipped with v4l4j:
  * `ant test-fps` captures frames for 10 seconds and print the frame rate.
  * `ant test-gui` displays the video stream in a window.
- * `ant test-server` starts a video server. The video stream and control list can be accessed via a web browser at `http://ip_address_of_server:8080` or through ffplay using `ffplay -f mjpeg http://ip_address_of_server:8080/stream`
+ * `ant test-server` starts a video server. The video stream and control list can be accessed via:
+   * a web browser using this url: `http://ip_address_of_server:8080`,
+   * ffplay using `ffplay -f mjpeg http://ip_address_of_server:8080/stream`
+   * VLC by opening the network stream at `http://ip_address_of_server:8080/stream`
  * `ant deviceInfo` prints information about the video device itself.
  * `ant test-dual` will only run if you have two video devices connected and will display both video streams side by side in a JFrame.
  * `ant test-getsnapshot` will take a snapshot from a video device and will display it.
