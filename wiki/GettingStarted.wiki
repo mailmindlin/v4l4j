@@ -3,6 +3,7 @@
 #sidebar v4l4jSideBar
 =Quick Start Guide=
 For the impatient, here are a few instructions that will get you started:
+ * If you want to install v4l4j on a Raspberry Pi, then head to [GettingStartedOnRPi this page].
  * If you are using Ubuntu or Debian, check [DebianInstall this page to install v4l4j Debian packages]. After that, you can run a test application with 
 {{{
 java -cp /usr/share/java/v4l4j.jar -Djava.library.path=/usr/lib/jni au.edu.jcu.v4l4j.examples.videoViewer.DeviceChooser
