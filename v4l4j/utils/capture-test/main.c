@@ -73,6 +73,12 @@ int run_test(int fd){
 		goto bail;
 	}
 
+	// set frame rate
+	if (set_frame_intv(fd, CAPTURE_FRAME_RATE_NUM, CAPTURE_FRAME_RATE_DEN) != 0) {
+		printf("Error setting frame rate\n");
+		// not fatal - keep going
+	}
+
 	// start capture
 	if (start_capture(fd, buffers) != 0) {
 		printf("Error starting capture\n");

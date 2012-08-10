@@ -80,6 +80,31 @@ int set_image_format(int fd){
 	return result;
 }
 
+int set_frame_intv(int fd, int num, int denom) {
+	struct v4l2_streamparm param;
+
+	printf("Requesting frame rate: %d / %d\n", num, denom);
+
+	CLEAR(&param, sizeof(param));
+	param.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	param.parm.capture.timeperframe.numerator = num;
+	param.parm.capture.timeperframe.denominator = denom;
+	if (ioctl(fd, VIDIOC_S_PARM, &param) == -1) {
+		perror("Error setting the frame rate\n");
+		return -1;
+	}
+
+	// Drivers are allowed to return 0, and still adjust the framerate
+	// to something closer to what they can do. So here we just print
+	// the actual frame rate.
+
+	printf("Driver adjusted frame rate to %d / %d\n", 
+		param.parm.capture.timeperframe.numerator, 
+		param.parm.capture.timeperframe.denominator);
+
+	return 0;
+}
+
 // request v4l2 buffers and mmap them to our address space
 struct video_buffers* get_v4l2_buffers(int fd){
 	int i;
