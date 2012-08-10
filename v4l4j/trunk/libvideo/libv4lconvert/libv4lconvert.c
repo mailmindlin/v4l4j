@@ -644,8 +644,26 @@ static void refresh_pixfc(struct v4lconvert_data *data, unsigned int width,
 
        // Create a struct pixfc if we dont have one
        if (data->pixfc == NULL) {
-               if (create_pixfc(&data->pixfc, src_fmt, dst_fmt, width, height,
-                               PixFcFlag_SSE2Only | PixFcFlag_NNbResamplingOnly) != PIXFC_OK)
+			int row_size = 0;
+			switch (src_fmt) {
+				case PixFcYUYV:
+				case PixFcUYVY:
+					row_size = width * 2;
+					break;
+				case PixFcYUV420P:
+					row_size = width;
+					break;
+				case PixFcRGB24:
+				case PixFcBGR24:
+					row_size = width * 3;
+					break;
+				default:
+					printf("Unknown source pixel format\n");
+					break;
+			};
+               if ((row_size != 0) && 
+				   (create_pixfc(&data->pixfc, src_fmt, dst_fmt, width, height, row_size,
+                        PixFcFlag_SSE2Only | PixFcFlag_NNbResamplingOnly) != PixFc_OK))
                        data->pixfc = NULL;
        }
 }
