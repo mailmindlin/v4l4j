@@ -43,6 +43,8 @@ typedef enum {
 	PixFcUYVY,
 	PixFcYUV422P,
 	PixFcYUV420P,
+	PixFcV210,		// 10-bit YUV - row bytes is (width + 47) / 48 * 128
+					// see https://developer.apple.com/quicktime/icefloe/dispatch019.html#v210
 
 	// RGB formats
 	PixFcARGB,	// 32-bit ARGB
@@ -77,11 +79,14 @@ typedef		void (*ConversionBlockFn)(const struct PixFcSSE *pixfc, void *inBuffer,
 struct PixFcSSE{
 	ConversionBlockFn 			convert;	// Conversion function - call me to perform the conversion
 
+	// Values below are identical to those passed to create_pixfc()
 	PixFcPixelFormat 			source_fmt;
 	PixFcPixelFormat 			dest_fmt;
 	uint32_t					pixel_count;
 	uint32_t					width;
 	uint32_t					height;
+	uint32_t					row_bytes;
+	
 	uint32_t					uses_sse;	// set to 1 if the conversion function
 											// uses SSE, 0 if not.
 };
@@ -95,10 +100,13 @@ typedef enum {
 
 	//
 	// Force the use of a non-SSE conversion routine.
-	// (Using this flag implies PixFcFlag_NNbResamplingOnly).
 	PixFcFlag_NoSSE	=				(1 << 0),
 	// Force the use of a SSE2-only conversion routine
+	// (ie. exclude Non-SSE, SSSE3 and SSE41 conversion routines)
 	PixFcFlag_SSE2Only =			(1 << 1),
+	// Force the use of a SSE2 and SSSE3-only conversion routine
+	// (ie. exclude Non-SSE, SSE2-only and SSE41 conversion routines)
+	PixFcFlag_SSE2_SSSE3Only =			(1 << 2),
 
 	//
 	// By default, PixFC performs a full-range conversion, unless one of the
@@ -122,18 +130,25 @@ typedef enum {
 } PixFcFlag;
 
 
-
 /*
  * This function creates a struct PixFcSSE and sets it up
  * for a conversion from the given source format to the destination
  * one if supported. See macros further down for returned error codes.
  */
-uint32_t		create_pixfc(struct PixFcSSE**,		// out - returns a struct PixFcSSE
-								PixFcPixelFormat,  	// in  - source format
-								PixFcPixelFormat, 	// in  - destination format
-								uint32_t,			// in  - width
-								uint32_t, 			// in  - height
-								PixFcFlag			// in  - see enum above - tune the selection of the conversion function
+uint32_t		create_pixfc(
+	struct PixFcSSE**,	// out - returns a struct PixFcSSE
+	PixFcPixelFormat,  	// in  - source format
+	PixFcPixelFormat, 	// in  - destination format
+	uint32_t,			// in  - width
+	uint32_t, 			// in  - height
+	uint32_t,			// in  - row bytes: length of one image row (in bytes). 
+						//		 For most input formats, this is 
+						//		 width * number_of_bytes_per_pixel. However some
+						//		 formats have alignment requirements. For instance,
+						//		 v210 requires the size of each line to be multiple
+						//		 of 128 bytes.
+	PixFcFlag			// in  - tune the selection of the conversion function. See
+						//		 enum definition above.
 );
 
 
@@ -145,18 +160,28 @@ void			destroy_pixfc(struct PixFcSSE*);
 /*
  * Error codes
  */
-// All good
-#define			PIXFC_OK								0
+enum {
+	// The SSE features required are not available on the executing CPU.
+	PixFc_NoCPUSupport = -6,
 
-// Generic error code
-#define			PIXFC_ERROR								-1
-
-// Conversion from source to destination format not supported
-#define			PIXFC_CONVERSION_NOT_SUPPORTED			-2
-
-// Out of memory
-#define 		PIXFC_OOM								-3
-
+	// Source image has an invalid row size
+	PixFc_InvalidSourceImageRowSize = -5,
+	
+	// Source image dimensions prevent SSE conversions from being used.
+	PixFc_UnsupportedSourceImageDimension = -4,
+		
+	// Out of memory
+	PixFc_OOMError = -3, 
+	
+	// Conversion from source to destination format not supported
+	PixFc_UnsupportedConversionError = -2,
+		
+	// Generic error code
+	PixFc_Error = -1,
+	
+	//
+	PixFc_OK = 0,
+};
 
 #ifdef __cplusplus
 }
