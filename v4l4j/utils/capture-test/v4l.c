@@ -21,6 +21,7 @@
 #include <string.h>			// for memset
 #include <sys/ioctl.h>		// for ioctl
 #include <sys/mman.h>		//for mmap
+#include <sys/time.h>
 #include "v4l.h"
 
 #define CLEAR(address,size) 	memset((address), 0x0, (size));
@@ -198,6 +199,7 @@ bail:
 // dequeue the next buffer, and enqueue it back
 int get_latest_frame(int fd, struct video_buffers *buffers){
 	int result = -1;
+        struct timeval before_ioctl, after_ioctl;
 	struct v4l2_buffer *b = buffers->v4l2_buf;
 	CLEAR(b, sizeof(struct v4l2_buffer));
 
@@ -207,13 +209,18 @@ int get_latest_frame(int fd, struct video_buffers *buffers){
 	printf("Getting last frame...");
 
 	// get latest buffer
+        gettimeofday(&before_ioctl, NULL);
 	if (0 == ioctl(fd, VIDIOC_DQBUF, b)) {
+                gettimeofday(&after_ioctl, NULL);
 		// frame starts at buffers->mmap_buffers[b->index].start
 		// and is b->bytesused bytes long
 
+#define TV_TO_US(tv)    ((tv).tv_sec*1000000ULL + (tv).tv_usec)
+                timersub(&after_ioctl, &before_ioctl, &after_ioctl);
+                printf(" Timestamp: %llu us - ioctl blocked for %llu us ...", TV_TO_US(b->timestamp), TV_TO_US(after_ioctl));
 		// put the buffer back
 		if (0 == ioctl(fd, VIDIOC_QBUF, b)) {
-			printf("OK\n");
+			printf(" OK\n");
 			result = 0;
 		} else
 			perror("\nError enqueuing buffer");
