@@ -1,0 +1,50 @@
+#summary Installing and testing v4l4j on RPi
+
+This page explains how to setup v4l4j on Raspberry Pi.
+
+= Introduction =
+v4l4j has been successfully built and tested on two flavours of the Debian distribution for RPi: 
+ * Raspbian Wheezy (available [http://downloads.raspberrypi.org/images/raspbian/2012-07-15-wheezy-raspbian/2012-07-15-wheezy-raspbian.zip here]), which is built  with armv6 specific instructions, vector floating point instructions and specify the ARM EABI where floating point values are to be passed in floating point registers.
+ * Wheezy beta (available [http://downloads.raspberrypi.org/images/debian/7/2012-06-18-wheezy-beta.zip here]), which unlike the previous one, does not use hardware register to pass floating point values.
+ 
+If you are unsure about which version you have, check the contents of `/boot/issue.txt`:
+ * Raspbian Wheezy:
+Raspberry Pi reference 2012-07-15 (armhf)
+Generated using spindle, http://asbradbury.org/projects/spindle/, d2c1253, stage4-lxde-edu.qed
+
+ * Wheezy beta:
+Raspberry Pi reference 2012-06-17
+Generated using spindle, http://asbradbury.org/projects/spindle/, e8c77c6, stage4-lxde-edu.qed
+
+Make sure you identify which version you are running and follow the appropriate steps for it.
+
+= Building v4l4j on RPi =
+
+Install what's required to build v4l4j with :
+{{{
+sudo apt-get install openjdk-7-jdk ant libjpeg8-dev
+sudo apt-get remove openjdk-6-*
+}}}
+
+Check out a copy of v4l4j:
+{{{
+ant co http://v4l4j.googlecode.com/svn/v4l4j/trunk v4l4j-trunk
+cd v4l4j-trunk
+}}}
+
+*On Raspbian Wheezy:*
+{{{
+JDK_HOME=/usr/lib/jvm/java-7-openjdk-armhf/ LIBPIXFC=pixfc-sse/libpixfc-sse-armv6l-hardfp.a ant clean all
+}}}
+
+*On Wheezy beta: *
+{{{
+JDK_HOME=/usr/lib/jvm/java-7-openjdk-armhf/ LIBPIXFC=pixfc-sse/libpixfc-sse-armv6l-softfp.a ant clean all
+}}}
+
+If the build went well, install and test with:
+{{{
+sudo ant install
+ant test-fps
+}}}
+More testing apps are available as explained [GettingStarted#Testing here].
