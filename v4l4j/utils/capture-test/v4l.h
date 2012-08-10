@@ -22,9 +22,9 @@
 #define CAPTURE_WIDTH			640					// capture width
 #define CAPTURE_HEIGHT			480					// capture height
 #define CAPTURE_PIX_FORMAT		V4L2_PIX_FMT_YUYV	// capture pixel format
-#define NB_BUFFERS_REQUESTED 	4 // how many v4l2 buffers we will request
+#define NB_BUFFERS_REQUESTED 	5 // how many v4l2 buffers we will request
 #define NB_CAPTURED_FRAMES		10 // how many frames will we capture
-#define NB_TEST_RUNS			2 // how many time to run the test
+#define NB_TEST_RUNS			1 // how many time to run the test
 
 #include <linux/videodev2.h>
 
