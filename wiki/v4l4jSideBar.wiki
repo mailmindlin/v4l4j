@@ -1,4 +1,5 @@
   * [GettingStarted Installing v4l4j]
+  * [GettingStartedOnRPi Installing v4l4j on RPi]
   * [DebianInstall Installing Debian packages]
   * [v4l4jIntegration Integrating v4l4j with other APIs]
   * [TestedHardware Tested hardware]
