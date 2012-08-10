@@ -422,7 +422,7 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 			case RGB32:
 				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for RGB32\n");
 				XMALLOC(d->conversion_buffer, unsigned char *, (d->vdev->capture->width*d->vdev->capture->height*3/2));
-				if (create_pixfc(&d->pixfc, PixFcARGB, PixFcYUV420P, d->vdev->capture->width, d->vdev->capture->height, PixFcFlag_NNbResamplingOnly) == PIXFC_OK) {
+				if (create_pixfc(&d->pixfc, PixFcARGB, PixFcYUV420P, d->vdev->capture->width, d->vdev->capture->height, 4 * d->vdev->capture->width, PixFcFlag_NNbResamplingOnly) == PixFc_OK) {
 					d->convert = fast_jpeg_encode_rgb;
 				} else  	{
 					dprint(LOG_JPEG, "Error creating PixFC struct for RGB32 to YUV420 conversion - using scalar conversion\n");
@@ -435,7 +435,7 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 			case RGB24:
 				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for RGB24\n");
 				XMALLOC(d->conversion_buffer, unsigned char *, (d->vdev->capture->width*d->vdev->capture->height*3/2));
-				if (create_pixfc(&d->pixfc, PixFcRGB24, PixFcYUV420P, d->vdev->capture->width, d->vdev->capture->height, PixFcFlag_NNbResamplingOnly) == PIXFC_OK) {
+				if (create_pixfc(&d->pixfc, PixFcRGB24, PixFcYUV420P, d->vdev->capture->width, d->vdev->capture->height, 3 * d->vdev->capture->width, PixFcFlag_NNbResamplingOnly) == PixFc_OK) {
 					d->convert = fast_jpeg_encode_rgb;
 				} else 	{
 					dprint(LOG_JPEG, "Error creating PixFC struct for RGB24 to YUV420 conversion - using scalar conversion\n");
@@ -447,7 +447,7 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 			case BGR32:
 				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for BGR32\n");
 				XMALLOC(d->conversion_buffer, unsigned char *, (d->vdev->capture->width*d->vdev->capture->height*3/2));
-				if (create_pixfc(&d->pixfc, PixFcBGRA, PixFcYUV420P, d->vdev->capture->width, d->vdev->capture->height, PixFcFlag_NNbResamplingOnly) == PIXFC_OK) {
+				if (create_pixfc(&d->pixfc, PixFcBGRA, PixFcYUV420P, d->vdev->capture->width, d->vdev->capture->height, 4 * d->vdev->capture->width, PixFcFlag_NNbResamplingOnly) == PixFc_OK) {
 					d->convert = fast_jpeg_encode_rgb;
 				} else {
 					dprint(LOG_JPEG, "Error creating PixFC struct for BGR32 to YUV420 conversion - using scalar conversion\n");
@@ -459,7 +459,7 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 			case BGR24:
 				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for BGR24\n");
 				XMALLOC(d->conversion_buffer, unsigned char *, (d->vdev->capture->width*d->vdev->capture->height*3/2));
-				if (create_pixfc(&d->pixfc, PixFcBGR24, PixFcYUV420P, d->vdev->capture->width, d->vdev->capture->height, PixFcFlag_NNbResamplingOnly) == PIXFC_OK) {
+				if (create_pixfc(&d->pixfc, PixFcBGR24, PixFcYUV420P, d->vdev->capture->width, d->vdev->capture->height, 3 * d->vdev->capture->width, PixFcFlag_NNbResamplingOnly) == PixFc_OK) {
 					d->convert = fast_jpeg_encode_rgb;
 				} else {
 					dprint(LOG_JPEG, "Error creating PixFC struct for BGR24 to YUV420 conversion - using scalar conversion\n");
@@ -476,7 +476,7 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 			switch (d->vdev->capture->palette) {
 			case YUYV:
 				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for YUYV\n");
-				if (create_pixfc(&d->pixfc, PixFcYUYV, PixFcYUV422P, d->vdev->capture->width, d->vdev->capture->height, PixFcFlag_Default) != PIXFC_OK)
+				if (create_pixfc(&d->pixfc, PixFcYUYV, PixFcYUV422P, d->vdev->capture->width, d->vdev->capture->height, 2 * d->vdev->capture->width, PixFcFlag_Default) != PixFc_OK)
 				{
 					info("Error creating PixFC struct for YUYV to YUV422P conversion\n");
 					return -1;
@@ -489,7 +489,7 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 				break;
 			case UYVY:
 				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for UYVY\n");
-				if (create_pixfc(&d->pixfc, PixFcUYVY, PixFcYUV422P, d->vdev->capture->width, d->vdev->capture->height, PixFcFlag_Default) != PIXFC_OK)
+				if (create_pixfc(&d->pixfc, PixFcUYVY, PixFcYUV422P, d->vdev->capture->width, d->vdev->capture->height, 2 * d->vdev->capture->width, PixFcFlag_Default) != PixFc_OK)
 				{
 					info("Error creating PixFC struct for UYVY to YUV422P conversion\n");
 					return -1;
