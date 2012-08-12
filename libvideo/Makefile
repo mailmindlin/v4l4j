@@ -69,7 +69,12 @@ ifeq ($(shell arch), x86_64)
 else ifeq ($(shell arch | grep -Eic "^i?.86"), 1)
 	LIBPIXFC ?= pixfc-sse/libpixfc-sse-x86.a
 else ifeq ($(shell arch | grep -ic "arm"), 1) 
-	LIBPIXFC ?= pixfc-sse/libpixfc-sse-armv7.a
+#
+# define LIBPIXFC explicitly for ARM archs
+#
+ifeq ($(origin LIBPIXFC), undefined)
+$(error ARM architecture detected - define LIBPIFXC explicitly)
+endif
 endif
 
 ifeq ($(origin LIBPIXFC), undefined)
@@ -84,11 +89,11 @@ OBJ := v4l2-input.o v4l1-input.o libvideo.o pwc-probe.o gspca-probe.o \
   v4l2-tuner.o palettes.o
 
 CC := gcc
-CFLAGS := $(DBG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) \
+CFLAGS := $(CFLAGS) $(DBG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) \
   $(OPTIMISATION) -fPIC -I.
 
 LD := gcc
-LDFLAGS := -lm -lrt -shared -ljpeg
+LDFLAGS := -lm -lrt -shared -ljpeg $(LDFLAGS)
 
 all: $(LIB).$(LIB_RELEASE)
 
