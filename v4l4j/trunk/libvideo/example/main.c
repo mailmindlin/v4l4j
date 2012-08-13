@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
 	}
 
 	//Set capture param (image format, color, size, crop...)
-	if ((*cdev->actions->set_cap_param)(d, fmts , NB_SUPPORTED_FORMATS)!=0) {
+	if ((*cdev->actions->set_cap_param)(d, -1, MJPEG)!=0) {
 		info(LOG_ERR, "Unable to set capture parameters. It could be due to:\n");
 		info(LOG_ERR, " - the chosen width and height,\n - the driver not supporting the image formats libvideo tried\n");
 		info(LOG_ERR, "Recompile libvideo with debugging enabled (see README)\n");
@@ -278,7 +278,7 @@ void list_cap_param(int newsockfd,struct video_device *d) {
 	//outputs controls
 	l = d->control;
 	for(i = 0; i< l->count; i++) {
-		if(get_control_value(d, l->controls[i].v4l2_ctrl, &v) != 0) {
+		if(get_control_value(d, l->controls[i].v4l2_ctrl, &v, sizeof(v)) != 0) {
 			info(LOG_ERR, "Error getting value for control %s\n", l->controls[i].v4l2_ctrl->name);
 			v = 0;
 		}
@@ -343,7 +343,7 @@ int get_action(int sock, struct video_device *d) {
 				} else {
 					assert(ctrl_index < l->count);
 					info(LOG_INFO, "Setting %s to %d\n", l->controls[ctrl_index].v4l2_ctrl->name, value);
-					set_control_value(d, l->controls[ctrl_index].v4l2_ctrl, &value);
+					set_control_value(d, l->controls[ctrl_index].v4l2_ctrl, &value, sizeof(value));
 					info(LOG_INFO, "New value: %d\n", value);
 				}
 			} else
@@ -485,6 +485,10 @@ void *send_stream_to(void *v) {
 
 			f_nr++;
 		}
+        else
+        {
+            info(LOG_ERR, "Error dequeing buffer\n");
+        }
 	}
 
 	end:
