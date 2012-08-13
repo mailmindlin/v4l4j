@@ -65,6 +65,8 @@ public class CamServer implements Runnable, CaptureCallback{
 	private Thread						serverThread;
 	private Vector<ClientConnection> 	clients;
 	private String 						httpLineFromClient;
+	private long						frameCount;
+	private long						lastFrameTimestamp;
 	
 	private static final int			MAIN_PAGE = 0;
 	private static final int			WEBCAM_PAGE = 1;
@@ -101,6 +103,13 @@ public class CamServer implements Runnable, CaptureCallback{
 		videoDevice = new VideoDevice(dev);
 		frameGrabber = videoDevice.getJPEGFrameGrabber(width, height, 0, 0, 80);
 		frameGrabber.setCaptureCallback(this);
+		try {
+			System.out.println("setting frame rate to 15");
+			frameGrabber.setFrameInterval(1, 15);
+		} catch (Exception e){
+			System.out.println("Couldnt set the frame interval");
+		}
+
 		controlList = videoDevice.getControlList();
 		clients = new Vector<ClientConnection>();
 
@@ -201,8 +210,10 @@ public class CamServer implements Runnable, CaptureCallback{
 					clients.add(new ClientConnection(clientSocket, inStream, outStream));
 
 					// if this is the first client, start the capture
-					if (clients.size() == 1)
+					if (clients.size() == 1) {
+						frameCount = 0;
 						frameGrabber.startCapture();
+					}
 				}
 			} catch (IOException e) {
 				// error connecting with client
@@ -310,6 +321,17 @@ public class CamServer implements Runnable, CaptureCallback{
 			copyClients = new Vector<ClientConnection>(clients);
 		}
 
+		frameCount++;
+		if (frameCount == 1) {
+			lastFrameTimestamp = System.currentTimeMillis();
+		} else {
+			long delta = System.currentTimeMillis() - lastFrameTimestamp;
+			if (delta > 10000) {
+				System.out.println("FPS: " + ((float) (frameCount - 1) * 1000 / delta));
+				frameCount = 0;
+				lastFrameTimestamp = 0;
+			}
+		}
 		// send the frame to each client
 		for(ClientConnection client: copyClients){
 			try {
