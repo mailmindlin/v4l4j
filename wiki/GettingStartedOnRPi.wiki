@@ -29,7 +29,7 @@ sudo apt-get remove openjdk-6-*
 
 Check out a copy of v4l4j:
 {{{
-ant co http://v4l4j.googlecode.com/svn/v4l4j/trunk v4l4j-trunk
+svn co http://v4l4j.googlecode.com/svn/v4l4j/trunk v4l4j-trunk
 cd v4l4j-trunk
 }}}
 
