@@ -1,20 +1,16 @@
 #summary how to cross-compile v4l4j for ARM architectures
 #labels Phase-Deploy
 
-On this page, I will explain how to setup a basic Ubuntu root filesystem that can be used to compile v4l4j for an ARM target, assumed to be running a Debian/Ubuntu OS.
+On this page, I will explain how to setup a basic Ubuntu root filesystem that can be used to compile v4l4j for an ARM target, assumed to be running a Debian/Ubuntu OS. Instructions on this page are taken from [http://www.cnx-software.com/2012/05/02/getting-started-with-multiarch-armel-armhf-in-ubuntu/ here].
 
 These instructions and the resulting binaries have been successfully tested on the following setup:
 Host machine: Ubuntu 12.04 64 bits
 Target machine: Beagle board XM running a GNU EABI ARM Hard-float version of Ubuntu 12.04 (as detailed [http://elinux.org/BeagleBoardUbuntu#Canonical.2FUbuntu_Images here]).
 
 == Creating the chroot environment ==
-Install debootstrap which will create a basic root filesystem:
+Install debootstrap and create a Ubuntu 12.04 Precise root filesystem in `precise-amd64/`:
 {{{
 sudo apt-get install debootstrap
-}}}
-
-Create root filesystem in `precise-amd64/`:
-{{{
 sudo debootstrap --arch=amd64 --variant=buildd precise precise-amd64
 }}}
 
@@ -25,7 +21,7 @@ mount -t proc proc /proc
 }}}
 
 == Setting up the chroot environment ==
-Fix APT source list  file to add ARM hard-float package repository and support multiarch (explained [https://wiki.ubuntu.com/MultiarchSpec here]):
+Fix apt source list file to add ARM hard-float package repository and support multiarch (explained [https://wiki.ubuntu.com/MultiarchSpec here]):
 {{{
 echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu precise main
 deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports precise main universe
@@ -42,7 +38,7 @@ Setup dpkg:
 echo "foreign-architecture armhf" > /etc/dpkg/dpkg.cfg.d/multiarch
 }}}
 
-Prevent APT from installing recommended and suggested packges:
+Prevent apt from installing recommended and suggested packges:
 {{{
 echo 'APT::Install-Recommends "0";
 APT::Install-Suggests "0";' > /etc/apt/apt.conf.d/10local
@@ -54,16 +50,18 @@ echo "exit 101" > /usr/sbin/policy-rc.d
 chmod a+x /usr/sbin/policy-rc.d
 }}}
 
-Install ARM toolchain and headers:
+Install ARM toolchain and Lib C headers:
 {{{
 apt-get update
 apt-get install gcc-arm-linux-gnueabihf libc6-dev-armhf-cross
 }}}
 
+We need `ant` to build v4l4j, and a Java compiler (from `openjdk-6-jdk`). Building v4l4j requires the libjpeg (`libjpeg-turbo8-dev`) and JNI (`openjdk-6-jdk`) header files  
 Install v4l4j build dependencies:
 {{{
 apt-get install ant openjdk-6-jdk libjpeg-turbo8-dev:armhf openjdk-6-jdk:armhf
 }}}
+
 
 == Cross compiling v4l4j ==
 We need to install Subversion so we can check out a copy of the latest v4l4j:
