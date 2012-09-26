@@ -41,13 +41,11 @@ OBJ := jpeg.o v4l4j_FrameGrabber.o v4l4j_ImageFormatList.o \
   v4l4j_DeviceInfo.o v4l4j_VideoDevice.o v4l4j_Control.o v4l4j_Tuner.o \
   v4l4j_ResolutionInfo.o v4l4j_FrameInterval.o
 
-CC := gcc
 INCLUDES := -I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ \
   -I$(LIBVIDEO_PATH) -I$(LIBVIDEO_PATH)/pixfc-sse -I.
-CFLAGS := $(INCLUDES) $(DBG) $(OPTIMISATION) -fPIC
+CFLAGS += $(INCLUDES) $(DBG) $(OPTIMISATION) -fPIC
 
-LD := gcc
-LDFLAGS := -shared -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME)
+LDFLAGS += -shared -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME)
 
 all: $(LIB)
 

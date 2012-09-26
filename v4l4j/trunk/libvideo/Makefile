@@ -88,17 +88,15 @@ OBJ := v4l2-input.o v4l1-input.o libvideo.o pwc-probe.o gspca-probe.o \
   qc-probe.o fps-param-probe.o v4l1-query.o v4l2-query.o v4l1-tuner.o \
   v4l2-tuner.o palettes.o
 
-CC := gcc
-CFLAGS := $(CFLAGS) $(DBG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) \
+CFLAGS += $(DBG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) \
   $(OPTIMISATION) -fPIC -I.
 
-LD := gcc
-LDFLAGS := -lm -lrt -shared -ljpeg $(LDFLAGS)
+LDFLAGS += -lm -lrt -shared -ljpeg
 
 all: $(LIB).$(LIB_RELEASE)
 
 $(LIB).$(LIB_RELEASE): version.h $(OBJ) $(LIBV4LCONVERT_AR)
-	$(LD) $(OBJ) $(LIBV4LCONVERT_AR) $(LIBPIXFC) -Wl,-soname,$(LIB).$(LIB_RELEASE) \
+	$(CC) $(OBJ) $(LIBV4LCONVERT_AR) $(LIBPIXFC) -Wl,-soname,$(LIB).$(LIB_RELEASE) \
   $(LDFLAGS) -o $(LIB).$(LIB_RELEASE)
 	ln -f -s $(LIB).$(LIB_RELEASE) $(LIB)
 
