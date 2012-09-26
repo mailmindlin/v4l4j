@@ -1,0 +1,109 @@
+#summary how to cross-compile v4l4j for ARM architectures
+#labels Phase-Deploy
+
+On this page, I will explain how to setup a basic Ubuntu root filesystem that can be used to compile v4l4j for an ARM target, assumed to be running a Debian/Ubuntu OS.
+
+These instructions and the resulting binaries have been successfully tested on the following setup:
+Host machine: Ubuntu 12.04 64 bits
+Target machine: Beagle board XM running a GNU EABI ARM Hard-float version of Ubuntu 12.04 (as detailed [http://elinux.org/BeagleBoardUbuntu#Canonical.2FUbuntu_Images here]).
+
+== Creating the chroot environment ==
+Install debootstrap which will create a basic root filesystem:
+{{{
+sudo apt-get install debootstrap
+}}}
+
+Create root filesystem in `precise-amd64/`:
+{{{
+sudo debootstrap --arch=amd64 --variant=buildd precise precise-amd64
+}}}
+
+Chroot to `precise-amd64/` and mount `/proc`:
+{{{
+sudo chroot precise-amd64
+mount -t proc proc /proc
+}}}
+
+== Setting up the chroot environment ==
+Fix APT source list  file to add ARM hard-float package repository and support multiarch (explained [https://wiki.ubuntu.com/MultiarchSpec here]):
+{{{
+echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu precise main
+deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports precise main universe
+deb [arch=amd64] http://ppa.launchpad.net/linaro-maintainers/toolchain/ubuntu precise main" > /etc/apt/sources.list
+}}}
+
+Add Linaro Overlay PPA key to keychain
+{{{
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 7BE1F97B
+}}}
+
+Setup dpkg:
+{{{
+echo "foreign-architecture armhf" > /etc/dpkg/dpkg.cfg.d/multiarch
+}}}
+
+Prevent APT from installing recommended and suggested packges:
+{{{
+echo 'APT::Install-Recommends "0";
+APT::Install-Suggests "0";' > /etc/apt/apt.conf.d/10local
+}}}
+
+Ensure no daemon process is started:
+{{{
+echo "exit 101" > /usr/sbin/policy-rc.d
+chmod a+x /usr/sbin/policy-rc.d
+}}}
+
+Install ARM toolchain and headers:
+{{{
+apt-get update
+apt-get install gcc-arm-linux-gnueabihf libc6-dev-armhf-cross
+}}}
+
+Install v4l4j build dependencies:
+{{{
+apt-get install ant openjdk-6-jdk libjpeg-turbo8-dev:armhf openjdk-6-jdk:armhf
+}}}
+
+== Cross compiling v4l4j ==
+We need to install Subversion so we can check out a copy of the latest v4l4j:
+{{{
+apt-get install subversion
+mkdir /root/workspace
+cd /root/workspace
+svn co http://v4l4j.googlecode.com/svn/v4l4j/trunk v4l4j-trunk
+cd v4l4j-trunk
+}}}
+
+Cross compile with:
+{{{
+JDK_HOME=/usr/lib/jvm/java-6-openjdk-armhf LIBPIXFC=pixfc-sse/libpixfc-sse-armv7-hf.a CC=/usr/bin/arm-linux-gnueabihf-gcc LD=${CC} CPPFLAGS="-march=armv7-a -mcpu=cortex-a8 -mfloat-abi=hard -mfpu=vfpv3-d16 -I/usr/include -I/usr/include/arm-linux-gnueabihf" LDFLAGS="-L/usr/lib/arm-linux-gnueabihf" ant clean all
+}}}
+
+== Test on target machine ==
+If the above steps went well, you should now have the 3 binaries `v4l4j.jar`, `libv4l4j.so` and `libvideo/libvideo.so`. Copy them to the target machine:
+ * `v4l4j.jar` and `libv4l4j.so` go wherever you want
+ * `libvideo.so` must go to `/usr/lib/arm-linux-gnueabihf`. Also create a symlink to it with:
+{{{
+sudo ln -s /usr/lib/arm-linux-gnueabihf/libvideo.so /usr/lib/arm-linux-gnueabihf/libvideo.so.0
+}}}
+
+Check that libv4l4j.so can find all its dependencies:
+{{{
+ldd libv4l4j.so 
+}}}
+This prints the shared libraries libv4l4.so depends on, and the output should be similar to :
+{{{
+libjpeg.so.8 => /usr/lib/arm-linux-gnueabihf/libjpeg.so.8 (0x401fc000)
+libvideo.so.0 => /usr/lib/arm-linux-gnueabihf/libvideo.so.0 (0x40237000)
+libc.so.6 => /lib/arm-linux-gnueabihf/libc.so.6 (0x4035d000)
+/lib/ld-linux-armhf.so.3 (0x4001a000)
+libm.so.6 => /lib/arm-linux-gnueabihf/libm.so.6 (0x400ca000)
+librt.so.1 => /lib/arm-linux-gnueabihf/librt.so.1 (0x4006b000)
+libpthread.so.0 => /lib/arm-linux-gnueabihf/libpthread.so.0 (0x40079000)
+}}}
+
+Test v4l4j:
+{{{
+java -cp ./v4l4j.jar -Djava.library.path=. au.edu.jcu.v4l4j.examples.DumpInfo
+}}}
