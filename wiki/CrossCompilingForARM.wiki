@@ -1,17 +1,25 @@
 #summary how to cross-compile v4l4j for ARM architectures
 #labels Phase-Deploy
+#sidebar v4l4jSideBar
 
 On this page, I will explain how to setup a basic Ubuntu root filesystem that can be used to compile v4l4j for an ARM target, assumed to be running a Debian/Ubuntu OS. Instructions on this page are taken from [http://www.cnx-software.com/2012/05/02/getting-started-with-multiarch-armel-armhf-in-ubuntu/ here].
 
 These instructions and the resulting binaries have been successfully tested on the following setup:
-Host machine: Ubuntu 12.04 64 bits
-Target machine: Beagle board XM running a GNU EABI ARM Hard-float version of Ubuntu 12.04 (as detailed [http://elinux.org/BeagleBoardUbuntu#Canonical.2FUbuntu_Images here]).
+|| *Host machine* || *Target machine* || 
+|| Ubuntu 12.04 - 64 bit || Beagle board XM - Ubuntu 12.04 GNU EABI armv7-a hard float (as detailed [http://elinux.org/BeagleBoardUbuntu#Canonical.2FUbuntu_Images here]) ||
+|| Ubuntu 12.04 - 64 bit || RaspberryPi - Wheezy 2012-09-18 GNU EABI armv6l hard float (available [http://downloads.raspberrypi.org/images/raspbian/2012-09-18-wheezy-raspbian/2012-09-18-wheezy-raspbian.zip here]) ||
 
 == Creating the chroot environment ==
 Install debootstrap and create a Ubuntu 12.04 Precise root filesystem in `precise-amd64/`:
 {{{
 sudo apt-get install debootstrap
 sudo debootstrap --arch=amd64 --variant=buildd precise precise-amd64
+}}}
+
+*If cross-compiling for RaspberryPi*, download the cross-compiler and copy it to the root filesystem:
+{{{
+sudo git clone https://github.com/raspberrypi/tools.git /opt/rpi-xtools
+sudo cp -r /opt/rpi-xtools precise-amd64/opt
 }}}
 
 Chroot to `precise-amd64/` and mount `/proc`:
@@ -62,6 +70,10 @@ Install v4l4j build dependencies:
 apt-get install ant openjdk-6-jdk libjpeg-turbo8-dev:armhf openjdk-6-jdk:armhf
 }}}
 
+*If cross-compiling for RaspberryPi*, the cross-compiler needs some extra packages to work (taken from [http://www.raspberrypi.org/phpBB3/viewtopic.php?f=33&t=8758 this post]). Install them with:
+{{{
+apt-get install lib32z1 apt-utils libc6-i386 lib32stdc++6
+}}}
 
 == Cross compiling v4l4j ==
 We need to install Subversion so we can check out a copy of the latest v4l4j:
@@ -73,9 +85,14 @@ svn co http://v4l4j.googlecode.com/svn/v4l4j/trunk v4l4j-trunk
 cd v4l4j-trunk
 }}}
 
-Cross compile with:
+Cross compile for BeagleBoard with:
 {{{
 JDK_HOME=/usr/lib/jvm/java-6-openjdk-armhf LIBPIXFC=pixfc-sse/libpixfc-sse-armv7-hf.a CC=/usr/bin/arm-linux-gnueabihf-gcc LD=${CC} CPPFLAGS="-march=armv7-a -mcpu=cortex-a8 -mfloat-abi=hard -mfpu=vfpv3-d16 -I/usr/include -I/usr/include/arm-linux-gnueabihf" LDFLAGS="-L/usr/lib/arm-linux-gnueabihf" ant clean all
+}}}
+
+Cross compile for RaspberryPi with:
+{{{
+JDK_HOME=/usr/lib/jvm/java-6-openjdk-armhf LIBPIXFC=pixfc-sse/libpixfc-sse-armv6l-hardfp.a CC=/opt/rpi-xtools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin/arm-linux-gnueabihf-gcc LD=${CC} CPPFLAGS="-mcpu=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp -I/usr/include -I/usr/include/arm-linux-gnueabihf" LDFLAGS="-L/usr/lib/arm-linux-gnueabihf" ant clean all
 }}}
 
 == Test on target machine ==
@@ -105,3 +122,11 @@ Test v4l4j:
 {{{
 java -cp ./v4l4j.jar -Djava.library.path=. au.edu.jcu.v4l4j.examples.DumpInfo
 }}}
+
+Run the v4l4j MJPEG server app:
+{{{
+java -cp ./v4l4j.jar -Djava.library.path=. au.edu.jcu.v4l4j.examples.server.CamServer
+}}}
+and using your browser, connect to it at `http://rpi_ip_address:8080`.
+
+With an JPEG-capable webcam (Logitech Quickcam Orbit/Sphere AF), I get a solid 15 frames per second, with a CPU idle percentage around 85%.
