@@ -1,0 +1,78 @@
+#summary how to build and install v4l4j from source on Intel platforms
+#sidebar v4l4jSideBar
+
+This page explains how to download v4l4j's source code, compile it and install it.
+
+= Quick install guide =
+  * Either download the latest stable tarball from [http://code.google.com/p/v4l4j/downloads/list Downloads tab] above, or checkout the code from Subversion using
+{{{
+svn co http://v4l4j.googlecode.com/svn/v4l4j/trunk v4l4j
+}}}
+  * Install build pre-requisites:
+    * Sun JDK or OpenJDK (version 6 or up),
+    * libjpeg-turbo (or libjpeg if libjpeg-turbo is unavailable) *and its header files*,
+    * development tools (gcc, make) & header files, and
+    * Apache ant 
+  * Set the `JDK_HOME` environment variable point to where the JDK is installed. You can also edit `JDK_HOME` at the top of `v4l4j/src/Makefile`.
+  * Compile and install with `cd v4l4j && ant clean all && sudo ant install`
+
+
+If anything goes wrong or for more info on each step, read on. Otherwise, jump to [TestingV4l4j the testing section].
+
+=Download=
+Choose one of the following method to download v4l4j:
+ * From source: The latest stable version of v4l4j is available as a tar archive from the [http://code.google.com/p/v4l4j/downloads/list Downloads tab].
+ * Latest SVN snapshot: the latest snapshot of v4l4j can be downloaded using:
+{{{
+svn co http://v4l4j.googlecode.com/svn/v4l4j/trunk v4l4j
+}}}
+
+=Requirements=
+v4l4j requires the following:
+ * a supported V4L video source (webcam, capture card, tuner card). 
+ * Sun JAVA JDK 1.6 or OpenJDK6 (it wont compile with earlier versions and it *must* be a JDK !!!). Install the JDK somewhere and note the location.
+ * the development files of libjpeg, as well as libjpeg itself. It is recommended to use libjpeg-turbo if available.
+ * make, gcc and Apache Ant (to build the classes and JNI library).
+
+In Ubuntu Precise 12.04 (and later), use:
+{{{
+sudo apt-get install libjpeg-turbo8-dev openjdk-6-jdk build-essential ant
+}}}
+
+In Debian and Ubuntu prior to Precise, these can be installed with:
+{{{
+sudo apt-get install libjpeg-dev openjdk-6-jdk build-essential ant
+}}}
+
+
+On Mandriva 2010, use:
+{{{
+sudo urpmi make ant libjpeg-devel gcc
+}}}
+
+=Build=
+First, make sure that you have all the dependencies installed (see previous [SourceInstall#Requirements requirements] paragraph). To compile v4l4j, run `ant all` in the v4l4j top-level directory. This will first compile the libvideo shared library and the JNI library libv4l4j.so. It will then compile the java classes and pack them in a JAR file. Both the JNI library libv4l4j.so and the JAR file v4l4j.jar are copied in the top-level directory. libvideo is NOT copied in the top-level directory and remains in libvideo/ .
+If you get this error:
+{{{
+v4l4j_FrameGrabber.c:25:17: error: jni.h: No such file or directory
+}}}
+the JDK_HOME environment variable is not set or does not point to a valid JDK. Set it to the directory where you previously installed the JDK and try again.
+For example, on Mandriva, use `JDK_HOME=/usr/lib/jvm/java ant all`
+
+If you get this error:
+{{{
+v4l4j_FrameGrabber.c:27:21: error: jpeglib.h: No such file or directory
+}}}
+you have not installed the development files on libjpeg. See the previous paragraph on how to fix this.
+
+The JavaDoc can be generated with `ant javadoc` and is located in doc/.
+
+=Installing=
+v4l4j can be installed by:
+ * running `sudo ant install`. This will copy libvideo's shared library in /usr/lib , the JNI library libv4l4j.so in /usr/lib/jni and v4l4j's JAR file in /usr/share/java. Any of these paths can be changed by modifying the right property in build.properties .
+ * Make sure you run `sudo ldconfig` so libvideo's shared library is added to the cache.
+
+You can later on uninstall v4l4j using `sudo ant uninstall`
+
+
+Once you have successfully installed v4l4j, head to [TestingV4l4j this page] to test your v4l4j installation.
