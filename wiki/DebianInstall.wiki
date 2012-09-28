@@ -28,6 +28,8 @@ sudo apt-get udpate
 sudo apt-get install libv4l4j-java
 }}}
 
+Next, head over to [TestingV4l4j the testing page] to ensure v4l4j works as it should.
+
 == Manual download ==
 The latest packages are available on the [https://launchpad.net/~gillesg/+archive/ppa/+packages Launchpad PPA page].
   * Download the latest versions of libvideo0 and libv4l4j-java. You need at least these two packages.
@@ -42,6 +44,9 @@ sudo dpkg -i libvideo0_XXX.deb libv4l4j-java_XXX.deb
 sudo apt-get install jarwrapper realpath
 sudo dpkg -i libv4l4j-bin_XXX.deb
 }}}
+
+Next, head over to [TestingV4l4j the testing page] to ensure v4l4j works as it should.
+
 
 = Debian =
 Follow the [DebianInstall#Manual_download manual download] section
