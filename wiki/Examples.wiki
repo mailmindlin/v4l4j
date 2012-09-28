@@ -3,19 +3,28 @@
 #sidebar v4l4jSideBar
 
 This page shows a few examples in Java on how to use v4l4j. It assumes you have successfully compiled and installed v4l4j (see GettingStarted page for detailed instructions). Here, video source refers to any video-capture device supported by the Linux kernel, and accessible through the Video4Linux API using the associated device file (usually /dev/video0). The v4l4j API has many more methods and classes than presented here. Be sure to check the Java documentation for a complete reference.
-Below, you will find the following examples:
+Below, you will find information on:
+ * *JVM arguments*: the arguments you must pass to the JVM to use v4l4j.
  * *Initialising the video device*: Creating a java object to interact with a video device.
  * *Gathering information about the device*: finding out the number of inputs, tuners, supported image formats, supported capture resolutions and lots more.
  * *Dealing with controls*: List the controls associated with a video device and get / set their values.
  * *Capturing frames*: Getting a `FrameGrabber` object to capture images from the video device.
  * *Display video in a GUI (JFrame)*: Create a graphical interface (JFrame) to display the captured video stream.
  * *Integrate v4l4j with other frameworks*: head over to [v4l4jIntegration this page] for more examples on how to use v4l4j with other APIs and frameworks.
-You can find complete example applications in the `au.edu.jcu.v4l4j.examples` package. The webcam server application encodes a video stream in MJPEG and send it over the network to clients, which include web broswsers, VLC and ffplay. The VideoViewer application simply displays a video stream in a JFrame (screenshot below).
+You can find complete example applications in the `au.edu.jcu.v4l4j.examples` package. The webcam server application encodes a video stream in MJPEG and send it over the network to clients, which include web broswsers, VLC and ffplay. The VideoViewer application simply displays a video stream in a JFrame 
 
-<img src="http://v4l4j.googlegroups.com/web/test-gui.jpg" width="640">
+= JVM arguments =
+In order to use v4l4j in your own application, you must tell the JVM:
+  * where to find `v4l4j.jar`. This is usually done via the `-cp` or `-classpath` argument, and
+  * where to find the v4l4j JNI library (named `libv4l4j.so`).
+Both of the above can be done by passing the following arguments to the JVM:
+{{{
+-Djava.library.path=/usr/lib/jni -cp /usr/share/java/v4l4j.jar
+}}}
+Of course, modify the above paths if you have changed the default installation directories.
 
 = Initialising the video device =
-All interactions with a video device are done using a `VideoDevice` object. To instantiate one, you simply needs its device file:
+All interactions with a video device are done using a `VideoDevice` object. To instantiate one, you simply need its device file:
 {{{
 String dev = "/dev/video0";
 VideoDevice vd = new VideoDevice(dev);
