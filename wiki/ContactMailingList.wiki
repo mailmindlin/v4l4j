@@ -1,4 +1,5 @@
 #summary how to contacting the mailing list
+#sidebar v4l4jSideBar
 
 If you encountered a bug / crash while using v4l4j, you need to install the debugging version of v4l4j as explained below before. 
 
