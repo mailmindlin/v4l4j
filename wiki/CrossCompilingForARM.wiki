@@ -129,4 +129,4 @@ java -cp ./v4l4j.jar -Djava.library.path=. au.edu.jcu.v4l4j.examples.server.CamS
 }}}
 and using your browser, connect to it at `http://rpi_ip_address:8080`.
 
-With an JPEG-capable webcam (Logitech Quickcam Orbit/Sphere AF), I get a solid 15 frames per second, with a CPU idle percentage around 85%.
+Next, head to the [TestingV4l4j testing page].
