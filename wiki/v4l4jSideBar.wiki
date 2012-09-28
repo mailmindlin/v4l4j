@@ -5,7 +5,7 @@
     * [CrossCompilingForARM Cross-compile v4l4j]
   * [TestingV4l4j Use sample apps to test/learn v4l4j]
   * [Examples Program with v4l4j]
-  * [v4l4jIntegration Integrate v4l4j with other APIs]
+  * [v4l4jIntegration Integrate with other APIs]
   * FAQ
     * [TestedHardware Tested hardware]
     * [Troubleshooting Solve common issues]
