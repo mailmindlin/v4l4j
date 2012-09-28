@@ -1,0 +1,36 @@
+#summary Test v4l4j performance
+#sidebar v4l4jSideBar
+
+This page lists example applications shipped with v4l4j. They can be used as a basis to learn how to use v4l4j and also to make sure it is correctly installed and performs well. Once you have successfully tested v4l4j, [Examples this page] shows how to use v4l4j in your own application.
+
+*Make sure you have installed v4l4j (as explained [GettingStarted here]).*
+
+The following example applications are included in v4l4j (in the `au.edu.jcu.v4l4j.examples` package):
+ * `ant deviceInfo` is the simplest of the sample apps and it just prints information about the video device itself. 
+ * `ant test-fps` captures frames for 10 seconds and print the frame rate. It is useful to determine the highest achievable frame rate for a given resolution and capture format.
+ * `ant test-gui` displays the video stream in a window.
+ * `ant test-server` starts a video server. The server waits until a client connects, and then sends the captured video as an MJPEG compressed stream. The following clients can connect to the server:
+   * a web browser using this url: `http://ip_address_of_server:8080`. The available controls are also displayed on the web page,
+   * ffplay using `ffplay -f mjpeg http://ip_address_of_server:8080/stream`
+   * VLC by opening the network stream at `http://ip_address_of_server:8080/stream`
+ * `ant test-dual` will only run if you have two video devices connected and will display both video streams side by side in a JFrame.
+ * `ant test-getsnapshot` takes a snapshot from a video device and displays it.
+
+
+By default, these tests will use /dev/video0 as the video device (assumed to be a webcam), and the capture resolution is set to 640x480 . You can change any of these settings by editing the values at the end of the `build.properties` file, or provide those values on the ant command line:
+  * `-Dtest.device=` changes the video device,
+  * `-Dtest.width=` changes the width of captured frames,
+  * `-Dtest.height=` changes the height of captured frames,
+  * `-Dtest.channel=` changes the input used for capture (0 for webcams),
+  * `-Dtest.standard=` changes the video standard used during capture (0 for webcams, 1 for PAL, 2 for SECAM and 3 for NTSC).
+  * `-Dtest.inFormat=` changes the capture image format, ie the format images are captured in from Video4Linux (used only by `ant test-fps`). The value must be an image format supported by your video device, as listed in `ant deviceInfo`.
+  * `-Dtest.outFormat=` changes the output image format, ie the format image will be in when handed out by v4l4j (used only by `ant test-fps`). Acceptable values are:
+    * 0: raw format - v4l4j will not do any format conversion and images will be handed out in their original capture format.
+    * 1: JPEG format 
+    * 2: RGB24 format
+    * 3: BGR24 format
+    * 4: YUV420 format
+    * 5: YVU420 format
+  * `-Dtest.fps=` sets the frame rate to the given value, assuming 1) your driver supports adjusting the capture frame, 2) the given value is correct. An error message will be printed if either condition is not met.
+
+If you have just installed and successfully tested, head to [Examples this page] to learn how to use v4l4j in your own application.
