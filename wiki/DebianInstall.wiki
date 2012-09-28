@@ -1,5 +1,4 @@
 #summary how to install v4l4j Debian packages
-#labels Featured
 #sidebar v4l4jSideBar
 
 v4l4j is made of four Debian packages:
