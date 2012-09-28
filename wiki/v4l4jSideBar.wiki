@@ -2,7 +2,7 @@
     * [DebianInstall Install Ubuntu/Debian packages]
     * [SourceInstall Build/install from source]
     * [GettingStartedOnRPi Build v4l4j on RPi]
-    * [CrossCompilingForARM Cross-compile v4l4j]
+    * [CrossCompilingForARM Cross-compile v4l4j for ARM]
   * [TestingV4l4j Use sample apps to test/learn v4l4j]
   * [Examples Program with v4l4j]
   * [v4l4jIntegration Integrate with other APIs]
