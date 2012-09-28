@@ -43,9 +43,9 @@ JDK_HOME=/usr/lib/jvm/java-7-openjdk-armhf/ LIBPIXFC=pixfc-sse/libpixfc-sse-armv
 JDK_HOME=/usr/lib/jvm/java-7-openjdk-armel/ LIBPIXFC=pixfc-sse/libpixfc-sse-armv6l-softfp.a ant clean all
 }}}
 
-If the build went well, install and test with:
+If the build went well, install with:
 {{{
 sudo ant install
-ant test-fps
 }}}
-More testing apps are available as explained [GettingStarted#Testing here].
+
+Next, head to the [TestingV4l4j testing page].
