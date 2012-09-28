@@ -1,23 +1,57 @@
 #summary Test v4l4j performance
 #sidebar v4l4jSideBar
 
-This page lists example applications shipped with v4l4j. They can be used as a basis to learn how to use v4l4j and also to make sure it is correctly installed and performs well. Once you have successfully tested v4l4j, [Examples this page] shows how to use v4l4j in your own application.
+This page lists example applications shipped with v4l4j. In order to run them, make sure you have installed v4l4j first (as explained [GettingStarted here]). These sample apps can be used as a basis to learn how to use v4l4j and also to make sure it is correctly installed and performs well. Once you have successfully tested v4l4j with these apps, [Examples this page] shows how to use v4l4j in your own application.
 
-*Make sure you have installed v4l4j (as explained [GettingStarted here]).*
+The following example applications are included in v4l4j. For each app, *two commands are shown: use the first one if you have installed v4l4j from source and you are in the v4l4j source directory. Otherwise, use the second one.*
+ * `au.edu.jcu.v4l4j.examples.DumpInfo` is the simplest of the sample apps and it just prints information about the video device itself.
+{{{
+ant deviceInfo
+}}} 
+{{{
+java -cp /usr/share/java/v4l4j.jar -Djava.library.path=/usr/lib/jni au.edu.jcu.v4l4j.examples.DumpInfo
+}}}
+ * `au.edu.jcu.v4l4j.examples.GetFrameRate` captures frames for 10 seconds and print the frame rate. It is useful to determine the highest achievable frame rate for a given resolution and capture format.
+{{{
+ant test-fps
+}}}
+{{{
+java -cp /usr/share/java/v4l4j.jar -Djava.library.path=/usr/lib/jni au.edu.jcu.v4l4j.examples.GetFrameRate
+}}}
+ * `au.edu.jcu.v4l4j.examples.videoViewer.DeviceChooser` displays the video stream in a window.
+{{{
+ant test-gui
+}}}
+{{{
+java -cp /usr/share/java/v4l4j.jar -Djava.library.path=/usr/lib/jni au.edu.jcu.v4l4j.examples.videoViewer.DeviceChooser
+}}}
 
-The following example applications are included in v4l4j (in the `au.edu.jcu.v4l4j.examples` package):
- * `ant deviceInfo` is the simplest of the sample apps and it just prints information about the video device itself. 
- * `ant test-fps` captures frames for 10 seconds and print the frame rate. It is useful to determine the highest achievable frame rate for a given resolution and capture format.
- * `ant test-gui` displays the video stream in a window.
- * `ant test-server` starts a video server. The server waits until a client connects, and then sends the captured video as an MJPEG compressed stream. The following clients can connect to the server:
+ * `au.edu.jcu.v4l4j.examples.server.CamServer` starts a video server. The server waits until a client connects, and then sends the captured video as an MJPEG compressed stream. The following clients can connect to the server:
    * a web browser using this url: `http://ip_address_of_server:8080`. The available controls are also displayed on the web page,
    * ffplay using `ffplay -f mjpeg http://ip_address_of_server:8080/stream`
    * VLC by opening the network stream at `http://ip_address_of_server:8080/stream`
- * `ant test-dual` will only run if you have two video devices connected and will display both video streams side by side in a JFrame.
- * `ant test-getsnapshot` takes a snapshot from a video device and displays it.
+{{{
+ant test-server
+}}}
+{{{
+java -cp /usr/share/java/v4l4j.jar -Djava.library.path=/usr/lib/jni au.edu.jcu.v4l4j.examples.server.CamServer
+}}}
+ * `au.edu.jcu.v4l4j.examples.DualViewer` will only run if you have two video devices connected and will display both video streams side by side in a JFrame.
+{{{
+ant test-dual
+}}}
+{{{
+java -cp /usr/share/java/v4l4j.jar -Djava.library.path=/usr/lib/jni au.edu.jcu.v4l4j.examples.DualViewer
+}}}
+ * `au.edu.jcu.v4l4j.examples.GetSnapshotApp` takes a snapshot from a video device and displays it.
+{{{
+ant test-getsnapshot
+}}}
+{{{
+java -cp /usr/share/java/v4l4j.jar -Djava.library.path=/usr/lib/jni au.edu.jcu.v4l4j.examples.GetSnapshotApp
+}}}
 
-
-By default, these tests will use /dev/video0 as the video device (assumed to be a webcam), and the capture resolution is set to 640x480 . You can change any of these settings by editing the values at the end of the `build.properties` file, or provide those values on the ant command line:
+By default, these apps will use /dev/video0 as the video device (assumed to be a webcam), and the capture resolution is set to 640x480 . You can change any of these settings by editing the values at the end of the `build.properties` file (if you downloaded v4l4j from source), or by providing those values on the command line:
   * `-Dtest.device=` changes the video device,
   * `-Dtest.width=` changes the width of captured frames,
   * `-Dtest.height=` changes the height of captured frames,
