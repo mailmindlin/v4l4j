@@ -1,5 +1,4 @@
 #summary solve common issues when using v4l4j
-#labels Featured
 #sidebar v4l4jSideBar
 
 = Introduction =
