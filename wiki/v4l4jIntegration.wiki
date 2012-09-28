@@ -1,5 +1,5 @@
 #summary Integrating v4l4j with existing frameworks
-#labels Featured
+#sidebar v4l4jSideBar
 
 On this page, you will find sample code showing how to integrate v4l4j with other video-related frameworks and APIs
 
