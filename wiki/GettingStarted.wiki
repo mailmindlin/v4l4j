@@ -1,121 +1,22 @@
-#summary a step-by-step guide to downloading & installing v4l4j
+#summary a step-by-step guide to downloading & installing v4l4j on various platforms. START HERE !
 #labels Featured
 #sidebar v4l4jSideBar
-=Quick Start Guide=
-For the impatient, here are a few instructions that will get you started:
- * If you want to install v4l4j on a Raspberry Pi, then head to [GettingStartedOnRPi this page].
- * If you are using Ubuntu or Debian, check [DebianInstall this page to install v4l4j Debian packages]. After that, you can run a test application with 
-{{{
-java -cp /usr/share/java/v4l4j.jar -Djava.library.path=/usr/lib/jni au.edu.jcu.v4l4j.examples.videoViewer.DeviceChooser
-}}}
-(more examples apps can be found in the `au.edu.jcu.v4l4j.examples` package)
- * Otherwise, use the following these steps to install from source:
-   * Either download the latest stable tarball from [http://code.google.com/p/v4l4j/downloads/list Downloads tab] above, or the latest SVN version using
-{{{
-svn co http://v4l4j.googlecode.com/svn/v4l4j/trunk v4l4j
-}}}
-   * Install Sun JDK6 or OpenJDK6, libjpeg and development files & Apache ant 
-   * Make sure your JDK_HOME environment variable is set and points to where the JDK is installed. You can also edit `JDK_HOME` at the top of v4l4j/src/Makefile.
-   * Run `ant clean all` to compile v4l4j.
-   * Run `sudo ant install` to install v4l4j (it can be uninstalled later on with `sudo ant uninstall`).
-   * Run a test application with `ant test-gui` (see the [GettingStarted#Testing testing section] for more test apps).
 
-The test application displays a video stream from /dev/video0 by default. To use another video device, add `-Dtest.device=/dev/videoXX`. If things go wrong, then read on. Otherwise, jump to [GettingStarted#Installing the install section] to include v4l4j in your own application.
+Getting started with v4l4j is easy. The next set of pages will walk you through the steps to install and test v4l4j. After that, read about the v4l4j API and start using it !
 
-=Download=
-Choose one of the following method to download v4l4j:
- * *Latest stable version*
-   * Debian packages: [DebianInstall This page] explains how to install v4l4j from Debian packages.
-   * From source: The latest stable version of v4l4j is available as a tar archive from the [http://code.google.com/p/v4l4j/downloads/list Downloads tab].
- * *Latest SVN snapshot*
-The latest snapshot of v4l4j can be downloaded using:
-{{{
-svn co http://v4l4j.googlecode.com/svn/v4l4j/trunk v4l4j
-}}}
-
-=Requirements=
-v4l4j requires the following:
- * a supported V4L video source (webcam, capture card, tuner card). 
- * Sun JAVA JDK 1.6 or OpenJDK6 (it wont compile with earlier versions and it *must* be a JDK !!!). Install the JDK somewhere and note the location.
- * the development files of libjpeg, as well as libjpeg itself. It is recommended to use libjpeg-turbo if available.
- * make, gcc and Apache Ant (to build the classes and JNI library).
-
-In Debian and Ubuntu prior to Precise, these can be installed with:
-{{{
-sudo apt-get install libjpeg-dev openjdk-6-jdk build-essential ant
-}}}
-
-In Ubuntu Precise, use:
-{{{
-sudo apt-get install libjpeg-turbo8-dev openjdk-6-jdk build-essential ant
-}}}
-
-On Mandriva 2010, use:
-{{{
-sudo urpmi make ant libjpeg-devel gcc
-}}}
-
-=Build=
-First, make sure that you have all the dependencies installed (see previous [GettingStarted#Requirements requirements] paragraph). To compile v4l4j, run `ant all` in the top-level directory. This will first compile the libvideo shared library and the JNI library libv4l4j.so. It will then compile the java classes and pack them in a JAR file. Both the JNI library libv4l4j.so and the JAR file v4l4j.jar are copied in the top-level directory. libvideo is NOT copied in the top-level directory and remains in libvideo/ .
-If you get this error:
-{{{
-v4l4j_FrameGrabber.c:25:17: error: jni.h: No such file or directory
-}}}
-the JDK_HOME environment variable is not set or does not point to a valid JDK. Set it to the directory where you previously installed the JDK and try again.
-For example, on Mandriva, use `JDK_HOME=/usr/lib/jvm/java ant all`
-
-If you get this error:
-{{{
-v4l4j_FrameGrabber.c:27:21: error: jpeglib.h: No such file or directory
-}}}
-you have not installed the development files on libjpeg. See the previous paragraph on how to fix this.
-
-The JavaDoc can be generated with `ant javadoc` and is located in doc/.
-
-=Installing=
-v4l4j can be installed by:
- * running `sudo ant install`. This will copy libvideo's shared library in /usr/lib , the JNI library libv4l4j.so in /usr/lib/jni and v4l4j's JAR file in /usr/share/java. Any of these paths can be changed by modifying the right property in build.properties .
- * Make sure you run `sudo ldconfig` so libvideo's shared library is added to the cache.
+=== Install on Intel platforms ===
+You have two options:
+  * You can take the easy route and install the Debian/Ubuntu v4l4j packages in just a few commands. [DebianInstall This page] shows you how.
+  * The less-easy option: manually download the source code, build it and install it. Instructions are on [SourceInstall this page].
 
 
-In order to use the v4l4j package from your own Java application, pass the following arguments to the JVM:
-"-Djava.library.path=/usr/lib/jni -cp /usr/share/java/v4l4j.jar" (modify the above values if you have changed the default installation directories).
+=== Install on ARM platforms ===
+*v4l4j support for ARM platforms is still experimental* and currently limited to the two ARM devices I own: a [http://raspberrypi.org RaspberryPi] and a [http://beagleboard.org BeagleBoard XM]. Here again, you have two options:
+  * Build v4l4j on the target itself. Instructions for the RPi can be found [GettingStartedOnRPi here].
+  * Cross-compile v4l4j and copy it to the target. Instructions for cross-compiling for RPi and BeagleBoard XM can be found [CrossCompilingForARM here] 
 
+=== Testing ===
+Once you have successfully installed v4l4j, you can test it as explained [TestingV4l4j on this page].
 
-You can later on uninstall v4l4j using `sudo ant uninstall`
-
-=Testing=
-In order to use the following example applications, make sure you first install
-v4l4j (see above section). Many example applications are shipped with v4l4j:
- * `ant test-fps` captures frames for 10 seconds and print the frame rate.
- * `ant test-gui` displays the video stream in a window.
- * `ant test-server` starts a video server. The video stream and control list can be accessed via:
-   * a web browser using this url: `http://ip_address_of_server:8080`,
-   * ffplay using `ffplay -f mjpeg http://ip_address_of_server:8080/stream`
-   * VLC by opening the network stream at `http://ip_address_of_server:8080/stream`
- * `ant deviceInfo` prints information about the video device itself.
- * `ant test-dual` will only run if you have two video devices connected and will display both video streams side by side in a JFrame.
- * `ant test-getsnapshot` will take a snapshot from a video device and will display it.
-
-
-By default, these tests will use /dev/video0 as the video device (assumed to be a webcam), and the capture resolution is set to 640x480 . You can change any of these settings by editing the values at the end of the "build.properties" file, or provide those values on the ant command line:
-  * `-Dtest.device=` changes the video device,
-  * `-Dtest.width=` changes the width of captured frames,
-  * `-Dtest.height=` changes the height of captured frames,
-  * `-Dtest.channel=` changes the input used for capture (0 for webcams),
-  * `-Dtest.standard=` changes the video standard used during capture (0 for webcams, 1 for PAL, 2 for SECAM and 3 for NTSC).
-  * `-Dtest.inFormat=` changes the capture image format, ie the format images are captured in from Video4Linux (used only by `ant test-fps`). The value must be an image format supported by your video device, as listed in `ant deviceInfo`.
-  * `-Dtest.outFormat=` changes the output image format, ie the format image will be in when handed out by v4l4j (used only by `ant test-fps`). Acceptable values are:
-    * 0: raw format - v4l4j will not do any format conversion and images will be handed out in their original capture format.
-    * 1: JPEG format 
-    * 2: RGB24 format
-    * 3: BGR24 format
-    * 4: YUV420 format
-    * 5: YVU420 format
-  * `-Dtest.fps=` sets the frame rate to the given value, assuming 1) your driver supports adjusting the capture frame, 2) the given value is correct. An error message will be printed if either condition is not met.
-
-=Debugging=
-*First, if you have already installed v4l4j then uninstall it*, otherwise the previous jar file & libraries (without debug statements) may take precedence over the new ones. Then, compile v4l4j to produce extra debug output, useful to troubleshoot issues, with `ant clean all-debug`. Install it with `sudo ant install`. Also, check the the [Troubleshooting troubleshooting page] for help on solving common issues.
-
-=Issues=
-Feedback is is greatly appreciated to expand the list of platforms and video devices v4l4j has been successfully tested with. Feedback, issues and queries can be emailed to the [http://groups.google.com/group/v4l4j v4l4j mailing list] along with a description of what went wrong (or right) and what hardware you run v4l4j on. Before posting, check the [Troubleshooting troubleshooting] page for more information.
+=== v4l4j API ===
+You can read about the main v4l4j classes are presented on [Examples this page], and have a look at the many example applications that come with v4l4j (listed [TestingV4l4j here]). The javadoc can be found [http://v4l4j.googlecode.com/svn/www/v4l4j-api/index.html here].
