@@ -1,7 +1,7 @@
   * [GettingStarted Get started with v4l4j]
     * [DebianInstall Install Ubuntu/Debian packages]
     * [SourceInstall Build/install from source]
-    * [GettingStartedOnRPi v4l4j on RaspbarryPi]
+    * [GettingStartedOnRPi Build v4l4j on RPi]
     * [CrossCompilingForARM Cross-compile v4l4j]
   * [TestingV4l4j Use sample apps to test/learn v4l4j]
   * [Examples Program with v4l4j]
