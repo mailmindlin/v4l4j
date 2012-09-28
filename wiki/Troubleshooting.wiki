@@ -1,9 +1,9 @@
-#summary How to troubleshoot v4l4j issues and ask for help.
+#summary solve common issues when using v4l4j
 #labels Featured
 #sidebar v4l4jSideBar
 
 = Introduction =
-This page details some of the issues you may come across when using v4l4j. You will find answers to the following questions:
+This page details some of the common issues you may come across when using v4l4j. You will find answers to the following questions:
 
 *Compilation issues*<br>
 [#Missing_headers I get an error at compile time about `jni.h` or `jpeglib.h` not found. What do I do ?]
@@ -17,8 +17,10 @@ This page details some of the issues you may come across when using v4l4j. You w
 *JVM crash*<br>
 [#SegFault When using v4l4j, the JVM crashes. What shall I do ?]
 
-The v4l4j mailing list is available at http://groups.google.com/group/v4l4j . You have the option to join the list if you want to get updates delivered to your email address. Otherwise, you have to keep checking the web page to read new posts. If you have a question which is not mentioned on this page, search the mailing list first to make sure it has no been answered already. If it has not, then go ahead and post your question. The email alias of the v4l4j mailing list (where you should send your posts) is v4l4j AT googlegroups DOT com .
+If you cannot find an answer to your question or if you need more help solving an issue, head to [ContactMailingList this page] to contact the mailing list.
 
+
+<br>
 = Compilation issues =
 
 ==Missing headers==
@@ -37,7 +39,10 @@ If you get this error:
 {{{
 v4l4j_FrameGrabber.c: error: jni.h: No such file or directory
 }}}
-then edit v4l4j/src/Makefile and change the top line `JDK_HOME=/usr/lib/jvm/java-6-sun` to point to the directory where you the JDK is installed.
+then set the `JDK_HOME` environment variable to point to the directory where you the JDK is installed. For instance 
+{{{
+set JDK_HOME="/usr/lib/jvm/java" ant clean all
+}}}
 
 If you get this error:
 {{{
@@ -45,21 +50,7 @@ v4l4j_FrameGrabber.c: error: jpeglib.h: No such file or directory
 }}}
 you have not installed the development files on libjpeg. It is usually a matter of installing the proper package. In Ubuntu / Debian, it is called `libjpeg-dev`, on OpenSuse / Fedora Core `libjpeg-devel`, on Mandriva `libjpeg62-dev`.
 
-If you have completed the previous steps but compilation still fails, do the following in the v4l4j directory:
-
-`uname -a > failed_compile 2>&1`
-
-`gcc --version >> failed_compile 2>&1`
-
-`java -version >> failed_compile 2>&1`
-
-`ant clean test-fps >> failed_compile 2>&1`
-
-`tar -jcf failed_compile.tar.bz2 failed_compile`
-
-Send a post on the mailing list and attach the `failed_compile.tar.bz2` file generated with the above commands. See introduction paragraph above for more information on how to access the mailing list.
-
-=Running issues=
+=Runtime issues=
 
 ==JNI Library issues==
 *Question:*
@@ -74,14 +65,11 @@ Exception in thread "main" java.lang.UnsatisfiedLinkError: no v4l4j in java.libr
 }}}
 
 *Answers*:
-  * Have you compiled the JNI library ?
-Run `ant clean all` in the v4l4j directory.
+  * Have you compiled and installed the JNI library (`libv4l4j.so`) ?
+Run `ant clean all && sudo ant install` in the v4l4j directory.
 
-  * Is the JNI library either in the library path or installed in the JRE standard library loction ?
-Do one of the following:<br>
-Setup the library path variable to point to the directory where the JNI library resides, with `-Djava.library.path=` .  <br>
-OR<br>
-Run `sudo ant install-jnilib` (or `ant install-jnilib64` for AMD64) to install the JNI library in the standard location the JRE expects to find it.
+  * Is the JNI library in the JVM library path ?
+Make sure you tell the JVM where to find the v4l4j JNI library (`libv4l4j.so`) with  `-Djava.library.path=/path/to/JNI/lib/dir`. *Note the path is the directory where `libv4l4j.so` is located, not the actual path to `libv4l4j.so`.*
 
 
 ==Video streaming==
@@ -91,6 +79,8 @@ Run `sudo ant install-jnilib` (or `ant install-jnilib64` for AMD64) to install t
 I have a `FrameGrabber` object using image format XX & I get a very low frame rate. How can I improve it ?
 
 *Answer:*
+First, make sure you disable auto-exposure. This is usually done through one of the controls. You may have to load extra controls for your device using `uvcdynctrl`.
+
 Some video devices can achieve higher frame rates if you select the right image format. For instance, on my test machine, the Hauppauge HVR 1300 card produces around 9 frames per second using YUYV, but achieves 29 frames per second if I use RGB32.
 First, find out the image formats supported by your video device by running the following command in the v4l4j directory (replace /dev/video0 with your device file):
 {{{
@@ -109,30 +99,5 @@ This command will tell you the maximum frame rate you can achieve with the given
 When using v4l4j, the JVM crashes. What shall I do ?
 
 *Answser:*
-Most of the time, this happens because of a bug in the JNI code. 
-===If this happens when trying one of the example applications shipped with v4l4j ===
-If the crash happens when running `ant test-fps` or `ant test-gui`, then do the following (assuming you are in the v4l4j/ directory):
-`VIDEO_DEV="/dev/video0`
-
-`rm hs_pid*.log`
-
-`ant clean all-debug >compile_output 2>&1`
-
-`cd libv4l && make test`
-
-`./list-caps ${VIDEO_DEV} > list_caps_output 2>&1`
-
-`./test-capture ${VIDEO_DEV} 1 0 0 640 480 > test_cap_output 2>&1`
-
-`cd ..`
-
-`ant deviceInfo -Dtest.device=${VIDEO_DEV} >deviceInfo_capture 2>&1`
-
-`ant test-fps -Dtest.device=${VIDEO_DEV} >test_fps_capture 2>&1`
-
-`tar -jcf jvm_crash.tar.bz2 compile_output libv4l/list_caps_output libv4l/test_cap_output deviceInfo_capture test_fps_capture`
-
-Send a post on the mailing list and attach the `jvm_crash.tar.bz2` file generated with the above commands as well as the JVM crash log (hs_pidXXX.log file). See Introduction paragraph above for more information on how to access the mailing list.
-
-===If this happens inside your own application which uses v4l4j ===
-Do all of the above steps and submit a precise description of what your program is trying to do, as well as information about the video device itself.
+Most of the time, this happens because of a bug in the JNI code. [ContactMailingList Contact the mailing list] and
+submit a precise description of what you did to trigger the crash.
