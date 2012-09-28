@@ -11,7 +11,7 @@ Below, you will find information on:
  * *Capturing frames*: Getting a `FrameGrabber` object to capture images from the video device.
  * *Display video in a GUI (JFrame)*: Create a graphical interface (JFrame) to display the captured video stream.
  * *Integrate v4l4j with other frameworks*: head over to [v4l4jIntegration this page] for more examples on how to use v4l4j with other APIs and frameworks.
-You can find complete example applications in the `au.edu.jcu.v4l4j.examples` package. The webcam server application encodes a video stream in MJPEG and send it over the network to clients, which include web broswsers, VLC and ffplay. The VideoViewer application simply displays a video stream in a JFrame 
+You can find complete example applications in the `au.edu.jcu.v4l4j.examples` package. See [TestingV4l4j this page] for details.
 
 = JVM arguments =
 In order to use v4l4j in your own application, you must tell the JVM:
