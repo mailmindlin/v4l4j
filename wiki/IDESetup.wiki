@@ -1,5 +1,4 @@
 #summary this page explains how to import v4l4j in Eclipse and NetBeans
-#labels Featured
 #sidebar v4l4jSideBar
 
 This page explains how to import v4l4j in Eclipse and Netbeans.
