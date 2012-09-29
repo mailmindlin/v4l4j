@@ -1,4 +1,4 @@
 #summary where to report issues
 #labels Phase-Support
 
-If you encounter any issues while using v4l4j, or if you have any question, comment or feedback, use the v4l4j mailing list at http://groups.google.com/group/v4l4j
+If you encounter any issues while using v4l4j, or if you have any question, comment or feedback, use the v4l4j mailing list. See [ContactMailingList this page].
