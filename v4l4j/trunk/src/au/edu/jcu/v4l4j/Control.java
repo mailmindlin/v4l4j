@@ -58,21 +58,21 @@ import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
  * {@link #getDiscreteValueNames()}.</li>
  * <li><code>V4L4JConstants.CTRL_TYPE_STRING</code>: These controls accept string values, 
  * which can be retrieved using {@link #getStringValue()} and set with 
- * {@link #setStringValue()}. Calls to any other get/set methods will result in 
+ * {@link #setStringValue(String)}. Calls to any other get/set methods will result in 
  * {@link UnsupportedMethod} exceptions. {@link #getMinValue()} & {@link #getMaxValue()} 
  * return the smallest / largest string length (number of characters) this control will accept. 
  * {@link #getStepValue()} specify the step length of the string.</li>
  * <li><code>V4L4JConstants.CTRL_TYPE_LONG</code>: These controls accept long values, 
  * between {@link Long#MIN_VALUE} and {@link Long#MAX_VALUE} with a step value
  * of 1. The actual value is set / retrieved
- * with {@link Control#setLongValue()} and {@link Control#getLongValue()}.
+ * with {@link Control#setLongValue(long)} and {@link Control#getLongValue()}.
  * Calls to any other get/set methods, {@link #getMinValue()}, 
  * {@link #getMaxValue()} and {@link #getStepValue()} will result in {@link UnsupportedMethod}
  * exceptions.</li>
  * <li><code>V4L4JConstants.CTRL_TYPE_BITMASK</code>: These controls accept bitmask values, 
  * between 0 and {@link Integer#MAX_VALUE} with a step value
  * of 1. The actual value is set / retrieved
- * with {@link Control#setValue()} and {@link Control#getValue()}.
+ * with {@link Control#setValue(int)} and {@link Control#getValue()}.
  * Calls to any other get/set methods will result in {@link UnsupportedMethod}
  * exceptions.</li>
  * </ul>
@@ -189,9 +189,9 @@ public class Control {
 	 * @return the current value of this control (0 if it is a button)
 	 * @throws ControlException if the value cannot be retrieved
 	 * @throws UnsupportedMethod if this control is of type {@link V4L4JConstants#CTRL_TYPE_STRING}
-	 * (and you should be using {@link #getStringValue(String)} instead) or 
+	 * (and you should be using {@link #getStringValue()} instead) or 
 	 * if this control is of type {@link V4L4JConstants#CTRL_TYPE_LONG}
-	 * (and you should be using {@link #setLongValue(String)} instead).
+	 * (and you should be using {@link #setLongValue(long)} instead).
 	 * @throws StateException if this control has been released and must not be used anymore.
 	 */
 	public int getValue() throws ControlException{
@@ -230,7 +230,7 @@ public class Control {
 	 * @throws UnsupportedMethod if this control is of type {@link V4L4JConstants#CTRL_TYPE_STRING}
 	 * (and you should be using {@link #setStringValue(String)} instead) or 
 	 * if this control is of type {@link V4L4JConstants#CTRL_TYPE_LONG}
-	 * (and you should be using {@link #setLongValue(String)} instead).
+	 * (and you should be using {@link #setLongValue(long)} instead).
 	 * @throws StateException if this control has been released and must not be used anymore.
 	 */
 	public int setValue(int value) throws ControlException {
