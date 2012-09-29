@@ -118,10 +118,16 @@ class PushSource implements Runnable {
 
 	@Override
 	public final void run() {
+		VideoFrame frame = null;
+		
 		while (! Thread.interrupted()){
 			try {
-				// Get the next frame and deliver it to the callback object
-				callback.nextFrame(frameGrabber.getNextVideoFrame());
+				// Get the next frame 
+				frame = frameGrabber.getNextVideoFrame();
+				
+				// and deliver it to the callback object
+				try { callback.nextFrame(frame); }
+				catch (Throwable t) {} // ignore any exception thrown by the callback
 			} catch (Throwable t) {
 				// Received an exception. If we are in the middle of a capture (ie. it does not
 				// happen as the result of the capture having been stopped or the frame 
