@@ -1,7 +1,7 @@
 #summary how to contacting the mailing list
 #sidebar v4l4jSideBar
 
-If you encountered a bug / crash while using v4l4j, you need to install the debugging version of v4l4j as explained below before. 
+If you encountered a bug / crash while using v4l4j, you will need to install the debugging version of v4l4j as explained below.
 
 = Install debug version of v4l4j =
 *First, if you have already installed v4l4j then uninstall it*, otherwise the previous jar file & libraries (without debug statements) may take precedence over the new ones. Then, download the latest version of v4l4j from svn (see [SourceInstall here for more info]), and compile v4l4j in debug mode with `ant clean all-debug`. Install it with `sudo ant install`.
