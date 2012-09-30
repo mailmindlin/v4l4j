@@ -132,6 +132,7 @@ public class CamServer implements Runnable, CaptureCallback{
 	}
 
 	public void stop() {
+		System.out.println("Stopping server...");
 		// close the server socket first
 		try {
 			serverSocket.close();
