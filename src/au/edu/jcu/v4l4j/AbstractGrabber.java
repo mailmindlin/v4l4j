@@ -452,16 +452,19 @@ abstract class AbstractGrabber implements FrameGrabber {
 		// OR
 		// 2) in fillBuffer(), waiting for a V4L buffer
 
-		// If the push thread is blocked in 1) we can wake it up by interrupting
-		// it, but we cannot wake it up if blocked in 2), although
-		// we know it will unblock in the near future so we can just wait for it
+		// If the push thread is blocked in 1), we can wake it up by interrupting it.
+		// If the push thread is blocked in 2), tell the JNI layer to stop the capture
+		// which will wake up the push thread blocked in fillBuffer() with an error.
 
 		// unblock thread in 1)
 		// if we re started and in push mode, stop the push source
 		if (pushSource != null)
 			pushSource.stopCapture();
 
-		// wait for thread blocked in 2)
+		// unblock thread in 2)
+		stop(object);
+
+		// wait for thread blocked in 2) to return
 		state.waitTillNoMoreUsers();
 
 		// at this stage, we know that no one is waiting in getVideoFrame() anymore,
@@ -470,9 +473,6 @@ abstract class AbstractGrabber implements FrameGrabber {
 		// Make sure all video frames are recycled
 		for(VideoFrame frame: videoFrames)
 			frame.recycle();
-
-		// stop jni code
-		stop(object);
 
 		// remove all frames from available queue
 		synchronized(availableVideoFrames) {
