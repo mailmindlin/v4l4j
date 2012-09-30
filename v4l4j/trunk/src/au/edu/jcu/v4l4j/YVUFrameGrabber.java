@@ -23,6 +23,8 @@
 */
 package au.edu.jcu.v4l4j;
 
+import java.util.concurrent.ThreadFactory;
+
 import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
 import au.edu.jcu.v4l4j.exceptions.ImageFormatException;
 import au.edu.jcu.v4l4j.exceptions.InitialisationException;
@@ -63,10 +65,11 @@ public class YVUFrameGrabber extends AbstractGrabber {
 	 * @param std the video standard, as returned by 
 	 * {@link InputInfo#getSupportedStandards()} (see V4L4JConstants)
 	 * @param imf the image format frame should be captured in
+	 * @param factory the thread factory to use when creating the push source.
 	 */
 	YVUFrameGrabber(DeviceInfo di,long o, int w, int h, int ch, int std, Tuner t,
-			ImageFormat imf) throws ImageFormatException {
-		super(di, o, w, h, ch, std, t, imf, YVU_GRABBER);
+			ImageFormat imf, ThreadFactory factory) throws ImageFormatException {
+		super(di, o, w, h, ch, std, t, imf, YVU_GRABBER, factory);
 	}
 
 	/**

@@ -44,13 +44,19 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * Frame grabbers operate in push mode: you must give v4l4j
  * an object implementing the {@link CaptureCallback} interface by calling
  * {@link #setCaptureCallback(CaptureCallback)}. During capture,
- * v4l4j will deliver frames to this object as soon as they arrive.<br>
+ * v4l4j will create a thread and deliver new frames to the capture callback 
+ * object. By default, new threads are created by the thread factory returned by 
+ * <code>Executors.defaultThreadFactory()</code>, but you can
+ * provide your own thread factory by calling 
+ * {@link VideoDevice#setThreadFactory(java.util.concurrent.ThreadFactory factory)}
+ * <b>prior to creating a <code>FrameGrabber</code> object</b>.<br>
  * A typical <code>FrameGrabber</code> use case is as follows:
  * <br>
  * Create the video device and frame grabber:
  * <code><br><br>
  * //create a new video device<br>
  * VideoDevice vd = new VideoDevice("/dev/video0");<br>
+ * // vd.setThreadFactory(myThreadFactory); // set your own thread factory if required.
  * <br>//Create an instance of FrameGrabber
  * <br>FrameGrabber f = vd.getJPEGFrameGrabber(320, 240, 0, 0, 80);
  * <br>//If supported, this frame grabber will capture frames and convert them

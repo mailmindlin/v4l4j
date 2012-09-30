@@ -23,6 +23,8 @@
  */
 package au.edu.jcu.v4l4j;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.Vector;
 
 import au.edu.jcu.v4l4j.FrameInterval.DiscreteInterval;
@@ -72,6 +74,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	private int							lastCapturedFrameBufferIndex;//
 	private PushSource					pushSource;
 	private long						pushSourceThreadId;
+	private ThreadFactory				threadFactory;
 
 	/*
 	 * JNI returns a long (which is really a pointer) when a device is allocated
@@ -133,11 +136,12 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 * @param ty the output image format, ie the type of this frame grabber:
 	 * {@link #RAW_GRABBER}, {@link #JPEG_GRABBER}, {@link #RGB24_GRABBER}, 
 	 * {@link #BGR24_GRABBER}, {@link #YUV_GRABBER}, {@link #YVU_GRABBER}
+	 * @param factory the {@link ThreadFactory} to use when creating new threads
 	 * @throw {@link ImageFormatException} if the image format is null and 
 	 * type = {@link #RAW_GRABBER}
 	 */
 	protected AbstractGrabber(DeviceInfo di, long o, int w, int h, int ch, int std
-			, Tuner t,ImageFormat imf, int ty) throws ImageFormatException{
+			, Tuner t,ImageFormat imf, int ty, ThreadFactory factory) throws ImageFormatException{
 		if(imf==null)
 			throw new ImageFormatException("The image format can not be null");
 		state= new State();
@@ -155,6 +159,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 		availableVideoFrames = new Vector<BaseVideoFrame>();
 		pushSource = null;
 		pushSourceThreadId = 0;
+		threadFactory = factory;
 	}
 
 
@@ -301,7 +306,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 				throw new StateException("This frame grabber is already started");
 
 			//FIXME: when transitioned to push mode only, instantiate
-			pushSource = new  PushSource(this, callback);
+			pushSource = new  PushSource(this, callback, threadFactory);
 		}
 	}
 
