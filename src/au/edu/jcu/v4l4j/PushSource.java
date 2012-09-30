@@ -17,6 +17,8 @@
 */
 package au.edu.jcu.v4l4j;
 
+import java.util.concurrent.ThreadFactory;
+
 import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
@@ -33,6 +35,7 @@ class PushSource implements Runnable {
 	private CaptureCallback 		callback;
 	private AbstractGrabber			frameGrabber;
 	private Thread					thread;
+	private ThreadFactory			threadFactory;
 	
 	private int						state;
 	private static final int		STATE_STOPPED = 0;
@@ -49,12 +52,13 @@ class PushSource implements Runnable {
 	 * interface to which the frames will be delivered through the 
 	 * {@link CaptureCallback#nextFrame(VideoFrame)}.
 	 */
-	public PushSource(AbstractGrabber grabber, CaptureCallback callback) {
+	public PushSource(AbstractGrabber grabber, CaptureCallback callback, ThreadFactory factory) {
 		if ((grabber == null) || (callback == null))
 			throw new NullPointerException("the frame grabber and callback cannot be null");
 		
 		this.callback = callback;
 		frameGrabber = grabber;
+		threadFactory = factory;
 		state = STATE_STOPPED;
 	}
 	
@@ -70,7 +74,8 @@ class PushSource implements Runnable {
 		
 		// Update our state and start the thread
 		state = STATE_RUNNING;
-		thread = new Thread(this, "Frame pusher");
+		thread = threadFactory.newThread(this);
+		thread.setName(thread.getName() + " - v4l4j push source");
 		thread.start();
 
 		return thread.getId();

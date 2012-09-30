@@ -26,6 +26,7 @@ package au.edu.jcu.v4l4j;
 import java.awt.color.ColorSpace;
 import java.awt.image.DataBuffer;
 import java.awt.image.PixelInterleavedSampleModel;
+import java.util.concurrent.ThreadFactory;
 
 import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
 import au.edu.jcu.v4l4j.exceptions.ImageFormatException;
@@ -60,7 +61,7 @@ public class BGRFrameGrabber extends AbstractGrabber {
 	/**
 	 * This constructor builds a FrameGrabber object used to capture BGR24
 	 * frames from a video source
-	 * @paramdi the DeviceInfo of the video device 
+	 * @param di the DeviceInfo of the video device 
 	 * @param o a JNI pointer to a v4l4j_device structure
 	 * @param w the requested frame width 
 	 * @param h the requested frame height
@@ -69,10 +70,11 @@ public class BGRFrameGrabber extends AbstractGrabber {
 	 * @param std the video standard, as returned by 
 	 * {@link InputInfo#getSupportedStandards()} (see V4L4JConstants)
 	 * @param imf the image format frame should be captured in
+	 * @param factory the thread factory to use when creating the push source thread.
 	 */
 	BGRFrameGrabber(DeviceInfo di, long o, int w, int h, int ch, int std, 
-			Tuner t,ImageFormat imf) throws ImageFormatException {
-		super(di, o, w, h, ch, std, t, imf, BGR24_GRABBER);
+			Tuner t,ImageFormat imf, ThreadFactory factory) throws ImageFormatException {
+		super(di, o, w, h, ch, std, t, imf, BGR24_GRABBER, factory);
 	}
 
 	/**
