@@ -80,8 +80,10 @@ public class CamServer implements Runnable, CaptureCallback{
 		int w = (System.getProperty("test.width")!=null) ? Integer.parseInt(System.getProperty("test.width")) : 640;
 		int h = (System.getProperty("test.height")!=null) ? Integer.parseInt(System.getProperty("test.height")) : 480;
 		int port = (System.getProperty("test.port")!=null) ? Integer.parseInt(System.getProperty("test.port")) : 8080;
+		int fps =  (System.getProperty("test.fps")!=null) ? Integer.parseInt(System.getProperty("test.fps")) : 15;
+
  
-		CamServer server = new CamServer(dev, w, h, port);
+		CamServer server = new CamServer(dev, w, h, port, fps);
 		server.start();
 		System.out.println("Press enter to exit.");
 		System.in.read();
@@ -96,16 +98,17 @@ public class CamServer implements Runnable, CaptureCallback{
 	 * @param width the capture width
 	 * @param height the capture height
 	 * @param port the TCP port to listen on for incoming connections
+	 * @param fps the frame rate used for capture
 	 * @throws V4L4JException if a JPEG frame grabber cant be created 
 	 * @throws IOException if a server socket on the given port cant be created
 	 */
-	public CamServer(String dev, int width, int height, int port) throws V4L4JException, IOException {
+	public CamServer(String dev, int width, int height, int port, int fps) throws V4L4JException, IOException {
 		videoDevice = new VideoDevice(dev);
 		frameGrabber = videoDevice.getJPEGFrameGrabber(width, height, 0, 0, 80);
 		frameGrabber.setCaptureCallback(this);
 		try {
-			System.out.println("setting frame rate to 15");
-			frameGrabber.setFrameInterval(1, 15);
+			System.out.println("setting frame rate to "+fps);
+			frameGrabber.setFrameInterval(1, fps);
 		} catch (Exception e){
 			System.out.println("Couldnt set the frame interval");
 		}
