@@ -120,29 +120,34 @@
 
 #endif // if DEBUG
 
-#define dprint_v4l2_control(qc)\
+#define dprint_v4l2_control(ctrl)\
 	do { \
+		int i = 0;\
 		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1, \
 				"CTRL: control id: 0x%x - name: %s - min: %d - max: %d - "\
 				"step: %d - type: %d(%s) - flags: %d (%s%s%s%s%s%s%s)\n", \
-				qc->id, (char *) &qc->name, qc->minimum, qc->maximum,\
-				qc->step, qc->type, \
-				qc->type == V4L2_CTRL_TYPE_INTEGER ? "Integer" :  \
-				qc->type == V4L2_CTRL_TYPE_BOOLEAN ? "Boolean" :  \
-				qc->type == V4L2_CTRL_TYPE_MENU ? "Menu" :  \
-				qc->type == V4L2_CTRL_TYPE_BUTTON ? "Button" : \
-				qc->type == V4L2_CTRL_TYPE_INTEGER64 ? "Integer64" :  \
-				qc->type == V4L2_CTRL_TYPE_CTRL_CLASS ? "Class" :\
-				qc->type == V4L2_CTRL_TYPE_STRING ? "String" :\
-				qc->type == V4L2_CTRL_TYPE_BITMASK ? "Bitmask" : "", \
-				qc->flags, \
-				qc->flags & V4L2_CTRL_FLAG_DISABLED ? "Disabled " : "", \
-				qc->flags & V4L2_CTRL_FLAG_GRABBED ? "Grabbed " : "", \
-				qc->flags & V4L2_CTRL_FLAG_READ_ONLY ? "ReadOnly " : "", \
-				qc->flags & V4L2_CTRL_FLAG_UPDATE ? "Update " : "", \
-				qc->flags & V4L2_CTRL_FLAG_INACTIVE ? "Inactive " : "", \
-				qc->flags & V4L2_CTRL_FLAG_SLIDER ? "slider " : "",\
-				qc->flags & V4L2_CTRL_FLAG_WRITE_ONLY ? "write-only" : ""); \
+				ctrl.v4l2_ctrl->id, (char *) &(ctrl.v4l2_ctrl->name), ctrl.v4l2_ctrl->minimum, ctrl.v4l2_ctrl->maximum,\
+				ctrl.v4l2_ctrl->step, ctrl.v4l2_ctrl->type, \
+				ctrl.v4l2_ctrl->type == V4L2_CTRL_TYPE_INTEGER ? "Integer" :  \
+				ctrl.v4l2_ctrl->type == V4L2_CTRL_TYPE_BOOLEAN ? "Boolean" :  \
+				ctrl.v4l2_ctrl->type == V4L2_CTRL_TYPE_MENU ? "Menu" :  \
+				ctrl.v4l2_ctrl->type == V4L2_CTRL_TYPE_BUTTON ? "Button" : \
+				ctrl.v4l2_ctrl->type == V4L2_CTRL_TYPE_INTEGER64 ? "Integer64" :  \
+				ctrl.v4l2_ctrl->type == V4L2_CTRL_TYPE_CTRL_CLASS ? "Class" :\
+				ctrl.v4l2_ctrl->type == V4L2_CTRL_TYPE_STRING ? "String" :\
+				ctrl.v4l2_ctrl->type == V4L2_CTRL_TYPE_BITMASK ? "Bitmask" : "", \
+				ctrl.v4l2_ctrl->flags, \
+				ctrl.v4l2_ctrl->flags & V4L2_CTRL_FLAG_DISABLED ? "Disabled " : "", \
+				ctrl.v4l2_ctrl->flags & V4L2_CTRL_FLAG_GRABBED ? "Grabbed " : "", \
+				ctrl.v4l2_ctrl->flags & V4L2_CTRL_FLAG_READ_ONLY ? "ReadOnly " : "", \
+				ctrl.v4l2_ctrl->flags & V4L2_CTRL_FLAG_UPDATE ? "Update " : "", \
+				ctrl.v4l2_ctrl->flags & V4L2_CTRL_FLAG_INACTIVE ? "Inactive " : "", \
+				ctrl.v4l2_ctrl->flags & V4L2_CTRL_FLAG_SLIDER ? "slider " : "",\
+				ctrl.v4l2_ctrl->flags & V4L2_CTRL_FLAG_WRITE_ONLY ? "write-only" : ""); \
+		for(i=0; i<ctrl.count_menu; i++) {\
+			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1, \
+				"   Menu %d - index: %d - '%s'\n", i, ctrl.v4l2_menu[i].index, ctrl.v4l2_menu[i].name);\
+		}\
 	} while(0);
 
 #define XMALLOC(var, type, size)	\
