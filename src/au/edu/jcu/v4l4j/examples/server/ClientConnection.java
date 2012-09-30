@@ -36,37 +36,37 @@ public class ClientConnection{
 	private static String mjpegFrameheader = "--boundary\r\nContent-Type: image/jpeg\r\nContent-Length: ";
 
 	private static String mainPageHTML = "HTTP/1.0 200 OK\r\nLocation: http://v4l4j_mini_server\r\nExpires: 0\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Frameset//EN\" http://www.w3.org/TR/html4/frameset.dtd>" +
-	"<html>" +
-	"<head>" +
-	"<title>v4l4j mini server</title>" +
-	"</head>" +
-	"<frameset cols=\"4*,6*\">" +
-	"<frame src=\"control\" name=\"control list\">" +
-	"<frame src=\"webcam\" name=\"video stream\">" +
-	"</frameset>" +
+	"<html>\n" +
+	"<head>\n" +
+	"<title>v4l4j mini server</title>\n" +
+	"</head>\n" +
+	"<frameset cols=\"4*,6*\">\n" +
+	"<frame src=\"control\" name=\"control list\">\n" +
+	"<frame src=\"webcam\" name=\"video stream\">\n" +
+	"</frameset>\n" +
 	"</html>";
 
 	private static String webcamPageHTML= "HTTP/1.0 200 OK\r\nLocation: http://v4l4j_mini_server\r\nExpires: 0\r\nContent-Type: text/html\r\n\r\n" +
-	"<html>" +
-	"<body>" +
-	"<table>" +
-	"<td>" +
-	"<tr>" +
-	"<img src=\"stream.jpg\">" +
-	"</tr>" +
-	"</td>" +
-	"</table>" +
-	"</body>" +
+	"<html>\n" +
+	"<body>\n" +
+	"<table>\n" +
+	"<td>\n" +
+	"<tr>\n" +
+	"<img src=\"stream.jpg\">\n" +
+	"</tr>\n" +
+	"</td>\n" +
+	"</table>\n" +
+	"</body>\n" +
 	"</html>";
 
 	private static String controlPageHTMLHeader = "HTTP/1.0 200 OK\r\nLocation: http://v4l4j_mini_server\r\nExpires: 0\r\nContent-Type: text/html\r\n\r\n" +
-	"<html>" +
-	"<body>" +
-	"<table>";
+	"<html>\n" +
+	"<body>\n" +
+	"<table>\n";
 
-	private static String controlPageHTMLFooter=  "</table>" +
-	"</body>" +
-	"</html>";
+	private static String controlPageHTMLFooter=  "</table>\n" +
+	"</body>\n" +
+	"</html>\n";
 
 
 	private Socket 				clientSocket;
@@ -148,39 +148,43 @@ public class ClientConnection{
 
 
 		// add a fake control to adjust the jpeg quality
-		out.writeBytes("<tr>");
-		out.writeBytes("<td>JPEG Quality</td>");
-		out.writeBytes("<td><form action=\"update\">");
-		out.writeBytes("<input type=\"hidden\" name=\"id\" value=\"-1\">");
-		out.writeBytes("<input type=\"text\" name=\"val\" value=\""+jpegQuality+"\" size=\"10\" maxlength=\"10\">");
-		out.writeBytes("<br>Min: 0 - Max: 100 - Step: 1");
-		out.writeBytes("</td><td><input type=\"submit\" name=\"set\" value=\"set\"></form></td></tr>");
+		out.writeBytes("<tr>\n");
+		out.writeBytes("<td>JPEG Quality</td>\n");
+		out.writeBytes("<td><form action=\"update\">\n");
+		out.writeBytes("<input type=\"hidden\" name=\"id\" value=\"-1\">\n");
+		out.writeBytes("<input type=\"text\" name=\"val\" value=\""+jpegQuality+"\" size=\"10\" maxlength=\"10\">\n");
+		out.writeBytes("<br>Min: 0 - Max: 100 - Step: 1\n");
+		out.writeBytes("</td><td><input type=\"submit\" name=\"set\" value=\"set\"></form></td></tr>\n");
 
 
 
 		// for each control, create an entry in the table
 		for(Control control : ctrlList.getList()) {
-			out.writeBytes("<tr>");
-			out.writeBytes("<td>"+control.getName()+"</td>");
-			out.writeBytes("<td><form action=\"update\">");
+			out.writeBytes("<form action=\"update\"><tr>\n");
+			out.writeBytes("<td>"+control.getName()+"</td>\n");
+			out.writeBytes("<td>\n");
 			out.writeBytes("<input type=\"hidden\" name=\"id\" value=\""+ 
-					ctrlList.getList().indexOf(control) +"\">");
+					ctrlList.getList().indexOf(control) +"\">\n");
 
-			try {
-				// Select the best HTML element to represent the control based
-				// on its type
-				switch (control.getType())
-				{
+			// Select the best HTML element to represent the control based
+			// on its type
+			switch (control.getType())
+			{
 				case V4L4JConstants.CTRL_TYPE_BUTTON:
 					out.writeBytes("<input type=\"hidden\" name=\"val\" value=\"0\">");
-					out.writeBytes("</td><td><input type=\"submit\" name=\"Activate\">");
+					out.writeBytes("</td>\n<td>\n<input type=\"submit\" name=\"Activate\" value=\"Activate\">");
 					break;
 
 				case V4L4JConstants.CTRL_TYPE_SLIDER:
-					out.writeBytes("<input type=\"text\" name=\"val\" value=\""+control.getValue()+"\" size=\"10\" maxlength=\"10\">");
+					try {
+						out.writeBytes("<input type=\"text\" name=\"val\" value=\""+control.getValue()+"\" size=\"10\" maxlength=\"10\">");
+					} catch (Exception e) {
+						out.writeBytes("<input type=\"text\" name=\"val\" value=\"\" size=\"10\" maxlength=\"10\">");
+					}
 					out.writeBytes("<br>Min: "+control.getMinValue()+ " - Max: "+control.getMaxValue()+
 							" - Step: "+control.getStepValue());
-					out.writeBytes("</td><td><input type=\"submit\" name=\"set\" value=\"set\">");
+
+					out.writeBytes("\n</td>\n<td>\n<input type=\"submit\" name=\"set\" value=\"set\">");
 					break;
 
 				case V4L4JConstants.CTRL_TYPE_DISCRETE:
@@ -188,31 +192,35 @@ public class ClientConnection{
 					Map<String, Integer> valueMap = control.getDiscreteValuesMap();
 					for(String name : valueMap.keySet()){
 						out.writeBytes("<option value=\""+valueMap.get(name)+"\"");
-						if (control.getValue() == valueMap.get(name).intValue())
-							out.writeBytes(" selected=\"selected\"");
+						try {
+							if (control.getValue() == valueMap.get(name).intValue())
+								out.writeBytes(" selected=\"selected\"");
+						} catch (Exception e) {}
 						out.writeBytes(" >");
 						out.writeBytes(name);
 						out.writeBytes("</option>");
 					}
-					out.writeBytes("</select>");
-					out.writeBytes("</td><td><input type=\"submit\" name=\"set\" value=\"set\">");
+					out.writeBytes("</select>\n");
+					out.writeBytes("</td>\n<td><input type=\"submit\" name=\"set\" value=\"set\">");
 					break;
 
 				case V4L4JConstants.CTRL_TYPE_SWITCH:
 					out.writeBytes("<input type=\"checkbox\" name=\"val\" value=\"");
-					if(control.getValue() == 1)
-						out.writeBytes("0\" checked=\"checked\">");
-					else
-						out.writeBytes("1\">");
-					out.writeBytes("</td><td><input type=\"submit\" name=\"set\" value=\"set\">");
+					try {
+						if(control.getValue() == 1)
+							out.writeBytes("0\" checked=\"checked\">\n");
+						else
+							out.writeBytes("1\">\n");
+					} catch (Exception e) {}
+					out.writeBytes("</td>\n<td><input type=\"submit\" name=\"set\" value=\"set\">");
 					break;
-				}
-			} catch (Exception e){
-				// error creating form
+				default:
+					System.out.println("Unknown control type: "+control.getType());
+
 			}
 
-			out.writeBytes("</form></td>");
-			out.writeBytes("</tr>");			
+			out.writeBytes("</td>\n");
+			out.writeBytes("</tr></form>\n");			
 		}
 
 		out.writeBytes(controlPageHTMLFooter);
