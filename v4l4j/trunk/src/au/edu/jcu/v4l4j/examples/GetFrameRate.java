@@ -239,8 +239,6 @@ public class GetFrameRate implements CaptureCallback{
 		}
 		fg.stopCapture();
 		
-		System.out.println("End time: "+currentTime);
-
 		System.out.println(" =====  TEST RESULTS  =====");
 		System.out.println("\tFrames captured :"+numFrames);
 		System.out.println("\tFPS: "+((float) numFrames/(currentTime/1000-startTime/1000)));
