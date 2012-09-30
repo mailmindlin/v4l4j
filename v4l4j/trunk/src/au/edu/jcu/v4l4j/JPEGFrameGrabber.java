@@ -23,6 +23,8 @@
 */
 package au.edu.jcu.v4l4j;
 
+import java.util.concurrent.ThreadFactory;
+
 import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
 import au.edu.jcu.v4l4j.exceptions.ImageFormatException;
 import au.edu.jcu.v4l4j.exceptions.InitialisationException;
@@ -68,10 +70,11 @@ public class JPEGFrameGrabber extends AbstractGrabber {
 	 * between the range {@link V4L4JConstants#MIN_JPEG_QUALITY} and 
 	 * {@link V4L4JConstants#MAX_JPEG_QUALITY}.
 	 * @param imf the image format frame should be captured in 
+	 * @param factory the thread factory to use when creating the push source
 	 */
 	JPEGFrameGrabber(DeviceInfo di,long o, int w, int h, int ch, int std, int q
-			, Tuner t,ImageFormat imf) throws V4L4JException{
-		super(di, o,w,h,ch,std, t , imf, JPEG_GRABBER);	
+			, Tuner t,ImageFormat imf, ThreadFactory factory) throws V4L4JException{
+		super(di, o,w,h,ch,std, t , imf, JPEG_GRABBER, factory);	
 		setJPGQuality(q);
 	}
 	

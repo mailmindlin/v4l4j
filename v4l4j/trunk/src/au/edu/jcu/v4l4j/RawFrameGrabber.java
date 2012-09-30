@@ -24,6 +24,8 @@
 
 package au.edu.jcu.v4l4j;
 
+import java.util.concurrent.ThreadFactory;
+
 import au.edu.jcu.v4l4j.exceptions.ImageFormatException;
 import au.edu.jcu.v4l4j.exceptions.StateException;
 
@@ -58,12 +60,13 @@ public class RawFrameGrabber extends AbstractGrabber {
 	 * @param t the {@link Tuner} associated with this frame grabber or
 	 * <code>null</code>.
 	 * @param imf the image format frames should be captured in
+	 * @param factory the thread factory to sue when creating the push source
 	 * @throws ImageFormatException if the image format is null and a RAW frame 
 	 * grabber is to be created  
 	 */
 	RawFrameGrabber(DeviceInfo di, long o, int w, int h, int ch, 
-			int std, Tuner t, ImageFormat imf) throws ImageFormatException{
-		super(di, o,w,h,ch,std,t,imf, RAW_GRABBER);
+			int std, Tuner t, ImageFormat imf, ThreadFactory factory) throws ImageFormatException{
+		super(di, o,w,h,ch,std,t,imf, RAW_GRABBER, factory);
 	}
 	
 	/**

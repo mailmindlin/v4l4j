@@ -25,6 +25,8 @@
 package au.edu.jcu.v4l4j;
 
 import java.io.File;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.Vector;
 
 import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
@@ -252,6 +254,11 @@ public class VideoDevice {
 	 * for use. This field is read-only (!!!) 
 	 */
 	private long v4l4jObject;
+
+	/**
+	 * ThreadFactory that will be passed on to each new FrameGrabber.
+	 */
+	private ThreadFactory	threadFactory;
 	
 	/**
 	 * This constructor builds a <code>VideoDevice</code> using the full path to
@@ -267,6 +274,7 @@ public class VideoDevice {
 		if(!(new File(dev).canRead()))
 			throw new V4L4JException("The device file is not readable");
 
+		threadFactory = Executors.defaultThreadFactory();
 		state = new State();		
 		deviceFile = dev;
 		v4l4jObject = doInit(deviceFile);
@@ -614,7 +622,7 @@ public class VideoDevice {
 			if(fg==null) {
 				state.get();
 				fg = new JPEGFrameGrabber(deviceInfo, v4l4jObject, w, h, input, 
-						std, q, findTuner(input), imf);
+						std, q, findTuner(input), imf, threadFactory);
 				try {
 					fg.init();
 				} catch (V4L4JException ve){
@@ -767,7 +775,7 @@ public class VideoDevice {
 			if(fg==null) {
 				state.get();
 				fg = new RGBFrameGrabber(deviceInfo, v4l4jObject, w, h, input,
-						std, findTuner(input), imf);
+						std, findTuner(input), imf, threadFactory);
 				try {
 					fg.init();
 				} catch (V4L4JException ve){
@@ -914,7 +922,7 @@ public class VideoDevice {
 			if(fg==null) {
 				state.get();
 				fg = new BGRFrameGrabber(deviceInfo, v4l4jObject, w, h, input,
-						std, findTuner(input), imf);
+						std, findTuner(input), imf,  threadFactory);
 				try {
 					fg.init();
 				} catch (V4L4JException ve){
@@ -1063,7 +1071,7 @@ public class VideoDevice {
 			if(fg==null) {
 				state.get();
 				fg = new YUVFrameGrabber(deviceInfo, v4l4jObject, w, h, input,
-						std, findTuner(input), imf);
+						std, findTuner(input), imf, threadFactory);
 				try {
 					fg.init();
 				} catch (V4L4JException ve){
@@ -1212,7 +1220,7 @@ public class VideoDevice {
 			if(fg==null) {
 				state.get();
 				fg = new YVUFrameGrabber(deviceInfo, v4l4jObject, w, h, input,
-						std, findTuner(input), imf);
+						std, findTuner(input), imf, threadFactory);
 				try {
 					fg.init();
 				} catch (V4L4JException ve){
@@ -1335,7 +1343,7 @@ public class VideoDevice {
 			if(fg==null) {
 				state.get();
 				fg = new RawFrameGrabber(deviceInfo, v4l4jObject, w, h, input,
-						std, findTuner(input), format);
+						std, findTuner(input), format, threadFactory);
 				try {
 					fg.init();
 				} catch (V4L4JException ve){
@@ -1466,6 +1474,23 @@ public class VideoDevice {
 
 	}
 	
+	/**
+	 * This method sets the {@link ThreadFactory} to be used when new threads are
+	 * created by frame grabbers created for this video device. By default, a
+	 * video device instance will use the thread factory returned by 
+	 * <code>Executors#defaultThreadFactory()</code>. If this is not suitable, you
+	 * can specify your own thread factory using this method.
+	 * @param factory the {@link ThreadFactory} to use when creating new threads. If
+	 * <code>null</code>, the default factory returned by 
+	 * <code>Executors#defaultThreadFactory()</code> will be used.
+	 */
+	 public synchronized void setThreadFactory(ThreadFactory factory) {
+		 if(factory == null)
+			 factory = Executors.defaultThreadFactory();
+
+		threadFactory = factory;
+	 }
+
 	private static class State {
 
 		private int state;
