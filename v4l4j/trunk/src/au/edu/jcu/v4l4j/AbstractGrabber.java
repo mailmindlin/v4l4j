@@ -92,7 +92,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	}
 
 
-	private native int doInit(long o, int w, int h, int ch, int std,
+	private native int doInit(long o, int numBuffers, int w, int h, int ch, int std,
 			int requestedFormat, int output)
 	throws V4L4JException;
 
@@ -154,7 +154,8 @@ abstract class AbstractGrabber implements FrameGrabber {
 		format = imf.getIndex();
 		tuner = t;
 		type = ty;
-		nbV4LBuffers = 0;
+		// Check property for user-specified number of buffers - otherwise use 4.
+		nbV4LBuffers = (System.getProperty("v4l4j.num_driver_buffers") != null) ? Integer.parseInt(System.getProperty("v4l4j.num_driver_buffers")) : 4;
 		videoFrames = new Vector<BaseVideoFrame>();
 		availableVideoFrames = new Vector<BaseVideoFrame>();
 		pushSource = null;
@@ -187,7 +188,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 
 		// Initialise libvideo and setup capture parameters
 		// Return value is the number of buffers mmaped into the driver's memory
-		nbV4LBuffers = doInit(object, width, height, channel, standard, format, type);
+		nbV4LBuffers = doInit(object, nbV4LBuffers, width, height, channel, standard, format, type);
 		int bufferSize = getBufferSize(object);
 
 		// Create the V4L4J data buffer objects
