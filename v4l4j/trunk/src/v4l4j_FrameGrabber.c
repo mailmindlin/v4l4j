@@ -325,7 +325,7 @@ static int get_lastFrame_field_ids(JNIEnv *e, jobject this, struct v4l4j_device 
  * return the number of mmap''ed buffers
  */
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doInit(
-		JNIEnv *e, jobject t, jlong object, jint w, jint h, jint ch, jint std,
+		JNIEnv *e, jobject t, jlong object, jint num_buffers, jint w, jint h, jint ch, jint std,
 		jint in_fmt, jint fg_out_fmt){
 
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
@@ -343,7 +343,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doInit(
 	 * i n i t _ c a p t u r e _ d e v i c e ( )
 	 */
 	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling init_capture_device()\n");
-	c = init_capture_device(d->vdev, w,h,ch,std, 4); // ask for 4 buffers by default
+	c = init_capture_device(d->vdev, w,h,ch,std, num_buffers);
 
 	if(c==NULL) {
 		dprint(LOG_V4L4J, "[V4L4J] init_capture_device failed\n");

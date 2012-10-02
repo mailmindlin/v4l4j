@@ -24,6 +24,7 @@
 
 package au.edu.jcu.v4l4j;
 
+import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.FrameInterval.DiscreteInterval;
 import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
 import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
@@ -130,13 +131,17 @@ public interface FrameGrabber {
 	 * This method returns the number of buffers v4l4j has negotiated with
 	 * the driver. The driver stores captured frames in these buffers and returns
 	 * them to v4l4j. A {@link VideoFrame} represents (and encapsulates) one of 
-	 * these buffers.
-	 * Hence, this number is an indication as to how many video
-	 * frames can be obtained from the driver through {@link #getVideoFrame()}
-	 * before the capture stops until a buffer is returned to the driver 
-	 * through {@link VideoFrame#recycle()}. Practically speaking, this number
-	 * specifies how many times you can call {@link #getVideoFrame()} before 
-	 * the method blocks, waiting for one of the previous frame to be recycled.
+	 * these buffers. Hence, this number is an indication of how many video
+	 * frames can be delivered by v4l4j to your application before the capture 
+	 * blocks until a buffer is returned to the driver. Practically speaking, 
+	 * this number specifies how many times v4l4j can call 
+	 * {@link CaptureCallback#nextFrame(VideoFrame frame)} and block waiting for
+	 * one of the previous frames to be recycled through {@link VideoFrame#recycle()}.<br>
+	 * You can specify how many buffers the driver should use by
+	 * setting the <code>v4l4j.num_driver_buffers</code> property to an integer value 
+	 * <b>before creating a frame grabber object</b>. The number you specify is only an
+	 * indication, and the driver can decide to allocate a different number of buffers.
+	 * Before setting this number, make sure you fully understand the implications of doing this.
 	 * @return the number of frame buffers used to retrieve frames from 
 	 * the driver
 	 */
@@ -147,8 +152,10 @@ public interface FrameGrabber {
 	 * of video frames are currently available to v4l4j (and the driver) to 
 	 * store new incoming frames.
 	 * This number indicates how many more frames can be captured by v4l4j 
-	 * before the capture stops until one of the previous frame gets recycled.
+	 * before the capture stops until you recycle one of the previous frame that was
+	 * delivered to your application by calling {@link VideoFrame#recycle()}.
 	 * @return the number of video frames currently recycled.
+	 * @see #getNumberOfVideoFrames()
 	 */
 	public int getNumberOfRecycledVideoFrames();
 	
