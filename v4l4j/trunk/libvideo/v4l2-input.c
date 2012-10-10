@@ -1317,6 +1317,8 @@ int get_control_value_v4l2(struct video_device *vdev,
 					"CTRL: workaround: g_ext_ctrl failed with ENOTTY, trying g_ctrl\n");
 
 			ret = v4lconvert_vidioc_g_ctrl(vdev->control->priv, &vc);
+			if(ret == 0)
+				ctrl.value = vc.value;
 		}
 
 		if( ret == 0 ) {
