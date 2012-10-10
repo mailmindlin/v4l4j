@@ -1305,7 +1305,21 @@ int get_control_value_v4l2(struct video_device *vdev,
 		} else
 			ctrl.size = 0;
 
-		if( (ret = ioctl(vdev->fd, VIDIOC_G_EXT_CTRLS, &ext_ctrl)) == 0 ) {
+		ret = ioctl(vdev->fd, VIDIOC_G_EXT_CTRLS, &ext_ctrl);
+		if ((ret != 0) && (errno == ENOTTY)) {
+			// Older kernels may not support extended controls - retry with g_ctrl
+			struct v4l2_control vc;
+
+			CLEAR(vc);
+			vc.id = qctrl->id;
+
+			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
+					"CTRL: workaround: g_ext_ctrl failed with ENOTTY, trying g_ctrl\n");
+
+			ret = v4lconvert_vidioc_g_ctrl(vdev->control->priv, &vc);
+		}
+
+		if( ret == 0 ) {
 			if (qctrl->type == V4L2_CTRL_TYPE_INTEGER64) {
 				*((int64_t*)val) = ctrl.value64;
 				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
@@ -1363,6 +1377,7 @@ int set_control_value_v4l2(struct video_device *vdev,
 	} else {
 		struct v4l2_ext_controls ext_ctrl;
 		struct v4l2_ext_control ctrl;
+		int result;
 
 		// Reset control structs and set members
 		CLEAR(ext_ctrl);
@@ -1394,7 +1409,21 @@ int set_control_value_v4l2(struct video_device *vdev,
 			}
 		}
 
-		if( (ioctl(vdev->fd, VIDIOC_S_EXT_CTRLS, &ext_ctrl)) != 0 ) {
+		result = ioctl(vdev->fd, VIDIOC_S_EXT_CTRLS, &ext_ctrl);
+		if((result != 0 ) && (errno == ENOTTY)) {
+			// older kernels may not support extended controls - retry with VIDIOC_S_CTRL
+			struct v4l2_control vc;
+
+			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
+						"CTRL: workaround: s_ext_ctrl failed with ENOTTY, trying s_ctrl\n");
+
+			vc.id = qctrl->id;
+			vc.value = *(int32_t*)val;
+
+			result = v4lconvert_vidioc_s_ctrl(vdev->control->priv, &vc);
+		}
+
+		if (result != 0) {
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
 					"CTRL: Error setting value\n");
 			if(errno == EINVAL)
