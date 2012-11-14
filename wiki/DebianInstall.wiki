@@ -23,7 +23,7 @@ sudo add-apt-repository ppa:gillesg/ppa
 }}}
   * Install libv4l4j-java with:
 {{{
-sudo apt-get udpate
+sudo apt-get update
 sudo apt-get install libv4l4j-java
 }}}
 
