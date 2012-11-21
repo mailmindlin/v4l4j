@@ -35,17 +35,19 @@ cd v4l4j-trunk
 
 *On Raspbian Wheezy:*
 {{{
-JDK_HOME=/usr/lib/jvm/java-7-openjdk-armhf/ LIBPIXFC=pixfc-sse/libpixfc-sse-armv6l-hardfp.a ant clean all
+export JDK_HOME=/usr/lib/jvm/java-7-openjdk-armhf/ 
+export LIBPIXFC=pixfc-sse/libpixfc-sse-armv6l-hardfp.a 
+ant clean all
+sudo LIBPIXFC="${LIBPIXFC}" ant install
 }}}
 
 *On Wheezy beta: *
 {{{
-JDK_HOME=/usr/lib/jvm/java-7-openjdk-armel/ LIBPIXFC=pixfc-sse/libpixfc-sse-armv6l-softfp.a ant clean all
+export JDK_HOME=/usr/lib/jvm/java-7-openjdk-armel/ 
+export LIBPIXFC=pixfc-sse/libpixfc-sse-armv6l-softfp.a
+ant clean all
+sudo LIBPIXFC="${LIBPIXFC}" ant install
 }}}
 
-If the build went well, install with:
-{{{
-sudo ant install
-}}}
 
 Next, head to the [TestingV4l4j testing page].
