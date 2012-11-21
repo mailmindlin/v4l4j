@@ -33,80 +33,99 @@ struct PixFcSSE;
 
 /*
  * List of known pixel formats
- *
- * (see pixfmt_description.h for a struct containing more
- * info about each format, including name and fill pattern)
  */
 typedef enum {
+	//
 	// YUV formats
+
+	// Interleaved YUV422    - 8-bit components
+	// 4 bytes per 2 pixels  - row bytes is 2 * width
 	PixFcYUYV = 0,
+
+	// Interleaved YUV422    - 8-bit components
+	// 4 bytes per 2 pixels  - row bytes is 2 * width
 	PixFcUYVY,
+
+	// Planar YUV422         - 8-bit components
+	// 3 planes (Y, U, V) in a single contiguous memory area
+	// 4 bytes per 2 pixels  - row bytes is 2 * width
 	PixFcYUV422P,
+
+	// Planar YUV420         - 8-bit components
+	// 3 planes (Y, U, V) in a single contiguous memory area
+	// 4 bytes per 2 pixels  - row bytes is 2 * width
 	PixFcYUV420P,
-	PixFcV210,		// 10-bit YUV - row bytes is (width + 47) / 48 * 128
-					// see https://developer.apple.com/quicktime/icefloe/dispatch019.html#v210
 
+	// Interleaved YUV422    - 10-bit components
+	// 16 bytes per 6 pixels - row bytes is (width + 47) / 48 * 128 bytes long (integer math !!)
+	// see https://developer.apple.com/quicktime/icefloe/dispatch019.html#v210
+	PixFcV210,
+
+
+	//
 	// RGB formats
-	PixFcARGB,	// 32-bit ARGB
-	PixFcBGRA,	// 32-bit BGRA
-	PixFcRGB24,	// 24-bit RGB
-	PixFcBGR24,	// 24-bit BGR
 
+	// Interleaved 32-bit ARGB  - 8-bit components
+	// 4 bytes per pixel        - row bytes is width * 4
+	PixFcARGB,
+
+	// Interleaved 32-bit BGRA  - 8-bit components
+	// 4 bytes per pixel        - row bytes is width * 4
+	PixFcBGRA,
+
+	// Interleaved 24-bit RGB   - 8-bit components
+	// 3 bytes per pixel        - row bytes is width * 3
+	PixFcRGB24,
+
+	// Interleaved 24-bit BGR   - 8-bit components
+	// 3 bytes per pixel        - row bytes is width * 3
+	PixFcBGR24,
+
+  	// Interleaved 10-bit RGB   - 10-bit components
+	// 4 bytes per pixel        - row bytes is (width + 63) / 64 * 256 bytes long (integer math !!)
+	// see http://www.bitjazz.com/en/products/sheervideo/faq/formats/pixel_formats.php#r210
+	PixFcR210,
+
+	// Interleaved 10-bit RGB   - 10-bit components
+	// 4 bytes per pixel        - row bytes is (width + 63) / 64 * 256 bytes long (integer math !!)
+	// see http://www.bitjazz.com/en/products/sheervideo/faq/formats/pixel_formats.php#r10k
+	PixFcR10k,
+	
+	//
 	//
 	PixFcFormatCount
 
 } PixFcPixelFormat;
 
 
-/*
- * A conversion block function converts pixels from an input buffer in a specific
- * format to a different format and places them in an output buffer. Both in- and
- * out-buffers must be allocated by the called. To achieve higher conversion speeds,
- * both buffers should be 16-byte aligned, but they do not have to.
- *
- * Prototype for conversion block functions 
- */
-typedef		void (*ConversionBlockFn)(const struct PixFcSSE *pixfc, void *inBuffer, void *outBuffer);
-
-
-/*
- *  This structure is the entry point for pixel conversion.
- *  - You obtain one by calling by create_pixfc(),
- *  - Convert images by calling the convert() function pointer,
- *  - and release with destroy_pixfc().
- *  All members in this structure are read-only.
- */
-struct PixFcSSE{
-	ConversionBlockFn 			convert;	// Conversion function - call me to perform the conversion
-
-	// Values below are identical to those passed to create_pixfc()
-	PixFcPixelFormat 			source_fmt;
-	PixFcPixelFormat 			dest_fmt;
-	uint32_t					pixel_count;
-	uint32_t					width;
-	uint32_t					height;
-	uint32_t					row_bytes;
-	
-	uint32_t					uses_sse;	// set to 1 if the conversion function
-											// uses SSE, 0 if not.
-};
 
 /*
  * Flags that can be passed to create_pixfc() to modify
  * the conversion routine selection process.
  */
 typedef enum {
+	//
+	// Using this flag, PixFC will perform a full-range, average-resampling
+	// conversion using the fastest routine supported by the platform.
 	PixFcFlag_Default = 0,
 
 	//
-	// Force the use of a non-SSE conversion routine.
+	// Force the use of a non-SSE integer conversion routine.
 	PixFcFlag_NoSSE	=				(1 << 0),
+	// Force the use of a non-SSE float conversion routine. If no float
+	// conversion routine is available, an integer one is returned instead,
+	// as if PixFcFlag_NoSSE was used.
+	PixFcFlag_NoSSEFloat =			(1 << 1),
 	// Force the use of a SSE2-only conversion routine
 	// (ie. exclude Non-SSE, SSSE3 and SSE41 conversion routines)
-	PixFcFlag_SSE2Only =			(1 << 1),
+	PixFcFlag_SSE2Only =			(1 << 2),
 	// Force the use of a SSE2 and SSSE3-only conversion routine
 	// (ie. exclude Non-SSE, SSE2-only and SSE41 conversion routines)
-	PixFcFlag_SSE2_SSSE3Only =			(1 << 2),
+	PixFcFlag_SSE2_SSSE3Only =		(1 << 3),
+	// Force the use of a SSE2, SSSE3 and SSE41 conversion routine
+	// (ie. exclude Non-SSE, SSE2-only and SSE2/SSSE3-only conversion routines)
+	// Note this flag is redundant as it is implied by PixFcFlag_Default.
+	PixFcFlag_SSE2_SSSE3_SSE41Only=	(1 << 4),
 
 	//
 	// By default, PixFC performs a full-range conversion, unless one of the
@@ -126,8 +145,44 @@ typedef enum {
 	// - downsampling simply drops unused chromas.
 	// This is the fastest form of resampling, but converted images can be
 	// of lower quality and prone to conversion artifacts (aliasing).
-	PixFcFlag_NNbResamplingOnly	=		(1 << 14),
+	PixFcFlag_NNbResamplingOnly	=	(1 << 14),
 } PixFcFlag;
+
+
+/*
+ * A conversion block function converts pixels from an input buffer in a specific
+ * format to a different format and places them in an output buffer. Both in- and
+ * out-buffers must be allocated by the called. To achieve higher conversion speeds,
+ * both buffers should be 16-byte aligned, but they do not have to.
+ *
+ * Prototype for conversion block functions
+ */
+typedef		void (*ConversionBlockFn)(const struct PixFcSSE *pixfc, void *inBuffer, void *outBuffer);
+
+
+/*
+ *  This structure is the entry point for pixel conversion.
+ *  - You obtain one by calling by create_pixfc(),
+ *  - Convert images by calling the convert() function pointer,
+ *  - and release with destroy_pixfc().
+ *  All members in this structure are read-only.
+ */
+struct PixFcSSE{
+	// Conversion function - call me to perform the conversion
+	ConversionBlockFn 			convert;
+
+	// Values below are read-only & identical to those passed to create_pixfc()
+	PixFcPixelFormat 			source_fmt;
+	PixFcPixelFormat 			dest_fmt;
+	uint32_t					pixel_count;
+	uint32_t					width;
+	uint32_t					height;
+	uint32_t					source_row_bytes;
+	uint32_t					dest_row_bytes;
+
+	// PixFC will set this member to reflect the flags actually used by the conversion function
+	PixFcFlag					flags;
+};
 
 
 /*
@@ -141,12 +196,13 @@ uint32_t		create_pixfc(
 	PixFcPixelFormat, 	// in  - destination format
 	uint32_t,			// in  - width
 	uint32_t, 			// in  - height
-	uint32_t,			// in  - row bytes: length of one image row (in bytes). 
+	uint32_t,			// in  - source buffer row bytes: length of one image row (in bytes).
 						//		 For most input formats, this is 
 						//		 width * number_of_bytes_per_pixel. However some
 						//		 formats have alignment requirements. For instance,
 						//		 v210 requires the size of each line to be multiple
 						//		 of 128 bytes.
+	uint32_t,			// in  - destination buffer row bytes.
 	PixFcFlag			// in  - tune the selection of the conversion function. See
 						//		 enum definition above.
 );
@@ -162,10 +218,13 @@ void			destroy_pixfc(struct PixFcSSE*);
  */
 enum {
 	// The SSE features required are not available on the executing CPU.
-	PixFc_NoCPUSupport = -6,
+	PixFc_NoCPUSupport = -7,
 
-	// Source image has an invalid row size
-	PixFc_InvalidSourceImageRowSize = -5,
+	// Destination image buffer has an invalid row size
+	PixFc_InvalidDestBufferRowSize = -6,
+
+	// Source image buffer has an invalid row size
+	PixFc_InvalidSourceBufferRowSize = -5,
 	
 	// Source image dimensions prevent SSE conversions from being used.
 	PixFc_UnsupportedSourceImageDimension = -4,
