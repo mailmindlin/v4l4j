@@ -7,7 +7,6 @@
   * [Examples Program with v4l4j]
   * [v4l4jIntegration Integrate with other APIs]
   * FAQ
-    * [TestedHardware Tested hardware]
     * [Troubleshooting Solve common issues]
     * [ContactMailingList Where to get help]
     * [IDESetup Setup your IDE to use v4l4j]
