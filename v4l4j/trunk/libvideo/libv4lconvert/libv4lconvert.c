@@ -627,45 +627,47 @@ int v4lconvert_oom_error(struct v4lconvert_data *data)
 	return -1;
 }
 
+static int  get_row_size(PixFcPixelFormat format, uint32_t width) {
+	switch (format) {
+		case PixFcYUYV:
+		case PixFcUYVY:
+			return width * 2;
+		case PixFcYUV420P:
+			return width * 3 / 2;
+		case PixFcRGB24:
+		case PixFcBGR24:
+			return width * 3;
+		default:
+			printf("Unknown source pixel format\n");
+			return 0;
+	};
+}
+
 static void refresh_pixfc(struct v4lconvert_data *data, unsigned int width,
 		unsigned int height, PixFcPixelFormat src_fmt, PixFcPixelFormat dst_fmt) {
-       // If the width, height, source or destination pixel format in the current
-       // struct pixfc is different from the new ones (given as args), release struct.
-       if ((data->pixfc != NULL) &&
-                       (data->pixfc->width != width
-                       || data->pixfc->height != height
-                       || data->pixfc->source_fmt != src_fmt
-                       || data->pixfc->dest_fmt != dst_fmt)
-               )
-       {
-               destroy_pixfc(data->pixfc);
-               data->pixfc = NULL;
-       }
+	// If the width, height, source or destination pixel format in the current
+	// struct pixfc is different from the new ones (given as args), release struct.
+	if ((data->pixfc != NULL) &&
+			(data->pixfc->width != width
+			 || data->pixfc->height != height
+			 || data->pixfc->source_fmt != src_fmt
+			 || data->pixfc->dest_fmt != dst_fmt)
+	   )
+	{
+		destroy_pixfc(data->pixfc);
+		data->pixfc = NULL;
+	}
 
-       // Create a struct pixfc if we dont have one
-       if (data->pixfc == NULL) {
-			int row_size = 0;
-			switch (src_fmt) {
-				case PixFcYUYV:
-				case PixFcUYVY:
-					row_size = width * 2;
-					break;
-				case PixFcYUV420P:
-					row_size = width;
-					break;
-				case PixFcRGB24:
-				case PixFcBGR24:
-					row_size = width * 3;
-					break;
-				default:
-					printf("Unknown source pixel format\n");
-					break;
-			};
-               if ((row_size != 0) && 
-				   (create_pixfc(&data->pixfc, src_fmt, dst_fmt, width, height, row_size,
-                        PixFcFlag_SSE2Only | PixFcFlag_NNbResamplingOnly) != PixFc_OK))
-                       data->pixfc = NULL;
-       }
+	// Create a struct pixfc if we dont have one
+	if (data->pixfc == NULL) {
+		int src_row_size = get_row_size(src_fmt, width);
+		int dst_row_size = get_row_size(dst_fmt, width);
+
+		if ((src_row_size != 0) && (dst_row_size != 0) &&
+				(create_pixfc(&data->pixfc, src_fmt, dst_fmt, width, height, src_row_size, dst_row_size,
+					      PixFcFlag_SSE2Only | PixFcFlag_NNbResamplingOnly) != PixFc_OK))
+			data->pixfc = NULL;
+	}
 }
 
 static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
