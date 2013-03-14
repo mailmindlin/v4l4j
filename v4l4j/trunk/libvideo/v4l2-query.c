@@ -470,12 +470,8 @@ static int check_palettes_v4l2(struct video_device *vdev){
 	while(v4lconvert_enum_fmt(vdev->info->convert, &fmtd)>=0){
 		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
 				"QRY: looking for palette %#x\n", fmtd.pixelformat);
-		if ((p=find_v4l2_palette(fmtd.pixelformat)) == -1) {
-			info("libvideo has encountered an unsupported image format:\n");
-			info("%s (%#x)\n", fmtd.description, fmtd.pixelformat);
-			info("Please let the author know about this error.\n");
-			info("See the ISSUES section in the libvideo README file.\n");
-		} else {
+
+		if ((p=find_v4l2_palette(fmtd.pixelformat)) != -1) {
 			dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
 					"QRY: %s supported (%d)\n", libvideo_palettes[p].name, p);
 			if(add_supported_palette(vdev, di, p)!=0){
@@ -484,10 +480,16 @@ static int check_palettes_v4l2(struct video_device *vdev){
 
 				return LIBVIDEO_ERR_IOCTL;
 			}
+		} else {
+			info("libvideo has skipped an unsupported image format:\n");
+			info("%s (%#x)\n", fmtd.description, fmtd.pixelformat);
+			info("Please let the author know about this error.\n");
+			info("See the ISSUES section in the libvideo README file.\n");
 		}
 		fmtd.index++;
 	}
-	return fmtd.index;
+	
+	return vdev->info->nb_palettes;
 }
 static int query_tuner(struct video_input_info *vi, int fd, int index){
 	struct v4l2_tuner t;
@@ -646,7 +648,7 @@ int query_device_v4l2(struct video_device *vdev){
 	}
 
 	//fill palettes field
-	if((vdev->info->nb_palettes = check_palettes_v4l2(vdev))==LIBVIDEO_ERR_IOCTL){
+	if(check_palettes_v4l2(vdev)==LIBVIDEO_ERR_IOCTL){
 		free_video_inputs(vdev->info->inputs, vdev->info->nb_inputs);
 		info("Error checking supported palettes on V4L2 video device %s\n",
 				vdev->file);
