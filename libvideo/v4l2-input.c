@@ -1019,7 +1019,7 @@ static void set_query_menu(struct video_device *vd, struct control *c){
 
 		//count how many menus there are
 		qm.id = id;
-		for(i = c->v4l2_ctrl->minimum; i==c->v4l2_ctrl->maximum; i++){
+		for(i = c->v4l2_ctrl->minimum; i<=c->v4l2_ctrl->maximum; i++){
 			qm.index = i;
 			if(ioctl(vd->fd, VIDIOC_QUERYMENU, &qm) == 0){
 				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
@@ -1035,7 +1035,7 @@ static void set_query_menu(struct video_device *vd, struct control *c){
 			//populate struct control->v4l2_querymenu
 			XMALLOC(q, struct v4l2_querymenu *, count * sizeof(struct v4l2_querymenu));
 
-			for(i = c->v4l2_ctrl->minimum; i==c->v4l2_ctrl->maximum; i++){
+			for(i = c->v4l2_ctrl->minimum; i<=c->v4l2_ctrl->maximum; i++){
 				q[idx].id = id;
 				q[idx].index = i;
 				if(ioctl(vd->fd, VIDIOC_QUERYMENU, &q[idx]) == 0)
@@ -1085,7 +1085,7 @@ static void fix_quirky_struct(struct v4l2_queryctrl *v){
 			v->minimum = temp;
 		}
 
-	} else if(v->type==V4L2_CTRL_TYPE_MENU) {
+	} else if((v->type==V4L2_CTRL_TYPE_MENU) || (v->type == V4L2_CTRL_TYPE_INTEGER_MENU)) {
 		//Not sure about this one...
 		if(v->step==0){
 			v->step = 1;
@@ -1164,7 +1164,8 @@ int create_v4l2_controls(struct video_device *vdev, struct control *controls,
 			if ( !(controls[count].v4l2_ctrl->flags & V4L2_CTRL_FLAG_DISABLED)&&
 					controls[count].v4l2_ctrl->type!=V4L2_CTRL_TYPE_CTRL_CLASS){
 				fix_quirky_struct(controls[count].v4l2_ctrl);
-				if(controls[count].v4l2_ctrl->type == V4L2_CTRL_TYPE_MENU)
+				if((controls[count].v4l2_ctrl->type == V4L2_CTRL_TYPE_MENU) ||
+					(controls[count].v4l2_ctrl->type == V4L2_CTRL_TYPE_INTEGER_MENU))
 					set_query_menu(vdev, &controls[count]);
 				count++;
 				add_node(&list, i);
@@ -1184,7 +1185,8 @@ int create_v4l2_controls(struct video_device *vdev, struct control *controls,
 			if( ! (controls[count].v4l2_ctrl->flags & V4L2_CTRL_FLAG_DISABLED) &&
 					controls[count].v4l2_ctrl->type!=V4L2_CTRL_TYPE_CTRL_CLASS){
 				fix_quirky_struct(controls[count].v4l2_ctrl);
-				if(controls[count].v4l2_ctrl->type == V4L2_CTRL_TYPE_MENU)
+				if((controls[count].v4l2_ctrl->type == V4L2_CTRL_TYPE_MENU) ||
+					(controls[count].v4l2_ctrl->type == V4L2_CTRL_TYPE_INTEGER_MENU))
 					set_query_menu(vdev, &controls[count]);
 				count++;
 				add_node(&list, i);
@@ -1220,7 +1222,8 @@ int create_v4l2_controls(struct video_device *vdev, struct control *controls,
 			CLEAR(*controls[count].v4l2_ctrl);
 			memcpy(controls[count].v4l2_ctrl, &qctrl,sizeof(struct v4l2_queryctrl));
 			fix_quirky_struct(controls[count].v4l2_ctrl);
-			if(controls[count].v4l2_ctrl->type == V4L2_CTRL_TYPE_MENU)
+			if((controls[count].v4l2_ctrl->type == V4L2_CTRL_TYPE_MENU) ||
+				(controls[count].v4l2_ctrl->type == V4L2_CTRL_TYPE_INTEGER_MENU))
 				set_query_menu(vdev, &controls[count]);
 			dprint_v4l2_control(controls[count]);
 			count++;
@@ -1242,7 +1245,8 @@ int create_v4l2_controls(struct video_device *vdev, struct control *controls,
 }
 static int fix_quirky_values(struct v4l2_queryctrl *qc, int v){
 	if ((qc->type == V4L2_CTRL_TYPE_INTEGER) || (qc->type == V4L2_CTRL_TYPE_BOOLEAN)
-			|| (qc->type == V4L2_CTRL_TYPE_MENU) || (qc->type ==  V4L2_CTRL_TYPE_BUTTON)) {
+			|| (qc->type == V4L2_CTRL_TYPE_MENU) || (qc->type ==  V4L2_CTRL_TYPE_BUTTON)
+			|| (qc->type == V4L2_CTRL_TYPE_INTEGER_MENU)) {
 		if(v < qc->minimum) {
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
 					"CTRL: QUIRK: fixed quirky control value %d below minimum %d\n",
@@ -1608,7 +1612,8 @@ static void print_v4l2_control(struct v4l2_queryctrl *qc) {
 			qc->type == V4L2_CTRL_TYPE_INTEGER64 ? "Integer64" :
 			qc->type == V4L2_CTRL_TYPE_CTRL_CLASS ? "Class" :
 			qc->type == V4L2_CTRL_TYPE_BITMASK ? "Bitmask" :
-			qc->type == V4L2_CTRL_TYPE_STRING ? "String" : "",
+			qc->type == V4L2_CTRL_TYPE_STRING ? "String" : 
+			qc->type == V4L2_CTRL_TYPE_INTEGER_MENU ? "IntMenu" : "",
 			qc->flags,
 			qc->flags & V4L2_CTRL_FLAG_DISABLED ? "Disabled " : "",
 			qc->flags & V4L2_CTRL_FLAG_GRABBED ? "Grabbed " : "",

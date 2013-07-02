@@ -113,8 +113,19 @@ static jobjectArray get_names(JNIEnv *e, struct control *l){
 		return NULL;
 	}
 
-	for(i=0;i<l->count_menu;i++)
-		(*e)->SetObjectArrayElement(e, names_array, i, (*e)->NewStringUTF(e, (const char *) l->v4l2_menu[i].name));
+	for(i=0;i<l->count_menu;i++) {
+		if(l->v4l2_ctrl->type == V4L2_CTRL_TYPE_MENU) {
+			(*e)->SetObjectArrayElement(e, names_array, i, (*e)->NewStringUTF(e, (const char *) l->v4l2_menu[i].name));
+		} else if (l->v4l2_ctrl->type == V4L2_CTRL_TYPE_INTEGER_MENU) {
+			char control_name[64] = {0};	// hopefully long enough to hold the largest name
+			snprintf(control_name, sizeof(control_name), "%lld", l->v4l2_menu[i].value);
+			(*e)->SetObjectArrayElement(e, names_array, i, (*e)->NewStringUTF(e, (const char *) control_name));
+		} else {
+			info("[V4L4J] Unknown menu type\n");
+			THROW_EXCEPTION(e, JNI_EXCP, "Unknown menu control type\n");
+			return NULL;
+		}
+	}
 
 	return names_array;
 }
@@ -150,7 +161,7 @@ static int translate_type(JNIEnv *e, int t){
 			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the SLIDER field in V4L4JConstants class");
 			return -1;
 		}
-	} else if(t == V4L2_CTRL_TYPE_MENU){
+	} else if((t == V4L2_CTRL_TYPE_MENU) || (t == V4L2_CTRL_TYPE_INTEGER_MENU)){
 		fid = (*e)->GetStaticFieldID(e, constants, "CTRL_TYPE_DISCRETE", "I");
 		if(fid == NULL){
 			info( "[V4L4J] Error looking up the DISCRETE field in V4L4JConstants class\n");
