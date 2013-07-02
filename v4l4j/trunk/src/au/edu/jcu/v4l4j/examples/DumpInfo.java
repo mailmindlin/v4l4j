@@ -18,6 +18,7 @@
 package au.edu.jcu.v4l4j.examples;
 
 import java.util.List;
+import java.util.Map;
 
 import au.edu.jcu.v4l4j.Control;
 import au.edu.jcu.v4l4j.DeviceInfo;
@@ -157,6 +158,17 @@ public class DumpInfo {
 				} catch (V4L4JException ve){
 					System.out.println(" ERROR");
 				}
+			} else if (c.getType() == V4L4JConstants.CTRL_TYPE_DISCRETE) {
+				Map<String,Integer> valueMap = c.getDiscreteValuesMap();
+				System.out.print("Menu control: "+c.getName() + " - value: ");
+				try {
+					System.out.println(c.getValue());
+				} catch (V4L4JException ve){
+					System.out.println(" ERROR");
+				}
+				System.out.println("Menu entries:");
+				for(String s: valueMap.keySet())
+					System.out.println("  " + s + " - " + valueMap.get(s));
 			} else {
 				System.out.print("Control: "+c.getName()+" - min: "+c.getMinValue()+
 						" - max: "+c.getMaxValue()+" - step: "+c.getStepValue()+

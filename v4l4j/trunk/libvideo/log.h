@@ -135,7 +135,8 @@
 				ctrl.v4l2_ctrl->type == V4L2_CTRL_TYPE_INTEGER64 ? "Integer64" :  \
 				ctrl.v4l2_ctrl->type == V4L2_CTRL_TYPE_CTRL_CLASS ? "Class" :\
 				ctrl.v4l2_ctrl->type == V4L2_CTRL_TYPE_STRING ? "String" :\
-				ctrl.v4l2_ctrl->type == V4L2_CTRL_TYPE_BITMASK ? "Bitmask" : "", \
+				ctrl.v4l2_ctrl->type == V4L2_CTRL_TYPE_BITMASK ? "Bitmask" :\
+				ctrl.v4l2_ctrl->type == V4L2_CTRL_TYPE_INTEGER_MENU ? "IntMenu" : "UNKNOWN TYPE",\
 				ctrl.v4l2_ctrl->flags, \
 				ctrl.v4l2_ctrl->flags & V4L2_CTRL_FLAG_DISABLED ? "Disabled " : "", \
 				ctrl.v4l2_ctrl->flags & V4L2_CTRL_FLAG_GRABBED ? "Grabbed " : "", \
@@ -145,8 +146,12 @@
 				ctrl.v4l2_ctrl->flags & V4L2_CTRL_FLAG_SLIDER ? "slider " : "",\
 				ctrl.v4l2_ctrl->flags & V4L2_CTRL_FLAG_WRITE_ONLY ? "write-only" : ""); \
 		for(i=0; i<ctrl.count_menu; i++) {\
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1, \
-				"   Menu %d - index: %d - '%s'\n", i, ctrl.v4l2_menu[i].index, ctrl.v4l2_menu[i].name);\
+			if (ctrl.v4l2_ctrl->type==V4L2_CTRL_TYPE_MENU)\
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1, \
+					"   Menu %d - index: %d - '%s'\n", i, ctrl.v4l2_menu[i].index, ctrl.v4l2_menu[i].name);\
+			else\
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1, \
+					"   Menu %d - index: %d - '%lld'\n", i, ctrl.v4l2_menu[i].index, ctrl.v4l2_menu[i].value);\
 		}\
 	} while(0);
 

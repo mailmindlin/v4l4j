@@ -122,9 +122,9 @@ uninstall:
 	rm -f $(DESTDIR)$(LIBV4L_HELPERS_INSTALL_DIR)/libv4l/*-decomp
 
 test: $(LIB).$(LIB_RELEASE) $(TESTOBJ)
-	$(LD) test-capture.o -lm -lrt -L. -l$(LIB_NAME) -o test-capture
-	$(LD) list-caps.o -lm -lrt -L. -l$(LIB_NAME) -o list-caps
-	$(LD) dump-capture.o -lm -lrt -L. -l$(LIB_NAME) -o dump-capture
+	$(CC) test-capture.o -lm -lrt -L. -l$(LIB_NAME) -o test-capture
+	$(CC) list-caps.o -lm -lrt -L. -l$(LIB_NAME) -o list-caps
+	$(CC) dump-capture.o -lm -lrt -L. -l$(LIB_NAME) -o dump-capture
 
 version.h:
 	@sh svn-version.sh
