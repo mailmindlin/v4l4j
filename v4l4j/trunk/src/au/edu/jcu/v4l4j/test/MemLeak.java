@@ -26,13 +26,16 @@ package au.edu.jcu.v4l4j.test;
 import java.io.IOException;
 
 import au.edu.jcu.v4l4j.FrameGrabber;
+import au.edu.jcu.v4l4j.CaptureCallback;
 import au.edu.jcu.v4l4j.VideoDevice;
+import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 public class MemLeak implements Runnable{
 	private boolean stop;
 	private String dev;
 	private VideoDevice vd;
+	private int numCapturedFrames;
 	
 	public MemLeak(String d) throws V4L4JException{
 		stop = false;
@@ -45,72 +48,182 @@ public class MemLeak implements Runnable{
 	
 	public void run(){
 		FrameGrabber fg;
-		int count = 0;
 		
 		while(!stop){
-			count = 0;
 			try {
 				vd = new VideoDevice(dev);
 				vd.getControlList();
 				fg = vd.getJPEGFrameGrabber(640, 480, 0, 0, 80);
-				fg.startCapture();
-				while(count++<200)
-					fg.getVideoFrame().recycle();
+
+				numCapturedFrames = 0;
+				fg.setCaptureCallback(new CaptureCallback() {
+
+					@Override
+					public void nextFrame(VideoFrame frame) {
+					numCapturedFrames++;
+
+					if (numCapturedFrames == 200){
+						synchronized(vd){
+							vd.notifyAll();
+						}
+					}
+					}
+
+					@Override
+					public void exceptionReceived(V4L4JException e) {
+						e.printStackTrace();
+					}
+				});
+
+				synchronized (vd){
+					fg.startCapture();
+					vd.wait(15000);  //wait up to 15 seconds for to collect 200 frames
+				}
+
 				fg.stopCapture();
 				vd.releaseFrameGrabber();	
-			} catch (V4L4JException e) {
+			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 
 			try {
-				count = 0;
 				fg = vd.getRGBFrameGrabber(640, 480, 0, 0);
-				fg.startCapture();
-				while(count++<200)
-					fg.getVideoFrame().recycle();
+
+				numCapturedFrames = 0;
+				fg.setCaptureCallback(new CaptureCallback() {
+
+					@Override
+					public void nextFrame(VideoFrame frame) {
+					numCapturedFrames++;
+
+					if (numCapturedFrames == 200){
+						synchronized(vd){
+							vd.notifyAll();
+						}
+					}
+					}
+
+					@Override
+					public void exceptionReceived(V4L4JException e) {
+						e.printStackTrace();
+					}
+				});
+
+				synchronized (vd){
+					fg.startCapture();
+					vd.wait(15000);  //wait up to 15 seconds for to collect 200 frames
+				}
+
+
 				fg.stopCapture();
 				vd.releaseFrameGrabber();	
-			} catch (V4L4JException e) {
+			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 
 			try {
-				count = 0;
 				fg = vd.getBGRFrameGrabber(640, 480, 0, 0);
-				fg.startCapture();
-				while(count++<200)
-					fg.getVideoFrame().recycle();
+
+				numCapturedFrames = 0;
+				fg.setCaptureCallback(new CaptureCallback() {
+
+					@Override
+					public void nextFrame(VideoFrame frame) {
+					numCapturedFrames++;
+
+					if (numCapturedFrames == 200){
+						synchronized(vd){
+							vd.notifyAll();
+						}
+					}
+					}
+
+					@Override
+					public void exceptionReceived(V4L4JException e) {
+						e.printStackTrace();
+					}
+				});
+
+				synchronized (vd){
+					fg.startCapture();
+					vd.wait(15000);  //wait up to 15 seconds for to collect 200 frames
+				}
+
 				fg.stopCapture();
 				vd.releaseFrameGrabber();	
-			} catch (V4L4JException e) {
+			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 
 			try {
-				count = 0;
 				fg = vd.getYUVFrameGrabber(640, 480, 0, 0);
-				fg.startCapture();
-				while(count++<200)
-					fg.getVideoFrame().recycle();
+
+				numCapturedFrames = 0;
+				fg.setCaptureCallback(new CaptureCallback() {
+
+					@Override
+					public void nextFrame(VideoFrame frame) {
+					numCapturedFrames++;
+
+					if (numCapturedFrames == 200){
+						synchronized(vd){
+							vd.notifyAll();
+						}
+					}
+					}
+
+					@Override
+					public void exceptionReceived(V4L4JException e) {
+						e.printStackTrace();
+					}
+				});
+
+				synchronized (vd){
+					fg.startCapture();
+					vd.wait(15000);  //wait up to 15 seconds for to collect 200 frames
+				}
+
 				fg.stopCapture();
 				vd.releaseFrameGrabber();	
-			} catch (V4L4JException e) {
+			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 
 			try {
-				count = 0;
 				fg = vd.getYVUFrameGrabber(640, 480, 0, 0);
-				fg.startCapture();
-				while(count++<200)
-					fg.getVideoFrame().recycle();
+
+				numCapturedFrames = 0;
+				fg.setCaptureCallback(new CaptureCallback() {
+
+					@Override
+					public void nextFrame(VideoFrame frame) {
+					numCapturedFrames++;
+
+					if (numCapturedFrames == 200){
+						synchronized(vd){
+							vd.notifyAll();
+						}
+					}
+					}
+
+					@Override
+					public void exceptionReceived(V4L4JException e) {
+						e.printStackTrace();
+					}
+				});
+
+				synchronized (vd){
+					fg.startCapture();
+					vd.wait(15000);  //wait up to 15 seconds for to collect 200 frames
+				}
+
 				fg.stopCapture();
 				vd.releaseFrameGrabber();	
-			} catch (V4L4JException e) {
+			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
