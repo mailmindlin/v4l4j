@@ -36,14 +36,16 @@ import org.junit.Test;
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.VideoFrame;
+import au.edu.jcu.v4l4j.CaptureCallback;
 import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
-public class FrameGrabberTest {
+public class FrameGrabberTest implements CaptureCallback {
 	private static VideoDevice vd;
 	private FrameGrabber fg;
 	int w,h, std, ch, repeats;
 	String dev;
+	VideoFrame lastFrame;
 	
 	
 	@Before
@@ -70,26 +72,11 @@ public class FrameGrabberTest {
 	public void testDoNothing() {
 	}
 
-	@Test
-	public void testStartCapture() {
-		try {
-			fg.startCapture();
-		} catch (V4L4JException e) {
-			fail("Failed to start capture");
-		}
-		
+	@Test(expected=V4L4JException.class)
+	public void testStartCaptureWithoutSetCallback() throws V4L4JException{
+		fg.startCapture();
+		fail("Error: we shouldnt be here");	
 		fg.stopCapture();
-	}
-
-	@Test
-	public void testGetFrame() {
-		try {
-			fg.startCapture();
-			fg.getVideoFrame().recycle();
-			fg.stopCapture();
-		} catch (V4L4JException e) {
-			fail("Error: Shouldnt be in exception handler here...");
-		}
 	}
 
 	@Test
@@ -104,16 +91,20 @@ public class FrameGrabberTest {
 	
 	@Test(expected=StateException.class)
 	public void testDoubleStartCapture() throws V4L4JException{
+		fg.setCaptureCallback(this);
 		try {
 			fg.startCapture();
 		} catch (V4L4JException e) {
+			e.printStackTrace();
 			fail("Error: Should be able to start the capture here");
 		}
 		fg.startCapture();
+		fail("Error we shouldnt be here");
 	}
 	
 	@Test(expected=StateException.class)
 	public void testDoubleStopCapture() throws StateException{
+		fg.setCaptureCallback(this);
 		try {
 			fg.startCapture();
 		} catch (V4L4JException e) {
@@ -122,33 +113,31 @@ public class FrameGrabberTest {
 		fg.stopCapture();
 
 		fg.stopCapture();
+		fail("Error we shouldnt be here");
 	}
 		
 	@Test(expected=StateException.class)
-	public void testAccessVideoFrameAfterStartStopStartCapture() throws StateException{
-		VideoFrame frame = null;
+	public void testAccessVideoFrameAfterStopCapture() throws Exception{
+		fg.setCaptureCallback(this);
 		try {
 			fg.startCapture();
-			frame = fg.getVideoFrame();
+			Thread.sleep(2000);
 			fg.stopCapture();
-			fg.startCapture();
 		} catch (V4L4JException e) {
 			fail("Error: Should be able to start the capture here");
 		}
-		frame.getBytes();	// this should throw a StateException
+		lastFrame.getBytes();	// this should throw a StateException
 	}
 	
 	@Test
 	public void testMultipleCapture(){
+		fg.setCaptureCallback(this);
 		try {
 			fg.startCapture();
-			fg.getVideoFrame().recycle();
 			fg.stopCapture();
 			fg.startCapture();
-			fg.getVideoFrame().recycle();
 			fg.stopCapture();
 			fg.startCapture();
-			fg.getVideoFrame().recycle();
 			fg.stopCapture();
 		} catch (V4L4JException e) {
 			fail("Error: Shouldnt be in exception handler here...");
@@ -158,9 +147,9 @@ public class FrameGrabberTest {
 	@Test
 	public void testMultipleInitRelease(){
 		try {
-			Vector<VideoFrame> frames= new Vector<VideoFrame>();
 			int iteration = repeats;
-			
+			fg.setCaptureCallback(this);
+
 			while (iteration-- > 0){
 				vd.releaseFrameGrabber();
 				vd.release();
@@ -169,20 +158,6 @@ public class FrameGrabberTest {
 				fg = vd.getRawFrameGrabber(w, h, ch, std);
 			}
 			
-			iteration = repeats;
-			while(iteration-- > 0){				
-				fg.startCapture();
-				
-				for(int i = 0; i<fg.getNumberOfVideoFrames(); i++)
-					frames.add(fg.getVideoFrame());
-				
-				for(VideoFrame frame : frames)
-					frame.recycle();
-				
-				fg.stopCapture();
-				vd.releaseFrameGrabber();
-				fg = vd.getRawFrameGrabber(w, h, ch, std);
-			}
 		} catch (V4L4JException e) {
 			fail("Error: Shouldnt be in exception handler here...");
 		}
@@ -192,9 +167,20 @@ public class FrameGrabberTest {
 	@Test
 	public void testReleaseWithoutStopCapture() {
 		try {
+			fg.setCaptureCallback(this);
 			fg.startCapture();
 		} catch (V4L4JException e) {
 			fail("Error: Shouldnt be in exception handler here...");
 		}
 	}
+
+	public void nextFrame(VideoFrame frame) {
+		lastFrame = frame;
+		frame.recycle();
+	}
+
+        public void exceptionReceived(V4L4JException e) {
+		fail("Error we shouldnt be here");
+	}
 }
+

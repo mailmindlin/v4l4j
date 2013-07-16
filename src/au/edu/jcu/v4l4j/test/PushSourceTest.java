@@ -61,57 +61,6 @@ public class PushSourceTest implements CaptureCallback{
 		vd.release();
 	}
 
-	@Test(expected=StateException.class)
-	public void testSetCallbackAfterStartCapture() throws V4L4JException{
-		fg.startCapture();
-
-		try {
-			fg.setCaptureCallback(new CaptureCallback() {
-
-				@Override
-				public void nextFrame(VideoFrame frame) {
-					fail("we shouldnt be here");
-					frame.recycle();
-				}
-
-				@Override
-				public void exceptionReceived(V4L4JException e) {
-					e.printStackTrace();
-					fail("Received exception when we were not expecting one");
-				}
-			});
-		} finally {
-			fg.stopCapture();
-		}
-	}
-
-	@Test(expected=UnsupportedMethod.class)
-	public void testGetVideoFrameWhileInPushMode() throws V4L4JException{
-		numCapturedFrames = 0;
-		fg.setCaptureCallback(new CaptureCallback() {
-
-			@Override
-			public void nextFrame(VideoFrame frame) {
-				frame.recycle();
-			}
-
-			@Override
-			public void exceptionReceived(V4L4JException e) {
-				e.printStackTrace();
-				fail("Received exception when we were not expecting one");
-			}
-		});
-
-		fg.startCapture();
-
-		try {
-			fg.getVideoFrame().recycle();
-			fail("We shouldnt be here");
-		} finally {
-			fg.stopCapture();
-		}
-	}
-	
 	public synchronized void Log(String s){
 		System.err.println(Thread.currentThread().getName()+": "+ s);
 		System.err.flush();
