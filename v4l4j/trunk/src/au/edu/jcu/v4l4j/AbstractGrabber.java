@@ -73,7 +73,6 @@ abstract class AbstractGrabber implements FrameGrabber {
 	private long						lastCapturedFrameTimeuSec;	// these three names are changed
 	private int							lastCapturedFrameBufferIndex;//
 	private PushSource					pushSource;
-	private long						pushSourceThreadId;
 	private ThreadFactory				threadFactory;
 
 	/*
@@ -159,7 +158,6 @@ abstract class AbstractGrabber implements FrameGrabber {
 		videoFrames = new Vector<BaseVideoFrame>();
 		availableVideoFrames = new Vector<BaseVideoFrame>();
 		pushSource = null;
-		pushSourceThreadId = 0;
 		threadFactory = factory;
 	}
 
@@ -306,8 +304,8 @@ abstract class AbstractGrabber implements FrameGrabber {
 			if (state.isStarted())
 				throw new StateException("This frame grabber is already started");
 
-			//FIXME: when transitioned to push mode only, instantiate
-			pushSource = new  PushSource(this, callback, threadFactory);
+			// create the push source object
+			pushSource = new PushSource(this, callback, threadFactory);
 		}
 	}
 
@@ -318,13 +316,16 @@ abstract class AbstractGrabber implements FrameGrabber {
 	public final void startCapture() throws V4L4JException {
 		state.start();
 
-		//FIXME: no need to check pushSource when transitioned to push mode only
-		// if we are in push mode, start the push source and wait until 
-		// it's blocked on getVideoFrame()
-		if (pushSource != null) {
-			pushSourceThreadId = pushSource.startCapture();
-			state.waitForAtLeastOneUser();
+		// make sure we have a push source
+		if(pushSource == null) {
+			state.rollback();
+			throw new V4L4JException("setCaptureCallback() must be called with a valid "
+					+ "callback object before startCapture()"); 
 		}
+
+		// start the push source and wait until it's blocked on getVideoFrame()
+		pushSource.startCapture();
+		state.waitForAtLeastOneUser();
 
 		try {
 			// start video capture and enqueue all buffers
@@ -332,10 +333,8 @@ abstract class AbstractGrabber implements FrameGrabber {
 		} catch (V4L4JException e) {
 			// Error starting the capture...
 
-			//FIXME: no need to check pushSource when transitioned to push mode only 
-			// stop the capture thread
-			if (pushSource != null)
-				pushSource.stopCapture();
+			// stop the push source thread
+			pushSource.stopCapture();
 
 			// return to previous state
 			state.rollback();
@@ -381,28 +380,11 @@ abstract class AbstractGrabber implements FrameGrabber {
 		return frame;
 	}
 
-	/* (non-Javadoc)
-	 * @see au.edu.jcu.v4l4j.FrameGrabber#getVideoFrame()
-	 */
-	@Override
-	public final VideoFrame getVideoFrame() throws V4L4JException {
-		//FIXME: remove this method when transitioned to push mode only
-		return getNextVideoFrame();
-	}
-
 	final VideoFrame getNextVideoFrame() throws V4L4JException {
 		int frameSize;
 		BaseVideoFrame nextFrame;
 
 		state.get();
-
-		//FIXME: no need to check pushSource when transitioned to push mode only
-		// if we are in push mode, make sure the calling thread is
-		// our pushSource's thread
-		if ((pushSource != null) &&  (Thread.currentThread().getId() != pushSourceThreadId)) {
-			state.put();
-			throw new UnsupportedMethod("This frame grabber is set to push mode");
-		}
 
 		try {
 			// get next available video frame object
@@ -461,12 +443,10 @@ abstract class AbstractGrabber implements FrameGrabber {
 		// If the push thread is blocked in 2), tell the JNI layer to stop the capture
 		// which will wake up the push thread blocked in fillBuffer() with an error.
 
-		// unblock thread in 1)
-		// if we re started and in push mode, stop the push source
-		if (pushSource != null)
-			pushSource.stopCapture();
+		// unblock thread in 1): stop the push source
+		pushSource.stopCapture();
 
-		// unblock thread in 2)
+		// unblock thread in 2): tell libvideo to stop capture
 		stop(object);
 
 		// wait for thread blocked in 2) to return
