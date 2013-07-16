@@ -431,11 +431,15 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 * @param frame the frame being recycled.
 	 */
 	final void recycleVideoBuffer(BaseVideoFrame frame) {
-		enqueueBuffer(object, frame.getBufferInex());
+		// Make sure we are in started state
+		if (state.isStarted())
+		{
+			enqueueBuffer(object, frame.getBufferInex());
 
-		synchronized(availableVideoFrames){
-			availableVideoFrames.add(frame);
-			availableVideoFrames.notify();
+			synchronized(availableVideoFrames){
+				availableVideoFrames.add(frame);
+				availableVideoFrames.notify();
+			}
 		}
 	}
 
@@ -659,6 +663,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 				throw new StateException("This FrameGrabber is not started and "
 						+"can not be stopped");
 		}
+
 
 		/**
 		 * This method unblocks when there are no more users.
