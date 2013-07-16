@@ -147,6 +147,26 @@ public class SimpleViewer extends WindowAdapter implements CaptureCallback{
 		frame.dispose();            
 	}
 
+	public void windowIconified(WindowEvent e){
+		try {
+                        frameGrabber.stopCapture();
+                } catch (Exception ex) {
+                        // the frame grabber may be already stopped, so we just ignore
+                        // any exception and simply continue.
+			ex.printStackTrace();
+                }
+
+	}
+
+	public void windowDeiconified(WindowEvent e){
+		try {
+                        frameGrabber.startCapture();
+                } catch (Exception ex) {
+                        // the frame grabber may be already stopped, so we just ignore
+                        // any exception and simply continue.
+			ex.printStackTrace();
+                }
+	}
 
 	@Override
 	public void exceptionReceived(V4L4JException e) {
@@ -168,3 +188,4 @@ public class SimpleViewer extends WindowAdapter implements CaptureCallback{
 		frame.recycle();
 	}
 }
+
