@@ -57,23 +57,6 @@ VERSION_MAJOR := 0
 VERSION_MINOR := 9
 LIB_RELEASE := 0
 
-ifeq ($(shell arch), x86_64)
-	LIBPIXFC ?= pixfc-sse/libpixfc-sse-x86_64.a
-else ifeq ($(shell arch | grep -Eic "^i?.86"), 1)
-	LIBPIXFC ?= pixfc-sse/libpixfc-sse-x86.a
-else ifeq ($(shell arch | grep -ic "arm"), 1) 
-#
-# define LIBPIXFC explicitly for ARM archs
-#
-ifeq ($(origin LIBPIXFC), undefined)
-$(error ARM architecture detected - define LIBPIFXC explicitly)
-endif
-endif
-
-ifeq ($(origin LIBPIXFC), undefined)
-$(error Unable to determine architecture to select the right libpixfc)
-endif
-
 LIB_NAME := video
 LIB := lib$(LIB_NAME).so
 TESTOBJ := test-capture.o dump-capture.o list-caps.o
@@ -89,7 +72,7 @@ LDFLAGS += -lm -lrt -shared -ljpeg -lv4lconvert
 all: $(LIB).$(LIB_RELEASE)
 
 $(LIB).$(LIB_RELEASE): version.h $(OBJ)
-	$(CC) $(OBJ) $(LIBPIXFC) -Wl,-soname,$(LIB).$(LIB_RELEASE) \
+	$(CC) $(OBJ) -Wl,-soname,$(LIB).$(LIB_RELEASE) \
   $(LDFLAGS) -o $(LIB).$(LIB_RELEASE)
 	ln -f -s $(LIB).$(LIB_RELEASE) $(LIB)
 
