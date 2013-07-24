@@ -22,11 +22,11 @@ always be found at http://v4l4j.googlecode.com
 
 QUICK START:
 The following installs the dependencies, compiles & install v4l4j and runs a
-test application, assuming you are running Ubuntu (prior to Precise) or Debian:
-sudo apt-get install openjdk-6-jdk libjpeg-dev build-essential ant
+test application, assuming you are running Ubuntu Lucid or Debian:
+sudo apt-get install openjdk-6-jdk libjpeg-dev build-essential ant libv4l-dev
 
-If you are running Ubuntu Precise:
-sudo apt-get install openjdk-6-jdk libjpeg-turbo8-dev build-essential ant
+If you are running Ubuntu Precise or later:
+sudo apt-get install openjdk-6-jdk libjpeg-turbo8-dev build-essential ant libv4l-dev
 
 Then:
 
@@ -43,6 +43,8 @@ v4l4j requires the following:
 - Sun JAVA JDK 1.6 or OpenJDK6 (it wont compile with earlier versions).
 - the development files of libjpeg, as well as libjpeg itself. It is 
   recommended to use libjpeg-turbo over libjpeg if possible.
+- libv4lconvert (library and header files), part of the v4l-util suite available
+  from linuxtv.org
 - standard build tools (make, gcc, ld) & headers (libc)
 - Apache Ant
 
