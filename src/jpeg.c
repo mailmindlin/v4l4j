@@ -207,27 +207,20 @@ static inline void jpeg_encode_yuv422p(struct v4l4j_device *d, unsigned char *ds
 
 static void jpeg_encode_yuyv(struct v4l4j_device *d, unsigned char *src, unsigned char *dst){
 	// reorganise YUYV pixels into YUV422P suitable to give to the jpeg compressor
-	d->pixfc->convert(d->pixfc, src, d->conversion_buffer);
+	convert_yuyv_to_yuv422p(src, d->conversion_buffer, d->vdev->capture->width, d->vdev->capture->height);
 	jpeg_encode_yuv422p(d, dst);
 }
 
 static void jpeg_encode_uyvy(struct v4l4j_device *d, unsigned char *src, unsigned char *dst){
 	// reorganise UYVY pixels into YUV422P suitable to give to the jpeg compressor
-	d->pixfc->convert(d->pixfc, src, d->conversion_buffer);
+	convert_yvyu_to_yuv422p(src, d->conversion_buffer, d->vdev->capture->width, d->vdev->capture->height);
 	jpeg_encode_yuv422p(d, dst);
 }
 
 static void jpeg_encode_yvyu(struct v4l4j_device *d, unsigned char *src, unsigned char *dst){
 	// reorganise YVYU pixels into YUV422P suitable to give to the jpeg compressor
-	// PixFC doesnt have support for YVYU, so our lame non see conversion for now
 	convert_yvyu_to_yuv422p(src, d->conversion_buffer, d->vdev->capture->width, d->vdev->capture->height);
 	jpeg_encode_yuv422p(d, dst);
-}
-
-static void fast_jpeg_encode_rgb(struct v4l4j_device *d, unsigned char *src, unsigned char *dst){
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	d->pixfc->convert(d->pixfc, src, d->conversion_buffer);
-	jpeg_encode_yuv420(d, d->conversion_buffer, dst);
 }
 
 static void jpeg_encode_rgb32(struct v4l4j_device *d, unsigned char *src, unsigned char *dst){
@@ -370,16 +363,11 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 		d->vdev->capture->palette == RGB32 || d->vdev->capture->palette == BGR24 ||
 		d->vdev->capture->palette == UYVY || d->vdev->capture->palette == BGR32) {
 
-		//
-		// RGB32 / BGR32 / RGB24 / BGR24 are converted to YUV420 first then to JPEG
-		// YUYV / YVYU / UYVY are converted to YUV422P first then to JPEG
-
 		//JPEG param common to YUV420, YUYV, YVYU, RGB24, RGB32, BGR24, UYVY & BGR32
 		XMALLOC(d->j->cinfo, struct jpeg_compress_struct *, sizeof(struct jpeg_compress_struct));
 		XMALLOC(d->j->jerr, struct jpeg_error_mgr *, sizeof(struct jpeg_error_mgr));
 		XMALLOC(d->j->destmgr, struct jpeg_destination_mgr *, sizeof(struct jpeg_destination_mgr));
 
-		// Set up the JPEG converter for YUV -> JPEG conversion
 		d->j->cinfo->err = jpeg_std_error(d->j->jerr);
 		jpeg_create_compress(d->j->cinfo);
 		d->j->destmgr->init_destination = init_destination;
@@ -393,122 +381,76 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 		d->j->cinfo->dct_method = JDCT_FASTEST;
 		d->j->jpeg_quality = q;
 
-		jpeg_set_defaults(d->j->cinfo);
-		jpeg_set_colorspace(d->j->cinfo, JCS_YCbCr);
+		if ((d->vdev->capture->palette == YUV420) || (d->vdev->capture->palette == YUYV)
+			|| (d->vdev->capture->palette == YVYU) || (d->vdev->capture->palette == UYVY)){
 
-		d->j->cinfo->raw_data_in = TRUE; // supply downsampled data
-		d->j->cinfo->comp_info[0].h_samp_factor = 2;
-		// d->j->cinfo->comp_info[0].v_samp_factor set below depending on source format
-		d->j->cinfo->comp_info[1].h_samp_factor = 1;
-		d->j->cinfo->comp_info[1].v_samp_factor = 1;
-		d->j->cinfo->comp_info[2].h_samp_factor = 1;
-		d->j->cinfo->comp_info[2].v_samp_factor = 1;
+			// Set up the JPEG converter for YUV ->JPEG conversion
+			jpeg_set_defaults(d->j->cinfo);
+			jpeg_set_colorspace(d->j->cinfo, JCS_YCbCr);
 
-		if ((d->vdev->capture->palette == YUV420) || (d->vdev->capture->palette == RGB32) || 
-			(d->vdev->capture->palette == RGB24) || (d->vdev->capture->palette == BGR32) || 
-			(d->vdev->capture->palette == BGR24)) {
-			d->j->cinfo->comp_info[0].v_samp_factor = 2;
-			// According to libjpeg's documentation, "there must be a multiple of 8 sample rows for each component".
-			// For YUV420, this means a multiple of 8 U and V rows, which means a multiple of 16 Y rows since there
-			// are two Y rows for 1 U / V line. This means 1920x1080 wont work (unless there is some padding) because
-			// 1080 is not a multiple of 16
-			d->j->lines_written_per_loop = 16;
+			d->j->cinfo->raw_data_in = TRUE; // supply downsampled data
+			d->j->cinfo->comp_info[0].h_samp_factor = 2;
+			// d->j->cinfo->comp_info[0].v_samp_factor set below depending on source format
+			d->j->cinfo->comp_info[1].h_samp_factor = 1;
+			d->j->cinfo->comp_info[1].v_samp_factor = 1;
+			d->j->cinfo->comp_info[2].h_samp_factor = 1;
+			d->j->cinfo->comp_info[2].v_samp_factor = 1;
 
-			switch(d->vdev->capture->palette) {
-			case YUV420:
+			if (d->vdev->capture->palette == YUV420) {
 				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for YUV420\n");
+				d->j->cinfo->comp_info[0].v_samp_factor = 2;
+				d->j->lines_written_per_loop = 16;
 				d->convert = jpeg_encode_yuv420;
-				break;
-			case RGB32:
-				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for RGB32\n");
-				XMALLOC(d->conversion_buffer, unsigned char *, (d->vdev->capture->width*d->vdev->capture->height*3/2));
-				if (create_pixfc(&d->pixfc, PixFcARGB, PixFcYUV420P, d->vdev->capture->width, d->vdev->capture->height, 4 * d->vdev->capture->width, 3 * d->vdev->capture->width / 2, PixFcFlag_NNbResamplingOnly) == PixFc_OK) {
-					d->convert = fast_jpeg_encode_rgb;
-				} else  	{
-					dprint(LOG_JPEG, "Error creating PixFC struct for RGB32 to YUV420 conversion - using scalar conversion\n");
-					d->j->cinfo->in_color_space = JCS_RGB;
-					jpeg_set_defaults(d->j->cinfo) ;
-					d->convert = jpeg_encode_rgb32;
-
+			} else {
+				d->j->cinfo->comp_info[0].v_samp_factor = 1;
+				d->j->lines_written_per_loop = 8;
+				XMALLOC(d->conversion_buffer, unsigned char *, (d->vdev->capture->width * d->vdev->capture->height * 2));
+				switch (d->vdev->capture->palette) {
+				case YUYV:
+					dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for YUYV\n");
+					d->convert = jpeg_encode_yuyv;
+					break;
+				case YVYU:
+					dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for YVYU\n");
+					d->convert = jpeg_encode_yvyu;
+					break;
+				case UYVY:
+					dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for UYVY\n");
+					d->convert = jpeg_encode_uyvy;
+					break;
 				}
-				break;
-			case RGB24:
-				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for RGB24\n");
-				XMALLOC(d->conversion_buffer, unsigned char *, (d->vdev->capture->width*d->vdev->capture->height*3/2));
-				if (create_pixfc(&d->pixfc, PixFcRGB24, PixFcYUV420P, d->vdev->capture->width, d->vdev->capture->height, 3 * d->vdev->capture->width, 3 * d->vdev->capture->width / 2, PixFcFlag_NNbResamplingOnly) == PixFc_OK) {
-					d->convert = fast_jpeg_encode_rgb;
-				} else 	{
-					dprint(LOG_JPEG, "Error creating PixFC struct for RGB24 to YUV420 conversion - using scalar conversion\n");
-					d->j->cinfo->in_color_space = JCS_RGB;
-					jpeg_set_defaults(d->j->cinfo);
-					d->convert = jpeg_encode_rgb24;
-				}
-				break;
-			case BGR32:
-				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for BGR32\n");
-				XMALLOC(d->conversion_buffer, unsigned char *, (d->vdev->capture->width*d->vdev->capture->height*3/2));
-				if (create_pixfc(&d->pixfc, PixFcBGRA, PixFcYUV420P, d->vdev->capture->width, d->vdev->capture->height, 4 * d->vdev->capture->width, 3 * d->vdev->capture->width / 2, PixFcFlag_NNbResamplingOnly) == PixFc_OK) {
-					d->convert = fast_jpeg_encode_rgb;
-				} else {
-					dprint(LOG_JPEG, "Error creating PixFC struct for BGR32 to YUV420 conversion - using scalar conversion\n");
-					d->j->cinfo->in_color_space = JCS_RGB;
-					jpeg_set_defaults(d->j->cinfo);
-					d->convert = jpeg_encode_bgr32;
-				}
-				break;
-			case BGR24:
-				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for BGR24\n");
-				XMALLOC(d->conversion_buffer, unsigned char *, (d->vdev->capture->width*d->vdev->capture->height*3/2));
-				if (create_pixfc(&d->pixfc, PixFcBGR24, PixFcYUV420P, d->vdev->capture->width, d->vdev->capture->height, 3 * d->vdev->capture->width, 3 * d->vdev->capture->width / 2, PixFcFlag_NNbResamplingOnly) == PixFc_OK) {
-					d->convert = fast_jpeg_encode_rgb;
-				} else {
-					dprint(LOG_JPEG, "Error creating PixFC struct for BGR24 to YUV420 conversion - using scalar conversion\n");
-					d->j->cinfo->in_color_space = JCS_RGB;
-					jpeg_set_defaults(d->j->cinfo);
-					d->convert = jpeg_encode_bgr24;
-				}
-				break;
 			}
+
+			// Allocate JSAMPROW arrays
+			XMALLOC(d->j->y, JSAMPROW *, sizeof(JSAMPROW) * d->j->lines_written_per_loop);
+			XMALLOC(d->j->cb, JSAMPROW *, sizeof(JSAMPROW) * d->j->lines_written_per_loop);
+			XMALLOC(d->j->cr, JSAMPROW *, sizeof(JSAMPROW) * d->j->lines_written_per_loop);
+
+			// set up JSAMPIMAGE
+			d->j->data[0] = d->j->y;
+			d->j->data[1] = d->j->cb;
+			d->j->data[2] = d->j->cr;
+
 		} else {
-			d->j->cinfo->comp_info[0].v_samp_factor = 1;
-			d->j->lines_written_per_loop = 8;
-			XMALLOC_ALIGNED(d->conversion_buffer, unsigned char *, (d->vdev->capture->width * d->vdev->capture->height * 2));
-			switch (d->vdev->capture->palette) {
-			case YUYV:
-				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for YUYV\n");
-				if (create_pixfc(&d->pixfc, PixFcYUYV, PixFcYUV422P, d->vdev->capture->width, d->vdev->capture->height, 2 * d->vdev->capture->width, 2 * d->vdev->capture->width, PixFcFlag_Default) != PixFc_OK)
-				{
-					info("Error creating PixFC struct for YUYV to YUV422P conversion\n");
-					return -1;
-				}
-				d->convert = jpeg_encode_yuyv;
-				break;
-			case YVYU:
-				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for YVYU\n");
-				d->convert = jpeg_encode_yvyu;
-				break;
-			case UYVY:
-				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for UYVY\n");
-				if (create_pixfc(&d->pixfc, PixFcUYVY, PixFcYUV422P, d->vdev->capture->width, d->vdev->capture->height, 2 * d->vdev->capture->width, 2 * d->vdev->capture->width,PixFcFlag_Default) != PixFc_OK)
-				{
-					info("Error creating PixFC struct for UYVY to YUV422P conversion\n");
-					return -1;
-				}
-				d->convert = jpeg_encode_uyvy;
-				break;
+			d->j->cinfo->in_color_space = JCS_RGB;
+			jpeg_set_defaults(d->j->cinfo) ;
+			if (d->vdev->capture->palette == RGB24){
+				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for RGB24\n");
+				d->convert = jpeg_encode_rgb24;
+			} else if (d->vdev->capture->palette == RGB32){
+				XMALLOC(d->conversion_buffer, unsigned char *, (d->vdev->capture->width*3));
+				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for RGB32\n");
+				d->convert = jpeg_encode_rgb32;
+			}  else if (d->vdev->capture->palette == BGR24){
+				XMALLOC(d->conversion_buffer, unsigned char *, (d->vdev->capture->width*3));
+				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for BGR24\n");
+				d->convert = jpeg_encode_bgr24;
+			} else if (d->vdev->capture->palette == BGR32){
+				XMALLOC(d->conversion_buffer, unsigned char *, (d->vdev->capture->width*3));
+				dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for BGR32\n");
+				d->convert = jpeg_encode_bgr32;
 			}
 		}
-
-		// Allocate JSAMPROW arrays
-		XMALLOC(d->j->y, JSAMPROW *, sizeof(JSAMPROW) * d->j->lines_written_per_loop);
-		XMALLOC(d->j->cb, JSAMPROW *, sizeof(JSAMPROW) * d->j->lines_written_per_loop);
-		XMALLOC(d->j->cr, JSAMPROW *, sizeof(JSAMPROW) * d->j->lines_written_per_loop);
-
-		// set up JSAMPIMAGE
-		d->j->data[0] = d->j->y;
-		d->j->data[1] = d->j->cb;
-		d->j->data[2] = d->j->cr;
-
 		jpeg_set_quality(d->j->cinfo, d->j->jpeg_quality,TRUE);
 	} else if(d->vdev->capture->palette == MJPEG) {
 		dprint(LOG_JPEG, "[JPEG] Setting jpeg compressor for MJPEG\n");
@@ -534,8 +476,6 @@ void destroy_jpeg_compressor(struct v4l4j_device *d){
 		if (d->vdev->capture->palette != YUV420)
 			XFREE(d->conversion_buffer);
 
-		if (d->pixfc)
-			destroy_pixfc(d->pixfc);
 		XFREE(d->j->y);
 		XFREE(d->j->cb);
 		XFREE(d->j->cr);

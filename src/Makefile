@@ -43,7 +43,7 @@ OBJ := jpeg.o v4l4j_FrameGrabber.o v4l4j_ImageFormatList.o \
 
 
 INCLUDES := -I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ \
-  -I$(LIBVIDEO_PATH) -I$(LIBVIDEO_PATH)/pixfc-sse -I.
+  -I$(LIBVIDEO_PATH) -I.
 CFLAGS += $(INCLUDES) $(DBG) $(OPTIMISATION) -fPIC -fno-stack-protector
 
 LDFLAGS += -shared -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME)
@@ -55,11 +55,11 @@ $(LIB): $(OBJ)
 
 test-debug:  $(LIBVIDEO_PATH)/lib$(LIBVIDEO_NAME).so
 	$(CC) $(INCLUDES) -mssse3 -DDEBUG -Wall -ggdb -DMAKETEST -c jpeg.c
-	$(LD) jpeg.o -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME) -o jpeg
+	$(CC) jpeg.o -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME) -o jpeg
 
 test: $(LIBVIDEO_PATH)/lib$(LIBVIDEO_NAME).so
 	$(CC) $(INCLUDES) -mssse3 -msse2 -O3 -Wall -DMAKETEST -c jpeg.c
-	$(LD) jpeg.o -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME) -o jpeg
+	$(CC) jpeg.o -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME) -o jpeg
 
 
 clean:
