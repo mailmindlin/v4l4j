@@ -70,7 +70,7 @@
 
 #define XFREE(var)					\
 		do { dprint(LOG_MEMALLOC, "[MEMALLOC]: freeing memory for var %s (%p).\n", #var, var);\
-			if (var) { free(var); } \
+			if (var) { free(var); (var) = NULL;} \
 			else { dprint(LOG_MEMALLOC, "[MEMALLOC]: Trying to free a NULL pointer.\n");}\
 		} while (0)
 
@@ -103,7 +103,7 @@
 
 
 #define XFREE(var)					\
-		do { if (var) { free(var); } } while (0)
+		do { if (var) { free(var); (var) = NULL;} } while (0)
 
 //#define SHOW_CONVERSION_TIMING
 #ifdef SHOW_CONVERSION_TIMING
