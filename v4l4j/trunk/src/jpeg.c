@@ -213,7 +213,7 @@ static void jpeg_encode_yuyv(struct v4l4j_device *d, unsigned char *src, unsigne
 
 static void jpeg_encode_uyvy(struct v4l4j_device *d, unsigned char *src, unsigned char *dst){
 	// reorganise UYVY pixels into YUV422P suitable to give to the jpeg compressor
-	convert_yvyu_to_yuv422p(src, d->conversion_buffer, d->vdev->capture->width, d->vdev->capture->height);
+	convert_uyvy_to_yuv422p(src, d->conversion_buffer, d->vdev->capture->width, d->vdev->capture->height);
 	jpeg_encode_yuv422p(d, dst);
 }
 
