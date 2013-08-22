@@ -137,6 +137,10 @@ static void jpeg_encode_yuv420(struct v4l4j_device *d, unsigned char *src, unsig
 	d->j->destmgr->free_in_buffer = rgb_size;
 	jpeg_set_quality(cinfo,d->j->jpeg_quality,TRUE);
 
+#if JPEG_LIB_VERSION >= 70 
+    cinfo->do_fancy_downsampling = FALSE;  // Without this, libjpeg8 (but not libjpeg8-turbo) crashes on ARM cpus
+#endif 
+
 	// setup pointers in the JSAMPIMAGE array
 	for (line = 0; line < d->j->lines_written_per_loop; line++) {
 		d->j->y[line] = src + width * line;
