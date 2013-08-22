@@ -54,11 +54,11 @@ $(LIB): $(OBJ)
 	$(LD) $(OBJ) $(LDFLAGS) -o $(LIB)
 
 test-debug:  $(LIBVIDEO_PATH)/lib$(LIBVIDEO_NAME).so
-	$(CC) $(INCLUDES) -mssse3 -DDEBUG -Wall -ggdb -DMAKETEST -c jpeg.c
+	$(CC) $(INCLUDES) -DDEBUG -Wall -ggdb -DMAKETEST -c jpeg.c
 	$(CC) jpeg.o -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME) -o jpeg
 
 test: $(LIBVIDEO_PATH)/lib$(LIBVIDEO_NAME).so
-	$(CC) $(INCLUDES) -mssse3 -msse2 -O3 -Wall -DMAKETEST -c jpeg.c
+	$(CC) $(INCLUDES) -O3 -Wall -DMAKETEST -c jpeg.c
 	$(CC) jpeg.o -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME) -o jpeg
 
 
