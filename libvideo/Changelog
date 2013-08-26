@@ -1,3 +1,8 @@
+v0.9.1:
+- remove libv4lconvert and add external dependency
+- remove PixFC
+- remove deprecated FrameGrabber.GetVideoFrame() method
+- fix a couple of crashes with unhandled pixel formats, unhandled control types
 v0.9:
 - add set/get methods to switch input
 - add support for integer64, strings and bitmask V4L controls
