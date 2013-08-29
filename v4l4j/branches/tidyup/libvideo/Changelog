@@ -1,0 +1,104 @@
+v0.9.1:
+- remove libv4lconvert and add external dependency
+- remove PixFC
+- remove deprecated FrameGrabber.GetVideoFrame() method
+- fix a couple of crashes with unhandled pixel formats, unhandled control types
+v0.9:
+- add set/get methods to switch input
+- add support for integer64, strings and bitmask V4L controls
+- updated libv4l to v0.8.6
+- make libv4lconvert use SSE conversion routines from PixFC for some pixel 
+  format conversions
+- fix NullPointerException bug with PAC webcams
+- fix Makefile so linking works with later versions of gcc
+- fix issue when stopping / starting the capture without re-setting the 
+  CaptureCallback object
+- experimental ARM support (armv7 only for now)
+v0.8.10:
+- fix nasty bug reported by Florent and Eric on the ML causing JPEG frame
+  grabbers to segfault on release, and lines from different frame grabbers to
+  mix with each other during JPEG conversion. Thanks to both of them for 
+  reporting and testing fixes.
+- deprecated frame grabber pull mode in favour of push mode to improve frame
+  delivery accuracy
+- updated javadoc
+- added more example apps
+v0.8.9:
+- reworked frame delivery method - added push and pull modes
+- frames are encapsulated in VideoFrame object, delivered to java in byte[]
+- minimised number of copies required per captured frame: at most 1 copy / conversion
+  from v4l to java byte{}
+- added sequence and capture time as metadata 
+- added CamServer example appplication
+v0.8.7:
+- Updated  to libv4l v0.6.3
+- fix minor bug in previous version preventing desktop shortcut to launch the
+  application
+v0.8.6:
+- added support for adjustable frame rate
+v0.8.5:
+- updated to latest videodev2.h from v4l mercurial repository.
+- updated to libv4l v0.6
+- fix bug caused by v4lconvert_try_format not failing when given an unsupported
+  format 
+v0.8.4:
+- updated to libv4l v0.5.99
+v0.8.3:
+- modified build system to simplify Debian packaging
+v0.8.2:
+- added resolution information to image formats
+v0.8.1:
+- Fixed bug in svn-version.sh
+v0.8:
+- renamed libv4l to libvideo
+- Added libvideo convert code (libv4l v0.5.0) from Hans de Goede
+v0.5.7:
+- Reorganised V4L control code and driver probe sections.
+- Now, multiple driver probes can be successful (instead of only 1 before),
+  allowing for "plugin"-style code adding functionnality based on the driver
+  in use
+- header files for V4L control have been reorganised
+v0.5.6:
+- Added selection of the best palette to achieve capture resolution closest
+  to the one requested. After adding support for linux UVC driver, i noticed
+  MJPEG palette couldnt capture at higher resolutions (>930x720), whereas
+  YUYV could. So now, the best palette is chosen (amongst the one requested
+  by user) so the resolution is as close as possible to the one requested.
+v0.5.5:
+- Added detection and reporting of extended controls (first pass). The
+  extended controls are listed, duplicates with classic controls are removed
+  and the unique ones are reported as normal V4L2 controls. The next step is
+  to add methods to the interface so ext. controls can be changed at once.
+- Tested Logitech Quickcam Communicate Deluxe with the linux UVC driver, for
+  which I added support for YUYV (YUV422) and MJPEG formats. There is no need
+  to probe the linux UVC driver as it doesnt have any private ioctl (as of
+  SVN revision 246).
+
+v0.5.4:
+- replaced libv4l generic code with a struct libv4l_actions to avoid the
+  overhead of calling two methods to get the job done(1 method to check the
+  V4L version and another to do the job). Instead, the user now calls
+  the right method straight away by using struct libv4l_actions which is
+  set at initialisation and points to the right methods straight away.
+  
+v0.5.3:
+- Improved mmap code for V4L1
+- added error return codes and improved console output when initialisation
+  & setup of video device fails
+- added support for more image formats. The whole list :
+  YUV420 - RGB24 - RGB32 - YUYV - RGB555 - RGB565 - GREY
+- user can now specify a list of acceptable image formats 
+
+v0.5.1:
+- Added support for V4L1 devices
+- renamed to libv4l
+
+
+v0.3.1:
+- Grouped open_device() and check_cap_param() under init_libv4l2() to fix an
+  issue with controls being listed before checking if the video device is V4L2
+- as a consequence, close_device() is now called by del_libv4l2()
+
+v0.3.0:
+- Fixed buffer overrun issues with probe-pwc
+- dropped frame.c and frame.h
