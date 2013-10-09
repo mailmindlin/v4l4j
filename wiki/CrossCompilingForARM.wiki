@@ -5,6 +5,8 @@
 On this page, I will explain how to setup a basic Ubuntu root filesystem that can be used to compile v4l4j for an ARM target, assumed to be running a Debian/Ubuntu OS. Instructions on this page are taken from [http://www.cnx-software.com/2012/05/02/getting-started-with-multiarch-armel-armhf-in-ubuntu/ here].
 
 These instructions and the resulting binaries have been successfully tested on the following setup:
+
+(Host machine is where cross-compilation is done, target machine is the machine running the cross-compiled v4l4j binaries) 
 || *Host machine* || *Target machine* || 
 || Ubuntu 12.04 - 64 bit || Beagle board XM - Ubuntu 12.04 GNU EABI armv7-a hard float (as detailed [http://elinux.org/BeagleBoardUbuntu#Canonical.2FUbuntu_Images here]) ||
 || Ubuntu 12.04 - 64 bit || RaspberryPi - Wheezy 2012-09-18 GNU EABI armv6l hard float (available [http://downloads.raspberrypi.org/images/raspbian/2012-09-18-wheezy-raspbian/2012-09-18-wheezy-raspbian.zip here]) ||
@@ -15,6 +17,7 @@ Install debootstrap and create a Ubuntu 12.04 Precise root filesystem in `precis
 sudo apt-get install debootstrap
 sudo debootstrap --arch=amd64 --variant=buildd precise precise-amd64
 }}}
+If your host machine is running a 32-bit OS, then omit`--arch=amd64` .
 
 *If cross-compiling for RaspberryPi*, download the cross-compiler and copy it to the root filesystem:
 {{{
@@ -34,6 +37,12 @@ Fix apt source list file to add ARM hard-float package repository and support mu
 echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu precise main
 deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports precise main universe
 deb [arch=amd64] http://ppa.launchpad.net/linaro-maintainers/toolchain/ubuntu precise main" > /etc/apt/sources.list
+}}}
+If your host machine is running a 32-bit OS, then run this instead:
+{{{
+echo "deb http://archive.ubuntu.com/ubuntu precise main
+deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports precise main universe
+deb http://ppa.launchpad.net/linaro-maintainers/toolchain/ubuntu precise main" > /etc/apt/sources.list
 }}}
 
 Add Linaro Overlay PPA key to keychain
@@ -58,7 +67,7 @@ echo "exit 101" > /usr/sbin/policy-rc.d
 chmod a+x /usr/sbin/policy-rc.d
 }}}
 
-Install ARM toolchain and Lib C headers:
+*If cross-compiling for BeagleBoard*, install ARM toolchain and Lib C headers:
 {{{
 apt-get update
 apt-get install gcc-arm-linux-gnueabihf libc6-dev-armhf-cross
@@ -67,7 +76,7 @@ apt-get install gcc-arm-linux-gnueabihf libc6-dev-armhf-cross
 We need `ant` to build v4l4j, and a Java compiler (from `openjdk-6-jdk`). Building v4l4j requires the libjpeg (`libjpeg-turbo8-dev`) and JNI (`openjdk-6-jdk`) header files  
 Install v4l4j build dependencies:
 {{{
-apt-get install ant openjdk-6-jdk libjpeg-turbo8-dev:armhf openjdk-6-jdk:armhf
+apt-get install ant openjdk-6-jdk libjpeg-turbo8-dev:armhf openjdk-6-jdk:armhf libv4l-dev:armhf
 }}}
 
 *If cross-compiling for RaspberryPi*, the cross-compiler needs some extra packages to work (taken from [http://www.raspberrypi.org/phpBB3/viewtopic.php?f=33&t=8758 this post]). Install them with:
@@ -87,12 +96,12 @@ cd v4l4j-trunk
 
 Cross compile for BeagleBoard with:
 {{{
-JDK_HOME=/usr/lib/jvm/java-6-openjdk-armhf LIBPIXFC=pixfc-sse/libpixfc-sse-armv7-hf.a CC=/usr/bin/arm-linux-gnueabihf-gcc LD=${CC} CPPFLAGS="-march=armv7-a -mcpu=cortex-a8 -mfloat-abi=hard -mfpu=vfpv3-d16 -I/usr/include -I/usr/include/arm-linux-gnueabihf" LDFLAGS="-L/usr/lib/arm-linux-gnueabihf" ant clean all
+JDK_HOME=/usr/lib/jvm/java-6-openjdk-armhf CC=/usr/bin/arm-linux-gnueabihf-gcc LD=${CC} CPPFLAGS="-march=armv7-a -mcpu=cortex-a8 -mfloat-abi=hard -mfpu=vfpv3-d16 -I/usr/include -I/usr/include/arm-linux-gnueabihf" LDFLAGS="-L/usr/lib/arm-linux-gnueabihf" ant clean all
 }}}
 
 Cross compile for RaspberryPi with:
 {{{
-JDK_HOME=/usr/lib/jvm/java-6-openjdk-armhf LIBPIXFC=pixfc-sse/libpixfc-sse-armv6l-hardfp.a CC=/opt/rpi-xtools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin/arm-linux-gnueabihf-gcc LD=${CC} CPPFLAGS="-mcpu=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp -I/usr/include -I/usr/include/arm-linux-gnueabihf" LDFLAGS="-L/usr/lib/arm-linux-gnueabihf" ant clean all
+JDK_HOME=/usr/lib/jvm/java-6-openjdk-armhf CC=/opt/rpi-xtools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin/arm-linux-gnueabihf-gcc LD=${CC} CPPFLAGS="-mcpu=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp -I/usr/include -I/usr/include/arm-linux-gnueabihf" LDFLAGS="-L/usr/lib/arm-linux-gnueabihf" ant clean all
 }}}
 
 == Test on target machine ==
@@ -109,14 +118,17 @@ ldd libv4l4j.so
 }}}
 This prints the shared libraries libv4l4.so depends on, and the output should be similar to :
 {{{
-libjpeg.so.8 => /usr/lib/arm-linux-gnueabihf/libjpeg.so.8 (0x401fc000)
-libvideo.so.0 => /usr/lib/arm-linux-gnueabihf/libvideo.so.0 (0x40237000)
-libc.so.6 => /lib/arm-linux-gnueabihf/libc.so.6 (0x4035d000)
-/lib/ld-linux-armhf.so.3 (0x4001a000)
-libm.so.6 => /lib/arm-linux-gnueabihf/libm.so.6 (0x400ca000)
-librt.so.1 => /lib/arm-linux-gnueabihf/librt.so.1 (0x4006b000)
-libpthread.so.0 => /lib/arm-linux-gnueabihf/libpthread.so.0 (0x40079000)
+libjpeg.so.8 => /usr/lib/arm-linux-gnueabihf/libjpeg.so.8 (0x4016f000)
+libvideo.so.0 => /usr/lib/arm-linux-gnueabihf/libvideo.so.0 (0x400f9000)
+libc.so.6 => /lib/arm-linux-gnueabihf/libc.so.6 (0x401aa000)
+/lib/ld-linux-armhf.so.3 (0x400d9000)
+libv4lconvert.so.0 => /usr/lib/arm-linux-gnueabihf/libv4lconvert.so.0 (0x4028e000)
+librt.so.1 => /lib/arm-linux-gnueabihf/librt.so.1 (0x40039000)
+libm.so.6 => /lib/arm-linux-gnueabihf/libm.so.6 (0x40301000)
+libpthread.so.0 => /lib/arm-linux-gnueabihf/libpthread.so.0 (0x40110000)
 }}}
+
+If any of the above shared libraries are not found, install them following the steps listed [https://code.google.com/p/v4l4j/wiki/SourceInstall#Requirements here].
 
 Test v4l4j:
 {{{
