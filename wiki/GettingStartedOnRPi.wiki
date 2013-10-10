@@ -17,7 +17,7 @@ Make sure you identify which version you are running and follow the appropriate 
 
 Install what's required to build v4l4j with :
 {{{
-sudo apt-get install openjdk-7-jdk ant libjpeg8-dev
+sudo apt-get install openjdk-7-jdk ant libjpeg8-dev libv4l-dev
 sudo apt-get remove openjdk-6-*
 }}}
 
@@ -30,17 +30,15 @@ cd v4l4j-trunk
 *On Raspbian Wheezy:*
 {{{
 export JDK_HOME=/usr/lib/jvm/java-7-openjdk-armhf/ 
-export LIBPIXFC=pixfc-sse/libpixfc-sse-armv6l-hardfp.a 
 ant clean all
-sudo LIBPIXFC="${LIBPIXFC}" ant install
+sudo ant install
 }}}
 
 *On Wheezy beta: *
 {{{
 export JDK_HOME=/usr/lib/jvm/java-7-openjdk-armel/ 
-export LIBPIXFC=pixfc-sse/libpixfc-sse-armv6l-softfp.a
 ant clean all
-sudo LIBPIXFC="${LIBPIXFC}" ant install
+sudo ant install
 }}}
 
 
