@@ -34,7 +34,7 @@ The latest packages are available on the [https://launchpad.net/~gillesg/+archiv
   * Download the latest versions of libvideo0 and libv4l4j-java. You need at least these two packages.
   * Run the following (I assume you have already installed a JRE 6):
 {{{
-sudo apt-get install libjpeg62
+sudo apt-get install libjpeg62 libv4l
 sudo dpkg -i libvideo0_XXX.deb libv4l4j-java_XXX.deb
 }}}
 (Replace XXX with the right version info)
