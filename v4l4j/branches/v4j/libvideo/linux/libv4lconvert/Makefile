@@ -1,4 +1,4 @@
-override CPPFLAGS += -I.. -fvisibility=hidden
+override CPPFLAGS += -I.. -fvisibility=hidden -D CONVERT_FAST=0 -D ARM_SIMD=0
 
 CFLAGS := -g -O1
 CFLAGS += -Wall -Wno-unused -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes
