@@ -21,6 +21,7 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
+#include <types.h>
 #include "common.h"
 #include "debug.h"
 #include "libvideo.h"
@@ -74,7 +75,7 @@ static unsigned char *temp_buf;
  * length of the compressed JPEG frame. "d->j" contains the JPEG compressor and
  * must be initialised correctly by the caller
  */
-static void jpeg_encode_yuv420(struct v4l4j_device *d, unsigned char *src, unsigned char *dst) {
+static void jpeg_encode_yuv420(struct v4l4j_device *d, u8 *src, u8 *dst) {
 	//Code for this function is taken from Motion
 	//Credit to them !!!
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
