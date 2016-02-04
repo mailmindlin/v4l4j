@@ -36,6 +36,8 @@ PREFIX:=/usr
 LIB_INSTALL_DIR := $(PREFIX)/lib
 #Directory where the include files will be installed
 INC_INSTALL_DIR := $(PREFIX)/include
+#Directory where the libv4l helpers will be installed		
+LIBV4L_HELPERS_INSTALL_DIR := $(PREFIX)/lib/v4l4j
 
 
 
@@ -57,6 +59,11 @@ VERSION_MAJOR := 0
 VERSION_MINOR := 9
 LIB_RELEASE := 0
 
+LIBV4LCONVERT_DIR := libv4lconvert		
+LIBV4LCONVERT_AR := libv4lconvert.a		
+LIBV4LCONVERT_NAME := v4lconvert		
+LIBV4LCONVERT_HELPERS := ov511-decomp ov518-decomp
+ 
 LIB_NAME := video
 LIB := lib$(LIB_NAME).so
 TESTOBJ := test-capture.o dump-capture.o list-caps.o
@@ -67,14 +74,19 @@ OBJ := v4l2-input.o v4l1-input.o libvideo.o pwc-probe.o gspca-probe.o \
 CFLAGS += $(DBG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) \
   $(OPTIMISATION) -fPIC -I.
 
-LDFLAGS += -lm -lrt -shared -ljpeg -lv4lconvert
+LDFLAGS += -lm -lrt -shared -ljpeg
 
 all: $(LIB).$(LIB_RELEASE)
 
-$(LIB).$(LIB_RELEASE): version.h $(OBJ)
-	$(CC) $(OBJ) -Wl,-soname,$(LIB).$(LIB_RELEASE) \
+$(LIB).$(LIB_RELEASE): version.h $(OBJ) $(LIBV4LCONVERT_AR)
+	$(CC) $(OBJ) $(LIBV4LCONVERT_AR) -Wl,-soname,$(LIB).$(LIB_RELEASE) \
   $(LDFLAGS) -o $(LIB).$(LIB_RELEASE)
 	ln -f -s $(LIB).$(LIB_RELEASE) $(LIB)
+
+$(LIBV4LCONVERT_AR):		
+	LINKTYPE=static LIBDIR=$(LIBV4L_HELPERS_INSTALL_DIR) \		
+		make -C $(LIBV4LCONVERT_DIR)		
+	cp $(LIBV4LCONVERT_DIR)/$(LIBV4LCONVERT_AR) .
 
 install: $(LIB).$(LIB_RELEASE)
 	mkdir -p $(DESTDIR)$(INC_INSTALL_DIR)
@@ -82,11 +94,15 @@ install: $(LIB).$(LIB_RELEASE)
 	mkdir -p $(DESTDIR)$(LIB_INSTALL_DIR)
 	install -m 755 $(LIB).$(LIB_RELEASE) $(DESTDIR)$(LIB_INSTALL_DIR)
 	cd $(DESTDIR)$(LIB_INSTALL_DIR) && ln -f -s $(LIB).$(LIB_RELEASE) $(LIB)
+	mkdir -p $(DESTDIR)$(LIBV4L_HELPERS_INSTALL_DIR)/libv4l		
+	install -m 755 $(LIBV4LCONVERT_DIR)/*-decomp \
+		$(DESTDIR)$(LIBV4L_HELPERS_INSTALL_DIR)/libv4l
 
 uninstall:
 	for f in $(USER_INCLUDES); do rm -f $(DESTDIR)$(INC_INSTALL_DIR)/$${f}; done
 	rm -f $(DESTDIR)$(LIB_INSTALL_DIR)/$(LIB)
 	rm -f $(DESTDIR)$(LIB_INSTALL_DIR)/$(LIB).$(LIB_RELEASE)
+	rm -f $(DESTDIR)$(LIBV4L_HELPERS_INSTALL_DIR)/libv4l/*-decomp
 
 test: $(LIB).$(LIB_RELEASE) $(TESTOBJ)
 	$(CC) test-capture.o -lm -lrt -L. -l$(LIB_NAME) -o test-capture
@@ -97,8 +113,9 @@ version.h:
 	@sh svn-version.sh
 
 clean:
+	make -C $(LIBV4LCONVERT_DIR) clean
 	rm -f $(OBJ) $(BIN) $(LIB) $(LIB).$(LIB_RELEASE) $(TESTOBJ) \
-  ./*.o list-caps test-capture dump-capture version.h ./*~
+		$(LIBV4LCONVERT_AR) ./*.o list-caps test-capture dump-capture version.h ./*~
 
 .PHONY: all install uninstall test clean
 

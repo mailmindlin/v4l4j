@@ -367,11 +367,14 @@ int init_jpeg_compressor(struct v4l4j_device *d, int q){
 		d->vdev->capture->palette == RGB32 || d->vdev->capture->palette == BGR24 ||
 		d->vdev->capture->palette == UYVY || d->vdev->capture->palette == BGR32) {
 
+		// RGB32 / BGR32 / RGB24 / BGR24 are converted to YUV420 first then to JPEG		
+		// YUYV / YVYU / UYVY are converted to YUV422P first then to JPEG
 		//JPEG param common to YUV420, YUYV, YVYU, RGB24, RGB32, BGR24, UYVY & BGR32
 		XMALLOC(d->j->cinfo, struct jpeg_compress_struct *, sizeof(struct jpeg_compress_struct));
 		XMALLOC(d->j->jerr, struct jpeg_error_mgr *, sizeof(struct jpeg_error_mgr));
 		XMALLOC(d->j->destmgr, struct jpeg_destination_mgr *, sizeof(struct jpeg_destination_mgr));
 
+		// Set up the JPEG converter for YUV -> JPEG conversion
 		d->j->cinfo->err = jpeg_std_error(d->j->jerr);
 		jpeg_create_compress(d->j->cinfo);
 		d->j->destmgr->init_destination = init_destination;
