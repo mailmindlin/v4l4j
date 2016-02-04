@@ -251,14 +251,14 @@ public class VideoDevice {
 	
 	/**
 	 * JNI returns a long (which is really a pointer) when a device is allocated
-	 * for use. This field is read-only (!!!) 
+	 * for use.
 	 */
-	private long v4l4jObject;
+	private final long v4l4jObject;
 
 	/**
 	 * ThreadFactory that will be passed on to each new FrameGrabber.
 	 */
-	private ThreadFactory	threadFactory;
+	private ThreadFactory threadFactory;
 	
 	/**
 	 * This constructor builds a <code>VideoDevice</code> using the full path to
@@ -275,7 +275,7 @@ public class VideoDevice {
 			throw new V4L4JException("The device file is not readable");
 
 		threadFactory = Executors.defaultThreadFactory();
-		state = new State();		
+		state = new State();
 		deviceFile = dev;
 		v4l4jObject = doInit(deviceFile);
 		
@@ -307,22 +307,22 @@ public class VideoDevice {
 		deviceInfo = new DeviceInfo(v4l4jObject, deviceFile);
 		ImageFormatList l = deviceInfo.getFormatList();
 		
-		supportJPEG = l.getJPEGEncodableFormats().size()==0?false:true;
-		supportRGB24 = l.getRGBEncodableFormats().size()==0?false:true;
-		supportBGR24 = l.getBGREncodableFormats().size()==0?false:true;
-		supportYUV420 = l.getYUVEncodableFormats().size()==0?false:true;
-		supportYVU420 = l.getYVUEncodableFormats().size()==0?false:true;
+		supportJPEG = l.getJPEGEncodableFormats().size() > 0;
+		supportRGB24 = l.getRGBEncodableFormats().size() > 0;
+		supportBGR24 = l.getBGREncodableFormats().size() > 0;
+		supportYUV420 = l.getYUVEncodableFormats().size() > 0;
+		supportYVU420 = l.getYVUEncodableFormats().size() > 0;
 		
 		//initialise TunerList
-		Vector<Tuner> v= new Vector<Tuner>();
+		Vector<Tuner> v = new Vector<Tuner>();
 		doGetTunerActions(v4l4jObject);
-		for(InputInfo i:deviceInfo.getInputs()){
+		for(InputInfo i : deviceInfo.getInputs()){
 			try {
 				v.add(new Tuner(v4l4jObject,i.getTunerInfo()));
 			} catch (NoTunerException e) {}	//no tuner for this input
 		}
 
-		if(v.size()!=0)
+		if(v.size() != 0)
 			tuners = new TunerList(v);
 	}
 	
@@ -367,6 +367,8 @@ public class VideoDevice {
 		
 		if(deviceInfo!=null)
 			deviceInfo.release();
+		
+		//TODO release framegrabber and/or controllist
 		
 		doRelease(v4l4jObject);
 		
@@ -597,15 +599,13 @@ public class VideoDevice {
 	 * be released before a JPEGFrameGrabber can be allocated, or if the 
 	 * <code>VideoDevice</code> has been released. 
 	 */
-	public JPEGFrameGrabber getJPEGFrameGrabber(int w, int h, int input, 
-			int std, int q, ImageFormat imf) throws V4L4JException{
-		if(!supportJPEG || deviceInfo==null)
+	public JPEGFrameGrabber getJPEGFrameGrabber(int w, int h, int input, int std, int q, ImageFormat imf) throws V4L4JException {
+		if(!supportJPEG || deviceInfo == null)
 			throw new ImageFormatException("This video device does not support "
 					+"JPEG-encoding of its frames.");
 		
-		if(imf!=null){
-			if(!deviceInfo.getFormatList().
-					getJPEGEncodableFormats().contains(imf))
+		if(imf != null) {
+			if(!deviceInfo.getFormatList().getJPEGEncodableFormats().contains(imf))
 			
 				throw new ImageFormatException(
 						"The image format "+imf.getName()+" cannot be JPEG "
@@ -618,21 +618,17 @@ public class VideoDevice {
 			imf = deviceInfo.getFormatList().getJPEGEncodableFormats().get(0);
 	
 
-		synchronized(this){
-			if(fg==null) {
+		synchronized(this) {
+			if(fg == null) {
 				state.get();
 				fg = new JPEGFrameGrabber(deviceInfo, v4l4jObject, w, h, input, 
 						std, q, findTuner(input), imf, threadFactory);
 				try {
 					fg.init();
-				} catch (V4L4JException ve){
+				} catch (V4L4JException | StateException sve){
 					fg = null;
 					state.put();
-					throw ve;
-				}  catch (StateException se){
-					fg = null;
-					state.put();
-					throw se;
+					throw sve;
 				}  catch (Throwable t){
 					fg = null;
 					state.put();
