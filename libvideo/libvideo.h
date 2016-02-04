@@ -90,84 +90,84 @@ enum {
 
 	// Grey formats
 	GREY,				//10
-	Y4,
-	Y6,
-	Y10,
-	Y16,
+	Y4,					//11
+	Y6,					//12
+	Y10,				//13
+	Y16,				//14
 
 	// palette formats
-	PAL8,
+	PAL8,				//15
 
 	// YUV formats
-	YVU410,
-	YVU420,
-	YUYV,
-	YYUV,
+	YVU410,				//16
+	YVU420,				//17
+	YUYV,				//18
+	YYUV,				//19
 	YVYU,				//20
-	UYVY,
-	VYUY,
-	YUV422P,
-	YUV411P,
-	Y41P,
+	UYVY,				//21
+	VYUY,				//22
+	YUV422P,			//23
+	YUV411P,			//24
+	Y41P,				//25
 	YUV444,
 	YUV555,
 	YUV565,
 	YUV32,
-	YUV410,
+	YUV410,				//30
 	YUV420,
 	HI240,
 	HM12,
 
 	// Two planes - Y and Cb/Cr interleaved
 	NV12,
-	NV21,
+	NV21,				//35
 	NV16,
 	NV61,
 
 	// Bayer formats
 	SBGGR8,
 	SGBRG8,
-	SGRBG8,
+	SGRBG8,				//40
 	SRGGB8,
 	SBGGR10,
 	SGBRG10,
 	SGRBG10,
-	SRGGB10,
+	SRGGB10,			//45
 	SGRBG10DPCM8,
 	SBGGR16,
 
 	// Compressed formats
 	MJPEG,
 	JPEG,
-	DV,
+	DV,					//50
 	MPEG,
 
 	// Vendor-specific formats
 	CPIA1,
 	WNVA,
 	SN9C10X,
-	SN9C20X_I420,
+	SN9C20X_I420,		//55
 	PWC1,
 	PWC2,
 	ET61X251,
 	SPCA501,
-	SPCA505,
+	SPCA505,			//60
 	SPCA508,
 	SPCA561,
 	PAC207,
 	MR97310A,
-	SN9C2028,
+	SN9C2028,			//65
 	SQ905C,
 	PJPG,
 	OV511,
 	OV518,
-	STV0680,
+	STV0680,			//70
 	TM6000,
 	CIT_YYVYUY,
 	KONICA420,
 	NB_SUPPORTED_PALETTES,
 	/* Dont use the following three, use YUV420, YUYV or YUV411P instead !! */\
-	YUV420P,
+	YUV420P,			//75
 	YUV422,
 	YUV411,
 #define		IDENTICAL_FORMATS		3
