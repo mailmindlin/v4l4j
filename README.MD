@@ -22,7 +22,7 @@ always be found at [github.com/mailmindlin/v4l4j](https://github.com/mailmindlin
 
 ## QUICK START
 The following installs the dependencies, compiles & install v4l4j and runs a
-test application, assuming you are running Ubuntu Lucid or Debian: `sudo apt-get install openjdk-6-jdk libjpeg-dev build-essential ant libv4l-dev`
+test application, assuming you are running Ubuntu Lucid or Debian: `sudo apt-get install openjdk-8-jdk libjpeg-dev build-essential ant libv4l-dev`
 
 If you are running Ubuntu Precise or later: `sudo apt-get install openjdk-8-jdk libjpeg-turbo8-dev build-essential ant libv4l-dev`
 
@@ -48,7 +48,7 @@ v4l4j requires the following:
 
 
 ## COMPILING
-To compile v4l4j, run "`ant all`" in the top-level directory. This will first 
+To compile v4l4j, run `ant all` in the top-level directory. This will first 
 compile the libvideo shared library and the JNI library libv4l4j.so. It will 
 then compile the java classes and pack them in a JAR file. Both the JNI library
 libv4l4j.so and the JAR file v4l4j.jar are copied in the top-level directory. 
@@ -57,31 +57,31 @@ libvideo is NOT copied in the top-level directory and remains in libvideo/ .
 
 ## INSTALLING
 v4l4j can be installed by:
-- running "`sudo ant install`". This will copy libvideo's shared library in 
+- running `sudo ant install`. This will copy libvideo's shared library in 
   /usr/lib , the JNI library libv4l4j.so in /usr/lib/jni and v4l4j's JAR file 
   in /usr/share/java. Any of these paths can be changed by modifying the right 
   property in build.properties .
-- Make sure you run "`sudo ldconfig`" so libvideo's shared library is added to the
+- Make sure you run `sudo ldconfig` so libvideo's shared library is added to the
   cache.
   
 In order to use the v4l4j package from your own Java application, pass the 
 following arguments to the JVM:
-"`-Djava.library.path=/usr/lib/jni -cp /usr/share/java/v4l4j.jar`"
+`-Djava.library.path=/usr/lib/jni -cp /usr/share/java/v4l4j.jar`
 (modify the above values if you have changed the default installation
 directories).
 
 ## TESTING
 In order to use the following example applications, make sure you first install
 v4l4j (see above section). Many example applications are shipped with v4l4j:
-- "`ant test-fps`" simply captures frames for 10 seconds and print the frame rate.
-- "`ant test-gui`" displays the video stream & video controls in a window.
-- "`ant deviceInfo`" displays information about the video device.
-- "`ant test-server`" runs a webcam server. The video stream and control list
+- `ant test-fps` simply captures frames for 10 seconds and print the frame rate.
+- `ant test-gui` displays the video stream & video controls in a window.
+- `ant deviceInfo` displays information about the video device.
+- `ant test-server` runs a webcam server. The video stream and control list
   can be accessed from a web browser (use http://ip_address_of_server:8080), or
-  from ffplay using "`ffplay -f mjpeg http://ip_address_of_server:8080`"
-- "`ant test-dual`" will only run if you have two video devices connected and
+  from ffplay using `ffplay -f mjpeg http://ip_address_of_server:8080`
+- `ant test-dual` will only run if you have two video devices connected and
   will display them side by side in a JFrame.
-- "`ant test-getsnapshot`" will take a snapshot from a video device and will
+- `ant test-getsnapshot` will take a snapshot from a video device and will
   display it.
 
 By default, tests will use /dev/video0 (assumed to be a webcam) as the video 
@@ -93,11 +93,11 @@ the height and so on).
 
 
 ## DEBUGGING
-First, if you have already installed v4l4j (with "`sudo ant install`") then you 
-MUST uninstall it with "`sudo ant uninstall`", otherwise the previous jar file & 
+First, if you have already installed v4l4j (with `sudo ant install`) then you 
+MUST uninstall it with `sudo ant uninstall`, otherwise the previous jar file & 
 libraries (without debug statements) will take precedence over the new ones. 
 Then, compile v4l4j to produce extra debug output, useful to troubleshoot 
-issues, with "`ant clean all-debug`". Install it with "`sudo ant install`". 
+issues, with `ant clean all-debug`. Install it with `sudo ant install`. 
 
 
 ## CONTACT
