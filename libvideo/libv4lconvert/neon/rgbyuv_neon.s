@@ -9,16 +9,25 @@ v4lconvert_neon_yuyv_to_rgb24:
 	push {ip,lr}							@Push lr
 	
 	@ Initialize the subtraction register with the value 128
-	vdup.16 q15, #128						@Fill q15 (d30, d31) with 128 (uint16)
+	mov r3, 		#128
+	vdup.16			q15, r3					@Fill q15 (d30, d31) with 128 (uint16)
 	
 	@ See http://www.fourcc.org/yuv2ppm.c for the coefficients
-	vdup.32 q11, #1.370705					@Fill q11 with 0.337633 ('v' coefficient for red)
-	vdup.32 q12, #0.698001					@Fill q12 with 0.337633 ('v' coefficient for green)
-	vdup.32 q13, #0.337633					@Fill q13 with 0.337633 ('u' coefficient for green)
-	vdup.32 q14, #1.732446					@Fill q14 with 1.732446 ('u' coefficient for blue)
+	movw	r3, #29507						@Load 1.37075 (high 16 bits) into r3 for staging
+	movt	r3, #16303						@Load 1.37075 (low 16 bits) into r3 for staging
+	vdup.32			q11, r3					@Fill q11 with 1.370705 ('v' coefficient for red)
+	movw	r3, #45106						@Load 0.698001 (high 16 bits) into r3 for staging
+	movt	r3, #16178						@Load 0.698001 (low 16 bits) into r3 for staging
+	vdup.32			q12, r3					@Fill q12 with 0.698001 ('v' coefficient for green)
+	movw	r3, #56892						@Load 0.337633 (high 16 bits) into r3 for staging
+	movt	r3, #16044						@Load 0.337633 (low 16 bits) into r3 for staging
+	vdup.32			q13, r3					@Fill q13 with 0.337633 ('u' coefficient for green)
+	movw	r3, #49354						@Load 1.732446 (high 16 bits) into r3 for staging
+	movt	r3, #16349						@Load 1.732446 (low 16 bits) into r3 for staging
+	vdup.32			q14, r3					@Fill q14 with 1.732446 ('u' coefficient for blue)
 	
 	.loop
-		vld4.8		{d0 - d3}, [r0]!		@load 8 pixels (q0, q1)
+		vld4.8		{d0 - d3}, [r0]!		@Load 8 pixels (q0, q1)
 		
 		vmovl.u8	q2, d1					@Convert uint8 to uint16 ('u' bytes)
 		vmovl.u8	q0, d0					@Convert uint8 to uint16 ('y1' bytes)
