@@ -29,15 +29,10 @@ v4lconvert_neon_yuyv_to_rgb24:
 	.loop
 		vld4.8		{d0 - d3}, [r0]!		@Load 8 pixels (q0, q1)
 		
-		vmovl.u8	q2, d1					@Convert uint8 to uint16 ('u' bytes)
-		vmovl.u8	q0, d0					@Convert uint8 to uint16 ('y1' bytes)
-		vmovl.u8	q4, d3					@Convert uint8 to uint16 ('v' bytes) (q3 will be filled with u 5-8 later)
-		vmovl.u8	q1, d2					@Convert uint8 to uint16 ('y2' bytes)
-		
-		vreinterpret.s16.u16 q2, q2			@Convert the uint16 to int16 (the 'u' bytes)
-		vreinterpret.s16.u16 q0, q0			@Convert the uint16 to int16 (the 'y1' bytes)
-		vreinterpret.s16.u16 q4, q4			@Convert the uint16 to int16 (the 'v' bytes)
-		vreinterpret.s16.u16 q1, q1			@Convert the uint16 to int16 (the 'y2' bytes)
+		vmovl.u8	q2, d1					@Convert uint8 to int16 ('u' bytes)
+		vmovl.u8	q0, d0					@Convert uint8 to int16 ('y1' bytes)
+		vmovl.u8	q4, d3					@Convert uint8 to int16 ('v' bytes) (q3 will be filled with u 5-8 later)
+		vmovl.u8	q1, d2					@Convert uint8 to int16 ('y2' bytes)
 		
 		vqsub.s16	q2, q2, q15				@Subtract 128 from the 'u' bytes
 		vqsub.s16	q4, q4, q15				@Subtract 128 from the 'v' bytes
@@ -97,21 +92,13 @@ v4lconvert_neon_yuyv_to_rgb24:
 		vqadd.s16	q2, q0, q2				@Blue 1	= 'y1' + 'b'
 		
 		
-		@ Reinterpret RGB values
-		vreinterpret.u16.s16 q2, q2			@Convert the int16 to uint16 (the 'b1' bytes)
-		vreinterpret.u16.s16 q3, q3			@Convert the int16 to uint16 (the 'b2' bytes)
-		vreinterpret.u16.s16 q4, q4			@Convert the int16 to uint16 (the 'r1' bytes)
-		vreinterpret.u16.s16 q5, q5			@Convert the int16 to uint16 (the 'r2' bytes)
-		vreinterpret.u16.s16 q6, q6			@Convert the int16 to uint16 (the 'g1' bytes)
-		vreinterpret.u16.s16 q7, q7			@Convert the int16 to uint16 (the 'g2' bytes)
-		
 		@ Convert RGB to u8
-		vqmovn.u8	d0, q4					@Convert the uint16 to uint8 (the 'r1' bytes)
-		vqmovn.u8	d1, q6					@Convert the uint16 to uint8 (the 'g1' bytes)
-		vqmovn.u8	d2, q2					@Convert the uint16 to uint8 (the 'b1' bytes)
-		vqmovn.u8	d3, q5					@Convert the uint16 to uint8 (the 'r2' bytes)
-		vqmovn.u8	d4, q7					@Convert the uint16 to uint8 (the 'g2' bytes)
-		vqmovn.u8	d5, q3					@Convert the uint16 to uint8 (the 'b2' bytes)
+		vqmovun.s16	d0, q4					@Convert the int16 to uint8 (the 'r1' bytes)
+		vqmovun.s16	d1, q6					@Convert the int16 to uint8 (the 'g1' bytes)
+		vqmovun.s16	d2, q2					@Convert the int16 to uint8 (the 'b1' bytes)
+		vqmovun.s16	d3, q5					@Convert the int16 to uint8 (the 'r2' bytes)
+		vqmovun.s16	d4, q7					@Convert the int16 to uint8 (the 'g2' bytes)
+		vqmovun.s16	d5, q3					@Convert the int16 to uint8 (the 'b2' bytes)
 		
 		@ Interleave RGB (TODO make sure that this is right, I think that the operands might need to be switched for vzip)
 		vzip.8		d0, d3					@Interleave 'r1' & 'r2'
