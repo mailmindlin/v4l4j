@@ -52,13 +52,13 @@ v4lconvert_neon_yuyv_to_rgb24:
 		@ Because of less register pressure).
 		vmul.f32	q6, q2, q13				@Calculate the 'u' part of green (1 - 4)
 		vmul.f32	q7, q4, q12				@Calculate the 'v' part of green (1 - 4)
-		vqadd.f32	q6, q7, q6				@Add the 'u' and 'v' part of green together (1 - 4)
+		vadd.f32	q6, q7, q6				@Add the 'u' and 'v' part of green together (1 - 4)
 		vcvt.s32.f32 q6, q6					@Convert the float32 to int32 (1 - 4)
 		vqmovn.s32	d12, q6					@Convert the int32 to int16 (1 - 4) (d12 is q6 low)
 		
 		vmul.f32	q7, q3, q13				@Calculate the 'u' part of green (5 - 8)
 		vmul.f32	q8, q5, q12				@Calculate the 'v' part of green (5 - 8)
-		vqadd.f32	q7, q8, q7				@Add the 'u' and 'v' part of green together (5 - 8)
+		vadd.f32	q7, q8, q7				@Add the 'u' and 'v' part of green together (5 - 8)
 		vcvt.s32.f32 q7, q7					@Convert the float32 to int32 (5 - 8)
 		vqmovn.s32	d13, q7					@Convert the int32 to int16 (5 - 8) (d13 is q6 high)
 		@ NOTE: q6 is the green offset from y (1 - 8)
@@ -105,8 +105,8 @@ v4lconvert_neon_yuyv_to_rgb24:
 		vzip.8		d1, d4					@Interleave 'g1' & 'g2'
 		vzip.8		d2, d5					@Interleave 'b1' & 'b2'
 		
-		vst3.8		{d0 - d3} [r1]!			@Store RGB (1 - 6)
-		vst3.8		{d4 - d5} [r1]!			@Store RGB (6 - 12)
+		vst3.8		{d0 - d2}, [r1]!		@Store RGB (1 - 6)
+		vst3.8		{d3 - d5}, [r1]!		@Store RGB (6 - 12)
 		
 		subs		r2, r2, #1				@Decrement len by 1
 		bne			.loop					@IF len>0, GOTO .loop
