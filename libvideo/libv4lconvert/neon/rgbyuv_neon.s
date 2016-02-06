@@ -1,10 +1,11 @@
-AREA |.text|, CODE, READONLY
+.text
+.align 4
 
+.globl v4lconvert_neon_yuyv_to_rgb24
 @ r0: *src
 @ r1: *dest
 @ r2: len (in sets of 8 pixels)
-v4lconvert_neon_yuyv_to_rgb24 PROC
-	EXPORT v4lconvert_neon_yuyv_to_rgb24
+v4lconvert_neon_yuyv_to_rgb24:
 	push {ip,lr}							@Push lr
 	
 	@ Initialize the subtraction register with the value 128
@@ -115,4 +116,3 @@ v4lconvert_neon_yuyv_to_rgb24 PROC
 		bne			.loop					@IF len>0, GOTO .loop
 	
 	pop {ip,pc}								@Return
-ENDP
