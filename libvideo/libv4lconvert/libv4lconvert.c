@@ -28,9 +28,7 @@
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
-static void v4lconvert_get_framesizes(struct v4lconvert_data *data,
-		unsigned int pixelformat, int index);
-
+static void v4lconvert_get_framesizes(struct v4lconvert_data *data, uint32 pixelformat, u32 index);
 /* Note for proper functioning of v4lconvert_enum_fmt the first entries in
    supported_src_pixfmts must match with the entries in supported_dst_pixfmts */
 #define SUPPORTED_DST_PIXFMTS \
@@ -104,8 +102,7 @@ static const int v4lconvert_crop_res[][2] = {
 	{ 176, 144 },
 };
 
-struct v4lconvert_data *v4lconvert_create(int fd)
-{
+struct v4lconvert_data *v4lconvert_create(int fd) {
 	int i, j;
 	struct v4lconvert_data *data = calloc(1, sizeof(struct v4lconvert_data));
 	struct v4l2_capability cap;
@@ -178,8 +175,7 @@ struct v4lconvert_data *v4lconvert_create(int fd)
 	return data;
 }
 
-void v4lconvert_destroy(struct v4lconvert_data *data)
-{
+void v4lconvert_destroy(struct v4lconvert_data *data) {
 	v4lprocessing_destroy(data->processing);
 	v4lcontrol_destroy(data->control);
 	if (data->tinyjpeg) {
@@ -204,8 +200,7 @@ void v4lconvert_destroy(struct v4lconvert_data *data)
 	free(data);
 }
 
-int v4lconvert_supported_dst_format(unsigned int pixelformat)
-{
+int v4lconvert_supported_dst_format(unsigned int pixelformat) {
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(supported_dst_pixfmts); i++)

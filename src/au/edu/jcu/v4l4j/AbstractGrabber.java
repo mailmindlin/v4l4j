@@ -91,8 +91,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	}
 
 
-	private native int doInit(long o, int numBuffers, int w, int h, int ch, int std,
-			int requestedFormat, int output)
+	private native int doInit(long o, int numBuffers, int w, int h, int ch, int std, int requestedFormat, int output)
 	throws V4L4JException;
 
 	private native void start(long o) throws V4L4JException;
@@ -123,31 +122,30 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 * @param di the DeviceInfo object associated with the video device who 
 	 * created this grabber
 	 * @param o a JNI pointer to the v4l4j_device structure
-	 * @param w the requested frame width 
-	 * @param h the requested frame height
+	 * @param width the requested frame width 
+	 * @param height the requested frame height
 	 * @param ch the input index, as returned by 
-	 * <code>InputInfo.getIndex()</code>
+	 * 		<code>InputInfo.getIndex()</code>
 	 * @param std the video standard, as returned by 
-	 * <code>InputInfo.getSupportedStandards()</code> (see V4L4JConstants)
+	 * 		<code>InputInfo.getSupportedStandards()</code> (see V4L4JConstants)
 	 * @param t the {@link Tuner} associated with this frame grabber or
-	 * <code>null</code>.
+	 * 		<code>null</code>.
 	 * @param imf the image format frames should be captured in
 	 * @param ty the output image format, ie the type of this frame grabber:
-	 * {@link #RAW_GRABBER}, {@link #JPEG_GRABBER}, {@link #RGB24_GRABBER}, 
-	 * {@link #BGR24_GRABBER}, {@link #YUV_GRABBER}, {@link #YVU_GRABBER}
+	 * 		{@link #RAW_GRABBER}, {@link #JPEG_GRABBER}, {@link #RGB24_GRABBER}, 
+	 * 		{@link #BGR24_GRABBER}, {@link #YUV_GRABBER}, {@link #YVU_GRABBER}
 	 * @param factory the {@link ThreadFactory} to use when creating new threads
 	 * @throw {@link ImageFormatException} if the image format is null and 
-	 * type = {@link #RAW_GRABBER}
+	 * 		type = {@link #RAW_GRABBER}
 	 */
-	protected AbstractGrabber(DeviceInfo di, long o, int w, int h, int ch, int std
-			, Tuner t,ImageFormat imf, int ty, ThreadFactory factory) throws ImageFormatException{
+	protected AbstractGrabber(DeviceInfo di, long o, int width, int height, int ch, int std, Tuner t, ImageFormat imf, int ty, ThreadFactory factory) throws ImageFormatException{
 		if(imf==null)
 			throw new ImageFormatException("The image format can not be null");
 		state= new State();
 		dInfo = di;
 		object = o;
-		width = w;
-		height = h;
+		this.width = w;
+		this.height = h;
 		channel = ch;
 		standard= std;
 		format = imf.getIndex();
@@ -414,11 +412,10 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 */
 	final void recycleVideoBuffer(BaseVideoFrame frame) {
 		// Make sure we are in started state
-		if (state.isStarted())
-		{
+		if (state.isStarted()) {
 			enqueueBuffer(object, frame.getBufferInex());
 
-			synchronized(availableVideoFrames){
+			synchronized(availableVideoFrames) {
 				availableVideoFrames.add(frame);
 				availableVideoFrames.notify();
 			}
@@ -429,7 +426,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 * @see au.edu.jcu.v4l4j.FrameGrabber#stopCapture()
 	 */
 	@Override
-	public final void stopCapture(){
+	public final void stopCapture() {
 		state.stop();
 		// At this stage, further calls to getVideoFrame() will throw an exception..
 		// However, the push thread might still be blocked in getVideoFrame().
@@ -474,13 +471,13 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 * <code>FrameGrabber</code> has been already released, and therefore must 
 	 * not be used anymore.
 	 */
-	final void release(){
+	final void release() throws StateException {
 		try {stopCapture();}
 		catch (StateException se) {
 			//capture already stopped 
 		}
 
-		state.release();		
+		state.release();
 		doRelease(object);
 		state.commit();
 	}

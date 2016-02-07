@@ -72,9 +72,8 @@ public class RGBFrameGrabber extends AbstractGrabber {
 	 * @param imf the image format frame should be captured in
 	 * @param factory the thread factory to use when creating the push source
 	 */
-	RGBFrameGrabber(DeviceInfo di, long o, int w, int h, int ch, int std, Tuner t, 
-			ImageFormat imf, ThreadFactory factory) throws V4L4JException{
-		super(di, o,w,h,ch,std, t , imf, RGB24_GRABBER, factory);	
+	RGBFrameGrabber(DeviceInfo di, long o, int width, int height, int ch, int std, Tuner t, ImageFormat imf, ThreadFactory factory) throws V4L4JException{
+		super(di, o, width, height, ch, std, t, imf, RGB24_GRABBER, factory);	
 	}
 	
 	/**
@@ -99,7 +98,7 @@ public class RGBFrameGrabber extends AbstractGrabber {
 	 * released
 	 * @throws V4L4JException if there is an error applying capture parameters
 	 */
-	void init() throws V4L4JException{
+	void init() throws V4L4JException {
 		try {
 			super.init();
 		} catch (ImageFormatException ife){
