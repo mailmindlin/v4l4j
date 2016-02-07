@@ -163,7 +163,7 @@ int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data, u8 *src, int s
 
 int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data, u8 *src, int src_size, u8 *dest, struct v4l2_format *fmt, unsigned int dest_pix_fmt);
 
-int v4lconvert_decode_jpgl(const u8 *src, int src_size, unsigned int dest_pix_fmt, u8 *dest, u32 width, u32 height);
+int v4lconvert_decode_jpgl(const u8 *src, u32 src_size, unsigned int dest_pix_fmt, u8 *dest, u32 width, u32 height);
 
 void v4lconvert_decode_spca561(const u8 *src, u8 *dst, u32 width, u32 height);
 

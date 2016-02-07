@@ -122,8 +122,7 @@ static char clampTbl[1280];
 #endif
 
 /* Code to initialize those tables */
-static void vlcTbl_init(void)
-{
+static void vlcTbl_init(void) {
 	/* Bases tables used to compute the bigger one
 	 * To understands theses, look at the VLC doc in the
 	 * US patent document. */
@@ -410,10 +409,7 @@ static inline int decodeBlock( struct rqBitReader *br, int *block, int *dc )
 	return !(hdr & 0x700);
 }
 
-int v4lconvert_decode_jpgl(const u8 *inp, int src_size,
-		unsigned int dest_pix_fmt, u8 *fb,
-		int img_width, int img_height)
-{
+int v4lconvert_decode_jpgl(const u8 *inp, u32 src_size, unsigned int dest_pix_fmt, u8 *fb, u32 img_width, u32 img_height) {
 	/* Vars */
 	struct RingQueue rq;
 	struct rqBitReader br;
