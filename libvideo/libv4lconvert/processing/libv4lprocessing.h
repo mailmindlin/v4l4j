@@ -23,6 +23,8 @@
 
 #include "../libv4lsyscall-priv.h"
 #include "videodev2.h"
+#include <stdint.h>
+#define u8 uint8_t
 
 struct v4lprocessing_data;
 struct v4lcontrol_data;
