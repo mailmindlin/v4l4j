@@ -636,8 +636,8 @@ static int  get_row_size(PixFcPixelFormat format, uint32_t width) {
 	};
 }
 
-static void refresh_pixfc(struct v4lconvert_data *data, unsigned u32 width,
-		unsigned u32 height, PixFcPixelFormat src_fmt, PixFcPixelFormat dst_fmt) {
+static void refresh_pixfc(struct v4lconvert_data *data, u32 width,
+		u32 height, PixFcPixelFormat src_fmt, PixFcPixelFormat dst_fmt) {
 	// If the width, height, source or destination pixel format in the current
 	// struct pixfc is different from the new ones (given as args), release struct.
 	if ((data->pixfc != NULL) &&
@@ -668,8 +668,8 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	struct v4l2_format *fmt, unsigned int dest_pix_fmt) {
 	int result = 0;
 	unsigned int src_pix_fmt = fmt->fmt.pix.pixelformat;
-	unsigned u32 width  = fmt->fmt.pix.width;
-	unsigned u32 height = fmt->fmt.pix.height;
+	u32 width  = fmt->fmt.pix.width;
+	u32 height = fmt->fmt.pix.height;
 
 	switch (src_pix_fmt) {
 	/* JPG and variants */

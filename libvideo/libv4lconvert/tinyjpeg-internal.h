@@ -82,7 +82,7 @@ typedef void (*convert_colorspace_fct) (struct jdec_private *priv);
 struct jdec_private {
 	/* Public variables */
 	uint8_t *components[COMPONENTS];
-	unsigned u32 width, height;	/* Size of the image */
+	u32 width, height;	/* Size of the image */
 	unsigned int flags;
 
 	/* Private variables */

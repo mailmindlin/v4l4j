@@ -28,8 +28,8 @@ int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data,
 	int result = 0;
 	u8 *components[3];
 	unsigned int header_width, header_height;
-	unsigned u32 width  = fmt->fmt.pix.width;
-	unsigned u32 height = fmt->fmt.pix.height;
+	u32 width  = fmt->fmt.pix.width;
+	u32 height = fmt->fmt.pix.height;
 
 	if (!data->tinyjpeg) {
 		data->tinyjpeg = tinyjpeg_init();
@@ -175,7 +175,7 @@ static int decode_libjpeg_h_samp1(struct v4lconvert_data *data,
 	struct jpeg_decompress_struct *cinfo = &data->cinfo;
 	int x, y;
 	u8 *uv_buf;
-	unsigned u32 width = cinfo->image_width;
+	u32 width = cinfo->image_width;
 	JSAMPROW y_rows[16], u_rows[8], v_rows[8];
 	JSAMPARRAY rows[3] = { y_rows, u_rows, v_rows };
 
@@ -228,7 +228,7 @@ static int decode_libjpeg_h_samp2(struct v4lconvert_data *data,
 {
 	struct jpeg_decompress_struct *cinfo = &data->cinfo;
 	int y;
-	unsigned u32 width = cinfo->image_width;
+	u32 width = cinfo->image_width;
 	JSAMPROW y_rows[16], u_rows[8], v_rows[8];
 	JSAMPARRAY rows[3] = { y_rows, u_rows, v_rows };
 
@@ -262,8 +262,8 @@ int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data,
 	u8 *src, int src_size, u8 *dest,
 	struct v4l2_format *fmt, unsigned int dest_pix_fmt)
 {
-	unsigned u32 width  = fmt->fmt.pix.width;
-	unsigned u32 height = fmt->fmt.pix.height;
+	u32 width  = fmt->fmt.pix.width;
+	u32 height = fmt->fmt.pix.height;
 	int result = 0;
 
 	/* libjpeg errors before decoding the first line should signal EAGAIN */
