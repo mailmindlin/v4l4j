@@ -23,6 +23,8 @@
 
 #include "../control/libv4lcontrol.h"
 #include "../libv4lsyscall-priv.h"
+#include <stdint.h>
+#define u8 uint8_t
 
 #define V4L2PROCESSING_UPDATE_RATE 10
 

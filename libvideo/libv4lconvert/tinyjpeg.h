@@ -35,11 +35,14 @@
 #ifndef __JPEGDEC_H__
 #define __JPEGDEC_H__
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 struct jdec_private;
+
 
 /* Flags that can be set by any applications */
 #define TINYJPEG_FLAGS_MJPEG_TABLE	(1<<1)
@@ -53,6 +56,8 @@ enum tinyjpeg_fmt {
 	TINYJPEG_FMT_RGB24,
 	TINYJPEG_FMT_YUV420P,
 };
+
+#define u8 uint8_t
 
 struct jdec_private *tinyjpeg_init(void);
 void tinyjpeg_free(struct jdec_private *priv);
