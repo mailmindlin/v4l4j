@@ -21,7 +21,7 @@ CONVERT_OBJS  = libv4lconvert.o tinyjpeg.o sn9c10x.o sn9c20x.o pac207.o \
 TARGETS       = $(CONVERT_LIB) libv4lconvert.pc ov511-decomp ov518-decomp
 INCLUDES      = ../include/libv4lconvert.h
 
-override CPPFLAGS += -DLIBDIR=\"$(LIBDIR)\" -DLIBSUBDIR=\"$(LIBSUBDIR)\"
+override CPPFLAGS += -DLIBDIR=\"$(LIBDIR)\" -DLIBSUBDIR=\"$(LIBSUBDIR)\" -Wunused-function
 
 all: $(TARGETS)
 

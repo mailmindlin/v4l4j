@@ -22,13 +22,14 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <stdint.h>
 #include "libv4lconvert.h"
 #include "libv4lconvert-priv.h"
 #include "libv4lsyscall-priv.h"
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
-static void v4lconvert_get_framesizes(struct v4lconvert_data *data, uint32 pixelformat, u32 index);
+static void v4lconvert_get_framesizes(struct v4lconvert_data *data, uint32_t pixelformat, uint32_t index);
 /* Note for proper functioning of v4lconvert_enum_fmt the first entries in
    supported_src_pixfmts must match with the entries in supported_dst_pixfmts */
 #define SUPPORTED_DST_PIXFMTS \
@@ -1399,8 +1400,7 @@ const char *v4lconvert_get_error_message(struct v4lconvert_data *data)
 	return data->error_msg;
 }
 
-static void v4lconvert_get_framesizes(struct v4lconvert_data *data,
-		unsigned int pixelformat, int index)
+static void v4lconvert_get_framesizes(struct v4lconvert_data *data, uint32_t pixelformat, uint32_t index)
 {
 	int i, j, match;
 	struct v4l2_frmsizeenum frmsize = { .pixel_format = pixelformat };
