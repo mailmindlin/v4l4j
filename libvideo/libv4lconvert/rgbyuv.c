@@ -23,7 +23,12 @@
  */
 
 #include <string.h>
+#include <stdint.h>
 #include "libv4lconvert-priv.h"
+
+#ifdef CONVERT_ARM_NEON
+#include "neon/rgbyuv_neon.h"
+#endif
 
 #define RGB2Y(r, g, b, y) \
 	(y) = ((8453 * (r) + 16594 * (g) + 3223 * (b) + 524288) >> 15)
@@ -217,9 +222,11 @@ void v4lconvert_yuyv_to_bgr24(const unsigned char *src, unsigned char *dest, int
 	}
 }
 
-void v4lconvert_yuyv_to_rgb24(const unsigned char *src, unsigned char *dest, int width, int height) {
-	int j;
-
+void v4lconvert_yuyv_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
+#ifdef CONVERT_ARM_NEON
+	v4lconvert_neon_yuyv_to_rgb24(src, dest, width / 2, height);
+#else
+	u32 j;
 	while (--height >= 0) {
 		for (j = 0; j < width; j += 2) {
 			int u = src[1];
@@ -239,6 +246,7 @@ void v4lconvert_yuyv_to_rgb24(const unsigned char *src, unsigned char *dest, int
 			src += 4;
 		}
 	}
+#endif
 }
 
 void v4lconvert_yuyv_to_yuv420(const unsigned char *src, unsigned char *dest, int width, int height, int yvu) {
