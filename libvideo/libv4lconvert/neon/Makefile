@@ -1,5 +1,5 @@
 CONVERT_NEON_ASM_OBJS = rgbyuv_neon.o
-AFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -march=armv7-a -mapcs-reentrant -fPIC
+AFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -march=armv7-a -mapcs-reentrant -k --warn --statistics
 AS = as
 
 all:

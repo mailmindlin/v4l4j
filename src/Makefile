@@ -1,7 +1,7 @@
 # If the env variable JDK_HOME is not defined,
 # use the following one (works on Ubuntu with OpenJDK).
 ifndef JDK_HOME
-JDK_HOME := /usr/lib/jvm/java-6-openjdk
+JDK_HOME := /usr/lib/jvm/jdk-8-oracle-arm-vfp-hflt
 endif
 
 
@@ -55,11 +55,11 @@ $(LIB): $(OBJ)
 
 test-debug:  $(LIBVIDEO_PATH)/lib$(LIBVIDEO_NAME).so
 	$(CC) $(INCLUDES) -DDEBUG -Wall -ggdb -DMAKETEST -c jpeg.c
-	$(CC) jpeg.o -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME) -o jpeg
+	$(LD) jpeg.o -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME) -o jpeg
 
 test: $(LIBVIDEO_PATH)/lib$(LIBVIDEO_NAME).so
 	$(CC) $(INCLUDES) -O3 -Wall -DMAKETEST -c jpeg.c
-	$(CC) jpeg.o -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME) -o jpeg
+	$(LD) jpeg.o -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME) -o jpeg
 
 
 clean:
