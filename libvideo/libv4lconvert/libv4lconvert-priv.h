@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <jpeglib.h>
 #include <setjmp.h>
+#include "types.h"
 #include "libv4lconvert.h"
 #include "control/libv4lcontrol.h"
 #include "processing/libv4lprocessing.h"
@@ -42,11 +43,6 @@
 /* Card flags */
 #define V4LCONVERT_IS_UVC                0x01
 #define V4LCONVERT_USE_TINYJPEG          0x02
-
-typedef uint32_t	u32;
-typedef uint8_t		u8;
-typedef int32_t		i32;
-typedef int8_t		i8;
 
 struct v4lconvert_data {
 	int fd;

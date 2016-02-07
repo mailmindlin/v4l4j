@@ -4,10 +4,10 @@ LIBS_libv4lconvert = -lrt -lm -ljpeg
 
 ifeq ($(LINKTYPE),static)
 CONVERT_LIB   = libv4lconvert.a
-override CPPFLAGS += -fPIC
+override CPPFLAGS += -fPIC -w
 else
 CONVERT_LIB   = libv4lconvert.so
-override CPPFLAGS += -fPIC
+override CPPFLAGS += -fPIC -w
 endif
 
 CONVERT_OBJS  = libv4lconvert.o tinyjpeg.o sn9c10x.o sn9c20x.o pac207.o \
