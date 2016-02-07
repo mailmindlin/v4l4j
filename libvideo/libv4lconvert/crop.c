@@ -25,7 +25,7 @@
 
 
 static void v4lconvert_reduceandcrop_rgbbgr24(
-		unsigned char *src, unsigned char *dest,
+		u8 *src, u8 *dest,
 		const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt)
 {
 	int x, y;
@@ -35,7 +35,7 @@ static void v4lconvert_reduceandcrop_rgbbgr24(
 	src += starty * src_fmt->fmt.pix.bytesperline + 3 * startx;
 
 	for (y = 0; y < dest_fmt->fmt.pix.height; y++) {
-		unsigned char *mysrc = src;
+		u8 *mysrc = src;
 		for (x = 0; x < dest_fmt->fmt.pix.width; x++) {
 			*(dest++) = *(mysrc++);
 			*(dest++) = *(mysrc++);
@@ -46,7 +46,7 @@ static void v4lconvert_reduceandcrop_rgbbgr24(
 	}
 }
 
-static void v4lconvert_crop_rgbbgr24(unsigned char *src, unsigned char *dest,
+static void v4lconvert_crop_rgbbgr24(u8 *src, u8 *dest,
 		const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt)
 {
 	int x;
@@ -63,7 +63,7 @@ static void v4lconvert_crop_rgbbgr24(unsigned char *src, unsigned char *dest,
 }
 
 static void v4lconvert_reduceandcrop_yuv420(
-		unsigned char *src, unsigned char *dest,
+		u8 *src, u8 *dest,
 		const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt)
 {
 	int x, y;
@@ -71,7 +71,7 @@ static void v4lconvert_reduceandcrop_yuv420(
 	int dest_width_half = dest_fmt->fmt.pix.width / 2;
 	int startx = (src_fmt->fmt.pix.width / 2 - dest_fmt->fmt.pix.width) & ~1;
 	int starty = (src_fmt->fmt.pix.height / 2 - dest_fmt->fmt.pix.height) & ~1;
-	unsigned char *mysrc, *mysrc2;
+	u8 *mysrc, *mysrc2;
 
 	/* Y */
 	mysrc = src + starty * src_fmt->fmt.pix.bytesperline + startx;
@@ -109,13 +109,13 @@ static void v4lconvert_reduceandcrop_yuv420(
 	}
 }
 
-static void v4lconvert_crop_yuv420(unsigned char *src, unsigned char *dest,
+static void v4lconvert_crop_yuv420(u8 *src, u8 *dest,
 		const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt)
 {
 	int x;
 	int startx = ((src_fmt->fmt.pix.width - dest_fmt->fmt.pix.width) / 2) & ~1;
 	int starty = ((src_fmt->fmt.pix.height - dest_fmt->fmt.pix.height) / 2) & ~1;
-	unsigned char *mysrc = src + starty * src_fmt->fmt.pix.bytesperline + startx;
+	u8 *mysrc = src + starty * src_fmt->fmt.pix.bytesperline + startx;
 
 	/* Y */
 	for (x = 0; x < dest_fmt->fmt.pix.height; x++) {
@@ -145,7 +145,7 @@ static void v4lconvert_crop_yuv420(unsigned char *src, unsigned char *dest,
 
 /* Ok, so this is not really cropping, but more the reverse, whatever */
 static void v4lconvert_add_border_rgbbgr24(
-		unsigned char *src, unsigned char *dest,
+		u8 *src, u8 *dest,
 		const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt)
 {
 	int y;
@@ -177,7 +177,7 @@ static void v4lconvert_add_border_rgbbgr24(
 }
 
 static void v4lconvert_add_border_yuv420(
-		unsigned char *src, unsigned char *dest,
+		u8 *src, u8 *dest,
 		const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt)
 {
 	int y;
@@ -257,7 +257,7 @@ static void v4lconvert_add_border_yuv420(
 	}
 }
 
-void v4lconvert_crop(unsigned char *src, unsigned char *dest,
+void v4lconvert_crop(u8 *src, u8 *dest,
 		const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt)
 {
 	switch (dest_fmt->fmt.pix.pixelformat) {

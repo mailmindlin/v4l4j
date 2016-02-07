@@ -39,9 +39,9 @@
 		(v) = ((14456 * (r) - 12105 * (g) - 2351 * (b) + 4210688) >> 15); \
 	} while (0)
 
-void v4lconvert_rgb24_to_yuv420(const unsigned char *src, unsigned char *dest, const struct v4l2_format *src_fmt, int bgr, int yvu) {
+void v4lconvert_rgb24_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt, int bgr, int yvu) {
 	int x, y;
-	unsigned char *udest, *vdest;
+	u8 *udest, *vdest;
 
 	/* Y */
 	for (y = 0; y < src_fmt->fmt.pix.height; y++) {
@@ -92,13 +92,13 @@ void v4lconvert_rgb24_to_yuv420(const unsigned char *src, unsigned char *dest, c
 #define YUV2B(y, u, v) ({ \
 		int b = (y) + ((((u) - 128) * 1814) >> 10); b > 255 ? 255 : b < 0 ? 0 : b; })
 
-#define CLIP(color) (unsigned char)(((color) > 0xFF) ? 0xff : (((color) < 0) ? 0 : (color)))
+#define CLIP(color) (u8)(((color) > 0xFF) ? 0xff : (((color) < 0) ? 0 : (color)))
 
-void v4lconvert_yuv420_to_bgr24(const unsigned char *src, unsigned char *dest, int width, int height, int yvu) {
+void v4lconvert_yuv420_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height, int yvu) {
 	int i, j;
 
-	const unsigned char *ysrc = src;
-	const unsigned char *usrc, *vsrc;
+	const u8 *ysrc = src;
+	const u8 *usrc, *vsrc;
 
 	if (yvu) {
 		vsrc = src + width * height;
@@ -146,11 +146,11 @@ void v4lconvert_yuv420_to_bgr24(const unsigned char *src, unsigned char *dest, i
 	}
 }
 
-void v4lconvert_yuv420_to_rgb24(const unsigned char *src, unsigned char *dest, int width, int height, int yvu) {
+void v4lconvert_yuv420_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height, int yvu) {
 	int i, j;
 
-	const unsigned char *ysrc = src;
-	const unsigned char *usrc, *vsrc;
+	const u8 *ysrc = src;
+	const u8 *usrc, *vsrc;
 
 	if (yvu) {
 		vsrc = src + width * height;
@@ -198,7 +198,7 @@ void v4lconvert_yuv420_to_rgb24(const unsigned char *src, unsigned char *dest, i
 	}
 }
 
-void v4lconvert_yuyv_to_bgr24(const unsigned char *src, unsigned char *dest, int width, int height) {
+void v4lconvert_yuyv_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height) {
 	int j;
 
 	while (--height >= 0) {
@@ -249,10 +249,10 @@ void v4lconvert_yuyv_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
 #endif
 }
 
-void v4lconvert_yuyv_to_yuv420(const unsigned char *src, unsigned char *dest, int width, int height, int yvu) {
+void v4lconvert_yuyv_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height, int yvu) {
 	int i, j;
-	const unsigned char *src1;
-	unsigned char *udest, *vdest;
+	const u8 *src1;
+	u8 *udest, *vdest;
 
 	/* copy the Y values */
 	src1 = src;
@@ -286,7 +286,7 @@ void v4lconvert_yuyv_to_yuv420(const unsigned char *src, unsigned char *dest, in
 	}
 }
 
-void v4lconvert_yvyu_to_bgr24(const unsigned char *src, unsigned char *dest, int width, int height) {
+void v4lconvert_yvyu_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height) {
 	int j;
 
 	while (--height >= 0) {
@@ -310,7 +310,7 @@ void v4lconvert_yvyu_to_bgr24(const unsigned char *src, unsigned char *dest, int
 	}
 }
 
-void v4lconvert_yvyu_to_rgb24(const unsigned char *src, unsigned char *dest, int width, int height) {
+void v4lconvert_yvyu_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
 	int j;
 
 	while (--height >= 0) {
@@ -334,7 +334,7 @@ void v4lconvert_yvyu_to_rgb24(const unsigned char *src, unsigned char *dest, int
 	}
 }
 
-void v4lconvert_uyvy_to_bgr24(const unsigned char *src, unsigned char *dest, int width, int height) {
+void v4lconvert_uyvy_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height) {
 	int j;
 
 	while (--height >= 0) {
@@ -358,7 +358,7 @@ void v4lconvert_uyvy_to_bgr24(const unsigned char *src, unsigned char *dest, int
 	}
 }
 
-void v4lconvert_uyvy_to_rgb24(const unsigned char *src, unsigned char *dest, int width, int height) {
+void v4lconvert_uyvy_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
 	int j;
 
 	while (--height >= 0) {
@@ -382,10 +382,10 @@ void v4lconvert_uyvy_to_rgb24(const unsigned char *src, unsigned char *dest, int
 	}
 }
 
-void v4lconvert_uyvy_to_yuv420(const unsigned char *src, unsigned char *dest, int width, int height, int yvu) {
+void v4lconvert_uyvy_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height, int yvu) {
 	int i, j;
-	const unsigned char *src1;
-	unsigned char *udest, *vdest;
+	const u8 *src1;
+	u8 *udest, *vdest;
 
 	/* copy the Y values */
 	src1 = src;
@@ -418,11 +418,11 @@ void v4lconvert_uyvy_to_yuv420(const unsigned char *src, unsigned char *dest, in
 	}
 }
 
-void v4lconvert_swap_rgb(const unsigned char *src, unsigned char *dst, int width, int height) {
+void v4lconvert_swap_rgb(const u8 *src, u8 *dst, u32 width, u32 height) {
 	int i;
 
 	for (i = 0; i < (width * height); i++) {
-		unsigned char tmp0, tmp1;
+		u8 tmp0, tmp1;
 		tmp0 = *src++;
 		tmp1 = *src++;
 		*dst++ = *src++;
@@ -431,7 +431,7 @@ void v4lconvert_swap_rgb(const unsigned char *src, unsigned char *dst, int width
 	}
 }
 
-void v4lconvert_swap_uv(const unsigned char *src, unsigned char *dest, const struct v4l2_format *src_fmt) {
+void v4lconvert_swap_uv(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt) {
 	int y;
 
 	/* Copy Y */
@@ -458,7 +458,7 @@ void v4lconvert_swap_uv(const unsigned char *src, unsigned char *dest, const str
 	}
 }
 
-void v4lconvert_rgb565_to_rgb24(const unsigned char *src, unsigned char *dest, int width, int height) {
+void v4lconvert_rgb565_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
 	int j;
 	while (--height >= 0) {
 		for (j = 0; j < width; j++) {
@@ -474,7 +474,7 @@ void v4lconvert_rgb565_to_rgb24(const unsigned char *src, unsigned char *dest, i
 	}
 }
 
-void v4lconvert_rgb565_to_bgr24(const unsigned char *src, unsigned char *dest, int width, int height) {
+void v4lconvert_rgb565_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height) {
 	int j;
 	while (--height >= 0) {
 		for (j = 0; j < width; j++) {
@@ -490,10 +490,10 @@ void v4lconvert_rgb565_to_bgr24(const unsigned char *src, unsigned char *dest, i
 	}
 }
 
-void v4lconvert_rgb565_to_yuv420(const unsigned char *src, unsigned char *dest, const struct v4l2_format *src_fmt, int yvu) {
+void v4lconvert_rgb565_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt, int yvu) {
 	int x, y;
 	unsigned short tmp;
-	unsigned char *udest, *vdest;
+	u8 *udest, *vdest;
 	unsigned r[4], g[4], b[4];
 	int avg_src[3];
 
@@ -552,7 +552,7 @@ void v4lconvert_rgb565_to_yuv420(const unsigned char *src, unsigned char *dest, 
 	}
 }
 
-void v4lconvert_grey_to_rgb24(const unsigned char *src, unsigned char *dest, int width, int height) {
+void v4lconvert_grey_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
 	int j;
 	while (--height >= 0) {
 		for (j = 0; j < width; j++) {
@@ -564,7 +564,7 @@ void v4lconvert_grey_to_rgb24(const unsigned char *src, unsigned char *dest, int
 	}
 }
 
-void v4lconvert_grey_to_yuv420(const unsigned char *src, unsigned char *dest, const struct v4l2_format *src_fmt) {
+void v4lconvert_grey_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt) {
 	int x, y;
 
 	/* Y */
@@ -592,8 +592,8 @@ static inline void convert_packed_to_16bit(uint8_t *raw, uint16_t *unpacked, 			
 }
 
 int v4lconvert_y10b_to_rgb24(struct v4lconvert_data *data,
-	const unsigned char *src, unsigned char *dest, int width, int height) {
-	unsigned char *unpacked_buffer;
+	const u8 *src, u8 *dest, u32 width, u32 height) {
+	u8 *unpacked_buffer;
 
 	unpacked_buffer = v4lconvert_alloc_buffer(width * height * 2, 			&data->convert_pixfmt_buf, 			&data->convert_pixfmt_buf_size);
 	if (!unpacked_buffer)
@@ -619,8 +619,8 @@ int v4lconvert_y10b_to_rgb24(struct v4lconvert_data *data,
 }
 
 int v4lconvert_y10b_to_yuv420(struct v4lconvert_data *data,
-	const unsigned char *src, unsigned char *dest, int width, int height) {
-	unsigned char *unpacked_buffer;
+	const u8 *src, u8 *dest, u32 width, u32 height) {
+	u8 *unpacked_buffer;
 
 	unpacked_buffer = v4lconvert_alloc_buffer(width * height * 2, &data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
 	if (!unpacked_buffer)

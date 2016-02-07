@@ -121,8 +121,8 @@
 
 /* Now the decode function itself */
 
-void v4lconvert_decode_sn9c2028(const unsigned char *src, unsigned char *dst,
-		int width, int height)
+void v4lconvert_decode_sn9c2028(const u8 *src, u8 *dst,
+		u32 width, u32 height)
 {
 	long dst_index = 0;
 	int starting_row = 0;

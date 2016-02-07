@@ -121,7 +121,7 @@ static int whitebalance_calculate_lookup_tables_generic(
 }
 
 static int whitebalance_calculate_lookup_tables_bayer(
-		struct v4lprocessing_data *data, unsigned char *buf,
+		struct v4lprocessing_data *data, u8 *buf,
 		const struct v4l2_format *fmt, int starts_with_green)
 {
 	int x, y, a1 = 0, a2 = 0, b1 = 0, b2 = 0;
@@ -160,7 +160,7 @@ static int whitebalance_calculate_lookup_tables_bayer(
 }
 
 static int whitebalance_calculate_lookup_tables_rgb(
-		struct v4lprocessing_data *data, unsigned char *buf,
+		struct v4lprocessing_data *data, u8 *buf,
 		const struct v4l2_format *fmt)
 {
 	int x, y, green_avg = 0, comp1_avg = 0, comp2_avg = 0;
@@ -186,7 +186,7 @@ static int whitebalance_calculate_lookup_tables_rgb(
 
 static int whitebalance_calculate_lookup_tables(
 		struct v4lprocessing_data *data,
-		unsigned char *buf, const struct v4l2_format *fmt)
+		u8 *buf, const struct v4l2_format *fmt)
 {
 	switch (fmt->fmt.pix.pixelformat) {
 	case V4L2_PIX_FMT_SGBRG8:

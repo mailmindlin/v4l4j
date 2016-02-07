@@ -58,34 +58,34 @@ static const int Y_coords_624x[128][2] = {
 	{ 8,  7}, { 9,  7}, {10,  7}, {11,  7}, {12,  7}, {13,  7}, {14,  7}, {15,  7}
 };
 
-static void do_write_u(const unsigned char *buf, unsigned char *ptr,
+static void do_write_u(const u8 *buf, u8 *ptr,
 		int i, int j)
 {
 	*ptr = buf[i + 128 + j];
 }
 
-static void do_write_v(const unsigned char *buf, unsigned char *ptr,
+static void do_write_v(const u8 *buf, u8 *ptr,
 		int i, int j)
 {
 	*ptr = buf[i + 160 + j];
 }
 
-void v4lconvert_sn9c20x_to_yuv420(const unsigned char *raw, unsigned char *i420,
-		int width, int height, int yvu)
+void v4lconvert_sn9c20x_to_yuv420(const u8 *raw, u8 *i420,
+		u32 width, u32 height, int yvu)
 {
 	int i = 0, x = 0, y = 0, j, relX, relY, x_div2, y_div2;
-	const unsigned char *buf = raw;
-	unsigned char *ptr;
+	const u8 *buf = raw;
+	u8 *ptr;
 	int frame_size = width * height;
 	int frame_size_div2 = frame_size >> 1;
 	int frame_size_div4 = frame_size >> 2;
-	int width_div2 = width >> 1;
+	u32 width_div2 = width >> 1;
 #if (DO_SANITY_CHECKS == 1)
-	int height_div2 = height >> 1;
+	u32 height_div2 = height >> 1;
 #endif
-	void (*do_write_uv1)(const unsigned char *buf, unsigned char *ptr, int i,
+	void (*do_write_uv1)(const u8 *buf, u8 *ptr, int i,
 			int j) = NULL;
-	void (*do_write_uv2)(const unsigned char *buf, unsigned char *ptr, int i,
+	void (*do_write_uv2)(const u8 *buf, u8 *ptr, int i,
 			int j) = NULL;
 
 	if (yvu) {

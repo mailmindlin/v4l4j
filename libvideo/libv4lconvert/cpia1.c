@@ -35,11 +35,11 @@
 
 /* CPIA YUYV (sometimes sort of compressed) */
 int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data,
-		const unsigned char *src, int src_size,
-		unsigned char *dest, int width, int height, int yvu)
+		const u8 *src, int src_size,
+		u8 *dest, u32 width, u32 height, int yvu)
 {
 	int x, y, ll, compressed;
-	unsigned char *udest, *vdest;
+	u8 *udest, *vdest;
 
 	if (width > 352 || height > 288) {
 		fprintf(stderr, "FATAL ERROR CPIA1 size > 352x288, please report!\n");

@@ -35,7 +35,7 @@
 #define JPEG_HEIGHT_OFFSET	 94
 
 static int find_eoi(struct v4lconvert_data *data,
-        const unsigned char *jpeg_data, int jpeg_data_idx, int jpeg_data_size)
+        const u8 *jpeg_data, int jpeg_data_idx, int jpeg_data_size)
 {
 	int i;
 
@@ -53,10 +53,10 @@ static int find_eoi(struct v4lconvert_data *data,
 
 
 int v4lconvert_decode_jl2005bcd(struct v4lconvert_data *data,
-		const unsigned char *src, int src_size,
-                unsigned char *dest, int width, int height)
+		const u8 *src, int src_size,
+                u8 *dest, u32 width, u32 height)
 {
-	unsigned char jpeg_stripe[50000];
+	u8 jpeg_stripe[50000];
 	int q;
 	struct jpeg_compress_struct cinfo;
 	struct jpeg_decompress_struct dinfo;

@@ -38,9 +38,9 @@ struct v4lprocessing_data {
 	   V4L2PROCESSING_UPDATE_RATE overflow happens */
 	int lookup_table_update_counter;
 	/* RGB/BGR lookup tables */
-	unsigned char comp1[256];
-	unsigned char green[256];
-	unsigned char comp2[256];
+	u8 comp1[256];
+	u8 green[256];
+	u8 comp2[256];
 	/* Filter private data for filters which need it */
 	/* whitebalance.c data */
 	int green_avg;
@@ -48,7 +48,7 @@ struct v4lprocessing_data {
 	int comp2_avg;
 	/* gamma.c data */
 	int last_gamma;
-	unsigned char gamma_table[256];
+	u8 gamma_table[256];
 	/* autogain.c data */
 	int last_gain_correction;
 };
@@ -58,7 +58,7 @@ struct v4lprocessing_filter {
 	int (*active)(struct v4lprocessing_data *data);
 	/* Returns 1 if any of the lookup tables was changed */
 	int (*calculate_lookup_tables)(struct v4lprocessing_data *data,
-			unsigned char *buf, const struct v4l2_format *fmt);
+			u8 *buf, const struct v4l2_format *fmt);
 };
 
 extern struct v4lprocessing_filter whitebalance_filter;

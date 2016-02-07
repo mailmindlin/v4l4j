@@ -29,7 +29,7 @@
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
-static void v4lconvert_get_framesizes(struct v4lconvert_data *data, uint32_t pixelformat, uint32_t index);
+static void v4lconvert_get_framesizes(struct v4lconvert_data *data, u32 pixelformat, u32 index);
 /* Note for proper functioning of v4lconvert_enum_fmt the first entries in
    supported_src_pixfmts must match with the entries in supported_dst_pixfmts */
 #define SUPPORTED_DST_PIXFMTS \
@@ -180,7 +180,7 @@ void v4lconvert_destroy(struct v4lconvert_data *data) {
 	v4lprocessing_destroy(data->processing);
 	v4lcontrol_destroy(data->control);
 	if (data->tinyjpeg) {
-		unsigned char *comps[3] = { NULL, NULL, NULL };
+		u8 *comps[3] = { NULL, NULL, NULL };
 
 		tinyjpeg_set_components(data->tinyjpeg, comps, 3);
 		tinyjpeg_free(data->tinyjpeg);
@@ -573,8 +573,7 @@ int v4lconvert_needs_conversion(struct v4lconvert_data *data,
 }
 
 static int v4lconvert_processing_needs_double_conversion(
-		unsigned int src_pix_fmt, unsigned int dest_pix_fmt)
-{
+		unsigned int src_pix_fmt, unsigned int dest_pix_fmt) {
 	switch (src_pix_fmt) {
 	case V4L2_PIX_FMT_RGB24:
 	case V4L2_PIX_FMT_BGR24:
@@ -601,9 +600,8 @@ static int v4lconvert_processing_needs_double_conversion(
 	return 1;
 }
 
-unsigned char *v4lconvert_alloc_buffer(int needed,
-		unsigned char **buf, int *buf_size)
-{
+u8 *v4lconvert_alloc_buffer(int needed,
+		u8 **buf, int *buf_size) {
 	if (*buf_size < needed) {
 		free(*buf);
 		*buf = malloc(needed);
@@ -616,8 +614,7 @@ unsigned char *v4lconvert_alloc_buffer(int needed,
 	return *buf;
 }
 
-int v4lconvert_oom_error(struct v4lconvert_data *data)
-{
+int v4lconvert_oom_error(struct v4lconvert_data *data) {
 	V4LCONVERT_ERR("could not allocate memory\n");
 	errno = ENOMEM;
 	return -1;
@@ -639,8 +636,8 @@ static int  get_row_size(PixFcPixelFormat format, uint32_t width) {
 	};
 }
 
-static void refresh_pixfc(struct v4lconvert_data *data, unsigned int width,
-		unsigned int height, PixFcPixelFormat src_fmt, PixFcPixelFormat dst_fmt) {
+static void refresh_pixfc(struct v4lconvert_data *data, unsigned u32 width,
+		unsigned u32 height, PixFcPixelFormat src_fmt, PixFcPixelFormat dst_fmt) {
 	// If the width, height, source or destination pixel format in the current
 	// struct pixfc is different from the new ones (given as args), release struct.
 	if ((data->pixfc != NULL) &&
@@ -667,13 +664,12 @@ static void refresh_pixfc(struct v4lconvert_data *data, unsigned int width,
 }
 
 static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
-	unsigned char *src, int src_size, unsigned char *dest, int dest_size,
-	struct v4l2_format *fmt, unsigned int dest_pix_fmt)
-{
+	u8 *src, int src_size, u8 *dest, int dest_size,
+	struct v4l2_format *fmt, unsigned int dest_pix_fmt) {
 	int result = 0;
 	unsigned int src_pix_fmt = fmt->fmt.pix.pixelformat;
-	unsigned int width  = fmt->fmt.pix.width;
-	unsigned int height = fmt->fmt.pix.height;
+	unsigned u32 width  = fmt->fmt.pix.width;
+	unsigned u32 height = fmt->fmt.pix.height;
 
 	switch (src_pix_fmt) {
 	/* JPG and variants */
@@ -719,7 +715,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	case V4L2_PIX_FMT_CPIA1:
 	case V4L2_PIX_FMT_OV511:
 	case V4L2_PIX_FMT_OV518: {
-		unsigned char *d;
+		u8 *d;
 		int d_size;
 		int yvu = 0;
 
@@ -826,7 +822,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	case V4L2_PIX_FMT_SN9C2028:
 	case V4L2_PIX_FMT_SQ905C:
 	case V4L2_PIX_FMT_STV0680: { /* Not compressed but needs some shuffling */
-		unsigned char *tmpbuf;
+		u8 *tmpbuf;
 		struct v4l2_format tmpfmt = *fmt;
 
 		tmpbuf = v4lconvert_alloc_buffer(width * height,
@@ -923,7 +919,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 		break;
 
 	case V4L2_PIX_FMT_SE401: {
-		unsigned char *d = NULL;
+		u8 *d = NULL;
 
 		switch (dest_pix_fmt) {
 		case V4L2_PIX_FMT_RGB24:
@@ -1226,17 +1222,16 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 int v4lconvert_convert(struct v4lconvert_data *data,
 		const struct v4l2_format *src_fmt,  /* in */
 		const struct v4l2_format *dest_fmt, /* in */
-		unsigned char *src, int src_size, unsigned char *dest, int dest_size)
-{
+		u8 *src, int src_size, u8 *dest, int dest_size) {
 	int res, dest_needed, temp_needed, processing, convert = 0;
 	int rotate90, vflip, hflip, crop;
-	unsigned char *convert1_dest = dest;
+	u8 *convert1_dest = dest;
 	int convert1_dest_size = dest_size;
-	unsigned char *convert2_src = src, *convert2_dest = dest;
+	u8 *convert2_src = src, *convert2_dest = dest;
 	int convert2_dest_size = dest_size;
-	unsigned char *rotate90_src = src, *rotate90_dest = dest;
-	unsigned char *flip_src = src, *flip_dest = dest;
-	unsigned char *crop_src = src;
+	u8 *rotate90_src = src, *rotate90_dest = dest;
+	u8 *flip_src = src, *flip_dest = dest;
+	u8 *crop_src = src;
 	struct v4l2_format my_src_fmt = *src_fmt;
 	struct v4l2_format my_dest_fmt = *dest_fmt;
 
@@ -1351,6 +1346,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 	}
 
 	/* Done setting sources / dest and allocating intermediate buffers,
+	/* Done setting sources / dest and allocating intermediate buffers,
 	   real conversion / processing / ... starts here. */
 	if (convert == 2) {
 		res = v4lconvert_convert_pixfmt(data, src, src_size,
@@ -1395,13 +1391,11 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 	return dest_needed;
 }
 
-const char *v4lconvert_get_error_message(struct v4lconvert_data *data)
-{
+const char *v4lconvert_get_error_message(struct v4lconvert_data *data) {
 	return data->error_msg;
 }
 
-static void v4lconvert_get_framesizes(struct v4lconvert_data *data, uint32_t pixelformat, uint32_t index)
-{
+static void v4lconvert_get_framesizes(struct v4lconvert_data *data, u32 pixelformat, u32 index) {
 	int i, j, match;
 	struct v4l2_frmsizeenum frmsize = { .pixel_format = pixelformat };
 

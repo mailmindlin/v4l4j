@@ -20,7 +20,7 @@
 #include "libv4lprocessing.h"
 #include "libv4lprocessing-priv.h"
 
-#define CLIP(color) (unsigned char)(((color) > 0xff) ? 0xff : (((color) < 0) ? 0 : (color)))
+#define CLIP(color) (u8)(((color) > 0xff) ? 0xff : (((color) < 0) ? 0 : (color)))
 
 static int gamma_active(struct v4lprocessing_data *data)
 {
@@ -31,7 +31,7 @@ static int gamma_active(struct v4lprocessing_data *data)
 
 static int gamma_calculate_lookup_tables(
 		struct v4lprocessing_data *data,
-		unsigned char *buf, const struct v4l2_format *fmt)
+		u8 *buf, const struct v4l2_format *fmt)
 {
 	int i, x, gamma;
 

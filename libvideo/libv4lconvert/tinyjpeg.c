@@ -110,7 +110,7 @@ static char *print_bits(unsigned int value, char *bitstr)
 	return bitstr;
 }
 
-static void print_next_16bytes(int offset, const unsigned char *stream)
+static void print_next_16bytes(int offset, const u8 *stream)
 {
 	trace("%4.4x: %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x\n",
 			offset,
@@ -123,7 +123,7 @@ static void print_next_16bytes(int offset, const unsigned char *stream)
 #endif
 
 
-static const unsigned char zigzag[64] = {
+static const u8 zigzag[64] = {
 	0,  1,  5,  6, 14, 15, 27, 28,
 	2,  4,  7, 13, 16, 26, 29, 42,
 	3,  8, 12, 17, 25, 30, 41, 43,
@@ -136,24 +136,24 @@ static const unsigned char zigzag[64] = {
 
 /* Set up the standard Huffman tables (cf. JPEG standard section K.3) */
 /* IMPORTANT: these are only valid for 8-bit data precision! */
-static const unsigned char bits_dc_luminance[17] = {
+static const u8 bits_dc_luminance[17] = {
 	0, 0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0
 };
-static const unsigned char val_dc_luminance[] = {
+static const u8 val_dc_luminance[] = {
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
 };
 
-static const unsigned char bits_dc_chrominance[17] = {
+static const u8 bits_dc_chrominance[17] = {
 	0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0
 };
-static const unsigned char val_dc_chrominance[] = {
+static const u8 val_dc_chrominance[] = {
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
 };
 
-static const unsigned char bits_ac_luminance[17] = {
+static const u8 bits_ac_luminance[17] = {
 	0, 0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 0x7d
 };
-static const unsigned char val_ac_luminance[] = {
+static const u8 val_ac_luminance[] = {
 	0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12,
 	0x21, 0x31, 0x41, 0x06, 0x13, 0x51, 0x61, 0x07,
 	0x22, 0x71, 0x14, 0x32, 0x81, 0x91, 0xa1, 0x08,
@@ -177,11 +177,11 @@ static const unsigned char val_ac_luminance[] = {
 	0xf9, 0xfa
 };
 
-static const unsigned char bits_ac_chrominance[17] = {
+static const u8 bits_ac_chrominance[17] = {
 	0, 0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 0x77
 };
 
-static const unsigned char val_ac_chrominance[] = {
+static const u8 val_ac_chrominance[] = {
 	0x00, 0x01, 0x02, 0x03, 0x11, 0x04, 0x05, 0x21,
 	0x31, 0x06, 0x12, 0x41, 0x51, 0x07, 0x61, 0x71,
 	0x13, 0x22, 0x32, 0x81, 0x08, 0x14, 0x42, 0x91,
@@ -205,7 +205,7 @@ static const unsigned char val_ac_chrominance[] = {
 	0xf9, 0xfa
 };
 
-const unsigned char pixart_quantization[][64] = { {
+const u8 pixart_quantization[][64] = { {
 		0x07, 0x07, 0x08, 0x0a, 0x09, 0x07, 0x0d, 0x0b,
 		0x0c, 0x0d, 0x11, 0x10, 0x0f, 0x12, 0x17, 0x27,
 		0x1a, 0x18, 0x16, 0x16, 0x18, 0x31, 0x23, 0x25,
@@ -254,7 +254,7 @@ const unsigned char pixart_quantization[][64] = { {
  */
 #define fill_nbits(reservoir, nbits_in_reservoir, stream, nbits_wanted) do { \
 	while (nbits_in_reservoir < nbits_wanted) { \
-		unsigned char c; \
+		u8 c; \
 		if (stream >= priv->stream_end) { \
 			snprintf(priv->error_string, sizeof(priv->error_string), \
 					"fill_nbits error: need %u more bits\n", \
@@ -357,9 +357,9 @@ static int get_next_huffman_code(struct jdec_private *priv, struct huffman_table
  */
 static void process_Huffman_data_unit(struct jdec_private *priv, int component)
 {
-	unsigned char j;
+	u8 j;
 	unsigned int huff_code;
-	unsigned char size_val, count_0;
+	u8 size_val, count_0;
 
 	struct component *c = &priv->component_infos[component];
 	short int DCT[64];
@@ -417,10 +417,10 @@ static void process_Huffman_data_unit(struct jdec_private *priv, int component)
  * code_size will be used to known how many bits this symbol is encoded.
  * slowtable will be used when the first lookup didn't give the result.
  */
-static int build_huffman_table(struct jdec_private *priv, const unsigned char *bits, const unsigned char *vals, struct huffman_table *table)
+static int build_huffman_table(struct jdec_private *priv, const u8 *bits, const u8 *vals, struct huffman_table *table)
 {
 	unsigned int i, j, code, code_size, val, nbits;
-	unsigned char huffsize[257], *hz;
+	u8 huffsize[257], *hz;
 	unsigned int huffcode[257], *hc;
 	int slowtable_used[16 - HUFFMAN_HASH_NBITS];
 
@@ -535,7 +535,7 @@ static int build_default_huffman_tables(struct jdec_private *priv)
  *
  ******************************************************************************/
 
-static unsigned char clamp(int i)
+static u8 clamp(int i)
 {
 	if (i < 0)
 		return 0;
@@ -553,8 +553,8 @@ static unsigned char clamp(int i)
  */
 static void YCrCB_to_YUV420P_1x1(struct jdec_private *priv)
 {
-	const unsigned char *s, *y;
-	unsigned char *p;
+	const u8 *s, *y;
+	u8 *p;
 	int i, j;
 
 	p = priv->plane[0];
@@ -592,8 +592,8 @@ static void YCrCB_to_YUV420P_1x1(struct jdec_private *priv)
  */
 static void YCrCB_to_YUV420P_2x1(struct jdec_private *priv)
 {
-	unsigned char *p;
-	const unsigned char *s, *y1;
+	u8 *p;
+	const u8 *s, *y1;
 	unsigned int i;
 
 	p = priv->plane[0];
@@ -632,8 +632,8 @@ static void YCrCB_to_YUV420P_2x1(struct jdec_private *priv)
  */
 static void YCrCB_to_YUV420P_1x2(struct jdec_private *priv)
 {
-	const unsigned char *s, *y;
-	unsigned char *p;
+	const u8 *s, *y;
+	u8 *p;
 	int i, j;
 
 	p = priv->plane[0];
@@ -671,8 +671,8 @@ static void YCrCB_to_YUV420P_1x2(struct jdec_private *priv)
  */
 static void YCrCB_to_YUV420P_2x2(struct jdec_private *priv)
 {
-	unsigned char *p;
-	const unsigned char *s, *y1;
+	u8 *p;
+	const u8 *s, *y1;
 	unsigned int i;
 
 	p = priv->plane[0];
@@ -708,8 +708,8 @@ static void YCrCB_to_YUV420P_2x2(struct jdec_private *priv)
  */
 static void YCrCB_to_RGB24_1x1(struct jdec_private *priv)
 {
-	const unsigned char *Y, *Cb, *Cr;
-	unsigned char *p;
+	const u8 *Y, *Cb, *Cr;
+	u8 *p;
 	int i, j;
 	int offset_to_next_row;
 
@@ -761,8 +761,8 @@ static void YCrCB_to_RGB24_1x1(struct jdec_private *priv)
  */
 static void YCrCB_to_BGR24_1x1(struct jdec_private *priv)
 {
-	const unsigned char *Y, *Cb, *Cr;
-	unsigned char *p;
+	const u8 *Y, *Cb, *Cr;
+	u8 *p;
 	int i, j;
 	int offset_to_next_row;
 
@@ -814,8 +814,8 @@ static void YCrCB_to_BGR24_1x1(struct jdec_private *priv)
  */
 static void YCrCB_to_RGB24_2x1(struct jdec_private *priv)
 {
-	const unsigned char *Y, *Cb, *Cr;
-	unsigned char *p;
+	const u8 *Y, *Cb, *Cr;
+	u8 *p;
 	int i, j;
 	int offset_to_next_row;
 
@@ -874,8 +874,8 @@ static void YCrCB_to_RGB24_2x1(struct jdec_private *priv)
  */
 static void YCrCB_to_BGR24_2x1(struct jdec_private *priv)
 {
-	const unsigned char *Y, *Cb, *Cr;
-	unsigned char *p;
+	const u8 *Y, *Cb, *Cr;
+	u8 *p;
 	int i, j;
 	int offset_to_next_row;
 
@@ -936,8 +936,8 @@ static void YCrCB_to_BGR24_2x1(struct jdec_private *priv)
  */
 static void YCrCB_to_RGB24_1x2(struct jdec_private *priv)
 {
-	const unsigned char *Y, *Cb, *Cr;
-	unsigned char *p, *p2;
+	const u8 *Y, *Cb, *Cr;
+	u8 *p, *p2;
 	int i, j;
 	int offset_to_next_row;
 
@@ -1001,8 +1001,8 @@ static void YCrCB_to_RGB24_1x2(struct jdec_private *priv)
  */
 static void YCrCB_to_BGR24_1x2(struct jdec_private *priv)
 {
-	const unsigned char *Y, *Cb, *Cr;
-	unsigned char *p, *p2;
+	const u8 *Y, *Cb, *Cr;
+	u8 *p, *p2;
 	int i, j;
 	int offset_to_next_row;
 
@@ -1067,8 +1067,8 @@ static void YCrCB_to_BGR24_1x2(struct jdec_private *priv)
  */
 static void YCrCB_to_RGB24_2x2(struct jdec_private *priv)
 {
-	const unsigned char *Y, *Cb, *Cr;
-	unsigned char *p, *p2;
+	const u8 *Y, *Cb, *Cr;
+	u8 *p, *p2;
 	int i, j;
 	int offset_to_next_row;
 
@@ -1148,8 +1148,8 @@ static void YCrCB_to_RGB24_2x2(struct jdec_private *priv)
  */
 static void YCrCB_to_BGR24_2x2(struct jdec_private *priv)
 {
-	const unsigned char *Y, *Cb, *Cr;
-	unsigned char *p, *p2;
+	const u8 *Y, *Cb, *Cr;
+	u8 *p, *p2;
 	int i, j;
 	int offset_to_next_row;
 
@@ -1228,8 +1228,8 @@ static void YCrCB_to_BGR24_2x2(struct jdec_private *priv)
  */
 static void YCrCB_to_Grey_1x1(struct jdec_private *priv)
 {
-	const unsigned char *y;
-	unsigned char *p;
+	const u8 *y;
+	u8 *p;
 	unsigned int i;
 	int offset_to_next_row;
 
@@ -1252,8 +1252,8 @@ static void YCrCB_to_Grey_1x1(struct jdec_private *priv)
  */
 static void YCrCB_to_Grey_2x1(struct jdec_private *priv)
 {
-	const unsigned char *y;
-	unsigned char *p;
+	const u8 *y;
+	u8 *p;
 	unsigned int i;
 
 	p = priv->plane[0];
@@ -1277,8 +1277,8 @@ static void YCrCB_to_Grey_2x1(struct jdec_private *priv)
  */
 static void YCrCB_to_Grey_1x2(struct jdec_private *priv)
 {
-	const unsigned char *y;
-	unsigned char *p;
+	const u8 *y;
+	u8 *p;
 	unsigned int i;
 
 	p = priv->plane[0];
@@ -1301,8 +1301,8 @@ static void YCrCB_to_Grey_1x2(struct jdec_private *priv)
  */
 static void YCrCB_to_Grey_2x2(struct jdec_private *priv)
 {
-	const unsigned char *y;
-	unsigned char *p;
+	const u8 *y;
+	u8 *p;
 	unsigned int i;
 
 	p = priv->plane[0];
@@ -1378,7 +1378,7 @@ static void decode_MCU_2x1_3planes(struct jdec_private *priv)
 
 static void pixart_decode_MCU_2x1_3planes(struct jdec_private *priv)
 {
-	unsigned char marker;
+	u8 marker;
 
 	look_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, 8, marker);
 	/* I think the marker indicates which quantization table to use, iow
@@ -1539,10 +1539,10 @@ static void decode_MCU_1x2_1plane(struct jdec_private *priv)
 	process_Huffman_data_unit(priv, cCr);
 }
 
-static void print_SOF(const unsigned char *stream)
+static void print_SOF(const u8 *stream)
 {
 #if DEBUG
-	int width, height, nr_components, precision;
+	u32 width, height, nr_components, precision;
 	const char *nr_components_to_string[] = {
 		"????",
 		"Grayscale",
@@ -1573,7 +1573,7 @@ static void print_SOF(const unsigned char *stream)
  *
  ******************************************************************************/
 
-static void build_quantization_table(float *qtable, const unsigned char *ref_table)
+static void build_quantization_table(float *qtable, const u8 *ref_table)
 {
 	/* Taken from libjpeg. Copyright Independent JPEG Group's LLM idct.
 	 * For float AA&N IDCT method, divisors are equal to quantization
@@ -1589,7 +1589,7 @@ static void build_quantization_table(float *qtable, const unsigned char *ref_tab
 		1.0, 1.387039845, 1.306562965, 1.175875602,
 		1.0, 0.785694958, 0.541196100, 0.275899379
 	};
-	const unsigned char *zz = zigzag;
+	const u8 *zz = zigzag;
 
 	for (i = 0; i < 8; i++)
 		for (j = 0; j < 8; j++)
@@ -1597,11 +1597,11 @@ static void build_quantization_table(float *qtable, const unsigned char *ref_tab
 
 }
 
-static int parse_DQT(struct jdec_private *priv, const unsigned char *stream)
+static int parse_DQT(struct jdec_private *priv, const u8 *stream)
 {
 	int qi;
 	float *table;
-	const unsigned char *dqt_block_end;
+	const u8 *dqt_block_end;
 
 	trace("> DQT marker\n");
 	dqt_block_end = stream + be16_to_cpu(stream);
@@ -1624,7 +1624,7 @@ static int parse_DQT(struct jdec_private *priv, const unsigned char *stream)
 	return 0;
 }
 
-static int parse_SOF(struct jdec_private *priv, const unsigned char *stream)
+static int parse_SOF(struct jdec_private *priv, const u8 *stream)
 {
 	int i, width, height, nr_components, cid, sampling_factor;
 	int Q_table;
@@ -1672,7 +1672,7 @@ static int parse_SOF(struct jdec_private *priv, const unsigned char *stream)
 	return 0;
 }
 
-static int parse_SOS(struct jdec_private *priv, const unsigned char *stream)
+static int parse_SOS(struct jdec_private *priv, const u8 *stream)
 {
 	unsigned int i, cid, table;
 	unsigned int nr_components = stream[2];
@@ -1736,10 +1736,10 @@ static int parse_SOS(struct jdec_private *priv, const unsigned char *stream)
 	return 0;
 }
 
-static int parse_DHT(struct jdec_private *priv, const unsigned char *stream)
+static int parse_DHT(struct jdec_private *priv, const u8 *stream)
 {
 	unsigned int count, i;
-	unsigned char huff_bits[17];
+	u8 huff_bits[17];
 	int length, index;
 
 	length = be16_to_cpu(stream) - 2;
@@ -1783,7 +1783,7 @@ static int parse_DHT(struct jdec_private *priv, const unsigned char *stream)
 	return 0;
 }
 
-static int parse_DRI(struct jdec_private *priv, const unsigned char *stream)
+static int parse_DRI(struct jdec_private *priv, const u8 *stream)
 {
 	unsigned int length;
 
@@ -1829,7 +1829,7 @@ static int find_next_rst_marker(struct jdec_private *priv)
 {
 	int rst_marker_found = 0;
 	int marker;
-	const unsigned char *stream = priv->stream;
+	const u8 *stream = priv->stream;
 
 	/* Parse marker */
 	while (!rst_marker_found) {
@@ -1862,7 +1862,7 @@ static int find_next_rst_marker(struct jdec_private *priv)
 
 static int find_next_sos_marker(struct jdec_private *priv)
 {
-	const unsigned char *stream = priv->stream;
+	const u8 *stream = priv->stream;
 
 	/* Parse marker */
 	while (1) {
@@ -1886,7 +1886,7 @@ static int find_next_sos_marker(struct jdec_private *priv)
 	return 0;
 }
 
-static int parse_JFIF(struct jdec_private *priv, const unsigned char *stream)
+static int parse_JFIF(struct jdec_private *priv, const u8 *stream)
 {
 	int chuck_len;
 	int marker;
@@ -1894,7 +1894,7 @@ static int parse_JFIF(struct jdec_private *priv, const unsigned char *stream)
 	int dqt_marker_found = 0;
 	int sos_marker_found = 0;
 	int dht_marker_found = 0;
-	const unsigned char *next_chunck;
+	const u8 *next_chunck;
 
 	/* Parse marker */
 	while (!sos_marker_found) {
@@ -2033,7 +2033,7 @@ void tinyjpeg_free(struct jdec_private *priv)
  * Check if the jpeg can be decoded with this jpeg decoder.
  * Fill some table used for preprocessing.
  */
-int tinyjpeg_parse_header(struct jdec_private *priv, const unsigned char *buf, unsigned int size)
+int tinyjpeg_parse_header(struct jdec_private *priv, const u8 *buf, unsigned int size)
 {
 	/* Identify the file */
 	if ((buf[0] != 0xFF) || (buf[1] != SOI))
@@ -2096,8 +2096,8 @@ static const convert_colorspace_fct convert_colorspace_grey[4] = {
 int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt);
 
 /* This function parses and removes the special Pixart JPEG chunk headers */
-static int pixart_filter(struct jdec_private *priv, unsigned char *dest,
-		const unsigned char *src, int n)
+static int pixart_filter(struct jdec_private *priv, u8 *dest,
+		const u8 *src, int n)
 {
 	int chunksize, copied = 0;
 
@@ -2552,7 +2552,7 @@ void tinyjpeg_get_size(struct jdec_private *priv, unsigned int *width, unsigned 
 	*height = priv->height;
 }
 
-int tinyjpeg_get_components(struct jdec_private *priv, unsigned char **components)
+int tinyjpeg_get_components(struct jdec_private *priv, u8 **components)
 {
 	int i;
 
@@ -2561,7 +2561,7 @@ int tinyjpeg_get_components(struct jdec_private *priv, unsigned char **component
 	return 0;
 }
 
-int tinyjpeg_set_components(struct jdec_private *priv, unsigned char **components, unsigned int ncomponents)
+int tinyjpeg_set_components(struct jdec_private *priv, u8 **components, unsigned int ncomponents)
 {
 	unsigned int i;
 

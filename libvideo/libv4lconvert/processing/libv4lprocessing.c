@@ -70,7 +70,7 @@ int v4lprocessing_pre_processing(struct v4lprocessing_data *data)
 }
 
 static void v4lprocessing_update_lookup_tables(struct v4lprocessing_data *data,
-		unsigned char *buf, const struct v4l2_format *fmt)
+		u8 *buf, const struct v4l2_format *fmt)
 {
 	int i;
 
@@ -90,7 +90,7 @@ static void v4lprocessing_update_lookup_tables(struct v4lprocessing_data *data,
 }
 
 static void v4lprocessing_do_processing(struct v4lprocessing_data *data,
-		unsigned char *buf, const struct v4l2_format *fmt)
+		u8 *buf, const struct v4l2_format *fmt)
 {
 	int x, y;
 
@@ -153,7 +153,7 @@ static void v4lprocessing_do_processing(struct v4lprocessing_data *data,
 }
 
 void v4lprocessing_processing(struct v4lprocessing_data *data,
-		unsigned char *buf, const struct v4l2_format *fmt)
+		u8 *buf, const struct v4l2_format *fmt)
 {
 	if (!data->do_process)
 		return;

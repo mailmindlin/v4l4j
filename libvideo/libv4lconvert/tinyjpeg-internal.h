@@ -55,7 +55,7 @@ struct huffman_table {
 	 * if the symbol is <0, then we need to look into the tree table */
 	short int lookup[HUFFMAN_HASH_SIZE];
 	/* code size: give the number of bits of a symbol is encoded */
-	unsigned char code_size[HUFFMAN_HASH_SIZE];
+	u8 code_size[HUFFMAN_HASH_SIZE];
 	/* some place to store value that is not encoded in the lookup table
 	 * IMPROVEME: Calculate if 256 value is enough to store all values
 	 */
@@ -82,13 +82,13 @@ typedef void (*convert_colorspace_fct) (struct jdec_private *priv);
 struct jdec_private {
 	/* Public variables */
 	uint8_t *components[COMPONENTS];
-	unsigned int width, height;	/* Size of the image */
+	unsigned u32 width, height;	/* Size of the image */
 	unsigned int flags;
 
 	/* Private variables */
-	const unsigned char *stream_end;
-	const unsigned char *stream;	/* Pointer to the current stream */
-	unsigned char *stream_filtered;
+	const u8 *stream_end;
+	const u8 *stream;	/* Pointer to the current stream */
+	u8 *stream_filtered;
 	int stream_filtered_bufsize;
 	unsigned int reservoir, nbits_in_reservoir;
 

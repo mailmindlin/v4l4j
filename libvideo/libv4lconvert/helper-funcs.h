@@ -33,7 +33,7 @@
 static int v4lconvert_helper_write(int fd, const void *b, size_t count,
   char *progname)
 {
-  const unsigned char *buf = b;
+  const u8 *buf = b;
   size_t ret, written = 0;
 
   while (written < count) {
@@ -57,7 +57,7 @@ static int v4lconvert_helper_write(int fd, const void *b, size_t count,
 static int v4lconvert_helper_read(int fd, void *b, size_t count,
   char *progname)
 {
-  unsigned char *buf = b;
+  u8 *buf = b;
   size_t ret, r = 0;
 
   while (r < count) {

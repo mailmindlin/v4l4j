@@ -31,8 +31,8 @@
 static int decoder_initialized;
 
 static struct {
-	unsigned char is_abs;
-	unsigned char len;
+	u8 is_abs;
+	u8 len;
 	signed char val;
 } table[256];
 
@@ -86,24 +86,24 @@ static void init_mr97310a_decoder(void)
 	decoder_initialized = 1;
 }
 
-static inline unsigned char get_byte(const unsigned char *inp,
+static inline u8 get_byte(const u8 *inp,
 		unsigned int bitpos)
 {
-	const unsigned char *addr;
+	const u8 *addr;
 
 	addr = inp + (bitpos >> 3);
 	return (addr[0] << (bitpos & 7)) | (addr[1] >> (8 - (bitpos & 7)));
 }
 
 int v4lconvert_decode_mr97310a(struct v4lconvert_data *data,
-		const unsigned char *inp, int src_size,
-		unsigned char *outp, int width, int height)
+		const u8 *inp, int src_size,
+		u8 *outp, u32 width, u32 height)
 {
 	int row, col;
 	int val;
 	int bitpos;
-	unsigned char code;
-	unsigned char lp, tp, tlp, trp;
+	u8 code;
+	u8 lp, tp, tlp, trp;
 	struct v4l2_control min_clockdiv = { .id = MIN_CLOCKDIV_CID };
 
 	if (!decoder_initialized)

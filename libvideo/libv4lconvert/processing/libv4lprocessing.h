@@ -38,6 +38,6 @@ int v4lprocessing_pre_processing(struct v4lprocessing_data *data);
    returned 0, or if called more then 1 time after a single
    v4lprocessing_pre_processing() call. */
 void v4lprocessing_processing(struct v4lprocessing_data *data,
-  unsigned char *buf, const struct v4l2_format *fmt);
+  u8 *buf, const struct v4l2_format *fmt);
 
 #endif

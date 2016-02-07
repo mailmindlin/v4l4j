@@ -72,7 +72,7 @@ static void autogain_adjust(struct v4l2_queryctrl *ctrl, int *value,
 http://ytse.tricolour.net/docs/LowLightOptimization.html */
 static int autogain_calculate_lookup_tables(
 		struct v4lprocessing_data *data,
-		unsigned char *buf, const struct v4l2_format *fmt)
+		u8 *buf, const struct v4l2_format *fmt)
 {
 	int x, y, target, steps, avg_lum = 0;
 	int gain, exposure, orig_gain, orig_exposure, exposure_low;

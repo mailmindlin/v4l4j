@@ -36,18 +36,18 @@ Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
  */
 
 #define CLIP(color) \
-	(unsigned char)(((color) > 0xff) ? 0xff : (((color) < 0) ? 0 : (color)))
+	(u8)(((color) > 0xff) ? 0xff : (((color) < 0) ? 0 : (color)))
 
 static const int stride = 720;
 
-static void v4lconvert_hm12_to_rgb(const unsigned char *src, unsigned char *dest,
-		int width, int height, int rgb)
+static void v4lconvert_hm12_to_rgb(const u8 *src, u8 *dest,
+		u32 width, u32 height, int rgb)
 {
 	unsigned int y, x, i, j;
-	const unsigned char *y_base = src;
-	const unsigned char *uv_base = src + stride * height;
-	const unsigned char *src_y;
-	const unsigned char *src_uv;
+	const u8 *y_base = src;
+	const u8 *uv_base = src + stride * height;
+	const u8 *src_y;
+	const u8 *src_uv;
 	int mb_size = 256;
 	int r = rgb ? 0 : 2;
 	int b = 2 - r;
@@ -91,26 +91,26 @@ static void v4lconvert_hm12_to_rgb(const unsigned char *src, unsigned char *dest
 	}
 }
 
-void v4lconvert_hm12_to_rgb24(const unsigned char *src, unsigned char *dest,
-		int width, int height)
+void v4lconvert_hm12_to_rgb24(const u8 *src, u8 *dest,
+		u32 width, u32 height)
 {
 	v4lconvert_hm12_to_rgb(src, dest, width, height, 1);
 }
 
-void v4lconvert_hm12_to_bgr24(const unsigned char *src, unsigned char *dest,
-		int width, int height)
+void v4lconvert_hm12_to_bgr24(const u8 *src, u8 *dest,
+		u32 width, u32 height)
 {
 	v4lconvert_hm12_to_rgb(src, dest, width, height, 0);
 }
 
-static void de_macro_uv(unsigned char *dstu, unsigned char *dstv,
-		const unsigned char *src, int w, int h)
+static void de_macro_uv(u8 *dstu, u8 *dstv,
+		const u8 *src, int w, int h)
 {
 	unsigned int y, x, i, j;
 
 	for (y = 0; y < h; y += 16) {
 		for (x = 0; x < w; x += 8) {
-			const unsigned char *src_uv = src + y * stride + x * 32;
+			const u8 *src_uv = src + y * stride + x * 32;
 			int maxy = (h - y < 16 ? h - y : 16);
 			int maxx = (w - x < 8 ? w - x : 8);
 
@@ -127,14 +127,14 @@ static void de_macro_uv(unsigned char *dstu, unsigned char *dstv,
 	}
 }
 
-static void de_macro_y(unsigned char *dst, const unsigned char *src,
+static void de_macro_y(u8 *dst, const u8 *src,
 		int w, int h)
 {
 	unsigned int y, x, i;
 
 	for (y = 0; y < h; y += 16) {
 		for (x = 0; x < w; x += 16) {
-			const unsigned char *src_y = src + y * stride + x * 16;
+			const u8 *src_y = src + y * stride + x * 16;
 			int maxy = (h - y < 16 ? h - y : 16);
 			int maxx = (w - x < 16 ? w - x : 16);
 
@@ -146,8 +146,8 @@ static void de_macro_y(unsigned char *dst, const unsigned char *src,
 	}
 }
 
-void v4lconvert_hm12_to_yuv420(const unsigned char *src, unsigned char *dest,
-		int width, int height, int yvu)
+void v4lconvert_hm12_to_yuv420(const u8 *src, u8 *dest,
+		u32 width, u32 height, int yvu)
 {
 	de_macro_y(dest, src, width, height);
 	dest += width * height;

@@ -23,7 +23,7 @@
 #include <string.h>
 #include "libv4lconvert-priv.h"
 
-static void v4lconvert_vflip_rgbbgr24(unsigned char *src, unsigned char *dest,
+static void v4lconvert_vflip_rgbbgr24(u8 *src, u8 *dest,
 		struct v4l2_format *fmt)
 {
 	int y;
@@ -36,7 +36,7 @@ static void v4lconvert_vflip_rgbbgr24(unsigned char *src, unsigned char *dest,
 	}
 }
 
-static void v4lconvert_vflip_yuv420(unsigned char *src, unsigned char *dest,
+static void v4lconvert_vflip_yuv420(u8 *src, u8 *dest,
 		struct v4l2_format *fmt)
 {
 	int y;
@@ -66,7 +66,7 @@ static void v4lconvert_vflip_yuv420(unsigned char *src, unsigned char *dest,
 	}
 }
 
-static void v4lconvert_hflip_rgbbgr24(unsigned char *src, unsigned char *dest,
+static void v4lconvert_hflip_rgbbgr24(u8 *src, u8 *dest,
 		struct v4l2_format *fmt)
 {
 	int x, y;
@@ -84,7 +84,7 @@ static void v4lconvert_hflip_rgbbgr24(unsigned char *src, unsigned char *dest,
 	}
 }
 
-static void v4lconvert_hflip_yuv420(unsigned char *src, unsigned char *dest,
+static void v4lconvert_hflip_yuv420(u8 *src, u8 *dest,
 		struct v4l2_format *fmt)
 {
 	int x, y;
@@ -114,8 +114,8 @@ static void v4lconvert_hflip_yuv420(unsigned char *src, unsigned char *dest,
 	}
 }
 
-static void v4lconvert_rotate180_rgbbgr24(const unsigned char *src,
-		unsigned char *dst, int width, int height)
+static void v4lconvert_rotate180_rgbbgr24(const u8 *src,
+		u8 *dst, u32 width, u32 height)
 {
 	int i;
 
@@ -130,8 +130,8 @@ static void v4lconvert_rotate180_rgbbgr24(const unsigned char *src,
 	}
 }
 
-static void v4lconvert_rotate180_yuv420(const unsigned char *src,
-		unsigned char *dst, int width, int height)
+static void v4lconvert_rotate180_yuv420(const u8 *src,
+		u8 *dst, u32 width, u32 height)
 {
 	int i;
 
@@ -151,8 +151,8 @@ static void v4lconvert_rotate180_yuv420(const unsigned char *src,
 		*dst++ = *src--;
 }
 
-static void v4lconvert_rotate90_rgbbgr24(const unsigned char *src,
-		unsigned char *dst, int destwidth, int destheight)
+static void v4lconvert_rotate90_rgbbgr24(const u8 *src,
+		u8 *dst, int destwidth, int destheight)
 {
 	int x, y;
 #define srcwidth destheight
@@ -167,8 +167,8 @@ static void v4lconvert_rotate90_rgbbgr24(const unsigned char *src,
 		}
 }
 
-static void v4lconvert_rotate90_yuv420(const unsigned char *src,
-		unsigned char *dst, int destwidth, int destheight)
+static void v4lconvert_rotate90_yuv420(const u8 *src,
+		u8 *dst, int destwidth, int destheight)
 {
 	int x, y;
 
@@ -198,7 +198,7 @@ static void v4lconvert_rotate90_yuv420(const unsigned char *src,
 		}
 }
 
-void v4lconvert_rotate90(unsigned char *src, unsigned char *dest,
+void v4lconvert_rotate90(u8 *src, u8 *dest,
 		struct v4l2_format *fmt)
 {
 	int tmp;
@@ -222,7 +222,7 @@ void v4lconvert_rotate90(unsigned char *src, unsigned char *dest,
 	v4lconvert_fixup_fmt(fmt);
 }
 
-void v4lconvert_flip(unsigned char *src, unsigned char *dest,
+void v4lconvert_flip(u8 *src, u8 *dest,
 		struct v4l2_format *fmt, int hflip, int vflip)
 {
 	if (vflip && hflip) {

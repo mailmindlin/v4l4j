@@ -41,11 +41,11 @@
    int			height
    int			flags
    int			data length
-   unsigned char[]	data (data length long)
+   u8[]	data (data length long)
 
    From the helper to libv4l the following is send:
    int			data length (-1 in case of a decompression error)
-   unsigned char[]	data (not present when a decompression error happened)
+   u8[]	data (not present when a decompression error happened)
  */
 
 static int v4lconvert_helper_start(struct v4lconvert_data *data,
@@ -121,7 +121,7 @@ error:
 static int v4lconvert_helper_write(struct v4lconvert_data *data,
 		const void *b, size_t count)
 {
-	const unsigned char *buf = b;
+	const u8 *buf = b;
 	size_t ret, written = 0;
 
 	while (written < count) {
@@ -143,7 +143,7 @@ static int v4lconvert_helper_write(struct v4lconvert_data *data,
 static int v4lconvert_helper_read(struct v4lconvert_data *data, void *b,
 		size_t count)
 {
-	unsigned char *buf = b;
+	u8 *buf = b;
 	size_t ret, r = 0;
 
 	while (r < count) {
@@ -166,8 +166,8 @@ static int v4lconvert_helper_read(struct v4lconvert_data *data, void *b,
 }
 
 int v4lconvert_helper_decompress(struct v4lconvert_data *data,
-		const char *helper, const unsigned char *src, int src_size,
-		unsigned char *dest, int dest_size, int width, int height, int flags)
+		const char *helper, const u8 *src, int src_size,
+		u8 *dest, int dest_size, u32 width, u32 height, int flags)
 {
 	int r;
 

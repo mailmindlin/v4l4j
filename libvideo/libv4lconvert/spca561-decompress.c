@@ -32,7 +32,7 @@
 
 /*fixme: not reentrant */
 static unsigned int bit_bucket;
-static const unsigned char *input_ptr;
+static const u8 *input_ptr;
 
 static inline void refill(int *bitfill)
 {
@@ -303,9 +303,9 @@ static int fun_F(int cur_byte, int *bitfill)
 	return 0xff;
 }
 
-static int internal_spca561_decode(int width, int height,
-		const unsigned char *inbuf,
-		unsigned char *outbuf)
+static int internal_spca561_decode(u32 width, u32 height,
+		const u8 *inbuf,
+		u8 *outbuf)
 {
 	/* buffers */
 	static int accum[8 * 8 * 8];
@@ -575,7 +575,7 @@ static int internal_spca561_decode(int width, int height,
 		72, 80, 88, 98, 112, 128, 144, 160
 	};
 	/* clamp0_255[256 + i] = min(max(i,255),0) */
-	static const unsigned char clamp0_255[] = {
+	static const u8 clamp0_255[] = {
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0,
@@ -753,7 +753,7 @@ static int internal_spca561_decode(int width, int height,
 	int off_up_left = -2 - 2 * xwidth;
 	int pixel_U = 0, saved_pixel_UR = 0;
 	int pixel_x = 0, pixel_y = 2;
-	unsigned char *output_ptr = outbuf;
+	u8 *output_ptr = outbuf;
 
 	memset(i_hits, 0, sizeof(i_hits));
 	memset(accum, 0, sizeof(accum));
@@ -895,11 +895,11 @@ static int internal_spca561_decode(int width, int height,
 
 /* FIXME, change internal_spca561_decode not to need the extra border
    around its dest buffer */
-void v4lconvert_decode_spca561(const unsigned char *inbuf,
-		unsigned char *outbuf, int width, int height)
+void v4lconvert_decode_spca561(const u8 *inbuf,
+		u8 *outbuf, u32 width, u32 height)
 {
 	int i;
-	static unsigned char tmpbuf[650 * 490];
+	static u8 tmpbuf[650 * 490];
 
 	if (internal_spca561_decode(width, height, inbuf, tmpbuf) != 0)
 		return;

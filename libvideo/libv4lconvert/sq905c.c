@@ -32,25 +32,25 @@
 
 
 	static int
-sq905c_first_decompress(unsigned char *output, const unsigned char *input,
+sq905c_first_decompress(u8 *output, const u8 *input,
 		unsigned int outputsize)
 {
-	unsigned char parity = 0;
-	unsigned char nibble_to_keep[2];
-	unsigned char temp1 = 0, temp2 = 0;
-	unsigned char input_byte;
-	unsigned char lookup = 0;
+	u8 parity = 0;
+	u8 nibble_to_keep[2];
+	u8 temp1 = 0, temp2 = 0;
+	u8 input_byte;
+	u8 lookup = 0;
 	unsigned int i = 0;
 	unsigned int bytes_used = 0;
 	unsigned int bytes_done = 0;
 	unsigned int bit_counter = 8;
 	unsigned int cycles = 0;
 	int table[9] = { -1, 0, 2, 6, 0x0e, 0x0e, 0x0e, 0x0e, 0xfb};
-	unsigned char lookup_table[16] = {
+	u8 lookup_table[16] = {
 		0, 2, 6, 0x0e, 0xf0, 0xf1, 0xf2, 0xf3, 0xf4,
 		0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa, 0xfb
 	};
-	unsigned char translator[16] = {
+	u8 translator[16] = {
 		8, 7, 9, 6, 10, 11, 12, 13,
 		14, 15, 5, 4, 3, 2, 1, 0
 	};
@@ -98,22 +98,22 @@ sq905c_first_decompress(unsigned char *output, const unsigned char *input,
 }
 
 	static int
-sq905c_second_decompress(unsigned char *uncomp, unsigned char *in,
-		int width, int height)
+sq905c_second_decompress(u8 *uncomp, u8 *in,
+		u32 width, u32 height)
 {
 	int diff = 0;
 	int tempval = 0;
 	int i, m;
-	unsigned char delta_left = 0;
-	unsigned char delta_right = 0;
+	u8 delta_left = 0;
+	u8 delta_right = 0;
 	int input_counter = 0;
 	int delta_table[] = {
 		-144, -110, -77, -53, -35, -21, -11, -3,
 		2, 10, 20, 34, 52, 76, 110, 144
 	};
-	unsigned char *templine_red;
-	unsigned char *templine_green;
-	unsigned char *templine_blue;
+	u8 *templine_red;
+	u8 *templine_green;
+	u8 *templine_blue;
 
 	templine_red = malloc(width);
 	if (!templine_red) {
@@ -199,12 +199,12 @@ sq905c_second_decompress(unsigned char *uncomp, unsigned char *in,
 	return 0;
 }
 
-void v4lconvert_decode_sq905c(const unsigned char *src, unsigned char *dst,
-		int width, int height)
+void v4lconvert_decode_sq905c(const u8 *src, u8 *dst,
+		u32 width, u32 height)
 {
 	int size;
-	unsigned char *temp_data;
-	const unsigned char *raw;
+	u8 *temp_data;
+	const u8 *raw;
 	/* here we get rid of the 0x50 bytes of header in src. */
 	raw = src + 0x50;
 	size = width * height / 2;

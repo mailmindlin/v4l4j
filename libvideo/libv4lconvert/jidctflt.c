@@ -82,7 +82,7 @@
 
 #if defined(__GNUC__) && (defined(__i686__) || defined(__x86_64__))
 
-static inline unsigned char descale_and_clamp(int x, int shift)
+static inline u8 descale_and_clamp(int x, int shift)
 {
 	__asm__ (
 		"add %3,%1\n"
@@ -92,13 +92,13 @@ static inline unsigned char descale_and_clamp(int x, int shift)
 		"\tcmpl %4,%1\n"
 		"\tcmovg %4,%1\n"
 		: "=r"(x)
-		: "0"(x), "Ic"((unsigned char)shift), "ir" (1U << (shift - 1)), "r" (0xff), "r" (0)
+		: "0"(x), "Ic"((u8)shift), "ir" (1U << (shift - 1)), "r" (0xff), "r" (0)
 		);
 	return x;
 }
 
 #else
-static inline unsigned char descale_and_clamp(int x, int shift)
+static inline u8 descale_and_clamp(int x, int shift)
 {
 	x += 1UL << (shift - 1);
 	if (x < 0)

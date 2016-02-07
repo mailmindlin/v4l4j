@@ -34,7 +34,7 @@
 #define RING_QUEUE_PEEK(rq,ofs) ((rq)->queue[((ofs) + (rq)->ri)])
 
 struct RingQueue {
-	const unsigned char *queue;
+	const u8 *queue;
 	int length;
 	int ri;
 };
@@ -107,7 +107,7 @@ static int yuvTbl_v2[256];
 /* Clamping table */
 #define SAFE_CLAMP
 #ifdef SAFE_CLAMP
-static inline unsigned char clamp(int x) {
+static inline u8 clamp(int x) {
 	if (x > 255)
 		return 255;
 	if (x < 0)
@@ -410,8 +410,8 @@ static inline int decodeBlock( struct rqBitReader *br, int *block, int *dc )
 	return !(hdr & 0x700);
 }
 
-int v4lconvert_decode_jpgl(const unsigned char *inp, int src_size,
-		unsigned int dest_pix_fmt, unsigned char *fb,
+int v4lconvert_decode_jpgl(const u8 *inp, int src_size,
+		unsigned int dest_pix_fmt, u8 *fb,
 		int img_width, int img_height)
 {
 	/* Vars */
@@ -423,8 +423,8 @@ int v4lconvert_decode_jpgl(const unsigned char *inp, int src_size,
 	int x,y;
 	int block_idx;
 
-	unsigned char *Yline_baseptr, *Uline_baseptr, *Vline_baseptr;
-	unsigned char *Yline, *Uline, *Vline;
+	u8 *Yline_baseptr, *Uline_baseptr, *Vline_baseptr;
+	u8 *Yline, *Uline, *Vline;
 	int Yline_baseofs, UVline_baseofs;
 
 	int dc_y, dc_u, dc_v;	/* DC Coefficients */
@@ -432,7 +432,7 @@ int v4lconvert_decode_jpgl(const unsigned char *inp, int src_size,
 	int block_u[16];		/* U block */
 	int block_v[16];		/* V block */
 
-	unsigned char *mainbuffer;
+	u8 *mainbuffer;
 
 	int yc,uc,vc;
 

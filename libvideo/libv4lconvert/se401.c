@@ -110,8 +110,8 @@ static int decode_JangGu(const uint8_t *data, int bits, int plen, int pixels,
 }
 
 int v4lconvert_se401_to_rgb24(struct v4lconvert_data *data,
-		const unsigned char *src, int src_size,
-		unsigned char *dest, int width, int height)
+		const u8 *src, int src_size,
+		u8 *dest, u32 width, u32 height)
 {
 	int in, plen, bits, pixels, info;
 	int x = 0, total_pixels = 0;

@@ -141,7 +141,7 @@ term_source (j_decompress_ptr cinfo)
 */
 
 GLOBAL(void)
-jpeg_mem_src (j_decompress_ptr cinfo, unsigned char * buffer,
+jpeg_mem_src (j_decompress_ptr cinfo, u8 * buffer,
 	unsigned long bufsize)
 {
 	my_src_ptr src;
@@ -264,7 +264,7 @@ term_destination (j_compress_ptr cinfo)
 }
 
 GLOBAL(void)
-jpeg_mem_dest (j_compress_ptr cinfo, unsigned char ** outbuffer,
+jpeg_mem_dest (j_compress_ptr cinfo, u8 ** outbuffer,
 	unsigned long * outsize)
 {
 	my_dest_ptr dest;

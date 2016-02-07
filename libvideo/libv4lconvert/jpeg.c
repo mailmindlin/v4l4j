@@ -22,14 +22,14 @@
 #include "jpeg_memsrcdest.h"
 
 int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data,
-	unsigned char *src, int src_size, unsigned char *dest,
+	u8 *src, int src_size, u8 *dest,
 	struct v4l2_format *fmt, unsigned int dest_pix_fmt, int flags)
 {
 	int result = 0;
-	unsigned char *components[3];
+	u8 *components[3];
 	unsigned int header_width, header_height;
-	unsigned int width  = fmt->fmt.pix.width;
-	unsigned int height = fmt->fmt.pix.height;
+	unsigned u32 width  = fmt->fmt.pix.width;
+	unsigned u32 height = fmt->fmt.pix.height;
 
 	if (!data->tinyjpeg) {
 		data->tinyjpeg = tinyjpeg_init();
@@ -131,7 +131,7 @@ static void jerr_emit_message(j_common_ptr cinfo, int msg_level)
 static void init_libjpeg_cinfo(struct v4lconvert_data *data)
 {
 	struct jpeg_compress_struct cinfo;
-	unsigned char *jpeg_header = NULL;
+	u8 *jpeg_header = NULL;
 	unsigned long jpeg_header_size = 0;
 
 	if (data->cinfo_initialized)
@@ -169,13 +169,13 @@ static void init_libjpeg_cinfo(struct v4lconvert_data *data)
 }
 
 static int decode_libjpeg_h_samp1(struct v4lconvert_data *data,
-	unsigned char *ydest, unsigned char *udest, unsigned char *vdest,
+	u8 *ydest, u8 *udest, u8 *vdest,
 	int v_samp)
 {
 	struct jpeg_decompress_struct *cinfo = &data->cinfo;
 	int x, y;
-	unsigned char *uv_buf;
-	unsigned int width = cinfo->image_width;
+	u8 *uv_buf;
+	unsigned u32 width = cinfo->image_width;
 	JSAMPROW y_rows[16], u_rows[8], v_rows[8];
 	JSAMPARRAY rows[3] = { y_rows, u_rows, v_rows };
 
@@ -223,12 +223,12 @@ static int decode_libjpeg_h_samp1(struct v4lconvert_data *data,
 }
 
 static int decode_libjpeg_h_samp2(struct v4lconvert_data *data,
-	unsigned char *ydest, unsigned char *udest, unsigned char *vdest,
+	u8 *ydest, u8 *udest, u8 *vdest,
 	int v_samp)
 {
 	struct jpeg_decompress_struct *cinfo = &data->cinfo;
 	int y;
-	unsigned int width = cinfo->image_width;
+	unsigned u32 width = cinfo->image_width;
 	JSAMPROW y_rows[16], u_rows[8], v_rows[8];
 	JSAMPARRAY rows[3] = { y_rows, u_rows, v_rows };
 
@@ -259,11 +259,11 @@ static int decode_libjpeg_h_samp2(struct v4lconvert_data *data,
 }
 
 int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data,
-	unsigned char *src, int src_size, unsigned char *dest,
+	u8 *src, int src_size, u8 *dest,
 	struct v4l2_format *fmt, unsigned int dest_pix_fmt)
 {
-	unsigned int width  = fmt->fmt.pix.width;
-	unsigned int height = fmt->fmt.pix.height;
+	unsigned u32 width  = fmt->fmt.pix.width;
+	unsigned u32 height = fmt->fmt.pix.height;
 	int result = 0;
 
 	/* libjpeg errors before decoding the first line should signal EAGAIN */
@@ -321,7 +321,7 @@ int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data,
 #endif
 	} else {
 		int h_samp, v_samp;
-		unsigned char *udest, *vdest;
+		u8 *udest, *vdest;
 
 		if (data->cinfo.max_h_samp_factor == 2 &&
 		    data->cinfo.cur_comp_info[0]->h_samp_factor == 2 &&

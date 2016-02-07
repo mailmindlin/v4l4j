@@ -27,14 +27,14 @@
 #include <string.h>
 #include "libv4lconvert-priv.h"
 
-#define CLIP(color) (unsigned char)(((color) > 0xFF) ? 0xff : (((color) < 0) ? 0 : (color)))
+#define CLIP(color) (u8)(((color) > 0xFF) ? 0xff : (((color) < 0) ? 0 : (color)))
 
 /* FIXME not threadsafe */
 static int decoder_initialized;
 
 static struct {
-	unsigned char is_abs;
-	unsigned char len;
+	u8 is_abs;
+	u8 len;
 	signed char val;
 } table[256];
 
@@ -96,28 +96,28 @@ static void init_pixart_decoder(void)
 	decoder_initialized = 1;
 }
 
-static inline unsigned char getByte(const unsigned char *inp,
+static inline u8 getByte(const u8 *inp,
 		unsigned int bitpos)
 {
-	const unsigned char *addr;
+	const u8 *addr;
 
 	addr = inp + (bitpos >> 3);
 	return (addr[0] << (bitpos & 7)) | (addr[1] >> (8 - (bitpos & 7)));
 }
 
-static inline unsigned short getShort(const unsigned char *pt)
+static inline unsigned short getShort(const u8 *pt)
 {
 	return ((pt[0] << 8) | pt[1]);
 }
 
 static int
-pac_decompress_row(const unsigned char *inp, unsigned char *outp, int width,
+pac_decompress_row(const u8 *inp, u8 *outp, u32 width,
 		int step_size, int abs_bits)
 {
 	int col;
 	int val;
 	int bitpos;
-	unsigned char code;
+	u8 code;
 
 	if (!decoder_initialized)
 		init_pixart_decoder();
@@ -152,14 +152,14 @@ pac_decompress_row(const unsigned char *inp, unsigned char *outp, int width,
 }
 
 int v4lconvert_decode_pac207(struct v4lconvert_data *data,
-		const unsigned char *inp, int src_size, unsigned char *outp,
-		int width, int height)
+		const u8 *inp, int src_size, u8 *outp,
+		u32 width, u32 height)
 {
 	/* we should received a whole frame with header and EOL marker
 	   in myframe->data and return a GBRG pattern in frame->tmpbuffer
 	   remove the header then copy line by line EOL is set with 0x0f 0xf0 marker
 	   or 0x1e 0xe1 for compressed line*/
-	const unsigned char *end = inp + src_size;
+	const u8 *end = inp + src_size;
 	unsigned short word;
 	int row;
 

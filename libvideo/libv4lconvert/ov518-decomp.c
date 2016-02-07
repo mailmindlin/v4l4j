@@ -46,7 +46,7 @@ struct comp_info {
 	int bytes;		/* Number of processed input bytes */
 	int bits;		/* Number of unprocessed input bits */
 	int rawLen;		/* Total number of bytes in input buffer */
-	unsigned char *qt;	/* Current quantization table */
+	u8 *qt;	/* Current quantization table */
 };
 
 /******************************************************************************
@@ -54,7 +54,7 @@ struct comp_info {
  ******************************************************************************/
 
 /* Zig-Zag Table */
-static const unsigned char ZigZag518[] = {
+static const u8 ZigZag518[] = {
 	0x00, 0x02, 0x03, 0x09,
 	0x01, 0x04, 0x08, 0x0a,
 	0x05, 0x07, 0x0b, 0x11,
@@ -509,8 +509,8 @@ getBytes(int *rawData, struct comp_info *cinfo)
 	int bufLen = cinfo->rawLen;
 	int bits = cinfo->bits;
 	int bytes = cinfo->bytes;
-	unsigned char *in = bytes + (unsigned char *) rawData;
-	unsigned char b1, b2, b3, b4, b5;
+	u8 *in = bytes + (u8 *) rawData;
+	u8 b1, b2, b3, b4, b5;
 	unsigned int packedIn;
 
 	/* Pull 5 bytes out of raw data */
@@ -783,7 +783,7 @@ huffmanDecoderUV(int *C, int *pIn, struct comp_info *cinfo)
 #endif
 
 static void
-DCT_8x4(int *coeff, unsigned char *out)
+DCT_8x4(int *coeff, u8 *out)
 	/* pre: coeff == coefficients
 	   post: coeff != coefficients
 	 ** DO NOT ASSUME coeff TO BE THE SAME BEFORE AND AFTER CALLING THIS FUNCTION!
@@ -842,13 +842,13 @@ DCT_8x4(int *coeff, unsigned char *out)
 	val3 += TIMES_12538(coeff[24] + coeff[28]);
 
 	t = (base + val1 + val2 + val3) >> 17;
-	out[0] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[0] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base - val1 - val2 + val3 - C4 - C20) >> 17;
-	out[7] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[7] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base - val1 + val2 - val3 - C16 - C20) >> 17;
-	out[24] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[24] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base + val1 - val2 - val3 - C4 - C16 - C20) >> 17;
-	out[31] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[31] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 
 	//1,6,25,30
 
@@ -878,13 +878,13 @@ DCT_8x4(int *coeff, unsigned char *out)
 	val3 += TIMES_30270(coeff[8] - coeff[12]);
 
 	t = (base + val1 + val2 + val3 + C4 + C20) >> 17;
-	out[1] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[1] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base - val1 - val2 + val3) >> 17;
-	out[6] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[6] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base - val1 + val2 - val3 + C4 - C16 + C20) >> 17;
-	out[25] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[25] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base + val1 - val2 - val3 + C20) >> 17;
-	out[30] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[30] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 
 	//2,5,26,29
 
@@ -914,13 +914,13 @@ DCT_8x4(int *coeff, unsigned char *out)
 	val3 += TIMES_30270(coeff[8] - coeff[12]);
 
 	t = (base + val1 + val2 + val3) >> 17;
-	out[2] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[2] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base - val1 - val2 + val3) >> 17;
-	out[5] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[5] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base - val1 + val2 - val3 - C16) >> 17;
-	out[26] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[26] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base + val1 - val2 - val3 + C4 - C16 + C20) >> 17;
-	out[29] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[29] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 
 	//3,4,27,28
 
@@ -950,13 +950,13 @@ DCT_8x4(int *coeff, unsigned char *out)
 	tmp2 = TIMES_41986(coeff[15]) + TIMES_17391(coeff[31]);
 
 	t = (base + val1 + val2 + val3 - tmp1 - tmp2 - C4 - C20) >> 17;
-	out[3] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[3] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base - val1 - val2 + val3) >> 17;
-	out[4] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[4] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base - val1 + val2 - val3 - tmp1 + tmp2) >> 17;
-	out[27] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[27] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base + val1 - val2 - val3 - C16 - C20) >> 17;
-	out[28] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[28] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 
 	// Second half
 	C2_18 = coeff[2] - coeff[18];
@@ -994,13 +994,13 @@ DCT_8x4(int *coeff, unsigned char *out)
 	val3 += TIMES_12538(coeff[8] + coeff[12]);
 
 	t = (base + val1 + val2 + val3) >> 17;
-	out[8] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[8] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base - val1 - val2 + val3 - C4 + C16 + C20) >> 17;
-	out[15] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[15] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base - val1 + val2 - val3) >> 17;
-	out[16] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[16] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base + val1 - val2 - val3 - C4 + C20) >> 17;
-	out[23] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[23] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 
 	//9,14,17,22
 
@@ -1030,13 +1030,13 @@ DCT_8x4(int *coeff, unsigned char *out)
 	val3 -= TIMES_30270(coeff[24] - coeff[28]);
 
 	t = (base + val1 + val2 + val3 + C4 + C16 - C20) >> 17;
-	out[9] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[9] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base - val1 - val2 + val3 + C16) >> 17;
-	out[14] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[14] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base - val1 + val2 - val3 + C4) >> 17;
-	out[17] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[17] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base + val1 - val2 - val3) >> 17;
-	out[22] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[22] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 
 	//10,13,18,21
 
@@ -1066,13 +1066,13 @@ DCT_8x4(int *coeff, unsigned char *out)
 	val3 -= TIMES_30270(coeff[24] - coeff[28]);
 
 	t = (base + val1 + val2 + val3) >> 17;
-	out[10] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[10] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base - val1 - val2 + val3 + C4 + C16 - C20) >> 17;
-	out[13] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[13] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base - val1 + val2 - val3) >> 17;
-	out[18] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[18] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base + val1 - val2 - val3 + C4) >> 17;
-	out[21] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[21] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 
 	// 11,12,19,20
 
@@ -1102,13 +1102,13 @@ DCT_8x4(int *coeff, unsigned char *out)
 	tmp2 = -TIMES_17391(coeff[15]) + TIMES_41986(coeff[31]);
 
 	t = (base + val1 + val2 + val3 - tmp1 + tmp2 + C16 + C20) >> 17;
-	out[11] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[11] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base - val1 - val2 + val3 + C16 + C20) >> 17;
-	out[12] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[12] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base - val1 + val2 - val3 - tmp1 - tmp2 - C4 + C20) >> 17;
-	out[19] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[19] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 	t = (base + val1 - val2 - val3) >> 17;
-	out[20] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	out[20] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
 }
 
 #undef TIMES_16382
@@ -1139,8 +1139,8 @@ DCT_8x4(int *coeff, unsigned char *out)
  * determines the positin in the input buffer.
  */
 static int
-decompress8x4(unsigned char	*pOut,
-		unsigned char	*pIn,
+decompress8x4(u8	*pOut,
+		u8	*pIn,
 		int		*lastDC,
 		int		uvFlag,
 		struct comp_info	*cinfo)
@@ -1150,7 +1150,7 @@ decompress8x4(unsigned char	*pOut,
 	int deZigZag[32];
 	int *dest;
 	int *src;
-	unsigned char *qt = cinfo->qt;
+	u8 *qt = cinfo->qt;
 
 	if (!uvFlag) {
 		huffmanDecoderY(coeffs, (int *)pIn, cinfo);
@@ -1200,7 +1200,7 @@ decompress8x4(unsigned char	*pOut,
 }
 
 static inline void
-copyBlock(unsigned char *src, unsigned char *dest, int destInc)
+copyBlock(u8 *src, u8 *dest, int destInc)
 {
 	int i;
 	unsigned int *pSrc, *pDest;
@@ -1217,9 +1217,9 @@ copyBlock(unsigned char *src, unsigned char *dest, int destInc)
 
 #if 0
 static inline int
-decompress400NoMMXOV518(unsigned char	 *pIn,
-		unsigned char	 *pOut,
-		unsigned char	 *pTmp,
+decompress400NoMMXOV518(u8	 *pIn,
+		u8	 *pOut,
+		u8	 *pTmp,
 		const int	 w,
 		const int	 h,
 		const int	 numpix,
@@ -1255,16 +1255,16 @@ decompress400NoMMXOV518(unsigned char	 *pIn,
 #endif
 
 static inline int
-decompress420NoMMXOV518(unsigned char	 *pIn,
-		unsigned char	 *pOut,
-		unsigned char	 *pTmp,
+decompress420NoMMXOV518(u8	 *pIn,
+		u8	 *pOut,
+		u8	 *pTmp,
 		const int	 w,
 		const int	 h,
 		const int	 numpix,
 		struct comp_info *cinfo,
 		int yvu)
 {
-	unsigned char *pOutU, *pOutV;
+	u8 *pOutU, *pOutV;
 	int iOutY, iOutU, iOutV, x, y;
 	int lastYDC = 0;
 	int lastUDC = 0;
@@ -1333,7 +1333,7 @@ decompress420NoMMXOV518(unsigned char	 *pIn,
 /* Get quantization tables from input
  * Returns: <0 if error, or >=0 otherwise */
 static int
-get_qt_dynamic(unsigned char *pIn, struct comp_info *cinfo)
+get_qt_dynamic(u8 *pIn, struct comp_info *cinfo)
 {
 	int rawLen = cinfo->rawLen;
 
@@ -1347,7 +1347,7 @@ get_qt_dynamic(unsigned char *pIn, struct comp_info *cinfo)
 }
 
 /* Remove all 0 blocks from input */
-static void remove0blocks(unsigned char *pIn, int *inSize)
+static void remove0blocks(u8 *pIn, int *inSize)
 {
 	long long *in = (long long *)pIn;
 	long long *out = (long long *)pIn;
@@ -1368,15 +1368,15 @@ static void remove0blocks(unsigned char *pIn, int *inSize)
  * Returns uncompressed data length if success, or zero if error
  */
 static int
-Decompress400(unsigned char *pIn,
-		unsigned char *pOut,
+Decompress400(u8 *pIn,
+		u8 *pOut,
 		int	     w,
 		int	     h,
 		int	     inSize)
 {
 	struct comp_info cinfo;
 	int numpix = w * h;
-	unsigned char pTmp[32];
+	u8 pTmp[32];
 
 	remove0blocks(pIn, &inSize);
 
@@ -1401,12 +1401,12 @@ Decompress400(unsigned char *pIn,
  * Output format is planar YUV420
  * Returns uncompressed data length if success, or zero if error
  */
-static int v4lconvert_ov518_to_yuv420(unsigned char *src, unsigned char *dst,
+static int v4lconvert_ov518_to_yuv420(u8 *src, u8 *dst,
 		int w, int h, int yvu, int inSize)
 {
 	struct comp_info cinfo;
 	int numpix = w * h;
-	unsigned char pTmp[32];
+	u8 pTmp[32];
 
 	remove0blocks(src, &inSize);
 
@@ -1426,9 +1426,9 @@ static int v4lconvert_ov518_to_yuv420(unsigned char *src, unsigned char *dst,
 
 int main(int argc, char *argv[])
 {
-	int width, height, yvu, src_size, dest_size;
-	unsigned char src_buf[200000];
-	unsigned char dest_buf[500000];
+	u32 width, height, yvu, src_size, dest_size;
+	u8 src_buf[200000];
+	u8 dest_buf[500000];
 
 	while (1) {
 		if (v4lconvert_helper_read(STDIN_FILENO, &width, sizeof(int), argv[0]))

@@ -22,8 +22,8 @@
  * Decompression Functions
  ******************************************************************************/
 
-static void DecompressYHI(unsigned char *pIn,
-		unsigned char *pOut,
+static void DecompressYHI(u8 *pIn,
+		u8 *pOut,
 		int           *iIn,	/* in/out */
 		int           *iOut,	/* in/out */
 		const int      w,
@@ -36,7 +36,7 @@ static void DecompressYHI(unsigned char *pIn,
 	int in_pos = *iIn;
 	int out_pos = *iOut;
 	int tmp, tmp1, tmp2, tmp3;
-	unsigned char header, ZTable[64];
+	u8 header, ZTable[64];
 	short tmpl, tmph, half_byte, idx, count;
 	unsigned long ZigZag_length = 0, ZT_length, i, j;
 	short DeZigZag[64];
@@ -305,7 +305,7 @@ static void DecompressYHI(unsigned char *pIn,
 			tmp = 255;		\
 		if (tmp < 0)			\
 			tmp = 0;		\
-		pOut[i] = (unsigned char)tmp;	\
+		pOut[i] = (u8)tmp;	\
 	} while (0)
 
 #define IDCT_2D_ROW(in)						\
@@ -373,13 +373,13 @@ static void DecompressYHI(unsigned char *pIn,
 
 #if 0
 static inline int
-Decompress400HiNoMMX(unsigned char *pIn,
-		unsigned char *pOut,
+Decompress400HiNoMMX(u8 *pIn,
+		u8 *pOut,
 		const int      w,
 		const int      h,
 		const int      inSize)
 {
-	unsigned char *pY = pOut;
+	u8 *pY = pOut;
 	int x, y, iIn, iY;
 
 	iIn = 0;
@@ -395,15 +395,15 @@ Decompress400HiNoMMX(unsigned char *pIn,
 #endif
 
 static inline int
-Decompress420HiNoMMX(unsigned char *pIn,
-		unsigned char *pOut,
+Decompress420HiNoMMX(u8 *pIn,
+		u8 *pOut,
 		const int      w,
 		const int      h,
 		const int      inSize)
 {
-	unsigned char *pY = pOut;
-	unsigned char *pU = pY + w * h;
-	unsigned char *pV = pU + w * h / 4;
+	u8 *pY = pOut;
+	u8 *pU = pY + w * h;
+	u8 *pV = pU + w * h / 4;
 	int xY, xUV, iY, iU, iV, iIn, count;
 	const int nBlocks = (w * h) / (32 * 8);
 
@@ -441,9 +441,9 @@ Decompress420HiNoMMX(unsigned char *pIn,
  * image at pOut is specified by w.
  */
 	static inline void
-make_8x8(unsigned char *pIn, unsigned char *pOut, int w)
+make_8x8(u8 *pIn, u8 *pOut, int w)
 {
-	unsigned char *pOut1 = pOut;
+	u8 *pOut1 = pOut;
 	int x, y;
 
 	for (y = 0; y < 8; y++) {
@@ -467,10 +467,10 @@ make_8x8(unsigned char *pIn, unsigned char *pOut, int w)
  */
 	static void
 yuv400raw_to_yuv400p(struct ov511_frame *frame,
-		unsigned char *pIn0, unsigned char *pOut0)
+		u8 *pIn0, u8 *pOut0)
 {
 	int x, y;
-	unsigned char *pIn, *pOut, *pOutLine;
+	u8 *pIn, *pOut, *pOutLine;
 
 	/* Copy Y */
 	pIn = pIn0;
@@ -524,11 +524,11 @@ yuv400raw_to_yuv400p(struct ov511_frame *frame,
  * FIXME: Currently only handles width and height that are multiples of 16
  */
 	static void
-yuv420raw_to_yuv420p(unsigned char *pIn0, unsigned char *pOut0,
-		int width, int height)
+yuv420raw_to_yuv420p(u8 *pIn0, u8 *pOut0,
+		u32 width, u32 height)
 {
 	int k, x, y;
-	unsigned char *pIn, *pOut, *pOutLine;
+	u8 *pIn, *pOut, *pOutLine;
 	const unsigned int a = width * height;
 	const unsigned int w = width / 2;
 
@@ -567,7 +567,7 @@ yuv420raw_to_yuv420p(unsigned char *pIn0, unsigned char *pOut0,
 
 
 /* Remove all 0 blocks from input */
-static void remove0blocks(unsigned char *pIn, int *inSize)
+static void remove0blocks(u8 *pIn, int *inSize)
 {
 	long long *in = (long long *)pIn;
 	long long *out = (long long *)pIn;
@@ -592,7 +592,7 @@ static void remove0blocks(unsigned char *pIn, int *inSize)
 	*inSize -= (in - out) * 8;
 }
 
-static int v4lconvert_ov511_to_yuv420(unsigned char *src, unsigned char *dest,
+static int v4lconvert_ov511_to_yuv420(u8 *src, u8 *dest,
 		int w, int h, int yvu, int src_size)
 {
 	int rc = 0;
@@ -612,9 +612,9 @@ static int v4lconvert_ov511_to_yuv420(unsigned char *src, unsigned char *dest,
 
 int main(int argc, char *argv[])
 {
-	int width, height, yvu, src_size, dest_size;
-	unsigned char src_buf[500000];
-	unsigned char dest_buf[500000];
+	u32 width, height, yvu, src_size, dest_size;
+	u8 src_buf[500000];
+	u8 dest_buf[500000];
 
 	while (1) {
 		if (v4lconvert_helper_read(STDIN_FILENO, &width, sizeof(int), argv[0]))
