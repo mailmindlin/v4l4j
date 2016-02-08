@@ -5,7 +5,9 @@ V4L_UTILS_VERSION=0.8.6
 CFLAGS := -g -O1
 CFLAGS += -Wall -Wpointer-arith
 CXXFLAGS := $(CFLAGS)
+CPPFLAGS += -D CONVERT_ARM_NEON
 CFLAGS += -Wstrict-prototypes -Wmissing-prototypes
+AFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -march=armv7-a -mapcs-reentrant -k --warn --statistics
 
 PREFIX = /usr/local
 LIBDIR = $(PREFIX)/lib
@@ -28,6 +30,9 @@ LIB_RELEASE = 0
 
 %.o: %.cpp
 	$(CXX) -Wp,-MMD,"$*.d",-MQ,"$@",-MP -c $(CPPFLAGS) $(CXXFLAGS) -o $@ $<
+
+%.o: %.s
+	$(AS) $(AFLAGS) -o $@ $<
 
 %.so:
 	$(CC) -shared $(LDFLAGS) -Wl,-soname,$@.$(LIB_RELEASE) -o $@.$(LIB_RELEASE) $^ $(LIBS_$*)
