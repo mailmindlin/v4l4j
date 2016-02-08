@@ -1,4 +1,5 @@
 #include <jpeglib.h>
+#include "types.h"
 
 void
 jpeg_mem_src (j_decompress_ptr cinfo, u8 * buffer,

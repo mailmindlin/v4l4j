@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include "types.h"
 
 static int v4lconvert_helper_write(int fd, const void *b, size_t count,
   char *progname)

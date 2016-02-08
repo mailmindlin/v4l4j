@@ -1346,7 +1346,6 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 	}
 
 	/* Done setting sources / dest and allocating intermediate buffers,
-	/* Done setting sources / dest and allocating intermediate buffers,
 	   real conversion / processing / ... starts here. */
 	if (convert == 2) {
 		res = v4lconvert_convert_pixfmt(data, src, src_size,

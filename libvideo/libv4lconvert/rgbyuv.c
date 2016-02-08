@@ -27,6 +27,7 @@
 #include "libv4lconvert-priv.h"
 
 #ifdef CONVERT_ARM_NEON
+#warning NEON!!!
 #include "neon/rgbyuv_neon.h"
 #endif
 

@@ -80,7 +80,7 @@ all: $(LIB).$(LIB_RELEASE)
 
 $(LIB).$(LIB_RELEASE): version.h $(OBJ) $(LIBV4LCONVERT_AR)
 	$(CC) $(OBJ) $(LIBV4LCONVERT_AR) -Wl,-soname,$(LIB).$(LIB_RELEASE) \
-  $(LDFLAGS) -o $(LIB).$(LIB_RELEASE)
+		$(LDFLAGS) -o $(LIB).$(LIB_RELEASE)
 	ln -f -s $(LIB).$(LIB_RELEASE) $(LIB)
 
 $(LIBV4LCONVERT_AR):
