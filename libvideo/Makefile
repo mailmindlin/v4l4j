@@ -36,7 +36,7 @@ PREFIX:=/usr
 LIB_INSTALL_DIR := $(PREFIX)/lib
 #Directory where the include files will be installed
 INC_INSTALL_DIR := $(PREFIX)/include
-#Directory where the libv4l helpers will be installed		
+#Directory where the libv4l helpers will be installed
 LIBV4L_HELPERS_INSTALL_DIR := $(PREFIX)/lib/v4l4j
 
 
@@ -59,11 +59,28 @@ VERSION_MAJOR := 0
 VERSION_MINOR := 9
 LIB_RELEASE := 0
 
-LIBV4LCONVERT_DIR := libv4lconvert		
-LIBV4LCONVERT_AR := libv4lconvert.a		
-LIBV4LCONVERT_NAME := v4lconvert		
+LIBV4LCONVERT_DIR := libv4lconvert
+LIBV4LCONVERT_AR := libv4lconvert.a
+LIBV4LCONVERT_NAME := v4lconvert
 LIBV4LCONVERT_HELPERS := ov511-decomp ov518-decomp
- 
+
+ifeq ($(shell arch), x86_64)
+	LIBPIXFC ?= pixfc-sse/libpixfc-sse-x86_64.a
+else ifeq ($(shell arch | grep -Eic "^i?.86"), 1)
+	LIBPIXFC ?= pixfc-sse/libpixfc-sse-x86.a
+else ifeq ($(shell arch | grep -ic "arm"), 1) 
+#
+# define LIBPIXFC explicitly for ARM archs
+#
+ifeq ($(origin LIBPIXFC), undefined)
+$(error ARM architecture detected - define LIBPIFXC explicitly)
+endif
+endif
+
+ifeq ($(origin LIBPIXFC), undefined)
+$(error Unable to determine architecture to select the right libpixfc)
+endif
+
 LIB_NAME := video
 LIB := lib$(LIB_NAME).so
 TESTOBJ := test-capture.o dump-capture.o list-caps.o
@@ -79,13 +96,13 @@ LDFLAGS += -lm -lrt -shared -ljpeg
 all: $(LIB).$(LIB_RELEASE)
 
 $(LIB).$(LIB_RELEASE): version.h $(OBJ) $(LIBV4LCONVERT_AR)
-	$(CC) $(OBJ) $(LIBV4LCONVERT_AR) -Wl,-soname,$(LIB).$(LIB_RELEASE) \
-		$(LDFLAGS) -o $(LIB).$(LIB_RELEASE)
+	$(CC) $(OBJ) $(LIBV4LCONVERT_AR) $(LIBPIXFC) -Wl,-soname,$(LIB).$(LIB_RELEASE) \
+  $(LDFLAGS) -o $(LIB).$(LIB_RELEASE)
 	ln -f -s $(LIB).$(LIB_RELEASE) $(LIB)
 
 $(LIBV4LCONVERT_AR):
-	LINKTYPE=static LIBDIR=$(LIBV4L_HELPERS_INSTALL_DIR) \		
-		make -C $(LIBV4LCONVERT_DIR)		
+	LINKTYPE=static LIBDIR=$(LIBV4L_HELPERS_INSTALL_DIR) \
+		make -C $(LIBV4LCONVERT_DIR)
 	cp $(LIBV4LCONVERT_DIR)/$(LIBV4LCONVERT_AR) .
 
 install: $(LIB).$(LIB_RELEASE)
@@ -94,7 +111,7 @@ install: $(LIB).$(LIB_RELEASE)
 	mkdir -p $(DESTDIR)$(LIB_INSTALL_DIR)
 	install -m 755 $(LIB).$(LIB_RELEASE) $(DESTDIR)$(LIB_INSTALL_DIR)
 	cd $(DESTDIR)$(LIB_INSTALL_DIR) && ln -f -s $(LIB).$(LIB_RELEASE) $(LIB)
-	mkdir -p $(DESTDIR)$(LIBV4L_HELPERS_INSTALL_DIR)/libv4l		
+	mkdir -p $(DESTDIR)$(LIBV4L_HELPERS_INSTALL_DIR)/libv4l
 	install -m 755 $(LIBV4LCONVERT_DIR)/*-decomp \
 		$(DESTDIR)$(LIBV4L_HELPERS_INSTALL_DIR)/libv4l
 
@@ -115,7 +132,6 @@ version.h:
 clean:
 	make -C $(LIBV4LCONVERT_DIR) clean
 	rm -f $(OBJ) $(BIN) $(LIB) $(LIB).$(LIB_RELEASE) $(TESTOBJ) \
-		$(LIBV4LCONVERT_AR) ./*.o list-caps test-capture dump-capture version.h ./*~
+  $(LIBV4LCONVERT_AR) ./*.o list-caps test-capture dump-capture version.h ./*~
 
 .PHONY: all install uninstall test clean
-
