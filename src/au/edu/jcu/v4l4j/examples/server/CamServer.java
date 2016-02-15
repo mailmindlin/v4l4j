@@ -57,7 +57,7 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * @author gilles
  *
  */
-public class CamServer implements Runnable, CaptureCallback{
+public class CamServer implements Runnable, CaptureCallback {
 	private ServerSocket 				serverSocket;
 	private VideoDevice					videoDevice;
 	private JPEGFrameGrabber			frameGrabber;
@@ -103,11 +103,11 @@ public class CamServer implements Runnable, CaptureCallback{
 	 * @throws IOException if a server socket on the given port cant be created
 	 */
 	public CamServer(String dev, int width, int height, int port, int fps) throws V4L4JException, IOException {
-		videoDevice = new VideoDevice(dev);
-		frameGrabber = videoDevice.getJPEGFrameGrabber(width, height, 0, 0, 80);
-		frameGrabber.setCaptureCallback(this);
+		this.videoDevice = new VideoDevice(dev);
+		this.frameGrabber = videoDevice.getJPEGFrameGrabber(width, height, 0, 0, 80);
+		this.frameGrabber.setCaptureCallback(this);
 		try {
-			System.out.println("setting frame rate to "+fps);
+			System.out.println("setting frame rate to " + fps);
 			frameGrabber.setFrameInterval(1, fps);
 		} catch (Exception e){
 			System.out.println("Couldnt set the frame interval");
@@ -119,8 +119,7 @@ public class CamServer implements Runnable, CaptureCallback{
 		// initialise tcp port to listen on
 		serverSocket = new ServerSocket(port);
 		
-		System.out.println("Server listening at "+
-				serverSocket.getInetAddress().getHostAddress() + ":"+ serverSocket.getLocalPort());
+		System.out.println("Server listening at " + serverSocket.getInetAddress().getHostAddress() + ":" + serverSocket.getLocalPort());
 
 		// create server thread
 		serverThread = new Thread(this, "Server thread");
@@ -141,7 +140,7 @@ public class CamServer implements Runnable, CaptureCallback{
 		}
 		
 		// now interrupt the server thread				
-		if (serverThread.isAlive()){
+		if (serverThread.isAlive()) {
 			serverThread.interrupt();
 			try {
 				serverThread.join();
@@ -159,7 +158,7 @@ public class CamServer implements Runnable, CaptureCallback{
 		// no need for the lock - the capture is already stopped which means
 		// no more calls to nextFrame(), so we are the only one to access 
 		// the client list
-		for(ClientConnection client:clients)
+		for(ClientConnection client : clients)
 			client.stop();
 
 		// release v4l4j frame grabber, control list and video device
@@ -178,16 +177,14 @@ public class CamServer implements Runnable, CaptureCallback{
 	 * @throws V4L4JException  if there is an error starting the capture when the first
 	 * client connects
 	 */
-	private void serverMainLoop() throws IOException, V4L4JException{
+	private void serverMainLoop() throws IOException, V4L4JException {
 		BufferedReader 			inStream = null;
 		DataOutputStream 		outStream = null; 
 		int 					requestedAction = MAIN_PAGE;
 
 		// Wait for new incoming connection
 		Socket clientSocket = serverSocket.accept();
-		System.out.println("Connection from "+
-				clientSocket.getInetAddress().getHostAddress()+
-				":"+clientSocket.getPort());
+		System.out.println("Connection from " + clientSocket.getInetAddress().getHostAddress() + ":" + clientSocket.getPort());
 
 		// Create input/output streams then check what page
 		// was requested
@@ -210,7 +207,7 @@ public class CamServer implements Runnable, CaptureCallback{
 
 			// add new client to clients list 
 			try {
-				synchronized (clients){
+				synchronized (clients) {
 					clients.add(new ClientConnection(clientSocket, inStream, outStream));
 
 					// if this is the first client, start the capture
@@ -221,10 +218,7 @@ public class CamServer implements Runnable, CaptureCallback{
 				}
 			} catch (IOException e) {
 				// error connecting with client
-				System.out.println("Disconnected from "+
-						clientSocket.getInetAddress().getHostAddress()+
-						":"+clientSocket.getPort());
-				
+				System.out.println("Disconnected from " + clientSocket.getInetAddress().getHostAddress() + ":" + clientSocket.getPort());				
 				inStream.close();
 				outStream.close();
 				clientSocket.close();
@@ -319,12 +313,12 @@ public class CamServer implements Runnable, CaptureCallback{
 	@Override
 	public void nextFrame(VideoFrame frame) {
 		Vector<ClientConnection> copyClients = null;
-
+		
 		// copy client vector
-		synchronized(clients){
+		synchronized(clients) {
 			copyClients = new Vector<ClientConnection>(clients);
 		}
-
+		
 		frameCount++;
 		if (frameCount == 1) {
 			lastFrameTimestamp = System.currentTimeMillis();
@@ -337,7 +331,7 @@ public class CamServer implements Runnable, CaptureCallback{
 			}
 		}
 		// send the frame to each client
-		for(ClientConnection client: copyClients){
+		for(ClientConnection client : copyClients) {
 			try {
 				client.sendNextFrame(frame);
 			} catch (IOException e) {
@@ -347,7 +341,7 @@ public class CamServer implements Runnable, CaptureCallback{
 				client.stop();
 				
 				// remove client from list
-				synchronized(clients){
+				synchronized(clients) {
 					clients.remove(client);
 
 					// stop capture if there are no more clients
