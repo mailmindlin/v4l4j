@@ -7,6 +7,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  */
+#ifndef __RGB_YUV_NEON_H
+#define __RGB_YUV_NEON_H
+
 #include <stdint.h>
 
-extern void v4lconvert_neon_yuyv_to_rgb24(u8* src, u8* dest, u32 width, u32 height);
+extern void v4lconvert_neon_yuyv_to_rgb24(const u8* src, u8* dest, u32 width, u32 height);
+
+#endif

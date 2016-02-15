@@ -72,6 +72,9 @@ else ifeq ($(shell arch | grep -ic "arm"), 1)
 #
 # define LIBPIXFC explicitly for ARM archs
 #
+
+	LIBPIXFC ?= pixfc-sse/libpixfc-sse-armv7-hf.a
+
 ifeq ($(origin LIBPIXFC), undefined)
 $(error ARM architecture detected - define LIBPIFXC explicitly)
 endif

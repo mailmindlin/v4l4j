@@ -144,8 +144,8 @@ abstract class AbstractGrabber implements FrameGrabber {
 		state= new State();
 		dInfo = di;
 		object = o;
-		this.width = w;
-		this.height = h;
+		this.width = width;
+		this.height = height;
 		channel = ch;
 		standard= std;
 		format = imf.getIndex();
