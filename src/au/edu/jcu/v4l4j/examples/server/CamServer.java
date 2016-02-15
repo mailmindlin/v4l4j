@@ -204,7 +204,7 @@ public class CamServer implements Runnable, CaptureCallback {
 		// and add it to the list of clients. The capture thread is in charged
 		// of sending mpjeg frames to all clients in the list
 		if (requestedAction == VIDEO_STREAM) {
-
+			System.out.println("Serving video stream");
 			// add new client to clients list 
 			try {
 				synchronized (clients) {
@@ -232,19 +232,23 @@ public class CamServer implements Runnable, CaptureCallback {
 		try {
 			switch(requestedAction){
 			case WEBCAM_PAGE:
+				System.out.println("Serving webcam page");
 				// send webcam viewer page
 				ClientConnection.sendWebcamPage(outStream);
 				break;
 			case UPDATE_CONTROL_VALUE:
+				System.out.println("Updating control");
 				// parse http line and update the requested control's value
 				ClientConnection.updateControlValue(controlList, frameGrabber, httpLineFromClient);
 				//fallthrough so we re-send the control list
 			case CONTROL_PAGE:
+				System.out.println("Serving control page");
 				// send the control list page
 				ClientConnection.sendControlListPage(controlList, frameGrabber.getJPGQuality(), outStream);
 				break;
 			case MAIN_PAGE:
 			default:
+				System.out.println("Serving main page");
 				// send the main page
 				ClientConnection.sendMainPage(outStream);
 				break;
