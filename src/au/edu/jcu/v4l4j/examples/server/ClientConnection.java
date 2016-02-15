@@ -165,11 +165,8 @@ public class ClientConnection{
 		out.writeBytes("<td>JPEG Quality</td>\n");
 		out.writeBytes("<td><form action=\"update\">\n");
 		out.writeBytes("<input type=\"hidden\" name=\"id\" value=\"-1\">\n");
-		out.writeBytes("<input type=\"text\" name=\"val\" value=\"" + jpegQuality + "\" size=\"10\" maxlength=\"10\">\n");
-		out.writeBytes("<br>Min: 0 - Max: 100 - Step: 1\n");
-		out.writeBytes("</td><td><input type=\"submit\" name=\"set\" value=\"set\"></form></td></tr>\n");
-
-
+		writeSliderControl(out, jpegQuality, 0, 100, 1);
+		out.writeBytes("</form></td></tr>\n");
 
 		// for each control, create an entry in the table
 		for(Control control : ctrlList.getList()) {
@@ -187,35 +184,12 @@ public class ClientConnection{
 					break;
 
 				case V4L4JConstants.CTRL_TYPE_SLIDER:
-					out.writeBytes("<input type='number' name='val' size='10' maxlength='10' ");
-					try {
-						out.writeBytes("value='"+control.getValue()+"' min='" + control.getMinValue() + "' max='" + control.getMaxValue() + "' step='" + control.getStepValue() + "'");
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-					out.writeBytes("/><br>Min: "+control.getMinValue()+ " - Max: "+control.getMaxValue()+
-							" - Step: "+control.getStepValue());
-
-					out.writeBytes("\n</td>\n<td data-ctrl-type='slider'>\n<input type='submit' name='set' value='set'>");
+					writeSliderControl(out, control);
 					break;
 
 				case V4L4JConstants.CTRL_TYPE_DISCRETE:
-					out.writeBytes("<select name='val' size='1'>");
-					Map<String, Integer> valueMap = control.getDiscreteValuesMap();
-					for(String name : valueMap.keySet()){
-						out.writeBytes("<option value='" + valueMap.get(name) + "'");
-						try {
-							if (control.getValue() == valueMap.get(name).intValue())
-								out.writeBytes(" selected='selected'");
-						} catch (Exception e) {}
-						out.writeBytes(" >");
-						out.writeBytes(name);
-						out.writeBytes("</option>");
-					}
-					out.writeBytes("</select>\n");
-					out.writeBytes("</td>\n<td data-ctrl-type='discrete'><input type='submit' name='set' value='set'>");
+					writeDiscreteControl(out, control);
 					break;
-
 				case V4L4JConstants.CTRL_TYPE_SWITCH:
 					out.writeBytes("<input type='checkbox' name='val' value='");
 					try {
@@ -296,5 +270,38 @@ public class ClientConnection{
 			else
 				ctrlList.getList().get(controlID).setValue(value);
 		}
+	}
+	protected void writeDiscreteControl(DataOutputStream out, Control control) throws IOException {
+		out.writeBytes("<select name='val' size='1'>");
+		Map<String, Integer> valueMap = control.getDiscreteValuesMap();
+		for(Map.Entry<String, Integer> entry: valueMap.entrySet()) {
+			out.writeBytes("<option value='" + entry.getValue() + "'");
+			try {
+				if (control.getValue() == entry.getValue().intValue())
+					out.writeBytes(" selected='selected'");
+			} catch (Exception e) {}
+			out.writeBytes(" >");
+			out.writeBytes(entry.getKey());
+			out.writeBytes("</option>");
+		}
+		out.writeBytes("</select>\n");
+		out.writeBytes("</td>\n<td data-ctrl-type='discrete'><input type='submit' name='set' value='set'>");
+	}
+	protected void writeSliderControl(DataOutputStream out, Control control) throws IOException {
+		int min, max, step, value;
+		try {
+			min = control.getMinValue();
+			max = control.getMaxValue();
+			value = control.getValue();
+			step = control.getStepValue();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		writeSliderControl(out, value, min, max, step);
+	}
+	protected void writeSliderControl(DataOutputStream out, int value, int min, int max, int step) throws IOException {
+		out.writeBytes("<input type='number' name='val' size='10' maxlength='10' value='");
+		out.writeBytes("" + value + "' min='" + min + "' max='" + max + "' step='" + step + "'/>");
+		out.writeBytes("\n</td>\n<td data-ctrl-type='slider'>\n<input type='submit' name='set' value='set'/>");
 	}
 }
