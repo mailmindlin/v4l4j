@@ -32,21 +32,36 @@ import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.ControlException;
 
 public class ClientConnection{
-	private static String mjpegHeader = "HTTP/1.0 200 OK\r\nExpires: 0\r\nPragma: no-cache\r\nCache-Control: no-cache\r\nContent-Type: multipart/x-mixed-replace;boundary=\"boundary\"\r\n\r\n";
-	private static String mjpegFrameheader = "--boundary\r\nContent-Type: image/jpeg\r\nContent-Length: ";
+	private static String mjpegHeader = "HTTP/1.0 200 OK\r\n"
+		+ "Expires: 0\r\n"
+		+ "Pragma: no-cache\r\n"
+		+ "Cache-Control: no-cache\r\n"
+		+ "Content-Type: multipart/x-mixed-replace;boundary=\"boundary\"\r\n\r\n";
+	
+	private static String mjpegFrameheader = "--boundary\r\n"
+		+ "Content-Type: image/jpeg\r\n"
+		+ "Content-Length: ";
 
-	private static String mainPageHTML = "HTTP/1.0 200 OK\r\nLocation: http://v4l4j_mini_server\r\nExpires: 0\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Frameset//EN\" http://www.w3.org/TR/html4/frameset.dtd>" +
-	"<html>\n" +
-	"<head>\n" +
-	"<title>v4l4j mini server</title>\n" +
-	"</head>\n" +
-	"<frameset cols=\"4*,6*\">\n" +
-	"<frame src=\"control\" name=\"control list\">\n" +
-	"<frame src=\"webcam\" name=\"video stream\">\n" +
-	"</frameset>\n" +
-	"</html>";
+	private static String mainPageHTML = "HTTP/1.0 200 OK\r\n"
+		+ "Location: http://v4l4j_mini_server\r\n"
+		+ "Expires: 0\r\n"
+		+ "Content-Type: text/html\r\n"
+		+ "\r\n"
+			+ "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Frameset//EN\" http://www.w3.org/TR/html4/frameset.dtd>"
+			+ "<html>\n"
+				+ "<head>\n"
+					+ "<title>v4l4j mini server</title>\n"
+				+ "</head>\n"
+				+ "<frameset cols='4*,6*'>\n"
+					+ "<frame src='control' name='control list'>\n"
+					+ "<frame src='webcam' name='video stream'>\n"
+				+ "</frameset>\n"
+			+ "</html>";
 
-	private static String webcamPageHTML= "HTTP/1.0 200 OK\r\nLocation: http://v4l4j_mini_server\r\nExpires: 0\r\nContent-Type: text/html\r\n\r\n" +
+	private static String webcamPageHTML= "HTTP/1.0 200 OK\r\n"
+		+ "Location: http://v4l4j_mini_server\r\n"
+		+ "Expires: 0\r\n"
+		+ "Content-Type: text/html\r\n\r\n" +
 	"<html>\n" +
 	"<body>\n" +
 	"<table>\n" +
@@ -86,7 +101,7 @@ public class ClientConnection{
 		if ((client == null) || (in == null) || (out == null))
 			throw new NullPointerException("client, in and out cannot be null");
 
-		clientSocket = client;		
+		clientSocket = client;
 		inStream = in;
 		outStream = out;
 
@@ -99,9 +114,7 @@ public class ClientConnection{
 	 */
 	public void stop() {
 		try {
-			System.out.println("Disconnected from "+
-					clientSocket.getInetAddress().getHostAddress()+
-					":"+clientSocket.getPort());
+			System.out.println("Disconnected from " + clientSocket.getInetAddress().getHostAddress() + ":" + clientSocket.getPort());
 			
 			inStream.close();
 			outStream.close();
@@ -113,7 +126,7 @@ public class ClientConnection{
 	}
 
 	/**
-	 * Send the given frame in an mpjeg frame header
+	 * Send the given frame in an mjpeg frame header
 	 * @param frame the frame to be send
 	 * @throws IOException if there is an error writing over the socket
 	 */
@@ -152,7 +165,7 @@ public class ClientConnection{
 		out.writeBytes("<td>JPEG Quality</td>\n");
 		out.writeBytes("<td><form action=\"update\">\n");
 		out.writeBytes("<input type=\"hidden\" name=\"id\" value=\"-1\">\n");
-		out.writeBytes("<input type=\"text\" name=\"val\" value=\""+jpegQuality+"\" size=\"10\" maxlength=\"10\">\n");
+		out.writeBytes("<input type=\"text\" name=\"val\" value=\"" + jpegQuality + "\" size=\"10\" maxlength=\"10\">\n");
 		out.writeBytes("<br>Min: 0 - Max: 100 - Step: 1\n");
 		out.writeBytes("</td><td><input type=\"submit\" name=\"set\" value=\"set\"></form></td></tr>\n");
 
@@ -163,13 +176,11 @@ public class ClientConnection{
 			out.writeBytes("<form action=\"update\"><tr>\n");
 			out.writeBytes("<td>"+control.getName()+"</td>\n");
 			out.writeBytes("<td>\n");
-			out.writeBytes("<input type=\"hidden\" name=\"id\" value=\""+ 
-					ctrlList.getList().indexOf(control) +"\">\n");
+			out.writeBytes("<input type=\"hidden\" name=\"id\" value=\"" + ctrlList.getList().indexOf(control) + "\">\n");
 
 			// Select the best HTML element to represent the control based
 			// on its type
-			switch (control.getType())
-			{
+			switch (control.getType()) {
 				case V4L4JConstants.CTRL_TYPE_BUTTON:
 					out.writeBytes("<input type=\"hidden\" name=\"val\" value=\"0\">");
 					out.writeBytes("</td>\n<td>\n<input type=\"submit\" name=\"Activate\" value=\"Activate\">");
@@ -177,45 +188,45 @@ public class ClientConnection{
 
 				case V4L4JConstants.CTRL_TYPE_SLIDER:
 					try {
-						out.writeBytes("<input type=\"text\" name=\"val\" value=\""+control.getValue()+"\" size=\"10\" maxlength=\"10\">");
+						out.writeBytes("<input type='text' name='val' value='"+control.getValue()+"' size='10' maxlength='10'>");
 					} catch (Exception e) {
-						out.writeBytes("<input type=\"text\" name=\"val\" value=\"\" size=\"10\" maxlength=\"10\">");
+						out.writeBytes("<input type='text' name='val' value='' size='10' maxlength='10'>");
 					}
 					out.writeBytes("<br>Min: "+control.getMinValue()+ " - Max: "+control.getMaxValue()+
 							" - Step: "+control.getStepValue());
 
-					out.writeBytes("\n</td>\n<td>\n<input type=\"submit\" name=\"set\" value=\"set\">");
+					out.writeBytes("\n</td>\n<td data-ctrl-type='slider'>\n<input type='submit' name='set' value='set'>");
 					break;
 
 				case V4L4JConstants.CTRL_TYPE_DISCRETE:
-					out.writeBytes("<select name=\"val\" size=\"1\">");
+					out.writeBytes("<select name='val' size='1'>");
 					Map<String, Integer> valueMap = control.getDiscreteValuesMap();
 					for(String name : valueMap.keySet()){
-						out.writeBytes("<option value=\""+valueMap.get(name)+"\"");
+						out.writeBytes("<option value='" + valueMap.get(name) + "'");
 						try {
 							if (control.getValue() == valueMap.get(name).intValue())
-								out.writeBytes(" selected=\"selected\"");
+								out.writeBytes(" selected='selected'");
 						} catch (Exception e) {}
 						out.writeBytes(" >");
 						out.writeBytes(name);
 						out.writeBytes("</option>");
 					}
 					out.writeBytes("</select>\n");
-					out.writeBytes("</td>\n<td><input type=\"submit\" name=\"set\" value=\"set\">");
+					out.writeBytes("</td>\n<td data-ctrl-type='discrete'><input type='submit' name='set' value='set'>");
 					break;
 
 				case V4L4JConstants.CTRL_TYPE_SWITCH:
-					out.writeBytes("<input type=\"checkbox\" name=\"val\" value=\"");
+					out.writeBytes("<input type='checkbox' name='val' value='");
 					try {
 						if(control.getValue() == 1)
-							out.writeBytes("0\" checked=\"checked\">\n");
+							out.writeBytes("0' checked='checked'>\n");
 						else
-							out.writeBytes("1\">\n");
+							out.writeBytes("1'>\n");
 					} catch (Exception e) {}
-					out.writeBytes("</td>\n<td><input type=\"submit\" name=\"set\" value=\"set\">");
+					out.writeBytes("</td>\n<td data-ctrl-type='switch'><input type='submit' name='set' value='set'>");
 					break;
 				default:
-					System.out.println("Unknown control type: "+control.getType());
+					System.out.println("Unknown control type: " + control.getType());
 
 			}
 
