@@ -77,10 +77,12 @@
 	<target name="jnilib-debug" depends="init">
 		<exec executable="make">
 			<env key="DEBUG" value="1"/>
+			<arg line="-j ${make.jobs}" />
 		    <arg line="-C ${libvideo.dir}" />
 		</exec>
 		<exec executable="make" failonerror="true">
 		        <env key="DEBUG" value="1"/>
+				<arg line="-j ${make.jobs}" />
 		        <arg line="-C ${project.src}" />
 		</exec>
 		<move file="${project.src}/libv4l4j.so" tofile="${project.dir}/libv4l4j.so" />
@@ -89,9 +91,11 @@
 	<target name="jnilib" depends="init">
 		<exec executable="make" failonerror="true">
 			<arg line="-C ${libvideo.dir}" />
+			<arg line="-j ${make.jobs}" />
 		</exec>
 		<exec executable="make" failonerror="true">
 			<arg line="-C ${project.src}" />
+			<arg line="-j ${make.jobs}" />
 		</exec>
 		<copy file="${project.src}/libv4l4j.so" tofile="${project.dir}/libv4l4j.so" />
 	</target>
@@ -100,6 +104,7 @@
 		<exec executable="make" failonerror="true">
 			<arg line="-C ${libvideo.dir} install"/>
 			<env key="DESTDIR" value="${destdir}"/>
+			<arg line="-j ${make.jobs}" />
 		</exec>
 	</target>
 	
@@ -107,6 +112,7 @@
 		<exec executable="make" failonerror="true">
 			<arg line="-C ${libvideo.dir} uninstall"/>
 			<env key="DESTDIR" value="${destdir}"/>
+			<arg line="-j ${make.jobs}" />
 		</exec>
 	</target>
 
@@ -128,8 +134,8 @@
 
 	<target name="install-doc" depends="javadoc">
 		<copy todir="${destdir}${platform.standard.javadoc.location}">
-                	<fileset dir="${project.javadoc.dir}"/>
-                </copy>
+            <fileset dir="${project.javadoc.dir}"/>
+        </copy>
 	</target>
 
 	<target name="uninstall-doc">
@@ -297,13 +303,13 @@
 	</target>
 
 	<target name="test-dual">
-			<java classname="au.edu.jcu.v4l4j.examples.DualViewer" fork="true" failonerror="true">
-				<classpath>
-					<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
-				</classpath>
-				<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
-			</java>
-		</target>
+		<java classname="au.edu.jcu.v4l4j.examples.DualViewer" fork="true" failonerror="true">
+			<classpath>
+				<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
+			</classpath>
+			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
+		</java>
+	</target>
 	
 	<target name="deviceInfo">
 		<java classname="au.edu.jcu.v4l4j.examples.DumpInfo" fork="true" failonerror="true">
@@ -332,10 +338,12 @@
 		
 	<target name="clean">
 		<exec executable="make">
-		<arg line="-C ${libvideo.dir} clean" />
+			<arg line="-C ${libvideo.dir} clean" />
+			<arg line="-j ${make.jobs}" />
 		</exec>
 		<exec executable="make">
 			<arg line="-C ${project.src} clean" />
+			<arg line="-j ${make.jobs}" />
 		</exec>
 		<delete file="${project.dir}/${project.jar.file}" />
 		<delete file="${project.dir}/${project.jni.file}" />
