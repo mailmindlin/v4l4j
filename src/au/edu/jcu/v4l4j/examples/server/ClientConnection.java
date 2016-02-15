@@ -267,8 +267,10 @@ public class ClientConnection{
 			// catch the jpeg quality control which is not a real control
 			if (controlID == -1)
 				fg.setJPGQuality(value);
-			else
+			else {
+				System.out.println("Setting control id " + controlID + "(" + ctrlList.getList().get(controlID).getName() + ") to " + value);
 				ctrlList.getList().get(controlID).setValue(value);
+			}
 		}
 	}
 	protected static  void writeDiscreteControl(DataOutputStream out, Control control) throws IOException {
