@@ -44,7 +44,8 @@
 		<echo message=" uninstall:         Uninstall v4l4j.jar, the JNI lib (must be root)"/>
 		<echo message=" install-doc:       Build and install JavaDoc (must be root)"/>
 		<echo message=" uninstall-doc:     Uninstall JavaDoc (must be root)"/>
-		<echo message=" clean:             Remove all build generated files"/>		
+		<echo message=" clean:             Remove all build generated files"/>	
+		<echo message=" usage:             Print this message"/>
 		<echo message=" ********************************************************" />
 		<echo message="" />
 		<echo message=" The following targets will work ONLY if v4l4j has been" />

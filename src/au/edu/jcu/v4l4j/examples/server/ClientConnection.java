@@ -187,12 +187,13 @@ public class ClientConnection{
 					break;
 
 				case V4L4JConstants.CTRL_TYPE_SLIDER:
+					out.writeBytes("<input type='number' name='val' size='10' maxlength='10' ");
 					try {
-						out.writeBytes("<input type='text' name='val' value='"+control.getValue()+"' size='10' maxlength='10'>");
+						out.writeBytes("value='"+control.getValue()+"' min='" + control.getMinValue() + "' max='" + control.getMaxValue() + "' step='" + control.getStepValue() + "'");
 					} catch (Exception e) {
-						out.writeBytes("<input type='text' name='val' value='' size='10' maxlength='10'>");
+						e.printStackTrace();
 					}
-					out.writeBytes("<br>Min: "+control.getMinValue()+ " - Max: "+control.getMaxValue()+
+					out.writeBytes("/><br>Min: "+control.getMinValue()+ " - Max: "+control.getMaxValue()+
 							" - Step: "+control.getStepValue());
 
 					out.writeBytes("\n</td>\n<td data-ctrl-type='slider'>\n<input type='submit' name='set' value='set'>");
