@@ -271,7 +271,7 @@ public class ClientConnection{
 				ctrlList.getList().get(controlID).setValue(value);
 		}
 	}
-	protected void writeDiscreteControl(DataOutputStream out, Control control) throws IOException {
+	protected static void writeDiscreteControl(DataOutputStream out, Control control) throws IOException {
 		out.writeBytes("<select name='val' size='1'>");
 		Map<String, Integer> valueMap = control.getDiscreteValuesMap();
 		for(Map.Entry<String, Integer> entry: valueMap.entrySet()) {
@@ -287,7 +287,7 @@ public class ClientConnection{
 		out.writeBytes("</select>\n");
 		out.writeBytes("</td>\n<td data-ctrl-type='discrete'><input type='submit' name='set' value='set'>");
 	}
-	protected void writeSliderControl(DataOutputStream out, Control control) throws IOException {
+	protected static void writeSliderControl(DataOutputStream out, Control control) throws IOException {
 		int min, max, step, value;
 		try {
 			min = control.getMinValue();
@@ -299,7 +299,7 @@ public class ClientConnection{
 		}
 		writeSliderControl(out, value, min, max, step);
 	}
-	protected void writeSliderControl(DataOutputStream out, int value, int min, int max, int step) throws IOException {
+	protected static void writeSliderControl(DataOutputStream out, int value, int min, int max, int step) throws IOException {
 		out.writeBytes("<input type='number' name='val' size='10' maxlength='10' value='");
 		out.writeBytes("" + value + "' min='" + min + "' max='" + max + "' step='" + step + "'/>");
 		out.writeBytes("\n</td>\n<td data-ctrl-type='slider'>\n<input type='submit' name='set' value='set'/>");
