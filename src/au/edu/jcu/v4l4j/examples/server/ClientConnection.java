@@ -225,6 +225,7 @@ public class ClientConnection{
 		boolean	hasID = false;
 		int 	controlID = 0;
 		int 	value = 0;
+		System.out.println(" => " + httpLine);
 
 		// parse the http line to find out the control index and
 		// its new value. Expected line:
@@ -233,17 +234,16 @@ public class ClientConnection{
 
 		while(tokens.hasMoreTokens()){
 			String next = tokens.nextToken();
+			System.out.println(" => " + next);
 
-			if ((next.equalsIgnoreCase("id")) && tokens.hasMoreTokens())
-			{
+			if ((next.equalsIgnoreCase("id")) && tokens.hasMoreTokens()) {
 				try {
 					controlID = Integer.parseInt(tokens.nextToken());
 					hasID = true;
 				} catch (NumberFormatException e) {
 					// control id is not a number, ignore 
 				}
-			} else if ((next.equalsIgnoreCase("val")) && tokens.hasMoreTokens())
-			{
+			} else if ((next.equalsIgnoreCase("val")) && tokens.hasMoreTokens()) {
 				try {
 					value = Integer.parseInt(tokens.nextToken());
 					hasValue = true;
