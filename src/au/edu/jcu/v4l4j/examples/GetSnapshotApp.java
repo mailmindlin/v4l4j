@@ -41,28 +41,31 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 /**
  * This class creates a user interface to capture and display the current image
  * from a video device.
+ * 
  * @author gilles
  *
  */
-public class GetSnapshotApp  extends WindowAdapter implements CaptureCallback{
-	private static int		width, height, std, channel;
-	private static String	device;
+public class GetSnapshotApp extends WindowAdapter implements CaptureCallback {
+	private static int width, height, std, channel;
+	private static String device;
 
-	private JFrame			frame;
-	private JLabel			label;
-	private JButton			button;
+	private JFrame frame;
+	private JLabel label;
+	private JButton button;
 
-	private VideoDevice		videoDevice;
-	private FrameGrabber	frameGrabber;
-	private VideoFrame		lastVideoFrame;
+	private VideoDevice videoDevice;
+	private FrameGrabber frameGrabber;
+	private VideoFrame lastVideoFrame;
 
-
-	public static void main(String args[]){
-		device = (System.getProperty("test.device") != null) ? System.getProperty("test.device") : "/dev/video0"; 
-		width = (System.getProperty("test.width")!=null) ? Integer.parseInt(System.getProperty("test.width")) : 640;
-		height = (System.getProperty("test.height")!=null) ? Integer.parseInt(System.getProperty("test.height")) : 480;
-		std = (System.getProperty("test.standard")!=null) ? Integer.parseInt(System.getProperty("test.standard")) : V4L4JConstants.STANDARD_WEBCAM;
-		channel = (System.getProperty("test.channel")!=null) ? Integer.parseInt(System.getProperty("test.channel")) : 0;
+	public static void main(String args[]) {
+		device = (System.getProperty("test.device") != null) ? System.getProperty("test.device") : "/dev/video0";
+		width = (System.getProperty("test.width") != null) ? Integer.parseInt(System.getProperty("test.width")) : 640;
+		height = (System.getProperty("test.height") != null) ? Integer.parseInt(System.getProperty("test.height"))
+				: 480;
+		std = (System.getProperty("test.standard") != null) ? Integer.parseInt(System.getProperty("test.standard"))
+				: V4L4JConstants.STANDARD_WEBCAM;
+		channel = (System.getProperty("test.channel") != null) ? Integer.parseInt(System.getProperty("test.channel"))
+				: 0;
 
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
@@ -74,9 +77,11 @@ public class GetSnapshotApp  extends WindowAdapter implements CaptureCallback{
 
 	/**
 	 * Start a new GetSnapshot UI
-	 * @throws V4L4JException if there is a problem capturing from the given device
+	 * 
+	 * @throws V4L4JException
+	 *             if there is a problem capturing from the given device
 	 */
-	public GetSnapshotApp(){
+	public GetSnapshotApp() {
 		lastVideoFrame = null;
 
 		// initialise the video device and frame grabber
@@ -85,15 +90,15 @@ public class GetSnapshotApp  extends WindowAdapter implements CaptureCallback{
 		} catch (V4L4JException e) {
 			System.err.println("Error setting up capture");
 			e.printStackTrace();
-			
+
 			// cleanup and exit
 			cleanupCapture();
 			return;
 		}
-		
+
 		// Create and initialise UI
 		initGUI();
-		
+
 		// start capture
 		try {
 			frameGrabber.startCapture();
@@ -104,11 +109,12 @@ public class GetSnapshotApp  extends WindowAdapter implements CaptureCallback{
 	}
 
 	/**
-	 * This method creates the VideoDevice and frame grabber.
-	 * It enables push mode and starts the capture
+	 * This method creates the VideoDevice and frame grabber. It enables push
+	 * mode and starts the capture
+	 * 
 	 * @throws V4L4JException
 	 */
-	private void initFrameGrabber() throws V4L4JException{
+	private void initFrameGrabber() throws V4L4JException {
 		videoDevice = new VideoDevice(device);
 		frameGrabber = videoDevice.getJPEGFrameGrabber(width, height, channel, std, 80);
 		width = frameGrabber.getWidth();
@@ -121,16 +127,16 @@ public class GetSnapshotApp  extends WindowAdapter implements CaptureCallback{
 	 */
 	private void initGUI() {
 		frame = new JFrame();
-		frame.setLayout(new BoxLayout(frame.getContentPane(),BoxLayout.LINE_AXIS));
+		frame.setLayout(new BoxLayout(frame.getContentPane(), BoxLayout.LINE_AXIS));
 
-		label = new JLabel(width +" x " + height);
+		label = new JLabel(width + " x " + height);
 		label.setPreferredSize(new Dimension(width, height));
 		label.setMaximumSize(new Dimension(width, height));
 		label.setSize(new Dimension(width, height));
 		label.setAlignmentX(Component.CENTER_ALIGNMENT);
 		label.setAlignmentY(Component.CENTER_ALIGNMENT);
 
-		button = new JButton("Get snapshot");       
+		button = new JButton("Get snapshot");
 		button.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 				getSnapshot();
@@ -141,7 +147,6 @@ public class GetSnapshotApp  extends WindowAdapter implements CaptureCallback{
 		frame.getContentPane().add(Box.createGlue());
 		frame.getContentPane().add(button);
 
-
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frame.addWindowListener(this);
 
@@ -150,34 +155,35 @@ public class GetSnapshotApp  extends WindowAdapter implements CaptureCallback{
 	}
 
 	/**
-	 * This method is called when the Get snapshot button is hit and 
-	 * it displays the current video frame.
+	 * This method is called when the Get snapshot button is hit and it displays
+	 * the current video frame.
 	 */
 	private void getSnapshot() {
 		VideoFrame lastFrameCopy = null;
-		
+
 		synchronized (this) {
 			// If there is a current frame ...
 			if (lastVideoFrame != null) {
 				// Make a local copy
 				lastFrameCopy = lastVideoFrame;
-				
+
 				// and set the class member to null so it does not get recycled
 				// in nextFrame(), since we are going to recycle it
 				// ourselves once drawn in the label.
 				lastVideoFrame = null;
 			}
 		}
-		
+
 		// Draw the frame and recycle it
 		if (lastFrameCopy != null) {
 			label.getGraphics().drawImage(lastFrameCopy.getBufferedImage(), 0, 0, width, height, null);
 			lastFrameCopy.recycle();
 		}
 	}
-	
+
 	/**
-	 * This method stop the capture and releases the frame grabber and video device
+	 * This method stop the capture and releases the frame grabber and video
+	 * device
 	 */
 	private void cleanupCapture() {
 		// stop capture
@@ -186,7 +192,7 @@ public class GetSnapshotApp  extends WindowAdapter implements CaptureCallback{
 		} catch (Exception ex) {
 			// frame grabber may be already stopped, so ignore this
 		}
-		
+
 		// release frame grabber and video device
 		try {
 			videoDevice.releaseFrameGrabber();
@@ -198,10 +204,9 @@ public class GetSnapshotApp  extends WindowAdapter implements CaptureCallback{
 
 	@Override
 	public void windowClosing(WindowEvent e) {
-		cleanupCapture();		
+		cleanupCapture();
 		frame.dispose();
 	}
-
 
 	@Override
 	public void exceptionReceived(V4L4JException e) {

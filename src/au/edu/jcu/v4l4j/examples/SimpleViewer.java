@@ -33,29 +33,31 @@ import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 /**
- * This class demonstrates how to perform a simple push-mode capture.
- * It starts the capture and display the video stream in a JLabel
+ * This class demonstrates how to perform a simple push-mode capture. It starts
+ * the capture and display the video stream in a JLabel
+ * 
  * @author gilles
  *
  */
-public class SimpleViewer extends WindowAdapter implements CaptureCallback{
-	private static int		width, height, std, channel;
-	private static String	device;
+public class SimpleViewer extends WindowAdapter implements CaptureCallback {
+	private static int width, height, std, channel;
+	private static String device;
 
-	private VideoDevice		videoDevice;
-	private FrameGrabber	frameGrabber;
+	private VideoDevice videoDevice;
+	private FrameGrabber frameGrabber;
 
-	private JLabel 			label;
-	private JFrame 			frame;
+	private JLabel label;
+	private JFrame frame;
 
-
-
-	public static void main(String args[]){
-		device = (System.getProperty("test.device") != null) ? System.getProperty("test.device") : "/dev/video0"; 
-		width = (System.getProperty("test.width")!=null) ? Integer.parseInt(System.getProperty("test.width")) : 640;
-		height = (System.getProperty("test.height")!=null) ? Integer.parseInt(System.getProperty("test.height")) : 480;
-		std = (System.getProperty("test.standard")!=null) ? Integer.parseInt(System.getProperty("test.standard")) : V4L4JConstants.STANDARD_WEBCAM;
-		channel = (System.getProperty("test.channel")!=null) ? Integer.parseInt(System.getProperty("test.channel")) : 0;
+	public static void main(String args[]) {
+		device = (System.getProperty("test.device") != null) ? System.getProperty("test.device") : "/dev/video0";
+		width = (System.getProperty("test.width") != null) ? Integer.parseInt(System.getProperty("test.width")) : 640;
+		height = (System.getProperty("test.height") != null) ? Integer.parseInt(System.getProperty("test.height"))
+				: 480;
+		std = (System.getProperty("test.standard") != null) ? Integer.parseInt(System.getProperty("test.standard"))
+				: V4L4JConstants.STANDARD_WEBCAM;
+		channel = (System.getProperty("test.channel") != null) ? Integer.parseInt(System.getProperty("test.channel"))
+				: 0;
 
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
@@ -67,28 +69,30 @@ public class SimpleViewer extends WindowAdapter implements CaptureCallback{
 
 	/**
 	 * Builds a WebcamViewer object
-	 * @throws V4L4JException if any parameter if invalid
+	 * 
+	 * @throws V4L4JException
+	 *             if any parameter if invalid
 	 */
-	public SimpleViewer(){
+	public SimpleViewer() {
 		// Initialise video device and frame grabber
 		try {
 			initFrameGrabber();
 		} catch (V4L4JException e1) {
 			System.err.println("Error setting up capture");
 			e1.printStackTrace();
-			
+
 			// cleanup and exit
 			cleanupCapture();
 			return;
 		}
-		
+
 		// create and initialise UI
 		initGUI();
-		
+
 		// start capture
 		try {
 			frameGrabber.startCapture();
-		} catch (V4L4JException e){
+		} catch (V4L4JException e) {
 			System.err.println("Error starting the capture");
 			e.printStackTrace();
 		}
@@ -96,32 +100,35 @@ public class SimpleViewer extends WindowAdapter implements CaptureCallback{
 
 	/**
 	 * Initialises the FrameGrabber object
-	 * @throws V4L4JException if any parameter if invalid
+	 * 
+	 * @throws V4L4JException
+	 *             if any parameter if invalid
 	 */
-	private void initFrameGrabber() throws V4L4JException{
+	private void initFrameGrabber() throws V4L4JException {
 		videoDevice = new VideoDevice(device);
 		frameGrabber = videoDevice.getJPEGFrameGrabber(width, height, channel, std, 80);
 		frameGrabber.setCaptureCallback(this);
 		width = frameGrabber.getWidth();
 		height = frameGrabber.getHeight();
-		System.out.println("Starting capture at "+width+"x"+height);
+		System.out.println("Starting capture at " + width + "x" + height);
 	}
 
-	/** 
+	/**
 	 * Creates the UI components and initialises them
 	 */
-	private void initGUI(){
+	private void initGUI() {
 		frame = new JFrame();
 		label = new JLabel();
 		frame.getContentPane().add(label);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frame.addWindowListener(this);
 		frame.setVisible(true);
-		frame.setSize(width, height);       
+		frame.setSize(width, height);
 	}
-	
+
 	/**
-	 * this method stops the capture and releases the frame grabber and video device
+	 * this method stops the capture and releases the frame grabber and video
+	 * device
 	 */
 	private void cleanupCapture() {
 		try {
@@ -138,34 +145,35 @@ public class SimpleViewer extends WindowAdapter implements CaptureCallback{
 
 	/**
 	 * Catch window closing event so we can free up resources before exiting
+	 * 
 	 * @param e
 	 */
 	public void windowClosing(WindowEvent e) {
 		cleanupCapture();
 
 		// close window
-		frame.dispose();            
+		frame.dispose();
 	}
 
-	public void windowIconified(WindowEvent e){
+	public void windowIconified(WindowEvent e) {
 		try {
-                        frameGrabber.stopCapture();
-                } catch (Exception ex) {
-                        // the frame grabber may be already stopped, so we just ignore
-                        // any exception and simply continue.
+			frameGrabber.stopCapture();
+		} catch (Exception ex) {
+			// the frame grabber may be already stopped, so we just ignore
+			// any exception and simply continue.
 			ex.printStackTrace();
-                }
+		}
 
 	}
 
-	public void windowDeiconified(WindowEvent e){
+	public void windowDeiconified(WindowEvent e) {
 		try {
-                        frameGrabber.startCapture();
-                } catch (Exception ex) {
-                        // the frame grabber may be already stopped, so we just ignore
-                        // any exception and simply continue.
+			frameGrabber.startCapture();
+		} catch (Exception ex) {
+			// the frame grabber may be already stopped, so we just ignore
+			// any exception and simply continue.
 			ex.printStackTrace();
-                }
+		}
 	}
 
 	@Override
@@ -180,12 +188,11 @@ public class SimpleViewer extends WindowAdapter implements CaptureCallback{
 	public synchronized void nextFrame(VideoFrame frame) {
 		// This method is called when a new frame is ready.
 		// Don't forget to recycle it when done dealing with the frame.
-		
+
 		// draw the new frame onto the JLabel
 		label.getGraphics().drawImage(frame.getBufferedImage(), 0, 0, width, height, null);
-		
+
 		// recycle the frame
 		frame.recycle();
 	}
 }
-

@@ -28,17 +28,19 @@ import au.edu.jcu.v4l4j.ImageFormat;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
-public class ControlViewer extends AbstractVideoViewer{
-	
+public class ControlViewer extends AbstractVideoViewer {
+
 	/**
 	 * Builds a WebcamViewer object
-	 * @param v the video device 
+	 * 
+	 * @param v
+	 *            the video device
 	 */
-    public ControlViewer(VideoDevice v) {
-    	super(v);
-    	
-    	initGUI(new Object[] {},640,480,"");    	      
-    }
+	public ControlViewer(VideoDevice v) {
+		super(v);
+
+		initGUI(new Object[] {}, 640, 480, "");
+	}
 
 	@Override
 	protected FrameGrabber getFrameGrabber(ImageFormat i) throws V4L4JException {

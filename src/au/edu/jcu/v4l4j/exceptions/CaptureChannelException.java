@@ -25,7 +25,9 @@
 package au.edu.jcu.v4l4j.exceptions;
 
 /**
- * This class of exception is thrown when the specified capture channel is invalid.
+ * This class of exception is thrown when the specified capture channel is
+ * invalid.
+ * 
  * @author gilles
  */
 public class CaptureChannelException extends V4L4JException {

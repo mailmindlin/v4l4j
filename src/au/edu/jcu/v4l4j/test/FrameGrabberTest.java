@@ -43,22 +43,21 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 public class FrameGrabberTest implements CaptureCallback {
 	private static VideoDevice vd;
 	private FrameGrabber fg;
-	int w,h, std, ch, repeats;
+	int w, h, std, ch, repeats;
 	String dev;
 	VideoFrame lastFrame;
-	
-	
+
 	@Before
 	public void setUp() throws Exception {
-		dev = (System.getProperty("test.device")!=null) ? System.getProperty("test.device") : "/dev/video0"; 
+		dev = (System.getProperty("test.device") != null) ? System.getProperty("test.device") : "/dev/video0";
 		vd = new VideoDevice(dev);
-		w = (System.getProperty("test.width")!=null) ? Integer.parseInt(System.getProperty("test.width")) : 320;
-		h = (System.getProperty("test.height")!=null) ? Integer.parseInt(System.getProperty("test.height")) : 240;
-		std = (System.getProperty("test.standard")!=null) ? Integer.parseInt(System.getProperty("test.standard")) : 0;
-		ch = (System.getProperty("test.channel")!=null) ? Integer.parseInt(System.getProperty("test.channel")) : 0;
- 
+		w = (System.getProperty("test.width") != null) ? Integer.parseInt(System.getProperty("test.width")) : 320;
+		h = (System.getProperty("test.height") != null) ? Integer.parseInt(System.getProperty("test.height")) : 240;
+		std = (System.getProperty("test.standard") != null) ? Integer.parseInt(System.getProperty("test.standard")) : 0;
+		ch = (System.getProperty("test.channel") != null) ? Integer.parseInt(System.getProperty("test.channel")) : 0;
+
 		repeats = 10;
-		
+
 		fg = vd.getRawFrameGrabber(w, h, ch, std);
 	}
 
@@ -67,30 +66,30 @@ public class FrameGrabberTest implements CaptureCallback {
 		vd.releaseFrameGrabber();
 		vd.release();
 	}
-	
+
 	@Test
 	public void testDoNothing() {
 	}
 
-	@Test(expected=V4L4JException.class)
-	public void testStartCaptureWithoutSetCallback() throws V4L4JException{
+	@Test(expected = V4L4JException.class)
+	public void testStartCaptureWithoutSetCallback() throws V4L4JException {
 		fg.startCapture();
-		fail("Error: we shouldnt be here");	
+		fail("Error: we shouldnt be here");
 		fg.stopCapture();
 	}
 
 	@Test
 	public void testGetHeight() {
-		assertTrue(fg.getHeight()>0);
+		assertTrue(fg.getHeight() > 0);
 	}
 
 	@Test
 	public void testGetWidth() {
-		assertTrue(fg.getWidth()>0);
+		assertTrue(fg.getWidth() > 0);
 	}
-	
-	@Test(expected=StateException.class)
-	public void testDoubleStartCapture() throws V4L4JException{
+
+	@Test(expected = StateException.class)
+	public void testDoubleStartCapture() throws V4L4JException {
 		fg.setCaptureCallback(this);
 		try {
 			fg.startCapture();
@@ -101,9 +100,9 @@ public class FrameGrabberTest implements CaptureCallback {
 		fg.startCapture();
 		fail("Error we shouldnt be here");
 	}
-	
-	@Test(expected=StateException.class)
-	public void testDoubleStopCapture() throws StateException{
+
+	@Test(expected = StateException.class)
+	public void testDoubleStopCapture() throws StateException {
 		fg.setCaptureCallback(this);
 		try {
 			fg.startCapture();
@@ -115,9 +114,9 @@ public class FrameGrabberTest implements CaptureCallback {
 		fg.stopCapture();
 		fail("Error we shouldnt be here");
 	}
-		
-	@Test(expected=StateException.class)
-	public void testAccessVideoFrameAfterStopCapture() throws Exception{
+
+	@Test(expected = StateException.class)
+	public void testAccessVideoFrameAfterStopCapture() throws Exception {
 		fg.setCaptureCallback(this);
 		try {
 			fg.startCapture();
@@ -126,11 +125,11 @@ public class FrameGrabberTest implements CaptureCallback {
 		} catch (V4L4JException e) {
 			fail("Error: Should be able to start the capture here");
 		}
-		lastFrame.getBytes();	// this should throw a StateException
+		lastFrame.getBytes(); // this should throw a StateException
 	}
-	
+
 	@Test
-	public void testMultipleCapture(){
+	public void testMultipleCapture() {
 		fg.setCaptureCallback(this);
 		try {
 			fg.startCapture();
@@ -143,27 +142,27 @@ public class FrameGrabberTest implements CaptureCallback {
 			fail("Error: Shouldnt be in exception handler here...");
 		}
 	}
-	
+
 	@Test
-	public void testMultipleInitRelease(){
+	public void testMultipleInitRelease() {
 		try {
 			int iteration = repeats;
 			fg.setCaptureCallback(this);
 
-			while (iteration-- > 0){
+			while (iteration-- > 0) {
 				vd.releaseFrameGrabber();
 				vd.release();
-			
+
 				vd = new VideoDevice(dev);
 				fg = vd.getRawFrameGrabber(w, h, ch, std);
 			}
-			
+
 		} catch (V4L4JException e) {
 			fail("Error: Shouldnt be in exception handler here...");
 		}
 
 	}
-	
+
 	@Test
 	public void testReleaseWithoutStopCapture() {
 		try {
@@ -179,8 +178,7 @@ public class FrameGrabberTest implements CaptureCallback {
 		frame.recycle();
 	}
 
-        public void exceptionReceived(V4L4JException e) {
+	public void exceptionReceived(V4L4JException e) {
 		fail("Error we shouldnt be here");
 	}
 }
-

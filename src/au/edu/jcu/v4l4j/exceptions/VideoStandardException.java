@@ -25,7 +25,9 @@
 package au.edu.jcu.v4l4j.exceptions;
 
 /**
- * This class of exception is thrown when the requested video standard is invalid/not supported.
+ * This class of exception is thrown when the requested video standard is
+ * invalid/not supported.
+ * 
  * @author gilles
  */
 public class VideoStandardException extends V4L4JException {

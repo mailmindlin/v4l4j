@@ -22,13 +22,15 @@
 *
 */
 package au.edu.jcu.v4l4j.exceptions;
+
 /**
- * Exceptions of this type are thrown whenever an error occurs retrieving or setting
- * the value of a control
+ * Exceptions of this type are thrown whenever an error occurs retrieving or
+ * setting the value of a control
+ * 
  * @author gilles
  *
  */
-public class ControlException extends V4L4JException{
+public class ControlException extends V4L4JException {
 
 	private static final long serialVersionUID = -8310718978974706151L;
 

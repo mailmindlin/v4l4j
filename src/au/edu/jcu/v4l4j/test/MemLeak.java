@@ -31,25 +31,25 @@ import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
-public class MemLeak implements Runnable{
+public class MemLeak implements Runnable {
 	private boolean stop;
 	private String dev;
 	private VideoDevice vd;
 	private int numCapturedFrames;
-	
-	public MemLeak(String d) throws V4L4JException{
+
+	public MemLeak(String d) throws V4L4JException {
 		stop = false;
 		dev = d;
 	}
-	
-	public void stop(){
+
+	public void stop() {
 		stop = true;
 	}
-	
-	public void run(){
+
+	public void run() {
 		FrameGrabber fg;
-		
-		while(!stop){
+
+		while (!stop) {
 			try {
 				vd = new VideoDevice(dev);
 				vd.getControlList();
@@ -60,13 +60,13 @@ public class MemLeak implements Runnable{
 
 					@Override
 					public void nextFrame(VideoFrame frame) {
-					numCapturedFrames++;
+						numCapturedFrames++;
 
-					if (numCapturedFrames == 200){
-						synchronized(vd){
-							vd.notifyAll();
+						if (numCapturedFrames == 200) {
+							synchronized (vd) {
+								vd.notifyAll();
+							}
 						}
-					}
 					}
 
 					@Override
@@ -75,13 +75,14 @@ public class MemLeak implements Runnable{
 					}
 				});
 
-				synchronized (vd){
+				synchronized (vd) {
 					fg.startCapture();
-					vd.wait(15000);  //wait up to 15 seconds for to collect 200 frames
+					vd.wait(15000); // wait up to 15 seconds for to collect 200
+									// frames
 				}
 
 				fg.stopCapture();
-				vd.releaseFrameGrabber();	
+				vd.releaseFrameGrabber();
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -95,13 +96,13 @@ public class MemLeak implements Runnable{
 
 					@Override
 					public void nextFrame(VideoFrame frame) {
-					numCapturedFrames++;
+						numCapturedFrames++;
 
-					if (numCapturedFrames == 200){
-						synchronized(vd){
-							vd.notifyAll();
+						if (numCapturedFrames == 200) {
+							synchronized (vd) {
+								vd.notifyAll();
+							}
 						}
-					}
 					}
 
 					@Override
@@ -110,14 +111,14 @@ public class MemLeak implements Runnable{
 					}
 				});
 
-				synchronized (vd){
+				synchronized (vd) {
 					fg.startCapture();
-					vd.wait(15000);  //wait up to 15 seconds for to collect 200 frames
+					vd.wait(15000); // wait up to 15 seconds for to collect 200
+									// frames
 				}
 
-
 				fg.stopCapture();
-				vd.releaseFrameGrabber();	
+				vd.releaseFrameGrabber();
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -131,13 +132,13 @@ public class MemLeak implements Runnable{
 
 					@Override
 					public void nextFrame(VideoFrame frame) {
-					numCapturedFrames++;
+						numCapturedFrames++;
 
-					if (numCapturedFrames == 200){
-						synchronized(vd){
-							vd.notifyAll();
+						if (numCapturedFrames == 200) {
+							synchronized (vd) {
+								vd.notifyAll();
+							}
 						}
-					}
 					}
 
 					@Override
@@ -146,13 +147,14 @@ public class MemLeak implements Runnable{
 					}
 				});
 
-				synchronized (vd){
+				synchronized (vd) {
 					fg.startCapture();
-					vd.wait(15000);  //wait up to 15 seconds for to collect 200 frames
+					vd.wait(15000); // wait up to 15 seconds for to collect 200
+									// frames
 				}
 
 				fg.stopCapture();
-				vd.releaseFrameGrabber();	
+				vd.releaseFrameGrabber();
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -166,13 +168,13 @@ public class MemLeak implements Runnable{
 
 					@Override
 					public void nextFrame(VideoFrame frame) {
-					numCapturedFrames++;
+						numCapturedFrames++;
 
-					if (numCapturedFrames == 200){
-						synchronized(vd){
-							vd.notifyAll();
+						if (numCapturedFrames == 200) {
+							synchronized (vd) {
+								vd.notifyAll();
+							}
 						}
-					}
 					}
 
 					@Override
@@ -181,13 +183,14 @@ public class MemLeak implements Runnable{
 					}
 				});
 
-				synchronized (vd){
+				synchronized (vd) {
 					fg.startCapture();
-					vd.wait(15000);  //wait up to 15 seconds for to collect 200 frames
+					vd.wait(15000); // wait up to 15 seconds for to collect 200
+									// frames
 				}
 
 				fg.stopCapture();
-				vd.releaseFrameGrabber();	
+				vd.releaseFrameGrabber();
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -201,13 +204,13 @@ public class MemLeak implements Runnable{
 
 					@Override
 					public void nextFrame(VideoFrame frame) {
-					numCapturedFrames++;
+						numCapturedFrames++;
 
-					if (numCapturedFrames == 200){
-						synchronized(vd){
-							vd.notifyAll();
+						if (numCapturedFrames == 200) {
+							synchronized (vd) {
+								vd.notifyAll();
+							}
 						}
-					}
 					}
 
 					@Override
@@ -216,13 +219,14 @@ public class MemLeak implements Runnable{
 					}
 				});
 
-				synchronized (vd){
+				synchronized (vd) {
 					fg.startCapture();
-					vd.wait(15000);  //wait up to 15 seconds for to collect 200 frames
+					vd.wait(15000); // wait up to 15 seconds for to collect 200
+									// frames
 				}
 
 				fg.stopCapture();
-				vd.releaseFrameGrabber();	
+				vd.releaseFrameGrabber();
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -230,23 +234,23 @@ public class MemLeak implements Runnable{
 			vd.releaseControlList();
 			vd.release();
 		}
-		
-	}
-	
-	public void release(){
+
 	}
 
-	public static void main(String[] args) throws V4L4JException, IOException, InterruptedException{
+	public void release() {
+	}
+
+	public static void main(String[] args) throws V4L4JException, IOException, InterruptedException {
 		String dev = "/dev/video0";
-		if(args.length==1)
+		if (args.length == 1)
 			dev = args[0];
 		MemLeak m = new MemLeak(dev);
-		Thread t = new Thread(m,"CaptureThread");
+		Thread t = new Thread(m, "CaptureThread");
 		t.start();
 		System.in.read();
 		m.stop();
 		t.join();
 		m.release();
 	}
-	
+
 }

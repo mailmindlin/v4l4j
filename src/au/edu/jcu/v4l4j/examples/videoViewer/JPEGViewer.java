@@ -35,59 +35,64 @@ import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 /**
- * Objects of this class create a graphical interface to capture frames 
- * from a video device and display it. The interface also gives access to the 
- * video controls. Frames are captured from a video device in a format that
- * v4l4j can encode in JPEG. If the given video device does not support
- * such format, 
+ * Objects of this class create a graphical interface to capture frames from a
+ * video device and display it. The interface also gives access to the video
+ * controls. Frames are captured from a video device in a format that v4l4j can
+ * encode in JPEG. If the given video device does not support such format,
  * 
  * @author gilles
  *
  */
-public class JPEGViewer extends AbstractVideoViewer{
+public class JPEGViewer extends AbstractVideoViewer {
 	private int width, height, qty, std, channel;
-	
+
 	/**
 	 * Builds a WebcamViewer object
-	 * @param v the video device 
-	 * @param w the desired capture width
-	 * @param h the desired capture height
-	 * @param s the capture standard
-	 * @param c the capture channel
-	 * @param q the JPEG compression quality
-	 * @throws V4L4JException if any parameter if invalid,  or if the video device 
-	 * does not support an image format that can be converted to JPEG
+	 * 
+	 * @param v
+	 *            the video device
+	 * @param w
+	 *            the desired capture width
+	 * @param h
+	 *            the desired capture height
+	 * @param s
+	 *            the capture standard
+	 * @param c
+	 *            the capture channel
+	 * @param q
+	 *            the JPEG compression quality
+	 * @throws V4L4JException
+	 *             if any parameter if invalid, or if the video device does not
+	 *             support an image format that can be converted to JPEG
 	 */
-    public JPEGViewer(VideoDevice v, int w, int h, int s, int c, int q) 
-    	throws V4L4JException{
-    	super(v);
+	public JPEGViewer(VideoDevice v, int w, int h, int s, int c, int q) throws V4L4JException {
+		super(v);
 
-    	List<ImageFormat> fmts;
+		List<ImageFormat> fmts;
 
-		if(!vd.supportJPEGConversion()){
+		if (!vd.supportJPEGConversion()) {
 			String msg = "Image from this video device cannot be converted\n"
-				+ "to JPEG. If no other application is currently using\n"
-				+ "the device, please submit a bug report about this issue,\n"
-				+"so support for your device can be added to v4l4j.\n"
-				+"See README file in the v4l4j/ directory for directions.";
+					+ "to JPEG. If no other application is currently using\n"
+					+ "the device, please submit a bug report about this issue,\n"
+					+ "so support for your device can be added to v4l4j.\n"
+					+ "See README file in the v4l4j/ directory for directions.";
 			JOptionPane.showMessageDialog(null, msg);
-			fmts=new Vector<ImageFormat>();
+			fmts = new Vector<ImageFormat>();
 		} else
 			fmts = vd.getDeviceInfo().getFormatList().getJPEGEncodableFormats();
 
-		initGUI(fmts.toArray(),w,h,"JPEG");
-		
+		initGUI(fmts.toArray(), w, h, "JPEG");
+
 		width = w;
 		height = h;
 		std = s;
 		channel = c;
 		qty = q;
-    	      
-    }
-    
+
+	}
 
 	@Override
 	protected FrameGrabber getFrameGrabber(ImageFormat i) throws V4L4JException {
 		return vd.getJPEGFrameGrabber(width, height, channel, std, qty, i);
 	}
- }
+}

@@ -29,67 +29,73 @@ import java.util.Vector;
 import au.edu.jcu.v4l4j.exceptions.StateException;
 
 /**
- * Objects of this class encapsulate a list of available {@link Tuner}s. 
- * This class can not be directly instantiated. Instead, to retrieve a list of 
- * tuners from a {@link VideoDevice}, use its
- * {@link VideoDevice#getTunerList() getTunerList()} method.  
+ * Objects of this class encapsulate a list of available {@link Tuner}s. This
+ * class can not be directly instantiated. Instead, to retrieve a list of tuners
+ * from a {@link VideoDevice}, use its {@link VideoDevice#getTunerList()
+ * getTunerList()} method.
+ * 
  * @author gilles
  *
  */
 public class TunerList {
 	private Vector<Tuner> tuners;
 	private boolean released;
-	
+
 	/**
-	 * This constructor builds a control list from the given list. (a copy of 
+	 * This constructor builds a control list from the given list. (a copy of
 	 * the list object is made).
-	 * @param c the tuner list used to initialise this object.
+	 * 
+	 * @param c
+	 *            the tuner list used to initialise this object.
 	 */
-	TunerList(List<Tuner> t){
-		tuners= new Vector<Tuner>(t);
+	TunerList(List<Tuner> t) {
+		tuners = new Vector<Tuner>(t);
 		released = false;
 	}
-	
+
 	/**
 	 * This method returns a copy of the tuner list.
+	 * 
 	 * @return a copy of the tuner list.
-	 * @throws StateException if this tuner list has been released and must 
-	 * not be used anymore
+	 * @throws StateException
+	 *             if this tuner list has been released and must not be used
+	 *             anymore
 	 */
-	public synchronized List<Tuner> getList(){
+	public synchronized List<Tuner> getList() {
 		checkReleased();
 		return new Vector<Tuner>(tuners);
 	}
-	
+
 	/**
 	 * This method returns a tuner given its index.
+	 * 
 	 * @return the tuner matching the given index, null otherwise
-	 * @throws StateException if this tuner list has been released and must not 
-	 * be used anymore
-	 * @throws ArrayIndexOutOfBoundsException if the given index is out of bounds
+	 * @throws StateException
+	 *             if this tuner list has been released and must not be used
+	 *             anymore
+	 * @throws ArrayIndexOutOfBoundsException
+	 *             if the given index is out of bounds
 	 */
-	public synchronized Tuner getTuner(int i){
+	public synchronized Tuner getTuner(int i) {
 		checkReleased();
-		for(Tuner t: tuners)
-			if(t.getIndex()==i)
+		for (Tuner t : tuners)
+			if (t.getIndex() == i)
 				return t;
-		
+
 		throw new ArrayIndexOutOfBoundsException("No tuner with such index");
 	}
-	
+
 	/**
 	 * This method released the tuner list, and all tuners in it.
 	 */
-	synchronized void release(){
+	synchronized void release() {
 		released = true;
-		for(Tuner t: tuners)
+		for (Tuner t : tuners)
 			t.release();
 	}
 
-	private void checkReleased(){
-		if(released)
-			throw new StateException("The tuner list has been released and " +
-					"must not be used");
+	private void checkReleased() {
+		if (released)
+			throw new StateException("The tuner list has been released and " + "must not be used");
 	}
 }
-

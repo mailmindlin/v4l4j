@@ -34,44 +34,49 @@ import au.edu.jcu.v4l4j.ImageFormat;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
-public class RGBViewer extends AbstractVideoViewer{
+public class RGBViewer extends AbstractVideoViewer {
 	private int width, height, std, channel;
 
-	
 	/**
 	 * Builds a WebcamViewer object
-	 * @param v the video device
-	 * @param w the desired capture width
-	 * @param h the desired capture height
-	 * @param s the capture standard
-	 * @param c the capture channel
-	 * @throws V4L4JException if the device file is not readable
+	 * 
+	 * @param v
+	 *            the video device
+	 * @param w
+	 *            the desired capture width
+	 * @param h
+	 *            the desired capture height
+	 * @param s
+	 *            the capture standard
+	 * @param c
+	 *            the capture channel
+	 * @throws V4L4JException
+	 *             if the device file is not readable
 	 */
-    public RGBViewer(VideoDevice v, int w, int h, int s, int c)
-    	throws V4L4JException{
-    	super(v);
+	public RGBViewer(VideoDevice v, int w, int h, int s, int c) throws V4L4JException {
+		super(v);
 
-    	List<ImageFormat> fmts;
-		if(!vd.supportRGBConversion()){
+		List<ImageFormat> fmts;
+		if (!vd.supportRGBConversion()) {
 			String msg = "Image from this video device cannot be converted\n"
-				+ "to RGB. If no other application is currently using the\n"
-				+ "device, please submit a bug report about this issue,\n"
-				+"so support for your device can be added to v4l4j.\n"
-				+"See README file in the v4l4j/ directory for directions.";
+					+ "to RGB. If no other application is currently using the\n"
+					+ "device, please submit a bug report about this issue,\n"
+					+ "so support for your device can be added to v4l4j.\n"
+					+ "See README file in the v4l4j/ directory for directions.";
 			JOptionPane.showMessageDialog(null, msg);
-			fmts=new Vector<ImageFormat>();
+			fmts = new Vector<ImageFormat>();
 		} else
 			fmts = vd.getDeviceInfo().getFormatList().getRGBEncodableFormats();
-		
+
 		width = w;
 		height = h;
 		std = s;
 		channel = c;
 
-        initGUI(fmts.toArray(),w,h,"RGB");
-      
-    }
-  
+		initGUI(fmts.toArray(), w, h, "RGB");
+
+	}
+
 	@Override
 	protected FrameGrabber getFrameGrabber(ImageFormat i) throws V4L4JException {
 		return vd.getRGBFrameGrabber(width, height, channel, std, i);

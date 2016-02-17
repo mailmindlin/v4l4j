@@ -4,3 +4,6 @@
 *.so
 .metadata/**/*
 *.d
+/bin/
+.classpath
+.project

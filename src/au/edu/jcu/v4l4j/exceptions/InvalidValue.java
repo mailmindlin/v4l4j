@@ -24,7 +24,9 @@
 package au.edu.jcu.v4l4j.exceptions;
 
 /**
- * Exceptions of this type are thrown when trying ti set an incorrect value on a control. 
+ * Exceptions of this type are thrown when trying ti set an incorrect value on a
+ * control.
+ * 
  * @author gilles
  *
  */

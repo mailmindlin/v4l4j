@@ -25,18 +25,22 @@
 package au.edu.jcu.v4l4j.exceptions;
 
 /**
- * A V4L4JExcption is the common superclass of all exceptions thrown by v4l4j. 
+ * A V4L4JExcption is the common superclass of all exceptions thrown by v4l4j.
+ * 
  * @author gilles
  */
 public class V4L4JException extends Exception {
 
 	private static final long serialVersionUID = -8247407640809375121L;
+
 	public V4L4JException(String message) {
-		    super(message);
-		  }
+		super(message);
+	}
+
 	public V4L4JException(String message, Throwable throwable) {
 		super(message, throwable);
 	}
+
 	public V4L4JException(Throwable throwable) {
 		super(throwable);
 	}

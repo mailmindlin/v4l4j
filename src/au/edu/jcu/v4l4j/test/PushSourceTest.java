@@ -32,23 +32,23 @@ import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
-public class PushSourceTest implements CaptureCallback{
+public class PushSourceTest implements CaptureCallback {
 	private VideoDevice vd;
 	private FrameGrabber fg;
-	private int w,h, std, ch;
+	private int w, h, std, ch;
 	private String dev;
 	private int numCapturedFrames;
 	private boolean hasSeenFrame0;
 
 	@Before
 	public void setUp() throws Exception {
-		dev = (System.getProperty("test.device")!=null) ? System.getProperty("test.device") : "/dev/video0"; 
+		dev = (System.getProperty("test.device") != null) ? System.getProperty("test.device") : "/dev/video0";
 		vd = new VideoDevice(dev);
 
-		w = (System.getProperty("test.width")!=null) ? Integer.parseInt(System.getProperty("test.width")) : 320;
-		h = (System.getProperty("test.height")!=null) ? Integer.parseInt(System.getProperty("test.height")) : 240;
-		std = (System.getProperty("test.standard")!=null) ? Integer.parseInt(System.getProperty("test.standard")) : 0;
-		ch = (System.getProperty("test.channel")!=null) ? Integer.parseInt(System.getProperty("test.channel")) : 0;
+		w = (System.getProperty("test.width") != null) ? Integer.parseInt(System.getProperty("test.width")) : 320;
+		h = (System.getProperty("test.height") != null) ? Integer.parseInt(System.getProperty("test.height")) : 240;
+		std = (System.getProperty("test.standard") != null) ? Integer.parseInt(System.getProperty("test.standard")) : 0;
+		ch = (System.getProperty("test.channel") != null) ? Integer.parseInt(System.getProperty("test.channel")) : 0;
 
 		fg = vd.getRawFrameGrabber(w, h, ch, std);
 		numCapturedFrames = 0;
@@ -61,13 +61,13 @@ public class PushSourceTest implements CaptureCallback{
 		vd.release();
 	}
 
-	public synchronized void Log(String s){
-		System.err.println(Thread.currentThread().getName()+": "+ s);
+	public synchronized void Log(String s) {
+		System.err.println(Thread.currentThread().getName() + ": " + s);
 		System.err.flush();
 	}
 
 	@Test
-	public void testCapture() throws Exception{
+	public void testCapture() throws Exception {
 		numCapturedFrames = 0;
 		fg.setCaptureCallback(new CaptureCallback() {
 
@@ -75,11 +75,11 @@ public class PushSourceTest implements CaptureCallback{
 			public void nextFrame(VideoFrame frame) {
 				if (frame.getSequenceNumber() == 0)
 					hasSeenFrame0 = true;
-				
+
 				numCapturedFrames++;
 				frame.recycle();
 
-				synchronized(vd){
+				synchronized (vd) {
 					vd.notifyAll();
 				}
 			}
@@ -91,9 +91,9 @@ public class PushSourceTest implements CaptureCallback{
 			}
 		});
 
-		synchronized (vd){
+		synchronized (vd) {
 			fg.startCapture();
-			vd.wait(5000);	//wait up to 5 seconds for a frame to arrive
+			vd.wait(5000); // wait up to 5 seconds for a frame to arrive
 		}
 
 		assertTrue(hasSeenFrame0);
@@ -101,13 +101,13 @@ public class PushSourceTest implements CaptureCallback{
 		fg.stopCapture();
 	}
 
-	@Test(expected=StateException.class)
-	public void testStopCaptureFromCallbackThread() throws Exception{
+	@Test(expected = StateException.class)
+	public void testStopCaptureFromCallbackThread() throws Exception {
 		fg.setCaptureCallback(this);
 
-		synchronized (vd){
+		synchronized (vd) {
 			fg.startCapture();
-			vd.wait(5000);	//wait up to 5 seconds for a frame to arrive
+			vd.wait(5000); // wait up to 5 seconds for a frame to arrive
 		}
 
 		assertTrue(numCapturedFrames > 0);
@@ -116,12 +116,12 @@ public class PushSourceTest implements CaptureCallback{
 		// has been stopped in the callback
 		fg.stopCapture();
 	}
-	
+
 	@Test
-	public void testNumberOfRecycledFramesWhileInCapture() throws V4L4JException, InterruptedException{
+	public void testNumberOfRecycledFramesWhileInCapture() throws V4L4JException, InterruptedException {
 		final int numberOfVideoFrames = fg.getNumberOfVideoFrames();
 		numCapturedFrames = 0;
-		
+
 		fg.setCaptureCallback(new CaptureCallback() {
 
 			@Override
@@ -129,8 +129,8 @@ public class PushSourceTest implements CaptureCallback{
 				numCapturedFrames++;
 				assertTrue(fg.getNumberOfRecycledVideoFrames() + numCapturedFrames == numberOfVideoFrames);
 
-				if (fg.getNumberOfRecycledVideoFrames() == 0){
-					synchronized(vd){
+				if (fg.getNumberOfRecycledVideoFrames() == 0) {
+					synchronized (vd) {
 						vd.notifyAll();
 					}
 				}
@@ -143,27 +143,27 @@ public class PushSourceTest implements CaptureCallback{
 			}
 		});
 
-		synchronized (vd){
+		synchronized (vd) {
 			fg.startCapture();
-			vd.wait(5000);	//wait up to 5 seconds for a frame to arrive
+			vd.wait(5000); // wait up to 5 seconds for a frame to arrive
 		}
 
 		assertTrue(numCapturedFrames == fg.getNumberOfVideoFrames());
 
 		fg.stopCapture();
 	}
-	
+
 	@Test
 	public void testMulitpleStartStop() throws V4L4JException, InterruptedException {
 		fg.setCaptureCallback(new CaptureCallback() {
-		
+
 			@Override
 			public void nextFrame(VideoFrame frame) {
 				frame.recycle();
 				numCapturedFrames++;
 				// Capture 5 frames then interrupt main thread
-				if (numCapturedFrames == 5 ) {
-					synchronized(vd) {
+				if (numCapturedFrames == 5) {
+					synchronized (vd) {
 						vd.notifyAll();
 					}
 				}
@@ -176,9 +176,8 @@ public class PushSourceTest implements CaptureCallback{
 			}
 		});
 
-
 		numCapturedFrames = 0;
-		synchronized(vd) {
+		synchronized (vd) {
 			fg.startCapture();
 			vd.wait(5000);
 		}
@@ -186,7 +185,7 @@ public class PushSourceTest implements CaptureCallback{
 		fg.stopCapture();
 
 		numCapturedFrames = 0;
-		synchronized(vd) {
+		synchronized (vd) {
 			fg.startCapture();
 			vd.wait(5000);
 		}
@@ -194,7 +193,7 @@ public class PushSourceTest implements CaptureCallback{
 		fg.stopCapture();
 
 		numCapturedFrames = 0;
-		synchronized(vd) {
+		synchronized (vd) {
 			fg.startCapture();
 			vd.wait(5000);
 		}
@@ -202,7 +201,7 @@ public class PushSourceTest implements CaptureCallback{
 		fg.stopCapture();
 
 		numCapturedFrames = 0;
-		synchronized(vd) {
+		synchronized (vd) {
 			fg.startCapture();
 			vd.wait(5000);
 		}
@@ -210,14 +209,14 @@ public class PushSourceTest implements CaptureCallback{
 		fg.stopCapture();
 
 	}
-	
+
 	@Override
 	public void nextFrame(VideoFrame frame) {
 		numCapturedFrames++;
 		frame.recycle();
 		fg.stopCapture();
 
-		synchronized(vd){
+		synchronized (vd) {
 			vd.notifyAll();
 		}
 	}

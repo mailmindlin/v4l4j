@@ -25,8 +25,10 @@
 package au.edu.jcu.v4l4j.exceptions;
 
 /**
- * This class of exception is thrown when v4l4j was unable to negotiate a suitable image format with the device.
- * See v4l4j README file for more information.
+ * This class of exception is thrown when v4l4j was unable to negotiate a
+ * suitable image format with the device. See v4l4j README file for more
+ * information.
+ * 
  * @author gilles
  */
 public class ImageFormatException extends V4L4JException {

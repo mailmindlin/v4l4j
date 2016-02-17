@@ -26,9 +26,10 @@ package au.edu.jcu.v4l4j.exceptions;
 import au.edu.jcu.v4l4j.VideoDevice;
 
 /**
- * This class of exception is thrown when trying to release a 
+ * This class of exception is thrown when trying to release a
  * {@link VideoDevice} using its {@link VideoDevice#release(boolean)} method
- * with a <code>true</code> argument, when the video device is still in use  
+ * with a <code>true</code> argument, when the video device is still in use
+ * 
  * @author gilles
  *
  */

@@ -30,83 +30,100 @@ import java.util.Vector;
 import au.edu.jcu.v4l4j.exceptions.StateException;
 
 /**
- * Objects of this class encapsulate a list of video source {@link Control}. This class
- * can not be directly instantiated. Instead, to retrieve a list of controls 
- * from a {@link VideoDevice}, use its 
- * {@link VideoDevice#getControlList() getControlList()} method. Once
- * the control list and associated controls are no longer needed, they must be 
- * released by calling {@link VideoDevice#releaseControlList() releaseControlList()}.
- * After that, neither the list nor the controls themselves must be used. If 
- * any attempt to use them is made, a {@link StateException} will be raised.
+ * Objects of this class encapsulate a list of video source {@link Control}.
+ * This class can not be directly instantiated. Instead, to retrieve a list of
+ * controls from a {@link VideoDevice}, use its
+ * {@link VideoDevice#getControlList() getControlList()} method. Once the
+ * control list and associated controls are no longer needed, they must be
+ * released by calling {@link VideoDevice#releaseControlList()
+ * releaseControlList()}. After that, neither the list nor the controls
+ * themselves must be used. If any attempt to use them is made, a
+ * {@link StateException} will be raised.
+ * 
  * @author gilles
  *
  */
 public class ControlList {
-	private Hashtable<String,Control> controls;
+	private Hashtable<String, Control> controls;
 	private boolean released;
-	
+
 	/**
-	 * This constructor builds a control list from the given list. (no copy is made)
-	 * @param c the control list used to initialise this object.
+	 * This constructor builds a control list from the given list. (no copy is
+	 * made)
+	 * 
+	 * @param c
+	 *            the control list used to initialise this object.
 	 */
-	ControlList(Hashtable<String,Control> c){
+	ControlList(Hashtable<String, Control> c) {
 		controls = c;
 		released = false;
 	}
-	
+
 	/**
-	 * This constructor builds a control list from the given list. (no copy is made)
-	 * @param c the control list used to initialise this object.
+	 * This constructor builds a control list from the given list. (no copy is
+	 * made)
+	 * 
+	 * @param c
+	 *            the control list used to initialise this object.
 	 */
-	ControlList(Control[] c){
+	ControlList(Control[] c) {
 		controls = new Hashtable<String, Control>();
-		for(Control ctrl: c)
+		for (Control ctrl : c)
 			controls.put(ctrl.getName(), ctrl);
 
 		released = false;
 	}
-	
+
 	/**
 	 * This method returns a map of control names and controls
+	 * 
 	 * @return a map of control names and controls
-	 * @throws StateException if this control list has been released and must not be used anymore
+	 * @throws StateException
+	 *             if this control list has been released and must not be used
+	 *             anymore
 	 */
-	public synchronized Hashtable<String,Control> getTable(){
+	public synchronized Hashtable<String, Control> getTable() {
 		checkReleased();
-		return new Hashtable<String,Control>(controls);
+		return new Hashtable<String, Control>(controls);
 	}
-	
+
 	/**
 	 * This method returns a list of {@link Control}s
+	 * 
 	 * @return a list of {@link Control}s
-	 * @throws StateException if this control list has been released and must not be used anymore
+	 * @throws StateException
+	 *             if this control list has been released and must not be used
+	 *             anymore
 	 */
-	public synchronized List<Control> getList(){
+	public synchronized List<Control> getList() {
 		checkReleased();
 		return new Vector<Control>(controls.values());
 	}
-	
+
 	/**
 	 * This method returns a control given its name.
+	 * 
 	 * @return the control matching the given name, null otherwise
-	 * @throws StateException if this control list has been released and must not be used anymore
+	 * @throws StateException
+	 *             if this control list has been released and must not be used
+	 *             anymore
 	 */
-	public synchronized Control getControl(String n){
+	public synchronized Control getControl(String n) {
 		checkReleased();
 		return controls.get(n);
 	}
-	
+
 	/**
 	 * This method released the control list, and all controls in it.
 	 */
-	synchronized void release(){
+	synchronized void release() {
 		released = true;
-		for(Control c: controls.values())
+		for (Control c : controls.values())
 			c.release();
 	}
 
-	private void checkReleased(){
-		if(released)
+	private void checkReleased() {
+		if (released)
 			throw new StateException("The control list has been released and must not be used");
 	}
 }

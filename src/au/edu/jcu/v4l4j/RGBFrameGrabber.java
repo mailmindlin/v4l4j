@@ -35,112 +35,122 @@ import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
 
-
 /**
- * Objects of this class are used to retrieve RGB frames from a 
- * {@link VideoDevice}. An RGB frame grabber can only be created 
- * if the associated video device can produce images in a format v4l4j
- * knows how to convert to RGB24. The 
- * {@link VideoDevice#supportRGBConversion()} method can be used to find out 
- * whether a video device can have its images RGB-encoded by v4l4j, ie if a 
- * RGB frame grabber can be instantiated.
+ * Objects of this class are used to retrieve RGB frames from a
+ * {@link VideoDevice}. An RGB frame grabber can only be created if the
+ * associated video device can produce images in a format v4l4j knows how to
+ * convert to RGB24. The {@link VideoDevice#supportRGBConversion()} method can
+ * be used to find out whether a video device can have its images RGB-encoded by
+ * v4l4j, ie if a RGB frame grabber can be instantiated.
  * <code>RGBFrameGrabber</code> objects are not instantiated directly. Instead,
- * the 
- * {@link VideoDevice#getRGBFrameGrabber(int, int, int, int)} or
+ * the {@link VideoDevice#getRGBFrameGrabber(int, int, int, int)} or
  * {@link VideoDevice#getRGBFrameGrabber(int, int, int, int, ImageFormat)}
- * method must be called on the associated {@link VideoDevice}. RGB frame grabbers
- * implement the {@link FrameGrabber} interface which provides methods to handle
- * video capture. See {@link FrameGrabber its documentation} for more information.
+ * method must be called on the associated {@link VideoDevice}. RGB frame
+ * grabbers implement the {@link FrameGrabber} interface which provides methods
+ * to handle video capture. See {@link FrameGrabber its documentation} for more
+ * information.
  * 
  * @see FrameGrabber {@link FrameGrabber}
  * @author gilles
  *
  */
 public class RGBFrameGrabber extends AbstractGrabber {
-	
+
 	/**
-	 * This constructor builds a FrameGrabber object used to capture RGB frames 
+	 * This constructor builds a FrameGrabber object used to capture RGB frames
 	 * from a video source
-	 * @param di the DeviceInfo of the VideoDevice who created this frame grabber
-	 * @param o a JNI pointer to a v4l4j_device structure
-	 * @param w the requested frame width 
-	 * @param h the requested frame height
-	 * @param ch the input index, as returned by 
-	 * {@link InputInfo#getIndex()}
-	 * @param std the video standard, as returned by 
-	 * {@link InputInfo#getSupportedStandards()} (see V4L4JConstants)
-	 * @param imf the image format frame should be captured in
-	 * @param factory the thread factory to use when creating the push source
+	 * 
+	 * @param di
+	 *            the DeviceInfo of the VideoDevice who created this frame
+	 *            grabber
+	 * @param o
+	 *            a JNI pointer to a v4l4j_device structure
+	 * @param w
+	 *            the requested frame width
+	 * @param h
+	 *            the requested frame height
+	 * @param ch
+	 *            the input index, as returned by {@link InputInfo#getIndex()}
+	 * @param std
+	 *            the video standard, as returned by
+	 *            {@link InputInfo#getSupportedStandards()} (see V4L4JConstants)
+	 * @param imf
+	 *            the image format frame should be captured in
+	 * @param factory
+	 *            the thread factory to use when creating the push source
 	 */
-	RGBFrameGrabber(DeviceInfo di, long o, int width, int height, int ch, int std, Tuner t, ImageFormat imf, ThreadFactory factory) throws V4L4JException{
-		super(di, o, width, height, ch, std, t, imf, RGB24_GRABBER, factory);	
+	RGBFrameGrabber(DeviceInfo di, long o, int width, int height, int ch, int std, Tuner t, ImageFormat imf,
+			ThreadFactory factory) throws V4L4JException {
+		super(di, o, width, height, ch, std, t, imf, RGB24_GRABBER, factory);
 	}
-	
+
 	/**
 	 * This method initialises the capture, and apply the capture parameters.
-	 * V4L may either adjust the height and width parameters to the closest 
-	 * valid values or reject them altogether. If the values were adjusted, 
-	 * they can be retrieved after calling {@link #init()} using 
-	 * {@link #getWidth()} and {@link #getHeight()}.
-	 * @throws VideoStandardException if the chosen video standard is not 
-	 * supported
-	 * @throws ImageFormatException this exception is thrown if the chosen image
-	 * format cannot be RGB24 encoded. If no image format was chosen, the video 
-	 * device does not have any image formats that can be RGB24 encoded
-	 * (let the author know, see README file)
-	 * @throws CaptureChannelException if the given channel number value is not 
-	 * valid
-	 * @throws ImageDimensionException if the given image dimensions are not 
-	 * supported
-	 * @throws InitialisationException if the video device file can not be 
-	 * initialised 
-	 * @throws StateException if the frame grabber is already initialised or
-	 * released
-	 * @throws V4L4JException if there is an error applying capture parameters
+	 * V4L may either adjust the height and width parameters to the closest
+	 * valid values or reject them altogether. If the values were adjusted, they
+	 * can be retrieved after calling {@link #init()} using {@link #getWidth()}
+	 * and {@link #getHeight()}.
+	 * 
+	 * @throws VideoStandardException
+	 *             if the chosen video standard is not supported
+	 * @throws ImageFormatException
+	 *             this exception is thrown if the chosen image format cannot be
+	 *             RGB24 encoded. If no image format was chosen, the video
+	 *             device does not have any image formats that can be RGB24
+	 *             encoded (let the author know, see README file)
+	 * @throws CaptureChannelException
+	 *             if the given channel number value is not valid
+	 * @throws ImageDimensionException
+	 *             if the given image dimensions are not supported
+	 * @throws InitialisationException
+	 *             if the video device file can not be initialised
+	 * @throws StateException
+	 *             if the frame grabber is already initialised or released
+	 * @throws V4L4JException
+	 *             if there is an error applying capture parameters
 	 */
 	void init() throws V4L4JException {
 		try {
 			super.init();
-		} catch (ImageFormatException ife){
-			if(format == -1){
-				String msg = 
-					"v4l4j was unable to find image format supported by the"
-					+ " \nvideo device and that can be converted to RGB24.\n"
-					+ "Please let the author know about this, so that support\n"
-					+ "for this video device can be improved. See \nREADME file"
-					+ " on how to submit v4l4j reports.";
+		} catch (ImageFormatException ife) {
+			if (format == -1) {
+				String msg = "v4l4j was unable to find image format supported by the"
+						+ " \nvideo device and that can be converted to RGB24.\n"
+						+ "Please let the author know about this, so that support\n"
+						+ "for this video device can be improved. See \nREADME file"
+						+ " on how to submit v4l4j reports.";
 				System.err.println(msg);
 				ife = new ImageFormatException(msg);
 			}
-			
+
 			throw ife;
 		}
 	}
-	
+
 	/**
-	 * This method returns the native image format used by this 
-	 * FrameGrabber. The returned format specifies the image format the capture
-	 * uses, ie the one images are retrieved from the device BEFORE RGB 
-	 * conversion.
+	 * This method returns the native image format used by this FrameGrabber.
+	 * The returned format specifies the image format the capture uses, ie the
+	 * one images are retrieved from the device BEFORE RGB conversion.
+	 * 
 	 * @return the native image format used by this FrameGrabber.
-	 * @throws StateException if this 
-	 * <code>FrameGrabber</code> has been already released, and therefore must
-	 * not be used anymore.
+	 * @throws StateException
+	 *             if this <code>FrameGrabber</code> has been already released,
+	 *             and therefore must not be used anymore.
 	 */
-	public ImageFormat getImageFormat(){
+	public ImageFormat getImageFormat() {
 		state.checkReleased();
 		return dInfo.getFormatList().getRGBEncodableFormat(format);
 	}
-	
+
 	@Override
 	protected void createBuffers(int bufferSize) {
 		ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
-		PixelInterleavedSampleModel sm = new PixelInterleavedSampleModel(
-				DataBuffer.TYPE_BYTE, getWidth(), getHeight(), 3, getWidth() * 3, new int[] {0,1,2});
-		
+		PixelInterleavedSampleModel sm = new PixelInterleavedSampleModel(DataBuffer.TYPE_BYTE, getWidth(), getHeight(),
+				3, getWidth() * 3, new int[] { 0, 1, 2 });
+
 		int numberOfBuffers = nbV4LBuffers;
-		
-		while(numberOfBuffers-- > 0)
-			videoFrames.add( new UncompressedVideoFrame(this, bufferSize, sm, cs) );
+
+		while (numberOfBuffers-- > 0)
+			videoFrames.add(new UncompressedVideoFrame(this, bufferSize, sm, cs));
 	}
 }
