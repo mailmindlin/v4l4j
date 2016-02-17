@@ -1,7 +1,7 @@
 # If the env variable JDK_HOME is not defined,
 # use the following one (works on Ubuntu with OpenJDK).
 ifndef JDK_HOME
-JDK_HOME := /usr/lib/jvm/jdk-8-oracle-arm-vfp-hflt
+JDK_HOME := /usr/lib/jvm/jdk-8-oracle-arm32-vfp-hflt
 endif
 
 

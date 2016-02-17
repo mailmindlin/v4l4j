@@ -338,12 +338,10 @@
 		
 	<target name="clean">
 		<exec executable="make">
-			<arg line="-C ${libvideo.dir} clean" />
-			<arg line="-j ${make.jobs}" />
+			<arg line="-j ${make.jobs} -C ${libvideo.dir} clean" />
 		</exec>
 		<exec executable="make">
-			<arg line="-C ${project.src} clean" />
-			<arg line="-j ${make.jobs}" />
+			<arg line="-j ${make.jobs} -C ${project.src} clean" />
 		</exec>
 		<delete file="${project.dir}/${project.jar.file}" />
 		<delete file="${project.dir}/${project.jni.file}" />
