@@ -23,9 +23,8 @@
  */
 package au.edu.jcu.v4l4j;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.Vector;
+import java.util.concurrent.ThreadFactory;
 
 import au.edu.jcu.v4l4j.FrameInterval.DiscreteInterval;
 import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
@@ -34,7 +33,6 @@ import au.edu.jcu.v4l4j.exceptions.InitialisationException;
 import au.edu.jcu.v4l4j.exceptions.InvalidValue;
 import au.edu.jcu.v4l4j.exceptions.NoTunerException;
 import au.edu.jcu.v4l4j.exceptions.StateException;
-import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
 
@@ -56,7 +54,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	protected final static int BGR24_GRABBER = 3;
 	protected final static int YUV_GRABBER = 4;
 	protected final static int YVU_GRABBER = 5;
-
+	
 	protected DeviceInfo dInfo;
 	private int width;
 	private int height;
@@ -79,7 +77,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 * JNI returns a long (which is really a pointer) when a device is allocated
 	 * for use. This field is read-only (!!!)
 	 */
-	protected long object;
+	protected final long object;
 
 	static {
 		try {
@@ -90,6 +88,19 @@ abstract class AbstractGrabber implements FrameGrabber {
 		}
 	}
 
+	/**
+	 * 
+	 * @param o object pointer
+	 * @param numBuffers number of buffers to create
+	 * @param w width of frame
+	 * @param h height of frame
+	 * @param ch channel
+	 * @param std
+	 * @param requestedFormat input format
+	 * @param output format
+	 * @return
+	 * @throws V4L4JException
+	 */
 	private native int doInit(long o, int numBuffers, int w, int h, int ch, int std, int requestedFormat, int output)
 			throws V4L4JException;
 
@@ -167,20 +178,19 @@ abstract class AbstractGrabber implements FrameGrabber {
 			int ty, ThreadFactory factory) throws ImageFormatException {
 		if (imf == null)
 			throw new ImageFormatException("The image format can not be null");
-		state = new State();
-		dInfo = di;
-		object = o;
+		this.state = new State();
+		this.dInfo = di;
+		this.object = o;
 		this.width = width;
 		this.height = height;
-		channel = ch;
-		standard = std;
-		format = imf.getIndex();
-		tuner = t;
-		type = ty;
+		this.channel = ch;
+		this.standard = std;
+		this.format = imf.getIndex();
+		this.tuner = t;
+		this.type = ty;
 		// Check property for user-specified number of buffers - otherwise use
 		// 4.
-		nbV4LBuffers = (System.getProperty("v4l4j.num_driver_buffers") != null)
-				? Integer.parseInt(System.getProperty("v4l4j.num_driver_buffers")) : 4;
+		nbV4LBuffers = (System.getProperty("v4l4j.num_driver_buffers") != null) ? Integer.parseInt(System.getProperty("v4l4j.num_driver_buffers")) : 4;
 		videoFrames = new Vector<BaseVideoFrame>();
 		availableVideoFrames = new Vector<BaseVideoFrame>();
 		pushSource = null;
@@ -282,7 +292,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 			// ie, it might be possible to get the current frame intv
 			// while capturing... to be tested
 			if (state.isStarted())
-				throw new StateException("Invalid method call: cannot get the" + " frame interval while capturing.");
+				throw new StateException("Invalid method call: cannot get the frame interval while capturing.");
 			return new DiscreteInterval(doGetFrameIntv(object, 0), doGetFrameIntv(object, 1));
 		}
 	}
@@ -366,8 +376,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 		// make sure we have a push source
 		if (pushSource == null) {
 			state.rollback();
-			throw new V4L4JException(
-					"setCaptureCallback() must be called with a valid " + "callback object before startCapture()");
+			throw new V4L4JException("setCaptureCallback() must be called with a valid callback object before startCapture()");
 		}
 
 		// start the push source and wait until it's blocked on getVideoFrame()

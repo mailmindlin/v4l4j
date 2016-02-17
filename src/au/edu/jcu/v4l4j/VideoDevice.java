@@ -922,10 +922,10 @@ public class VideoDevice {
 	 * let the author know about it so BGR24-encoding can be added. See the
 	 * README file on how to submit reports.</b>
 	 * 
-	 * @param w
+	 * @param width
 	 *            the desired frame width. This value may be adjusted to the
 	 *            closest supported by hardware.
-	 * @param h
+	 * @param height
 	 *            the desired frame height. This value may be adjusted to the
 	 *            closest supported by hardware.
 	 * @param input
@@ -968,7 +968,7 @@ public class VideoDevice {
 	 *             before another FrameGrabber can be allocated, or if the
 	 *             <code>VideoDevice</code> has been released.
 	 */
-	public BGRFrameGrabber getBGRFrameGrabber(int w, int h, int input, int std, ImageFormat imf) throws V4L4JException {
+	public BGRFrameGrabber getBGRFrameGrabber(int width, int height, int input, int std, ImageFormat imf) throws V4L4JException {
 		if (!supportBGR24 || deviceInfo == null)
 			throw new ImageFormatException("This video device does not support " + "BGR-encoding of its frames.");
 
@@ -985,7 +985,7 @@ public class VideoDevice {
 		synchronized (this) {
 			if (fg == null) {
 				state.get();
-				fg = new BGRFrameGrabber(deviceInfo, v4l4jObject, w, h, input, std, findTuner(input), imf,
+				fg = new BGRFrameGrabber(deviceInfo, v4l4jObject, width, height, input, std, findTuner(input), imf,
 						threadFactory);
 				try {
 					fg.init();
@@ -1033,10 +1033,10 @@ public class VideoDevice {
 	 * let the author know about it so BGR24-encoding can be added. See the
 	 * README file on how to submit reports.</b>
 	 * 
-	 * @param w
+	 * @param width
 	 *            the desired frame width. This value may be adjusted to the
 	 *            closest supported by hardware.
-	 * @param h
+	 * @param height
 	 *            the desired frame height. This value may be adjusted to the
 	 *            closest supported by hardware.
 	 * @param input
@@ -1067,8 +1067,8 @@ public class VideoDevice {
 	 *             before a BGRFrameGrabber can be allocated, or if the
 	 *             <code>VideoDevice</code> has been released.
 	 */
-	public BGRFrameGrabber getBGRFrameGrabber(int w, int h, int input, int std) throws V4L4JException {
-		return getBGRFrameGrabber(w, h, input, std, null);
+	public BGRFrameGrabber getBGRFrameGrabber(int width, int height, int input, int std) throws V4L4JException {
+		return getBGRFrameGrabber(width, height, input, std, null);
 	}
 
 	/**
@@ -1084,10 +1084,10 @@ public class VideoDevice {
 	 * let the author know about it so YUV420-encoding can be added. See the
 	 * README file on how to submit reports.</b>
 	 * 
-	 * @param w
+	 * @param width
 	 *            the desired frame width. This value may be adjusted to the
 	 *            closest supported by hardware.
-	 * @param h
+	 * @param height
 	 *            the desired frame height. This value may be adjusted to the
 	 *            closest supported by hardware.
 	 * @param input
@@ -1130,7 +1130,7 @@ public class VideoDevice {
 	 *             before another FrameGrabber can be allocated, or if the
 	 *             <code>VideoDevice</code> has been released.
 	 */
-	public YUVFrameGrabber getYUVFrameGrabber(int w, int h, int input, int std, ImageFormat imf) throws V4L4JException {
+	public YUVFrameGrabber getYUVFrameGrabber(int width, int height, int input, int std, ImageFormat imf) throws V4L4JException {
 		if (!supportYUV420 || deviceInfo == null)
 			throw new ImageFormatException("This video device does not support " + "YUV-encoding of its frames.");
 
@@ -1147,7 +1147,7 @@ public class VideoDevice {
 		synchronized (this) {
 			if (fg == null) {
 				state.get();
-				fg = new YUVFrameGrabber(deviceInfo, v4l4jObject, w, h, input, std, findTuner(input), imf,
+				fg = new YUVFrameGrabber(deviceInfo, v4l4jObject, width, height, input, std, findTuner(input), imf,
 						threadFactory);
 				try {
 					fg.init();

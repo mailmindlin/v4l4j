@@ -112,6 +112,7 @@ public class JPEGFrameGrabber extends AbstractGrabber {
 	 * @throws V4L4JException
 	 *             if there is an error applying capture parameters
 	 */
+	@Override
 	void init() throws V4L4JException {
 		try {
 			super.init();
