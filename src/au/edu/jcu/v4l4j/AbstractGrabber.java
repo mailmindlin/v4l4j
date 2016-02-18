@@ -191,8 +191,8 @@ abstract class AbstractGrabber implements FrameGrabber {
 		// Check property for user-specified number of buffers - otherwise use
 		// 4.
 		nbV4LBuffers = (System.getProperty("v4l4j.num_driver_buffers") != null) ? Integer.parseInt(System.getProperty("v4l4j.num_driver_buffers")) : 4;
-		videoFrames = new Vector<BaseVideoFrame>();
-		availableVideoFrames = new Vector<BaseVideoFrame>();
+		videoFrames = new Vector<BaseVideoFrame>(nbV4LBuffers);
+		availableVideoFrames = new Vector<BaseVideoFrame>(nbV4LBuffers);
 		pushSource = null;
 		threadFactory = factory;
 	}

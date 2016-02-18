@@ -33,7 +33,7 @@ import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
  * @author gilles
  *
  */
-class BaseVideoFrame implements VideoFrame {
+public class BaseVideoFrame implements VideoFrame {
 	protected int frameLength;
 	protected AbstractGrabber frameGrabber;
 	protected byte frameBuffer[];

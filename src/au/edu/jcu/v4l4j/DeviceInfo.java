@@ -164,7 +164,7 @@ public class DeviceInfo {
 	/**
 	 * a pointer to a C struct v4l4j_device
 	 */
-	private long object;
+	private final long object;
 
 	/**
 	 * whether the device info has been released
