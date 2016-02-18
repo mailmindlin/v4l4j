@@ -140,7 +140,7 @@ class PushSource implements Runnable {
 				// and deliver it to the callback object
 				try {
 					callback.nextFrame(frame);
-				} catch (Throwable t) {
+				} catch (Exception t) {
 				} // ignore any exception thrown by the callback
 			} catch (Throwable t) {
 				// Received an exception. If we are in the middle of a capture
