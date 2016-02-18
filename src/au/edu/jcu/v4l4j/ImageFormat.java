@@ -45,7 +45,8 @@ package au.edu.jcu.v4l4j;
  * See the {@link ImageFormatList} documentation for more information.
  * 
  * @see ImageFormatList
- * @author gilles
+ * @see ImagePalette
+ * @author gilles, mailmindlin
  *
  */
 public class ImageFormat {
@@ -53,7 +54,7 @@ public class ImageFormat {
 	/**
 	 * The name of this format
 	 */
-	private String name;
+	private ImagePalette palette;
 
 	/**
 	 * the libvideo Id for this format
@@ -78,8 +79,8 @@ public class ImageFormat {
 	 * @param o
 	 *            a C pointer to a struct v4l4j_device
 	 */
-	ImageFormat(String n, int i, long o) {
-		name = n;
+	ImageFormat(String name, int i, long o) {
+		this.palette = ImagePalette.values()[i];
 		libvideoID = i;
 		resolutions = new ResolutionInfo(i, o);
 	}
@@ -102,7 +103,15 @@ public class ImageFormat {
 	 * @return the name of this format
 	 */
 	public String getName() {
-		return name;
+		return this.palette.toString();
+	}
+	
+	/**
+	 * Get the palette for this format
+	 * @return the palette for this ImageFormat
+	 */
+	public ImagePalette getPalette() {
+		return this.palette;
 	}
 
 	/**
@@ -120,7 +129,7 @@ public class ImageFormat {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + libvideoID;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + ((palette == null) ? 0 : palette.hashCode());
 		return result;
 	}
 
@@ -135,20 +144,20 @@ public class ImageFormat {
 		ImageFormat other = (ImageFormat) obj;
 		if (libvideoID != other.libvideoID)
 			return false;
-		if (name == null) {
-			if (other.name != null)
+		if (palette == null) {
+			if (other.palette != null)
 				return false;
-		} else if (!name.equals(other.name))
+		} else if (!palette.equals(other.palette))
 			return false;
 		return true;
 	}
 
 	@Override
 	public String toString() {
-		return name + " - " + libvideoID;
+		return palette + " - " + libvideoID;
 	}
 
 	public String toNiceString() {
-		return name + " - " + libvideoID + " - " + resolutions;
+		return palette + " - " + libvideoID + " - " + resolutions;
 	}
 }
