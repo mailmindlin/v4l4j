@@ -151,8 +151,7 @@ class PushSource implements Runnable {
 				// e.printStackTrace();
 				try {
 					if (frameGrabber.isStarted())
-						callback.exceptionReceived(
-								new V4L4JException("Exception received while grabbing next frame", t));
+						callback.exceptionReceived(new V4L4JException("Exception received while grabbing next frame", t));
 				} catch (Throwable t2) {
 					// either the frame grabber has been released or the
 					// callback raised
