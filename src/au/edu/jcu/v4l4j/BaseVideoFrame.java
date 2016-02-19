@@ -80,7 +80,7 @@ public class BaseVideoFrame implements VideoFrame {
 	 *            this frame capture timestamp in elapsed microseconds since
 	 *            startup
 	 */
-	final synchronized void prepareForDelivery(int length, int index, long sequence, long timeUs) {
+	protected synchronized void prepareForDelivery(int length, int index, long sequence, long timeUs) {
 		frameLength = length;
 		dataBuffer.setNewFrameSize(length);
 		sequenceNumber = sequence;
@@ -135,7 +135,7 @@ public class BaseVideoFrame implements VideoFrame {
 	 */
 	protected WritableRaster refreshRaster() {
 		if (raster == null)
-			throw new UnsupportedMethod("A raster can not be generated for this " + "image format ("
+			throw new UnsupportedMethod("A raster can not be generated for this image format ("
 					+ frameGrabber.getImageFormat().toString() + ")");
 
 		return raster;
