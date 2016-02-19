@@ -123,7 +123,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 
 	private native int enqueueBuffer(long o, int index);
 
-	private native int fillBuffer(long o, byte array[]) throws V4L4JException;
+	private native int fillBuffer(long o, byte[] array) throws V4L4JException;
 
 	private native void stop(long o);
 
@@ -223,7 +223,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	void init() throws V4L4JException {
 		state.init();
 
-		// Initialise libvideo and setup capture parameters
+		// Initialize libvideo and setup capture parameters
 		// Return value is the number of buffers mmaped into the driver's memory
 		nbV4LBuffers = doInit(object, nbV4LBuffers, width, height, channel, standard, format, type);
 		int bufferSize = getBufferSize(object);
@@ -475,7 +475,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	final void recycleVideoBuffer(BaseVideoFrame frame) {
 		// Make sure we are in started state
 		if (state.isStarted()) {
-			enqueueBuffer(object, frame.getBufferInex());
+			enqueueBuffer(object, frame.getBufferIndex());
 
 			synchronized (availableVideoFrames) {
 				availableVideoFrames.add(frame);
