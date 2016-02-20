@@ -135,13 +135,13 @@ public class ClientConnection {
 	 * 
 	 * @param ctrlList
 	 *            the list of control for which the HTML form should be created
+	 * @param jpegQuality quality of JPEG image
 	 * @param out
 	 *            the output stream
 	 * @throws IOException
 	 *             if there is an error writing out the stream
 	 */
-	public static void sendControlListPage(ControlList ctrlList, int jpegQuality, DataOutputStream out)
-			throws IOException {
+	public static void sendControlListPage(ControlList ctrlList, int jpegQuality, DataOutputStream out) throws IOException {
 		out.writeBytes(controlPageHTMLHeader);
 
 		// add a fake control to adjust the jpeg quality
@@ -202,11 +202,13 @@ public class ClientConnection {
 	 * 
 	 * @param ctrlList
 	 *            the control list
+	 * @param fg 
 	 * @param httpLine
 	 *            the http line to be parsed
 	 * @throws ControlException
 	 *             if there is an error setting the new value
 	 */
+	@SuppressWarnings("null")
 	public static void updateControlValue(ControlList ctrlList, JPEGFrameGrabber fg, String httpLine)
 			throws ControlException {
 		boolean hasValue = false;
@@ -249,7 +251,7 @@ public class ClientConnection {
 		// hasValue is false in this case. Check if ID is of type SWICTH
 		// and if hasValues == false, in which case, set it to true,
 		// and use default value of 0
-		if (hasID && !hasValue && (control.getType() == V4L4JConstants.CTRL_TYPE_SWITCH)) {
+		if (hasID && !hasValue && (control != null && control.getType() == V4L4JConstants.CTRL_TYPE_SWITCH)) {
 			hasValue = true;
 			value = 0;
 		}
@@ -298,7 +300,7 @@ public class ClientConnection {
 	 * @throws IOException
 	 *             if there was an I/O problem while trying to write to the
 	 *             control
-	 * @see writeSliderControl(DataOutputStream, int, int, int, int)
+	 * @see #writeSliderControl(DataOutputStream, int, int, int, int)
 	 */
 	protected static void writeSliderControl(DataOutputStream out, Control control) throws IOException {
 		int min = -1, max = -1, step = -1, value = -1;
@@ -341,7 +343,7 @@ public class ClientConnection {
 	 *            the minimum allowed value change for the control
 	 * @throws IOException
 	 *             if there was an I/O problem while writing to the socket
-	 * @see writeSliderControl(DataOutputStream, Control)
+	 * @see #writeSliderControl(DataOutputStream, Control)
 	 */
 	protected static void writeSliderControl(DataOutputStream out, int value, int min, int max, int step)
 			throws IOException {

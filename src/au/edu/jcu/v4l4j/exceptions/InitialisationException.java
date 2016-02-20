@@ -25,8 +25,8 @@
 package au.edu.jcu.v4l4j.exceptions;
 
 /**
- * This class of exception is thrown when the initialisation a Video4Linux
- * device fails. The initialisation is made of three steps: allocating memory,
+ * This class of exception is thrown when the initialization a Video4Linux
+ * device fails. The initialization is made of three steps: allocating memory,
  * opening the device file and checking the version of V4L. Opening the device
  * fail could fail if the device is already being used, or if the permissions
  * forbid it. Checking the V4L version will fail only if the device file belongs

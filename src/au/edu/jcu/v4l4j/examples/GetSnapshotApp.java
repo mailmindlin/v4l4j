@@ -77,14 +77,11 @@ public class GetSnapshotApp extends WindowAdapter implements CaptureCallback {
 
 	/**
 	 * Start a new GetSnapshot UI
-	 * 
-	 * @throws V4L4JException
-	 *             if there is a problem capturing from the given device
 	 */
 	public GetSnapshotApp() {
 		lastVideoFrame = null;
 
-		// initialise the video device and frame grabber
+		// initialize the video device and frame grabber
 		try {
 			initFrameGrabber();
 		} catch (V4L4JException e) {

@@ -62,17 +62,17 @@ public class JPEGFrameGrabber extends AbstractGrabber {
 	 * @param di
 	 *            the DeviceInfo of the VideoDevice who created this frame
 	 *            grabber
-	 * @param w
+	 * @param width
 	 *            the requested frame width
-	 * @param h
+	 * @param height
 	 *            the requested frame height
-	 * @param ch
+	 * @param channel
 	 *            the input index, as returned by {@link InputInfo#getIndex()}
 	 * @param std
 	 *            the video standard, as returned by
 	 *            {@link InputInfo#getSupportedStandards()} (see
 	 *            V4L4JConstants).
-	 * @param q
+	 * @param quality
 	 *            the JPEG image quality (the higher, the better the quality),
 	 *            between the range {@link V4L4JConstants#MIN_JPEG_QUALITY} and
 	 *            {@link V4L4JConstants#MAX_JPEG_QUALITY}.
@@ -81,14 +81,14 @@ public class JPEGFrameGrabber extends AbstractGrabber {
 	 * @param factory
 	 *            the thread factory to use when creating the push source
 	 */
-	JPEGFrameGrabber(DeviceInfo di, long o, int w, int h, int ch, int std, int q, Tuner t, ImageFormat imf,
+	JPEGFrameGrabber(DeviceInfo di, long o, int width, int height, int channel, int std, int quality, Tuner t, ImageFormat imf,
 			ThreadFactory factory) throws V4L4JException {
-		super(di, o, w, h, ch, std, t, imf, JPEG_GRABBER, factory);
-		quality = q;
+		super(di, o, width, height, channel, std, t, imf, JPEG_GRABBER, factory);
+		this.quality = quality;
 	}
 
 	/**
-	 * This method initialises the capture, and apply the capture parameters.
+	 * This method initializes the capture, and apply the capture parameters.
 	 * V4L may either adjust the height and width parameters to the closest
 	 * valid values or reject them altogether. If the values were adjusted, they
 	 * can be retrieved after calling {@link #init()} using {@link #getWidth()}

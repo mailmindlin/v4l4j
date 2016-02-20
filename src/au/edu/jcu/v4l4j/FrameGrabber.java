@@ -197,6 +197,7 @@ public interface FrameGrabber {
 	 * or may not be supported by the underlying hardware/driver. If not
 	 * supported, calling this method throws a {@link UnsupportedMethod}
 	 * exception.
+	 * @return interval
 	 * 
 	 * @throws UnsupportedMethod
 	 *             if setting the frame interval is not supported.
@@ -210,6 +211,8 @@ public interface FrameGrabber {
 
 	/**
 	 * This method adjusts the current video input number and video standard.
+	 * @param inputNumber new video input number
+	 * @param standard new video standard
 	 * 
 	 * @throws VideoStandardException
 	 *             if the chosen video standard is not supported

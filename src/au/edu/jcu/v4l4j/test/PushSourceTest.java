@@ -24,12 +24,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.CaptureCallback;
+import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.StateException;
-import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 public class PushSourceTest implements CaptureCallback {

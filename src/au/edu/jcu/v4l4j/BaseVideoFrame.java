@@ -118,7 +118,7 @@ public class BaseVideoFrame implements VideoFrame {
 	 * 
 	 * @return the V4L2 buffer index
 	 */
-	final int getBufferIndex() {
+	public final int getBufferIndex() {
 		return bufferIndex;
 	}
 

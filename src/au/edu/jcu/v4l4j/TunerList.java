@@ -68,6 +68,7 @@ public class TunerList {
 
 	/**
 	 * This method returns a tuner given its index.
+	 * @param i tuner index
 	 * 
 	 * @return the tuner matching the given index, null otherwise
 	 * @throws StateException

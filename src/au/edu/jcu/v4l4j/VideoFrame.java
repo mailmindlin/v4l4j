@@ -132,13 +132,13 @@ public interface VideoFrame {
 	 * {@link UnsupportedMethod} exception.
 	 * 
 	 * @return the image data encapsulated in a {@link Raster} object
-	 * @throws {@link
-	 *             UnsupportedMethod} exception if the image format this video
-	 *             frame uses cannot be encapsulated in a {@link Raster}.
+	 * @throws UnsupportedMethod
+	 *             exception if the image format this video frame uses cannot be
+	 *             encapsulated in a {@link Raster}.
 	 * @throws StateException
 	 *             if this video frame has been recycled already.
 	 */
-	public Raster getRaster();
+	public Raster getRaster() throws UnsupportedMethod;
 
 	/**
 	 * This method returns the image data encapsulated in a
@@ -147,13 +147,13 @@ public interface VideoFrame {
 	 * will throw a {@link UnsupportedMethod} exception.
 	 * 
 	 * @return the image data encapsulated in a {@link BufferedImage} object
-	 * @throws {@link
-	 *             UnsupportedMethod} exception if the image format this video
-	 *             frame uses cannot be encapsulated in a {@link BufferedImage}.
+	 * @throws UnsupportedMethod
+	 *             if the image format this video frame uses cannot be
+	 *             encapsulated in a {@link BufferedImage}.
 	 * @throws StateException
 	 *             if this video frame has been recycled already.
 	 */
-	public BufferedImage getBufferedImage();
+	public BufferedImage getBufferedImage() throws UnsupportedMethod;
 
 	/**
 	 * This method marks this video frame as being no longer used, and ready to

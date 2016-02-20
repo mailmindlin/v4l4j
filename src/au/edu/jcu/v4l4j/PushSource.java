@@ -48,11 +48,12 @@ class PushSource implements Runnable {
 	 * 
 	 * @param grabber
 	 *            the {@link FrameGrabber} instance on which this push source
-	 *            will repeatedly call {@link FrameGrabber#getVideoFrame()}.
+	 *            will repeatedly call {@link AbstractGrabber#getNextVideoFrame()}.
 	 * @param callback
 	 *            an object implementing the {@link CaptureCallback} interface
 	 *            to which the frames will be delivered through the
 	 *            {@link CaptureCallback#nextFrame(VideoFrame)}.
+	 * @param factory 
 	 */
 	public PushSource(AbstractGrabber grabber, CaptureCallback callback, ThreadFactory factory) {
 		if ((grabber == null) || (callback == null))
@@ -67,6 +68,8 @@ class PushSource implements Runnable {
 	/**
 	 * This method instructs this source to start the capture and to push to the
 	 * captured frame to the {@link CaptureCallback}.
+	 * @return capture thread ID
+	 * @throws V4L4JException 
 	 * 
 	 * @throws StateException
 	 *             if the capture has already been started

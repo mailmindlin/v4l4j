@@ -102,6 +102,7 @@ public class ControlList {
 
 	/**
 	 * This method returns a control given its name.
+	 * @param n name of control
 	 * 
 	 * @return the control matching the given name, null otherwise
 	 * @throws StateException

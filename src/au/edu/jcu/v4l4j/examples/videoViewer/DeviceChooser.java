@@ -31,6 +31,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 
 import javax.swing.BorderFactory;
@@ -59,7 +61,7 @@ public class DeviceChooser extends WindowAdapter implements ActionListener {
 
 	private JFrame frame;
 	private JPanel mainPanel;
-	private JComboBox deviceFiles;
+	private JComboBox<?> deviceFiles;
 	private DeviceInfoPane info;
 	private int width, height;
 
@@ -69,6 +71,8 @@ public class DeviceChooser extends WindowAdapter implements ActionListener {
 	 * @param dev
 	 *            the full path to a v4l device file, or null to try and
 	 *            autodetect some.
+	 * @param w 
+	 * @param h 
 	 */
 	public DeviceChooser(String dev, int w, int h) {
 		frame = new JFrame("V4L device file selection");
@@ -85,9 +89,9 @@ public class DeviceChooser extends WindowAdapter implements ActionListener {
 				System.out.println("No video devices detected");
 				return;
 			}
-			deviceFiles = new JComboBox(deviceList);
+			deviceFiles = new JComboBox<Object>(deviceList);
 		} else
-			deviceFiles = new JComboBox(new Object[] { dev });
+			deviceFiles = new JComboBox<Object>(new Object[] { dev });
 
 		initGUI();
 		actionPerformed(null);
@@ -186,7 +190,7 @@ public class DeviceChooser extends WindowAdapter implements ActionListener {
 		private JLabel nameValue, inputTypeValue, tunerTypeValue;
 		private JLabel nativeFmtValues, JPEGEncFmtsValues, RGBEncFmtsValues, BGREncFmtsValues, YUVEncFmtsValues,
 				YVUEncFmtsValues;
-		private JComboBox inputs, standards;
+		private JComboBox<String> inputs, standards;
 		private DeviceInfo di;
 		private VideoDevice vd;
 		private JButton rgbView, jpegView;
@@ -250,15 +254,16 @@ public class DeviceChooser extends WindowAdapter implements ActionListener {
 				tmp += tmp.equals("") ? f.getName() : " - " + f.getName();
 			YVUEncFmtsValues = new JLabel(tmp);
 
-			Vector<String> names = new Vector<String>();
-			for (InputInfo i : di.getInputs())
+			List<InputInfo> inputInfos = di.getInputs();
+			ArrayList<String> names = new ArrayList<>(inputInfos.size());
+			for (InputInfo i : inputInfos)
 				names.add(i.getName());
-			inputs = new JComboBox(names.toArray());
+			inputs = new JComboBox<String>((String[])names.toArray());
 
 			inputTypeValue = new JLabel();
 			tunerTypeValue = new JLabel();
 
-			standards = new JComboBox();
+			standards = new JComboBox<String>();
 
 			rgbView = new JButton(RGB_BUTTON_STR);
 			rgbView.addActionListener(this);
@@ -391,7 +396,7 @@ public class DeviceChooser extends WindowAdapter implements ActionListener {
 							tunerTypeValue.setText(i.getTunerInfo().getName() + " - "
 									+ (i.getTunerInfo().getType() == V4L4JConstants.TUNER_TYPE_RADIO ? "Radio" : "TV"));
 						} catch (NoTunerException e) {
-						} // shouldnt happen
+						} // shouldn't happen
 					}
 
 					standards.removeAllItems();

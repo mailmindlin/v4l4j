@@ -225,7 +225,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 
 		// Initialize libvideo and setup capture parameters
 		// Return value is the number of buffers mmaped into the driver's memory
-		nbV4LBuffers = doInit(object, nbV4LBuffers, width, height, channel, standard, format, type);
+		this.nbV4LBuffers = doInit(object, nbV4LBuffers, width, height, channel, standard, format, type);
 		int bufferSize = getBufferSize(object);
 
 		// Create the V4L4J data buffer objects
@@ -653,7 +653,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 		 * 
 		 * @throws StateException
 		 *             if released
-		 * @return
+		 * @return started
 		 */
 		public boolean isStarted() {
 			checkReleased();
@@ -662,8 +662,6 @@ abstract class AbstractGrabber implements FrameGrabber {
 
 		/**
 		 * Must be called with state object lock held
-		 * 
-		 * @return
 		 */
 		public void checkReleased() {
 			if (state == RELEASED || temp == RELEASED)

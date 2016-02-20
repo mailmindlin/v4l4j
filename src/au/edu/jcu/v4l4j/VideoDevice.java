@@ -587,10 +587,10 @@ public class VideoDevice {
 	 * let the author know so support for it can be added. See the README file
 	 * on how to submit reports.</b>
 	 * 
-	 * @param w
+	 * @param width
 	 *            the desired frame width. This value may be adjusted to the
 	 *            closest supported by hardware.
-	 * @param h
+	 * @param height
 	 *            the desired frame height. This value may be adjusted to the
 	 *            closest supported by hardware.
 	 * @param input
@@ -599,7 +599,7 @@ public class VideoDevice {
 	 *            the video standard, as returned by
 	 *            {@link InputInfo#getSupportedStandards()} (see
 	 *            {@link V4L4JConstants})
-	 * @param q
+	 * @param quality
 	 *            the JPEG image quality (the higher, the better the quality),
 	 *            within the range {@link V4L4JConstants#MIN_JPEG_QUALITY},
 	 *            {@link V4L4JConstants#MAX_JPEG_QUALITY}.
@@ -626,8 +626,6 @@ public class VideoDevice {
 	 *             file on how to submit reports.</b>
 	 * @throws CaptureChannelException
 	 *             if the given channel number value is not valid
-	 * @throws ImageDimensionException
-	 *             if the given image dimensions are not supported
 	 * @throws InitialisationException
 	 *             if the video device file can not be initialised
 	 * @throws V4L4JException
@@ -637,7 +635,7 @@ public class VideoDevice {
 	 *             before a JPEGFrameGrabber can be allocated, or if the
 	 *             <code>VideoDevice</code> has been released.
 	 */
-	public JPEGFrameGrabber getJPEGFrameGrabber(int w, int h, int input, int std, int q, ImageFormat imf)
+	public JPEGFrameGrabber getJPEGFrameGrabber(int width, int height, int input, int std, int quality, ImageFormat imf)
 			throws V4L4JException {
 		if (!supportJPEG || deviceInfo == null)
 			throw new ImageFormatException("This video device does not support JPEG-encoding of its frames.");
@@ -656,7 +654,7 @@ public class VideoDevice {
 		synchronized (this) {
 			if (fg == null) {
 				state.get();
-				fg = new JPEGFrameGrabber(deviceInfo, v4l4jObject, w, h, input, std, q, findTuner(input), imf,
+				fg = new JPEGFrameGrabber(deviceInfo, v4l4jObject, width, height, input, std, quality, findTuner(input), imf,
 						threadFactory);
 				try {
 					fg.init();
@@ -731,8 +729,6 @@ public class VideoDevice {
 	 *             README file on how to submit reports.</b>
 	 * @throws CaptureChannelException
 	 *             if the given channel number value is not valid
-	 * @throws ImageDimensionException
-	 *             if the given image dimensions are not supported
 	 * @throws InitialisationException
 	 *             if the video device file can not be initialised
 	 * @throws V4L4JException
@@ -794,8 +790,6 @@ public class VideoDevice {
 	 *             README file on how to submit reports.</b>
 	 * @throws CaptureChannelException
 	 *             if the given channel number value is not valid
-	 * @throws ImageDimensionException
-	 *             if the given image dimensions are not supported
 	 * @throws InitialisationException
 	 *             if the video device file can not be initialised
 	 * @throws V4L4JException
@@ -894,8 +888,6 @@ public class VideoDevice {
 	 *             README file on how to submit reports.</b>
 	 * @throws CaptureChannelException
 	 *             if the given channel number value is not valid
-	 * @throws ImageDimensionException
-	 *             if the given image dimensions are not supported
 	 * @throws InitialisationException
 	 *             if the video device file can not be initialised
 	 * @throws V4L4JException
@@ -957,10 +949,8 @@ public class VideoDevice {
 	 *             README file on how to submit reports.</b>
 	 * @throws CaptureChannelException
 	 *             if the given channel number value is not valid
-	 * @throws ImageDimensionException
-	 *             if the given image dimensions are not supported
 	 * @throws InitialisationException
-	 *             if the video device file can not be initialised
+	 *             if the video device file can not be initialized
 	 * @throws V4L4JException
 	 *             if there is an error applying capture parameters
 	 * @throws StateException
@@ -1056,8 +1046,6 @@ public class VideoDevice {
 	 *             README file on how to submit reports.</b>
 	 * @throws CaptureChannelException
 	 *             if the given channel number value is not valid
-	 * @throws ImageDimensionException
-	 *             if the given image dimensions are not supported
 	 * @throws InitialisationException
 	 *             if the video device file can not be initialised
 	 * @throws V4L4JException
@@ -1119,8 +1107,6 @@ public class VideoDevice {
 	 *             README file on how to submit reports.</b>
 	 * @throws CaptureChannelException
 	 *             if the given channel number value is not valid
-	 * @throws ImageDimensionException
-	 *             if the given image dimensions are not supported
 	 * @throws InitialisationException
 	 *             if the video device file can not be initialised
 	 * @throws V4L4JException
@@ -1218,8 +1204,6 @@ public class VideoDevice {
 	 *             README file on how to submit reports.</b>
 	 * @throws CaptureChannelException
 	 *             if the given channel number value is not valid
-	 * @throws ImageDimensionException
-	 *             if the given image dimensions are not supported
 	 * @throws InitialisationException
 	 *             if the video device file can not be initialised
 	 * @throws V4L4JException
@@ -1281,8 +1265,6 @@ public class VideoDevice {
 	 *             README file on how to submit reports.</b>
 	 * @throws CaptureChannelException
 	 *             if the given channel number value is not valid
-	 * @throws ImageDimensionException
-	 *             if the given image dimensions are not supported
 	 * @throws InitialisationException
 	 *             if the video device file can not be initialised
 	 * @throws V4L4JException
@@ -1381,10 +1363,8 @@ public class VideoDevice {
 	 *             README file on how to submit reports.</b>
 	 * @throws CaptureChannelException
 	 *             if the given channel number value is not valid
-	 * @throws ImageDimensionException
-	 *             if the given image dimensions are not supported
 	 * @throws InitialisationException
-	 *             if the video device file can not be initialised
+	 *             if the video device file can not be initialized
 	 * @throws V4L4JException
 	 *             if there is an error applying capture parameters
 	 * @throws StateException
@@ -1502,8 +1482,6 @@ public class VideoDevice {
 	 *             if the chosen video standard is not supported.
 	 * @throws CaptureChannelException
 	 *             if the given channel number value is not valid.
-	 * @throws ImageDimensionException
-	 *             if the given image dimensions are not supported.
 	 * @throws InitialisationException
 	 *             if the video device file can not be initialised.
 	 * @throws ImageFormatException
@@ -1638,7 +1616,6 @@ public class VideoDevice {
 		 * This method switched to the released state. This method will wait
 		 * until all users have finished.
 		 * 
-		 * @return whether we can switch to the released state or not
 		 */
 		@SuppressWarnings("unused")
 		public synchronized void release() {
@@ -1651,9 +1628,8 @@ public class VideoDevice {
 		 * @param wait
 		 *            whether we want to wait for potential users or not. If we
 		 *            do, calls to this method will block until all users are
-		 *            finished. If we dont (wait = false), this method will
+		 *            finished. If we don't (wait = false), this method will
 		 *            throw a ReleaseException if there are users.
-		 * @return whether we can switch to the released state or not
 		 * @throws ReleaseException
 		 *             if there are still some users and we have chosen not to
 		 *             wait

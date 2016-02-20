@@ -87,7 +87,7 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 public abstract class AbstractVideoViewer extends WindowAdapter implements CaptureCallback {
 	private JLabel video, fps, freq;
 	private JFrame f;
-	private JComboBox formats;
+	private JComboBox<?> formats;
 	private IntervalGUI intervals;
 	private JPanel controlPanel, captureButtons;
 	private JScrollPane controlScrollPane;
@@ -173,7 +173,7 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
 		captureButtons = new JPanel();
 		captureButtons.setLayout(new BoxLayout(captureButtons, BoxLayout.LINE_AXIS));
 
-		formats = new JComboBox(i);
+		formats = new JComboBox<Object>(i);
 		formats.setAlignmentX(Component.CENTER_ALIGNMENT);
 		Dimension d = new Dimension(100, 25);
 		formats.setSize(d);
@@ -476,7 +476,7 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
 	public class IntervalGUI implements ControlGUI {
 		protected JPanel contentPanel;
 		private FrameInterval intv;
-		private JComboBox discreteList;
+		private JComboBox<?> discreteList;
 		private JTextField stepwiseValue;
 
 		public IntervalGUI() {
@@ -494,7 +494,7 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
 				return;
 
 			if (intv.getType() == Type.DISCRETE) {
-				discreteList = new JComboBox(intv.getDiscreteIntervals().toArray());
+				discreteList = new JComboBox<Object>(intv.getDiscreteIntervals().toArray());
 				contentPanel.add(discreteList);
 			} else if (intv.getType() == Type.STEPWISE) {
 				stepwiseValue = new JTextField(8);
@@ -826,7 +826,7 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
 	}
 
 	public class MenuControl extends ControlModelGUI implements ActionListener {
-		private JComboBox box;
+		private JComboBox<?> box;
 		String[] names = new String[0];
 		Integer[] values = new Integer[0];
 
@@ -836,7 +836,7 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
 			values = (Integer[]) ctrl.getDiscreteValues().toArray(values);
 
 			int v = c.getDefaultValue();
-			box = new JComboBox(names);
+			box = new JComboBox<Object>(names);
 			try {
 				v = c.getValue();
 			} catch (ControlException e) {
