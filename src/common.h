@@ -29,7 +29,9 @@
 #include <jpeglib.h>
 
 #include "libvideo.h"
+#include "debug.h"
 
+#define LOG_FN_ENTER dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__)
 struct v4l4j_device;
 
 struct jpeg_data {
