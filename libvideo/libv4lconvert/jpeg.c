@@ -21,10 +21,7 @@
 #include "libv4lconvert-priv.h"
 #include "jpeg_memsrcdest.h"
 
-int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data,
-	u8 *src, int src_size, u8 *dest,
-	struct v4l2_format *fmt, unsigned int dest_pix_fmt, int flags)
-{
+int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data, u8 *src, int src_size, u8 *dest, struct v4l2_format *fmt, unsigned int dest_pix_fmt, int flags) {
 	int result = 0;
 	u8 *components[3];
 	unsigned int header_width, header_height;

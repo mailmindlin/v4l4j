@@ -22,14 +22,13 @@
 #include "debug.h"
 
 
-/*
+/**
  * returns the type of frame interval for a given frame size struct
  * (0: struct frame_size_discrete, 1: struct frame_size_continuous (min res),
  * 2: struct frame_size_continuous(max res) )
  * 0: unsupported, 1:discrete, 2: stepwise
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetFrameIntvType(
-		JNIEnv *e, jobject obj, jint type, jlong o) {
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetFrameIntvType(JNIEnv *e, jobject obj, jint type, jlong o) {
 	int t = 0;
 
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);

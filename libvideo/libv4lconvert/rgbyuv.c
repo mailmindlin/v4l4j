@@ -249,6 +249,13 @@ void v4lconvert_yuyv_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
 #endif
 }
 
+/**
+ * @param src source buffer
+ * @param dest output buffer
+ * @param width width of frame
+ * @param height height of frame
+ * @param yvu whether to output in yuv420 or yvu420
+ */
 void v4lconvert_yuyv_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height, int yvu) {
 	int i, j;
 	const u8 *src1;

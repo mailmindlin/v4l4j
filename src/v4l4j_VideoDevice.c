@@ -28,12 +28,12 @@
 #include "libvideo.h"
 #include "common.h"
 #include "debug.h"
-
+#include "jpeg.h"
 
 /*
  * Initialise a video device object
  */
-JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doInit(JNIEnv *e, jobject t, jstring dev){
+JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doInit(JNIEnv *e, jobject t, jstring dev) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d;
 	XMALLOC(d, struct v4l4j_device *, sizeof(struct v4l4j_device));
@@ -54,13 +54,13 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doInit(JNIEnv *e, jobj
 /*
  * Releases a video device object
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doRelease(JNIEnv *e, jobject t, jlong o){
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doRelease(JNIEnv *e, jobject t, jlong o) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
 	int ret;
 
 	if ((ret = close_device(d->vdev)) !=0 ) {
-		if (ret== LIBVIDEO_ERR_CAPTURE_IN_USE){
+		if (ret == LIBVIDEO_ERR_CAPTURE_IN_USE){
 			dprint(LOG_LIBVIDEO, "[V4L4J] Error closing video_device - capture in progress\n");
 			THROW_EXCEPTION(e, RELEASE_EXCP, "Error closing video device, capture in progress");
 		} else if (ret == LIBVIDEO_ERR_INFO_IN_USE){
@@ -77,7 +77,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doRelease(JNIEnv *e, jo
 	XFREE(d);
 }
 
-static jintArray get_values(JNIEnv *e, struct control *l){
+static jintArray get_values(JNIEnv *e, struct control *l) {
 	int i,values[l->count_menu];
 	jintArray values_array = (*e)->NewIntArray(e, l->count_menu);
 

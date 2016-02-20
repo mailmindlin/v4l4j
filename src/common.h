@@ -56,7 +56,7 @@ enum output_format {
 	OUTPUT_BGR24,
 	OUTPUT_YUV420,
 	OUTPUT_YVU420
-} ;
+};
 
 
 struct v4l4j_device {

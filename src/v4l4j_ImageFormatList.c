@@ -29,17 +29,13 @@
 #include "common.h"
 #include "debug.h"
 
-static int add_format(JNIEnv *e, jobject vector, jmethodID add_method,
-		jclass format_class,jmethodID format_ctor, int index,
-		struct v4l4j_device *d){
+static int add_format(JNIEnv *e, jobject vector, jmethodID add_method, jclass format_class, jmethodID format_ctor, int index, struct v4l4j_device *d){
 	jobject obj;
 	obj = (*e)->NewObject(e,
 			format_class,
 			format_ctor,
-			(*e)->NewStringUTF(e,
-					(const char *)libvideo_palettes[index].name
-					)
-			, index,
+			(*e)->NewStringUTF(e, (const char *)libvideo_palettes[index].name),
+			index,
 			(jlong) (uintptr_t) d
 			);
 	if(obj==NULL){
@@ -51,9 +47,7 @@ static int add_format(JNIEnv *e, jobject vector, jmethodID add_method,
 	return 0;
 }
 
-static int create_JPEG_list(JNIEnv *e, struct v4l4j_device *d,
-		jobject formats, jmethodID add_method, jclass format_class,
-		jmethodID format_ctor ){
+static int create_JPEG_list(JNIEnv *e, struct v4l4j_device *d, jobject formats, jmethodID add_method, jclass format_class, jmethodID format_ctor ) {
 	int i, j;
 	struct device_info *di = d->vdev->info;
 	int jpeg_conv_formats[] = JPEG_CONVERTIBLE_FORMATS;
@@ -62,7 +56,7 @@ static int create_JPEG_list(JNIEnv *e, struct v4l4j_device *d,
 
 	/* Populates the JPEGformats list*/
 
-	for(i=0; i<di->nb_palettes; i++){
+	for(i=0; i<di->nb_palettes; i++) {
 		if(di->palettes[i].index==JPEG && !di->palettes[i].raw_palettes){
 			//if there is native JPEG format, add it
 			dprint(LOG_V4L4J,
@@ -94,9 +88,7 @@ static int create_JPEG_list(JNIEnv *e, struct v4l4j_device *d,
 	return 0;
 }
 
-static int create_RGB_list(JNIEnv *e, struct v4l4j_device *d,
-		jobject formats, jmethodID add_method, jclass format_class,
-		jmethodID format_ctor ){
+static int create_RGB_list(JNIEnv *e, struct v4l4j_device *d, jobject formats, jmethodID add_method, jclass format_class, jmethodID format_ctor ) {
 	int i, j;
 	struct device_info *di = d->vdev->info;
 

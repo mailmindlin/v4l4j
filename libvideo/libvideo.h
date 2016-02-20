@@ -503,8 +503,7 @@ int close_device(struct video_device *);
 //opens the device file, checks what version of v4l the device supports,
 //and whether capture and streaming are supported. Then creates the V4L
 //control list. Arguments: device file, width, height, channel, std, nb_buf
-struct capture_device *init_capture_device(struct video_device *, int, int,
-		int, int, int);
+struct capture_device *init_capture_device(struct video_device *, int, int, int, int, int);
 
 
 /*
