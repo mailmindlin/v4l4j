@@ -63,10 +63,10 @@ struct v4lconvert_encoder_series {
 	GENERATE_CONVERTER_SD_SF_2F(id + 1, (fn), (src_fmt_1), (dst_fmt_1), 1)
 
 #define GENERATE_CONVERTER_SD_SF_2F_x4(id, fn, src_fmt_0, src_fmt_1, dst_fmt_0, dst_fmt_1) \
-	GENERATE_CONVERTER_SD_SF_2F((id + 0), (fn), (src_fmt_0), (dst_fmt_0), 0, 0),\
-	GENERATE_CONVERTER_SD_SF_2F((id + 1), (fn), (src_fmt_1), (dst_fmt_0), 1, 0),\
-	GENERATE_CONVERTER_SD_SF_2F((id + 2), (fn), (src_fmt_0), (dst_fmt_1), 0, 1),\
-	GENERATE_CONVERTER_SD_SF_2F((id + 3), (fn), (src_fmt_1), (dst_fmt_1), 1, 1)
+	GENERATE_CONVERTER_SD_SF_2F((id) + 0, (fn), (src_fmt_0), (dst_fmt_0), 0, 0),\
+	GENERATE_CONVERTER_SD_SF_2F((id) + 1, (fn), (src_fmt_1), (dst_fmt_0), 1, 0),\
+	GENERATE_CONVERTER_SD_SF_2F((id) + 2, (fn), (src_fmt_0), (dst_fmt_1), 0, 1),\
+	GENERATE_CONVERTER_SD_SF_2F((id) + 3, (fn), (src_fmt_1), (dst_fmt_1), 1, 1)
 
 struct v4lconvert_converter v4lconvert_converters[] = {
 	GENERATE_CONVERTER_SD_SF_2F_x4(0, v4lconvert_rgb24_to_yuv420,	RGB32,	BGR32,	YUV420,	YVU420),
