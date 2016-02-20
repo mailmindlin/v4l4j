@@ -52,26 +52,26 @@ struct v4lconvert_encoder_series {
 	struct v4lconvert_encoder** encoders;
 }
 
-#define GENERATE_CONVERTER_SDWH_0F(id, fn, src_fmt, dst_fmt) {.id = id, .fingerprint = fingerprint_sdwh_0f,.target.cvt_sdwh_0f = fn,.src_fmt = src_fmt,.dst_fmt = dst_fmt,.flag1 = NULL,.flag2 = NULL}
+#define GENERATE_CONVERTER_SDWH_0F(id, (fn), (src_fmt), (dst_fmt)) {.id = (id), .fingerprint = fingerprint_sdwh_0f, .target.cvt_sdwh_0f = (fn), .(src_fmt) = (src_fmt), .(dst_fmt) = (dst_fmt), .flag1 = NULL, .flag2 = NULL}
 
-#define GENERATE_CONVERTER_SDWH_1F(id, fn, src_fmt, dst_fmt, flag1) {.id = id,.fingerprint = fingerprint_sdwh_1f,.target.cvt_sdwh_1f = fn,.src_fmt = src_fmt,.dst_fmt = dst_fmt,.flag1 = flag1,.flag2 = NULL}
+#define GENERATE_CONVERTER_SDWH_1F(id, (fn), (src_fmt), (dst_fmt), flag1) {.id = (id), .fingerprint = fingerprint_sdwh_1f, .target.cvt_sdwh_1f = (fn), .(src_fmt) = (src_fmt), .(dst_fmt) = (dst_fmt), .flag1 = flag1, .flag2 = NULL}
 
-#define GENERATE_CONVERTER_SD_SF_2F(id, fn, src_fmt, dst_fmt, flag1, flag2) {.id = id,.fingerprint = fingerprint_sd_sf_2f,.target.cvt_sd_sf_2f = fn,.src_fmt = src_fmt,.dst_fmt = dst_fmt,.flag1 = flag1,.flag2 = flag2}
+#define GENERATE_CONVERTER_SD_SF_2F(id, (fn), (src_fmt), (dst_fmt), flag1, flag2) {.id = id, .fingerprint = fingerprint_sd_sf_2f, .target.cvt_sd_sf_2f = (fn), .(src_fmt) = (src_fmt), .(dst_fmt) = (dst_fmt), .flag1 = flag1, .flag2 = flag2}
 
-#define GENERATE_CONVERTER_SDWH_1F_x2(id, fn, src_fmt_0, src_fmt_1, dst_fmt_0, dst_fmt_1) \
-	GENERATE_CONVERTER_SD_SF_2F(id + 0, fn, src_fmt_0, dst_fmt_0, 0),\
-	GENERATE_CONVERTER_SD_SF_2F(id + 1, fn, src_fmt_1, dst_fmt_1, 1)
+#define GENERATE_CONVERTER_SDWH_1F_x2(id, (fn), (src_fmt)_0, (src_fmt)_1, (dst_fmt)_0, (dst_fmt)_1) \
+	GENERATE_CONVERTER_SD_SF_2F(id + 0, (fn), (src_fmt)_0, (dst_fmt)_0, 0),\
+	GENERATE_CONVERTER_SD_SF_2F(id + 1, (fn), (src_fmt)_1, (dst_fmt)_1, 1)
 
 #define GENERATE_CONVERTER_SD_SF_2F_x4(id, fn, src_fmt_0, src_fmt_1, dst_fmt_0, dst_fmt_1) \
-	GENERATE_CONVERTER_SD_SF_2F(id + 0, fn, src_fmt_0, dst_fmt_0, 0, 0),\
-	GENERATE_CONVERTER_SD_SF_2F(id + 1, fn, src_fmt_1, dst_fmt_0, 1, 0),\
-	GENERATE_CONVERTER_SD_SF_2F(id + 2, fn, src_fmt_0, dst_fmt_1, 0, 1),\
-	GENERATE_CONVERTER_SD_SF_2F(id + 3, fn, src_fmt_1, dst_fmt_1, 1, 1)
+	GENERATE_CONVERTER_SD_SF_2F((id + 0), (fn), (src_fmt_0), (dst_fmt_0), 0, 0),\
+	GENERATE_CONVERTER_SD_SF_2F((id + 1), (fn), (src_fmt_1), (dst_fmt_0), 1, 0),\
+	GENERATE_CONVERTER_SD_SF_2F((id + 2), (fn), (src_fmt_0), (dst_fmt_1), 0, 1),\
+	GENERATE_CONVERTER_SD_SF_2F((id + 3), (fn), (src_fmt_1), (dst_fmt_1), 1, 1)
 
 struct v4lconvert_converter v4lconvert_converters[] = {
 	GENERATE_CONVERTER_SD_SF_2F_x4(0, v4lconvert_rgb24_to_yuv420,	RGB32,	BGR32,	YUV420,	YVU420),
 	GENERATE_CONVERTER_SDWH_1F_x2(4, v4lconvert_yuv420_to_rgb24,	YUV420,	YVU420,	RGB24,	15),
-	GENERATE_CONVERTER_SDWH_1F_x2(6,	v4lconvert_yuv420_to_bgr24,	YUV420,	YVU420,	BGR24,	BGR24),
+	GENERATE_CONVERTER_SDWH_1F_x2(6, v4lconvert_yuv420_to_bgr24, YUV420,	YVU420,	BGR24,	BGR24),
 	GENERATE_CONVERTER_SDWH_0F(8,		v4lconvert_yuyv_to_rgb24,	YUYV,	RGB24),
 	GENERATE_CONVERTER_SDWH_0F(9,		v4lconvert_yuyv_to_bgr24,	YUYV,	BGR24),
 	GENERATE_CONVERTER_SDWH_1F_x2(10,	v4lconvert_yuyv_to_yuv420,	YUYV,	YUYV,	YUV420,	YVU420),
@@ -85,15 +85,15 @@ struct v4lconvert_converter v4lconvert_converters[] = {
 	//TODO add other converters
 };
 
-void v4lconvert_encoder_doconvert(struct v4lconvert_encoder* self, const u8* src, u8* dst) {
+void v4lconvert_encoder_doConvert(struct v4lconvert_encoder* self, const u8* src, u8* dst) {
 	
 }
 
 void v4lconvert_encoder_init(struct v4lconvert_encoder* encoder, int converterId, int width, int height) {
-	encoder->convert = v4lconvert_encoder_doconvert;
-	encoder->converter = v4lconvert_converters[converterId];
-	encoder->src_fmt = encoder->converter->src_fmt;
-	encoder->dst_fmt = encoder->converter->dst_fmt;
+	encoder->convert = v4lconvert_encoder_doConvert;
+	encoder->converter = &(v4lconvert_converters[converterId]);
+	encoder->(src_fmt) = encoder->converter->(src_fmt);
+	encoder->(dst_fmt) = encoder->converter->(dst_fmt);
 	encoder->width = width;
 	encoder->height = height;
 }
