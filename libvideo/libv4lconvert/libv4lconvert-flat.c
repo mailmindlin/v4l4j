@@ -15,12 +15,12 @@ typedef enum {
 	figerprint_sdwh_1f,
 	figerprint_sdwh_2f,
 	figerprint_sd_sf_1f,
-	figerprint_sd_sf_2f;
+	figerprint_sd_sf_2f
 } v4lconvert_fn_fingerprint;
 
 struct v4lconvert_converter {
 	int id;
-	enum v4lconvert_fn_fingerprint fingerprint;
+	v4lconvert_fn_fingerprint fingerprint;
 	union v4lconvert_convertion_fn {
 		void (*cvt_sdwh_0f) (const u8* src, u8* dst, u32 width, u32 height);
 		void (*cvt_sdwh_1f) (const u8* src, u8* dst, u32 width, u32 height, int flag1);
@@ -49,7 +49,7 @@ struct v4lconvert_encoder_series {
 	int num_converters;
 	int src_fmt;
 	int dst_fmt;
-	v4lconvert_encoder** encoders;
+	struct v4lconvert_encoder** encoders;
 }
 
 #define GENERATE_CONVERTER_SDWH_0F(id, fn, src_fmt, dst_fmt) \
@@ -92,7 +92,7 @@ struct v4lconvert_encoder_series {
 	GENERATE_CONVERTER_SD_SF_2F(id + 2, fn, src_fmt_0, dst_fmt_1, 0, 1),\
 	GENERATE_CONVERTER_SD_SF_2F(id + 3, fn, src_fmt_1, dst_fmt_1, 1, 1)
 
-const v4lconvert_converter[] v4lconvert_converters = {
+extern struct v4lconvert_converter v4lconvert_converters[] = {
 	GENERATE_CONVERTER_SD_SF_2F_x4	(0,		v4lconvert_rgb24_to_yuv420,	RGB32,	BGR32,	YUV420,	YVU420),
 	GENERAGE_CONVERTER_SDWH_1F_x2	(4,		v4lconvert_yuv420_to_rgb24,	YUV420,	YVU420,	RGB24,	RGB24),
 	GENERAGE_CONVERTER_SDWH_1F_x2	(6,		v4lconvert_yuv420_to_bgr24,	YUV420,	YVU420,	BGR24,	BGR24),

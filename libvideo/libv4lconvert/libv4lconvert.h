@@ -16,19 +16,8 @@
 # Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
  */
 
-#ifndef __LIBV4LCONVERT_PRIV_H
-#define __LIBV4LCONVERT_PRIV_H
-
-#include <stdio.h>
-#include <stdint.h>
-#include <sys/types.h>
-#include <jpeglib.h>
-#include <setjmp.h>
-#include "types.h"
-#include "control/libv4lcontrol.h"
-#include "processing/libv4lprocessing.h"
-#include "tinyjpeg.h"
-#include "pixfc-sse/pixfc-sse.h"
+#ifndef __LIBV4LCONVERT_H
+#define __LIBV4LCONVERT_H
 
 #define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
 
@@ -43,62 +32,7 @@
 #define V4LCONVERT_IS_UVC                0x01
 #define V4LCONVERT_USE_TINYJPEG          0x02
 
-struct v4lconvert_data {
-	int fd;
-	int flags; /* bitfield */
-	int control_flags; /* bitfield */
-	unsigned int no_formats;
-	int64_t supported_src_formats; /* bitfield */
-	char error_msg[V4LCONVERT_ERROR_MSG_SIZE];
-	struct jdec_private *tinyjpeg;
-	struct jpeg_error_mgr jerr;
-	int jerr_errno;
-	jmp_buf jerr_jmp_state;
-	struct jpeg_decompress_struct cinfo;
-	int cinfo_initialized;
-	struct PixFcSSE *pixfc;
-	struct v4l2_frmsizeenum framesizes[V4LCONVERT_MAX_FRAMESIZES];
-	unsigned int no_framesizes;
-	int bandwidth;
-	int fps;
-	int convert1_buf_size;
-	int convert2_buf_size;
-	int rotate90_buf_size;
-	int flip_buf_size;
-	int convert_pixfmt_buf_size;
-	u8 *convert1_buf;
-	u8 *convert2_buf;
-	u8 *rotate90_buf;
-	u8 *flip_buf;
-	u8 *convert_pixfmt_buf;
-	struct v4lcontrol_data *control;
-	struct v4lprocessing_data *processing;
-
-	/* Data for external decompression helpers code */
-	pid_t decompress_pid;
-	int decompress_in_pipe[2];  /* Data from helper to us */
-	int decompress_out_pipe[2]; /* Data from us to helper */
-
-	/* For mr97310a decoder */
-	int frames_dropped;
-
-	/* For cpia1 decoder */
-	u8 *previous_frame;
-};
-
-struct v4lconvert_pixfmt {
-	unsigned int fmt;	/* v4l2 fourcc */
-	int bpp;		/* bits per pixel, 0 for compressed formats */
-	int rgb_rank;		/* rank for converting to rgb32 / bgr32 */
-	int yuv_rank;		/* rank for converting to yuv420 / yvu420 */
-	int needs_conversion;
-};
-
-void v4lconvert_fixup_fmt(struct v4l2_format *fmt);
-
-u8 *v4lconvert_alloc_buffer(int needed, u8 **buf, int *buf_size);
-
-int v4lconvert_oom_error(struct v4lconvert_data *data);
+struct v4lconvert_data;
 
 void v4lconvert_rgb24_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt, int bgr, int yvu);
 
