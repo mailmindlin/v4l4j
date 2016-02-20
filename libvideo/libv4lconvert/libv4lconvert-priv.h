@@ -25,7 +25,6 @@
 #include <jpeglib.h>
 #include <setjmp.h>
 #include "types.h"
-#include "libv4lconvert.h"
 #include "control/libv4lcontrol.h"
 #include "processing/libv4lprocessing.h"
 #include "tinyjpeg.h"
