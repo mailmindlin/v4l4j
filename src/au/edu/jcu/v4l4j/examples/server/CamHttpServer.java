@@ -59,7 +59,7 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * @author gilles
  *
  */
-public class CamServer implements Runnable, CaptureCallback {
+public class CamHttpServer implements Runnable, CaptureCallback {
 	private ServerSocket serverSocket;
 	private VideoDevice videoDevice;
 	private JPEGFrameGrabber frameGrabber;
@@ -83,7 +83,7 @@ public class CamServer implements Runnable, CaptureCallback {
 		int port = (System.getProperty("test.port") != null) ? Integer.parseInt(System.getProperty("test.port")) : 8080;
 		int fps = (System.getProperty("test.fps") != null) ? Integer.parseInt(System.getProperty("test.fps")) : 15;
 
-		CamServer server = new CamServer(dev, w, h, port, fps);
+		CamHttpServer server = new CamHttpServer(dev, w, h, port, fps);
 		server.start();
 		System.out.println("Press enter to exit.");
 		System.in.read();
@@ -110,7 +110,7 @@ public class CamServer implements Runnable, CaptureCallback {
 	 * @throws IOException
 	 *             if a server socket on the given port cant be created
 	 */
-	public CamServer(String dev, int width, int height, int port, int fps) throws V4L4JException, IOException {
+	public CamHttpServer(String dev, int width, int height, int port, int fps) throws V4L4JException, IOException {
 		this.videoDevice = new VideoDevice(dev);
 		this.frameGrabber = videoDevice.getJPEGFrameGrabber(width, height, 0, 0, 80);
 		this.frameGrabber.setCaptureCallback(this);
@@ -208,8 +208,9 @@ public class CamServer implements Runnable, CaptureCallback {
 			requestedAction = parseLine(inStream);
 		} catch (IOException e) {
 			// error setting up in and out streams with this client, abort
-			inStream.close();
-			outStream.close();
+			if (inStream != null)
+				inStream.close();
+			if (outStream != null)
 			clientSocket.close();
 			return;
 		}

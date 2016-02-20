@@ -18,6 +18,7 @@ CONVERT_OBJS  = libv4lconvert.o tinyjpeg.o sn9c10x.o sn9c20x.o pac207.o \
 		control/libv4lcontrol.o processing/libv4lprocessing.o \
 		processing/whitebalance.o processing/autogain.o \
 		processing/gamma.o helper.o \
+		libv4lconvert-flat.o \
 		neon/rgbyuv_neon.o
 TARGETS       = $(CONVERT_LIB) libv4lconvert.pc ov511-decomp ov518-decomp
 INCLUDES      = ../include/libv4lconvert.h
