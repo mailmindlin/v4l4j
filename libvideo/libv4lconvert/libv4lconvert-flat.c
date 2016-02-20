@@ -52,15 +52,15 @@ struct v4lconvert_encoder_series {
 	struct v4lconvert_encoder** encoders;
 }
 
-#define GENERATE_CONVERTER_SDWH_0F(id, (fn), (src_fmt), (dst_fmt)) {.id = (id), .fingerprint = fingerprint_sdwh_0f, .target.cvt_sdwh_0f = (fn), .(src_fmt) = (src_fmt), .(dst_fmt) = (dst_fmt), .flag1 = NULL, .flag2 = NULL}
+#define GENERATE_CONVERTER_SDWH_0F(id, fn, src_fmt, dst_fmt) {.id = (id), .fingerprint = fingerprint_sdwh_0f, .target.cvt_sdwh_0f = (fn), .(src_fmt) = (src_fmt), .(dst_fmt) = (dst_fmt), .flag1 = NULL, .flag2 = NULL}
 
-#define GENERATE_CONVERTER_SDWH_1F(id, (fn), (src_fmt), (dst_fmt), flag1) {.id = (id), .fingerprint = fingerprint_sdwh_1f, .target.cvt_sdwh_1f = (fn), .(src_fmt) = (src_fmt), .(dst_fmt) = (dst_fmt), .flag1 = flag1, .flag2 = NULL}
+#define GENERATE_CONVERTER_SDWH_1F(id, fn, src_fmt, dst_fmt, flag1) {.id = (id), .fingerprint = fingerprint_sdwh_1f, .target.cvt_sdwh_1f = (fn), .(src_fmt) = (src_fmt), .(dst_fmt) = (dst_fmt), .flag1 = flag1, .flag2 = NULL}
 
-#define GENERATE_CONVERTER_SD_SF_2F(id, (fn), (src_fmt), (dst_fmt), flag1, flag2) {.id = id, .fingerprint = fingerprint_sd_sf_2f, .target.cvt_sd_sf_2f = (fn), .(src_fmt) = (src_fmt), .(dst_fmt) = (dst_fmt), .flag1 = flag1, .flag2 = flag2}
+#define GENERATE_CONVERTER_SD_SF_2F(id, fn, src_fmt, dst_fmt, flag1, flag2) {.id = id, .fingerprint = fingerprint_sd_sf_2f, .target.cvt_sd_sf_2f = (fn), .(src_fmt) = (src_fmt), .(dst_fmt) = (dst_fmt), .flag1 = flag1, .flag2 = flag2}
 
-#define GENERATE_CONVERTER_SDWH_1F_x2(id, (fn), (src_fmt)_0, (src_fmt)_1, (dst_fmt)_0, (dst_fmt)_1) \
-	GENERATE_CONVERTER_SD_SF_2F(id + 0, (fn), (src_fmt)_0, (dst_fmt)_0, 0),\
-	GENERATE_CONVERTER_SD_SF_2F(id + 1, (fn), (src_fmt)_1, (dst_fmt)_1, 1)
+#define GENERATE_CONVERTER_SDWH_1F_x2(id, fn, src_fmt_0, src_fmt_1, dst_fmt_0, dst_fmt_1) \
+	GENERATE_CONVERTER_SD_SF_2F(id + 0, (fn), (src_fmt_0), (dst_fmt_0), 0),\
+	GENERATE_CONVERTER_SD_SF_2F(id + 1, (fn), (src_fmt_1), (dst_fmt_1), 1)
 
 #define GENERATE_CONVERTER_SD_SF_2F_x4(id, fn, src_fmt_0, src_fmt_1, dst_fmt_0, dst_fmt_1) \
 	GENERATE_CONVERTER_SD_SF_2F((id + 0), (fn), (src_fmt_0), (dst_fmt_0), 0, 0),\
