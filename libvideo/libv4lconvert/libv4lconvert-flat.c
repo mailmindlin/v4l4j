@@ -59,8 +59,8 @@ struct v4lconvert_encoder_series {
 #define GENERATE_CONVERTER_SD_SF_2F(id, fn, src_fmt, dst_fmt, flag1, flag2) {.id = id, .fingerprint = fingerprint_sd_sf_2f, .target.cvt_sd_sf_2f = (fn), .src_fmt = (src_fmt), .dst_fmt = (dst_fmt), .flag1 = flag1, .flag2 = flag2}
 
 #define GENERATE_CONVERTER_SDWH_1F_x2(id, fn, src_fmt_0, src_fmt_1, dst_fmt_0, dst_fmt_1) \
-	GENERATE_CONVERTER_SD_SF_2F(id + 0, (fn), (src_fmt_0), (dst_fmt_0), 0),\
-	GENERATE_CONVERTER_SD_SF_2F(id + 1, (fn), (src_fmt_1), (dst_fmt_1), 1)
+	GENERATE_CONVERTER_SD_SF_1F(id + 0, (fn), (src_fmt_0), (dst_fmt_0), 0),\
+	GENERATE_CONVERTER_SD_SF_1F(id + 1, (fn), (src_fmt_1), (dst_fmt_1), 1)
 
 #define GENERATE_CONVERTER_SD_SF_2F_x4(id, fn, src_fmt_0, src_fmt_1, dst_fmt_0, dst_fmt_1) \
 	GENERATE_CONVERTER_SD_SF_2F((id) + 0, (fn), (src_fmt_0), (dst_fmt_0), 0, 0),\
