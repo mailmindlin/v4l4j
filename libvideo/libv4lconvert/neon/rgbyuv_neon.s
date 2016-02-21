@@ -30,12 +30,13 @@ v4lconvert_neon_yuyv_to_rgb24:
 		lsr r2, r2, #16					@Shift r2>>16, so it contains Y1 and U
 		and r5, r4, #255				@Get U
 		and r3, r2, #255				@Get V
+		
+		mov r4, #128
+		qsub r5, r5, r4
+		qsub r3, r3, r4
+		
 		and r4, r4, #8					@Get Y2
 		lsr r2, r2, #8					@Get Y1
-		
-		qsub r5, r5, #128
-		qsub r3, r3, #128
-		
 		
 		@TODO finish
 		
