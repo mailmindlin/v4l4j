@@ -62,7 +62,7 @@
 				dprint(LOG_MEMALLOC, "[MEMALLOC]: allocated %lu bytes of type %s for var %s (%p).\n", (long unsigned int)size, #type, #var, (var));}\
 		} while (0)
 
-#define XCALLLOC(var, type, width, size)	\
+#define XCALLOC(var, type, width, size)	\
 		do { \
 			var = (type) calloc((width), (size)); \
 			if (!var) {dprint(LOG_MEMALLOC, "[MEMALLOC]: Can't allocate %lu of width %lu.\n", (long unsigned int) (size), (long unsigned int) (width));} \
