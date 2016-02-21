@@ -149,7 +149,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_d
 /**
  * 
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getConverterIds(JNIEnv* env, jobject self, jlong ptr, jArray out) {
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getConverterIds(JNIEnv* env, jobject self, jlong ptr, jintArray out) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct frame_encoder* encoder = mapEncoderPtr(ptr);
 	
@@ -158,7 +158,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_g
 		//array was null, so we're just goint to return the number of encoders
 		out_length = 0;
 	} else {
-		out_length = (*env)->GetArrayLength(out);
+		out_length = (*env)->GetArrayLength(env, out);
 	}
 	
 	int num_converters = 1;
