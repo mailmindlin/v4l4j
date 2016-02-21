@@ -44,7 +44,7 @@ struct frame_buffer {
 	unsigned int buffer_limit;
 	unsigned char lock;
 	unsigned char* buffer;
-}
+};
 
 struct frame_encoder {
 	void (*convert) (unsigned char*, unsigned char*);
@@ -62,7 +62,7 @@ struct frame_encoder {
 	} v4lenc;
 };
 
-static inline frame_encoder* mapEncoderPtr(jlong ptr) {
+static inline struct frame_encoder* mapEncoderPtr(jlong ptr) {
 	return (struct frame_encoder*) (uintptr_t) ptr;
 }
 
@@ -76,11 +76,14 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_
 	encoder->output_fmt = to;
 	encoder->width = width;
 	encoder->height = height;
-	encoder->jpeg_quality = NULL;
+	encoder->jpeg_quality = 101;
 	
-	encoder->is_series = TRUE;
-	XMALLOC(encoder->v4lenc.encoder, struct v4lconvert_encoder*, sizeof(struct v4lconvert_encoder));
-	v4lconvert_encoder_init(encoder->v4lenc.encoder, from, width, height);
+	encoder->is_series = FALSE;
+	
+	v4lconvert_encoder* v4lencoder;
+	XMALLOC(v4lencoder, struct v4lconvert_encoder*, sizeof(struct v4lconvert_encoder));
+	v4lconvert_encoder_init(v4lencoder, from, width, height);
+	encoder->v4lenc.encoder = v4lencoder;
 	
 	return (uintptr_t) encoder;
 }
