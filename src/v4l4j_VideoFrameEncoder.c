@@ -30,7 +30,7 @@
 #include "common.h"
 #include "debug.h"
 #include "libv4lconvert/libv4lconvert-priv.h"
-#include "libv4lconvert/libv4lconvert-flat.c"
+#include "libv4lconvert/libv4lconvert-flat.h"
 
 #ifndef TRUE
 #define TRUE 1

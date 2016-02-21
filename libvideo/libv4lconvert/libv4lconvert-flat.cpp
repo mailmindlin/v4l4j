@@ -57,7 +57,7 @@ struct v4lconvert_encoder_series {
 	int src_fmt;
 	int dst_fmt;
 	struct v4lconvert_encoder** encoders;
-}
+};
 
 #define GENERATE_CONVERTER_SDWH_0F(id, fn, src_fmt, dst_fmt) {(id), v4lconvert_convert_fn_fingerprint::sdwh_0f, {.cvt_sdwh_0f = (fn)}, (src_fmt), (dst_fmt), NULL, NULL}
 
