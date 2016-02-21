@@ -6,7 +6,6 @@
 #ifndef __LIBVIDEO_LIBV4LCONVERT_LIBV4LCONVERT_FLAT_H
 #define __LIBVIDEO_LIBV4LCONVERT_LIBV4LCONVERT_FLAT_H
 
-extern enum v4lconvert_conversion_fingerprint;
 struct v4lconvert_converter;
 struct v4lconvert_encoder;
 struct v4lconvert_encoder_series;
