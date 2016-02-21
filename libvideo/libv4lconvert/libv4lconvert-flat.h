@@ -37,6 +37,8 @@ struct v4lconvert_converter {
 	int flag2;
 };
 
+typedef struct v4lconvert_converter v4lconvert_converter_t;
+
 struct v4lconvert_encoder {
 	void (*convert) (struct v4lconvert_encoder* self, const u8* src, u8* dst);
 	int src_fmt;
