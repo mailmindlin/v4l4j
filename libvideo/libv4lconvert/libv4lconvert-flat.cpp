@@ -1,5 +1,5 @@
 
-#include "libv4lconvert-flag.h"
+#include "libv4lconvert-flat.h"
 #include "libv4lconvert-priv.h"
 #include "types.h"
 #include "libvideo.h"
