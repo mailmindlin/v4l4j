@@ -27,5 +27,15 @@ public class AbstractVideoFrameEncoderTest {
 		Assert.assertEquals(numConverters, 1);
 //		fail("Not yet implemented");
 	}
-
+	
+	public static void main(String[] args) {
+		AbstractVideoFrameEncoder encoder = new AbstractVideoFrameEncoder(5, 7, null, null);
+		int numConverters = -encoder.getConverterIds(encoder.object, null);
+		System.out.println("# Converters: " + numConverters);
+		
+		int[] converterIds = new int[numConverters];
+		numConverters = encoder.getConverterIds(encoder.object, converterIds);
+		System.out.println("# Converters: " + numConverters);
+		System.out.println(Arrays.toString(converterIds));
+	}
 }
