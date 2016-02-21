@@ -110,13 +110,13 @@ void v4lconvert_encoder_doConvert(struct v4lconvert_encoder* self, const u8* src
 		case v4lconvert_conversion_fingerprint::sdwh_1f:
 			converter->target.cvt_sdwh_1f (src, dst, self->width, self->height, converter->flag1);
 			return;
-		case convert_conversion_fingerprint::sdwh_2f:
+		case v4lconvert_conversion_fingerprint::sdwh_2f:
 			converter->target.cvt_sdwh_2f (src, dst, self->width, self->height, converter->flag1, converter->flag2);
 			return;
-		case convert_conversion_fingerprint::sd_sf_1f:
+		case v4lconvert_conversion_fingerprint::sd_sf_1f:
 			converter->target.cvt_sdwh_2f (src, dst, self->v4l_src_fmt, converter->flag1);
 			return;
-		case convert_conversion_fingerprint::sd_sf_2f:
+		case v4lconvert_conversion_fingerprint::sd_sf_2f:
 			converter->target.cvt_sdwh_2f (src, dst, self->v4l_src_fmt, converter->flag1, converter->flag2);
 			return;
 	}
