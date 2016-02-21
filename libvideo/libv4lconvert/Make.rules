@@ -2,10 +2,10 @@ V4L_UTILS_VERSION=0.8.6
 
 # These ones can be overriden from the cmdline
 
-CFLAGS := -g -O1 -std=gnu++11
+CFLAGS := -g -O1 -std=gnu11
 CFLAGS += -Wall -Wpointer-arith
 CXXFLAGS := $(CFLAGS)
-CPPFLAGS += -D CONVERT_ARM_NEON
+CPPFLAGS += -D CONVERT_ARM_NEON -std=gnu++11
 CFLAGS += -Wstrict-prototypes -Wmissing-prototypes
 AFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -march=armv7-a -mapcs-reentrant -k --warn --statistics
 

@@ -1,29 +1,31 @@
 
+#include "libv4lconvert-flag.h"
 #include "libv4lconvert-priv.h"
 #include "types.h"
 #include "libvideo.h"
 
-#ifndef __LIBVIDEO_LIBV4LCONVERT_LIBV4LCONVERT_FLAT_C
-#define __LIBVIDEO_LIBV4LCONVERT_LIBV4LCONVERT_FLAT_C
+#ifndef __LIBVIDEO_LIBV4LCONVERT_LIBV4LCONVERT_FLAT_CPP
+#define __LIBVIDEO_LIBV4LCONVERT_LIBV4LCONVERT_FLAT_CPP
 
 #ifndef NULL
 #define NULL 0
 #endif
 
-struct v4lconvert_converter;
-struct v4lconvert_encoder;
-struct v4lconvert_encoder_series;
-void v4lconvert_encoder_doConvert(struct v4lconvert_encoder* self, const u8* src, u8* dst);
-void v4lconvert_encoder_init(struct v4lconvert_encoder* encoder, int converterId, int width, int height);
-
 enum v4lconvert_conversion_fingerprint {
+	/**
+	 * Value if this fingerprint is unset (struct's will defaultly initialize with this value)
+	 */
+	unset = 0,
+	/**
+	 * For fingerprint <code>void convert(const u8* src, u8* dst, u32 width, u32 height);</code>
+	 */
 	sdwh_0f,
 	sdwh_1f,
 	sd_sf_1f,
 	sd_sf_2f
 };
 
-struct v4lconvert_converter{
+struct v4lconvert_converter {
 	int id;
 	enum v4lconvert_conversion_fingerprint fingerprint;
 	union v4lconvert_convertion_fn {
@@ -43,7 +45,7 @@ struct v4lconvert_encoder {
 	void (*convert) (struct v4lconvert_encoder* self, const u8* src, u8* dst);
 	int src_fmt;
 	int dst_fmt;
-	struct v4l2_format* v4_src_fmt;
+	struct v4l2_format* v4l_src_fmt;
 	struct v4lconvert_converter* converter;
 	u32 width;
 	u32 height;
@@ -81,8 +83,6 @@ struct v4lconvert_encoder_series {
 	GENERATE_CONVERTER_SD_SF_2F(id + 2, (fn), (src_fmt_0), (dst_fmt_1), 0, 1),\
 	GENERATE_CONVERTER_SD_SF_2F(id + 3, (fn), (src_fmt_1), (dst_fmt_1), 1, 1)
 
-typedef struct v4lconvert_converter v4lconvert_converter_t;
-
 v4lconvert_converter_t v4lconvert_converters[10] = {
 	GENERATE_CONVERTER_SD_SF_2F_x4(0, v4lconvert_rgb24_to_yuv420, RGB32, BGR32, YUV420, YVU420),
 	GENERATE_CONVERTER_SDWH_1F_x2(4, v4lconvert_yuv420_to_rgb24, YUV420, YVU420, RGB24, RGB24),
@@ -101,16 +101,35 @@ v4lconvert_converter_t v4lconvert_converters[10] = {
 };
 
 void v4lconvert_encoder_doConvert(struct v4lconvert_encoder* self, const u8* src, u8* dst) {
-	
+	switch (self->fingerprint) {
+		case v4lconvert_conversion_fingerprint::sdwh_0f:
+			self->target.cvt_sdwh_0f (src, dst, self->width, self->height);
+			return;
+		case v4lconvert_conversion_fingerprint::sdwh_1f:
+			self->target.cvt_sdwh_1f (src, dst, self->width, self->height, self->flag1);
+			return;
+		case convert_conversion_fingerprint::sdwh_2f:
+			self->target.cvt_sdwh_2f (src, dst, self->width, self->height, self->flag1, self->flag2);
+			return;
+		case convert_conversion_fingerprint::sd_sf_1f:
+			self->target.cvt_sdwh_2f (src, dst, self->v4l_src_format, self->flag1);
+			return;
+		case convert_conversion_fingerprint::sd_sf_2f:
+			self->target.cvt_sdwh_2f (src, dst, self->v4l_src_format, self->flag1, self->flag2);
+			return;
+	}
 }
 
 void v4lconvert_encoder_init(struct v4lconvert_encoder* encoder, int converterId, int width, int height) {
 	encoder->convert = v4lconvert_encoder_doConvert;
 	encoder->converter = &(v4lconvert_converters[converterId]);
-	encoder->(src_fmt) = encoder->converter->(src_fmt);
-	encoder->(dst_fmt) = encoder->converter->(dst_fmt);
+	encoder->src_fmt = encoder->converter->src_fmt;
+	encoder->dst_fmt = encoder->converter->dst_fmt;
 	encoder->width = width;
 	encoder->height = height;
 }
 
+v4lconvert_converter_t* v4lconvert_converter_getConverterById(int converterId) {
+	return &(v4lconvert_converters[converterId]);
+}
 #endif
