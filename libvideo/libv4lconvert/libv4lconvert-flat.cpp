@@ -21,6 +21,7 @@ enum v4lconvert_conversion_fingerprint {
 	 */
 	sdwh_0f,
 	sdwh_1f,
+	sdwh_2f,
 	sd_sf_1f,
 	sd_sf_2f
 };
@@ -104,6 +105,9 @@ void v4lconvert_encoder_doConvert(struct v4lconvert_encoder* self, const u8* src
 	v4lconvert_converter_t* converter = self->converter;
 	
 	switch (converter->fingerprint) {
+		case v4lconvert_conversion_fingerprint::unset:
+			//TODO maybe throw error or something
+			return;
 		case v4lconvert_conversion_fingerprint::sdwh_0f:
 			converter->target.cvt_sdwh_0f (src, dst, self->width, self->height);
 			return;
@@ -118,6 +122,8 @@ void v4lconvert_encoder_doConvert(struct v4lconvert_encoder* self, const u8* src
 			return;
 		case v4lconvert_conversion_fingerprint::sd_sf_2f:
 			converter->target.cvt_sdwh_2f (src, dst, self->v4l_src_fmt, converter->flag1, converter->flag2);
+			return;
+		default:
 			return;
 	}
 }
