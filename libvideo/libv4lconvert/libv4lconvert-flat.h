@@ -6,6 +6,10 @@
 #ifndef __LIBVIDEO_LIBV4LCONVERT_LIBV4LCONVERT_FLAT_H
 #define __LIBVIDEO_LIBV4LCONVERT_LIBV4LCONVERT_FLAT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum v4lconvert_conversion_fingerprint {
 	/**
 	 * Value if this fingerprint is unset (struct's will defaultly initialize with this value)
@@ -60,5 +64,9 @@ struct v4lconvert_encoder_series {
 void v4lconvert_encoder_doConvert(struct v4lconvert_encoder* self, const u8* src, u8* dst);
 void v4lconvert_encoder_init(struct v4lconvert_encoder* encoder, int converterId, int width, int height);
 v4lconvert_converter_t* v4lconvert_converter_getConverterById(int converterId);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

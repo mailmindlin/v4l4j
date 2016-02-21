@@ -7,6 +7,8 @@
 #ifndef __LIBVIDEO_LIBV4LCONVERT_LIBV4LCONVERT_FLAT_CPP
 #define __LIBVIDEO_LIBV4LCONVERT_LIBV4LCONVERT_FLAT_CPP
 
+extern "C" {
+
 #ifndef N_A
 #define N_A 0
 #endif
@@ -79,7 +81,7 @@ void v4lconvert_encoder_doConvert(struct v4lconvert_encoder* self, const u8* src
 	}
 }
 
-extern "C" void v4lconvert_encoder_init(struct v4lconvert_encoder* encoder, int converterId, int width, int height) {
+void v4lconvert_encoder_init(struct v4lconvert_encoder* encoder, int converterId, int width, int height) {
 	encoder->convert = v4lconvert_encoder_doConvert;
 	encoder->converter = &(v4lconvert_converters[converterId]);
 	encoder->src_fmt = encoder->converter->src_fmt;
@@ -88,7 +90,9 @@ extern "C" void v4lconvert_encoder_init(struct v4lconvert_encoder* encoder, int 
 	encoder->height = height;
 }
 
-extern "C" v4lconvert_converter_t* v4lconvert_converter_getConverterById(int converterId) {
+v4lconvert_converter_t* v4lconvert_converter_getConverterById(int converterId) {
 	return &(v4lconvert_converters[converterId]);
+}
+
 }
 #endif
