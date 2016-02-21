@@ -79,7 +79,7 @@ void v4lconvert_encoder_doConvert(struct v4lconvert_encoder* self, const u8* src
 	}
 }
 
-void v4lconvert_encoder_init(struct v4lconvert_encoder* encoder, int converterId, int width, int height) {
+extern "C" void v4lconvert_encoder_init(struct v4lconvert_encoder* encoder, int converterId, int width, int height) {
 	encoder->convert = v4lconvert_encoder_doConvert;
 	encoder->converter = &(v4lconvert_converters[converterId]);
 	encoder->src_fmt = encoder->converter->src_fmt;
@@ -88,7 +88,7 @@ void v4lconvert_encoder_init(struct v4lconvert_encoder* encoder, int converterId
 	encoder->height = height;
 }
 
-v4lconvert_converter_t* v4lconvert_converter_getConverterById(int converterId) {
+extern "C" v4lconvert_converter_t* v4lconvert_converter_getConverterById(int converterId) {
 	return &(v4lconvert_converters[converterId]);
 }
 #endif
