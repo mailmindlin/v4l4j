@@ -95,27 +95,29 @@ v4lconvert_converter_t v4lconvert_converters[10] = {
 	GENERATE_CONVERTER_SDWH_0F(14, v4lconvert_uyvy_to_rgb24, UYVY, RGB24),
 	GENERATE_CONVERTER_SDWH_0F(15, v4lconvert_uyvy_to_bgr24, UYVY, BGR24),
 	GENERATE_CONVERTER_SDWH_1F_x2(16, v4lconvert_uyvy_to_yuv420, UYVY, UYVY, YUV420, YVU420),
-	GENERATE_CONVERTER_SDWH_0f(17, v4lconvert_swap_rgb, RGB24, BGR24),
-	GENERATE_CONVERTER_SDWH_0f(18, v4lconvert_swap_rgb, BGR24, RGB24)
+	GENERATE_CONVERTER_SDWH_0F(17, v4lconvert_swap_rgb, RGB24, BGR24),
+	GENERATE_CONVERTER_SDWH_0F(18, v4lconvert_swap_rgb, BGR24, RGB24)
 	//TODO add other converters
 };
 
 void v4lconvert_encoder_doConvert(struct v4lconvert_encoder* self, const u8* src, u8* dst) {
-	switch (self->fingerprint) {
+	v4lconvert_converter_t* converter = self->converter;
+	
+	switch (converter->fingerprint) {
 		case v4lconvert_conversion_fingerprint::sdwh_0f:
-			self->target.cvt_sdwh_0f (src, dst, self->width, self->height);
+			converter->target.cvt_sdwh_0f (src, dst, self->width, self->height);
 			return;
 		case v4lconvert_conversion_fingerprint::sdwh_1f:
-			self->target.cvt_sdwh_1f (src, dst, self->width, self->height, self->flag1);
+			converter->target.cvt_sdwh_1f (src, dst, self->width, self->height, converter->flag1);
 			return;
 		case convert_conversion_fingerprint::sdwh_2f:
-			self->target.cvt_sdwh_2f (src, dst, self->width, self->height, self->flag1, self->flag2);
+			converter->target.cvt_sdwh_2f (src, dst, self->width, self->height, converter->flag1, converter->flag2);
 			return;
 		case convert_conversion_fingerprint::sd_sf_1f:
-			self->target.cvt_sdwh_2f (src, dst, self->v4l_src_format, self->flag1);
+			converter->target.cvt_sdwh_2f (src, dst, self->v4l_src_fmt, converter->flag1);
 			return;
 		case convert_conversion_fingerprint::sd_sf_2f:
-			self->target.cvt_sdwh_2f (src, dst, self->v4l_src_format, self->flag1, self->flag2);
+			converter->target.cvt_sdwh_2f (src, dst, self->v4l_src_fmt, converter->flag1, converter->flag2);
 			return;
 	}
 }
