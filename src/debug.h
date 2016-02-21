@@ -102,6 +102,12 @@
 			else { CLEAR(*var);}\
 		} while (0)
 
+#define XCALLOC(var, type, width, size)	\
+		do { \
+			var = (type) calloc((width), (size)); \
+			if (!var) {fprintf(stderr,"[%s:%d %s] MEMALLOC: OUT OF MEMORY !!! Cant allocate %lu of width %lu.\n", __FILE__, __LINE__, __PRETTY_FUNCTION__, (long unsigned int) size, (long unsigned int) width); fflush(stderr);} \
+		} while (0)
+
 #define XMALLOC_ALIGNED(var, type, size)	\
 		do { \
 			if (posix_memalign((void**)&(var), 16, (size))!=0) {fprintf(stderr,"[%s:%d %s] MEMALLOC: OUT OF MEMORY !!! Cant allocate %lu bytes.\n", __FILE__, __LINE__, __PRETTY_FUNCTION__, (long unsigned int) size); fflush(stderr);} \
