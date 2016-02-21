@@ -24,17 +24,17 @@ enum v4lconvert_conversion_fingerprint {
 	sd_sf_1f,
 	sd_sf_2f
 };
-
+union v4lconvert_conversion_fn {
+	void (*cvt_sdwh_0f) (const u8* src, u8* dst, u32 width, u32 height);
+	void (*cvt_sdwh_1f) (const u8* src, u8* dst, u32 width, u32 height, int flag1);
+	void (*cvt_sdwh_2f) (const u8* src, u8* dst, u32 width, u32 height, int flag1, int flag2);
+	void (*cvt_sd_sf_1f) (const u8* src, u8* dst, const struct v4l2_format* src_fmt, int flag1);
+	void (*cvt_sd_sf_2f) (const u8* src, u8* dst, const struct v4l2_format* src_fmt, int flag1, int flag2);
+};
 struct v4lconvert_converter {
 	int id;
 	enum v4lconvert_conversion_fingerprint fingerprint;
-	union v4lconvert_convertion_fn {
-		void (*cvt_sdwh_0f) (const u8* src, u8* dst, u32 width, u32 height);
-		void (*cvt_sdwh_1f) (const u8* src, u8* dst, u32 width, u32 height, int flag1);
-		void (*cvt_sdwh_2f) (const u8* src, u8* dst, u32 width, u32 height, int flag1, int flag2);
-		void (*cvt_sd_sf_1f) (const u8* src, u8* dst, const struct v4l2_format* src_fmt, int flag1);
-		void (*cvt_sd_sf_2f) (const u8* src, u8* dst, const struct v4l2_format* src_fmt, int flag1, int flag2);
-	} target;
+	union v4lconvert_conversion_fn target;
 	int src_fmt;
 	int dst_fmt;
 	int flag1;
@@ -59,7 +59,7 @@ struct v4lconvert_encoder_series {
 	struct v4lconvert_encoder** encoders;
 };
 
-#define GENERATE_CONVERTER_SDWH_0F(id, fn, src_fmt, dst_fmt) {(id), v4lconvert_convert_fn_fingerprint::sdwh_0f, {.cvt_sdwh_0f = (fn)}, (src_fmt), (dst_fmt), NULL, NULL}
+#define GENERATE_CONVERTER_SDWH_0F(id, fn, src_fmt, dst_fmt) {(id), v4lconvert_conversion_fingerprint::sdwh_0f, {.cvt_sdwh_0f = (fn)}, (src_fmt), (dst_fmt), NULL, NULL}
 
 #define GENERATE_CONVERTER_SDWH_1F(id, fn, src_fmt, dst_fmt, flag1) {(id), v4lconvert_conversion_fingerprint::sdwh_1f, {.cvt_sdwh_1f = (fn)}, (src_fmt), (dst_fmt), (flag1), NULL}
 
