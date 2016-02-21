@@ -178,7 +178,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_g
 	if (encoder->is_series) {
 		struct v4lconvert_encoder_series* v4lcvt_series = encoder->v4lenc.encoder_series;
 		for (int i=0; i < num_converters; i++)
-			converter_ids[i] = v4lcvt_series->encoders[i]->id;
+			converter_ids[i] = v4lcvt_series->encoders[i]->converter->id;
 	} else {
 		converter_ids[0] = encoder->v4lenc.encoder->converter->id;
 	}
