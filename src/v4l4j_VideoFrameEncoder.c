@@ -171,7 +171,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_g
 	jint* converter_ids;
 	XCALLOC(converter_ids, jint, out_length * sizeof(jint));
 	if (converter_ids == NULL)
-		THROW_EXCEPTION(env, JNI_EXCEP, "Unable to allocate memory.");
+		THROW_EXCEPTION(env, JNI_EXCP, "Unable to allocate memory.");
 	
 	if (encoder->is_series) {
 		struct v4lconvert_encoder_series* v4lcvt_series = encoder->v4lenc.encoder_series;
