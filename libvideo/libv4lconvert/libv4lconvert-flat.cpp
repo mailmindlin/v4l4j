@@ -84,7 +84,7 @@ struct v4lconvert_encoder_series {
 	GENERATE_CONVERTER_SD_SF_2F(id + 2, (fn), (src_fmt_0), (dst_fmt_1), 0, 1),\
 	GENERATE_CONVERTER_SD_SF_2F(id + 3, (fn), (src_fmt_1), (dst_fmt_1), 1, 1)
 
-v4lconvert_converter_t v4lconvert_converters[19] = {
+v4lconvert_converter_t v4lconvert_converters[20] = {
 	GENERATE_CONVERTER_SD_SF_2F_x4(0, v4lconvert_rgb24_to_yuv420, RGB32, BGR32, YUV420, YVU420),
 	GENERATE_CONVERTER_SDWH_1F_x2(4, v4lconvert_yuv420_to_rgb24, YUV420, YVU420, RGB24, RGB24),
 	GENERATE_CONVERTER_SDWH_1F_x2(6, v4lconvert_yuv420_to_bgr24, YUV420, YVU420, BGR24, BGR24),
@@ -96,8 +96,8 @@ v4lconvert_converter_t v4lconvert_converters[19] = {
 	GENERATE_CONVERTER_SDWH_0F(14, v4lconvert_uyvy_to_rgb24, UYVY, RGB24),
 	GENERATE_CONVERTER_SDWH_0F(15, v4lconvert_uyvy_to_bgr24, UYVY, BGR24),
 	GENERATE_CONVERTER_SDWH_1F_x2(16, v4lconvert_uyvy_to_yuv420, UYVY, UYVY, YUV420, YVU420),
-	GENERATE_CONVERTER_SDWH_0F(17, v4lconvert_swap_rgb, RGB24, BGR24),
-	GENERATE_CONVERTER_SDWH_0F(18, v4lconvert_swap_rgb, BGR24, RGB24)
+	GENERATE_CONVERTER_SDWH_0F(18, v4lconvert_swap_rgb, RGB24, BGR24),
+	GENERATE_CONVERTER_SDWH_0F(19, v4lconvert_swap_rgb, BGR24, RGB24)
 	//TODO add other converters
 };
 
