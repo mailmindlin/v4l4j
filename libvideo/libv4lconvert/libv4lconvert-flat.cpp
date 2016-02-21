@@ -7,8 +7,8 @@
 #ifndef __LIBVIDEO_LIBV4LCONVERT_LIBV4LCONVERT_FLAT_CPP
 #define __LIBVIDEO_LIBV4LCONVERT_LIBV4LCONVERT_FLAT_CPP
 
-#ifndef NULL
-#define NULL 0
+#ifndef N_A
+#define N_A 0
 #endif
 
 enum v4lconvert_conversion_fingerprint {
@@ -59,13 +59,13 @@ struct v4lconvert_encoder_series {
 	struct v4lconvert_encoder** encoders;
 };
 
-#define GENERATE_CONVERTER_SDWH_0F(id, fn, src_fmt, dst_fmt) {(id), v4lconvert_conversion_fingerprint::sdwh_0f, {.cvt_sdwh_0f = (fn)}, (src_fmt), (dst_fmt), NULL, NULL}
+#define GENERATE_CONVERTER_SDWH_0F(id, fn, src_fmt, dst_fmt) {(id), v4lconvert_conversion_fingerprint::sdwh_0f, {.cvt_sdwh_0f = (fn)}, (src_fmt), (dst_fmt), N_A, N_A}
 
-#define GENERATE_CONVERTER_SDWH_1F(id, fn, src_fmt, dst_fmt, flag1) {(id), v4lconvert_conversion_fingerprint::sdwh_1f, {.cvt_sdwh_1f = (fn)}, (src_fmt), (dst_fmt), (flag1), NULL}
+#define GENERATE_CONVERTER_SDWH_1F(id, fn, src_fmt, dst_fmt, flag1) {(id), v4lconvert_conversion_fingerprint::sdwh_1f, {.cvt_sdwh_1f = (fn)}, (src_fmt), (dst_fmt), (flag1), N_A}
 
 #define GENERATE_CONVERTER_SDWH_2F(id, fn, src_fmt, dst_fmt, flag1, flag2) {(id), v4lconvert_conversion_fingerprint::sdwh_1f, {.cvt_sdwh_1f = (fn)}, (src_fmt), (dst_fmt), (flag1), (flag2)}
 
-#define GENERATE_CONVERTER_SD_SF_1F(id, fn, src_fmt, dst_fmt, flag1) {(id), v4lconvert_conversion_fingerprint::sd_sf_1f, {.cvt_sd_sf_2f = (fn)}, (src_fmt), (dst_fmt), (flag1), NULL}
+#define GENERATE_CONVERTER_SD_SF_1F(id, fn, src_fmt, dst_fmt, flag1) {(id), v4lconvert_conversion_fingerprint::sd_sf_1f, {.cvt_sd_sf_2f = (fn)}, (src_fmt), (dst_fmt), (flag1), N_A}
 
 #define GENERATE_CONVERTER_SD_SF_2F(id, fn, src_fmt, dst_fmt, flag1, flag2) {(id), v4lconvert_conversion_fingerprint::sd_sf_2f, {.cvt_sd_sf_2f = (fn)}, (src_fmt), (dst_fmt), (flag1), (flag2)}
 
