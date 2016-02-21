@@ -44,7 +44,7 @@ OBJ := jpeg.o v4l4j_FrameGrabber.o v4l4j_ImageFormatList.o \
 
 INCLUDES := -I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ \
   -I$(LIBVIDEO_PATH) -I$(LIBVIDEO_PATH)/pixfc-sse -I.
-CFLAGS += $(INCLUDES) $(DBG) $(OPTIMISATION) -fPIC -fno-stack-protector
+CFLAGS += $(INCLUDES) $(DBG) $(OPTIMISATION) -fPIC -fno-stack-protector -std=gnu11
 
 LDFLAGS += -shared -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME)
 
