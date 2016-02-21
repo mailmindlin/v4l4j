@@ -26,7 +26,7 @@ v4lconvert_neon_yuyv_to_rgb24:
 	
 	.convert_yuyv_to_rgb24_x1:			@Loop to convert 1 macropixel at a time (slow)
 		ldrd r2, [r0], #4				@Load 1 macropixel (4 bytes)
-		and r4, r2, #65525				@Get r2 & (2^16 - 1), so it contains Y2 and V
+		@and r4, r2, #0xFFFF				@Get r2 & (2^16 - 1), so it contains Y2 and V
 		lsr r2, r2, #16					@Shift r2>>16, so it contains Y1 and U
 		and r5, r4, #255				@Get U
 		and r3, r2, #255				@Get V
