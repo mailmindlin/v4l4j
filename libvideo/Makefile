@@ -89,7 +89,7 @@ LIB := lib$(LIB_NAME).so
 TESTOBJ := test-capture.o dump-capture.o list-caps.o
 OBJ := v4l2-input.o v4l1-input.o libvideo.o pwc-probe.o gspca-probe.o \
   qc-probe.o fps-param-probe.o v4l1-query.o v4l2-query.o v4l1-tuner.o \
-  v4l2-tuner.o palettes.o
+  v4l2-tuner.o palettes.o libv4lconvert/libv4lconvert-flat.o
 
 CFLAGS += $(DBG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) \
   $(OPTIMISATION) -fPIC -I.

@@ -11,15 +11,15 @@
 #define N_A 0
 #endif
 
-#define GENERATE_CONVERTER_SDWH_0F(id, fn, src_fmt, dst_fmt) {(id), v4lconvert_conversion_fingerprint::sdwh_0f, {.cvt_sdwh_0f = (fn)}, (src_fmt), (dst_fmt), N_A, N_A}
+#define GENERATE_CONVERTER_SDWH_0F(id, fn, src_fmt, dst_fmt) {(id), sdwh_0f, {.cvt_sdwh_0f = (fn)}, (src_fmt), (dst_fmt), N_A, N_A}
 
-#define GENERATE_CONVERTER_SDWH_1F(id, fn, src_fmt, dst_fmt, flag1) {(id), v4lconvert_conversion_fingerprint::sdwh_1f, {.cvt_sdwh_1f = (fn)}, (src_fmt), (dst_fmt), (flag1), N_A}
+#define GENERATE_CONVERTER_SDWH_1F(id, fn, src_fmt, dst_fmt, flag1) {(id), sdwh_1f, {.cvt_sdwh_1f = (fn)}, (src_fmt), (dst_fmt), (flag1), N_A}
 
-#define GENERATE_CONVERTER_SDWH_2F(id, fn, src_fmt, dst_fmt, flag1, flag2) {(id), v4lconvert_conversion_fingerprint::sdwh_1f, {.cvt_sdwh_1f = (fn)}, (src_fmt), (dst_fmt), (flag1), (flag2)}
+#define GENERATE_CONVERTER_SDWH_2F(id, fn, src_fmt, dst_fmt, flag1, flag2) {(id), sdwh_1f, {.cvt_sdwh_1f = (fn)}, (src_fmt), (dst_fmt), (flag1), (flag2)}
 
-#define GENERATE_CONVERTER_SD_SF_1F(id, fn, src_fmt, dst_fmt, flag1) {(id), v4lconvert_conversion_fingerprint::sd_sf_1f, {.cvt_sd_sf_2f = (fn)}, (src_fmt), (dst_fmt), (flag1), N_A}
+#define GENERATE_CONVERTER_SD_SF_1F(id, fn, src_fmt, dst_fmt, flag1) {(id), sd_sf_1f, {.cvt_sd_sf_2f = (fn)}, (src_fmt), (dst_fmt), (flag1), N_A}
 
-#define GENERATE_CONVERTER_SD_SF_2F(id, fn, src_fmt, dst_fmt, flag1, flag2) {(id), v4lconvert_conversion_fingerprint::sd_sf_2f, {.cvt_sd_sf_2f = (fn)}, (src_fmt), (dst_fmt), (flag1), (flag2)}
+#define GENERATE_CONVERTER_SD_SF_2F(id, fn, src_fmt, dst_fmt, flag1, flag2) {(id), sd_sf_2f, {.cvt_sd_sf_2f = (fn)}, (src_fmt), (dst_fmt), (flag1), (flag2)}
 
 #define GENERATE_CONVERTER_SDWH_1F_x2(id, fn, src_fmt_0, src_fmt_1, dst_fmt_0, dst_fmt_1) \
 	GENERATE_CONVERTER_SDWH_1F(id    , (fn), (src_fmt_0), (dst_fmt_0), 0),\
@@ -56,22 +56,22 @@ void v4lconvert_encoder_doConvert(struct v4lconvert_encoder* self, const u8* src
 	v4lconvert_converter_t* converter = self->converter;
 	
 	switch (converter->fingerprint) {
-		case v4lconvert_conversion_fingerprint::unset:
+		case unset:
 			//TODO maybe throw error or something
 			return;
-		case v4lconvert_conversion_fingerprint::sdwh_0f:
+		case sdwh_0f:
 			converter->target.cvt_sdwh_0f (src, dst, self->width, self->height);
 			return;
-		case v4lconvert_conversion_fingerprint::sdwh_1f:
+		case sdwh_1f:
 			converter->target.cvt_sdwh_1f (src, dst, self->width, self->height, converter->flag1);
 			return;
-		case v4lconvert_conversion_fingerprint::sdwh_2f:
+		case sdwh_2f:
 			converter->target.cvt_sdwh_2f (src, dst, self->width, self->height, converter->flag1, converter->flag2);
 			return;
-		case v4lconvert_conversion_fingerprint::sd_sf_1f:
+		case sd_sf_1f:
 			converter->target.cvt_sd_sf_1f (src, dst, self->v4l_src_fmt, converter->flag1);
 			return;
-		case v4lconvert_conversion_fingerprint::sd_sf_2f:
+		case sd_sf_2f:
 			converter->target.cvt_sd_sf_2f (src, dst, self->v4l_src_fmt, converter->flag1, converter->flag2);
 			return;
 		default:
