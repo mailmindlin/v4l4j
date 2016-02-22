@@ -62,7 +62,7 @@
 				dprint(LOG_MEMALLOC, "[MEMALLOC]: allocated %lu bytes of type %s for var %s (%p).\n", (long unsigned int)size, #type, #var, (var));}\
 		} while (0)
 
-#define XCALLLOC(var, type, width, size)	\
+#define XCALLOC(var, type, width, size)	\
 		do { \
 			var = (type) calloc((width), (size)); \
 			if (!var) {dprint(LOG_MEMALLOC, "[MEMALLOC]: Can't allocate %lu of width %lu.\n", (long unsigned int) (size), (long unsigned int) (width));} \
@@ -100,6 +100,12 @@
 			var = (type) malloc(size); \
 			if (!var) {fprintf(stderr,"[%s:%d %s] MEMALLOC: OUT OF MEMORY !!! Cant allocate %lu bytes.\n", __FILE__, __LINE__, __PRETTY_FUNCTION__, (long unsigned int) size); fflush(stderr);} \
 			else { CLEAR(*var);}\
+		} while (0)
+
+#define XCALLOC(var, type, width, size)	\
+		do { \
+			var = (type) calloc((width), (size)); \
+			if (!var) {fprintf(stderr,"[%s:%d %s] MEMALLOC: OUT OF MEMORY !!! Cant allocate %lu of width %lu.\n", __FILE__, __LINE__, __PRETTY_FUNCTION__, (long unsigned int) size, (long unsigned int) width); fflush(stderr);} \
 		} while (0)
 
 #define XMALLOC_ALIGNED(var, type, size)	\

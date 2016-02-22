@@ -169,19 +169,21 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_g
 		return -num_converters;
 	
 	jint* converter_ids;
-	XCALLOC(converter_ids, jint, out_length * sizeof(jint));
-	if (converter_ids == NULL)
+	XCALLOC(converter_ids, jint*, sizeof(jint), out_length);
+	if (converter_ids == NULL) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Unable to allocate memory.");
+		return 0;
+	}
 	
 	if (encoder->is_series) {
 		struct v4lconvert_encoder_series* v4lcvt_series = encoder->v4lenc.encoder_series;
 		for (int i=0; i < num_converters; i++)
-			converter_ids[i] = vcvt_series->encoders[i]->id;
+			converter_ids[i] = v4lcvt_series->encoders[i]->converter->id;
 	} else {
 		converter_ids[0] = encoder->v4lenc.encoder->converter->id;
 	}
 	
-	(*env)->SetIntArrayRegion(env, out, 0, converter_ids, num_converters);
+	(*env)->SetIntArrayRegion(env, out, 0, num_converters, converter_ids);
 	
 	XFREE(converter_ids);
 	//TODO check that it was freed

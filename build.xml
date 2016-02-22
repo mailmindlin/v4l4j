@@ -331,6 +331,7 @@
 			<jvmarg value="-Dtest.channel=${test.channel}" />
 			<test name="au.edu.jcu.v4l4j.test.FrameGrabberTest" />
 			<test name="au.edu.jcu.v4l4j.test.PushSourceTest" />
+			<test name="au.edu.jcu.v4l4j.encoder.AbstractVideoFrameEncoderTest" />
 			<formatter type="plain" usefile="false" />
 			<classpath refid="test.classpath" />
 		</junit>

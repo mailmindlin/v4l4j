@@ -1,9 +1,14 @@
-*.o
 *.a
+*.d
+*.o
 *.pc
 *.so
+*.save
+*.so.0
 .metadata/**/*
-*.d
 /bin/
 .classpath
 .project
+classes/*
+libvideo/libv4lconvert/ov511-decomp
+libvideo/libv4lconvert/ov518-decomp
