@@ -4,6 +4,7 @@ import java.util.Vector;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+import au.edu.jcu.v4l4j.BaseVideoFrame;
 import au.edu.jcu.v4l4j.ImagePalette;
 import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.StateException;
@@ -47,8 +48,9 @@ public class AbstractVideoFrameEncoder implements VideoFrameEncoder {
 	 * @param object pointer to struct
 	 */
 	private native void doRelease(long object);
-	private native int getBufferCapacity(long o, int buffer);
-	private native int getBufferLimit(long o, int buffer);
+	protected native void setBufferCapacity(long o, int buffer, int capacity);
+	protected native int getBufferCapacity(long o, int buffer);
+	protected native int getBufferLimit(long o, int buffer);
 	/**
 	 * Put data into the encoder's buffer
 	 * @param o the object
@@ -124,8 +126,13 @@ public class AbstractVideoFrameEncoder implements VideoFrameEncoder {
 	}
 	
 	@Override
-	public VideoFrame encode(VideoFrame frame) throws V4L4JException {
-		// TODO Auto-generated method stub
-		return null;
+	public VideoFrame encode(BaseVideoFrame frame) throws V4L4JException {
+		AbstractConvertedVideoFrame outFrame = availableFrames.poll();
+		
+		this.putBuffer(this.object, frame.getBytes(), frame.getFrameLength());
+		this.doConvert(this.object);
+		int length = this.getBuffer(this.object, outFrame.getBytes());
+		outFrame.prepareForDelivery(length, 0, frame.getSequenceNumber(), frame.getCaptureTime());
+		return outFrame;
 	}
 }

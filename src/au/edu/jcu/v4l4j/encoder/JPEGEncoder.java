@@ -36,7 +36,7 @@ public class JPEGEncoder extends AbstractVideoFrameEncoder {
 		this.quality = quality;
 	}
 	@Override
-	public VideoFrame encode(VideoFrame frame) throws V4L4JException {
+	public VideoFrame encode(BaseVideoFrame frame) throws V4L4JException {
 		super.putBuffer(super.object, frame.getBytes(), frame.getFrameLength());
 		
 		AbstractConvertedVideoFrame output = getAvailableVideoFrame();

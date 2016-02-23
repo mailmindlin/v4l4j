@@ -78,6 +78,10 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_
 	encoder->height = height;
 	encoder->jpeg_quality = 101;
 	
+	//allocate buffers
+	XMALLOC(encoder->in_buffer, struct frame_buffer*, sizeof(struct frame_buffer));
+	XMALLOC(encoder->out_buffer, struct frame_buffer*, sizeof(struct frame_buffer));
+	
 	encoder->is_series = FALSE;
 	
 	struct v4lconvert_encoder* v4lencoder;
@@ -95,6 +99,14 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_d
 	
 	struct frame_encoder* encoder = mapEncoderPtr(ptr);
 	
+	if (encoder->in_buffer->buffer != NULL)
+		XFREE(encoder->in_buffer->buffer);
+	XFREE(encoder->in_buffer);
+	
+	if (encoder->out_buffer->buffer != NULL)
+		XFREE(encoder->out_buffer->buffer);
+	XFREE(encoder->out_buffer);
+	
 	if (!(encoder->is_series)) {
 		dprint(LOG_V4L4J, "[V4L4J] Freeing v4lconvert encoder\n");
 		XFREE(encoder->v4lenc.encoder);
@@ -104,6 +116,35 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_d
 	
 	dprint(LOG_V4L4J, "[V4L4J] Freeing frame encoder\n");
 	XFREE(encoder);
+}
+
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_setBufferCapacity(JNIEnv* env, jobject self, jlong ptr, jint bufferNum, jint capacity) {
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	
+	struct frame_encoder* encoder = mapEncoderPtr(ptr);
+	
+	struct frame_buffer* buffer;
+	if (bufferNum == 1) {
+		buffer = encoder->in_buffer;
+	} else if (bufferNum == 2) {
+		buffer = encoder->out_buffer;
+	} else {
+		THROW_EXCEPTION(env, JNI_EXCP, "Illegal buffer #");
+		return;
+	}
+	
+	if (buffer->lock) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Buffer is in use");
+		return;
+	}
+	buffer->lock = 1;
+	
+	if (buffer->buffer != NULL)
+		XFREE(buffer->buffer);
+	
+	XCALLOC(buffer->buffer, u8*, sizeof(u8), capacity);
+	
+	buffer->lock = 0;
 }
 
 /**
@@ -210,13 +251,28 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_d
 	
 	struct frame_encoder* encoder = mapEncoderPtr(ptr);
 	
+	//Lock buffers
+	if (encoder->in_buffer->lock) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Input buffer is in use");
+		return 0;
+	}
+	encoder->in_buffer->lock = 1;
+	if (encoder->out_buffer->lock) {
+		encoder->in_buffer->lock = 0;
+		THROW_EXCEPTION(env, JNI_EXCP, "Output buffer is in use");
+		return 0;
+	}
+	
 	if (encoder->is_series) {
 		struct v4lconvert_encoder_series* v4lencoders = encoder->v4lenc.encoder_series;
 		//TODO finish
 	} else {
 		struct v4lconvert_encoder* v4lencoder = encoder->v4lenc.encoder;
-		v4lencoder->convert(v4lencoder, encoder->in_buffer, encoder->out_buffer);
+		v4lencoder->convert(v4lencoder, encoder->in_buffer->buffer, encoder->out_buffer->buffer);
 	}
+	
+	encoder->in_buffer->lock = 0;
+	encoder->out_buffer->lock = 0;
 }
 /**
  * 

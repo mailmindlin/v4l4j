@@ -1,5 +1,6 @@
 package au.edu.jcu.v4l4j.encoder;
 
+import au.edu.jcu.v4l4j.BaseVideoFrame;
 import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
@@ -15,7 +16,7 @@ public interface VideoFrameEncoder extends AutoCloseable {
 	 * @return encoded frame
 	 * @throws V4L4JException
 	 */
-	VideoFrame encode(VideoFrame frame) throws V4L4JException;
+	VideoFrame encode(BaseVideoFrame frame) throws V4L4JException;
 	/**
 	 * Releases the native memory for this object
 	 */
