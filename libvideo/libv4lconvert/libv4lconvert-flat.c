@@ -107,7 +107,7 @@ unsigned int v4lconvert_converter_lookupConverterByConversion(unsigned int from,
 		if ((converter->src_fmt == from) && (converter->dst_fmt == to))
 			return i;
 	}
-	return NULL;
+	return N_A;
 }
 /**
  * Find a converter that does the conversion that you want
@@ -122,7 +122,7 @@ v4lconvert_converter_t* v4lconvert_converter_getConverterByConversion(unsigned i
 		if ((converter->src_fmt == from) && (converter->dst_fmt == to))
 			return converter;
 	}
-	return NULL;
+	return N_A;
 }
 
 #ifdef __cplusplus
