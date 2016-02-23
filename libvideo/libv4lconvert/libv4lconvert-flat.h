@@ -62,8 +62,8 @@ struct v4lconvert_encoder_series {
 };
 
 void v4lconvert_encoder_doConvert(struct v4lconvert_encoder* self, const u8* src, u8* dst);
-void v4lconvert_encoder_init(struct v4lconvert_encoder* encoder, int converterId, int width, int height);
-v4lconvert_converter_t* v4lconvert_converter_getConverterById(int converterId);
+void v4lconvert_encoder_init(struct v4lconvert_encoder* encoder, unsigned int converterId, unsigned int width, unsigned int height);
+v4lconvert_converter_t* v4lconvert_converter_getConverterById(unsigned int converterId);
 unsigned int v4lconvert_converter_lookupConverterByConversion(unsigned int from, unsigned int to);
 v4lconvert_converter_t* v4lconvert_converter_getConverterByConversion(unsigned int from, unsigned int to);
 

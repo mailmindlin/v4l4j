@@ -93,7 +93,7 @@ void v4lconvert_encoder_init(struct v4lconvert_encoder* encoder, unsigned int co
 	encoder->height = height;
 }
 
-v4lconvert_converter_t* v4lconvert_converter_getConverterById(int converterId) {
+v4lconvert_converter_t* v4lconvert_converter_getConverterById(unsigned int converterId) {
 	return &(v4lconvert_converters[converterId]);
 }
 
