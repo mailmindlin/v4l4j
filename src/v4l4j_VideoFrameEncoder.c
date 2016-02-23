@@ -29,6 +29,7 @@
 #include "libvideo-palettes.h"
 #include "common.h"
 #include "debug.h"
+#include "libv4lconvert/types.h"
 #include "libv4lconvert/libv4lconvert-priv.h"
 #include "libv4lconvert/libv4lconvert-flat.h"
 
@@ -40,22 +41,21 @@
 #endif
 
 struct frame_buffer {
-	unsigned int buffer_capacity;
-	unsigned int buffer_limit;
-	unsigned char lock;
-	unsigned char* buffer;
+	u32 buffer_capacity;
+	u32 buffer_limit;
+	u8 lock;
+	u8* buffer;
 };
 
 struct frame_encoder {
-	void (*convert) (unsigned char*, unsigned char*);
-	unsigned int input_fmt;
-	unsigned int output_fmt;
-	unsigned int width;
-	unsigned int height;
-	unsigned int jpeg_quality;
+	u32 input_fmt;
+	u32 output_fmt;
+	u32 width;
+	u32 height;
+	u32 jpeg_quality;
 	struct frame_buffer* in_buffer;
 	struct frame_buffer* out_buffer;
-	int is_series;
+	u8 is_series;
 	union {
 		struct v4lconvert_encoder* encoder;
 		struct v4lconvert_encoder_series* encoder_series;
@@ -110,6 +110,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_g
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	
 	struct frame_encoder* encoder = mapEncoderPtr(ptr);
+	
 	return -1;
 }
 
@@ -145,6 +146,8 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_d
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	
 	struct frame_encoder* encoder = mapEncoderPtr(ptr);
+	
+	encoder->convert(encoder, encoder->in_buffer, encoder->out_buffer);
 }
 /**
  * 

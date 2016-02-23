@@ -14,15 +14,15 @@ enum v4lconvert_conversion_fingerprint {
 	/**
 	 * Value if this fingerprint is unset (struct's will defaultly initialize with this value)
 	 */
-	unset = 0,
+	v4lconvert_conversion_fingerprint_unset = 0,
 	/**
 	 * For fingerprint <code>void convert(const u8* src, u8* dst, u32 width, u32 height);</code>
 	 */
-	sdwh_0f,
-	sdwh_1f,
-	sdwh_2f,
-	sd_sf_1f,
-	sd_sf_2f
+	v4lconvert_conversion_fingerprint_sdwh_0f,
+	v4lconvert_conversion_fingerprint_sdwh_1f,
+	v4lconvert_conversion_fingerprint_sdwh_2f,
+	v4lconvert_conversion_fingerprint_sd_sf_1f,
+	v4lconvert_conversion_fingerprint_sd_sf_2f
 };
 union v4lconvert_conversion_fn {
 	void (*cvt_sdwh_0f) (const u8* src, u8* dst, u32 width, u32 height);

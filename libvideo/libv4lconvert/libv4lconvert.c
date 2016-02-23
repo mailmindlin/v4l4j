@@ -218,8 +218,7 @@ int v4lconvert_supported_dst_fmt_only(struct v4lconvert_data *data)
 }
 
 /* See libv4lconvert.h for description of in / out parameters */
-int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt)
-{
+int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt) {
 	int i, no_faked_fmts = 0;
 	unsigned int faked_fmts[ARRAY_SIZE(supported_dst_pixfmts)];
 
