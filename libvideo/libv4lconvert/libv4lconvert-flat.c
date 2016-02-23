@@ -7,7 +7,9 @@
 #ifndef __LIBVIDEO_LIBV4LCONVERT_LIBV4LCONVERT_FLAT_CPP
 #define __LIBVIDEO_LIBV4LCONVERT_LIBV4LCONVERT_FLAT_CPP
 
+#ifdef __cplusplus
 extern "C" {
+#endif
 
 #ifndef N_A
 #define N_A 0
@@ -94,5 +96,8 @@ v4lconvert_converter_t* v4lconvert_converter_getConverterById(int converterId) {
 	return &(v4lconvert_converters[converterId]);
 }
 
+#ifdef __cplusplus
 }
+#endif
+
 #endif
