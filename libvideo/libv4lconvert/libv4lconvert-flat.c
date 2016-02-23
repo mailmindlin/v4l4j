@@ -39,7 +39,8 @@ extern "C" {
 	GENERATE_CONVERTER_SD_SF_2F(id + 2, (fn), (src_fmt_0), (dst_fmt_1), 0, 1),\
 	GENERATE_CONVERTER_SD_SF_2F(id + 3, (fn), (src_fmt_1), (dst_fmt_1), 1, 1)
 
-v4lconvert_converter_t v4lconvert_converters[20] = {
+#define NUM_CONVERTERS 20
+v4lconvert_converter_t v4lconvert_converters[NUM_CONVERTERS] = {
 	GENERATE_CONVERTER_SD_SF_2F_x4(0, v4lconvert_rgb24_to_yuv420, RGB32, BGR32, YUV420, YVU420),
 	GENERATE_CONVERTER_SDWH_1F_x2(4, v4lconvert_yuv420_to_rgb24, YUV420, YVU420, RGB24, RGB24),
 	GENERATE_CONVERTER_SDWH_1F_x2(6, v4lconvert_yuv420_to_bgr24, YUV420, YVU420, BGR24, BGR24),
@@ -83,7 +84,7 @@ void v4lconvert_encoder_doConvert(struct v4lconvert_encoder* self, const u8* src
 	}
 }
 
-void v4lconvert_encoder_init(struct v4lconvert_encoder* encoder, int converterId, int width, int height) {
+void v4lconvert_encoder_init(struct v4lconvert_encoder* encoder, unsigned int converterId, unsigned int width, unsigned int height) {
 	encoder->convert = v4lconvert_encoder_doConvert;
 	encoder->converter = &(v4lconvert_converters[converterId]);
 	encoder->src_fmt = encoder->converter->src_fmt;
@@ -94,6 +95,34 @@ void v4lconvert_encoder_init(struct v4lconvert_encoder* encoder, int converterId
 
 v4lconvert_converter_t* v4lconvert_converter_getConverterById(int converterId) {
 	return &(v4lconvert_converters[converterId]);
+}
+
+unsigned int v4lconvert_converter_lookupConverterByConversion(unsigned int from, unsigned int to) {
+	int i;
+	v4lconvert_converter_t* converter;
+	
+	//TODO use better lookup algorithm than O(n)
+	for (i = 0; i < NUM_CONVERTERS; i++) {
+		converter = &(v4lconvert_converters[converterId]);
+		if ((converter->src_fmt == from) && (converter->dst_fmt == to))
+			return i;
+	}
+	return NULL;
+}
+/**
+ * Find a converter that does the conversion that you want
+ */
+v4lconvert_converter_t* v4lconvert_converter_getConverterByConversion(unsigned int from, unsigned int to) {
+	int i;
+	v4lconvert_converter_t* converter;
+	
+	//TODO use better lookup algorithm than O(n)
+	for (i = 0; i < NUM_CONVERTERS; i++) {
+		converter = &(v4lconvert_converters[converterId]);
+		if ((converter->src_fmt == from) && (converter->dst_fmt == to))
+			return converter;
+	}
+	return NULL;
 }
 
 #ifdef __cplusplus

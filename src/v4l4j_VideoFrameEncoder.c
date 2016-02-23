@@ -82,7 +82,10 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_
 	
 	struct v4lconvert_encoder* v4lencoder;
 	XMALLOC(v4lencoder, struct v4lconvert_encoder*, sizeof(struct v4lconvert_encoder));
-	v4lconvert_encoder_init(v4lencoder, from, width, height);
+	
+	unsigned int converterId = v4lconvert_converter_lookupConverterByConversion(from, to);
+	v4lconvert_encoder_init(v4lencoder, converterId, width, height);
+	
 	encoder->v4lenc.encoder = v4lencoder;
 	
 	return (uintptr_t) encoder;
@@ -106,10 +109,31 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_d
 /**
  * 
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getBufferSize(JNIEnv* env, jobject self, jlong ptr) {
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getBufferCapacity(JNIEnv* env, jobject self, jlong ptr, jint buffer) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	
 	struct frame_encoder* encoder = mapEncoderPtr(ptr);
+	
+	if (buffer == 1)
+		return encoder->in_buffer->buffer_capacity;
+	
+	if (buffer == 2)
+		return encoder->out_buffer->buffer_capacity;
+	
+	return -1;
+}
+
+
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getBufferLimit(JNIEnv* env, jobject self, jlong ptr, jint buffer) {
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	
+	struct frame_encoder* encoder = mapEncoderPtr(ptr);
+	
+	if (buffer == 1)
+		return encoder->in_buffer->buffer_limit;
+	
+	if (buffer == 2)
+		return encoder->out_buffer->buffer_limit;
 	
 	return -1;
 }
@@ -133,13 +157,52 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_p
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	
 	struct frame_encoder* encoder = mapEncoderPtr(ptr);
+	
+	if (length > encoder->in_buffer->buffer_capacity) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Tried to store more data than can fit in the buffer");
+		return 0;
+	}
+	
+	//TODO use some atomic thing
+	if (encoder->in_buffer->lock) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Input buffer is in use");
+		return 0;
+	}
+	
+	encoder->in_buffer->lock = 1;
+	
+	(*env)->GetByteArrayRegion(env, buffer, 0, length, (jbyte*) (encoder->in_buffer->buffer));
+	
+	encoder->in_buffer->buffer_limit = length;
+		
+	encoder->in_buffer->lock = 0;
+	
+	//success
 }
 
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getBuffer (JNIEnv* env, jobject self, jlong ptr, jbyteArray buffer) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	
 	struct frame_encoder* encoder = mapEncoderPtr(ptr);
-	return -1;
+	
+	jsize length = (*env)->GetArrayLength(env, buffer);
+	
+	if (length > encoder->out_buffer->buffer_limit)
+		length = encoder->out_buffer->buffer_limit;
+	
+	//TODO use some atomic thing
+	if (encoder->out_buffer->lock) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Output buffer is in use");
+		return 0;
+	}
+	
+	encoder->out_buffer->lock = 1;
+	
+	(*env)->GetByteArrayRegion(env, buffer, 0, length, (jbyte*) (encoder->out_buffer->buffer));
+		
+	encoder->out_buffer->lock = 0;
+	
+	return length;
 }
 
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_doConvert(JNIEnv * env, jobject self, jlong ptr) {
@@ -147,7 +210,13 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_d
 	
 	struct frame_encoder* encoder = mapEncoderPtr(ptr);
 	
-	encoder->convert(encoder, encoder->in_buffer, encoder->out_buffer);
+	if (encoder->is_series) {
+		struct v4lconvert_encoder_series* v4lencoders = encoder->v4lenc.encoder_series;
+		//TODO finish
+	} else {
+		struct v4lconvert_encoder* v4lencoder = encoder->v4lenc.encoder;
+		v4lencoder->convert(v4lencoder, encoder->in_buffer, encoder->out_buffer);
+	}
 }
 /**
  * 

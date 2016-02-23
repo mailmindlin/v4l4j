@@ -47,7 +47,8 @@ public class AbstractVideoFrameEncoder implements VideoFrameEncoder {
 	 * @param object pointer to struct
 	 */
 	private native void doRelease(long object);
-	private native int getBufferSize(long o);
+	private native int getBufferCapacity(long o, int buffer);
+	private native int getBufferLimit(long o, int buffer);
 	/**
 	 * Put data into the encoder's buffer
 	 * @param o the object
