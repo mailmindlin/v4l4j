@@ -103,7 +103,7 @@ unsigned int v4lconvert_converter_lookupConverterByConversion(unsigned int from,
 	
 	//TODO use better lookup algorithm than O(n)
 	for (i = 0; i < NUM_CONVERTERS; i++) {
-		converter = &(v4lconvert_converters[converterId]);
+		converter = &(v4lconvert_converters[i]);
 		if ((converter->src_fmt == from) && (converter->dst_fmt == to))
 			return i;
 	}
@@ -118,7 +118,7 @@ v4lconvert_converter_t* v4lconvert_converter_getConverterByConversion(unsigned i
 	
 	//TODO use better lookup algorithm than O(n)
 	for (i = 0; i < NUM_CONVERTERS; i++) {
-		converter = &(v4lconvert_converters[converterId]);
+		converter = &(v4lconvert_converters[i]);
 		if ((converter->src_fmt == from) && (converter->dst_fmt == to))
 			return converter;
 	}
