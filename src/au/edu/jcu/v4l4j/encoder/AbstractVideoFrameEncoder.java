@@ -121,10 +121,6 @@ public class AbstractVideoFrameEncoder implements VideoFrameEncoder {
 		}
 	}
 	
-	public void release() {
-		doRelease(object);
-	}
-	
 	@Override
 	public VideoFrame encode(BaseVideoFrame frame) throws V4L4JException {
 		AbstractConvertedVideoFrame outFrame = availableFrames.poll();
@@ -134,5 +130,9 @@ public class AbstractVideoFrameEncoder implements VideoFrameEncoder {
 		int length = this.getBuffer(this.object, outFrame.getBytes());
 		outFrame.prepareForDelivery(length, 0, frame.getSequenceNumber(), frame.getCaptureTime());
 		return outFrame;
+	}
+	@Override
+	public void close() throws Exception {
+		doRelease(object);
 	}
 }

@@ -17,6 +17,15 @@ public class JPEGEncoder extends AbstractVideoFrameEncoder {
 		}
 	}
 	
+	static {
+		try {
+			System.loadLibrary("v4l4j");
+		} catch (UnsatisfiedLinkError e) {
+			System.err.println("Cant load v4l4j JNI library");
+			throw e;
+		}
+	}
+	
 	protected int quality;
 	
 	protected JPEGEncoder(int width, int height, ImagePalette from) {
@@ -49,11 +58,6 @@ public class JPEGEncoder extends AbstractVideoFrameEncoder {
 		output.prepareForDelivery(frameSize, bufferIndex, sequenceNumber, captureUs);
 		
 		return output;
-	}
-
-	@Override
-	public void release() {
-		super.release();
 	}
 
 	@Override

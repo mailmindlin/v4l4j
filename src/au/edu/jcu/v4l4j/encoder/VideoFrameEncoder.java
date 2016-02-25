@@ -18,13 +18,7 @@ public interface VideoFrameEncoder extends AutoCloseable {
 	 */
 	VideoFrame encode(BaseVideoFrame frame) throws V4L4JException;
 	/**
-	 * Releases the native memory for this object
+	 * Close encoder & release
 	 */
-	void release();
-	/**
-	 * Alias for {@link #release()}
-	 */
-	default void close() throws Exception {
-		release();
-	}
+	void close() throws Exception;
 }
