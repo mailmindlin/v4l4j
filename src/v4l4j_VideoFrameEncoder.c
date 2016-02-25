@@ -254,13 +254,13 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_d
 	//Lock buffers
 	if (encoder->in_buffer->lock) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Input buffer is in use");
-		return 0;
+		return;
 	}
 	encoder->in_buffer->lock = 1;
 	if (encoder->out_buffer->lock) {
 		encoder->in_buffer->lock = 0;
 		THROW_EXCEPTION(env, JNI_EXCP, "Output buffer is in use");
-		return 0;
+		return;
 	}
 	
 	if (encoder->is_series) {

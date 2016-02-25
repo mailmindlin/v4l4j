@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <jni.h>
 #include "common.h"
 #include "debug.h"
