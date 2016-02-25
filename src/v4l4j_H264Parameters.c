@@ -2,7 +2,7 @@
 #include <jni.h>
 #include "common.h"
 #include "debug.h"
-#include "x264.h"
+#include <x264.h>
 
 static jclass H264Parameters_class = NULL;
 static jfieldID H264Parameters_object_fid = NULL;
