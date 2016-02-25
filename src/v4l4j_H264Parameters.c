@@ -82,8 +82,8 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_applyPr
 	(*env)->ReleaseStringChars(env, profile, c_profile);
 }
 
-static inline jint setParamByName(x264_param_t* params, JNIEnv* env, jstring key, const char* value) {
-	const char* c_key = (*env)->GetStringChars(env, name, NULL);
+static inline jint setParamByName(x264_param_t* params, JNIEnv* env, jstring key, const jchar* value) {
+	const jchar* c_key = (*env)->GetStringChars(env, name, NULL);
 	
 	x264_param_parse(params, c_key, value);
 	
@@ -98,7 +98,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setPara
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	x264_param_t* params = getPointer(env, self);
 	
-	return setParamByName(env, name, &value);
+	return setParamByName(params, env, name, &value);
 }
 
 /*
@@ -110,7 +110,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setPara
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	x264_param_t* params = getPointer(env, self);
 	
-	return setParamByName(env, name, &value);
+	return setParamByName(params, env, name, &value);
 }
 
 /*
@@ -122,8 +122,8 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setPara
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	x264_param_t* params = getPointer(env, self);
 	
-	const char* c_value = (*env)->GetStringChars(env, value, NULL);
-	int result = setParamByName(env, name, &value);
+	const jchar* c_value = (*env)->GetStringChars(env, value, NULL);
+	int result = setParamByName(params, env, name, &value);
 	(*env)->ReleaseStringChars(env, value, c_value);
 	
 	return result;

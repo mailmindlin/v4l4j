@@ -201,13 +201,13 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_p
 	
 	if (length > encoder->in_buffer->buffer_capacity) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Tried to store more data than can fit in the buffer");
-		return 0;
+		return;
 	}
 	
 	//TODO use some atomic thing
 	if (encoder->in_buffer->lock) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Input buffer is in use");
-		return 0;
+		return;
 	}
 	
 	encoder->in_buffer->lock = 1;
