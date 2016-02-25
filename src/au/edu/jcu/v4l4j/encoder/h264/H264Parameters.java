@@ -58,6 +58,8 @@ public class H264Parameters implements Externalizable, Closeable {
 	 * @return pointer
 	 */
 	protected static native long allocate();
+	
+	@Override
 	public native void close();
 
 	public native void initDefault();
