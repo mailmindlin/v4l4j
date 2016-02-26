@@ -62,6 +62,9 @@ public class H264Parameters implements Externalizable, Closeable {
 	@Override
 	public native void close();
 
+	/**
+	 * Initialize with default parameters
+	 */
 	public native void initDefault();
 	/**
 	 * Calls <code>x264_param_default_preset</code>.

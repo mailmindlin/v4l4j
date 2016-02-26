@@ -10,6 +10,7 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 public class H264Encoder implements VideoFrameEncoder {
 	
 	protected final long object;
+	protected final long csp;
 	
 	static {
 		try {
@@ -28,16 +29,20 @@ public class H264Encoder implements VideoFrameEncoder {
 	 */
 	protected native long doInit(long params);
 	protected native long doGetParams();
-	protected native void doSetParams(long ptr);
+	protected native void doSetParams(long pointer);
+	
+	@Override
+	public native void close() throws Exception;
 	/**
-	 * Update 
-	 * @param params
+	 * Encode 
+	 * @param in pointer to the input picture
+	 * @param out pointer to the output picture
+	 * @return success
 	 */
-	protected native void updateParams(long params);
-	protected native void doRelease();
-	protected native int doEncode(ByteBuffer buffer);
+	protected native int doEncode(long in, long out);
 	
 	public H264Encoder(H264Parameters params) {
+		this.csp = params.getCsp();
 		this.object = doInit(params.object);
 		int width = params.getWidth();
 		int height = params.getHeight();
@@ -46,15 +51,8 @@ public class H264Encoder implements VideoFrameEncoder {
 
 	@Override
 	public VideoFrame encode(BaseVideoFrame frame) throws V4L4JException {
-		buffer.reset();
-		buffer.put(frame.getBytes(), 0, frame.getFrameLength());
-		doEncode(buffer);
 		return null;
 	}
-	
-	@Override
-	public native void close() throws Exception;
-	
 	
 	/**
 	 * Get a copy of the parameters

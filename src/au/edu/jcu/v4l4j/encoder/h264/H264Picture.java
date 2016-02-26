@@ -25,6 +25,9 @@ public class H264Picture implements Closeable, VideoFrame {
 	}
 	
 	protected final long object;
+	protected final int csp;
+	protected final int width;
+	protected final int height;
 	
 	/**
 	 * Allocates native struct and initializes it.
@@ -47,6 +50,9 @@ public class H264Picture implements Closeable, VideoFrame {
 	 */
 	public H264Picture(long pointer) {
 		this.object = pointer;
+		this.width = 0;
+		this.height = 0;
+		this.csp = 0;
 	}
 	
 	/**
@@ -56,11 +62,14 @@ public class H264Picture implements Closeable, VideoFrame {
 	 * @param height height
 	 */
 	public H264Picture(int csp, int width, int height) {
+		this.csp = csp;
+		this.width = width;
+		this.height = height;
 		this.object = init(csp, width, height);
 	}
 	
 	/**
-	 * 
+	 * Get colorspace
 	 * @return csp
 	 */
 	public native int getCsp();
