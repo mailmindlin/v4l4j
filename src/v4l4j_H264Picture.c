@@ -10,7 +10,7 @@ static jfieldID H264Picture_object_fid = NULL;
 static x264_picture_t* getPointer(JNIEnv* env, jobject self) {
 	if (H264Picture_class == NULL) {
 		H264Picture_class = (*env)->GetObjectClass(env, self);
-		H264Picture_object_fid = (*env)->GetFieldID(env, H264Picture_class, "object", "L");
+		H264Picture_object_fid = (*env)->GetFieldID(env, H264Picture_class, "object", "J");
 	}
 	
 	long ptr = (*env)->GetLongField(env, self, H264Picture_object_fid);
