@@ -9,11 +9,15 @@ static jfieldID H264Parameters_object_fid = NULL;
 
 static x264_param_t* getPointer(JNIEnv* env, jobject self) {
 	if (H264Parameters_class == NULL) {
+		dprint(LOG_V4L4J, "[PTR] Obtaining class");
 		H264Parameters_class = (*env)->GetObjectClass(env, self);
+		dprint(LOG_V4L4J, "[PTR] Got class %lu", H264Parameters_class);
 		H264Parameters_object_fid = (*env)->GetFieldID(env, H264Parameters_class, "object", "L");
+		dprint(LOG_V4L4J, "[PTR] Got field id for 'object': %lu", H264Parameters_object_fid);
 	}
 	
 	long ptr = (*env)->GetLongField(env, self, H264Parameters_object_fid);
+	dprint(LOG_V4L4J, "[PTR] Got pointer address to x264_param_t: %lu", ptr);
 	return (struct x264_param_t*) (uintptr_t) ptr;
 }
 
@@ -85,9 +89,11 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_applyPr
 static inline jint setParamByName(x264_param_t* params, JNIEnv* env, jstring key, const char* value) {
 	const jchar* c_key = (*env)->GetStringChars(env, key, NULL);
 	
-	x264_param_parse(params, (char*) c_key, value);
+	int result = x264_param_parse(params, (char*) c_key, value);
 	
 	(*env)->ReleaseStringChars(env, key, c_key);
+	
+	return result;
 }
 /*
  * Class:     au_edu_jcu_v4l4j_encoder_h264_H264Parameters
