@@ -140,7 +140,6 @@ public class H264Parameters implements Externalizable, Closeable {
 	
 	protected H264Parameters(long ptr) {
 		this.object = ptr;
-		System.out.println("Pointer is " + ptr);
 	}
 
 	public native void setCrop(int left, int top, int right, int bottom);
