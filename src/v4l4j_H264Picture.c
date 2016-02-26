@@ -20,6 +20,7 @@ static x264_picture_t* getPointer(JNIEnv* env, jobject self) {
 JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Picture_init(JNIEnv* env, jobject self, jint csp, jint width, jint height) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	x264_picture_t* result;
+	XMALLOC(result, x264_picture_t*, sizeof(x264_picture_t));
 	
 	x264_picture_alloc(result, csp, width, height);
 	x264_picture_init(result);
@@ -31,4 +32,5 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Picture_close(JNIE
 	x264_picture_t* picture = getPointer(env, self);
 	
 	x264_picture_clean(picture);
+	XFREE(picture);
 }

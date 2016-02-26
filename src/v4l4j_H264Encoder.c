@@ -36,7 +36,7 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Encoder_doGetPara
 	
 	x264_encoder_parameters(encoder, result);
 	
-	return result;
+	return (uintptr_t) result;
 }
 
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Encoder_doSetParams(JNIEnv * env, jobject self, jlong parameters) {
@@ -61,3 +61,5 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Encoder_doEncode(J
 	int i_nal;
 	x264_nal_t** nals;
 	
+	return 0;
+}
