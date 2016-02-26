@@ -50,7 +50,7 @@ public class H264Parameters implements Externalizable, Closeable {
 		}
 	}
 	
-	protected final long object;
+	public final long object;
 
 	/**
 	 * Allocate a x264_param_t
