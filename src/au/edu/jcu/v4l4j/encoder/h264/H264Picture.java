@@ -72,17 +72,23 @@ public class H264Picture implements Closeable, VideoFrame {
 	 * Get colorspace
 	 * @return csp
 	 */
-	public native int getCsp();
+	public int getCsp() {
+		return csp;
+	}
 	/**
 	 * Get width of picture
 	 * @return width
 	 */
-	public native int getWidth();
+	public int getWidth() {
+		return width;
+	}
 	/**
 	 * Get height of picture
 	 * @return height
 	 */
-	public native int getHeight();
+	public int getHeight() {
+		return height;
+	}
 
 	@Override
 	public FrameGrabber getFrameGrabber() {
