@@ -24,7 +24,7 @@ public class H264Picture implements Closeable, VideoFrame {
 		}
 	}
 	
-	protected final long object;
+	public final long object;
 	protected final int csp;
 	protected final int width;
 	protected final int height;

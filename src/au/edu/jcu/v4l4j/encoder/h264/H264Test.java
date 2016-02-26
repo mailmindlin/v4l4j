@@ -4,15 +4,18 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import junit.framework.Assert;
+
 public class H264Test {
 
 	@Test
 	public void testPicture() {
-		try (H264Picture picture = new H264Picture(X264.X264_CSP_RGB, 600, 800)) {
-			assertEquals(picture.getCsp(), X264.X264_CSP_RGB);
-			assertEquals(picture.getWidth(), 600);
-			assertEquals(picture.getHeight(), 800);
-		}
+		H264Picture picture = new H264Picture(X264.X264_CSP_RGB, 600, 800);
+		assertEquals(picture.getCsp(), X264.X264_CSP_RGB);
+		assertEquals(picture.getWidth(), 600);
+		assertEquals(picture.getHeight(), 800);
+		
+		picture.close();
 	}
 
 	@Test
