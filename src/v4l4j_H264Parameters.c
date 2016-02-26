@@ -17,7 +17,7 @@ static x264_param_t* getPointer(JNIEnv* env, jobject self) {
 	return (struct x264_param_t*) (uintptr_t) ptr;
 }
 
-JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_allocate(JNIEnv * env) {
+JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_allocate(JNIEnv * env, jclass clazz) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	
 	struct x264_param_t* params;
