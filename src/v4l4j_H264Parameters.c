@@ -9,11 +9,11 @@ static jfieldID H264Parameters_object_fid = NULL;
 
 static x264_param_t* getPointer(JNIEnv* env, jobject self) {
 	if (H264Parameters_class == NULL) {
-		dprint(LOG_V4L4J, "[PTR] Obtaining class");
+		dprint(LOG_V4L4J, "[PTR] Obtaining class\n");
 		H264Parameters_class = (*env)->GetObjectClass(env, self);
-		dprint(LOG_V4L4J, "[PTR] Got class %lu", H264Parameters_class);
+		dprint(LOG_V4L4J, "[PTR] Got class %lu\n", H264Parameters_class);
 		H264Parameters_object_fid = (*env)->GetFieldID(env, H264Parameters_class, "object", "J");
-		dprint(LOG_V4L4J, "[PTR] Got field id for 'object': %lu", H264Parameters_object_fid);
+		dprint(LOG_V4L4J, "[PTR] Got field id for 'object': %lu\n", H264Parameters_object_fid);
 	}
 	
 	long ptr = (*env)->GetLongField(env, self, H264Parameters_object_fid);
