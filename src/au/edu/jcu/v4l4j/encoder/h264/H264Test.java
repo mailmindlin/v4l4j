@@ -1,17 +1,19 @@
 package au.edu.jcu.v4l4j.encoder.h264;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import junit.framework.Assert;
+import au.edu.jcu.v4l4j.ImageFormat;
+import au.edu.jcu.v4l4j.VideoDevice;
+import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 public class H264Test {
 
 	@Test
 	public void testPicture() {
-		H264Picture picture = new H264Picture(X264.X264_CSP_RGB, 600, 800);
-		assertEquals(picture.getCsp(), X264.X264_CSP_RGB);
+		H264Picture picture = new H264Picture(600, 800, X264.CSP_RGB);
+		assertEquals(picture.getCsp(), X264.CSP_RGB);
 		assertEquals(picture.getWidth(), 600);
 		assertEquals(picture.getHeight(), 800);
 
@@ -20,19 +22,38 @@ public class H264Test {
 
 	@Test
 	public void testParameters() {
-		H264Parameters params = new H264Parameters();
-		params.initWithPreset(H264Parameters.PRESET_ULTRA_FAST, H264Parameters.TUNE_ZERO_LATENCY);
+		try (H264Parameters params = new H264Parameters()) {
+			params.initWithPreset(X264.PRESET_ULTRA_FAST, X264.TUNE_ZERO_LATENCY);
 
-		params.setCsp(X264.X264_CSP_RGB);
-		params.setInputDimension(600, 800);
-
-		params.applyFastFirstPass();
-
-		assertEquals(params.getWidth(), 600);
-		assertEquals(params.getHeight(), 800);
-
-		assertEquals(params.getCsp(), X264.X264_CSP_RGB);
-		params.close();
-
+			params.setCsp(X264.CSP_RGB);
+			params.setInputDimension(600, 800);
+	
+			params.applyFastFirstPass();
+	
+			assertEquals(params.getWidth(), 600);
+			assertEquals(params.getHeight(), 800);
+	
+			assertEquals(params.getCsp(), X264.CSP_RGB);
+		}
+	}
+	
+	@Test
+	public void testEncoder() throws Exception {
+		int width = 600;
+		int height = 800;
+		int csp = X264.CSP_I422;
+		H264Encoder encoder = new H264Encoder(width, height, csp);
+		H264Picture picIn = new H264Picture(width, height, csp);
+		
+		VideoDevice device = new VideoDevice("/dev/video0");
+		ImageFormat yuyvFormat;
+		for (ImageFormat format : device.getDeviceInfo().getFormatList().getNativeFormats()) {
+			System.out.println(format.toNiceString());
+		}
+		
+		encoder.close();
+		picIn.close();
+		device.releaseFrameGrabber();
+		device.release(false);
 	}
 }

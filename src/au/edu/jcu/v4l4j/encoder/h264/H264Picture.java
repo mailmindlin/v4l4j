@@ -24,11 +24,16 @@ public class H264Picture implements Closeable, VideoFrame {
 		}
 	}
 	
-	public final long object;
+	protected static native long alloc();
+	
+	public static H264Picture allocate(int width, int height, int csp) {
+		return new H264Picture(alloc(), width, height, csp);
+	}
+	
+	protected final long object;
 	protected final int csp;
 	protected final int width;
 	protected final int height;
-	
 	/**
 	 * Allocates native struct and initializes it.
 	 * @param csp
@@ -36,7 +41,7 @@ public class H264Picture implements Closeable, VideoFrame {
 	 * @param height
 	 * @return
 	 */
-	protected native long init(int csp, int width, int height);
+	protected native long init(int width, int height, int csp);
 	
 	/**
 	 * Release the native memory behind this picture
@@ -55,17 +60,28 @@ public class H264Picture implements Closeable, VideoFrame {
 		this.csp = 0;
 	}
 	
+	public H264Picture(long pointer, int width, int height, int csp) {
+		this.object = pointer;
+		this.width = width;
+		this.height = height;
+		this.csp = csp;
+	}
+	
 	/**
 	 * Initialize with given width, height, and CSP
 	 * @param csp color space
 	 * @param width width
 	 * @param height height
 	 */
-	public H264Picture(int csp, int width, int height) {
+	public H264Picture(int width, int height, int csp) {
 		this.csp = csp;
 		this.width = width;
 		this.height = height;
 		this.object = init(csp, width, height);
+	}
+	
+	public H264Picture() {
+		this(alloc());
 	}
 	
 	/**

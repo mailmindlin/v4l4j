@@ -41,6 +41,21 @@ public class H264Encoder implements VideoFrameEncoder {
 	 */
 	protected native int doEncode(long in, long out);
 	
+	public H264Encoder(int width, int height, int csp) {
+		this.csp = csp;
+		try (H264Parameters params = new H264Parameters()) {
+			params.initWithPreset(X264.PRESET_MEDIUM, X264.TUNE_ZERO_LATENCY);
+			params.setCsp(csp);
+			params.setInputDimension(width, height);
+			params.setVfrInput(false);
+			params.setRepeatHeaders(true);
+			params.setAnnexb(true);
+			params.applyProfile(X264.PROFILE_HIGH);
+		
+			this.object = doInit(params.object);
+		}
+		buffer = ByteBuffer.allocate(width * height * 3);
+	}
 	public H264Encoder(H264Parameters params) {
 		this.csp = params.getCsp();
 		this.object = doInit(params.object);

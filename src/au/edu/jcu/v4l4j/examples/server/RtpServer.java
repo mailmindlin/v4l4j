@@ -3,20 +3,25 @@ package au.edu.jcu.v4l4j.examples.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.LinkedList;
 import java.util.Vector;
 
 import au.edu.jcu.v4l4j.CaptureCallback;
 import au.edu.jcu.v4l4j.JPEGFrameGrabber;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.VideoFrame;
+import au.edu.jcu.v4l4j.encoder.h264.H264Encoder;
+import au.edu.jcu.v4l4j.encoder.h264.H264Parameters;
+import au.edu.jcu.v4l4j.encoder.h264.X264;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
-public class CamH264Server implements Runnable, CaptureCallback {
+public class RtpServer implements Runnable, CaptureCallback {
 	private ServerSocket serverSocket;
 	private VideoDevice videoDevice;
+	private H264Encoder encoder;
 	private JPEGFrameGrabber frameGrabber;
 	private Thread serverThread;
-	private Vector<ClientStreamingConnection> clients;
+	private LinkedList<ClientStreamingConnection> clients;
 	private long frameCount;
 	private long lastFrameTimestamp;
 	
@@ -27,7 +32,7 @@ public class CamH264Server implements Runnable, CaptureCallback {
 		int port = (System.getProperty("test.port") != null) ? Integer.parseInt(System.getProperty("test.port")) : 8080;
 		int fps = (System.getProperty("test.fps") != null) ? Integer.parseInt(System.getProperty("test.fps")) : 15;
 
-		CamH264Server server = new CamH264Server(dev, w, h, port, fps);
+		RtpServer server = new RtpServer(dev, w, h, port, fps);
 		server.start();
 		System.out.println("Press enter to exit.");
 		System.in.read();
@@ -55,8 +60,14 @@ public class CamH264Server implements Runnable, CaptureCallback {
 	 * @throws IOException
 	 *             if a server socket on the given port cant be created
 	 */
-	public CamH264Server(String dev, int width, int height, int port, int fps) throws V4L4JException, IOException {
+	public RtpServer(String dev, int width, int height, int port, int fps) throws V4L4JException, IOException {
 		this.videoDevice = new VideoDevice(dev);
+		try (H264Parameters h264Params = new H264Parameters()) {
+			h264Params.initWithPreset(X264.PRESET_MEDIUM, X264.TUNE_ZERO_LATENCY);
+			h264Params.setInputDimension(width, height);
+			h264Params.setCsp(X264.CSP_YV12);
+			this.encoder = new H264Encoder(h264Params);
+		}
 		this.frameGrabber = videoDevice.getJPEGFrameGrabber(width, height, 0, 0, 80);
 		this.frameGrabber.setCaptureCallback(this);
 		try {
@@ -66,9 +77,9 @@ public class CamH264Server implements Runnable, CaptureCallback {
 			System.out.println("Couldnt set the frame interval");
 		}
 
-		clients = new Vector<>();
+		clients = new LinkedList<>();
 
-		// initialise tcp port to listen on
+		// initialize tcp port to listen on
 		serverSocket = new ServerSocket(port);
 
 		System.out.println("Server listening at " + serverSocket.getInetAddress().getHostAddress() + ":"
@@ -115,6 +126,11 @@ public class CamH264Server implements Runnable, CaptureCallback {
 		for (ClientStreamingConnection client : clients)
 			client.close();
 
+		try {
+			this.encoder.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		// release v4l4j frame grabber, control list and video device
 		videoDevice.releaseFrameGrabber();
 		videoDevice.releaseControlList();

@@ -12,35 +12,6 @@ import java.io.ObjectOutput;
  * @author mailmindlin
  */
 public class H264Parameters implements Externalizable, Closeable {
-
-	public static final String TUNE_FILM = "film";
-	public static final String TUNE_ANIMATION = "animation";
-	public static final String TUNE_GRAIN = "grain";
-	public static final String TUNE_STILL_IMAGE = "stillimage";
-	public static final String TUNE_PSNR = "psnr";
-	public static final String TUNE_SSIM = "ssim";
-	public static final String TUNE_FAST_DECODE = "fastdecode";
-	public static final String TUNE_ZERO_LATENCY = "zerolatency";
-
-	public static final String PRESET_ULTRA_FAST = "ultrafast";
-	public static final String PRESET_SUPER_FAST = "superfast";
-	public static final String PRESET_VERY_FAST = "veryfast";
-	public static final String PRESET_FASTER = "faster";
-	public static final String PRESET_FAST = "fast";
-	public static final String PRESET_MEDIUM = "medium";
-	public static final String PRESET_SLOW = "slow";
-	public static final String PRESET_SLOWER = "slower";
-	public static final String PRESET_VERY_SLOW = "veryslow";
-	public static final String PRESET_PLACEBO = "placebo";
-
-	public static final String PROFILE_BASELINE = "baseline";
-	public static final String PROFILE_MAIN = "main";
-	public static final String PROFILE_HIGH = "high";
-	public static final String PROFILE_HIGH10 = "high10";
-	public static final String PROFILE_HIGH422 = "high422";
-	public static final String PROFILE_HIGH444 = "high444";
-	
-	
 	static {
 		try {
 			System.loadLibrary("v4l4j");
