@@ -60,9 +60,6 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_initWit
 	char* preset_name = x264_preset_names[preset];
 	char* tune_name = x264_tune_names[tune];
 	
-	const jchar* c_preset = (*env)->GetStringChars(env, preset, NULL);
-	const jchar* c_tune = (*env)->GetStringChars(env, tune, NULL);
-	
 	dprint(LOG_V4L4J, "[PARAM] Initializing with preset '%s', tune '%s'\n", preset_name, tune_name);
 	int result = x264_param_default_preset(params, preset_name, tune_name);
 	
