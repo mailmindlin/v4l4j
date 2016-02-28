@@ -11,9 +11,9 @@ static x264_param_t* getPointer(JNIEnv* env, jobject self) {
 	if (H264Parameters_class == NULL) {
 		dprint(LOG_V4L4J, "[PTR] Obtaining class\n");
 		H264Parameters_class = (*env)->GetObjectClass(env, self);
-		dprint(LOG_V4L4J, "[PTR] Got class %lu\n", H264Parameters_class);
+		dprint(LOG_V4L4J, "[PTR] Got class %lu\n", (long unsigned int)H264Parameters_class);
 		H264Parameters_object_fid = (*env)->GetFieldID(env, H264Parameters_class, "object", "J");
-		dprint(LOG_V4L4J, "[PTR] Got field id for 'object': %lu\n", H264Parameters_object_fid);
+		dprint(LOG_V4L4J, "[PTR] Got field id for 'object': %lu\n", (long unsigned int)H264Parameters_object_fid);
 	}
 	
 	long ptr = (*env)->GetLongField(env, self, H264Parameters_object_fid);
@@ -55,6 +55,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_initWit
 	const jchar* c_preset = (*env)->GetStringChars(env, preset, NULL);
 	const jchar* c_tune = (*env)->GetStringChars(env, tune, NULL);
 	
+	dptrint(LOG_V4L4J, "[PARAM] Initializing with preset '%s', tune '%s'\n", (char*) c_preset, (char*) c_tune);
 	int result = x264_param_default_preset(params, (char*) c_preset, (char*) c_tune);
 	
 	(*env)->ReleaseStringChars(env, preset, c_preset);
@@ -81,6 +82,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_applyPr
 	
 	const jchar* c_profile = (*env)->GetStringChars(env, profile, NULL);
 	
+	dptrint(LOG_V4L4J, "[PARAM] Applying profile '%s'\n", (char*) c_profile);
 	x264_param_apply_profile(params, (char*) c_profile);
 	
 	(*env)->ReleaseStringChars(env, profile, c_profile);
