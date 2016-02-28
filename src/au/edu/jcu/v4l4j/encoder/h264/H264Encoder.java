@@ -44,13 +44,13 @@ public class H264Encoder implements VideoFrameEncoder {
 	public H264Encoder(int width, int height, int csp) {
 		this.csp = csp;
 		try (H264Parameters params = new H264Parameters()) {
-			params.initWithPreset(X264.PRESET_MEDIUM, X264.TUNE_ZERO_LATENCY);
+			params.initWithPreset(X264.Preset.MEDIUM, X264.Tune.ZERO_LATENCY);
 			params.setCsp(csp);
 			params.setInputDimension(width, height);
 			params.setVfrInput(false);
 			params.setRepeatHeaders(true);
 			params.setAnnexb(true);
-			params.applyProfile(X264.PROFILE_HIGH);
+			params.applyProfile(X264.Profile.HIGH);
 		
 			this.object = doInit(params.object);
 		}

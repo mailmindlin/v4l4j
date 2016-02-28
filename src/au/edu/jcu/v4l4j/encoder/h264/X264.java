@@ -63,6 +63,16 @@ public class X264 {
 	public static final int TYPE_KEYFRAME = 0x0006;
 	
 	//for parameter setup
+	public static enum Tune {
+		FILM,
+		ANIMATION,
+		GRAIN,
+		STILL_IMAGE,
+		PSNR,
+		SSIM,
+		FAST_DECODE,
+		ZERO_LATENCY;
+	}
 	public static final String TUNE_FILM = "film";
 	public static final String TUNE_ANIMATION = "animation";
 	public static final String TUNE_GRAIN = "grain";
@@ -71,7 +81,19 @@ public class X264 {
 	public static final String TUNE_SSIM = "ssim";
 	public static final String TUNE_FAST_DECODE = "fastdecode";
 	public static final String TUNE_ZERO_LATENCY = "zerolatency";
-
+	
+	public static enum Preset {
+		ULTRA_FAST,
+		SUPER_FAST,
+		VERY_FAST,
+		FASTER,
+		FAST,
+		MEDIUM,
+		SLOW,
+		SLOWER,
+		VERY_SLOW,
+		PLACEBO;
+	}
 	public static final String PRESET_ULTRA_FAST = "ultrafast";
 	public static final String PRESET_SUPER_FAST = "superfast";
 	public static final String PRESET_VERY_FAST = "veryfast";
@@ -82,6 +104,15 @@ public class X264 {
 	public static final String PRESET_SLOWER = "slower";
 	public static final String PRESET_VERY_SLOW = "veryslow";
 	public static final String PRESET_PLACEBO = "placebo";
+	
+	public static enum Profile {
+		BASELINE,
+		MAIN,
+		HIGH,
+		HIGH10,
+		HIGH422,
+		HIGH444
+	}
 
 	public static final String PROFILE_BASELINE = "baseline";
 	public static final String PROFILE_MAIN = "main";

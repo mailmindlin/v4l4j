@@ -68,7 +68,11 @@ public class H264Parameters implements Externalizable, Closeable {
 	 * @return 0 on success, negative on failure (e.g. invalid preset/tune
 	 *         name).
 	 */
-	public native int initWithPreset(String preset, String tune);
+	protected native int initWithPreset(int preset, int tune);
+	
+	public int initWithPreset(X264.Preset preset, X264.Tune tune) {
+		return initWithPreset(preset.ordinal(), tune.ordinal());
+	}
 
 	/**
 	 * If first-pass mode is set (rc.b_stat_read == 0, rc.b_stat_write == 1),
@@ -78,7 +82,11 @@ public class H264Parameters implements Externalizable, Closeable {
 	 */
 	public native void applyFastFirstPass();
 	
-	public native void applyProfile(String profile);
+	public native void applyProfile(int profile);
+	
+	public void applyProfile(X264.Profile profile) {
+		applyProfile(profile.ordinal());
+	}
 	
 	/**
 	 * set one parameter by name. returns 0 on success, or returns one of the

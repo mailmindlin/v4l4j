@@ -23,7 +23,7 @@ public class H264Test {
 	@Test
 	public void testParameters() {
 		try (H264Parameters params = new H264Parameters()) {
-			params.initWithPreset(X264.PRESET_ULTRA_FAST, X264.TUNE_ZERO_LATENCY);
+			params.initWithPreset(X264.Preset.ULTRA_FAST, X264.Tune.ZERO_LATENCY);
 
 			params.setCsp(X264.CSP_RGB);
 			params.setInputDimension(600, 800);

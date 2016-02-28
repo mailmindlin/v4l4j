@@ -63,7 +63,7 @@ public class RtpServer implements Runnable, CaptureCallback {
 	public RtpServer(String dev, int width, int height, int port, int fps) throws V4L4JException, IOException {
 		this.videoDevice = new VideoDevice(dev);
 		try (H264Parameters h264Params = new H264Parameters()) {
-			h264Params.initWithPreset(X264.PRESET_MEDIUM, X264.TUNE_ZERO_LATENCY);
+			h264Params.initWithPreset(X264.Preset.MEDIUM, X264.Tune.ZERO_LATENCY);
 			h264Params.setInputDimension(width, height);
 			h264Params.setCsp(X264.CSP_YV12);
 			this.encoder = new H264Encoder(h264Params);
