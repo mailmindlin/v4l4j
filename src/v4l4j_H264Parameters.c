@@ -55,7 +55,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_initWit
 	const jchar* c_preset = (*env)->GetStringChars(env, preset, NULL);
 	const jchar* c_tune = (*env)->GetStringChars(env, tune, NULL);
 	
-	dptrint(LOG_V4L4J, "[PARAM] Initializing with preset '%s', tune '%s'\n", (char*) c_preset, (char*) c_tune);
+	dprint(LOG_V4L4J, "[PARAM] Initializing with preset '%s', tune '%s'\n", (char*) c_preset, (char*) c_tune);
 	int result = x264_param_default_preset(params, (char*) c_preset, (char*) c_tune);
 	
 	(*env)->ReleaseStringChars(env, preset, c_preset);
@@ -82,7 +82,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_applyPr
 	
 	const jchar* c_profile = (*env)->GetStringChars(env, profile, NULL);
 	
-	dptrint(LOG_V4L4J, "[PARAM] Applying profile '%s'\n", (char*) c_profile);
+	dprint(LOG_V4L4J, "[PARAM] Applying profile '%s'\n", (char*) c_profile);
 	x264_param_apply_profile(params, (char*) c_profile);
 	
 	(*env)->ReleaseStringChars(env, profile, c_profile);
