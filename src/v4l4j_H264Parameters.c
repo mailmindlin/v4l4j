@@ -17,7 +17,7 @@ static x264_param_t* getPointer(JNIEnv* env, jobject self) {
 	}
 	
 	long ptr = (*env)->GetLongField(env, self, H264Parameters_object_fid);
-	dprint(LOG_V4L4J, "[PTR] Got pointer address to x264_param_t: %lu", ptr);
+	dprint(LOG_V4L4J, "[PTR] Got pointer address to x264_param_t: %#08x\n", ptr);
 	return (struct x264_param_t*) (uintptr_t) ptr;
 }
 
