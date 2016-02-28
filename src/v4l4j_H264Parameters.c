@@ -43,9 +43,6 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_initDef
 	
 	x264_param_default(params);
 }
-static const char * const x264_preset_names[] = { "ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow", "placebo", 0 };
-static const char * const x264_tune_names[] = { "film", "animation", "grain", "stillimage", "psnr", "ssim", "fastdecode", "zerolatency", 0 };
-static const char * const x264_profile_names[] = { "baseline", "main", "high", "high10", "high422", "high444", 0 };
 /*
  * Class:     au_edu_jcu_v4l4j_encoder_h264_H264Parameters
  * Method:    initWithDefaultPreset
