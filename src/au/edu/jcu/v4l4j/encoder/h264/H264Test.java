@@ -48,7 +48,7 @@ public class H264Test {
 		VideoDevice device = new VideoDevice("/dev/video0");
 		ImageFormat yuyvFormat;
 		for (ImageFormat format : device.getDeviceInfo().getFormatList().getNativeFormats()) {
-			System.out.println(format.toNiceString());
+			System.out.println(format.getPalette());
 		}
 		
 		encoder.close();
