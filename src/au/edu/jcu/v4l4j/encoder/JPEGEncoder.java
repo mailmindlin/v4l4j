@@ -46,10 +46,10 @@ public class JPEGEncoder extends AbstractVideoFrameEncoder {
 	}
 	@Override
 	public VideoFrame encode(BaseVideoFrame frame) throws V4L4JException {
-		super.putBuffer(super.object, frame.getBytes(), frame.getFrameLength());
+		super.putBuffer(frame.getBytes(), frame.getFrameLength());
 		
 		AbstractConvertedVideoFrame output = getAvailableVideoFrame();
-		int frameSize = super.getBuffer(object, output.getBytes());
+		int frameSize = super.getBuffer(output.getBytes());
 		
 		int bufferIndex= (frame instanceof BaseVideoFrame) ? ((BaseVideoFrame)frame).getBufferIndex() : -1;
 		long sequenceNumber = frame.getSequenceNumber();

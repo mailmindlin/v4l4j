@@ -19,11 +19,11 @@ public class AbstractVideoFrameEncoderTest {
 			
 			AbstractVideoFrameEncoder encoder = new AbstractVideoFrameEncoder(5, 7, ImagePalette.RGB32, ImagePalette.YUV420);
 			
-			int numConverters = -encoder.getConverterIds(encoder.object, null);
+			int numConverters = -encoder.getConverterIds(null);
 			Assert.assertEquals(numConverters, 1);
 			
 			int[] converterIds = new int[numConverters];
-			numConverters = encoder.getConverterIds(encoder.object, converterIds);
+			numConverters = encoder.getConverterIds(converterIds);
 			System.out.println(Arrays.toString(converterIds));
 			Assert.assertEquals(numConverters, 1);
 			

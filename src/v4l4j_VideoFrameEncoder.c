@@ -62,8 +62,17 @@ struct frame_encoder {
 	} v4lenc;
 };
 
-static inline struct frame_encoder* mapEncoderPtr(jlong ptr) {
-	return (struct frame_encoder*) (uintptr_t) ptr;
+static jclass AbstractVideoFrameEncoder_class = NULL;
+static jfieldID AbstractVideoFrameEncoder_object_fid = NULL;
+
+static x264_t* getPointer(JNIEnv* env) {
+	if (AbstractVideoFrameEncoder_class == NULL) {
+		AbstractVideoFrameEncoder_class = (*env)->FindClass(env, "au/edu/jcu/v4l4j/encoder/AbstractVideoFrameEncoder");
+		AbstractVideoFrameEncoder_object_fid = (*env)->GetFieldID(env, AbstractVideoFrameEncoder_class, "object", "J");
+	}
+	
+	long ptr = (*env)->GetLongField(env, self, AbstractVideoFrameEncoder_object_fid);
+	return (x264_t*) (uintptr_t) ptr;
 }
 
 JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_doInit(JNIEnv *env, jobject self, jint from, jint to, jint width, jint height) {
@@ -97,7 +106,7 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_doRelease(JNIEnv *env, jobject self, jlong ptr) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	
-	struct frame_encoder* encoder = mapEncoderPtr(ptr);
+	struct frame_encoder* encoder = getPointer(env);
 	
 	if (encoder->in_buffer->buffer != NULL)
 		XFREE(encoder->in_buffer->buffer);
@@ -118,10 +127,10 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_d
 	XFREE(encoder);
 }
 
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_setBufferCapacity(JNIEnv* env, jobject self, jlong ptr, jint bufferNum, jint capacity) {
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_setBufferCapacity(JNIEnv* env, jobject self, jint bufferNum, jint capacity) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	
-	struct frame_encoder* encoder = mapEncoderPtr(ptr);
+	struct frame_encoder* encoder = getPointer(env);
 	
 	struct frame_buffer* buffer;
 	if (bufferNum == 1) {
@@ -150,10 +159,10 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_s
 /**
  * 
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getBufferCapacity(JNIEnv* env, jobject self, jlong ptr, jint buffer) {
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getBufferCapacity(JNIEnv* env, jobject self, jint buffer) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	
-	struct frame_encoder* encoder = mapEncoderPtr(ptr);
+	struct frame_encoder* encoder = getPointer(env);
 	
 	if (buffer == 1)
 		return encoder->in_buffer->buffer_capacity;
@@ -165,10 +174,10 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_g
 }
 
 
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getBufferLimit(JNIEnv* env, jobject self, jlong ptr, jint buffer) {
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getBufferLimit(JNIEnv* env, jobject self, jint buffer) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	
-	struct frame_encoder* encoder = mapEncoderPtr(ptr);
+	struct frame_encoder* encoder = getPointer(env);
 	
 	if (buffer == 1)
 		return encoder->in_buffer->buffer_limit;
@@ -182,10 +191,10 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_g
 /**
  * 
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_setQuality (JNIEnv* env, jobject self, jlong ptr, jint quality) {
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_setQuality (JNIEnv* env, jobject self, jint quality) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	
-	struct frame_encoder* encoder = mapEncoderPtr(ptr);
+	struct frame_encoder* encoder = getPointer(env);
 	
 	dprint(LOG_V4L4J, "[V4L4J] Setting JPEG quality to %d\n",quality);
 	encoder->jpeg_quality = quality;
@@ -194,10 +203,10 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_s
 /**
  * 
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_putBuffer(JNIEnv* env, jobject self, jlong ptr, jbyteArray buffer, jint length) {
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_putBuffer(JNIEnv* env, jobject self, jbyteArray buffer, jint length) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	
-	struct frame_encoder* encoder = mapEncoderPtr(ptr);
+	struct frame_encoder* encoder = getPointer(env);
 	
 	if (length > encoder->in_buffer->buffer_capacity) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Tried to store more data than can fit in the buffer");
@@ -221,10 +230,10 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_p
 	//success
 }
 
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getBuffer (JNIEnv* env, jobject self, jlong ptr, jbyteArray buffer) {
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getBuffer (JNIEnv* env, jobject self, jbyteArray buffer) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	
-	struct frame_encoder* encoder = mapEncoderPtr(ptr);
+	struct frame_encoder* encoder = getPointer(env);
 	
 	jsize length = (*env)->GetArrayLength(env, buffer);
 	
@@ -249,7 +258,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_g
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_doConvert(JNIEnv * env, jobject self, jlong ptr) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	
-	struct frame_encoder* encoder = mapEncoderPtr(ptr);
+	struct frame_encoder* encoder = getPointer(env);
 	
 	//Lock buffers
 	if (encoder->in_buffer->lock) {
@@ -277,9 +286,9 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_d
 /**
  * 
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getConverterIds(JNIEnv* env, jobject self, jlong ptr, jintArray out) {
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getConverterIds(JNIEnv* env, jobject self, NULLjintArray out) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	struct frame_encoder* encoder = mapEncoderPtr(ptr);
+	struct frame_encoder* encoder = getPointer(env);
 	
 	jsize out_length;
 	if (out == NULL) {

@@ -7,6 +7,7 @@ import java.util.concurrent.BlockingQueue;
 import au.edu.jcu.v4l4j.BaseVideoFrame;
 import au.edu.jcu.v4l4j.ImagePalette;
 import au.edu.jcu.v4l4j.VideoFrame;
+import au.edu.jcu.v4l4j.exceptions.JNIException;
 import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
@@ -161,9 +162,9 @@ public class AbstractVideoFrameEncoder implements VideoFrameEncoder {
 	public VideoFrame encode(BaseVideoFrame frame) throws V4L4JException {
 		AbstractConvertedVideoFrame outFrame = availableFrames.poll();
 		
-		this.putBuffer(this.object, frame.getBytes(), frame.getFrameLength());
-		this.doConvert(this.object);
-		int length = this.getBuffer(this.object, outFrame.getBytes());
+		this.putBuffer(frame.getBytes(), frame.getFrameLength());
+		this.doConvert();
+		int length = this.getBuffer(outFrame.getBytes());
 		outFrame.prepareForDelivery(length, 0, frame.getSequenceNumber(), frame.getCaptureTime());
 		return outFrame;
 	}
