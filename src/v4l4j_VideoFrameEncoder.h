@@ -20,35 +20,35 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_
  * Method:    doRelease
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_doRelease(JNIEnv* env, jobject self, jlong ptr);
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_doRelease(JNIEnv* env, jobject self);
 
 /*
  * Class:     au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder
  * Method:    getBufferSize
  * Signature: (J)I
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getBufferSize(JNIEnv* env, jobject self, jlong ptr);
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getBufferSize(JNIEnv* env, jobject self);
 
 /*
  * Class:     au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder
  * Method:    putBuffer
  * Signature: (J[BI)V
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_putBuffer(JNIEnv* env, jobject self, jlong ptr, jbyteArray buffer, jint length);
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_putBuffer(JNIEnv* env, jobject self, jbyteArray buffer, jint length);
 
 /*
  * Class:     au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder
  * Method:    getBuffer
  * Signature: (J[B)I
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getBuffer (JNIEnv* env, jobject self, jlong ptr, jbyteArray buffer);
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getBuffer (JNIEnv* env, jobject self, jbyteArray buffer);
 
 /*
  * Class:     au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder
  * Method:    setQuality
  * Signature: (JI)V
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_setQuality (JNIEnv* env, jobject self, jlong ptr, jint quality);
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_setQuality (JNIEnv* env, jobject self, jint quality);
 
 
 /*
@@ -56,14 +56,14 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_s
  * Method:    doConvert
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_doConvert(JNIEnv * env, jobject self, jlong ptr);
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_doConvert(JNIEnv * env, jobject self);
 
 /*
  * Class:     au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder
  * Method:    getConverterIds
  * Signature: (J[I)I
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getConverterIds(JNIEnv * env, jobject self, jlong ptr, jintArray out);
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getConverterIds(JNIEnv * env, jobject self, jintArray out);
 #ifdef __cplusplus
 }
 #endif
