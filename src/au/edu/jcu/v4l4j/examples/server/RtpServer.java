@@ -3,11 +3,17 @@ package au.edu.jcu.v4l4j.examples.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.Vector;
 
+import org.gstreamer.Gst;
+import org.gstreamer.Pipeline;
+
 import au.edu.jcu.v4l4j.CaptureCallback;
-import au.edu.jcu.v4l4j.JPEGFrameGrabber;
+import au.edu.jcu.v4l4j.ImageFormat;
+import au.edu.jcu.v4l4j.ImagePalette;
+import au.edu.jcu.v4l4j.RawFrameGrabber;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.encoder.h264.H264Encoder;
@@ -19,7 +25,7 @@ public class RtpServer implements Runnable, CaptureCallback {
 	private ServerSocket serverSocket;
 	private VideoDevice videoDevice;
 	private H264Encoder encoder;
-	private JPEGFrameGrabber frameGrabber;
+	private RawFrameGrabber frameGrabber;
 	private Thread serverThread;
 	private LinkedList<ClientStreamingConnection> clients;
 	private long frameCount;
@@ -68,13 +74,14 @@ public class RtpServer implements Runnable, CaptureCallback {
 			h264Params.setCsp(X264.CSP_YV12);
 			this.encoder = new H264Encoder(h264Params);
 		}
-		this.frameGrabber = videoDevice.getJPEGFrameGrabber(width, height, 0, 0, 80);
+		ImageFormat imf = videoDevice.getDeviceInfo().getFormatList().getNativeFormatOfType(ImagePalette.YUYV);
+		this.frameGrabber = videoDevice.getRawFrameGrabber(width, height, 0, 0, imf);
 		this.frameGrabber.setCaptureCallback(this);
 		try {
-			System.out.println("setting frame rate to " + fps);
+			System.out.println("Setting frame rate to " + fps);
 			frameGrabber.setFrameInterval(1, fps);
 		} catch (Exception e) {
-			System.out.println("Couldnt set the frame interval");
+			System.out.println("Couldn't set the frame interval: " + e.getMessage());
 		}
 
 		clients = new LinkedList<>();
@@ -90,6 +97,7 @@ public class RtpServer implements Runnable, CaptureCallback {
 	}
 
 	public void start() {
+		Gst.init("GStreamer", new String[0]);
 		// start the tcp server thread
 		serverThread.start();
 	}
@@ -158,6 +166,7 @@ public class RtpServer implements Runnable, CaptureCallback {
 			
 			System.out.println("Serving video stream");
 			
+			
 			// add new client to clients list
 			synchronized (clients) {
 				clients.add(new ClientStreamingConnection(clientSocket));
@@ -217,6 +226,9 @@ public class RtpServer implements Runnable, CaptureCallback {
 				lastFrameTimestamp = 0;
 			}
 		}
+		
+		Pipeline pipe = Pipeline.launch("");
+		
 		// send the frame to each client
 		for (ClientStreamingConnection client : copyClients) {
 			try {
@@ -248,4 +260,50 @@ public class RtpServer implements Runnable, CaptureCallback {
 		frameGrabber.stopCapture();
 	}
 
+	static class RtpFrame {
+		ByteBuffer buffer;
+		boolean padding;
+		boolean extension;
+		byte csrc;//4 bits, 0 - 16
+		boolean marker;
+		byte payload;//7 bits
+		short sequence;//16 bits
+		int timestamp;//32 bits
+		int ssrc;//32 bits
+		byte[] csrcs = new byte[32 * 15];
+		public void build() {
+			byte tmp = (byte) (0b10000000);
+			if (padding)
+				tmp|= 0b100000;
+			if (extension)
+				tmp|= 0b10000;
+			tmp|= csrc;
+			buffer.put(tmp);
+			
+			buffer.put((byte) ((marker ? (1<<7) : 0) | payload));
+			
+			buffer.putShort(sequence);
+			
+			buffer.putInt(timestamp);
+			buffer.putInt(ssrc);
+			
+			buffer.put(csrcs, 0, csrc * 4);
+		}
+		public void setPayload(byte payload) {
+			buffer.put(1, (byte) ((marker ? (1<<7) : 0) | payload));
+			this.payload = payload;
+		}
+		public void setTimestamp(int timestamp) {
+			buffer.putInt(4, timestamp);
+			this.timestamp = timestamp;
+		}
+		public void setNumCsrcs(byte num) {
+			buffer.put(0, (byte) ((1<<7) | (padding?1<<5:0) | (extension?1<<4:0) | num));
+			this.csrc = num;
+		}
+		public void setCsrc(int index, int csrc) {
+			
+		}
+		
+	}
 }

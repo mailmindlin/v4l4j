@@ -25,9 +25,12 @@
 package au.edu.jcu.v4l4j;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Vector;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-import java.util.Vector;
 
 import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
 import au.edu.jcu.v4l4j.exceptions.ImageDimensionsException;
@@ -151,6 +154,16 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
  */
 public class VideoDevice {
 
+	/**
+	 * Simple method to look for candidate video devices. Searches in the <code>/dev</code> folder
+	 * for files matching <code>video*</code>.
+	 * @return results
+	 */
+	public static Set<String> available() {
+		File dev = new File("/dev");
+		return new HashSet<>(Arrays.asList(dev.list((file, name)->(file == dev && name.startsWith("video")))));
+	}
+	
 	static {
 		try {
 			System.loadLibrary("v4l4j");
@@ -161,7 +174,7 @@ public class VideoDevice {
 	}
 
 	/**
-	 * This JNI method initialises the libv4's struct video_device
+	 * This JNI method initializes the libv4's struct video_device
 	 * 
 	 * @param device
 	 *            the name of the device file
@@ -182,7 +195,7 @@ public class VideoDevice {
 	private native void doRelease(long o);
 
 	/**
-	 * This JNI method initialises the control interface and returns an array of
+	 * This JNI method initializes the control interface and returns an array of
 	 * <code>Control</code>s.
 	 * 
 	 * @param o
@@ -249,7 +262,7 @@ public class VideoDevice {
 	private String deviceFile;
 
 	/**
-	 * The state of our VideoDevice (used for synchronisation)
+	 * The state of our VideoDevice (used for synchronization)
 	 */
 	private State state;
 
@@ -310,12 +323,12 @@ public class VideoDevice {
 	}
 
 	/**
-	 * This method initialises this VideoDevice with the information obtained
+	 * This method initializes this VideoDevice with the information obtained
 	 * from the {@link DeviceInfo}. This method must be called before any other
 	 * methods.
 	 * 
 	 * @throws V4L4JException
-	 *             if the device can not be initialised
+	 *             if the device can not be initialized
 	 */
 	private void initDeviceInfo() throws V4L4JException {
 		// initialize deviceInfo
@@ -1385,10 +1398,10 @@ public class VideoDevice {
 	 * The returned {@link RawFrameGrabber} must be released when no longer used
 	 * by calling {@link #releaseFrameGrabber()}.
 	 * 
-	 * @param w
+	 * @param width
 	 *            the desired frame width. This value may be adjusted to the
 	 *            closest supported by hardware.
-	 * @param h
+	 * @param height
 	 *            the desired frame height. This value may be adjusted to the
 	 *            closest supported by hardware.
 	 * @param input
@@ -1420,7 +1433,7 @@ public class VideoDevice {
 	 *             if a {@link FrameGrabber} already exists or if the
 	 *             <code>VideoDevice</code> has been released.
 	 */
-	public RawFrameGrabber getRawFrameGrabber(int w, int h, int input, int std, ImageFormat format)
+	public RawFrameGrabber getRawFrameGrabber(int width, int height, int input, int std, ImageFormat format)
 			throws V4L4JException {
 		if (format == null)
 			throw new ImageFormatException("The image format can not be null");
@@ -1428,7 +1441,7 @@ public class VideoDevice {
 		synchronized (this) {
 			if (fg == null) {
 				state.get();
-				fg = new RawFrameGrabber(deviceInfo, v4l4jObject, w, h, input, std, findTuner(input), format,
+				fg = new RawFrameGrabber(deviceInfo, v4l4jObject, width, height, input, std, findTuner(input), format,
 						threadFactory);
 				try {
 					fg.init();
@@ -1451,7 +1464,7 @@ public class VideoDevice {
 					return (RawFrameGrabber) fg;
 				else {
 					state.put();
-					throw new StateException("Another FrameGrabber object already " + "exists");
+					throw new StateException("Another FrameGrabber object already exists");
 				}
 			}
 		}
@@ -1465,10 +1478,10 @@ public class VideoDevice {
 	 * The {@link RawFrameGrabber} must be released when no longer used by
 	 * calling {@link #releaseFrameGrabber()}.
 	 * 
-	 * @param w
+	 * @param width
 	 *            the desired frame width. This value may be adjusted to the
 	 *            closest supported by hardware.
-	 * @param h
+	 * @param height
 	 *            the desired frame height. This value may be adjusted to the
 	 *            closest supported by hardware.
 	 * @param input
@@ -1494,11 +1507,11 @@ public class VideoDevice {
 	 *             if a <code>FrameGrabber</code> already exists or if the
 	 *             <code>VideoDevice</code> has been released.
 	 */
-	public RawFrameGrabber getRawFrameGrabber(int w, int h, int input, int std) throws V4L4JException {
+	public RawFrameGrabber getRawFrameGrabber(int width, int height, int input, int std) throws V4L4JException {
 		if (deviceInfo == null)
 			throw new ImageFormatException(
 					"No DeviceInfo could be obtained. The device is probably used by another application");
-		return getRawFrameGrabber(w, h, input, std, deviceInfo.getFormatList().getNativeFormats().get(0));
+		return getRawFrameGrabber(width, height, input, std, deviceInfo.getFormatList().getNativeFormats().get(0));
 	}
 
 	/**

@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import au.edu.jcu.v4l4j.ImageFormat;
+import au.edu.jcu.v4l4j.ImagePalette;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
@@ -46,10 +47,8 @@ public class H264Test {
 		H264Picture picIn = new H264Picture(width, height, csp);
 		
 		VideoDevice device = new VideoDevice("/dev/video0");
-		ImageFormat yuyvFormat;
-		for (ImageFormat format : device.getDeviceInfo().getFormatList().getNativeFormats()) {
-			System.out.println(format.getPalette());
-		}
+		ImageFormat yuyvFormat = device.getDeviceInfo().getFormatList().getNativeFormatOfType(ImagePalette.YUYV);
+		System.out.println(yuyvFormat);
 		
 		encoder.close();
 		picIn.close();

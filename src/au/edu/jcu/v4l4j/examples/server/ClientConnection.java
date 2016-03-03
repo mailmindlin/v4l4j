@@ -40,13 +40,28 @@ public class ClientConnection {
 	private static String mainPageHTML = "HTTP/1.0 200 OK\r\n" + "Location: http://v4l4j_mini_server\r\n"
 			+ "Expires: 0\r\n" + "Content-Type: text/html\r\n" + "\r\n"
 			+ "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Frameset//EN\" http://www.w3.org/TR/html4/frameset.dtd>"
-			+ "<html>\n" + "<head>\n" + "<title>v4l4j mini server</title>\n" + "</head>\n" + "<frameset cols='4*,6*'>\n"
-			+ "<frame src='control' name='control list'>\n" + "<frame src='webcam' name='video stream'>\n"
-			+ "</frameset>\n" + "</html>";
+			+ "<html>\n"
+				+ "<head>\n"
+					+ "<title>v4l4j mini server</title>\n"
+				+ "</head>\n"
+				+ "<frameset cols='4*,6*'>\n"
+				+ "<frame src='control' name='control list'>\n"
+				+ "<frame src='webcam' name='video stream'>\n"
+				+ "</frameset>\n"
+			+ "</html>";
 
 	private static String webcamPageHTML = "HTTP/1.0 200 OK\r\n" + "Location: http://v4l4j_mini_server\r\n"
-			+ "Expires: 0\r\n" + "Content-Type: text/html\r\n" + "\r\n" + "<html>\n" + "<body>\n" + "<table>\n"
-			+ "<td>\n" + "<tr>\n" + "<img src='stream.jpg'>\n" + "</tr>\n" + "</td>\n" + "</table>\n" + "</body>\n"
+			+ "Expires: 0\r\n" + "Content-Type: text/html\r\n" + "\r\n"
+			+ "<html>\n"
+				+ "<body>\n"
+					+ "<table>\n"
+						+ "<td>\n"
+							+ "<tr>\n"
+								+ "<img src='stream.jpg'>\n"
+							+ "</tr>\n"
+						+ "</td>\n"
+					+ "</table>\n"
+				+ "</body>\n"
 			+ "</html>";
 
 	private static String controlPageHTMLHeader = "HTTP/1.0 200 OK\r\n" + "Location: http://v4l4j_mini_server\r\n"

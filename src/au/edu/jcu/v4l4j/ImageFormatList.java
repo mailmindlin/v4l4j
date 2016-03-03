@@ -476,4 +476,16 @@ public class ImageFormatList {
 	public ImageFormat getYVUEncodableFormat(int i) {
 		return getFormat(YVU420formats, i);
 	}
+	
+	/**
+	 * Looks for a native image format with the given palette
+	 * @param palette palette to search for a format with
+	 * @return found image format, or null
+	 */
+	public ImageFormat getNativeFormatOfType(ImagePalette palette) {
+		for (ImageFormat imf : getNativeFormats())
+			if (imf.getPalette() == palette)
+				return imf;
+		return null;
+	}
 }

@@ -106,25 +106,25 @@ public class CamHttpServer implements Runnable, CaptureCallback {
 	 * @param fps
 	 *            the frame rate used for capture
 	 * @throws V4L4JException
-	 *             if a JPEG frame grabber cant be created
+	 *             if a JPEG frame grabber can't be created
 	 * @throws IOException
-	 *             if a server socket on the given port cant be created
+	 *             if a server socket on the given port can't be created
 	 */
 	public CamHttpServer(String dev, int width, int height, int port, int fps) throws V4L4JException, IOException {
 		this.videoDevice = new VideoDevice(dev);
 		this.frameGrabber = videoDevice.getJPEGFrameGrabber(width, height, 0, 0, 80);
 		this.frameGrabber.setCaptureCallback(this);
 		try {
-			System.out.println("setting frame rate to " + fps);
+			System.out.println("Setting frame rate to " + fps);
 			frameGrabber.setFrameInterval(1, fps);
 		} catch (Exception e) {
-			System.out.println("Couldnt set the frame interval");
+			System.out.println("Couldn't set the frame interval");
 		}
 
 		controlList = videoDevice.getControlList();
 		clients = new Vector<ClientConnection>();
 
-		// initialise tcp port to listen on
+		// initialize tcp port to listen on
 		serverSocket = new ServerSocket(port);
 
 		System.out.println("Server listening at " + serverSocket.getInetAddress().getHostAddress() + ":"
@@ -288,6 +288,7 @@ public class CamHttpServer implements Runnable, CaptureCallback {
 	private int parseLine(BufferedReader in) throws IOException {
 		// read the first line to determine which page to send
 		httpLineFromClient = in.readLine();
+		System.out.println(httpLineFromClient);
 
 		if (httpLineFromClient == null)
 			throw new IOException("Read null line");
@@ -301,7 +302,7 @@ public class CamHttpServer implements Runnable, CaptureCallback {
 			return CONTROL_PAGE;
 
 		// if the line contains the word stream, we want the control list page
-		if (httpLineFromClient.indexOf("stream") != -1)
+		if (httpLineFromClient.indexOf("stream") != -1 || httpLineFromClient.endsWith("jpg"))
 			return VIDEO_STREAM;
 
 		// if the line contains the word update, we want to update a control's
