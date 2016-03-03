@@ -10,18 +10,36 @@ import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
+/**
+ * A wrapper for the <code>libv4lconvert</code> library.
+ * @author mailmindlin
+ */
 public class AbstractVideoFrameEncoder implements VideoFrameEncoder {
+	/**
+	 * Type that this encoder will convert from
+	 */
 	protected final ImagePalette typeFrom;
+	/**
+	 * Type that this encoder will convert frames to
+	 */
 	protected final ImagePalette typeTo;
+	/**
+	 * Width of frames
+	 */
 	protected final int width;
+	/**
+	 * Height of frames
+	 */
 	protected final int height;
+	/**
+	 * 
+	 */
 	protected int numVideoFrames;
 	protected final Vector<AbstractConvertedVideoFrame> frames;
 	protected final BlockingQueue<AbstractConvertedVideoFrame> availableFrames;
 	
 	/**
-	 * JNI returns a long (which is really a pointer) when a device is allocated
-	 * for use. This field is read-only (!!!)
+	 * A pointer to the native struct in memory.
 	 */
 	protected final long object;
 
@@ -29,61 +47,79 @@ public class AbstractVideoFrameEncoder implements VideoFrameEncoder {
 		try {
 			System.loadLibrary("v4l4j");
 		} catch (UnsatisfiedLinkError e) {
-			System.err.println("Cant load v4l4j JNI library");
+			System.err.println("Can't load v4l4j JNI library");
 			throw e;
 		}
 	}
 	
 	/**
-	 * Create native struct
+	 * Create the native struct
 	 * @param from
+	 * 	image type to convert from
 	 * @param to
+	 * 	image type to convert to
 	 * @param width
+	 * 	the frame width
 	 * @param height
-	 * @return
+	 * 	the frame height
+	 * @return a pointer to the allocated struct
+	 * @throws JNIException if there was a problem with allocation or something
 	 */
-	private native long doInit(int from, int to, int width, int height);
+	private native long doInit(int from, int to, int width, int height) throws JNIException;
 	/**
-	 * Release native data
-	 * @param object pointer to struct
+	 * Release native memory
+	 * @param object
+	 * 	a pointer to the struct
 	 */
 	private native void doRelease(long object);
-	protected native void setBufferCapacity(long o, int buffer, int capacity);
-	protected native int getBufferCapacity(long o, int buffer);
-	protected native int getBufferLimit(long o, int buffer);
+	protected native void setBufferCapacity(int buffer, int capacity);
+	protected native int getBufferCapacity(int buffer);
+	protected native int getBufferLimit(int buffer);
 	/**
 	 * Put data into the encoder's buffer
-	 * @param o the object
 	 * @param array data to put
 	 * @param length length of data
 	 * @throws V4L4JException
 	 */
-	protected native void putBuffer(long o, byte[] array, int length) throws V4L4JException;
+	protected native void putBuffer(byte[] array, int length) throws V4L4JException;
 	/**
 	 * Get the data from the encoder's buffer
-	 * @param object
 	 * @param array
 	 * @return length of read data
 	 * @throws V4L4JException
 	 */
-	protected native int getBuffer(long object, byte[] array) throws V4L4JException;
+	protected native int getBuffer(byte[] array) throws V4L4JException;
 	
 	/**
 	 * Set JPEG image quality
-	 * @param object
 	 * @param quality
 	 */
-	protected native void setQuality(long object, int quality);
+	protected native void setQuality(int quality);
 	
-	protected native void doConvert(long object);
+	protected native void doConvert();
 	
 	/**
-	 * 
-	 * @param object
-	 * @param out
-	 * @return
+	 * Get ids of the converters used internally by libv4lconvert.
+	 * <p>
+	 * I don't see how anyone would need to use this method for anything,
+	 * because the actual IDs of the converters may be subject to change,
+	 * but it's here for debugging.
+	 * </p>
+	 * <p>
+	 * If the array passed to this method is too small, or null,
+	 * it will not write any ids to it, and return the 0 - [number of ids
+	 * used]. This behavior can be used like this:
+	 * <pre><code>
+	 *     int numIds = getConverterIds(null);
+	 *     int[] ids = new int[-numIds];
+	 *     assert(ids.length == getConverterIds(ids));
+	 * </code></pre>
+	 * </p>
+	 * @param out array of integers to write ids to
+	 * @return number of ids written to the array, or, if the array is too small (or null),
+	 * a negative number representing the number of ids.
 	 */
-	protected native int getConverterIds(long object, int[] out);
+	protected native int getConverterIds(int[] out);
 	
 	protected AbstractVideoFrameEncoder(int width, int height, ImagePalette from, ImagePalette to) {
 		this.width = width;
