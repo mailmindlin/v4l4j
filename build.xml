@@ -261,7 +261,7 @@
 	</target>
 	
 	<target name="test-server">
-		<java classname="au.edu.jcu.v4l4j.examples.server.CamServer" fork="true" failonerror="true">
+		<java classname="au.edu.jcu.v4l4j.examples.server.CamHttpServer" fork="true" failonerror="true">
 			<classpath>
 				<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
 			</classpath>
@@ -349,5 +349,13 @@
 		<delete file="${project.dir}/${project.jni.file}" />
 		<delete dir="${project.classes}"/>
 		<delete dir="${project.javadoc.dir}"/>
+	</target>
+	<target name="test-h264">
+		<junit fork="yes" haltonfailure="yes" showoutput="yes">
+			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
+			<test name="au.edu.jcu.v4l4j.encoder.h264.H264Test"/>
+			<formatter type="plain" usefile="false"/>
+			<classpath refid="test.classpath"/>
+		</junit>
 	</target>
 </project>
