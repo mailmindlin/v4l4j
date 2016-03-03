@@ -69,6 +69,7 @@ public class CamHttpServer implements Runnable, CaptureCallback {
 	private String httpLineFromClient;
 	private long frameCount;
 	private long lastFrameTimestamp;
+	private long frameCaptureTimeDelta;
 
 	private static final int MAIN_PAGE = 0;
 	private static final int WEBCAM_PAGE = 1;
@@ -349,6 +350,7 @@ public class CamHttpServer implements Runnable, CaptureCallback {
 		frameCount++;
 		if (frameCount == 1) {
 			lastFrameTimestamp = System.currentTimeMillis();
+			frameCaptureTimeDelta = lastFrameTimestamp - (frame.getCaptureTime() / 1000);
 		} else {
 			long delta = System.currentTimeMillis() - lastFrameTimestamp;
 			if (delta > 10000) {
@@ -356,6 +358,10 @@ public class CamHttpServer implements Runnable, CaptureCallback {
 				frameCount = 0;
 				lastFrameTimestamp = 0;
 			}
+			//work out how far this thread is behind the camera
+			long lag = (lastFrameTimestamp - (frame.getCaptureTime() / 1000)) - frameCaptureTimeDelta;
+			if (lag > 100)
+				System.out.println("Lag: " + lag + "ms total, " + (((float)lag) * 1000.0f / frameCount) + "ms/frame");
 		}
 		// send the frame to each client
 		for (ClientConnection client : copyClients) {
