@@ -339,7 +339,6 @@ public class CamHttpServer implements Runnable, CaptureCallback {
 
 	@Override
 	public void nextFrame(VideoFrame frame) {
-		System.out.println("F");
 		Vector<ClientConnection> copyClients = null;
 
 		// copy client vector
@@ -360,8 +359,7 @@ public class CamHttpServer implements Runnable, CaptureCallback {
 			}
 			//work out how far this thread is behind the camera
 			long lag = (lastFrameTimestamp - (frame.getCaptureTime() / 1000)) - frameCaptureTimeDelta;
-			if (lag > 100)
-				System.out.println("Lag: " + lag + "ms total, " + (((float)lag) * 1000.0f / frameCount) + "ms/frame");
+			System.out.println("Lag: " + lag + "ms total,\t" + (((float)lag) * 1000.0f / frameCount) + "ms/frame");
 		}
 		// send the frame to each client
 		for (ClientConnection client : copyClients) {
