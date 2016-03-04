@@ -350,6 +350,16 @@
 		<delete dir="${project.classes}"/>
 		<delete dir="${project.javadoc.dir}"/>
 	</target>
+	
+	<target name="clean-java">
+		<exec executable="make">
+			<arg line="-j ${make.jobs} -C ${project.src} clean" />
+		</exec>
+		<delete file="${project.dir}/${project.jar.file}" />
+		<delete dir="${project.classes}"/>
+		<delete dir="${project.javadoc.dir}"/>
+	</target>
+	
 	<target name="test-h264">
 		<junit fork="yes" haltonfailure="yes" showoutput="yes">
 			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
