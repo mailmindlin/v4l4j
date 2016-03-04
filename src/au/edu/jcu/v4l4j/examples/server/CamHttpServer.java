@@ -358,8 +358,9 @@ public class CamHttpServer implements Runnable, CaptureCallback {
 				lastFrameTimestamp = 0;
 			}
 			//work out how far this thread is behind the camera
-			long lag = (lastFrameTimestamp - (frame.getCaptureTime() / 1000)) - frameCaptureTimeDelta;
-			System.out.println("Lag: " + lag + "ms total,\t" + (((float)lag) * 1000.0f / frameCount) + "ms/frame");
+			long lag = frameCaptureTimeDelta + (frame.getCaptureTime() / 1000) - lastFrameTimestamp;
+			if (frameCount % 10 == 0)
+				System.out.println("Lag: " + lag + "ms total,\t" + (((float)lag) * 1000.0f / frameCount) + "ms/frame");
 		}
 		// send the frame to each client
 		for (ClientConnection client : copyClients) {
