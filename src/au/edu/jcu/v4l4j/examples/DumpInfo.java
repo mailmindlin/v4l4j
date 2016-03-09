@@ -217,6 +217,6 @@ public class DumpInfo {
 	}
 	private String getIntervalPrettyString(DiscreteInterval interval) {
 		double fps = .1 * Math.round(10.0 * interval.getDenom() / interval.getNum());
-		return interval.getNum() + '/' + interval.getDenom() + " (" + fps + " FPS)";
+		return interval.getNum() + "/" + interval.getDenom() + " (" + fps + " FPS)";
 	}
 }
