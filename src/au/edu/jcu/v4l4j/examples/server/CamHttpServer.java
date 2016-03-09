@@ -21,13 +21,22 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.ServerSocket;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.StandardSocketOptions;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
+import java.util.Iterator;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
+import au.edu.jcu.v4l4j.CaptureCallback;
 import au.edu.jcu.v4l4j.ControlList;
 import au.edu.jcu.v4l4j.JPEGFrameGrabber;
-import au.edu.jcu.v4l4j.CaptureCallback;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
@@ -60,12 +69,15 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  *
  */
 public class CamHttpServer implements Runnable, CaptureCallback {
-	private ServerSocket serverSocket;
+	private ServerSocketChannel serverSocket;
+	private Selector selector;
 	private VideoDevice videoDevice;
 	private JPEGFrameGrabber frameGrabber;
 	private ControlList controlList;
 	private Thread serverThread;
 	private Vector<ClientConnection> clients;
+	private ConcurrentHashMap<Long, SocketChannel> channelMap = new ConcurrentHashMap<>();
+	private AtomicLong channelId = new AtomicLong(0);
 	private String httpLineFromClient;
 	private long frameCount;
 	private long lastFrameTimestamp;
@@ -84,7 +96,7 @@ public class CamHttpServer implements Runnable, CaptureCallback {
 		int port = (System.getProperty("test.port") != null) ? Integer.parseInt(System.getProperty("test.port")) : 8080;
 		int fps = (System.getProperty("test.fps") != null) ? Integer.parseInt(System.getProperty("test.fps")) : 15;
 
-		CamHttpServer server = new CamHttpServer(dev, w, h, port, fps);
+		CamHttpServer server = new CamHttpServer(dev, w, h, new InetSocketAddress(port), fps);
 		server.start();
 		System.out.println("Press enter to exit.");
 		System.in.read();
@@ -111,7 +123,7 @@ public class CamHttpServer implements Runnable, CaptureCallback {
 	 * @throws IOException
 	 *             if a server socket on the given port can't be created
 	 */
-	public CamHttpServer(String dev, int width, int height, int port, int fps) throws V4L4JException, IOException {
+	public CamHttpServer(String dev, int width, int height, SocketAddress address, int fps) throws V4L4JException, IOException {
 		this.videoDevice = new VideoDevice(dev);
 		this.frameGrabber = videoDevice.getJPEGFrameGrabber(width, height, 0, 0, 80);
 		this.frameGrabber.setCaptureCallback(this);
@@ -125,11 +137,15 @@ public class CamHttpServer implements Runnable, CaptureCallback {
 		controlList = videoDevice.getControlList();
 		clients = new Vector<ClientConnection>();
 
+		this.selector = Selector.open();
 		// initialize tcp port to listen on
-		serverSocket = new ServerSocket(port);
+		this.serverSocket = ServerSocketChannel.open();
+		this.serverSocket.socket().bind(address);
+		this.serverSocket.configureBlocking(false);
+		this.serverSocket.register(this.selector, SelectionKey.OP_ACCEPT);
 
-		System.out.println("Server listening at " + serverSocket.getInetAddress().getHostAddress() + ":"
-				+ serverSocket.getLocalPort());
+		System.out.println("Server listening at " + serverSocket.socket().getInetAddress().getHostAddress() + ":"
+				+ serverSocket.socket().getLocalPort());
 
 		// create server thread
 		serverThread = new Thread(this, "Server thread");
@@ -321,10 +337,27 @@ public class CamHttpServer implements Runnable, CaptureCallback {
 	public void run() {
 		try {
 			// run the main loop only until we are interrupted
-			while (!Thread.interrupted())
-				serverMainLoop();
+			while (!Thread.interrupted()) {
+				if (selector.select() > 0) {
+					Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
+					while(keys.hasNext()) {
+						SelectionKey key = keys.next();
+						keys.remove();
+						if (!key.isValid())
+							continue;
+						if (key.isAcceptable()) {
+							accept(key);
+							continue;
+						}
+						if (key.isReadable()) {
+							read(key);
+							continue;
+						}
+					}
+				}
+			}
 
-		} catch (V4L4JException e) {
+//		} catch (V4L4JException e) {
 			// error starting the capture when the first client connected
 		} catch (Exception e) {
 			// error accepting new client connection over server socket
@@ -335,6 +368,20 @@ public class CamHttpServer implements Runnable, CaptureCallback {
 		} finally {
 			System.out.println("Server thread exiting");
 		}
+	}
+	private void accept(SelectionKey key) throws IOException {
+		SocketChannel socket = serverSocket.accept();
+		
+		//setup socket
+		socket.configureBlocking(false);
+		socket.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
+		socket.setOption(StandardSocketOptions.TCP_NODELAY, true);
+		
+		long id = this.channelId.incrementAndGet();
+		ClientConnection connection = new ClientConnection(socket, id);
+	}
+	private void read(SelectionKey key) {
+		
 	}
 
 	@Override
@@ -359,9 +406,9 @@ public class CamHttpServer implements Runnable, CaptureCallback {
 				lastFrameTimestamp = 0;
 			}
 			//work out how far this thread is behind the camera
-			long lag = now - (frame.getCaptureTime() / 1000) - frameCaptureTimeDelta;
-			if (frameCount % 10 == 0)
-				System.out.println("Lag: " + lag + "ms total,\t" + (((float)lag) * 1000.0f / frameCount) + "ms/frame");
+//			long lag = now - (frame.getCaptureTime() / 1000) - frameCaptureTimeDelta;
+//			if (frameCount % 10 == 0)
+//				System.out.println("Lag: " + lag + "ms total,\t" + (((float)lag) * 1000.0f / frameCount) + "ms/frame");
 		}
 		// send the frame to each client
 		for (ClientConnection client : copyClients) {

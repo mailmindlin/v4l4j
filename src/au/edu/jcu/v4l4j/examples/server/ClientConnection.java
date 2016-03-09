@@ -20,7 +20,7 @@ package au.edu.jcu.v4l4j.examples.server;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
+import java.nio.channels.SocketChannel;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -69,9 +69,8 @@ public class ClientConnection {
 
 	private static String controlPageHTMLFooter = "</table>\n" + "</body>\n" + "</html>\n";
 
-	private Socket clientSocket;
-	private BufferedReader inStream;
-	private DataOutputStream outStream;
+	private SocketChannel clientSocket;
+	protected final long id;
 
 	/**
 	 * Builds an object handling a tcp connection to one client. Sends the MJPEG
@@ -86,13 +85,13 @@ public class ClientConnection {
 	 * @throws IOException
 	 *             if there is an error get in/output streams
 	 */
-	public ClientConnection(Socket client, BufferedReader in, DataOutputStream out) throws IOException {
-		if ((client == null) || (in == null) || (out == null))
-			throw new NullPointerException("client, in and out cannot be null");
+	public ClientConnection(SocketChannel client, DataOutputStream out, long id) throws IOException {
+		if ((client == null) || (out == null))
+			throw new NullPointerException("client, out cannot be null");
 
 		clientSocket = client;
-		inStream = in;
 		outStream = out;
+		this.id = id;
 
 		// send mjpeg header
 		outStream.writeBytes(mjpegHeader);
@@ -103,10 +102,9 @@ public class ClientConnection {
 	 */
 	public void stop() {
 		try {
-			System.out.println("Disconnected from " + clientSocket.getInetAddress().getHostAddress() + ":"
-					+ clientSocket.getPort());
+			System.out.println("Disconnected from " + clientSocket.socket().getInetAddress().getHostAddress() + ":"
+					+ clientSocket.socket().getPort());
 
-			inStream.close();
 			outStream.close();
 			clientSocket.close();
 		} catch (IOException e) {
