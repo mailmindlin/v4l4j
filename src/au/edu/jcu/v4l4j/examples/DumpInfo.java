@@ -22,8 +22,13 @@ import java.util.Map;
 
 import au.edu.jcu.v4l4j.Control;
 import au.edu.jcu.v4l4j.DeviceInfo;
+import au.edu.jcu.v4l4j.FrameInterval;
+import au.edu.jcu.v4l4j.FrameInterval.DiscreteInterval;
+import au.edu.jcu.v4l4j.FrameInterval.StepwiseInterval;
 import au.edu.jcu.v4l4j.ImageFormat;
 import au.edu.jcu.v4l4j.InputInfo;
+import au.edu.jcu.v4l4j.ResolutionInfo;
+import au.edu.jcu.v4l4j.ResolutionInfo.DiscreteResolution;
 import au.edu.jcu.v4l4j.TunerInfo;
 import au.edu.jcu.v4l4j.V4L4JConstants;
 import au.edu.jcu.v4l4j.VideoDevice;
@@ -68,7 +73,7 @@ public class DumpInfo {
 	 */
 	private void dumpInfo() {
 
-		System.out.println("name: " + deviceInfo.getName());
+		System.out.println("Camer name:  " + deviceInfo.getName());
 		System.out.println("Device file: " + deviceInfo.getDeviceFile());
 		System.out.println("Supported formats:");
 		for (ImageFormat f : deviceInfo.getFormatList().getNativeFormats())
@@ -78,41 +83,41 @@ public class DumpInfo {
 				"\tFormats that can be RGB24-converted: " + (videoDevice.supportRGBConversion() ? "" : "None"));
 		if (videoDevice.supportRGBConversion())
 			for (ImageFormat f : deviceInfo.getFormatList().getRGBEncodableFormats())
-				System.out.println("\t\t" + f.toNiceString());
+				dumpFormatInfo(f);
 
 		System.out.println(
 				"\tFormats that can be BGR24-converted: " + (videoDevice.supportBGRConversion() ? "" : "None"));
 		if (videoDevice.supportBGRConversion())
 			for (ImageFormat f : deviceInfo.getFormatList().getBGREncodableFormats())
-				System.out.println("\t\t" + f.toNiceString());
+				dumpFormatInfo(f);
 
 		System.out.println(
 				"\tFormats that can be YUV420-converted: " + (videoDevice.supportYUVConversion() ? "" : "None"));
 		if (videoDevice.supportYUVConversion())
 			for (ImageFormat f : deviceInfo.getFormatList().getYUVEncodableFormats())
-				System.out.println("\t\t" + f.toNiceString());
+				dumpFormatInfo(f);
 
 		System.out.println(
 				"\tFormats that can be YVU420-converted: " + (videoDevice.supportYVUConversion() ? "" : "None"));
 		if (videoDevice.supportYVUConversion())
 			for (ImageFormat f : deviceInfo.getFormatList().getYVUEncodableFormats())
-				System.out.println("\t\t" + f.toNiceString());
+				dumpFormatInfo(f);
 
 		System.out
 				.println("\tFormats that can be JPEG-encoded: " + (videoDevice.supportJPEGConversion() ? "" : "None"));
 		if (videoDevice.supportJPEGConversion())
 			for (ImageFormat f : deviceInfo.getFormatList().getJPEGEncodableFormats())
-				System.out.println("\t\t" + f.toNiceString());
+				dumpFormatInfo(f);
 
 		System.out.println("Inputs:");
 		for (InputInfo i : deviceInfo.getInputs()) {
+			System.out.println("\tIndex: " + i.getIndex());
 			System.out.println("\tName: " + i.getName());
 			System.out.println("\tType: " + i.getType() + "("
 					+ (i.getType() == V4L4JConstants.INPUT_TYPE_CAMERA ? "Camera" : "Tuner") + ")");
-			System.out.println("\tIndex: " + i.getIndex());
 			System.out.println("\tSupported standards:");
 			for (Integer s : i.getSupportedStandards()) {
-				System.out.print("\t\t" + s);
+				System.out.print("\t\t" + s + " ");
 				if (s == V4L4JConstants.STANDARD_PAL)
 					System.out.println("(PAL)");
 				else if (s == V4L4JConstants.STANDARD_NTSC)
@@ -163,13 +168,19 @@ public class DumpInfo {
 				Map<String, Integer> valueMap = c.getDiscreteValuesMap();
 				System.out.print("Menu control: " + c.getName() + " - value: ");
 				try {
-					System.out.println(c.getValue());
+					int value = c.getValue();
+					System.out.print(value);
+					try {
+						System.out.println(" (" + c.getDiscreteValueName(c.getDiscreteValues().indexOf(value)) + ")");
+					} catch (Exception e) {
+						System.out.println(" (unknown)");
+					}
 				} catch (V4L4JException ve) {
 					System.out.println(" ERROR");
 				}
-				System.out.println("Menu entries:");
+				System.out.println("\tMenu entries:");
 				for (String s : valueMap.keySet())
-					System.out.println("  " + s + " - " + valueMap.get(s));
+					System.out.println("\t\t" + valueMap.get(s) + " - " + s);
 			} else {
 				System.out.print("Control: " + c.getName() + " - min: " + c.getMinValue() + " - max: " + c.getMaxValue()
 						+ " - step: " + c.getStepValue() + " - value: ");
@@ -180,5 +191,32 @@ public class DumpInfo {
 				}
 			}
 		}
+	}
+	private void dumpFormatInfo(ImageFormat format) {
+		System.out.println("\t" + format.toString());
+		
+		ResolutionInfo resolutions = format.getResolutionInfo();
+		if (resolutions.getType() == ResolutionInfo.Type.DISCRETE) {
+			for (DiscreteResolution resolution : resolutions.getDiscreteResolutions()) {
+				System.out.println("\t\t" + resolution.getWidth() + "x" + resolution.getHeight());
+				
+				dumpFrameIntervalInfo(resolution.getFrameInterval());
+			}
+		}
+	}
+	private void dumpFrameIntervalInfo(FrameInterval intervals) {
+		if (intervals.getType() == FrameInterval.Type.DISCRETE) {
+			for (DiscreteInterval interval : intervals.getDiscreteIntervals())
+				System.out.println("\t\t\t" + getIntervalPrettyString(interval));
+		} else if (intervals.getType() == FrameInterval.Type.STEPWISE) {
+			StepwiseInterval interval = intervals.getStepwiseInterval();
+			System.out.println("\t\t\tFrom " + getIntervalPrettyString(interval.getMinInterval()));
+			System.out.println("\t\t\tStep " + getIntervalPrettyString(interval.getStepInterval()));
+			System.out.println("\t\t\tTo   " + getIntervalPrettyString(interval.getMaxInterval()));
+		}
+	}
+	private String getIntervalPrettyString(DiscreteInterval interval) {
+		double fps = .1 * Math.round(10.0 * interval.getDenom() / interval.getNum());
+		return interval.getNum() + '/' + interval.getDenom() + " (" + fps + " FPS)";
 	}
 }

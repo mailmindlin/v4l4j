@@ -198,7 +198,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	}
 
 	/**
-	 * This method initialises the capture, and apply the capture parameters.
+	 * This method initializes the capture, and apply the capture parameters.
 	 * V4L may either adjust the height and width parameters to the closest
 	 * valid values or reject them altogether. If the values were adjusted, they
 	 * can be retrieved after calling {@link #init()} using {@link #getWidth()}

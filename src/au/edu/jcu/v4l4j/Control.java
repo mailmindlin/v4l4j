@@ -200,7 +200,7 @@ public class Control {
 	 */
 	Control(int id, String name, int min, int max, int step, int type, String[] names, int[] values, long o) {
 		this.id = id;
-		this.name = new String(name);
+		this.name = name;
 		this.min = min;
 		this.max = max;
 		this.step = step;
@@ -239,7 +239,7 @@ public class Control {
 	 *             if this control has been released and must not be used
 	 *             anymore.
 	 */
-	public int getValue() throws ControlException {
+	public int getValue() throws ControlException, UnsupportedMethod, StateException {
 		int v = 0;
 
 		if (type == V4L4JConstants.CTRL_TYPE_STRING)
@@ -287,7 +287,7 @@ public class Control {
 	 *             if this control has been released and must not be used
 	 *             anymore.
 	 */
-	public int setValue(int value) throws ControlException {
+	public int setValue(int value) throws ControlException, UnsupportedMethod, StateException {
 		int v = defaultValue;
 
 		if (type == V4L4JConstants.CTRL_TYPE_STRING)
@@ -331,7 +331,7 @@ public class Control {
 	 *             if this control has been released and must not be used
 	 *             anymore.
 	 */
-	public String getStringValue() throws ControlException {
+	public String getStringValue() throws ControlException, UnsupportedMethod, StateException {
 		String v;
 
 		if (type != V4L4JConstants.CTRL_TYPE_STRING)
@@ -746,13 +746,37 @@ public class Control {
 	 *             if this control has been released and must not be used
 	 *             anymore
 	 */
-	public List<String> getDiscreteValueNames() {
+	public List<String> getDiscreteValueNames() throws UnsupportedMethod, StateException {
 		if (type != V4L4JConstants.CTRL_TYPE_DISCRETE || names == null)
 			throw new UnsupportedMethod("This control does not have discrete values");
 		state.get();
 		Vector<String> v = new Vector<String>(names);
 		state.put();
 		return v;
+	}
+	
+	/**
+	 * This method returns the name for a given discrete value. The names are
+	 * indexed the same way as {@link #getDiscreteValueNames()}, so a call to
+	 * this method is functionally equivalent to <code>getDiscreteValues().get(index)</code>.
+	 * @param index index of name to get
+	 * @return name at index, or <b>null</b> if the index is invalid.
+	 * @throws UnsupportedMethod
+	 *             if this control does not support discrete values. Check this
+	 *             control's type (with {@link #getType()}) and use the
+	 *             appropriate method.
+	 * @throws StateException
+	 *             if this control has been released and must not be used
+	 *             anymore
+	 * @see #getDiscreteValueNames()
+	 * @see #getDiscreteValues()
+	 * @author mailmindlin
+	 */
+	public String getDiscreteValueName(int index) throws UnsupportedMethod, StateException {
+		List<String> names = getDiscreteValueNames();
+		if (index > names.size() + 1 || index < 0)
+			return null;
+		return names.get(index);
 	}
 
 	/**
@@ -767,7 +791,7 @@ public class Control {
 	 *             if this control has been released and must not be used
 	 *             anymore
 	 */
-	public Map<String, Integer> getDiscreteValuesMap() {
+	public Map<String, Integer> getDiscreteValuesMap() throws UnsupportedMethod, StateException {
 		if (type != V4L4JConstants.CTRL_TYPE_DISCRETE || names == null)
 			throw new UnsupportedMethod("This control does not have discrete values");
 		state.get();
@@ -783,7 +807,7 @@ public class Control {
 	 * This method releases this control. Any attempt to use the control
 	 * afterwards will raise a <code>StateException</code>
 	 */
-	void release() {
+	void release() throws StateException {
 		state.release();
 	}
 
@@ -840,7 +864,7 @@ public class Control {
 		/**
 		 * Must be called with the lock on this object(State) held
 		 * 
-		 * @return
+		 * @return whether this isn't released yet
 		 */
 		public boolean isNotReleased() {
 			return state == INIT && temp != RELEASED;
