@@ -8,16 +8,19 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 public class JPEGEncoder extends AbstractVideoFrameEncoder {
 	
-	static {
-		try {
-			System.loadLibrary("v4l4j");
-		} catch (UnsatisfiedLinkError e) {
-			System.err.println("Cant load v4l4j JNI library");
-			throw e;
-		}
+	protected int quality;
+	
+	public static JPEGEncoder from(int width, int height, ImagePalette from) {
+		return new JPEGEncoder(width, height, from);
 	}
 	
-	protected int quality;
+	public static JPEGEncoder to(int width, int height, ImagePalette to) {
+		return new JPEGEncoder(width, height, ImagePalette.JPEG, to);
+	}
+	
+	protected JPEGEncoder(int width, int height, ImagePalette from, ImagePalette to) {
+		super(width, height, from, to);
+	}
 	
 	public JPEGEncoder(int width, int height, ImagePalette from) {
 		super(width, height, from, ImagePalette.JPEG);
@@ -35,6 +38,7 @@ public class JPEGEncoder extends AbstractVideoFrameEncoder {
 			quality = V4L4JConstants.MAX_JPEG_QUALITY;
 		this.quality = quality;
 	}
+	
 	@Override
 	public VideoFrame encode(BaseVideoFrame frame) throws V4L4JException {
 		super.putBuffer(frame.getBytes(), frame.getFrameLength());
