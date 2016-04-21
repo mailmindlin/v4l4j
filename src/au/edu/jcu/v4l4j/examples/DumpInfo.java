@@ -73,7 +73,7 @@ public class DumpInfo {
 	 */
 	private void dumpInfo() {
 
-		System.out.println("Camer name:  " + deviceInfo.getName());
+		System.out.println("Camera name:  " + deviceInfo.getName());
 		System.out.println("Device file: " + deviceInfo.getDeviceFile());
 		System.out.println("Supported formats:");
 		for (ImageFormat f : deviceInfo.getFormatList().getNativeFormats())
