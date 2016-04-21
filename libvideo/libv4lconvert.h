@@ -57,8 +57,7 @@ LIBV4L_PUBLIC void v4lconvert_destroy(struct v4lconvert_data *data);
    destination formats can be used (as flipping / rotating / video-processing
    is not supported on other formats). This function can be used to query
    if that is the case. */
-LIBV4L_PUBLIC int v4lconvert_supported_dst_fmt_only(
-		struct v4lconvert_data *data);
+LIBV4L_PUBLIC int v4lconvert_supported_dst_fmt_only(struct v4lconvert_data *data);
 
 /* With regards to dest_fmt just like VIDIOC_TRY_FMT, except that the try
    format will succeed and return the requested V4L2_PIX_FMT_foo in dest_fmt if
