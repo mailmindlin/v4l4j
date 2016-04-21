@@ -33,10 +33,8 @@ static struct v4lprocessing_filter *filters[] = {
 	&gamma_filter,
 };
 
-struct v4lprocessing_data *v4lprocessing_create(int fd, struct v4lcontrol_data *control)
-{
-	struct v4lprocessing_data *data =
-		calloc(1, sizeof(struct v4lprocessing_data));
+struct v4lprocessing_data *v4lprocessing_create(int fd, struct v4lcontrol_data *control) {
+	struct v4lprocessing_data *data = calloc(1, sizeof(struct v4lprocessing_data));
 
 	if (!data) {
 		fprintf(stderr, "libv4lprocessing: error: out of memory!\n");
