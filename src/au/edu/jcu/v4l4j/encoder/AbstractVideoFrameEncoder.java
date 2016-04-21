@@ -1,5 +1,6 @@
 package au.edu.jcu.v4l4j.encoder;
 
+import java.util.Arrays;
 import java.util.Vector;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -134,6 +135,11 @@ public class AbstractVideoFrameEncoder implements VideoFrameEncoder {
 		this.availableFrames = new ArrayBlockingQueue<>(numVideoFrames);
 		
 		this.object = doInit(from.getIndex(), to.getIndex(), width, height);
+		
+		System.out.println("Built encoder from " + from + " to " + to + '.');
+		int[] ids = new int[getConverterIds(null)];
+		getConverterIds(ids);
+		System.out.println("\tIds " + Arrays.toString(ids));
 	}
 	
 	public void init() {
