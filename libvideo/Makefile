@@ -129,12 +129,9 @@ test: $(LIB).$(LIB_RELEASE) $(TESTOBJ)
 	$(CC) list-caps.o -lm -lrt -L. -l$(LIB_NAME) -o list-caps
 	$(CC) dump-capture.o -lm -lrt -L. -l$(LIB_NAME) -o dump-capture
 
-version.h:
-	@sh svn-version.sh
-
 clean:
 	make -C $(LIBV4LCONVERT_DIR) clean
 	rm -f $(OBJ) $(BIN) $(LIB) $(LIB).$(LIB_RELEASE) $(TESTOBJ) \
-  $(LIBV4LCONVERT_AR) ./*.o list-caps test-capture dump-capture version.h ./*~
+  $(LIBV4LCONVERT_AR) ./*.o list-caps test-capture dump-capture ./*~
 
 .PHONY: all install uninstall test clean
