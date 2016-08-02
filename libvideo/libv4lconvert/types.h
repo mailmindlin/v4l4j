@@ -7,8 +7,4 @@ typedef uint32_t u32;
 typedef int8_t i8;
 typedef int32_t i32;
 
-#ifndef CONVERT_ARM_NEON
-#define CONVERT_ARM_NEON
-#endif
-
 #endif
