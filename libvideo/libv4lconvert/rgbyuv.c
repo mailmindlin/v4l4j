@@ -27,7 +27,10 @@
 #include "libv4lconvert-priv.h"
 
 #ifdef CONVERT_ARM_NEON
+#pragma message "NEON sez hi!"
 #include "neon/rgbyuv_neon.h"
+#else
+#pragma message "NEON sez nope!"
 #endif
 
 #define RGB2Y(r, g, b, y) \
