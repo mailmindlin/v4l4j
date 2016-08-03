@@ -25,10 +25,7 @@
 package au.edu.jcu.v4l4j;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Vector;
+import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
@@ -300,10 +297,10 @@ public class VideoDevice {
 		if (!(new File(dev).canRead()))
 			throw new V4L4JException("The device file is not readable");
 
-		threadFactory = Executors.defaultThreadFactory();
-		state = new State();
-		deviceFile = dev;
-		v4l4jObject = doInit(deviceFile);
+		this.threadFactory = Executors.defaultThreadFactory();
+		this.state = new State();
+		this.deviceFile = dev;
+		this.v4l4jObject = doInit(deviceFile);
 
 		try {
 			initDeviceInfo();
@@ -331,28 +328,28 @@ public class VideoDevice {
 	 *             if the device can not be initialized
 	 */
 	private void initDeviceInfo() throws V4L4JException {
-		deviceInfo = new DeviceInfo(v4l4jObject, deviceFile);
 		// Initialize deviceInfo
+		this.deviceInfo = new DeviceInfo(v4l4jObject, deviceFile);
 		ImageFormatList l = deviceInfo.getFormatList();
 
-		supportJPEG = !l.getJPEGEncodableFormats().isEmpty();
-		supportRGB24 = !l.getRGBEncodableFormats().isEmpty();
-		supportBGR24 = !l.getBGREncodableFormats().isEmpty();
-		supportYUV420 = !l.getYUVEncodableFormats().isEmpty();
-		supportYVU420 = !l.getYVUEncodableFormats().isEmpty();
+		this.supportJPEG = !l.getJPEGEncodableFormats().isEmpty();
+		this.supportRGB24 = !l.getRGBEncodableFormats().isEmpty();
+		this.supportBGR24 = !l.getBGREncodableFormats().isEmpty();
+		this.supportYUV420 = !l.getYUVEncodableFormats().isEmpty();
+		this.supportYVU420 = !l.getYVUEncodableFormats().isEmpty();
 
-		Vector<Tuner> v = new Vector<Tuner>();
 		// Initialize TunerList
+		ArrayList<Tuner> tunerList = new ArrayList<>();
 		doGetTunerActions(v4l4jObject);
 		for (InputInfo i : deviceInfo.getInputs()) {
 			try {
-				v.add(new Tuner(v4l4jObject, i.getTunerInfo()));
+				tunerList.add(new Tuner(v4l4jObject, i.getTunerInfo()));
 			} catch (NoTunerException e) {
 			} // no tuner for this input
 		}
 
-		if (!v.isEmpty())
-			this.tuners = new TunerList(v);
+		if (!tunerList.isEmpty())
+			this.tuners = new TunerList(tunerList);
 	}
 
 	/**
