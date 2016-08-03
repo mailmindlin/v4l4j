@@ -26,6 +26,9 @@ package au.edu.jcu.v4l4j;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
@@ -768,7 +771,7 @@ public class VideoDevice {
 	 * @param width
 	 *            the desired frame width. This value may be adjusted to the
 	 *            closest supported by hardware.
-	 * @param h
+	 * @param height
 	 *            the desired frame height. This value may be adjusted to the
 	 *            closest supported by hardware.
 	 * @param input
@@ -1191,10 +1194,10 @@ public class VideoDevice {
 	 * let the author know about it so YUV420-encoding can be added. See the
 	 * README file on how to submit reports.</b>
 	 * 
-	 * @param w
+	 * @param width
 	 *            the desired frame width. This value may be adjusted to the
 	 *            closest supported by hardware.
-	 * @param h
+	 * @param height
 	 *            the desired frame height. This value may be adjusted to the
 	 *            closest supported by hardware.
 	 * @param input
@@ -1240,7 +1243,7 @@ public class VideoDevice {
 	 * let the author know about it so YVU420-encoding can be added. See the
 	 * README file on how to submit reports.</b>
 	 * 
-	 * @param w
+	 * @param width
 	 *            the desired frame width. This value may be adjusted to the
 	 *            closest supported by hardware.
 	 * @param height
