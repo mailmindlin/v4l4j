@@ -295,7 +295,7 @@ public class VideoDevice {
 	 */
 	public VideoDevice(String dev) throws V4L4JException {
 		if (dev == null)
-			throw new NullPointerException("the device file cannot be null");
+			throw new NullPointerException("The device file cannot be null");
 
 		if (!(new File(dev).canRead()))
 			throw new V4L4JException("The device file is not readable");
@@ -331,8 +331,8 @@ public class VideoDevice {
 	 *             if the device can not be initialized
 	 */
 	private void initDeviceInfo() throws V4L4JException {
-		// initialize deviceInfo
 		deviceInfo = new DeviceInfo(v4l4jObject, deviceFile);
+		// Initialize deviceInfo
 		ImageFormatList l = deviceInfo.getFormatList();
 
 		supportJPEG = !l.getJPEGEncodableFormats().isEmpty();
@@ -341,8 +341,8 @@ public class VideoDevice {
 		supportYUV420 = !l.getYUVEncodableFormats().isEmpty();
 		supportYVU420 = !l.getYVUEncodableFormats().isEmpty();
 
-		// initialize TunerList
 		Vector<Tuner> v = new Vector<Tuner>();
+		// Initialize TunerList
 		doGetTunerActions(v4l4jObject);
 		for (InputInfo i : deviceInfo.getInputs()) {
 			try {
@@ -640,7 +640,7 @@ public class VideoDevice {
 	 * @throws CaptureChannelException
 	 *             if the given channel number value is not valid
 	 * @throws InitialisationException
-	 *             if the video device file can not be initialised
+	 *             if the video device file can not be initialized
 	 * @throws V4L4JException
 	 *             if there is an error applying capture parameters
 	 * @throws StateException
@@ -715,10 +715,10 @@ public class VideoDevice {
 	 * let the author know so support for it can be added. See the README file
 	 * on how to submit reports.</b>
 	 * 
-	 * @param w
+	 * @param width
 	 *            the desired frame width. This value may be adjusted to the
 	 *            closest supported by hardware.
-	 * @param h
+	 * @param height
 	 *            the desired frame height. This value may be adjusted to the
 	 *            closest supported by hardware.
 	 * @param input
@@ -743,7 +743,7 @@ public class VideoDevice {
 	 * @throws CaptureChannelException
 	 *             if the given channel number value is not valid
 	 * @throws InitialisationException
-	 *             if the video device file can not be initialised
+	 *             if the video device file can not be initialized
 	 * @throws V4L4JException
 	 *             if there is an error applying capture parameters
 	 * @throws StateException
@@ -751,8 +751,8 @@ public class VideoDevice {
 	 *             before a JPEGFrameGrabber can be allocated, or if the
 	 *             <code>VideoDevice</code> has been released.
 	 */
-	public JPEGFrameGrabber getJPEGFrameGrabber(int w, int h, int input, int std, int q) throws V4L4JException {
-		return getJPEGFrameGrabber(w, h, input, std, q, null);
+	public JPEGFrameGrabber getJPEGFrameGrabber(int width, int height, int input, int std, int q) throws V4L4JException {
+		return getJPEGFrameGrabber(width, height, input, std, q, null);
 	}
 
 	/**
@@ -768,7 +768,7 @@ public class VideoDevice {
 	 * let the author know about it so RGB24-encoding can be added. See the
 	 * README file on how to submit reports.</b>
 	 * 
-	 * @param w
+	 * @param width
 	 *            the desired frame width. This value may be adjusted to the
 	 *            closest supported by hardware.
 	 * @param h
@@ -804,7 +804,7 @@ public class VideoDevice {
 	 * @throws CaptureChannelException
 	 *             if the given channel number value is not valid
 	 * @throws InitialisationException
-	 *             if the video device file can not be initialised
+	 *             if the video device file can not be initialized
 	 * @throws V4L4JException
 	 *             if there is an error applying capture parameters
 	 * @throws StateException
@@ -812,7 +812,7 @@ public class VideoDevice {
 	 *             before another FrameGrabber can be allocated, or if the
 	 *             <code>VideoDevice</code> has been released.
 	 */
-	public RGBFrameGrabber getRGBFrameGrabber(int w, int h, int input, int std, ImageFormat imf) throws V4L4JException {
+	public RGBFrameGrabber getRGBFrameGrabber(int width, int height, int input, int std, ImageFormat imf) throws V4L4JException {
 
 		if (!supportRGB24 || deviceInfo == null)
 			throw new ImageFormatException("This video device does not support RGB-encoding of its frames.");
@@ -830,7 +830,7 @@ public class VideoDevice {
 		synchronized (this) {
 			if (fg == null) {
 				state.get();
-				fg = new RGBFrameGrabber(deviceInfo, v4l4jObject, w, h, input, std, findTuner(input), imf,
+				fg = new RGBFrameGrabber(deviceInfo, v4l4jObject, width, height, input, std, findTuner(input), imf,
 						threadFactory);
 				try {
 					fg.init();
@@ -878,10 +878,10 @@ public class VideoDevice {
 	 * let the author know about it so RGB24-encoding can be added. See the
 	 * README file on how to submit reports.</b>
 	 * 
-	 * @param w
+	 * @param width
 	 *            the desired frame width. This value may be adjusted to the
 	 *            closest supported by hardware.
-	 * @param h
+	 * @param height
 	 *            the desired frame height. This value may be adjusted to the
 	 *            closest supported by hardware.
 	 * @param input
@@ -902,7 +902,7 @@ public class VideoDevice {
 	 * @throws CaptureChannelException
 	 *             if the given channel number value is not valid
 	 * @throws InitialisationException
-	 *             if the video device file can not be initialised
+	 *             if the video device file can not be initialized
 	 * @throws V4L4JException
 	 *             if there is an error applying capture parameters
 	 * @throws StateException
@@ -910,8 +910,8 @@ public class VideoDevice {
 	 *             before a RGBFrameGrabber can be allocated, or if the
 	 *             <code>VideoDevice</code> has been released.
 	 */
-	public RGBFrameGrabber getRGBFrameGrabber(int w, int h, int input, int std) throws V4L4JException {
-		return getRGBFrameGrabber(w, h, input, std, null);
+	public RGBFrameGrabber getRGBFrameGrabber(int width, int height, int input, int std) throws V4L4JException {
+		return getRGBFrameGrabber(width, height, input, std, null);
 	}
 
 	/**
@@ -1060,7 +1060,7 @@ public class VideoDevice {
 	 * @throws CaptureChannelException
 	 *             if the given channel number value is not valid
 	 * @throws InitialisationException
-	 *             if the video device file can not be initialised
+	 *             if the video device file can not be initialized
 	 * @throws V4L4JException
 	 *             if there is an error applying capture parameters
 	 * @throws StateException
@@ -1121,7 +1121,7 @@ public class VideoDevice {
 	 * @throws CaptureChannelException
 	 *             if the given channel number value is not valid
 	 * @throws InitialisationException
-	 *             if the video device file can not be initialised
+	 *             if the video device file can not be initialized
 	 * @throws V4L4JException
 	 *             if there is an error applying capture parameters
 	 * @throws StateException
@@ -1218,7 +1218,7 @@ public class VideoDevice {
 	 * @throws CaptureChannelException
 	 *             if the given channel number value is not valid
 	 * @throws InitialisationException
-	 *             if the video device file can not be initialised
+	 *             if the video device file can not be initialized
 	 * @throws V4L4JException
 	 *             if there is an error applying capture parameters
 	 * @throws StateException
@@ -1226,8 +1226,8 @@ public class VideoDevice {
 	 *             before a YUVFrameGrabber can be allocated, or if the
 	 *             <code>VideoDevice</code> has been released.
 	 */
-	public YUVFrameGrabber getYUVFrameGrabber(int w, int h, int input, int std) throws V4L4JException {
-		return getYUVFrameGrabber(w, h, input, std, null);
+	public YUVFrameGrabber getYUVFrameGrabber(int width, int height, int input, int std) throws V4L4JException {
+		return getYUVFrameGrabber(width, height, input, std, null);
 	}
 
 	/**
@@ -1246,7 +1246,7 @@ public class VideoDevice {
 	 * @param w
 	 *            the desired frame width. This value may be adjusted to the
 	 *            closest supported by hardware.
-	 * @param h
+	 * @param height
 	 *            the desired frame height. This value may be adjusted to the
 	 *            closest supported by hardware.
 	 * @param input
@@ -1279,7 +1279,7 @@ public class VideoDevice {
 	 * @throws CaptureChannelException
 	 *             if the given channel number value is not valid
 	 * @throws InitialisationException
-	 *             if the video device file can not be initialised
+	 *             if the video device file can not be initialized
 	 * @throws V4L4JException
 	 *             if there is an error applying capture parameters
 	 * @throws StateException
@@ -1287,7 +1287,7 @@ public class VideoDevice {
 	 *             released before another FrameGrabber can be allocated, or if
 	 *             the <code>VideoDevice</code> has been released.
 	 */
-	public YVUFrameGrabber getYVUFrameGrabber(int w, int h, int input, int std, ImageFormat imf) throws V4L4JException {
+	public YVUFrameGrabber getYVUFrameGrabber(int width, int height, int input, int std, ImageFormat imf) throws V4L4JException {
 		if (!supportYVU420 || deviceInfo == null)
 			throw new ImageFormatException("This video device does not support " + "YVU-encoding of its frames.");
 
@@ -1305,7 +1305,7 @@ public class VideoDevice {
 		synchronized (this) {
 			if (fg == null) {
 				state.get();
-				fg = new YVUFrameGrabber(deviceInfo, v4l4jObject, w, h, input, std, findTuner(input), imf,
+				fg = new YVUFrameGrabber(deviceInfo, v4l4jObject, width, height, input, std, findTuner(input), imf,
 						threadFactory);
 				try {
 					fg.init();
@@ -1353,10 +1353,10 @@ public class VideoDevice {
 	 * let the author know about it so YVU420-encoding can be added. See the
 	 * README file on how to submit reports.</b>
 	 * 
-	 * @param w
+	 * @param width
 	 *            the desired frame width. This value may be adjusted to the
 	 *            closest supported by hardware.
-	 * @param h
+	 * @param height
 	 *            the desired frame height. This value may be adjusted to the
 	 *            closest supported by hardware.
 	 * @param input
@@ -1385,8 +1385,8 @@ public class VideoDevice {
 	 *             before a YVUFrameGrabber can be allocated, or if the
 	 *             <code>VideoDevice</code> has been released.
 	 */
-	public YVUFrameGrabber getYVUFrameGrabber(int w, int h, int input, int std) throws V4L4JException {
-		return getYVUFrameGrabber(w, h, input, std, null);
+	public YVUFrameGrabber getYVUFrameGrabber(int width, int height, int input, int std) throws V4L4JException {
+		return getYVUFrameGrabber(width, height, input, std, null);
 	}
 
 	/**
@@ -1426,7 +1426,7 @@ public class VideoDevice {
 	 * @throws ImageDimensionsException
 	 *             if the given image dimensions are not supported
 	 * @throws InitialisationException
-	 *             if the video device file can not be initialised
+	 *             if the video device file can not be initialized
 	 * @throws V4L4JException
 	 *             if there is an error applying capture parameters
 	 * @throws StateException
@@ -1496,7 +1496,7 @@ public class VideoDevice {
 	 * @throws CaptureChannelException
 	 *             if the given channel number value is not valid.
 	 * @throws InitialisationException
-	 *             if the video device file can not be initialised.
+	 *             if the video device file can not be initialized.
 	 * @throws ImageFormatException
 	 *             if no image format could be found because the
 	 *             {@link DeviceInfo} object could not be obtained. Check if the
@@ -1614,7 +1614,7 @@ public class VideoDevice {
 				users++;
 			} else
 				throw new StateException("This VideoDevice has not been "
-						+ "initialised or is about to be removed, and can not be" + " used");
+						+ "initialized or is about to be removed, and can not be" + " used");
 		}
 
 		public synchronized void put() {
@@ -1622,13 +1622,14 @@ public class VideoDevice {
 				if (--users == 0 && temp == RELEASED)
 					notify();
 			} else
-				throw new StateException("This VideoDevice has not been " + "initialised and can not be used");
+				throw new StateException("This VideoDevice has not been " + "initialized and can not be used");
 		}
 
 		/**
 		 * This method switched to the released state. This method will wait
 		 * until all users have finished.
 		 * 
+		 * @return whether we can switch to the released state or not
 		 */
 		@SuppressWarnings("unused")
 		public synchronized void release() {
@@ -1643,6 +1644,7 @@ public class VideoDevice {
 		 *            do, calls to this method will block until all users are
 		 *            finished. If we don't (wait = false), this method will
 		 *            throw a ReleaseException if there are users.
+		 * @return whether we can switch to the released state or not
 		 * @throws ReleaseException
 		 *             if there are still some users and we have chosen not to
 		 *             wait
@@ -1653,7 +1655,7 @@ public class VideoDevice {
 				temp = RELEASED;
 				while (users != 0)
 					try {
-						if (wait)
+						if (wait == true)
 							wait();
 						else {
 							temp = t;
@@ -1663,12 +1665,11 @@ public class VideoDevice {
 						temp = t;
 						System.err.println("Interrupted while waiting for VideoDevice users to complete");
 						e.printStackTrace();
-						throw new StateException(
-								"There are remaining users of this VideoDevice and it can not be released");
+						throw new StateException("There are remaining users of this VideoDevice and it can not be released");
 					}
 				return;
 			}
-			throw new StateException("This VideoDevice has not been initialised and can not be used");
+			throw new StateException("This VideoDevice has not been initialized and can not be used");
 		}
 
 		public synchronized void commit() {
