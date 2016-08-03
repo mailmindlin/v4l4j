@@ -34,7 +34,20 @@ package au.edu.jcu.v4l4j.exceptions;
 public class ImageFormatException extends V4L4JException {
 
 	private static final long serialVersionUID = -3338859321078232443L;
-
+	public static ImageFormatException notSupported(String format) {
+		return new ImageFormatException("This video device does not support " + format + " encoding of its frames.");
+	}
+	public static ImageFormatException cannotConvert(String from, String to) {
+		return new ImageFormatException(new StringBuffer()
+				.append("The image format ")
+				.append(from)
+				.append(" cannot be converted to")
+				.append(to)
+				.toString());
+	}
+	public static ImageFormatException notNull() {
+		return new ImageFormatException("The image format can not be null");
+	}
 	public ImageFormatException(String message) {
 		super(message);
 	}
