@@ -89,7 +89,7 @@ public class H264Parameters implements Externalizable, Closeable {
 	}
 	
 	/**
-	 * set one parameter by name. returns 0 on success, or returns one of the
+	 * Set one parameter by name. Returns 0 on success, or returns one of the
 	 * following errors. note: BAD_VALUE occurs only if it can't even parse the
 	 * value, numerical range is not checked until x264_encoder_open() or
 	 * x264_encoder_reconfig(). value=NULL means "true" for boolean options, but
