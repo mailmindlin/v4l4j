@@ -23,8 +23,8 @@
 */
 package au.edu.jcu.v4l4j;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 import au.edu.jcu.v4l4j.exceptions.StateException;
 
@@ -38,7 +38,7 @@ import au.edu.jcu.v4l4j.exceptions.StateException;
  *
  */
 public class TunerList {
-	private Vector<Tuner> tuners;
+	private List<Tuner> tuners;
 	private boolean released;
 
 	/**
@@ -46,10 +46,10 @@ public class TunerList {
 	 * the list object is made).
 	 * 
 	 * @param c
-	 *            the tuner list used to initialise this object.
+	 *            the tuner list used to initialize this object.
 	 */
 	TunerList(List<Tuner> t) {
-		tuners = new Vector<Tuner>(t);
+		tuners = new ArrayList<Tuner>(t);
 		released = false;
 	}
 
@@ -63,7 +63,7 @@ public class TunerList {
 	 */
 	public synchronized List<Tuner> getList() {
 		checkReleased();
-		return new Vector<Tuner>(tuners);
+		return new ArrayList<Tuner>(tuners);
 	}
 
 	/**
@@ -97,6 +97,6 @@ public class TunerList {
 
 	private void checkReleased() {
 		if (released)
-			throw new StateException("The tuner list has been released and " + "must not be used");
+			throw new StateException("The tuner list has been released and must not be used");
 	}
 }
