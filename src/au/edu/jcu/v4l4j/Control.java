@@ -172,7 +172,7 @@ public class Control {
 	private int type;
 	private Vector<String> names;
 	private int[] values;
-	private long v4l4jObject;
+	private final long object;
 	private int defaultValue;
 	private State state;
 
@@ -216,7 +216,7 @@ public class Control {
 			this.defaultValue = 0;
 		else
 			this.defaultValue = (int) Math.round((max - min) / 2.0) + min;
-		v4l4jObject = o;
+		this.object = o;
 		state = new State();
 	}
 
@@ -254,7 +254,7 @@ public class Control {
 		}
 
 		try {
-			v = doGetValue(v4l4jObject, id);
+			v = doGetValue(this.object, id);
 		} catch (ControlException ce) {
 			state.put();
 			throw ce;
@@ -302,7 +302,7 @@ public class Control {
 			value = validateValue(value);
 
 		try {
-			doSetValue(v4l4jObject, id, value);
+			doSetValue(this.object, id, value);
 		} catch (ControlException ce) {
 			state.put();
 			throw ce;
@@ -340,7 +340,7 @@ public class Control {
 		state.get();
 
 		try {
-			v = doGetStringValue(v4l4jObject, id);
+			v = doGetStringValue(this.object, id);
 		} finally {
 			state.put();
 		}
@@ -379,8 +379,8 @@ public class Control {
 		state.get();
 
 		try {
-			doSetStringValue(v4l4jObject, id, value);
-			v = doGetStringValue(v4l4jObject, id);
+			doSetStringValue(this.object, id, value);
+			v = doGetStringValue(this.object, id);
 		} finally {
 			state.put();
 		}
@@ -413,7 +413,7 @@ public class Control {
 		state.get();
 
 		try {
-			v = doGetLongValue(v4l4jObject, id);
+			v = doGetLongValue(this.object, id);
 		} finally {
 			state.put();
 		}
@@ -446,8 +446,8 @@ public class Control {
 		state.get();
 
 		try {
-			doSetLongValue(v4l4jObject, id, value);
-			v = doGetLongValue(v4l4jObject, id);
+			doSetLongValue(this.object, id, value);
+			v = doGetLongValue(this.object, id);
 		} finally {
 			state.put();
 		}
@@ -494,11 +494,11 @@ public class Control {
 		 */
 		state.get();
 		try {
-			old = doGetValue(v4l4jObject, id);
+			old = doGetValue(this.object, id);
 		} catch (ControlException e) {
 		}
 		try {
-			old = doSetValue(v4l4jObject, id, validateValue(old + step));
+			old = doSetValue(this.object, id, validateValue(old + step));
 		} catch (ControlException ce) {
 			state.put();
 			throw ce;
@@ -545,11 +545,11 @@ public class Control {
 		 */
 		state.get();
 		try {
-			old = doGetValue(v4l4jObject, id);
+			old = doGetValue(this.object, id);
 		} catch (ControlException e) {
 		}
 		try {
-			old = doSetValue(v4l4jObject, id, validateValue(old - step));
+			old = doSetValue(this.object, id, validateValue(old - step));
 		} catch (ControlException ce) {
 			state.put();
 			throw ce;

@@ -223,7 +223,6 @@ public class ClientConnection {
 	 * @throws ControlException
 	 *             if there is an error setting the new value
 	 */
-	@SuppressWarnings("null")
 	public static void updateControlValue(ControlList ctrlList, JPEGFrameGrabber fg, String httpLine)
 			throws ControlException {
 		boolean hasValue = false;
