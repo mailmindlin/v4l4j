@@ -1128,7 +1128,7 @@ public class VideoDevice {
 	 */
 	public YUVFrameGrabber getYUVFrameGrabber(int width, int height, int input, int std, ImageFormat imf) throws V4L4JException {
 		if (!supportYUV420 || deviceInfo == null)
-			throw new ImageFormatException("This video device does not support " + "YUV-encoding of its frames.");
+			throw new ImageFormatException("This video device does not support YUV-encoding of its frames.");
 
 		if (imf != null) {
 			if (!deviceInfo.getFormatList().getYUVEncodableFormats().contains(imf))
