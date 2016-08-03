@@ -155,15 +155,16 @@ import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
 public class VideoDevice {
 
 	/**
-	 * Simple method to look for candidate video devices. Searches in the <code>/dev</code> folder
-	 * for files matching <code>video*</code>.
+	 * Simple method to look for candidate video devices. Searches in the
+	 * <code>/dev</code> folder for files matching <code>video*</code>.
+	 * 
 	 * @return results
 	 */
 	public static Set<String> available() {
 		File dev = new File("/dev");
-		return new HashSet<>(Arrays.asList(dev.list((file, name)->(file == dev && name.startsWith("video")))));
+		return new HashSet<>(Arrays.asList(dev.list((file, name) -> (file == dev && name.startsWith("video")))));
 	}
-	
+
 	static {
 		try {
 			System.loadLibrary("v4l4j");
@@ -667,8 +668,8 @@ public class VideoDevice {
 		synchronized (this) {
 			if (fg == null) {
 				state.get();
-				fg = new JPEGFrameGrabber(deviceInfo, v4l4jObject, width, height, input, std, quality, findTuner(input), imf,
-						threadFactory);
+				fg = new JPEGFrameGrabber(deviceInfo, v4l4jObject, width, height, input, std, quality, findTuner(input),
+						imf, threadFactory);
 				try {
 					fg.init();
 				} catch (V4L4JException ve) {
@@ -751,7 +752,8 @@ public class VideoDevice {
 	 *             before a JPEGFrameGrabber can be allocated, or if the
 	 *             <code>VideoDevice</code> has been released.
 	 */
-	public JPEGFrameGrabber getJPEGFrameGrabber(int width, int height, int input, int std, int q) throws V4L4JException {
+	public JPEGFrameGrabber getJPEGFrameGrabber(int width, int height, int input, int std, int q)
+			throws V4L4JException {
 		return getJPEGFrameGrabber(width, height, input, std, q, null);
 	}
 
@@ -812,7 +814,8 @@ public class VideoDevice {
 	 *             before another FrameGrabber can be allocated, or if the
 	 *             <code>VideoDevice</code> has been released.
 	 */
-	public RGBFrameGrabber getRGBFrameGrabber(int width, int height, int input, int std, ImageFormat imf) throws V4L4JException {
+	public RGBFrameGrabber getRGBFrameGrabber(int width, int height, int input, int std, ImageFormat imf)
+			throws V4L4JException {
 
 		if (!supportRGB24 || deviceInfo == null)
 			throw new ImageFormatException("This video device does not support RGB-encoding of its frames.");
@@ -971,13 +974,14 @@ public class VideoDevice {
 	 *             before another FrameGrabber can be allocated, or if the
 	 *             <code>VideoDevice</code> has been released.
 	 */
-	public BGRFrameGrabber getBGRFrameGrabber(int width, int height, int input, int std, ImageFormat imf) throws V4L4JException {
+	public BGRFrameGrabber getBGRFrameGrabber(int width, int height, int input, int std, ImageFormat imf)
+			throws V4L4JException {
 		if (!supportBGR24 || deviceInfo == null)
-			throw new ImageFormatException("This video device does not support " + "BGR-encoding of its frames.");
+			throw ImageFormatException.notSupported("BGR");
 
 		if (imf != null) {
 			if (!deviceInfo.getFormatList().getBGREncodableFormats().contains(imf))
-				throw new ImageFormatException("The image format " + imf.getName() + " cannot be converted to BGR24");
+				throw ImageFormatException.cannotConvert(imf.getName(), "BGR24");
 		} else
 			// if imf is null, pick the first format that can be rgb encoded
 			// the list returned by getBGREncodableFormats() is sorted by best
@@ -1129,13 +1133,14 @@ public class VideoDevice {
 	 *             before another FrameGrabber can be allocated, or if the
 	 *             <code>VideoDevice</code> has been released.
 	 */
-	public YUVFrameGrabber getYUVFrameGrabber(int width, int height, int input, int std, ImageFormat imf) throws V4L4JException {
+	public YUVFrameGrabber getYUVFrameGrabber(int width, int height, int input, int std, ImageFormat imf)
+			throws V4L4JException {
 		if (!supportYUV420 || deviceInfo == null)
-			throw new ImageFormatException("This video device does not support YUV-encoding of its frames.");
+			throw ImageFormatException.notSupported("YUV");
 
 		if (imf != null) {
 			if (!deviceInfo.getFormatList().getYUVEncodableFormats().contains(imf))
-				throw new ImageFormatException("The image format " + imf.getName() + " cannot be converted to YUV420");
+				throw ImageFormatException.cannotConvert(imf.getName(), "YUV420");
 		} else
 			// if imf is null, pick the first format that can be rgb encoded
 			// the list returned by getYUVEncodableFormats() is sorted by best
@@ -1287,13 +1292,14 @@ public class VideoDevice {
 	 *             released before another FrameGrabber can be allocated, or if
 	 *             the <code>VideoDevice</code> has been released.
 	 */
-	public YVUFrameGrabber getYVUFrameGrabber(int width, int height, int input, int std, ImageFormat imf) throws V4L4JException {
+	public YVUFrameGrabber getYVUFrameGrabber(int width, int height, int input, int std, ImageFormat imf)
+			throws V4L4JException {
 		if (!supportYVU420 || deviceInfo == null)
-			throw new ImageFormatException("This video device does not support " + "YVU-encoding of its frames.");
+			throw ImageFormatException.notSupported("YVU");
 
 		if (imf != null) {
 			if (!deviceInfo.getFormatList().getYVUEncodableFormats().contains(imf))
-				throw new ImageFormatException("The image format " + imf.getName() + " cannot be converted to YVU420");
+				throw ImageFormatException.cannotConvert(imf.getName(), "YVU420");
 		} else {
 			// if imf is null, pick the first format that can be rgb encoded
 			// the list returned by getYVUEncodableFormats() is sorted by best
@@ -1436,7 +1442,7 @@ public class VideoDevice {
 	public RawFrameGrabber getRawFrameGrabber(int width, int height, int input, int std, ImageFormat format)
 			throws V4L4JException {
 		if (format == null)
-			throw new ImageFormatException("The image format can not be null");
+			throw ImageFormatException.notNull();
 
 		synchronized (this) {
 			if (fg == null) {
@@ -1531,7 +1537,7 @@ public class VideoDevice {
 					fg.release();
 				} catch (Throwable t) {
 					t.printStackTrace();
-					throw new StateException("Cant release resources used by " + "framegrabber", t);
+					throw new StateException("Can't release resources used by framegrabber", t);
 				}
 				fg = null;
 				state.put();
@@ -1556,21 +1562,20 @@ public class VideoDevice {
 	 */
 	public TunerList getTunerList() throws NoTunerException {
 		if (tuners == null)
-			throw new NoTunerException("This video device does not have any " + "tuners");
+			throw new NoTunerException("This video device does not have any tuners");
 		return tuners;
 	}
 
 	private Tuner findTuner(int input) {
-		if (deviceInfo != null) {
+		if (deviceInfo != null)
 			for (InputInfo i : deviceInfo.getInputs())
 				if (i.getIndex() == input && i.hasTuner())
 					try {
 						return tuners.getTuner(i.getTunerInfo().getIndex());
 					} catch (NoTunerException e) {
-						// weird, shoudlnt be here
+						// weird, shoudln't be here
 					}
-		}
-
+		
 		return null;
 
 	}
@@ -1590,7 +1595,7 @@ public class VideoDevice {
 	public synchronized void setThreadFactory(ThreadFactory factory) {
 		if (factory == null)
 			factory = Executors.defaultThreadFactory();
-
+		
 		threadFactory = factory;
 	}
 
@@ -1610,11 +1615,10 @@ public class VideoDevice {
 		}
 
 		public synchronized void get() {
-			if (state == INIT && temp != RELEASED) {
+			if (state == INIT && temp != RELEASED)
 				users++;
-			} else
-				throw new StateException("This VideoDevice has not been "
-						+ "initialized or is about to be removed, and can not be" + " used");
+			else
+				throw new StateException("This VideoDevice has not been initialized or is about to be removed, and can not be used");
 		}
 
 		public synchronized void put() {
@@ -1622,14 +1626,12 @@ public class VideoDevice {
 				if (--users == 0 && temp == RELEASED)
 					notify();
 			} else
-				throw new StateException("This VideoDevice has not been " + "initialized and can not be used");
+				throw new StateException("This VideoDevice has not been initialized and can not be used");
 		}
 
 		/**
 		 * This method switched to the released state. This method will wait
 		 * until all users have finished.
-		 * 
-		 * @return whether we can switch to the released state or not
 		 */
 		@SuppressWarnings("unused")
 		public synchronized void release() {
@@ -1644,7 +1646,6 @@ public class VideoDevice {
 		 *            do, calls to this method will block until all users are
 		 *            finished. If we don't (wait = false), this method will
 		 *            throw a ReleaseException if there are users.
-		 * @return whether we can switch to the released state or not
 		 * @throws ReleaseException
 		 *             if there are still some users and we have chosen not to
 		 *             wait
