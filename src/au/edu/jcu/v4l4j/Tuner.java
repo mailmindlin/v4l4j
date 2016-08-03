@@ -44,24 +44,24 @@ import au.edu.jcu.v4l4j.exceptions.StateException;
  *
  */
 public class Tuner {
-	private long v4l4j_object;
+	private final long object;
 	private TunerInfo info;
 	private int index;
 
-	private native long getFreq(long o, int i);
+	private native long getFreq(int i);
 
-	private native void setFreq(long o, int i, long f);
+	private native void setFreq(int i, long f);
 
-	private native int getAfc(long o, int i);
+	private native int getAfc(int i);
 
-	private native int getRssi(long o, int i);
+	private native int getRssi(int i);
 
 	private boolean released;
 
-	Tuner(long o, TunerInfo ti) {
+	Tuner(long object, TunerInfo ti) {
 		info = ti;
 		index = info.getIndex();
-		v4l4j_object = o;
+		this.object = object;
 		released = false;
 	}
 
@@ -75,7 +75,7 @@ public class Tuner {
 	 */
 	public synchronized double getFrequency() {
 		checkRelease();
-		return getFreq(v4l4j_object, index) * 0.0625;
+		return getFreq(index) * 0.0625;
 	}
 
 	/**
@@ -90,7 +90,7 @@ public class Tuner {
 	public synchronized void setFrequency(double f) {
 		checkRelease();
 		long l = (long) (f / 0.0625);
-		setFreq(v4l4j_object, index, l);
+		setFreq(index, l);
 	}
 
 	/**
@@ -105,7 +105,7 @@ public class Tuner {
 	 */
 	public synchronized int getAFC() {
 		checkRelease();
-		return getAfc(v4l4j_object, index);
+		return getAfc(index);
 	}
 
 	/**
@@ -118,7 +118,7 @@ public class Tuner {
 	 */
 	public synchronized int getRSSI() {
 		checkRelease();
-		return getRssi(v4l4j_object, index);
+		return getRssi(index);
 	}
 
 	/**
