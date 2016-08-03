@@ -166,4 +166,4 @@ v4lconvert_neon_yuyv_to_rgb24:
 		
 		blo 	.convert_yuyv_to_rgb24_x8	@Loop around again for another batch of pixels (C flag was set already)
 	
-	pop {r4, pc}							@Return
+	pop {r4-r6, pc}							@Return
