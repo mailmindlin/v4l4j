@@ -7,6 +7,10 @@
 static jclass H264Encoder_class = NULL;
 static jfieldID H264Encoder_object_fid = NULL;
 
+#define H264_PACKAGE V4L4J_PACKAGE "encoder/h264/"
+#define H264_ENCODE_FAIL_EXCEPTION H264_PACKAGE "H264EncodeFailedException"
+#define H264_NO_NALS_EXCEPTION H264_PACKAGE "H264NoNalsException"
+
 static x264_t* getPointer(JNIEnv* env, jobject self) {
 	if (H264Encoder_class == NULL) {
 		H264Encoder_class = (*env)->GetObjectClass(env, self);
@@ -58,8 +62,17 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Encoder_doEncode(J
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	x264_t* encoder = getPointer(env, self);
 	
-	int i_nal;
-	x264_nal_t** nals;
+	x264_picture_t* in_pic = (struct x264_picture_t*) (uintptr_t) in_ptr;
+	x264_picture_t* out_pic = (struct x264_picture_t*) (uintptr_t) in_ptr;
 	
-	return 0;
+	int i_nal;
+	x264_nal_t* nals;
+	int frame_size = x264_encoder_encode(encoder, &nals, &i_nals, in_pic, out_pic);
+	
+	if (frame_size < 0)
+		THROW_EXCEPTION(env, H264_ENCODE_FAIL_EXCEPTION, "Error code %d", frame_size);
+	else if (!nals)
+		THROW_EXCEPTION(env, H264_NO_NALS_EXCEPTION, "x264_encoder_encode returned no valid nals.");
+	
+	return frame_size;
 }
