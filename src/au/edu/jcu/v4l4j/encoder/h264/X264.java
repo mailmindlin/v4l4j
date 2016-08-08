@@ -120,4 +120,13 @@ public class X264 {
 	public static final String PROFILE_HIGH10 = "high10";
 	public static final String PROFILE_HIGH422 = "high422";
 	public static final String PROFILE_HIGH444 = "high444";
+	
+	public static final int RC_CQP = 0;
+	public static final int RC_CRF = 1;
+	public static final int RC_ABR = 2;
+	public static enum RateControlMethod {
+		CQP,
+		CRF,
+		ABR;
+	}
 }

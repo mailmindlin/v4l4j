@@ -101,7 +101,8 @@ public class H264Parameters implements Externalizable, Closeable {
 	 * @return
 	 */
 	protected native int setParamByName(String name, boolean value);
-
+//See stackoverflow.com/a/2940700 for more details
+	//TODO javadoc
 	protected native int setParamByName(String name, int value);
 	protected native int setParamByName(String name, String value);
 	public native void setInputDimension(int width, int height);
@@ -109,10 +110,19 @@ public class H264Parameters implements Externalizable, Closeable {
 	public native void setVfrInput(boolean aflag);
 	public native void setRepeatHeaders(boolean aflag);
 	public native void setAnnexb(boolean aflag);
+	public native void setThreads(int numThreads);
+	public native void setFPS(int numerator, int denominator);
+	public native void setKeyintMax(int value);
+	public native void setIntraRefresh(boolean value);
+	public native void setRfConstant(float value, float max);
+	public native void setRcMethod(int method);
 	public native int getCsp();
 	public native int getWidth();
 	public native int getHeight();
-
+	
+	public void setRcMethod(X264.RateControlMethod method) {
+		setRcMethod(method.ordinal());
+	}
 	public H264Parameters() {
 		this(allocate());
 	}

@@ -211,3 +211,41 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setCrop
 	params->crop_rect.i_right = right;
 	params->crop_rect.i_bottom = bottom;
 }
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setThreads(JNIEnv* env, jobject self, jint numThreads) {
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	x264_param_t* params = getPointer(env, self);
+	
+	params->i_threads = numThreads;
+}
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setFps(JNIEnv* env, jobject self, jint numerator, jint denominator) {
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	x264_param_t* params = getPointer(env, self);
+	
+	params->i_fps_num = numerator;
+	params->i_fps_den = denominator;
+}
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setKeyintMax(JNIEnv* env, jobject self, jint value) {
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	x264_param_t* params = getPointer(env, self);
+	
+	params->i_keyint_max = value;
+}
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setIntraRefresh(JNIEnv* env, jobject self, jboolean value) {
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	x264_param_t* params = getPointer(env, self);
+	
+	params->b_intra_refresh = value;
+}
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setRfConstant(JNIEnv* env, jobject self, jfloat value, jfloat max) {
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	x264_param_t* params = getPointer(env, self);
+	
+	params->rc.f_rf_constant = value;
+	params->rc.f_rf_constant_max = max;
+}
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setRcMethod(JNIEnv* env, jobject self, jint method) {
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	x264_param_t* params = getPointer(env, self);
+	
+	params->rc.i_rc_method = method;
+}
