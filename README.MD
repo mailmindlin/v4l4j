@@ -14,6 +14,11 @@ to capture frames from Video4Linux devices. It consists of:
   See TestedHardware in the libvideo directory for a list of detected drivers
   and exported private ioctls
 
+## Roadmap
+ - x264 bindings for H.264-encoding
+ - A new encoding API that allows the conversion
+ - Increased performance on ARM processors, using SIMD and other features through assembly porting of some key methods
+ - Improved documentation
 
 ## Documentation
 The latest version of v4l4j and associated documentation (Howtos, API, ...) can
