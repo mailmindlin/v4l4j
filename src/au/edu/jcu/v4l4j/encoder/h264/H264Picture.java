@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.io.Closeable;
+import java.nio.ByteBuffer;
 
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.VideoFrame;
@@ -42,6 +43,8 @@ public class H264Picture implements Closeable, VideoFrame {
 	 * @return
 	 */
 	protected native long init(int width, int height, int csp);
+	
+	protected native void putInPlane(int planeNum, ByteBuffer buf);
 	
 	/**
 	 * Release the native memory behind this picture
@@ -129,6 +132,7 @@ public class H264Picture implements Closeable, VideoFrame {
 		// TODO Auto-generated method stub
 		return 0;
 	}
+	
 
 	@Override
 	public byte[] getBytes() {

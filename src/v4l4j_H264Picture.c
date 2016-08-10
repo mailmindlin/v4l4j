@@ -27,6 +27,14 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Picture_init(JNIE
 	
 	return (uintptr_t) result;
 }
+JNIEXPORT void JNICALL JAva_au_edu_jcu_v4l4j_encoder_h264_H264Picture_putInPlane(JNIEnv* env, jobject self, jint plane, jobject buf) {
+	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	x264_picture_t* picture = getPointer(env, self);
+	
+	void* data = (*env)->GetDirectBufferAddress(env, buf);
+	
+	picture.img.plane[plane] = data;
+}
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Picture_close(JNIEnv* env, jobject self) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	x264_picture_t* picture = getPointer(env, self);
