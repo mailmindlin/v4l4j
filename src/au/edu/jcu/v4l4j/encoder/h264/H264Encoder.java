@@ -11,6 +11,7 @@ public class H264Encoder implements VideoFrameEncoder {
 	
 	protected final long object;
 	protected final long csp;
+	protected int frameNum = 0;
 	
 	static {
 		try {
