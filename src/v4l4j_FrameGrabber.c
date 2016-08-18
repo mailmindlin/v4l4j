@@ -63,8 +63,7 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 	field = (*e)->GetFieldID(e, this_class, "width", "I");
 	if(field==NULL) {
 		info("[V4L4J] error looking up width field in FrameGrabber class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "error looking up width field in "
-				"FrameGrabber class");
+		THROW_EXCEPTION(e, JNI_EXCP, "error looking up width field in FrameGrabber class");
 		return;
 	}
 	(*e)->SetIntField(e, this, field, d->vdev->capture->width);

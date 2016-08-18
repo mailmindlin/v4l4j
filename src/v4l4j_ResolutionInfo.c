@@ -189,8 +189,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetStepwise(
  * this function sets the discreteValues attribute with a list of supported
  * resolutions
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetDiscrete(
-		JNIEnv *e, jobject t, jint index, jlong o){
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetDiscrete(JNIEnv *e, jobject t, jint index, jlong o){
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
 	struct palette_info *p;
 	int i = -1;
@@ -219,16 +218,14 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetDiscrete(
 			"Ljava/util/List;");
 	if(field == NULL){
 		info("[V4L4J] Error looking up the discreteValues fieldID\n");
-		THROW_EXCEPTION(e, JNI_EXCP, \
-				"Error looking up the discreteValues fieldID");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the discreteValues fieldID");
 		return;
 	}
 
 	disc_attr = (*e)->GetObjectField(e, t, field);
 	if(disc_attr == NULL){
 		info("[V4L4J] Error looking up the discreteValues member\n");
-		THROW_EXCEPTION(e, JNI_EXCP, \
-				"Error looking up the discreteValues member");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the discreteValues member");
 		return;
 	}
 
@@ -247,33 +244,29 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetDiscrete(
 	}
 
 	frame_intv_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/FrameInterval");
-	if(frame_intv_class == NULL){
+	if(frame_intv_class == NULL) {
 		info("[V4L4J] Error looking up the FrameInterval class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, \
-				"Error looking up FrameInterval class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up FrameInterval class");
 		return;
 	}
 
 	frame_intv_ctor = (*e)->GetMethodID(e, frame_intv_class, "<init>",	"(IJ)V");
 	if(frame_intv_ctor == NULL){
 		info("[V4L4J] Error looking up the ctor of FrameInterval class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, \
-				"Error looking up the ctor of FrameInterval class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the ctor of FrameInterval class");
 		return;
 	}
 
-	discrete_res_class = (*e)->FindClass(e,
-			"au/edu/jcu/v4l4j/ResolutionInfo$DiscreteResolution");
-	if(discrete_res_class == NULL){
+	discrete_res_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/ResolutionInfo$DiscreteResolution");
+	if(discrete_res_class == NULL) {
 		info("[V4L4J] Error looking up the DiscreteResolution class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, \
-				"Error looking up DiscreteResolution class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up DiscreteResolution class");
 		return;
 	}
 
 	discrete_res_ctor = (*e)->GetMethodID(e, discrete_res_class, "<init>",
 			"(IILau/edu/jcu/v4l4j/FrameInterval;)V");
-	if(discrete_res_ctor == NULL){
+	if(discrete_res_ctor == NULL) {
 		info("[V4L4J] Error looking up the ctor of DiscreteResolution class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, \
 				"Error looking up the ctor of DiscreteResolution class");
@@ -286,14 +279,11 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetDiscrete(
 							p->discrete[i].height);
 
 		//create the frame interval object
-		dprint(LOG_V4L4J, "[V4L4J] creating frame interval object first with "
-				"ptr %p and type: 0\n",&p->discrete[i] );
-		intv = (*e)->NewObject(e, frame_intv_class, frame_intv_ctor,
-				0, (jlong) (uintptr_t) &p->discrete[i]);
+		dprint(LOG_V4L4J, "[V4L4J] creating frame interval object first with ptr %p and type: 0\n",&p->discrete[i] );
+		intv = (*e)->NewObject(e, frame_intv_class, frame_intv_ctor, 0, (jlong) (uintptr_t) &p->discrete[i]);
 		if(intv == NULL){
 			info("[V4L4J] Error creating FrameInterval object\n");
-			THROW_EXCEPTION(e, JNI_EXCP, \
-					"Error creating FrameInterval object");
+			THROW_EXCEPTION(e, JNI_EXCP, "Error creating FrameInterval object");
 			return;
 		}
 
