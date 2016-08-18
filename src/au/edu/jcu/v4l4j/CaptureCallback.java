@@ -35,18 +35,22 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 public interface CaptureCallback {
 
 	/**
+	 * <p>
 	 * During a capture, this method is called by v4l4j to provide the latest
-	 * video frame. It is important that you minimise the amount of code and
+	 * video frame. It is important that you minimize the amount of code and
 	 * processing done in this method in order to maintain the appropriate frame
-	 * rate. <br>
+	 * rate.
+	 * </p>
+	 * <p>
 	 * Make sure the frame is recycled when no longer used. It does not have to
 	 * be done in this method, but it must be done at some point in the near
 	 * future.
+	 * </p>
 	 * 
 	 * @param frame
 	 *            the latest captured frame
 	 */
-	public void nextFrame(VideoFrame frame);
+	void nextFrame(VideoFrame frame);
 
 	/**
 	 * This method is called if an error occurs during capture. It is safe to
@@ -56,5 +60,5 @@ public interface CaptureCallback {
 	 * @param e
 	 *            the exception that was raised during the capture.
 	 */
-	public void exceptionReceived(V4L4JException e);
+	void exceptionReceived(V4L4JException e);
 }

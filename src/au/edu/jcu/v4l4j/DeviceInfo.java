@@ -23,8 +23,8 @@
 */
 package au.edu.jcu.v4l4j;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
@@ -206,7 +206,7 @@ public class DeviceInfo {
 	 */
 	public synchronized List<InputInfo> getInputs() {
 		checkRelease();
-		return new Vector<InputInfo>(inputs);
+		return new ArrayList<>(inputs);
 	}
 
 	/**
@@ -266,9 +266,10 @@ public class DeviceInfo {
 	 *             device.
 	 */
 	DeviceInfo(long object, String dev) throws V4L4JException {
-		inputs = new Vector<InputInfo>();
+		inputs = new ArrayList<InputInfo>();
 		deviceFile = dev;
 		getInfo(object);
+		((ArrayList<?>)inputs).trimToSize();
 		this.object = object;
 	}
 
@@ -311,23 +312,15 @@ public class DeviceInfo {
 	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj) {
+		if (this == obj)
 			return true;
-		}
-		if (obj == null) {
+		if (obj == null)
 			return false;
-		}
-		if (!(obj instanceof DeviceInfo)) {
+		if (!(obj instanceof DeviceInfo))
 			return false;
-		}
 		DeviceInfo other = (DeviceInfo) obj;
-		if (deviceFile == null) {
-			if (other.deviceFile != null) {
-				return false;
-			}
-		} else if (!deviceFile.equals(other.deviceFile)) {
-			return false;
-		}
-		return true;
+		if (this.deviceFile == null)
+			return other.deviceFile == null;
+		return this.deviceFile.equals(other.deviceFile);
 	}
 }
