@@ -23,7 +23,10 @@
  */
 package au.edu.jcu.v4l4j;
 
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadFactory;
 
 import au.edu.jcu.v4l4j.FrameInterval.DiscreteInterval;
@@ -179,15 +182,15 @@ abstract class AbstractGrabber implements FrameGrabber {
 		if (imf == null)
 			throw new ImageFormatException("The image format can not be null");
 		this.state = new State();
-		this.dInfo = di;
+		this.dInfo = dInfo;
 		this.object = o;
 		this.width = width;
 		this.height = height;
-		this.channel = ch;
+		this.channel = channel;
 		this.standard = std;
+		this.tuner = tuner;
 		this.format = imf.getIndex();
-		this.tuner = t;
-		this.type = ty;
+		this.type = type;
 		// Check property for user-specified number of buffers - otherwise use
 		// 4.
 		nbV4LBuffers = (System.getProperty("v4l4j.num_driver_buffers") != null) ? Integer.parseInt(System.getProperty("v4l4j.num_driver_buffers")) : 4;
@@ -417,7 +420,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 * {@link StateException} will be thrown
 	 * 
 	 * @return an available video frame.
-	 * @thrown {@link StateException} if interrupted while waiting.
+	 * @throws StateException if interrupted while waiting.
 	 */
 	private BaseVideoFrame getAvailableVideoFrame() throws StateException{
 		try {
@@ -503,7 +506,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 		pushSource.stopCapture();
 
 		// unblock thread in 2): tell libvideo to stop capture
-		stop(object);
+		this.stop(object);
 
 		// wait for thread blocked in 2) to return
 		state.waitTillNoMoreUsers();
@@ -620,10 +623,10 @@ abstract class AbstractGrabber implements FrameGrabber {
 		 * otherwise throw StateException
 		 */
 		public synchronized void init() {
-			if (state == UNINIT && temp != INIT) {
+			if (state == UNINIT && temp != INIT)
 				temp = INIT;
-			} else
-				throw new StateException("This FrameGrabber can not be " + "initialised again");
+			else
+				throw new StateException("This FrameGrabber can not be initialised again");
 		}
 
 		/**
@@ -631,10 +634,10 @@ abstract class AbstractGrabber implements FrameGrabber {
 		 * to state = STARTED
 		 */
 		public synchronized void start() {
-			if (state == INIT || state == STOPPED && temp != STARTED) {
+			if (state == INIT || state == STOPPED && temp != STARTED)
 				temp = STARTED;
-			} else
-				throw new StateException("This FrameGrabber is not initialised" + " or stopped and can not be started");
+			else
+				throw new StateException("This FrameGrabber is not initialised or has stopped and can not be started");
 		}
 
 		/**
@@ -642,7 +645,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 		 * 
 		 * @throws StateException
 		 *             if released
-		 * @return started
+		 * @return whether this FrameGrabber is started
 		 */
 		public boolean isStarted() {
 			checkReleased();
@@ -652,7 +655,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 		/**
 		 * Must be called with state object lock held
 		 */
-		public void checkReleased() {
+		public void checkReleased() throws StateException {
 			if (state == RELEASED || temp == RELEASED)
 				throw new StateException("This FrameGrabber has been released");
 		}
@@ -677,9 +680,9 @@ abstract class AbstractGrabber implements FrameGrabber {
 				try {
 					wait();
 				} catch (InterruptedException e) {
-					System.err.println("Interrupted while waiting for " + "push thread to start");
+					System.err.println("Interrupted while waiting for push thread to start");
 					e.printStackTrace();
-					throw new StateException("Interrupted while waiting for" + "push thread to start");
+					throw new StateException("Interrupted while waiting for push thread to start");
 				}
 			}
 		}
@@ -699,10 +702,10 @@ abstract class AbstractGrabber implements FrameGrabber {
 		}
 
 		public synchronized void stop() {
-			if (state == STARTED && temp != STOPPED) {
+			if (state == STARTED && temp != STOPPED)
 				temp = STOPPED;
-			} else
-				throw new StateException("This FrameGrabber is not started and " + "can not be stopped");
+			else
+				throw new StateException("This FrameGrabber is not started and can not be stopped");
 		}
 
 		/**
@@ -717,20 +720,17 @@ abstract class AbstractGrabber implements FrameGrabber {
 				} catch (InterruptedException e) {
 					// a thread called stopCapture() while another was
 					// blocked in getVideoFrame()
-					// System.err.println("Interrupted while waiting for "
-					// +"FrameGrabber users to complete");
+					// System.err.println("Interrupted while waiting for FrameGrabber users to complete");
 					// e.printStackTrace();
-					// throw new StateException("There are remaining users of "
-					// +"this FrameGrabber and it can not be stopped");
+					// throw new StateException("There are remaining users of this FrameGrabber and it can not be stopped");
 				}
 		}
 
 		public synchronized void release() {
-			if (state == INIT || state == STOPPED && temp != RELEASED) {
+			if (state == INIT || state == STOPPED && temp != RELEASED)
 				temp = RELEASED;
-			} else
-				throw new StateException(
-						"This FrameGrabber is neither " + "initialised nor stopped and can not be released");
+			else
+				throw new StateException("This FrameGrabber is neither initialised nor stopped and can not be released");
 		}
 
 		public synchronized void commit() {
@@ -762,24 +762,16 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj) {
+		if (this == obj)
 			return true;
-		}
-		if (obj == null) {
+		if (obj == null)
 			return false;
-		}
-		if (!(obj instanceof AbstractGrabber)) {
+		if (!(obj instanceof AbstractGrabber))
 			return false;
-		}
 		AbstractGrabber other = (AbstractGrabber) obj;
-		if (dInfo == null) {
-			if (other.dInfo != null) {
-				return false;
-			}
-		} else if (!dInfo.equals(other.dInfo)) {
-			return false;
-		}
-		return true;
+		if (dInfo == null)
+			return other.dInfo == null;
+		return dInfo.equals(other.dInfo);
 	}
 
 }
