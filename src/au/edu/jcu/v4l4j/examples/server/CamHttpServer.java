@@ -396,5 +396,7 @@ public class CamHttpServer implements Runnable, CaptureCallback {
 	public void exceptionReceived(V4L4JException e) {
 		// Error capturing frames, stop the frame grabber
 		frameGrabber.stopCapture();
+		serverThread.interrupt();
+		e.printStackTrace();
 	}
 }
