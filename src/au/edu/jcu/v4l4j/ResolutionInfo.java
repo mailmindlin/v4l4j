@@ -24,8 +24,9 @@
 
 package au.edu.jcu.v4l4j;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Vector;
 
 import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
 
@@ -203,7 +204,7 @@ public class ResolutionInfo {
 	public List<DiscreteResolution> getDiscreteResolutions() throws UnsupportedMethod {
 		if (type != Type.DISCRETE)
 			throw new UnsupportedMethod("Supported resolutions are not discrete");
-		return new Vector<DiscreteResolution>(discreteValues);
+		return Collections.unmodifiableList(this.discreteValues);
 	}
 
 	/**
@@ -224,17 +225,17 @@ public class ResolutionInfo {
 
 	@Override
 	public String toString() {
-		String s;
 		if (type == Type.STEPWISE) {
-			s = stepwiseObject.toString();
+			return stepwiseObject.toString();
 		} else if (type == Type.DISCRETE) {
-			s = "";
+			StringBuilder sb = new StringBuilder();
 			for (DiscreteResolution d : discreteValues)
-				s += d + " - ";
+				sb.append(d).append(" - ");
+			sb.setLength(sb.length() - 3);
+			return sb.toString();
 		} else {
-			s = "no resolution information";
+			return "no resolution information";
 		}
-		return s;
 	}
 
 	/**

@@ -37,6 +37,7 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.Raster;
 import java.util.Hashtable;
+import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -60,13 +61,13 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import au.edu.jcu.v4l4j.CaptureCallback;
 import au.edu.jcu.v4l4j.Control;
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.FrameInterval;
 import au.edu.jcu.v4l4j.FrameInterval.DiscreteInterval;
 import au.edu.jcu.v4l4j.FrameInterval.Type;
 import au.edu.jcu.v4l4j.ImageFormat;
-import au.edu.jcu.v4l4j.CaptureCallback;
 import au.edu.jcu.v4l4j.Tuner;
 import au.edu.jcu.v4l4j.TunerInfo;
 import au.edu.jcu.v4l4j.V4L4JConstants;
@@ -99,7 +100,7 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
 	private long start = 0;
 	private int n, width, height;
 	private FrameGrabber fg;
-	private Hashtable<String, Control> controls;
+	private Map<String, Control> controls;
 	protected VideoDevice vd;
 	private static ImageIcon v4l4jIcon = createImageIcon("resources/v4l4j.png");
 	private static int FPS_REFRESH = 1000; // in msecs

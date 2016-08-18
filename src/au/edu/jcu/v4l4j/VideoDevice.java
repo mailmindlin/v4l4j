@@ -656,7 +656,6 @@ public class VideoDevice {
 
 		if (imf != null) {
 			if (!deviceInfo.getFormatList().getJPEGEncodableFormats().contains(imf))
-
 				throw new ImageFormatException("The image format " + imf.getName() + " cannot be JPEG encoded.");
 		} else
 			// if imf is null, pick the first format that can be rgb encoded

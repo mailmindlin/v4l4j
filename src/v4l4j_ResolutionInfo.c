@@ -194,7 +194,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetDiscrete(
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
 	struct palette_info *p;
 	int i = -1;
-	jclass this_class, discrete_res_class, vector_class, frame_intv_class;
+	jclass this_class, discrete_res_class, list_class, frame_intv_class;
 	jfieldID field;
 	jmethodID add_method, discrete_res_ctor, frame_intv_ctor;
 	jobject disc_attr, discrete, intv;
@@ -232,19 +232,17 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetDiscrete(
 		return;
 	}
 
-	vector_class = (*e)->FindClass(e, "java/util/Vector");
-	if(vector_class == NULL){
-		info("[V4L4J] Error looking up the Vector class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up Vector class");
+	list_class = (*e)->FindClass(e, "java/util/List");
+	if(list_class == NULL) {
+		info("[V4L4J] Error looking up the List class\n");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up List class");
 		return;
 	}
 
-	add_method = (*e)->GetMethodID(e, vector_class, "addElement",
-			"(Ljava/lang/Object;)V");
-	if(add_method == NULL){
-		info("[V4L4J] Error looking up the add method of Vector class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, \
-				"Error looking up the add method of Vector class");
+	add_method = (*e)->GetMethodID(e, list_class, "add", "(Ljava/lang/Object;)V");
+	if(add_method == NULL) {
+		info("[V4L4J] Error looking up the add method of List class\n");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the add method of List class");
 		return;
 	}
 
@@ -315,7 +313,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetDiscrete(
 								p->discrete[i].width,
 								p->discrete[i].height);
 
-		//add to vector
+		//add to list
 		(*e)->CallVoidMethod(e, disc_attr, add_method, discrete);
 	}
 }

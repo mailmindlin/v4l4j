@@ -23,11 +23,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
+import au.edu.jcu.v4l4j.CaptureCallback;
 import au.edu.jcu.v4l4j.ControlList;
 import au.edu.jcu.v4l4j.JPEGFrameGrabber;
-import au.edu.jcu.v4l4j.CaptureCallback;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
@@ -65,7 +66,10 @@ public class CamHttpServer implements Runnable, CaptureCallback {
 	private JPEGFrameGrabber frameGrabber;
 	private ControlList controlList;
 	private Thread serverThread;
-	private Vector<ClientConnection> clients;
+	/**
+	 * A list of the currently connected clients.
+	 */
+	private List<ClientConnection> clients;
 	private String httpLineFromClient;
 	private long frameCount;
 	private long lastFrameTimestamp;
@@ -123,7 +127,7 @@ public class CamHttpServer implements Runnable, CaptureCallback {
 		}
 
 		controlList = videoDevice.getControlList();
-		clients = new Vector<ClientConnection>();
+		clients = new ArrayList<ClientConnection>();
 
 		// initialize tcp port to listen on
 		serverSocket = new ServerSocket(port);
@@ -339,11 +343,11 @@ public class CamHttpServer implements Runnable, CaptureCallback {
 
 	@Override
 	public void nextFrame(VideoFrame frame) {
-		Vector<ClientConnection> copyClients = null;
+		List<ClientConnection> copyClients = null;
 
 		// copy client vector
 		synchronized (clients) {
-			copyClients = new Vector<ClientConnection>(clients);
+			copyClients = new ArrayList<ClientConnection>(clients);
 		}
 
 		frameCount++;

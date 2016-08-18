@@ -58,7 +58,7 @@ static jobject create_tuner_object(JNIEnv *e, jobject t, struct tuner_info *tune
 }
 
 static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct video_device *vd){
-	jclass input_class, vector_class;
+	jclass input_class, list_class;
 	jfieldID inputs_field;
 	jmethodID ctor_wotuner, ctor_wtuner, add_method;
 	jintArray stds;
@@ -76,17 +76,17 @@ static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct
 		return;
 	}
 
-	vector_class = (*e)->FindClass(e, "java/util/Vector");
-	if(vector_class == NULL){
-		info("[V4L4J] Error looking up the Vector class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up Vector java objects");
+	list_class = (*e)->FindClass(e, "java/util/List");
+	if(list_class == NULL){
+		info("[V4L4J] Error looking up the List class\n");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up List java objects");
 		return;
 	}
 
-	add_method = (*e)->GetMethodID(e, vector_class, "addElement", "(Ljava/lang/Object;)V");
+	add_method = (*e)->GetMethodID(e, list_class, "add", "(Ljava/lang/Object;)V");
 	if(add_method == NULL){
-		info("[V4L4J] Error looking up the add method of Vector class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the add method of Vector objects");
+		info("[V4L4J] Error looking up the add method of List class\n");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the add method of List objects");
 		return;
 	}
 

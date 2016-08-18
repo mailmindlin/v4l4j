@@ -1,7 +1,8 @@
 package au.edu.jcu.v4l4j.encoder;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Vector;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -37,7 +38,7 @@ public class AbstractVideoFrameEncoder implements VideoFrameEncoder {
 	 * 
 	 */
 	protected int numVideoFrames;
-	protected final Vector<AbstractConvertedVideoFrame> frames;
+	protected final List<AbstractConvertedVideoFrame> frames;
 	protected final BlockingQueue<AbstractConvertedVideoFrame> availableFrames;
 	
 	/**
@@ -131,7 +132,7 @@ public class AbstractVideoFrameEncoder implements VideoFrameEncoder {
 		
 		this.numVideoFrames = (System.getProperty("v4l4j.num_encoder_buffers") != null) ? Integer.parseInt(System.getProperty("v4l4j.num_encoder_buffers")) : 1;
 		
-		this.frames = new Vector<>(numVideoFrames);
+		this.frames = new ArrayList<>(numVideoFrames);
 		this.availableFrames = new ArrayBlockingQueue<>(numVideoFrames);
 		
 		this.object = doInit(from.getIndex(), to.getIndex(), width, height);

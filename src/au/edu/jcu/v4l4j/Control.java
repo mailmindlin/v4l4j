@@ -24,7 +24,10 @@
 
 package au.edu.jcu.v4l4j;
 
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
@@ -170,7 +173,7 @@ public class Control {
 	private int min;
 	private int step;
 	private int type;
-	private Vector<String> names;
+	private List<String> names;
 	private int[] values;
 	private final long object;
 	private int defaultValue;
@@ -206,9 +209,9 @@ public class Control {
 		this.step = step;
 		this.type = type;
 		if (names != null) {
-			this.names = new Vector<String>();
-			for (String s : names)
-				this.names.add(s);
+			this.names = new ArrayList<String>(names.length);
+			for (String n : names)
+				this.names.add(n);
 		}
 		this.values = values;
 
@@ -722,11 +725,14 @@ public class Control {
 		if (type != V4L4JConstants.CTRL_TYPE_DISCRETE || values == null)
 			throw new UnsupportedMethod("This control does not accept discrete values");
 		state.get();
-		Vector<Integer> v = new Vector<Integer>();
-		for (int i : values)
-			v.add(new Integer(i));
-		state.put();
-		return v;
+		try {
+			List<Integer> result = new ArrayList<>(values.length);
+			for (int i = 0; i < values.length; i++)
+				result.add(values[i]);
+			return result;
+		} finally {
+			state.put();
+		}
 
 	}
 
@@ -750,9 +756,11 @@ public class Control {
 		if (type != V4L4JConstants.CTRL_TYPE_DISCRETE || names == null)
 			throw new UnsupportedMethod("This control does not have discrete values");
 		state.get();
-		Vector<String> v = new Vector<String>(names);
-		state.put();
-		return v;
+		try {
+			return Collections.unmodifiableList(this.names);
+		} finally {
+			state.put();
+		}
 	}
 	
 	/**
@@ -795,7 +803,7 @@ public class Control {
 		if (type != V4L4JConstants.CTRL_TYPE_DISCRETE || names == null)
 			throw new UnsupportedMethod("This control does not have discrete values");
 		state.get();
-		Hashtable<String, Integer> t = new Hashtable<String, Integer>();
+		Map<String, Integer> t = new HashMap<String, Integer>();
 		for (int i = 0; i < names.size(); i++)
 			t.put(names.get(i), values[i]);
 

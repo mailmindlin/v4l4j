@@ -61,8 +61,8 @@ abstract class AbstractGrabber implements FrameGrabber {
 	private int channel;
 	private int standard;
 	protected int nbV4LBuffers;
-	protected Vector<BaseVideoFrame> videoFrames;
-	private Vector<BaseVideoFrame> availableVideoFrames;
+	protected List<BaseVideoFrame> videoFrames;
+	private BlockingQueue<BaseVideoFrame> availableVideoFrames;
 	protected State state;
 	protected int format;
 	private Tuner tuner;
@@ -191,8 +191,8 @@ abstract class AbstractGrabber implements FrameGrabber {
 		// Check property for user-specified number of buffers - otherwise use
 		// 4.
 		nbV4LBuffers = (System.getProperty("v4l4j.num_driver_buffers") != null) ? Integer.parseInt(System.getProperty("v4l4j.num_driver_buffers")) : 4;
-		videoFrames = new Vector<BaseVideoFrame>(nbV4LBuffers);
-		availableVideoFrames = new Vector<BaseVideoFrame>(nbV4LBuffers);
+		videoFrames = new ArrayList<BaseVideoFrame>(nbV4LBuffers);
+		availableVideoFrames = new ArrayBlockingQueue<BaseVideoFrame>(nbV4LBuffers);
 		pushSource = null;
 		threadFactory = factory;
 	}
@@ -419,23 +419,13 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 * @return an available video frame.
 	 * @thrown {@link StateException} if interrupted while waiting.
 	 */
-	private BaseVideoFrame getAvailableVideoFrame() {
-		BaseVideoFrame frame = null;
-
-		// block until a video frame is available
-		synchronized (availableVideoFrames) {
-			while (availableVideoFrames.size() == 0)
-				try {
-					availableVideoFrames.wait();
-				} catch (InterruptedException e) {
-					throw new StateException("Interrupted while waiting for a video frame", e);
-				}
-
-			// get the video frame
-			frame = availableVideoFrames.remove(0);
+	private BaseVideoFrame getAvailableVideoFrame() throws StateException{
+		try {
+			// Get the video frame. Possibly block until one is available.
+			return availableVideoFrames.take();
+		} catch (InterruptedException e) {
+			throw new StateException("Interrupted while waiting for a video frame", e);
 		}
-
-		return frame;
 	}
 
 	final VideoFrame getNextVideoFrame() throws V4L4JException {
@@ -476,10 +466,11 @@ abstract class AbstractGrabber implements FrameGrabber {
 		// Make sure we are in started state
 		if (state.isStarted()) {
 			enqueueBuffer(object, frame.getBufferIndex());
-
-			synchronized (availableVideoFrames) {
-				availableVideoFrames.add(frame);
-				availableVideoFrames.notify();
+			try {
+				availableVideoFrames.put(frame);
+			} catch (InterruptedException e) {
+				//This should *never* happen, because the queue should never be full
+				throw new StateException("Error while recycling video frame", e);
 			}
 		}
 	}
@@ -526,9 +517,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 			frame.recycle();
 
 		// remove all frames from available queue
-		synchronized (availableVideoFrames) {
-			availableVideoFrames.removeAllElements();
-		}
+		availableVideoFrames.clear();
 
 		// commit new state
 		state.commit();

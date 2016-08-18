@@ -153,7 +153,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetDiscrete(
 		JNIEnv *e, jobject t, jint type, jlong o) {
 
 	int i = -1;
-	jclass this_class, discrete_intv_class, vector_class;
+	jclass this_class, discrete_intv_class, list_class;
 	jfieldID field;
 	jmethodID add_method, ctor;
 	jobject disc_attr, discrete;
@@ -193,19 +193,19 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetDiscrete(
 		return;
 	}
 
-	vector_class = (*e)->FindClass(e, "java/util/Vector");
-	if(vector_class == NULL){
-		info("[V4L4J] Error looking up the Vector class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up Vector class");
+	list_class = (*e)->FindClass(e, "java/util/List");
+	if(list_class == NULL){
+		info("[V4L4J] Error looking up the List class\n");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up List class");
 		return;
 	}
 
-	add_method = (*e)->GetMethodID(e, vector_class, "addElement",
+	add_method = (*e)->GetMethodID(e, list_class, "addElement",
 			"(Ljava/lang/Object;)V");
 	if(add_method == NULL){
-		info("[V4L4J] Error looking up the add method of Vector class\n");
+		info("[V4L4J] Error looking up the add method of List class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, \
-				"Error looking up the add method of Vector class");
+				"Error looking up the add method of List class");
 		return;
 	}
 
@@ -241,7 +241,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetDiscrete(
 
 		dprint(LOG_V4L4J, "[V4L4J] Adding discrete interval %d/%d\n",
 				d[i].numerator,d[i].denominator);
-		//add to vector
+		//add to list
 		(*e)->CallVoidMethod(e, disc_attr, add_method, discrete);
 	}
 }

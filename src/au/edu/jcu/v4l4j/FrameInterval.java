@@ -17,6 +17,8 @@
 */
 package au.edu.jcu.v4l4j;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
 
@@ -173,8 +175,9 @@ public class FrameInterval {
 
 		try {
 			if (frameIntvType == 1) {
-				discreteValues = new Vector<DiscreteInterval>();
+				discreteValues = new ArrayList<DiscreteInterval>();
 				doGetDiscrete(ptr_type, o);
+				((ArrayList<?>)discreteValues).trimToSize();
 			} else if (frameIntvType == 2) {
 				doGetStepwise(ptr_type, o);
 			}
@@ -219,7 +222,7 @@ public class FrameInterval {
 	public List<DiscreteInterval> getDiscreteIntervals() {
 		if (type != Type.DISCRETE)
 			throw new UnsupportedMethod("Supported intervals are not discrete");
-		return new Vector<DiscreteInterval>(discreteValues);
+		return Collections.unmodifiableList(this.discreteValues);
 	}
 
 	/**

@@ -64,7 +64,7 @@ public class RGBViewer extends AbstractVideoViewer {
 					+ "so support for your device can be added to v4l4j.\n"
 					+ "See README file in the v4l4j/ directory for directions.";
 			JOptionPane.showMessageDialog(null, msg);
-			fmts = new Vector<ImageFormat>();
+			fmts = Collections.emptyList();
 		} else
 			fmts = vd.getDeviceInfo().getFormatList().getRGBEncodableFormats();
 

@@ -33,7 +33,6 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -130,12 +129,13 @@ public class DeviceChooser extends WindowAdapter implements ActionListener {
 	}
 
 	private Object[] listV4LDeviceFiles() {
-		Vector<String> dev = new Vector<String>();
 		File dir = new File(v4lSysfsPath);
 		String[] files = dir.list();
 
 		if (files == null)
 			return null;
+		
+		List<String> dev = new ArrayList<String>(files.length);
 
 		for (String file : files)
 			// the following test the presence of "video" in
@@ -146,7 +146,8 @@ public class DeviceChooser extends WindowAdapter implements ActionListener {
 
 		if (dev.size() == 0) {
 			System.err.println("Unable to detect any V4L device file\n"
-					+ "Set the 'test.device' property to a valid\nvideo " + "device file and run this program again ");
+					+ "Set the 'test.device' property to a valid\n"
+					+ "video device file and run this program again");
 			System.exit(0);
 		}
 

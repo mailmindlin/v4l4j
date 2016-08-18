@@ -23,8 +23,9 @@
  */
 package au.edu.jcu.v4l4j;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Vector;
 
 /**
  * ImageFormatList objects group together a list of native {@link ImageFormat}s
@@ -104,13 +105,20 @@ public class ImageFormatList {
 	 *            the JNI C pointer to struct v4l4j_device
 	 */
 	ImageFormatList(long o) {
-		formats = new Vector<ImageFormat>();
-		JPEGformats = new Vector<ImageFormat>();
-		RGBformats = new Vector<ImageFormat>();
-		BGRformats = new Vector<ImageFormat>();
-		YUV420formats = new Vector<ImageFormat>();
-		YVU420formats = new Vector<ImageFormat>();
+		formats = new ArrayList<ImageFormat>();
+		JPEGformats = new ArrayList<ImageFormat>();
+		RGBformats = new ArrayList<ImageFormat>();
+		BGRformats = new ArrayList<ImageFormat>();
+		YUV420formats = new ArrayList<ImageFormat>();
+		YVU420formats = new ArrayList<ImageFormat>();
 		listFormats(o);
+		//Reduce memory footprint of the ArrayLists
+		((ArrayList<?>)formats).trimToSize();
+		((ArrayList<?>)JPEGformats).trimToSize();
+		((ArrayList<?>)RGBformats).trimToSize();
+		((ArrayList<?>)BGRformats).trimToSize();
+		((ArrayList<?>)YUV420formats).trimToSize();
+		((ArrayList<?>)YVU420formats).trimToSize();
 		sortLists();
 	}
 
@@ -248,7 +256,7 @@ public class ImageFormatList {
 	 * @return the {@link ImageFormat}s contained in this list
 	 */
 	public List<ImageFormat> getNativeFormats() {
-		return new Vector<ImageFormat>(formats);
+		return Collections.unmodifiableList(formats);
 	}
 
 	/**
@@ -286,7 +294,7 @@ public class ImageFormatList {
 	 *         be converted to JPEG by v4l4j.
 	 */
 	public List<ImageFormat> getJPEGEncodableFormats() {
-		return new Vector<ImageFormat>(JPEGformats);
+		return Collections.unmodifiableList(JPEGformats);
 	}
 
 	/**
@@ -326,7 +334,7 @@ public class ImageFormatList {
 	 *         be converted to RGB24 by v4l4j.
 	 */
 	public List<ImageFormat> getRGBEncodableFormats() {
-		return new Vector<ImageFormat>(RGBformats);
+		return Collections.unmodifiableList(RGBformats);
 	}
 
 	/**
@@ -366,7 +374,7 @@ public class ImageFormatList {
 	 *         be converted to BGR24 by v4l4j.
 	 */
 	public List<ImageFormat> getBGREncodableFormats() {
-		return new Vector<ImageFormat>(BGRformats);
+		return Collections.unmodifiableList(BGRformats);
 	}
 
 	/**
@@ -406,7 +414,7 @@ public class ImageFormatList {
 	 *         be converted to YUV420 by v4l4j.
 	 */
 	public List<ImageFormat> getYUVEncodableFormats() {
-		return new Vector<ImageFormat>(YUV420formats);
+		return Collections.unmodifiableList(YUV420formats);
 	}
 
 	/**
@@ -446,7 +454,7 @@ public class ImageFormatList {
 	 *         be converted to YVU420 by v4l4j.
 	 */
 	public List<ImageFormat> getYVUEncodableFormats() {
-		return new Vector<ImageFormat>(YVU420formats);
+		return Collections.unmodifiableList(YVU420formats);
 	}
 
 	/**

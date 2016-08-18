@@ -23,9 +23,10 @@
 */
 package au.edu.jcu.v4l4j;
 
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Vector;
+import java.util.Map;
 
 import au.edu.jcu.v4l4j.exceptions.StateException;
 
@@ -44,19 +45,18 @@ import au.edu.jcu.v4l4j.exceptions.StateException;
  *
  */
 public class ControlList {
-	private Hashtable<String, Control> controls;
-	private boolean released;
+	private Map<String, Control> controls;
+	private boolean released = false;
 
 	/**
 	 * This constructor builds a control list from the given list. (no copy is
 	 * made)
 	 * 
 	 * @param c
-	 *            the control list used to initialise this object.
+	 *            the control list used to initialize this object.
 	 */
-	ControlList(Hashtable<String, Control> c) {
+	ControlList(Map<String, Control> c) {
 		controls = c;
-		released = false;
 	}
 
 	/**
@@ -64,14 +64,17 @@ public class ControlList {
 	 * made)
 	 * 
 	 * @param c
-	 *            the control list used to initialise this object.
+	 *            the control list used to initialize this object.
 	 */
 	ControlList(Control[] c) {
-		controls = new Hashtable<String, Control>();
-		for (Control ctrl : c)
-			controls.put(ctrl.getName(), ctrl);
-
-		released = false;
+		try {
+			controls = new HashMap<String, Control>();
+			for (Control ctrl : c)
+				controls.put(ctrl.getName(), ctrl);
+		} catch (Throwable t) {
+			this.released = true;
+			throw t;
+		}
 	}
 
 	/**
@@ -82,9 +85,9 @@ public class ControlList {
 	 *             if this control list has been released and must not be used
 	 *             anymore
 	 */
-	public synchronized Hashtable<String, Control> getTable() {
+	public synchronized HashMap<String, Control> getTable() {
 		checkReleased();
-		return new Hashtable<String, Control>(controls);
+		return new HashMap<String, Control>(controls);
 	}
 
 	/**
@@ -97,7 +100,7 @@ public class ControlList {
 	 */
 	public synchronized List<Control> getList() {
 		checkReleased();
-		return new Vector<Control>(controls.values());
+		return new ArrayList<>(controls.values());
 	}
 
 	/**
