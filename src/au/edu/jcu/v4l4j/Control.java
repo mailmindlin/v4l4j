@@ -220,7 +220,7 @@ public class Control {
 		else
 			this.defaultValue = (int) Math.round((max - min) / 2.0) + min;
 		this.object = o;
-		state = new State();
+		this.state = new State();
 	}
 
 	/**
@@ -251,19 +251,22 @@ public class Control {
 			throw new UnsupportedMethod("This control is a long control and does not support calls to setValue()");
 
 		state.get();
-		if (type == V4L4JConstants.CTRL_TYPE_BUTTON) {
-			state.put();
-			return 0;
-		}
-
 		try {
-			v = doGetValue(this.object, id);
-		} catch (ControlException ce) {
+			if (type == V4L4JConstants.CTRL_TYPE_BUTTON) {
+				state.put();
+				return 0;
+			}
+
+			try {
+				v = doGetValue(this.object, id);
+			} catch (ControlException ce) {
+				state.put();
+				throw ce;
+			}
+			return v;
+		} finally {
 			state.put();
-			throw ce;
 		}
-		state.put();
-		return v;
 	}
 
 	/**
@@ -299,23 +302,26 @@ public class Control {
 			throw new UnsupportedMethod("This control is a long control and does not support calls to setValue()");
 
 		state.get();
-		if (type == V4L4JConstants.CTRL_TYPE_BUTTON)
-			value = 0;
-		else
-			value = validateValue(value);
-
 		try {
-			doSetValue(this.object, id, value);
-		} catch (ControlException ce) {
+			if (type == V4L4JConstants.CTRL_TYPE_BUTTON)
+				value = 0;
+			else
+				value = validateValue(value);
+	
+			try {
+				doSetValue(this.object, id, value);
+			} catch (ControlException ce) {
+				state.put();
+				throw ce;
+			}
+			try {
+				v = getValue();
+			} catch (ControlException ce) {
+			}
+			return v;
+		} finally {
 			state.put();
-			throw ce;
 		}
-		try {
-			v = getValue();
-		} catch (ControlException ce) {
-		}
-		state.put();
-		return v;
 	}
 
 	/**
@@ -335,20 +341,16 @@ public class Control {
 	 *             anymore.
 	 */
 	public String getStringValue() throws ControlException, UnsupportedMethod, StateException {
-		String v;
-
 		if (type != V4L4JConstants.CTRL_TYPE_STRING)
 			throw new UnsupportedMethod("This control is not a string control");
 
 		state.get();
 
 		try {
-			v = doGetStringValue(this.object, id);
+			return doGetStringValue(this.object, id);
 		} finally {
 			state.put();
 		}
-
-		return v;
 	}
 
 	/**
@@ -369,8 +371,6 @@ public class Control {
 	 *             anymore.
 	 */
 	public String setStringValue(String value) throws ControlException {
-		String v = null;
-
 		if (type != V4L4JConstants.CTRL_TYPE_STRING)
 			throw new UnsupportedMethod("This control is not a string control");
 
@@ -383,12 +383,10 @@ public class Control {
 
 		try {
 			doSetStringValue(this.object, id, value);
-			v = doGetStringValue(this.object, id);
+			return doGetStringValue(this.object, id);
 		} finally {
 			state.put();
 		}
-
-		return v;
 	}
 
 	/**
@@ -408,20 +406,16 @@ public class Control {
 	 *             anymore.
 	 */
 	public long getLongValue() throws ControlException {
-		long v;
-
 		if (type != V4L4JConstants.CTRL_TYPE_LONG)
 			throw new UnsupportedMethod("This control is not a long control");
 
 		state.get();
-
+		
 		try {
-			v = doGetLongValue(this.object, id);
+			return doGetLongValue(this.object, id);
 		} finally {
 			state.put();
 		}
-
-		return v;
 	}
 
 	/**
@@ -441,8 +435,6 @@ public class Control {
 	 *             anymore.
 	 */
 	public long setLongValue(long value) throws ControlException {
-		long v = 0;
-
 		if (type != V4L4JConstants.CTRL_TYPE_LONG)
 			throw new UnsupportedMethod("This control is not a long control");
 
@@ -450,12 +442,10 @@ public class Control {
 
 		try {
 			doSetLongValue(this.object, id, value);
-			v = doGetLongValue(this.object, id);
+			return doGetLongValue(this.object, id);
 		} finally {
 			state.put();
 		}
-
-		return v;
 	}
 
 	/**
@@ -497,17 +487,20 @@ public class Control {
 		 */
 		state.get();
 		try {
-			old = doGetValue(this.object, id);
-		} catch (ControlException e) {
-		}
-		try {
-			old = doSetValue(this.object, id, validateValue(old + step));
-		} catch (ControlException ce) {
+			try {
+				old = doGetValue(this.object, id);
+			} catch (ControlException e) {
+			}
+			try {
+				old = doSetValue(this.object, id, validateValue(old + step));
+			} catch (ControlException ce) {
+				state.put();
+				throw ce;
+			}
+			return old;
+		} finally {
 			state.put();
-			throw ce;
 		}
-		state.put();
-		return old;
 	}
 
 	/**
@@ -548,17 +541,19 @@ public class Control {
 		 */
 		state.get();
 		try {
-			old = doGetValue(this.object, id);
-		} catch (ControlException e) {
-		}
-		try {
-			old = doSetValue(this.object, id, validateValue(old - step));
-		} catch (ControlException ce) {
+			try {
+				old = doGetValue(this.object, id);
+			} catch (ControlException e) {
+			}
+			try {
+				old = doSetValue(this.object, id, validateValue(old - step));
+			} catch (ControlException ce) {
+				throw ce;
+			}
+			return old;
+		} finally {
 			state.put();
-			throw ce;
 		}
-		state.put();
-		return old;
 	}
 
 	/**
@@ -691,11 +686,9 @@ public class Control {
 	 */
 	public int getDefaultValue() {
 		if (type == V4L4JConstants.CTRL_TYPE_STRING)
-			throw new UnsupportedMethod(
-					"This control is a string control and does not support calls to getDefaultValue()");
+			throw new UnsupportedMethod("This control is a string control and does not support calls to getDefaultValue()");
 		if (type == V4L4JConstants.CTRL_TYPE_LONG)
-			throw new UnsupportedMethod(
-					"This control is a long control and does not support calls to getDefaultValue()");
+			throw new UnsupportedMethod("This control is a long control and does not support calls to getDefaultValue()");
 
 		synchronized (state) {
 			if (state.isNotReleased())
