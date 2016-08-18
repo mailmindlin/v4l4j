@@ -166,6 +166,8 @@ class PushSource implements Runnable {
 		}
 
 		// update state
-		state = STATE_STOPPED;
+		synchronized (this) {
+			state = STATE_STOPPED;
+		}
 	}
 }

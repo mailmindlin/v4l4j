@@ -167,9 +167,9 @@ public class ResolutionInfo {
 		} catch (Exception e) {
 			// error checking supported resolutions
 			e.printStackTrace();
-			System.err.println(
-					"There was an error checking the supported" + " resolutions.\nPlease report this error to the"
-							+ "v4l4j mailing list.\nSee REAME file for " + "information on reporting bugs");
+			System.err.println("There was an error checking the supported resolutions.\n"
+					+ "Please report this error to the v4l4j mailing list.\n"
+					+ "See REAME file for information on reporting bugs");
 			type = Type.UNSUPPORTED;
 			return;
 		}
