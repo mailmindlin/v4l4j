@@ -30,7 +30,7 @@ import au.edu.jcu.v4l4j.FrameInterval.DiscreteInterval;
 import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
 import au.edu.jcu.v4l4j.exceptions.ImageFormatException;
 import au.edu.jcu.v4l4j.exceptions.InitialisationException;
-import au.edu.jcu.v4l4j.exceptions.InvalidValue;
+import au.edu.jcu.v4l4j.exceptions.InvalidValueException;
 import au.edu.jcu.v4l4j.exceptions.NoTunerException;
 import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
@@ -129,7 +129,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 
 	private native void doRelease(long o);
 
-	private native void doSetFrameIntv(long o, int n, int d) throws InvalidValue;
+	private native void doSetFrameIntv(long o, int n, int d) throws InvalidValueException;
 
 	private native int doGetFrameIntv(long o, int what);
 
@@ -174,8 +174,8 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 * @throw {@link ImageFormatException} if the image format is null and type
 	 *        = {@link #RAW_GRABBER}
 	 */
-	protected AbstractGrabber(DeviceInfo di, long o, int width, int height, int ch, int std, Tuner t, ImageFormat imf,
-			int ty, ThreadFactory factory) throws ImageFormatException {
+	protected AbstractGrabber(DeviceInfo dInfo, long o, int width, int height, int channel, int std, Tuner tuner, ImageFormat imf,
+			int type, ThreadFactory factory) throws ImageFormatException {
 		if (imf == null)
 			throw new ImageFormatException("The image format can not be null");
 		this.state = new State();
@@ -272,7 +272,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 * @see au.edu.jcu.v4l4j.FrameGrabber#setFrameInterval()
 	 */
 	@Override
-	public void setFrameInterval(int num, int denom) throws InvalidValue {
+	public void setFrameInterval(int num, int denom) throws InvalidValueException {
 		synchronized (state) {
 			if (state.isStarted())
 				throw new StateException("Invalid method call");

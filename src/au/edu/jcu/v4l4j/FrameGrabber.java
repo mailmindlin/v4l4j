@@ -24,15 +24,16 @@
 
 package au.edu.jcu.v4l4j;
 
-import au.edu.jcu.v4l4j.VideoFrame;
+import java.util.function.Consumer;
+
 import au.edu.jcu.v4l4j.FrameInterval.DiscreteInterval;
 import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
-import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
-import au.edu.jcu.v4l4j.exceptions.InvalidValue;
+import au.edu.jcu.v4l4j.exceptions.InvalidValueException;
 import au.edu.jcu.v4l4j.exceptions.NoTunerException;
 import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
+import au.edu.jcu.v4l4j.exceptions.VideoStandardException;
 
 /**
  * Objects implementing this interface provide methods to capture frames from a
@@ -125,7 +126,7 @@ public interface FrameGrabber {
 	 *             if this <code>FrameGrabber</code> has been already released,
 	 *             and therefore must not be used anymore.
 	 */
-	public ImageFormat getImageFormat();
+	ImageFormat getImageFormat();
 
 	/**
 	 * This method returns the number of buffers v4l4j has negotiated with the
@@ -148,7 +149,7 @@ public interface FrameGrabber {
 	 * @return the number of frame buffers used to retrieve frames from the
 	 *         driver
 	 */
-	public int getNumberOfVideoFrames();
+	int getNumberOfVideoFrames();
 
 	/**
 	 * This method returns the number of recycled video frames, ie. the number
@@ -161,7 +162,7 @@ public interface FrameGrabber {
 	 * @return the number of video frames currently recycled.
 	 * @see #getNumberOfVideoFrames()
 	 */
-	public int getNumberOfRecycledVideoFrames();
+	int getNumberOfRecycledVideoFrames();
 
 	/**
 	 * This method sets the frame interval used for capture. The frame interval
@@ -169,7 +170,7 @@ public interface FrameGrabber {
 	 * the inverse of the frame rate. It may or may not be supported by the
 	 * underlying hardware/driver. If not supported, calling this method throws
 	 * a {@link UnsupportedMethod} exception. This method will throw an
-	 * {@link InvalidValue} exception if the given frame interval value is not
+	 * {@link InvalidValueException} exception if the given frame interval value is not
 	 * supported. As a guide, you can check the {@link ResolutionInfo} objects
 	 * associated with the video device to find out whether frame intervals are
 	 * at all supported, and if they are, what values (or range of values) are
@@ -183,14 +184,14 @@ public interface FrameGrabber {
 	 *            the denominator of the frame interval to be set
 	 * @throws UnsupportedMethod
 	 *             if setting the frame interval is not supported.
-	 * @throws InvalidValue
+	 * @throws InvalidValueException
 	 *             if the given frame interval value is invalid.
 	 * @throws StateException
 	 *             if capture is ongoing (the frame interval must be set when
 	 *             not capturing), or if this <code>FrameGrabber</code> has been
 	 *             already released, and therefore must not be used anymore.
 	 */
-	public void setFrameInterval(int num, int denom) throws InvalidValue;
+	void setFrameInterval(int num, int denom) throws InvalidValueException;
 
 	/**
 	 * This method returns the current frame interval used for capture. It may
@@ -207,7 +208,7 @@ public interface FrameGrabber {
 	 *             been already released, and therefore must not be used
 	 *             anymore.
 	 */
-	public DiscreteInterval getFrameInterval();
+	DiscreteInterval getFrameInterval();
 
 	/**
 	 * This method adjusts the current video input number and video standard.
@@ -219,7 +220,7 @@ public interface FrameGrabber {
 	 * @throws CaptureChannelException
 	 *             if the given channel number value is not valid
 	 */
-	public void setVideoInputNStandard(int inputNumber, int standard)
+	void setVideoInputNStandard(int inputNumber, int standard)
 			throws VideoStandardException, CaptureChannelException;
 
 	/**
@@ -227,7 +228,7 @@ public interface FrameGrabber {
 	 * 
 	 * @return the current input number
 	 */
-	public int getVideoInput();
+	int getVideoInput();
 
 	/**
 	 * This method retrieves the current video standard used by the current
@@ -235,7 +236,7 @@ public interface FrameGrabber {
 	 * 
 	 * @return the current standard
 	 */
-	public int getVideoStandard();
+	int getVideoStandard();
 
 	/**
 	 * This method returns the {@link Tuner} associated with the input of this
@@ -249,7 +250,7 @@ public interface FrameGrabber {
 	 *             if this <code>FrameGrabber</code> has been already released,
 	 *             and therefore must not be used anymore.
 	 */
-	public Tuner getTuner() throws NoTunerException;
+	Tuner getTuner() throws NoTunerException;
 
 	/**
 	 * <code>setCaptureCallback</code> sets the {@link CaptureCallback} object
@@ -262,12 +263,36 @@ public interface FrameGrabber {
 	 *            an object implementing the {@link CaptureCallback} interface
 	 *            which will receive new frames and capture exceptions.
 	 * @throws StateException
-	 *             if this method is invoked while capture is active, ie. after
+	 *             if this method is invoked while capture is active, i.e. after
 	 *             a call to {@link #startCapture()} and prior a call to
 	 *             {@link #stopCapture()}.
 	 */
-	public void setCaptureCallback(CaptureCallback callback);
+	void setCaptureCallback(CaptureCallback callback) throws StateException;
 
+	/**
+	 * A way to use {@link #setCaptureCallback(CaptureCallback)} with support for Java 8 lambas, or to
+	 * break up the two callbacks.
+	 * @param frameCallback The callback that implements the {@link CaptureCallback#nextFrame(VideoFrame) nextFrame}
+	 * 			half of {@link CaptureCallback}
+	 * @param errorCallback The callback that implements the {@link CaptureCallback#exceptionReceived(V4L4JException) exceptionRecieved}
+	 * 			half of {@link CaptureCallback}
+	 * @throws StateException
+	 * 				if this method is invoked while the capture is active, i.e., after
+	 * 				a call to {@link #startCapture()} and prior to a call to {@link #stopCapture()}
+	 * @see #setCaptureCallback(CaptureCallback)
+	 */
+	default void setCaptureCallback(Consumer<VideoFrame> frameCallback, Consumer<V4L4JException> errorCallback) throws StateException {
+		this.setCaptureCallback(new CaptureCallback() {
+			@Override
+			public void nextFrame(VideoFrame frame) {
+				frameCallback.accept(frame);
+			}
+			@Override
+			public void exceptionReceived(V4L4JException e) {
+				errorCallback.accept(e);
+			}
+		});
+	}
 	/**
 	 * This method starts the capture. Frames will be delivered to the provided
 	 * {@link CaptureCallback} object.
@@ -280,18 +305,17 @@ public interface FrameGrabber {
 	 *             if this <code>FrameGrabber</code> has been already released,
 	 *             and therefore must not be used anymore
 	 */
-	public void startCapture() throws V4L4JException;
+	void startCapture() throws V4L4JException;
 
 	/**
-	 * This method stops the capture, and recycles all @link {@link VideoFrame}
-	 * s.
+	 * This method stops the capture, and recycles all {@link VideoFrame}s.
 	 * 
 	 * @throws StateException
 	 *             if the capture has not been started, is already stopped, or
 	 *             if this <code>FrameGrabber</code> has been already released,
 	 *             and therefore must not be used anymore.
 	 */
-	public void stopCapture();
+	void stopCapture();
 
 	/**
 	 * This method returns the actual height of captured frames.
@@ -301,7 +325,7 @@ public interface FrameGrabber {
 	 *             if this <code>FrameGrabber</code> has been already released,
 	 *             and therefore must not be used anymore.
 	 */
-	public int getHeight();
+	int getHeight();
 
 	/**
 	 * This method returns the actual width of captured frames.
@@ -311,7 +335,7 @@ public interface FrameGrabber {
 	 *             if this <code>FrameGrabber</code> has been already released,
 	 *             and therefore must not be used anymore.
 	 */
-	public int getWidth();
+	int getWidth();
 
 	/**
 	 * This method returns the video channel used to capture frames.
@@ -321,7 +345,7 @@ public interface FrameGrabber {
 	 *             if this <code>FrameGrabber</code> has been already released,
 	 *             and therefore must not be used anymore.
 	 */
-	public int getChannel();
+	int getChannel();
 
 	/**
 	 * This method returns the actual video standard:
@@ -334,6 +358,6 @@ public interface FrameGrabber {
 	 *             if this <code>FrameGrabber</code> has been already released,
 	 *             and therefore must not be used anymore.
 	 */
-	public int getStandard();
+	int getStandard();
 
 }

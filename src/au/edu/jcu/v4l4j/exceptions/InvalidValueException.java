@@ -24,24 +24,24 @@
 package au.edu.jcu.v4l4j.exceptions;
 
 /**
- * Exceptions of this type are thrown when trying ti set an incorrect value on a
+ * Exceptions of this type are thrown when trying to set an incorrect value on a
  * control.
  * 
  * @author gilles
  *
  */
-public class InvalidValue extends RuntimeException {
+public class InvalidValueException extends RuntimeException {
 	private static final long serialVersionUID = -3506474708008499397L;
 
-	public InvalidValue(String message) {
+	public InvalidValueException(String message) {
 		super(message);
 	}
 
-	public InvalidValue(String message, Throwable throwable) {
+	public InvalidValueException(String message, Throwable throwable) {
 		super(message, throwable);
 	}
 
-	public InvalidValue(Throwable throwable) {
+	public InvalidValueException(Throwable throwable) {
 		super(throwable);
 	}
 }
