@@ -149,18 +149,20 @@ public class ResolutionInfo {
 	 * @param index
 	 *            the libvideo index of the image format for which this
 	 *            resolution info object is to be constructed
-	 * @param o
+	 * @param object
 	 *            a C pointer to a struct v4l4j_device
 	 */
-	ResolutionInfo(int index, long o) {
+	ResolutionInfo(int index, long object) {
 		int t;
 		try {
-			t = doGetType(index, o);
+			t = doGetType(index, object);
 			if (t == 1) {
-				discreteValues = new Vector<DiscreteResolution>();
-				doGetDiscrete(index, o);
+				this.discreteValues = new ArrayList<DiscreteResolution>();
+				doGetDiscrete(index, object);
+				//Compress arraylist
+				((ArrayList<?>)discreteValues).trimToSize();
 			} else if (t == 2) {
-				doGetStepwise(index, o);
+				doGetStepwise(index, object);
 			}
 		} catch (Exception e) {
 			// error checking supported resolutions
@@ -268,9 +270,9 @@ public class ResolutionInfo {
 		 */
 		public final FrameInterval interval;
 
-		private DiscreteResolution(int w, int h, FrameInterval f) {
-			width = w;
-			height = h;
+		private DiscreteResolution(int width, int height, FrameInterval f) {
+			this.width = width;
+			this.height = height;
 			interval = f;
 		}
 

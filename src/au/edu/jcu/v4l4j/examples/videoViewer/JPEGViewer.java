@@ -24,6 +24,7 @@
 
 package au.edu.jcu.v4l4j.examples.videoViewer;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
 
@@ -51,21 +52,21 @@ public class JPEGViewer extends AbstractVideoViewer {
 	 * 
 	 * @param v
 	 *            the video device
-	 * @param w
+	 * @param width
 	 *            the desired capture width
-	 * @param h
+	 * @param height
 	 *            the desired capture height
-	 * @param s
+	 * @param std
 	 *            the capture standard
-	 * @param c
+	 * @param channel
 	 *            the capture channel
-	 * @param q
+	 * @param quality
 	 *            the JPEG compression quality
 	 * @throws V4L4JException
 	 *             if any parameter if invalid, or if the video device does not
 	 *             support an image format that can be converted to JPEG
 	 */
-	public JPEGViewer(VideoDevice v, int w, int h, int s, int c, int q) throws V4L4JException {
+	public JPEGViewer(VideoDevice v, int width, int height, int std, int channel, int quality) throws V4L4JException {
 		super(v);
 
 		List<ImageFormat> fmts;
@@ -81,13 +82,13 @@ public class JPEGViewer extends AbstractVideoViewer {
 		} else
 			fmts = vd.getDeviceInfo().getFormatList().getJPEGEncodableFormats();
 
-		initGUI(fmts.toArray(), w, h, "JPEG");
+		initGUI(fmts.toArray(), width, height, "JPEG");
 
-		width = w;
-		height = h;
-		std = s;
-		channel = c;
-		qty = q;
+		this.width = width;
+		this.height = height;
+		this.std = std;
+		this.channel = channel;
+		this.qty = quality;
 
 	}
 

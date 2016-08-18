@@ -65,9 +65,9 @@ public class RGBFrameGrabber extends AbstractGrabber {
 	 *            grabber
 	 * @param o
 	 *            a JNI pointer to a v4l4j_device structure
-	 * @param w
+	 * @param width
 	 *            the requested frame width
-	 * @param h
+	 * @param height
 	 *            the requested frame height
 	 * @param ch
 	 *            the input index, as returned by {@link InputInfo#getIndex()}

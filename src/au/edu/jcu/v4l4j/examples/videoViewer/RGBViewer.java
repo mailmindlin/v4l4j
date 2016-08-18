@@ -24,8 +24,8 @@
 
 package au.edu.jcu.v4l4j.examples.videoViewer;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Vector;
 
 import javax.swing.JOptionPane;
 
@@ -42,18 +42,18 @@ public class RGBViewer extends AbstractVideoViewer {
 	 * 
 	 * @param v
 	 *            the video device
-	 * @param w
+	 * @param width
 	 *            the desired capture width
-	 * @param h
+	 * @param height
 	 *            the desired capture height
-	 * @param s
+	 * @param std
 	 *            the capture standard
-	 * @param c
+	 * @param channel
 	 *            the capture channel
 	 * @throws V4L4JException
 	 *             if the device file is not readable
 	 */
-	public RGBViewer(VideoDevice v, int w, int h, int s, int c) throws V4L4JException {
+	public RGBViewer(VideoDevice v, int width, int height, int std, int channel) throws V4L4JException {
 		super(v);
 
 		List<ImageFormat> fmts;
@@ -68,12 +68,12 @@ public class RGBViewer extends AbstractVideoViewer {
 		} else
 			fmts = vd.getDeviceInfo().getFormatList().getRGBEncodableFormats();
 
-		width = w;
-		height = h;
-		std = s;
-		channel = c;
+		this.width = width;
+		this.height = height;
+		this.std = std;
+		this.channel = channel;
 
-		initGUI(fmts.toArray(), w, h, "RGB");
+		initGUI(fmts.toArray(), width, height, "RGB");
 
 	}
 

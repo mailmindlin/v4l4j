@@ -101,7 +101,7 @@ struct v4l4j_device {
 #define STD_EXCP				EXCEPTION_PACKAGE "VideoStandardException"
 #define CTRL_EXCP				EXCEPTION_PACKAGE "ControlException"
 #define RELEASE_EXCP			EXCEPTION_PACKAGE "ReleaseException"
-#define INVALID_VAL_EXCP		EXCEPTION_PACKAGE "InvalidValue"
+#define INVALID_VAL_EXCP		EXCEPTION_PACKAGE "InvalidValueException"
 #define UNSUPPORTED_METH_EXCP	EXCEPTION_PACKAGE "UnsupportedMethod"
 #define JNI_EXCP				EXCEPTION_PACKAGE "JNIException"
 
