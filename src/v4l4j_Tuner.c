@@ -32,7 +32,7 @@ static jfieldID Tuner_object_fid = NULL;
 static struct v4l4j_device* getPointer(JNIEnv* env, jobject self) {
 	if (Tuner_object_fid == NULL) {
 		jclass Tuner_class = (*env)->FindClass(env, "au/edu/jcu/v4l4j/Tuner");
-		Tuner_object_fid = (*env)->GetFieldID(env, Tuner_object_fid, "object", "J");
+		Tuner_object_fid = (*env)->GetFieldID(env, Tuner_class, "object", "J");
 	}
 	
 	long ptr = (*env)->GetLongField(env, self, Tuner_object_fid);
