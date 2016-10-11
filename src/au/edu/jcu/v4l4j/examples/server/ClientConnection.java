@@ -31,6 +31,10 @@ import au.edu.jcu.v4l4j.V4L4JConstants;
 import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.ControlException;
 
+/**
+ * A wrapper for a client connection, abstracting writing frames
+ * @author Gilles Gigan, mailmindlin
+ */
 public class ClientConnection {
 	private static String mjpegHeader = "HTTP/1.0 200 OK\r\n" + "Expires: 0\r\n" + "Pragma: no-cache\r\n"
 			+ "Cache-Control: no-cache\r\n" + "Content-Type: multipart/x-mixed-replace;boundary=\"boundary\"\r\n\r\n";
@@ -140,6 +144,14 @@ public class ClientConnection {
 		out.writeBytes(mainPageHTML);
 	}
 
+	/**
+	 * Send the webcam page in html over the given output stream
+	 * 
+	 * @param out
+	 *            The output stream
+	 * @throws IOException
+	 *             If the stream is closed
+	 */
 	public static void sendWebcamPage(DataOutputStream out) throws IOException {
 		out.writeBytes(webcamPageHTML);
 	}

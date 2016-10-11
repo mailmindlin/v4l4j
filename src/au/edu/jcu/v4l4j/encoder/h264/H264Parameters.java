@@ -5,6 +5,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
 
 /**
  * Wrapper for <code>x264_param_t</code>
@@ -70,6 +71,13 @@ public class H264Parameters implements Externalizable, Closeable {
 	 */
 	protected native int initWithPreset(int preset, int tune);
 	
+	/**
+	 * Innitialize the parameters with the given preset.
+	 * @param preset The preset to use
+	 * @param tune The tune to use
+	 * @return O on success, negative on failure (e.g., invalid preset/tune name).
+	 * @throws NullPointerException if preset or tune are null
+	 */
 	public int initWithPreset(X264.Preset preset, X264.Tune tune) {
 		return initWithPreset(preset.ordinal(), tune.ordinal());
 	}
