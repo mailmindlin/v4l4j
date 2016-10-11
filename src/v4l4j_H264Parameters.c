@@ -45,15 +45,18 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_initDef
 }
 /*
  * Class:     au_edu_jcu_v4l4j_encoder_h264_H264Parameters
- * Method:    initWithDefaultPreset
+ * Method:    initWithPreset
  * Signature: (JLjava/lang/String;Ljava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_initWithPreset(JNIEnv* env, jobject self, jint preset, jint tune) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	x264_param_t* params = getPointer(env, self);
 	
-	if (preset > 10)
+	if (preset > 10) {
+		info("[V4L4J] Invalid value for preset\n");
+		THROW_EXCEPTION(e, INVALID_VALUE, "Invalid value for preset.");
 		return -1;
+	}
 	
 	if (tune > 8)
 		return -1;
