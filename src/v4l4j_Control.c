@@ -34,19 +34,18 @@
  * get the current value of a v4l2 control
  */
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_Control_doGetValue(JNIEnv *e, jobject t, jlong object, jint id){
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
-	int val = 0, ret;
+	dprint(LOG_CALLS, "[CALL] Entering %s\n", __PRETTY_FUNCTION__);
+	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
-	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling get_control_value(dev: %s, ctrl name:%s)\n", d->vdev->file,d->vdev->control->controls[id].v4l2_ctrl->name);
-	ret = get_control_value(d->vdev,d->vdev->control->controls[id].v4l2_ctrl, &val, 0);
-
+	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling get_control_value(dev: %s, ctrl name:%s)\n", dev->vdev->file, dev->vdev->control->controls[id].v4l2_ctrl->name);
+	int val = 0;
+	int ret = get_control_value(dev->vdev, dev->vdev->control->controls[id].v4l2_ctrl, &val, 0);
 	if(ret != 0) {
-		THROW_EXCEPTION(e, CTRL_EXCP, "Error getting current value for control '%s'", d->vdev->control->controls[id].v4l2_ctrl->name);
+		THROW_EXCEPTION(e, CTRL_EXCP, "Error getting current value for control '%s'", dev->vdev->control->controls[id].v4l2_ctrl->name);
 		return -1;
 	}
-
-	dprint(LOG_V4L4J, "[V4L4J] get_control_value(dev: %s, ctrl name:%s) = %d\n", d->vdev->file,d->vdev->control->controls[id].v4l2_ctrl->name, val);
+	
+	dprint(LOG_V4L4J, "[V4L4J] get_control_value(dev: %s, ctrl name:%s) = %d\n", dev->vdev->file, dev->vdev->control->controls[id].v4l2_ctrl->name, val);
 	return val;
 }
 
@@ -54,17 +53,17 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_Control_doGetValue(JNIEnv *e, jobje
 /*
  * Set a new value on a v4l2 control
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_Control_doSetValue(JNIEnv *e, jobject t, jlong object, jint id, jint value){
-	int ret, v = value;
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_Control_doSetValue(JNIEnv *e, jobject t, jlong object, jint id, jint value) {
+	dprint(LOG_CALLS, "[CALL] Entering %s\n", __PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
-	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling set_control_value(dev: %s, ctrl name:%s, val: %d)\n", d->vdev->file,d->vdev->control->controls[id].v4l2_ctrl->name,value);
-	ret = set_control_value(d->vdev, d->vdev->control->controls[id].v4l2_ctrl, &v, 0);
+	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling set_control_value(dev: %s, ctrl name:%s, val: %d)\n", d->vdev->file, d->vdev->control->controls[id].v4l2_ctrl->name,value);
+	int v = value;
+	int ret = set_control_value(d->vdev, d->vdev->control->controls[id].v4l2_ctrl, &v, 0);
 	if(ret != 0) {
-		if(ret == LIBVIDEO_ERR_OUT_OF_RANGE){
+		if(ret == LIBVIDEO_ERR_OUT_OF_RANGE) {
 			THROW_EXCEPTION(e, INVALID_VAL_EXCP, "Invalid value %d for control '%s': value out of range", value, d->vdev->control->controls[id].v4l2_ctrl->name);
-		} else if(ret == LIBVIDEO_ERR_STREAMING){
+		} else if(ret == LIBVIDEO_ERR_STREAMING) {
 			THROW_EXCEPTION(e, CTRL_EXCP, "Cannot set value for control '%s' while streaming", d->vdev->control->controls[id].v4l2_ctrl->name);
 		} else {
 			THROW_EXCEPTION(e, CTRL_EXCP, "Error setting current value for control '%s'", d->vdev->control->controls[id].v4l2_ctrl->name);
@@ -76,31 +75,32 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_Control_doSetValue(JNIEnv *e, jobje
 }
 
 /*
- * get the current value of a v4l2 string control
+ * Get the current value of a v4l2 string control
  */
-JNIEXPORT jstring JNICALL Java_au_edu_jcu_v4l4j_Control_doGetStringValue(JNIEnv *e, jobject t, jlong object, jint id){
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+JNIEXPORT jstring JNICALL Java_au_edu_jcu_v4l4j_Control_doGetStringValue(JNIEnv *e, jobject t, jlong object, jint id) {
+	dprint(LOG_CALLS, "[CALL] Entering %s\n", __PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
-	int ret;
+	
+	struct v4l2_queryctrl* control = d->vdev->control->controls[id].v4l2_ctrl;
+	
 	char *val;
-	jstring result;
+	XMALLOC(val, char*, control->maximum + 1); // "+ 1" as per spec
 
-	XMALLOC(val, char*, d->vdev->control->controls[id].v4l2_ctrl->maximum + 1); // "+ 1" as per spec
-
-	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling get_control_value(dev: %s, ctrl name:%s)\n", d->vdev->file,d->vdev->control->controls[id].v4l2_ctrl->name);
-	ret = get_control_value(d->vdev,d->vdev->control->controls[id].v4l2_ctrl, val, d->vdev->control->controls[id].v4l2_ctrl->maximum + 1);
-	if(ret != 0) {
+	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling get_control_value(dev: %s, ctrl name:%s)\n", d->vdev->file, control->name);
+	if(get_control_value(d->vdev, control, val, control->maximum + 1) != 0) {
+		//There was an error reading the control's value
 		XFREE(val);
-		THROW_EXCEPTION(e, CTRL_EXCP, "Error getting current value for string control '%s'", d->vdev->control->controls[id].v4l2_ctrl->name);
+		THROW_EXCEPTION(e, CTRL_EXCP, "Error getting current value for string control '%s'", control->name);
 		return NULL;
 	}
 
-	dprint(LOG_V4L4J, "[V4L4J] get_control_value(dev: %s, string ctrl name:%s) = %s\n", d->vdev->file,d->vdev->control->controls[id].v4l2_ctrl->name, val);
-
-	result = (*e)->NewStringUTF(e, val);
-
+	dprint(LOG_V4L4J, "[V4L4J] get_control_value(dev: %s, string ctrl name:%s) = %s\n", d->vdev->file, control->name, val);
+	
+	//Convert the char* to a Java String
+	jstring result = (*e)->NewStringUTF(e, val);
+	
 	XFREE(val);
-
+	
 	return result;
 }
 
@@ -108,41 +108,37 @@ JNIEXPORT jstring JNICALL Java_au_edu_jcu_v4l4j_Control_doGetStringValue(JNIEnv 
 /*
  * Set a new value on a v4l2 string control
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_Control_doSetStringValue(JNIEnv *e, jobject t, jlong object, jint id, jstring jvalue){
-	int ret;
-	char *copy;
-	int size;
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_Control_doSetStringValue(JNIEnv *e, jobject t, jlong object, jint id, jstring jvalue) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
-	const char * value = (*e)->GetStringUTFChars(e, jvalue, 0);
+	const char* value = (*e)->GetStringUTFChars(e, jvalue, 0);
 	if (value == NULL) {
 		// OOM exception already thrown
-		dprint(LOG_V4L4J, " error getting string\n");
+		dprint(LOG_V4L4J, " Error getting string\n");
 		return;
 	}
 
 	// copy the java string value in case it gets modified by the driver
-	copy = strdup(value);
+	char* copy = strdup(value);
 	if (copy == NULL) {
-		dprint(LOG_V4L4J, "Error copying string value\n");
 		THROW_EXCEPTION(e, CTRL_EXCP, "Error copying new string value");
 		return;
 	}
 
 	(*e)->ReleaseStringUTFChars(e, jvalue, value);
 	
-	size = strlen(copy) + 1;
+	int size = strlen(copy) + 1;
 
-	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling set_control_value(dev: %s, ctrl name:%s, val: %s - byte size: %d)\n", d->vdev->file,d->vdev->control->controls[id].v4l2_ctrl->name, copy, size);
-	ret = set_control_value(d->vdev, d->vdev->control->controls[id].v4l2_ctrl, copy, size);
+	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling set_control_value(dev: %s, ctrl name:%s, val: %s - byte size: %d)\n", d->vdev->file, d->vdev->control->controls[id].v4l2_ctrl->name, copy, size);
+	int ret = set_control_value(d->vdev, d->vdev->control->controls[id].v4l2_ctrl, copy, size);
 
 	free(copy);
 
 	if(ret != 0) {
-		if(ret == LIBVIDEO_ERR_OUT_OF_RANGE){
+		if(ret == LIBVIDEO_ERR_OUT_OF_RANGE) {
 			THROW_EXCEPTION(e, INVALID_VAL_EXCP, "Invalid value for string control %s : value out of range", d->vdev->control->controls[id].v4l2_ctrl->name);
-		} else if(ret == LIBVIDEO_ERR_STREAMING){
+		} else if(ret == LIBVIDEO_ERR_STREAMING) {
 			THROW_EXCEPTION(e, CTRL_EXCP, "Cannot set value for string control '%s' while streaming", d->vdev->control->controls[id].v4l2_ctrl->name);
 		} else {
 			THROW_EXCEPTION(e, CTRL_EXCP, "Error setting current value for string control '%s'", d->vdev->control->controls[id].v4l2_ctrl->name);
@@ -153,20 +149,18 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_Control_doSetStringValue(JNIEnv *e,
 /*
  * get the current value of a v4l2 integer64 control
  */
-JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_Control_doGetLongValue(JNIEnv *e, jobject t, jlong object, jint id){
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_Control_doGetLongValue(JNIEnv *e, jobject t, jlong object, jint id) {
+	dprint(LOG_CALLS, "[CALL] Entering %s\n", __PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
-	int ret;
-	jlong result;
 
 	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling get_control_value(dev: %s, ctrl name:%s)\n", d->vdev->file, d->vdev->control->controls[id].v4l2_ctrl->name);
-	ret = get_control_value(d->vdev,d->vdev->control->controls[id].v4l2_ctrl, &result, 0);
-	if(ret != 0) {
+	jlong result;
+	if(get_control_value(d->vdev, d->vdev->control->controls[id].v4l2_ctrl, &result, 0) != 0) {
 		THROW_EXCEPTION(e, CTRL_EXCP, "Error getting current value for long control '%s'", d->vdev->control->controls[id].v4l2_ctrl->name);
 		return 0;
 	}
 
-	dprint(LOG_V4L4J, "[V4L4J] get_control_value(dev: %s, integer64 ctrl name:%s) = %lld\n", d->vdev->file,d->vdev->control->controls[id].v4l2_ctrl->name, (unsigned long long)result);
+	dprint(LOG_V4L4J, "[V4L4J] get_control_value(dev: %s, integer64 ctrl name:%s) = %lld\n", d->vdev->file, d->vdev->control->controls[id].v4l2_ctrl->name, (unsigned long long)result);
 
 	return result;
 }
@@ -175,18 +169,17 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_Control_doGetLongValue(JNIEnv *e, 
 /*
  * Set a new value on a v4l2 integer64 control
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_Control_doSetLongValue(JNIEnv *e, jobject t, jlong object, jint id, jlong jvalue){
-	int ret;
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_Control_doSetLongValue(JNIEnv *e, jobject t, jlong object, jint id, jlong jvalue) {
+	dprint(LOG_CALLS, "[CALL] Entering %s\n", __PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
-	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling set_control_value(dev: %s, ctrl name:%s, val: %lld)\n", d->vdev->file,d->vdev->control->controls[id].v4l2_ctrl->name, (unsigned long long)jvalue);
-	ret = set_control_value(d->vdev, d->vdev->control->controls[id].v4l2_ctrl, &jvalue, 0);
+	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling set_control_value(dev: %s, ctrl name:%s, val: %lld)\n", d->vdev->file, d->vdev->control->controls[id].v4l2_ctrl->name, (unsigned long long)jvalue);
+	int ret = set_control_value(d->vdev, d->vdev->control->controls[id].v4l2_ctrl, &jvalue, 0);
 
 	if(ret != 0) {
-		if(ret == LIBVIDEO_ERR_OUT_OF_RANGE){
+		if(ret == LIBVIDEO_ERR_OUT_OF_RANGE) {
 			THROW_EXCEPTION(e, INVALID_VAL_EXCP, "Invalid value for long control %s : value out of range", d->vdev->control->controls[id].v4l2_ctrl->name);
-		} else if(ret == LIBVIDEO_ERR_STREAMING){
+		} else if(ret == LIBVIDEO_ERR_STREAMING) {
 			THROW_EXCEPTION(e, CTRL_EXCP, "Cannot set value for long control '%s' while streaming", d->vdev->control->controls[id].v4l2_ctrl->name);
 		} else {
 			THROW_EXCEPTION(e, CTRL_EXCP, "Error setting current value for long control '%s'", d->vdev->control->controls[id].v4l2_ctrl->name);
