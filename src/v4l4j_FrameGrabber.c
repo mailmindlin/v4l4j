@@ -389,7 +389,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doInit(JNIEnv *e, j
 
 
 	//update width, height, standard & image format in FrameGrabber class
-	update_width_height(e, t, d);
+	update_width_height(e, self, d);
 
 	return c->mmap->buffer_nr;
 }
