@@ -244,15 +244,13 @@ static int init_capture_format(struct v4l4j_device *d, int fg_out_fmt, int* src_
 	case OUTPUT_YUV420:
 		*dest_fmt = YUV420;
 		// leave native capture format in src_fmt
-		dprint(LOG_LIBVIDEO,
-				"[V4L4J] YUV420 conversion done by libvideo\n");
+		dprint(LOG_LIBVIDEO, "[V4L4J] YUV420 conversion done by libvideo\n");
 		d->need_conv=0;
 		return 0;
 	case OUTPUT_YVU420:
 		*dest_fmt = YVU420;
 		// leave native capture format in src_fmts
-		dprint(LOG_LIBVIDEO,
-				"[V4L4J] YVU420 conversion done by libvideo\n");
+		dprint(LOG_LIBVIDEO, "[V4L4J] YVU420 conversion done by libvideo\n");
 		d->need_conv=0;
 		return 0;
 	default:
@@ -271,21 +269,16 @@ static int get_lastFrame_field_ids(JNIEnv *e, jobject this, struct v4l4j_device 
 	jclass this_class;
 
 	//gets the fields of members updated every frame captured.
-	this_class = (*e)->GetObjectClass(e,this);
-	if(this_class==NULL) {
-		info("[V4L4J] error looking up FrameGrabber class\n");
+	this_class = (*e)->GetObjectClass(e, this);
+	if(this_class == NULL) {
 		THROW_EXCEPTION(e, JNI_EXCP, "error looking up FrameGrabber class");
 		return 0;
 	}
 
 	//last_captured_frame_sequence_fID
-	last_captured_frame_sequence_fID =
-			(*e)->GetFieldID(e, this_class, "lastCapturedFrameSequence", "J");
-	if(last_captured_frame_sequence_fID==NULL) {
-		info("[V4L4J] error looking up last_captured_frame_sequence_fID "
-				" in FrameGrabber class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "error looking up "
-				" last_captured_frame_sequence_fID field in FrameGrabber class");
+	last_captured_frame_sequence_fID = (*e)->GetFieldID(e, this_class, "lastCapturedFrameSequence", "J");
+	if(last_captured_frame_sequence_fID == NULL) {
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up last_captured_frame_sequence_fID field in FrameGrabber class");
 		return 0;
 	}
 
@@ -293,21 +286,14 @@ static int get_lastFrame_field_ids(JNIEnv *e, jobject this, struct v4l4j_device 
 	last_captured_frame_time_usec_fID =
 			(*e)->GetFieldID(e, this_class, "lastCapturedFrameTimeuSec", "J");
 	if(last_captured_frame_time_usec_fID==NULL) {
-		info("[V4L4J] error looking up lastCapturedFrameTimeuSec field in "
-				"FrameGrabber class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "error looking up lastCapturedFrameTimeuSec"
-				" field in FrameGrabber class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up lastCapturedFrameTimeuSec field in FrameGrabber class");
 		return 0;
 	}
 
 	// last_captured_frame_buffer_index_fID
-	last_captured_frame_buffer_index_fID =
-			(*e)->GetFieldID(e, this_class, "lastCapturedFrameBufferIndex", "I");
+	last_captured_frame_buffer_index_fID = (*e)->GetFieldID(e, this_class, "lastCapturedFrameBufferIndex", "I");
 	if(last_captured_frame_buffer_index_fID==NULL) {
-		info("[V4L4J] error looking up lastCapturedFrameBufferIndex field in "
-				"FrameGrabber class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "error looking up lastCapturedFrameBufferIndex"
-				" field in FrameGrabber class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up lastCapturedFrameBufferIndex field in FrameGrabber class");
 		return 0;
 	}
 	return 1;
@@ -315,39 +301,36 @@ static int get_lastFrame_field_ids(JNIEnv *e, jobject this, struct v4l4j_device 
 
 
 /*
- * initialise LIBVIDEO (open, set_cap_param, init_capture)
+ * initialize LIBVIDEO (open, set_cap_param, init_capture)
  * creates the Java ByteBuffers
  * creates the V4L2Controls
- * initialise the JPEG compressor
+ * initialize the JPEG compressor
  * fmt is the input format
  * output is the output format (enum output_format in common.h)
  * return the number of mmap''ed buffers
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doInit(JNIEnv *e, jobject t, jlong object, jint num_buffers, jint w, jint h, jint ch, jint std,
-		jint in_fmt, jint fg_out_fmt){
-
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	int i=0;
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doInit(JNIEnv *e, jobject self, jlong object, jint num_buffers, jint w, jint h, jint ch, jint std,
+		jint in_fmt, jint fg_out_fmt) {
+	dprint(LOG_CALLS, "[CALL] Entering %s\n", __PRETTY_FUNCTION__);
+	int i = 0;
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
-	struct capture_device *c;
 	int src_fmt = in_fmt, dest_fmt;
 
 	// Get the field IDs if we dont have them already. If error getting them, return.
-	if ((! last_captured_frame_sequence_fID || ! last_captured_frame_time_usec_fID)
-			&& ! get_lastFrame_field_ids(e, t, d))
+	if (!last_captured_frame_sequence_fID || !last_captured_frame_time_usec_fID)
+		if (!get_lastFrame_field_ids(e, self, d))
 			return 0;
+
 
 	/*
 	 * i n i t _ c a p t u r e _ d e v i c e ( )
 	 */
 	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling init_capture_device()\n");
-	c = init_capture_device(d->vdev, w,h,ch,std, num_buffers);
+	struct capture_device *c = init_capture_device(d->vdev, w, h, ch, std, num_buffers);
 
-	if(c==NULL) {
+	if(c == NULL) {
 		dprint(LOG_V4L4J, "[V4L4J] init_capture_device failed\n");
-		THROW_EXCEPTION(e, INIT_EXCP, "Error initialising device '%s'."
-							" Make sure it is a valid V4L device file and"
-							" check the file permissions.", d->vdev->file);
+		THROW_EXCEPTION(e, INIT_EXCP, "Error initializing device '%s'. Make sure it is a valid V4L device file and check the file permissions.", d->vdev->file);
 		return 0;
 	}
 
@@ -355,41 +338,31 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doInit(JNIEnv *e, j
 	/*
 	 * s e t _ c a p _ p a r a m
 	 */
-	d->output_fmt=fg_out_fmt;
-	if(init_capture_format(d, fg_out_fmt, &src_fmt, &dest_fmt)==-1){
+	d->output_fmt = fg_out_fmt;
+	if(init_capture_format(d, fg_out_fmt, &src_fmt, &dest_fmt) == -1){
 		free_capture_device(d->vdev);
-		THROW_EXCEPTION(e, INIT_EXCP, "unknown output format %d\n", fg_out_fmt);
+		THROW_EXCEPTION(e, INIT_EXCP, "Unknown output format %d\n", fg_out_fmt);
 		return 0;
 	}
 
-	dprint(LOG_LIBVIDEO, "[V4L4J] src format: %s\n",
-						(src_fmt != -1) ? libvideo_palettes[src_fmt].name : "'chosen by libvideo'");
+	dprint(LOG_LIBVIDEO, "[V4L4J] src format: %s\n", (src_fmt != -1) ? libvideo_palettes[src_fmt].name : "'chosen by libvideo'");
 
-	dprint(LOG_LIBVIDEO, "[V4L4J] dest format: %s\n",
-							libvideo_palettes[dest_fmt].name);
+	dprint(LOG_LIBVIDEO, "[V4L4J] dest format: %s\n", libvideo_palettes[dest_fmt].name);
 
 	dprint(LOG_LIBVIDEO, "[LIBVIDEO] calling 'set_cap_param'\n");
-	if((i=(*c->actions->set_cap_param)(d->vdev, src_fmt, dest_fmt))!=0){
+	if((i=(*c->actions->set_cap_param)(d->vdev, src_fmt, dest_fmt)) != 0){
 		dprint(LOG_V4L4J, "[V4L4J] set_cap_param failed\n");
 		free_capture_device(d->vdev);
 		if(i==LIBVIDEO_ERR_DIMENSIONS)
-			THROW_EXCEPTION(e, DIM_EXCP,
-					"The requested dimensions (%dx%d) are not supported",
-					c->width, c->height);
+			THROW_EXCEPTION(e, DIM_EXCP, "The requested dimensions (%dx%d) are not supported", c->width, c->height);
 		else if(i==LIBVIDEO_ERR_CHAN_SETUP)
-			THROW_EXCEPTION(e, CHANNEL_EXCP,
-					"The requested channel (%d) is invalid", c->channel);
+			THROW_EXCEPTION(e, CHANNEL_EXCP, "The requested channel (%d) is invalid", c->channel);
 		else if(i==LIBVIDEO_ERR_FORMAT)
-			THROW_EXCEPTION(e, FORMAT_EXCP,
-					"Image format %s not supported",
-					libvideo_palettes[in_fmt].name);
+			THROW_EXCEPTION(e, FORMAT_EXCP, "Image format %s not supported", libvideo_palettes[in_fmt].name);
 		else if(i==LIBVIDEO_ERR_STD)
-			THROW_EXCEPTION(e, STD_EXCP,
-					"The requested standard (%d) is invalid", c->std);
+			THROW_EXCEPTION(e, STD_EXCP, "The requested standard (%d) is invalid", c->std);
 		else
-			THROW_EXCEPTION(e, GENERIC_EXCP,
-					"Error applying capture parameters (error=%d)",i);
-
+			THROW_EXCEPTION(e, GENERIC_EXCP, "Error applying capture parameters (error=%d)",i);
 		return 0;
 	}
 
@@ -397,23 +370,20 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doInit(JNIEnv *e, j
 	/*
 	 * i n i t _ c a p t u r e ( )
 	 */
-	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling 'init_capture(dev: %s)'\n",
-			d->vdev->file);
-	if((i=(*c->actions->init_capture)(d->vdev))<0){
+	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling 'init_capture(dev: %s)'\n", d->vdev->file);
+	if((i=(*c->actions->init_capture)(d->vdev))<0) {
 		dprint(LOG_V4L4J, "[V4L4J] init_capture failed\n");
 		free_capture_device(d->vdev);
-		THROW_EXCEPTION(e, GENERIC_EXCP,
-				"Error initialising capture (error=%d)",i);
+		THROW_EXCEPTION(e, GENERIC_EXCP, "Error initializing capture (error=%d)",i);
 		return 0;
 	}
 
 	//setup format converter
-	if(init_format_converter(d)!=0){
-		dprint(LOG_V4L4J, "[V4L4J] Error initialising the format converter\n");
+	if(init_format_converter(d) != 0) {
+		dprint(LOG_V4L4J, "[V4L4J] Error initializing the format converter\n");
 		(*c->actions->free_capture)(d->vdev);
 		free_capture_device(d->vdev);
-		THROW_EXCEPTION(e, GENERIC_EXCP,
-				"Error initialising the format converter");
+		THROW_EXCEPTION(e, GENERIC_EXCP, "Error initializing the format converter");
 		return 0;
 	}
 
@@ -438,12 +408,11 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_getBufferSize(JNIEn
  * tell LIBVIDEO to start the capture
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_start(JNIEnv *e, jobject t, jlong object){
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	dprint(LOG_CALLS, "[CALL] Entering %s\n", __PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
-	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling 'start_capture(dev: %s)'\n",
-			d->vdev->file);
-	if((*d->vdev->capture->actions->start_capture)(d->vdev)<0){
+	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling 'start_capture(dev: %s)'\n", d->vdev->file);
+	if((*d->vdev->capture->actions->start_capture)(d->vdev) < 0){
 		dprint(LOG_V4L4J, "[V4L4J] start_capture failed\n");
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error starting the capture");
 	}
@@ -452,39 +421,34 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_start(JNIEnv *e, jo
 /*
  * tell the JPEG compressor the new compression factor
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_setQuality(JNIEnv *e, jobject t, jlong object, jint q) {
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
-	if(d->output_fmt!=OUTPUT_JPG)
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_setQuality(JNIEnv *env, jobject this, jlong object, jint quality) {
+	dprint(LOG_CALLS, "[CALL] Entering %s\n", __PRETTY_FUNCTION__);
+	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
+	if(dev->output_fmt != OUTPUT_JPG)
 		return;
-	dprint(LOG_V4L4J, "[V4L4J] Setting JPEG quality to %d\n",q);
-	d->j->jpeg_quality = q;
+	dprint(LOG_V4L4J, "[V4L4J] Setting JPEG quality to %d\n", quality);
+	dev->j->jpeg_quality = quality;
 }
 
 /*
  * sets the frame interval
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doSetFrameIntv(JNIEnv *e, jobject t, jlong object, jint num, jint denom) {
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	int ret = 0;
-	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
+	dprint(LOG_CALLS, "[CALL] Entering %s\n", __PRETTY_FUNCTION__);
+	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
 	dprint(LOG_V4L4J, "[LIBVIDEO] Setting frame interval to %d/%d\n",num, denom);
-	ret = d->vdev->capture->actions->set_frame_interval(d->vdev, num, denom);
+	int ret = dev->vdev->capture->actions->set_frame_interval(dev->vdev, num, denom);
 
-	switch(ret){
-	case LIBVIDEO_ERR_FORMAT:
-		dprint(LOG_V4L4J, "[V4L4J] Invalid frame interval\n");
-		THROW_EXCEPTION(e, INVALID_VAL_EXCP, "Error setting frame interval: "
-				"invalid values %d/%d", num, denom);
-		return;
-	case LIBVIDEO_ERR_IOCTL:
-		dprint(LOG_V4L4J, "[V4L4J] Setting frame interval not supported\n");
-		THROW_EXCEPTION(e, UNSUPPORTED_METH_EXCP,
-				"Setting frame interval not supported");
-		return;
+	switch(ret) {
+		case LIBVIDEO_ERR_FORMAT:
+			dprint(LOG_V4L4J, "[V4L4J] Invalid frame interval\n");
+			THROW_EXCEPTION(e, INVALID_VAL_EXCP, "Error setting frame interval: invalid values %d/%d", num, denom);
+			return;
+		case LIBVIDEO_ERR_IOCTL:
+			THROW_EXCEPTION(e, UNSUPPORTED_METH_EXCP, "Setting frame interval not supported");
+			return;
 	}
-
 }
 
 /*
@@ -493,19 +457,17 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doSetFrameIntv(JNIE
  * frac part of the frame intv does NOT interleave with doSetFrameIntv())
  */
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetFrameIntv(JNIEnv *e, jobject t, jlong object, jint what) {
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	LOG_FN_ENTER;
+
+	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
 	int num, denom;
-	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
-
-	if(d->vdev->capture->actions->get_frame_interval(d->vdev, &num, &denom)!=0){
-		dprint(LOG_V4L4J, "[V4L4J] Getting frame interval not supported\n");
-		THROW_EXCEPTION(e, UNSUPPORTED_METH_EXCP,
-				"Getting frame interval not supported");
+	if(dev->vdev->capture->actions->get_frame_interval(dev->vdev, &num, &denom) != 0) {
+		THROW_EXCEPTION(e, UNSUPPORTED_METH_EXCP, "Getting frame interval not supported");
 		return 0;
 	}
 
-	if(what==0)
+	if(what == 0)
 		return num;
 	else
 		return denom;
@@ -517,24 +479,20 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetFrameIntv(JNIE
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doSetVideoInputNStandard(JNIEnv *e, jobject t, jlong object, jint input_num, jint standard) {
 	LOG_FN_ENTER;
 	
-	int ret = 0;
-	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
+	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
 	dprint(LOG_V4L4J, "[LIBVIDEO] Setting input to %d and standard to %d\n", input_num, standard);
-	ret = d->vdev->capture->actions->set_video_input_std(d->vdev, input_num, standard);
+	int ret = dev->vdev->capture->actions->set_video_input_std(dev->vdev, input_num, standard);
 
-	switch(ret){
-	case LIBVIDEO_ERR_CHANNEL:
-		dprint(LOG_V4L4J, "[V4L4J] Invalid input\n");
-		THROW_EXCEPTION(e, CHANNEL_EXCP, "Error setting new input %d", input_num);
-		break;
-	case LIBVIDEO_ERR_STD:
-		dprint(LOG_V4L4J, "[V4L4J] Error setting standard to %d\n", standard);
-		THROW_EXCEPTION(e, STD_EXCP, "The requested standard (%d) is invalid", standard);
-		break;
+	switch(ret) {
+		case LIBVIDEO_ERR_CHANNEL:
+			THROW_EXCEPTION(e, CHANNEL_EXCP, "Error setting new input %d", input_num);
+			break;
+		case LIBVIDEO_ERR_STD:
+			dprint(LOG_V4L4J, "[V4L4J] Error setting standard to %d\n", standard);
+			THROW_EXCEPTION(e, STD_EXCP, "The requested standard (%d) is invalid", standard);
+			break;
 	}
-
-
 }
 
 /*
@@ -542,10 +500,10 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doSetVideoInputNSta
  */
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoInput(JNIEnv *e, jobject t, jlong object) {
 	LOG_FN_ENTER;
-	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
-	int input_num, standard;
+	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
-	d->vdev->capture->actions->get_video_input_std(d->vdev, &input_num, &standard);
+	int input_num, standard;
+	dev->vdev->capture->actions->get_video_input_std(dev->vdev, &input_num, &standard);
 
 	return (jint)input_num;
 }
@@ -556,12 +514,12 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoInput(JNI
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoStandard(JNIEnv *e, jobject t, jlong object) {
 	LOG_FN_ENTER;
 	
-	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
+	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
+
 	int input_num, standard;
+	dev->vdev->capture->actions->get_video_input_std(dev->vdev, &input_num, &standard);
 
-	d->vdev->capture->actions->get_video_input_std(d->vdev, &input_num, &standard);
-
-	return (jint)standard;
+	return (jint) standard;
 }
 
 
@@ -569,52 +527,46 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoStandard(
  * enqueue a buffer
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_enqueueBuffer(JNIEnv *e, jobject t, jlong object, jint buffer_index){
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
+	LOG_FN_ENTER;
+	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
-	(*d->vdev->capture->actions->enqueue_buffer)(d->vdev, buffer_index);
+	(*dev->vdev->capture->actions->enqueue_buffer)(dev->vdev, buffer_index);
 }
 
 /*
  * dequeue a buffer, perform conversion if required and return frame
  */
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *e, jobject this, jlong object, jarray byteArray) {
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	void *frame;
+	LOG_FN_ENTER
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
-	unsigned char *array = NULL;
-	unsigned long long captureTime, sequence;
-	unsigned int buffer_index;
-	jboolean isCopy;
 
 	//get frame from libvideo
-	if((frame = (*d->vdev->capture->actions->dequeue_buffer)
-			(d->vdev, &d->capture_len, &buffer_index, &captureTime, &sequence)) == NULL) {
-		dprint(LOG_V4L4J, "[V4L4J] Error dequeuing buffer for capture\n");
+	unsigned int buffer_index;
+	unsigned long long captureTime, sequence;
+	void* frame = (*d->vdev->capture->actions->dequeue_buffer)(d->vdev, &d->capture_len, &buffer_index, &captureTime, &sequence);
+	if(frame == NULL) {
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error dequeuing buffer for capture");
 		return 0;
 	}
 
 	// get a pointer to the java array
-	array = (*e)->GetPrimitiveArrayCritical(e, byteArray, &isCopy);
+	jboolean isCopy;
+	unsigned char* array = (*e)->GetPrimitiveArrayCritical(e, byteArray, &isCopy);
 	if (isCopy == JNI_TRUE)
-		dprintf(LOG_V4L4J, "[V4L4J] Slow path: cant get direct pointer to byte array\n");
+		dprintf(LOG_V4L4J, "[V4L4J] Slow path: can't get direct pointer to byte array\n");
 
 	// check we have a valid pointer
-	if (! array)
-	{
+	if (!array) {
 		(*d->vdev->capture->actions->enqueue_buffer)(d->vdev, buffer_index);
-		dprint(LOG_V4L4J, "[V4L4J] Error getting the byte array\n");
-		THROW_EXCEPTION(e, GENERIC_EXCP,
-				"Error getting the byte array");
+		THROW_EXCEPTION(e, GENERIC_EXCP, "Error getting the byte array");
 		return 0;
 	}
 
 	START_TIMING;
 	// Perform required conversion
-	if(d->vdev->capture->is_native!=1) {
+	if(d->vdev->capture->is_native != 1) {
 		// Check whether we can convert directly to the byte[] memory
-		if(d->need_conv!=1) {
+		if(d->need_conv != 1) {
 			// Only libv4l conversion is required
 			(*d->vdev->capture->actions->convert_buffer)(d->vdev, buffer_index, d->capture_len, array);
 		} else {
@@ -624,7 +576,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 		}
 	} else {
 		// No libv4l conversion required. Check if v4l4j conversion is required
-		if (d->need_conv!=1) {
+		if (d->need_conv != 1) {
 			// No v4l4j conversion required. So copy the frame to byte[] memory. This
 			// is definitely NOT an optimal solution, but I cant see any other way to do it:
 			// We could mmap the byte[] memory and used it as the buffer, but the JVM specs
@@ -644,12 +596,9 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 	(*e)->ReleasePrimitiveArrayCritical(e, byteArray, array, 0);
 
 	// update class members
-	(*e)->SetLongField(e, this, last_captured_frame_sequence_fID,
-			sequence);
-	(*e)->SetLongField(e, this, last_captured_frame_time_usec_fID,
-			captureTime);
-	(*e)->SetIntField(e, this, last_captured_frame_buffer_index_fID,
-			buffer_index);
+	(*e)->SetLongField(e, this, last_captured_frame_sequence_fID, sequence);
+	(*e)->SetLongField(e, this, last_captured_frame_time_usec_fID, captureTime);
+	(*e)->SetIntField(e, this, last_captured_frame_buffer_index_fID, buffer_index);
 
 	return d->len;
 }
@@ -660,11 +609,11 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_stop(JNIEnv *e, jobject t, jlong object) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
-	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling stop_capture(dev: %s)\n",
-			d->vdev->file);
-	if((*d->vdev->capture->actions->stop_capture)(d->vdev)<0) {
+
+	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling stop_capture(dev: %s)\n", d->vdev->file);
+	if((*d->vdev->capture->actions->stop_capture)(d->vdev) < 0) {
 		dprint(LOG_V4L4J, "Error stopping capture\n");
-		//dont throw an exception here...
+		//don't throw an exception here...
 		//if we do, FrameGrabber wont let us call delete
 		//free_capture because its state will be stuck in capture...
 	}
@@ -676,13 +625,14 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_stop(JNIEnv *e, job
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doRelease(JNIEnv *e, jobject t, jlong object) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
-	release_format_converter(d);
+	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
-	(*d->vdev->capture->actions->free_capture)(d->vdev);
+	release_format_converter(dev);
 
-	free_capture_device(d->vdev);
+	(*dev->vdev->capture->actions->free_capture)(dev->vdev);
+
+	free_capture_device(dev->vdev);
 }
 
 

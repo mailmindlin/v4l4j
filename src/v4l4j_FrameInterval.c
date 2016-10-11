@@ -51,14 +51,12 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetFrameIntvType(JN
 
 	//error
 	default:
-		info("[V4L4J] Error looking up the frame interval "
-				"(wrong struct type %d)\n", type);
+		info("[V4L4J] Error looking up the frame interval (wrong struct type %d)\n", type);
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up frame intervals");
 		break;
 	}
 
-	dprint(LOG_V4L4J, "[V4L4J] Returning frame interval of type %d (%s)\n",t,
-			(t==0)?"unsupported":((t==1)?"discrete":"stepwise"));
+	dprint(LOG_V4L4J, "[V4L4J] Returning frame interval of type %d (%s)\n", t, (t==0) ? "unsupported" : ((t==1) ? "discrete" : "stepwise"));
 	return t;
 }
 
@@ -69,10 +67,10 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetFrameIntvType(JN
  * frame_size_continuous(max res) and returns the struct frame_intv_discrete
  * associated with it, or NULL if not found
  */
-static struct frame_intv_discrete *get_discrete(jlong o, jint type){
+static struct frame_intv_discrete *get_discrete(jlong o, jint type) {
 	struct frame_intv_discrete *d = NULL;
 
-	switch(type){
+	switch(type) {
 	//frame_size_discrete
 	case 0:
 		d =	((struct frame_size_discrete*) (uintptr_t) o)->intv.discrete;
@@ -109,10 +107,10 @@ static struct frame_intv_discrete *get_discrete(jlong o, jint type){
  * frame_size_continuous(max res) and returns the struct frame_intv_continuous
  * associated with it, or NULL if not found
  */
-static struct frame_intv_continuous *get_continuous(jlong o, jint type){
+static struct frame_intv_continuous *get_continuous(jlong o, jint type) {
 	struct frame_intv_continuous *d = NULL;
 
-	switch(type){
+	switch(type) {
 	//frame_size_discrete
 	case 0:
 		d =	((struct frame_size_discrete*) (uintptr_t) o)->intv.continuous;

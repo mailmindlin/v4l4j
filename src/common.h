@@ -110,6 +110,7 @@ struct v4l4j_device {
 #define EXCEPTION_MSG_LENGTH	100
 #define THROW_EXCEPTION(e, c, format, ...)\
 		do {\
+			info("[V4L4J] " format "\n", ## __VA_ARGS__);\
 			char msg[EXCEPTION_MSG_LENGTH+1];\
 			jclass JV4L4JException = (*e)->FindClass(e,c);\
 			snprintf(msg, EXCEPTION_MSG_LENGTH, format, ## __VA_ARGS__);\
