@@ -233,7 +233,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobje
 
 	dprint(LOG_LIBVIDEO, "[LIBVIDEO] call to get_device_info\n");
 	//get data from libvideo
-	if(get_device_info(vd)!=NULL){
+	if(get_device_info(vd) != NULL){
 		//fill in values in DeviceInfo object
 		/* set the name field */
 		(*e)->SetObjectField(e, t, name_field, (*e)->NewStringUTF(e, vd->info->name));
@@ -321,8 +321,7 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_doListIntervals(
 	default:
 		info("[V4L4J] There is a bug in v4l4j. Please report this on the\n");
 		info("[V4L4J] V4L4J mailing list.\n");
-		THROW_EXCEPTION(e, JNI_EXCP, \
-				"Error creating the FrameInterval object");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error creating the FrameInterval object");
 		return NULL;
 	}
 	return frame_intv;

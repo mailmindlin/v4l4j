@@ -55,7 +55,7 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 	this_class = (*e)->GetObjectClass(e,this);
 	if(this_class==NULL) {
 		info("[V4L4J] error looking up FrameGrabber class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "error looking up FrameGrabber class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up FrameGrabber class");
 		return;
 	}
 
