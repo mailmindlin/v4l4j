@@ -105,12 +105,12 @@ public class ImageFormatList {
 	 *            the JNI C pointer to struct v4l4j_device
 	 */
 	ImageFormatList(long o) {
-		formats = new ArrayList<ImageFormat>();
-		JPEGformats = new ArrayList<ImageFormat>();
-		RGBformats = new ArrayList<ImageFormat>();
-		BGRformats = new ArrayList<ImageFormat>();
-		YUV420formats = new ArrayList<ImageFormat>();
-		YVU420formats = new ArrayList<ImageFormat>();
+		this.formats = new ArrayList<ImageFormat>();
+		this.JPEGformats = new ArrayList<ImageFormat>();
+		this.RGBformats = new ArrayList<ImageFormat>();
+		this.BGRformats = new ArrayList<ImageFormat>();
+		this.YUV420formats = new ArrayList<ImageFormat>();
+		this.YVU420formats = new ArrayList<ImageFormat>();
 		listFormats(o);
 		//Reduce memory footprint of the ArrayLists
 		((ArrayList<?>)formats).trimToSize();

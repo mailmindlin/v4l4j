@@ -28,6 +28,7 @@
 #include "libvideo-palettes.h"
 #include "common.h"
 #include "debug.h"
+#include "jniutils.c"
 
 static int add_format(JNIEnv *e, jobject vector, jmethodID add_method, jclass format_class, jmethodID format_ctor, int index, struct v4l4j_device *d){
 	jobject obj;
@@ -125,9 +126,7 @@ static int create_RGB_list(JNIEnv *e, struct v4l4j_device *d, jobject formats, j
 	return 0;
 }
 
-static int create_BGR_list(JNIEnv *e, struct v4l4j_device *d,
-		jobject formats, jmethodID add_method, jclass format_class,
-		jmethodID format_ctor ){
+static int create_BGR_list(JNIEnv *e, struct v4l4j_device *d, jobject formats, jmethodID add_method, jclass format_class, jmethodID format_ctor ){
 	int i, j;
 	struct device_info *di = d->vdev->info;
 
@@ -149,12 +148,9 @@ static int create_BGR_list(JNIEnv *e, struct v4l4j_device *d,
 			//if there are libvideo-converted BGR24 formats, add them
 			j=-1;
 			while(di->palettes[i].raw_palettes[++j]!=-1){
-				dprint(LOG_V4L4J, "[V4L4J] Found libvideo-converted BGR24 "
-						"format from %s format - add it\n",
-						libvideo_palettes[di->palettes[i].raw_palettes[j]].name);
+				dprint(LOG_V4L4J, "[V4L4J] Found libvideo-converted BGR24 format from %s format - add it\n", libvideo_palettes[di->palettes[i].raw_palettes[j]].name);
 
-				if(add_format(e,formats,add_method,format_class,
-						format_ctor, di->palettes[i].raw_palettes[j], d)==-1)
+				if(add_format(e,formats,add_method,format_class, format_ctor, di->palettes[i].raw_palettes[j], d)==-1)
 					return -1;
 			}
 		}
@@ -163,9 +159,7 @@ static int create_BGR_list(JNIEnv *e, struct v4l4j_device *d,
 	return 0;
 }
 
-static int create_YUV_list(JNIEnv *e, struct v4l4j_device *d,
-		jobject formats, jmethodID add_method, jclass format_class,
-		jmethodID format_ctor ){
+static int create_YUV_list(JNIEnv *e, struct v4l4j_device *d, jobject formats, jmethodID add_method, jclass format_class, jmethodID format_ctor ) {
 	int i,j;
 	struct device_info *di = d->vdev->info;
 
@@ -173,27 +167,23 @@ static int create_YUV_list(JNIEnv *e, struct v4l4j_device *d,
 
 	/* Populates the YUVformats list*/
 
-	for(i=0; i<di->nb_palettes; i++){
-		if(di->palettes[i].index==YUV420 && !di->palettes[i].raw_palettes){
-			//if there is native YUV420 format, add it
-			dprint(LOG_V4L4J,
-					"[V4L4J] Found native YUV420 format - adding it to list\n");
-
-			if(add_format(e,formats,add_method,format_class, format_ctor,
-					YUV420, d)==-1)
-				return -1;
-
-		} else if(di->palettes[i].index==YUV420 && di->palettes[i].raw_palettes){
-			//if there are libvideo-converted YUV420 format, add them
-			j=-1;
-			while(di->palettes[i].raw_palettes[++j]!=-1){
-				dprint(LOG_V4L4J, "[V4L4J] Found libvideo-converted YUV420 "
-						"format from %s format - add it\n",
-						libvideo_palettes[di->palettes[i].raw_palettes[j]].name);
-
-				if(add_format(e,formats,add_method,format_class,
-						format_ctor, di->palettes[i].raw_palettes[j], d)==-1)
+	for(int i = 0; i < di->nb_palettes; i++){
+		if (di->palettes[i].index == YUV420) {
+			if (!di->palettes[i].raw_palettes){
+				//if there is native YVU420 format, add it
+				dprint(LOG_V4L4J, "[V4L4J] Found native YUV420 format - adding it to list\n");
+				
+				if(add_format(e, formats, add_method, format_class, format_ctor, YVU420, d ) == -1)
 					return -1;
+			} else {
+				//if there are libvideo-converted YVU420 format, add them
+				int j = -1;
+				while(di->palettes[i].raw_palettes[++j] != -1){
+					dprint(LOG_V4L4J, "[V4L4J] Found libvideo-converted YUV420 format from %s format - add it\n", libvideo_palettes[di->palettes[i].raw_palettes[j]].name);
+					
+					if(add_format(e, formats, add_method, format_class, format_ctor, di->palettes[i].raw_palettes[j], d) == -1)
+						return -1;
+				}
 			}
 		}
 	}
@@ -201,37 +191,30 @@ static int create_YUV_list(JNIEnv *e, struct v4l4j_device *d,
 	return 0;
 }
 
-static int create_YVU_list(JNIEnv *e, struct v4l4j_device *d,
-		jobject formats, jmethodID add_method, jclass format_class,
-		jmethodID format_ctor ){
-	int i,j;
+static int create_YVU_list(JNIEnv *e, struct v4l4j_device *d, jobject formats, jmethodID add_method, jclass format_class, jmethodID format_ctor ) {
 	struct device_info *di = d->vdev->info;
 
 	dprint(LOG_V4L4J, "[V4L4J] Creating YVU encodable format list\n");
 
 	/* Populates the YUVformats list*/
 
-	for(i=0; i<di->nb_palettes; i++){
-		if(di->palettes[i].index==YVU420 && !di->palettes[i].raw_palettes){
-			//if there is native YVU420 format, add it
-			dprint(LOG_V4L4J,
-					"[V4L4J] Found native YVU420 format - adding it to list\n");
-
-			if(add_format(e,formats,add_method,format_class, format_ctor,
-					YVU420,d )==-1)
-				return -1;
-
-		} else if(di->palettes[i].index==YVU420 && di->palettes[i].raw_palettes){
-			//if there are libvideo-converted YVU420 format, add them
-			j=-1;
-			while(di->palettes[i].raw_palettes[++j]!=-1){
-				dprint(LOG_V4L4J, "[V4L4J] Found libvideo-converted YVU420 "
-						"format from %s format - add it\n",
-						libvideo_palettes[di->palettes[i].raw_palettes[j]].name);
-
-				if(add_format(e,formats,add_method,format_class,
-						format_ctor, di->palettes[i].raw_palettes[j],d)==-1)
+	for(int i = 0; i < di->nb_palettes; i++){
+		if (di->palettes[i].index == YVU420) {
+			if (!di->palettes[i].raw_palettes){
+				//if there is native YVU420 format, add it
+				dprint(LOG_V4L4J, "[V4L4J] Found native YVU420 format - adding it to list\n");
+				
+				if(add_format(e, formats, add_method, format_class, format_ctor, YVU420, d ) == -1)
 					return -1;
+			} else {
+				//if there are libvideo-converted YVU420 format, add them
+				int j = -1;
+				while(di->palettes[i].raw_palettes[++j] != -1){
+					dprint(LOG_V4L4J, "[V4L4J] Found libvideo-converted YVU420 format from %s format - add it\n", libvideo_palettes[di->palettes[i].raw_palettes[j]].name);
+					
+					if(add_format(e, formats, add_method, format_class, format_ctor, di->palettes[i].raw_palettes[j], d) == -1)
+						return -1;
+				}
 			}
 		}
 	}
@@ -239,16 +222,13 @@ static int create_YVU_list(JNIEnv *e, struct v4l4j_device *d,
 	return 0;
 }
 
-static int create_native_list(JNIEnv *e, struct v4l4j_device *d,
-		jobject formats, jmethodID add_method, jclass format_class,
-		jmethodID format_ctor ){
-	int i;
+static int create_native_list(JNIEnv *e, struct v4l4j_device *d, jobject formats, jmethodID add_method, jclass format_class, jmethodID format_ctor ){
 	struct device_info *di = d->vdev->info;
 
 	dprint(LOG_V4L4J, "[V4L4J] Creating native format list\n");
 
 	/* Populates the native formats list*/
-	for(i=0; i<di->nb_palettes; i++){
+	for(int i = 0; i < di->nb_palettes; i++){
 		dprint(LOG_V4L4J, "[V4L4J] Checking format %s - index: %d - raw ? %s\n",
 				libvideo_palettes[di->palettes[i].index].name,
 				di->palettes[i].index,
@@ -257,8 +237,7 @@ static int create_native_list(JNIEnv *e, struct v4l4j_device *d,
 
 		if(!di->palettes[i].raw_palettes)
 			//it is a native format, add it to the list
-			if(add_format(e, formats,add_method, format_class,
-					format_ctor, di->palettes[i].index,d)==-1)
+			if(add_format(e, formats, add_method, format_class, format_ctor, di->palettes[i].index,d) == -1)
 				return -1;
 	}
 
@@ -269,12 +248,11 @@ static int create_native_list(JNIEnv *e, struct v4l4j_device *d,
  * populate the formats, JPEGformats, RGBformats, YUVformats & YVUformats
  * members of the ImageFormat class with appropriate image formats
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(
-		JNIEnv *e, jobject t, jlong o){
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(JNIEnv *e, jobject t, jlong o){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 
-	jclass vector_class, format_class, this_class;
-	jmethodID add_method, format_ctor;
+	jclass format_class, this_class;
+	jmethodID format_ctor;
 	jfieldID field;
 	jobject obj;
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
@@ -294,28 +272,11 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(
 		return;
 	}
 
-	format_ctor = (*e)->GetMethodID(e, format_class, "<init>",
-			"(Ljava/lang/String;IJ)V");
+	format_ctor = (*e)->GetMethodID(e, format_class, "<init>", "(Ljava/lang/String;IJ)V");
 	if(format_ctor == NULL){
 		info("[V4L4J] Error looking up the constructor of ImageFormat class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, \
 				"Error looking up the constructor of ImageFormat class");
-		return;
-	}
-
-	vector_class = (*e)->FindClass(e, "java/util/Vector");
-	if(vector_class == NULL){
-		info("[V4L4J] Error looking up the Vector class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up Vector class");
-		return;
-	}
-
-	add_method = (*e)->GetMethodID(e, vector_class, "addElement",
-			"(Ljava/lang/Object;)V");
-	if(add_method == NULL){
-		info("[V4L4J] Error looking up the add method of Vector class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, \
-				"Error looking up the add method of Vector class");
 		return;
 	}
 
@@ -330,16 +291,19 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(
 	}
 
 	obj = (*e)->GetObjectField(e, t, field);
-	if(obj == NULL){
+	if(obj == NULL) {
 		info("[V4L4J] Error looking up the formats member\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the formats member");
 		return;
 	}
-
-	/* creates the list object and assign it to the formats attribute*/
-	if(create_native_list(e,d, obj, add_method, format_class,format_ctor)==-1)
+	
+	jmethodID add_method = lookupAddMethod(e, obj);
+	if (add_method == NULL)
 		return;
 
+	/* creates the list object and assign it to the formats attribute*/
+	if(create_native_list(e, d, obj, add_method, format_class, format_ctor) == -1)
+		return;
 
 
 	//
@@ -358,6 +322,10 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the RGBformats member");
 		return;
 	}
+	
+	add_method = lookupAddMethod(e, obj);
+	if (add_method == NULL)
+		return;
 
 	/* creates the list object and assign it to the RGBformats attribute*/
 	if(create_RGB_list(e,d, obj, add_method, format_class,format_ctor)==-1)
@@ -382,6 +350,10 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the BGRformats member");
 		return;
 	}
+	
+	add_method = lookupAddMethod(e, obj);
+	if (add_method == NULL)
+		return;
 
 	/* creates the list object and assign it to the BGRformats attribute*/
 	if(create_BGR_list(e,d, obj, add_method, format_class,format_ctor)==-1)
@@ -407,6 +379,10 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the YUV420formats member");
 		return;
 	}
+	
+	add_method = lookupAddMethod(e, obj);
+	if (add_method == NULL)
+		return;
 
 	/* creates the list object and assign it to the YUV420formats attribute*/
 	if(create_YUV_list(e,d, obj, add_method, format_class,format_ctor)==-1)
@@ -431,6 +407,10 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(
 		return;
 	}
 
+	add_method = lookupAddMethod(e, obj);
+	if (add_method == NULL)
+		return;
+	
 	/* creates the list object and assign it to the YVU420formats attribute*/
 	if(create_YVU_list(e,d, obj, add_method, format_class,format_ctor)==-1)
 		return;
@@ -453,6 +433,10 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the JPEGformats member");
 		return;
 	}
+	
+	add_method = lookupAddMethod(e, obj);
+	if (add_method == NULL)
+		return;
 
 	/* creates the list object and assign it to the JPEGformats attribute*/
 	if(create_JPEG_list(e,d, obj, add_method, format_class,format_ctor)==-1)

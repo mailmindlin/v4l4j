@@ -128,7 +128,7 @@ static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct
 		}
 
 		//store it in the list
-		if(obj == NULL){
+		if(obj == NULL) {
 			THROW_EXCEPTION(e, JNI_EXCP, "Error creating input object");
 			return;
 		}
