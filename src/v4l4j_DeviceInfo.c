@@ -172,8 +172,15 @@ static void create_formats_object(JNIEnv *e, jobject t, jclass this_class,
 	//Creates an ImageFormatList
 	obj = (*e)->NewObject(e, format_list_class, format_list_ctor, (jlong) (uintptr_t)d);
 	if(obj == NULL){
-		info("[V4L4J] Error creating the format list\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error creating the format list");
+		if ((*e)->ExceptionCheck(e)) {
+			info("[V4L4J] Error creating the format list\n");
+			jthrowable except = (*e)->ExceptionOccured(e);
+			(*e)->ExceptionDescribe(e);
+			(*e)->ExceptionClear(e);
+			(*e)->Throw(e, except);
+		} else {
+			THROW_EXCEPTION(e, JNI_EXCP, "Error creating the format list");
+		}
 		return;
 	}
 	(*e)->SetObjectField(e, t, formats_field, obj);
