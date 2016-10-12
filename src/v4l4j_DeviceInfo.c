@@ -58,74 +58,58 @@ static jobject create_tuner_object(JNIEnv *e, jobject t, struct tuner_info *tune
 }
 
 static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct video_device *vd){
-	jclass input_class, list_class;
-	jfieldID inputs_field;
-	jmethodID ctor_wotuner, ctor_wtuner, add_method;
-	jintArray stds;
-	jobject obj, input_list_object;
-
-	int i;
-	struct video_input_info *vi;
-
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 
-	input_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/InputInfo");
+	jclass input_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/InputInfo");
 	if(input_class == NULL){
 		info( "[V4L4J] Error looking up the InputInfo class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up InputInfo class");
 		return;
 	}
 
-	list_class = (*e)->FindClass(e, "java/util/List");
-	if(list_class == NULL){
-		info("[V4L4J] Error looking up the List class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up List java objects");
-		return;
-	}
-
-	add_method = (*e)->GetMethodID(e, list_class, "add", "(Ljava/lang/Object;)V");
-	if(add_method == NULL){
-		info("[V4L4J] Error looking up the add method of List class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the add method of List objects");
-		return;
-	}
-
-	inputs_field = (*e)->GetFieldID(e, this_class, "inputs", "Ljava/util/List;");
+	jfieldID inputs_field = (*e)->GetFieldID(e, this_class, "inputs", "Ljava/util/List;");
 	if(inputs_field == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the inputs attribute ID\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the inputs attribute ID");
 		return;
 	}
 
-	input_list_object = (*e)->GetObjectField(e, t, inputs_field);
+	jobject input_list_object = (*e)->GetObjectField(e, t, inputs_field);
 	if(input_list_object == NULL){
-		info("[V4L4J] Error looking up the inputs attribute\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the inputs attribute");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error retrieving up the inputs attribute");
 		return;
 	}
 
-	ctor_wotuner = (*e)->GetMethodID(e, input_class, "<init>", "(Ljava/lang/String;[II)V");
+	jclass input_list_class = (*e)->GetObjectClass(e, input_list_object);
+	if(input_list_class == NULL){
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the input list class.");
+		return;
+	}
+
+	jmethodID add_method = (*e)->GetMethodID(e, input_list_class, "add", "(Ljava/lang/Object;)V");
+	if(add_method == NULL){
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the add method of List objects");
+		return;
+	}
+
+	jmethodID ctor_wotuner = (*e)->GetMethodID(e, input_class, "<init>", "(Ljava/lang/String;[II)V");
 	if(ctor_wotuner == NULL){
-		dprint(LOG_V4L4J, "[V4L4J] Error looking up the constructor of Input class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of Input  class");
 		return;
 	}
 
-	ctor_wtuner = (*e)->GetMethodID(e, input_class, "<init>", "(Ljava/lang/String;[ILau/edu/jcu/v4l4j/TunerInfo;I)V");
+	jmethodID ctor_wtuner = (*e)->GetMethodID(e, input_class, "<init>", "(Ljava/lang/String;[ILau/edu/jcu/v4l4j/TunerInfo;I)V");
 	if(ctor_wtuner == NULL){
-		info("[V4L4J] Error looking up the constructor of InputInfo class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of InputInfo class");
 		return;
 	}
 
-	for(i = 0; i< vd->info->nb_inputs; i++){
-		vi = &vd->info->inputs[i];
+	for(int i = 0; i< vd->info->nb_inputs; i++){
+		struct video_input_info* vi = &vd->info->inputs[i];
 		//build the input object
 
 		//create the short[] with the supported standards
-		stds= (*e)->NewIntArray(e, vi->nb_stds);
+		jintArray stds = (*e)->NewIntArray(e, vi->nb_stds);
 		if(stds == NULL){
-			info( "[V4L4J] Error creating array\n");
 			THROW_EXCEPTION(e, JNI_EXCP, "Error creating array");
 			return;
 		}
@@ -133,24 +117,18 @@ static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct
 		(*e)->SetIntArrayRegion(e, stds, 0, vi->nb_stds,  vi->supported_stds);
 
 		//create the input object
-		if(vd->info->inputs[i].tuner==NULL) {
-
-			dprint(LOG_V4L4J, "[V4L4J] Creating input object (wo tuner): name '%s' - supported standards (%d): %p - index: %d\n",
-					vi->name,vi->nb_stds, vi->supported_stds, vi->index);
-			obj = (*e)->NewObject(e, input_class, ctor_wotuner, (*e)->NewStringUTF(e, (const char *)vi->name), stds, vi->index);
-
+		jstring name = (*e)->NewStringUTF(e, (const char*) vi->name);
+		jobject obj;
+		if(vd->info->inputs[i].tuner == NULL) {
+			dprint(LOG_V4L4J, "[V4L4J] Creating input object (w/o tuner): name '%s' - supported standards (%d): %p - index: %d\n", vi->name, vi->nb_stds, vi->supported_stds, vi->index);
+			obj = (*e)->NewObject(e, input_class, ctor_wotuner, name, stds, vi->index);
 		} else {
-
-			dprint(LOG_V4L4J, "[V4L4J] Creating input object (with tuner): name '%s' - supported standards(%d): %p - index: %d\n",
-					vi->name, vi->nb_stds, vi->supported_stds, vi->index);
-			obj = (*e)->NewObject(e, input_class, ctor_wtuner,
-					(*e)->NewStringUTF(e, (const char *)vi->name), stds,
-					create_tuner_object(e, t, vi->tuner), vi->index);
+			dprint(LOG_V4L4J, "[V4L4J] Creating input object (with tuner): name '%s' - supported standards(%d): %p - index: %d\n", vi->name, vi->nb_stds, vi->supported_stds, vi->index);
+			obj = (*e)->NewObject(e, input_class, ctor_wtuner, name, stds, create_tuner_object(e, t, vi->tuner), vi->index);
 		}
 
 		//store it in the list
 		if(obj == NULL){
-			info("[V4L4J] Error creating input object\n");
 			THROW_EXCEPTION(e, JNI_EXCP, "Error creating input object");
 			return;
 		}
@@ -192,7 +170,7 @@ static void create_formats_object(JNIEnv *e, jobject t, jclass this_class,
 
 
 	//Creates an ImageFormatList
-	obj =  (*e)->NewObject(e, format_list_class, format_list_ctor, (jlong) (uintptr_t)d);
+	obj = (*e)->NewObject(e, format_list_class, format_list_ctor, (jlong) (uintptr_t)d);
 	if(obj == NULL){
 		info("[V4L4J] Error creating the format list\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error creating the format list");
