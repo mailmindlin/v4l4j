@@ -1,0 +1,30 @@
+# Set default behavior
+* text=auto
+
+*.c text
+*.d text
+*.h text
+*.s text
+*.sh text
+*.MD text
+*.txt text
+*.xml text
+*.java text
+*.properties
+.gitattributes text
+.gitignore text
+Makefile text
+Make.rules text
+
+# Binary files
+*.a binary
+*.0 binary
+*.o binary
+*.a binary
+*.pc binary
+*.so binary
+*.jar binary
+*.jpg binary
+*.png binary
+*.jpeg binary
+*.class binary
