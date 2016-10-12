@@ -28,6 +28,9 @@
 #include "libvideo-palettes.h"
 #include "common.h"
 #include "debug.h"
+#include "jniutils.c"
+
+jmethodID lookupAddMethod(JNIEnv *env, jobject list);
 
 static jobject create_tuner_object(JNIEnv *e, jobject t, struct tuner_info *tuner) {
 	jclass tuner_class;

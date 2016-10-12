@@ -1,5 +1,8 @@
 #ifndef C_JNIUTILS__
 #define C_JNIUTILS__
+#include <jni.h>
+#include <stdint.h>
+
 #include "common.h"
 #include "debug.h"
 

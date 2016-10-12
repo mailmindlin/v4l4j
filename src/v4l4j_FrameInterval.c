@@ -20,6 +20,7 @@
 #include "libvideo.h"
 #include "common.h"
 #include "debug.h"
+#include "jniutils.c"
 
 
 /**
@@ -185,7 +186,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetDiscrete(JNIEnv 
 	}
 
 	jmethodID add_method = lookupAddMethod(e, discreteValues);
-	if(add_method == NULL
+	if(add_method == NULL)
 		return;
 
 
