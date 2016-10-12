@@ -140,7 +140,7 @@ static int create_BGR_list(JNIEnv *e, struct v4l4j_device *d, jobject formats, j
 			dprint(LOG_V4L4J,
 					"[V4L4J] Found native BGR24 format - adding it to list\n");
 
-			if(add_format(e,formats,add_method,format_class,
+			if(add_format(e,formats, add_method,format_class,
 					format_ctor, BGR24, d)==-1)
 				return -1;
 
@@ -259,7 +259,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(JNIEnv 
 
 	/* Get handles on Java stuff */
 	this_class = (*e)->GetObjectClass(e, t);
-	if(this_class == NULL){
+	if(this_class == NULL) {
 		info("[V4L4J] Error looking up the ImageFormatList class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up ImageFormatList class");
 		return;

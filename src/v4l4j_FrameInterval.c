@@ -184,19 +184,9 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetDiscrete(JNIEnv 
 		return;
 	}
 
-	jclass discreteValues_class = (*e)->GetObjectClass(e, discreteValues);
-	if(discreteValues_class == NULL){
-		info("[V4L4J] Error looking up the discreteValues List class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up discreteValues List class");
+	jmethodID add_method = lookupAddMethod(e, discreteValues);
+	if(add_method == NULL
 		return;
-	}
-
-	jmethodID add_method = (*e)->GetMethodID(e, discreteValues_class, "add", "(Ljava/lang/Object;)Z");
-	if(add_method == NULL){
-		info("[V4L4J] Error looking up the add method of discreteValues List class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the add method of discreteValues List class");
-		return;
-	}
 
 
 	jclass discrete_intv_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/FrameInterval$DiscreteInterval");

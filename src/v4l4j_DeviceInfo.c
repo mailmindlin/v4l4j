@@ -79,17 +79,9 @@ static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct
 		return;
 	}
 
-	jclass input_list_class = (*e)->GetObjectClass(e, input_list_object);
-	if(input_list_class == NULL){
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the input list class.");
+	jmethodID add_method = lookupAddMethod(e, input_list_object);
+	if(add_method == NULL)
 		return;
-	}
-
-	jmethodID add_method = (*e)->GetMethodID(e, input_list_class, "add", "(Ljava/lang/Object;)V");
-	if(add_method == NULL){
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the add method of List objects");
-		return;
-	}
 
 	jmethodID ctor_wotuner = (*e)->GetMethodID(e, input_class, "<init>", "(Ljava/lang/String;[II)V");
 	if(ctor_wotuner == NULL){
