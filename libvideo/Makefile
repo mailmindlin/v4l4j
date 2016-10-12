@@ -105,7 +105,7 @@ $(LIB).$(LIB_RELEASE): version.h $(OBJ) $(LIBV4LCONVERT_AR)
 
 $(LIBV4LCONVERT_AR):
 	LINKTYPE=static LIBDIR=$(LIBV4L_HELPERS_INSTALL_DIR) \
-		make -C $(LIBV4LCONVERT_DIR)
+		$(MAKE) -C $(LIBV4LCONVERT_DIR)
 	cp $(LIBV4LCONVERT_DIR)/$(LIBV4LCONVERT_AR) .
 
 install: $(LIB).$(LIB_RELEASE)
@@ -130,7 +130,7 @@ test: $(LIB).$(LIB_RELEASE) $(TESTOBJ)
 	$(CC) dump-capture.o -lm -lrt -L. -l$(LIB_NAME) -o dump-capture
 
 clean:
-	make -C $(LIBV4LCONVERT_DIR) clean
+	$(MAKE) -C $(LIBV4LCONVERT_DIR) clean
 	rm -f $(OBJ) $(BIN) $(LIB) $(LIB).$(LIB_RELEASE) $(TESTOBJ) \
   $(LIBV4LCONVERT_AR) ./*.o list-caps test-capture dump-capture ./*~
 
