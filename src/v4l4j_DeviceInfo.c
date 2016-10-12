@@ -174,7 +174,7 @@ static void create_formats_object(JNIEnv *e, jobject t, jclass this_class,
 	if(obj == NULL){
 		if ((*e)->ExceptionCheck(e)) {
 			info("[V4L4J] Error creating the format list\n");
-			jthrowable except = (*e)->ExceptionOccured(e);
+			jthrowable except = (*e)->ExceptionOccurred(e);
 			(*e)->ExceptionDescribe(e);
 			(*e)->ExceptionClear(e);
 			(*e)->Throw(e, except);
