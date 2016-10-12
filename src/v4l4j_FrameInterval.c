@@ -177,7 +177,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetDiscrete(JNIEnv 
 	}
 
 	jobject discreteValues = (*e)->GetObjectField(e, t, field);
-	if(disc_attr == NULL){
+	if(discreteValues == NULL){
 		info("[V4L4J] Error looking up the discreteValues member\n");
 		THROW_EXCEPTION(e, JNI_EXCP, \
 				"Error looking up the discreteValues member");
@@ -185,7 +185,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetDiscrete(JNIEnv 
 	}
 
 	jclass discreteValues_class = (*e)->GetObjectClass(e, discreteValues);
-	if(list_class == NULL){
+	if(discreteValues_class == NULL){
 		info("[V4L4J] Error looking up the discreteValues List class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up discreteValues List class");
 		return;
