@@ -53,7 +53,7 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 	//Updates the FrameGrabber class width, height & format fields with the
 	//values returned by V4L2
 	this_class = (*e)->GetObjectClass(e,this);
-	if(this_class==NULL) {
+	if(this_class == NULL) {
 		info("[V4L4J] error looking up FrameGrabber class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up FrameGrabber class");
 		return;
@@ -61,7 +61,7 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 
 	//width
 	field = (*e)->GetFieldID(e, this_class, "width", "I");
-	if(field==NULL) {
+	if(field == NULL) {
 		info("[V4L4J] error looking up width field in FrameGrabber class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "error looking up width field in FrameGrabber class");
 		return;
@@ -80,7 +80,7 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 
 	//standard
 	field = (*e)->GetFieldID(e, this_class, "standard", "I");
-	if(field==NULL) {
+	if(field == NULL) {
 		info("[V4L4J] error looking up height standard in FrameGrabber class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "error looking up standard field in "
 				"FrameGrabber class");
@@ -90,104 +90,89 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 
 
 	//format
-	if(d->output_fmt!=OUTPUT_RAW){
-		field = (*e)->GetFieldID(e, this_class, "format",
-				"I");
-		if(field==NULL) {
-			info("[V4L4J] error looking up format field in FrameGrabber "
-					"class\n");
-			THROW_EXCEPTION(e, JNI_EXCP, "error looking up format field in "
-					"FrameGrabber class");
+	if(d->output_fmt != OUTPUT_RAW){
+		field = (*e)->GetFieldID(e, this_class, "format", "I");
+		if(field == NULL) {
+			info("[V4L4J] error looking up format field in FrameGrabber class\n");
+			THROW_EXCEPTION(e, JNI_EXCP, "error looking up format field in FrameGrabber class");
 			return;
 		}
 
-		if(d->vdev->capture->is_native==1)
+		if(d->vdev->capture->is_native == 1)
 			i = d->vdev->capture->palette;
 		else
 			i = d->vdev->capture->convert->src_palette;
 
-		dprint(LOG_V4L4J, "[V4L4J] Setting format field to '%s' image format\n",
-			libvideo_palettes[i].name);
+		dprint(LOG_V4L4J, "[V4L4J] Setting format field to '%s' image format\n", libvideo_palettes[i].name);
 		(*e)->SetIntField(e, this, field, i);
 	}
 }
 
 static int get_buffer_length(struct v4l4j_device *d){
 	LOG_FN_ENTER;
-
-	if(d->output_fmt==OUTPUT_RAW || d->output_fmt==OUTPUT_JPG) {
-		//shall we trust what the driver says ?
-		dprint(LOG_V4L4J, "[V4L4J] OUTPUT: RAW / JPEG - Using byte array of "
-				"size %d\n", d->vdev->capture->imagesize );
-		return d->vdev->capture->imagesize;
-	} else if(d->output_fmt==OUTPUT_RGB24) {
-		//RGB24 means w * h * 3
-		dprint(LOG_V4L4J, "[V4L4J] OUTPUT: RGB24 - Using byte array of "
-				"size %d\n",
-				d->vdev->capture->width * d->vdev->capture->height * 3);
-
-		return d->vdev->capture->width * d->vdev->capture->height * 3;
-	} else if(d->output_fmt==OUTPUT_BGR24) {
-		//BGR24 means w * h * 3
-		dprint(LOG_V4L4J, "[V4L4J] OUTPUT: BGR24 - Using byte array of "
-				"size %d\n",
-				d->vdev->capture->width * d->vdev->capture->height * 3);
-
-		return d->vdev->capture->width * d->vdev->capture->height * 3;
-	} else if(d->output_fmt==OUTPUT_YUV420) {
-		//YUV420 means w * h * 3/2
-		dprint(LOG_V4L4J, "[V4L4J] OUTPUT: YUV420 - Using byte array of "
-				"size %d\n",
-				d->vdev->capture->width * d->vdev->capture->height * 3/2);
-
-		return d->vdev->capture->width * d->vdev->capture->height * 3/2;
-	} else if(d->output_fmt==OUTPUT_YVU420) {
-		//YVU420 means w * h * 3/2
-		dprint(LOG_V4L4J, "[V4L4J] OUTPUT: YVU420 - Using byte array of "
-				"size %d\n",
-				d->vdev->capture->width * d->vdev->capture->height * 3/2);
-
-		return d->vdev->capture->width * d->vdev->capture->height * 3/2;
-	} else {
-		dprint(LOG_V4L4J,"[V4L4J] Unknown output format...");
+	switch (d->output_fmt) {
+		case OUTPUT_RAW:
+		case OUTPUT_JPG:
+			//shall we trust what the driver says ?
+			dprint(LOG_V4L4J, "[V4L4J] OUTPUT: RAW / JPEG - Using byte array of size %d\n", d->vdev->capture->imagesize );
+			return d->vdev->capture->imagesize;
+		case OUTPUT_RGB24:
+			//RGB24 means w * h * 3
+			dprint(LOG_V4L4J, "[V4L4J] OUTPUT: RGB24 - Using byte array of size %d\n", d->vdev->capture->width * d->vdev->capture->height * 3);
+			return d->vdev->capture->width * d->vdev->capture->height * 3;
+		case OUTPUT_BGR24:
+			//BGR24 means w * h * 3
+			dprint(LOG_V4L4J, "[V4L4J] OUTPUT: BGR24 - Using byte array of size %d\n", d->vdev->capture->width * d->vdev->capture->height * 3);
+			return d->vdev->capture->width * d->vdev->capture->height * 3;
+		case  OUTPUT_YUV420:
+			//YUV420 means w * h * 3/2
+			dprint(LOG_V4L4J, "[V4L4J] OUTPUT: YUV420 - Using byte array of size %d\n", d->vdev->capture->width * d->vdev->capture->height * 3/2);
+			return d->vdev->capture->width * d->vdev->capture->height * 3/2;
+		case OUTPUT_YVU420:
+			//YVU420 means w * h * 3/2
+			dprint(LOG_V4L4J, "[V4L4J] OUTPUT: YVU420 - Using byte array of size %d\n", d->vdev->capture->width * d->vdev->capture->height * 3/2);
+			return d->vdev->capture->width * d->vdev->capture->height * 3/2;
+		default:
+			dprint(LOG_V4L4J,"[V4L4J] Unknown output format...");
+			return 0;
 	}
-	return 0;
 }
 
 /*
  * Call init routines of RGB, JPEG or raw depending on requested
  * output image format
  */
-static int init_format_converter(struct v4l4j_device *d){
+static int init_format_converter(struct v4l4j_device *d) {
 	LOG_FN_ENTER;
-	int ret = 0;
 
-	if(d->need_conv==1){
-		if(d->output_fmt==OUTPUT_JPG){
-			dprint(LOG_V4L4J, "[V4L4J] Initialising JPEG converter\n");
+	if(d->need_conv) {
+		int ret = 0;
+		if(d->output_fmt == OUTPUT_JPG) {
+			dprint(LOG_V4L4J, "[V4L4J] Initializing JPEG converter\n");
 			ret = init_jpeg_compressor(d, 80);
-			if(ret!=0)
-				dprint(LOG_V4L4J, "[V4L4J] Error initialising JPEG converter\n");
+			if(ret)
+				dprint(LOG_V4L4J, "[V4L4J] Error %d initialising JPEG converter\n", ret);
 		}
 
-		if (d->vdev->capture->is_native==0){
+		if (!(d->vdev->capture->is_native)) {
 			dprint(LOG_V4L4J, "[V4L4J] Setting up double conversion\n");
 			XMALLOC(d->double_conversion_buffer, unsigned char *, d->vdev->capture->imagesize);
 		}
+		return ret;
 	} else {
 		dprint(LOG_LIBVIDEO, "[V4L4J] no conversion done by v4l4j - raw copy\n");
 	}
 
-	return ret;
+	return 0;
 }
 
 static void release_format_converter(struct v4l4j_device *d){
 	LOG_FN_ENTER;
-	if(d->need_conv==1){
-		if(d->output_fmt==OUTPUT_JPG)
+	if(d->need_conv) {
+		if(d->output_fmt == OUTPUT_JPG)
 			destroy_jpeg_compressor(d);
 
-		if (d->vdev->capture->is_native==0)
+		if (!d->vdev->capture->is_native)
 			XFREE(d->double_conversion_buffer);
 	}
 }
@@ -201,59 +186,55 @@ static void release_format_converter(struct v4l4j_device *d){
 static int init_capture_format(struct v4l4j_device *d, int fg_out_fmt, int* src_fmt, int* dest_fmt){
 	LOG_FN_ENTER;
 	dprint(LOG_LIBVIDEO, "[V4L4J] Setting output to %s - input format: %s\n",
-			fg_out_fmt==OUTPUT_RAW?"RAW":
-			fg_out_fmt==OUTPUT_JPG?"JPEG":
-			fg_out_fmt==OUTPUT_RGB24?"RGB24":
-			fg_out_fmt==OUTPUT_BGR24?"BGR24":
-			fg_out_fmt==OUTPUT_YUV420?"YUV420":
-			fg_out_fmt==OUTPUT_YVU420?"YVU420":"UNKNOWN",
+			fg_out_fmt == OUTPUT_RAW ? "RAW":
+			fg_out_fmt == OUTPUT_JPG ? "JPEG":
+			fg_out_fmt == OUTPUT_RGB24 ? "RGB24":
+			fg_out_fmt == OUTPUT_BGR24 ? "BGR24":
+			fg_out_fmt == OUTPUT_YUV420 ? "YUV420":
+			fg_out_fmt == OUTPUT_YVU420 ? "YVU420" : "UNKNOWN",
 			libvideo_palettes[*src_fmt].name);
 
 	//check if libvideo does the conv
-	switch(fg_out_fmt){
+	switch(fg_out_fmt) {
 	case OUTPUT_JPG:
 		//for JPEG, v4l4j always does the conv
-		dprint(LOG_LIBVIDEO,
-				"[V4L4J] JPEG conversion done by v4l4j\n");
+		dprint(LOG_LIBVIDEO, "[V4L4J] JPEG conversion done by v4l4j\n");
 		*dest_fmt = *src_fmt;
 		*src_fmt = -1;
-		d->need_conv=1;
+		d->need_conv = 1;
 		return 0;
 
 	case OUTPUT_RGB24:
 		*dest_fmt = RGB24;
 		// leave native capture format in src_fmt
-		dprint(LOG_LIBVIDEO,
-				"[V4L4J] RGB24 conversion done by libvideo\n");
-		d->need_conv=0;
+		dprint(LOG_LIBVIDEO, "[V4L4J] RGB24 conversion done by libvideo\n");
+		d->need_conv = 0;
 		return 0;
 
 	case OUTPUT_RAW:
 		*dest_fmt = *src_fmt;
 		*src_fmt = -1;
-		dprint(LOG_LIBVIDEO,
-				"[V4L4J] raw format - no conversion\n");
-		d->need_conv=0;
+		dprint(LOG_LIBVIDEO, "[V4L4J] raw format - no conversion\n");
+		d->need_conv = 0;
 		return 0;
 
 	case OUTPUT_BGR24:
 		*dest_fmt = BGR24;
 		// leave native capture format in src_fmt
-		dprint(LOG_LIBVIDEO,
-				"[V4L4J] BGR24 conversion done by libvideo\n");
-		d->need_conv=0;
+		dprint(LOG_LIBVIDEO, "[V4L4J] BGR24 conversion done by libvideo\n");
+		d->need_conv = 0;
 		return 0;
 	case OUTPUT_YUV420:
 		*dest_fmt = YUV420;
 		// leave native capture format in src_fmt
 		dprint(LOG_LIBVIDEO, "[V4L4J] YUV420 conversion done by libvideo\n");
-		d->need_conv=0;
+		d->need_conv = 0;
 		return 0;
 	case OUTPUT_YVU420:
 		*dest_fmt = YVU420;
 		// leave native capture format in src_fmts
 		dprint(LOG_LIBVIDEO, "[V4L4J] YVU420 conversion done by libvideo\n");
-		d->need_conv=0;
+		d->need_conv = 0;
 		return 0;
 	default:
 		info("[V4L4J] Error: unknown output format %d\n", fg_out_fmt);
@@ -285,16 +266,15 @@ static int get_lastFrame_field_ids(JNIEnv *e, jobject this, struct v4l4j_device 
 	}
 
 	// last_captured_frame_time_usec_fID
-	last_captured_frame_time_usec_fID =
-			(*e)->GetFieldID(e, this_class, "lastCapturedFrameTimeuSec", "J");
-	if(last_captured_frame_time_usec_fID==NULL) {
+	last_captured_frame_time_usec_fID = (*e)->GetFieldID(e, this_class, "lastCapturedFrameTimeuSec", "J");
+	if(last_captured_frame_time_usec_fID == NULL) {
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up lastCapturedFrameTimeuSec field in FrameGrabber class");
 		return 0;
 	}
 
 	// last_captured_frame_buffer_index_fID
 	last_captured_frame_buffer_index_fID = (*e)->GetFieldID(e, this_class, "lastCapturedFrameBufferIndex", "I");
-	if(last_captured_frame_buffer_index_fID==NULL) {
+	if(last_captured_frame_buffer_index_fID == NULL) {
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up lastCapturedFrameBufferIndex field in FrameGrabber class");
 		return 0;
 	}
@@ -373,7 +353,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doInit(JNIEnv *e, j
 	 * i n i t _ c a p t u r e ( )
 	 */
 	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling 'init_capture(dev: %s)'\n", d->vdev->file);
-	if((i=(*c->actions->init_capture)(d->vdev))<0) {
+	if((i=(*c->actions->init_capture)(d->vdev)) < 0) {
 		dprint(LOG_V4L4J, "[V4L4J] init_capture failed\n");
 		free_capture_device(d->vdev);
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error initializing capture (error=%d)",i);
@@ -464,7 +444,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetFrameIntv(JNIE
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
 	int num, denom;
-	if(dev->vdev->capture->actions->get_frame_interval(dev->vdev, &num, &denom) != 0) {
+	if(dev->vdev->capture->actions->get_frame_interval(dev->vdev, &num, &denom)) {
 		THROW_EXCEPTION(e, UNSUPPORTED_METH_EXCP, "Getting frame interval not supported");
 		return 0;
 	}
