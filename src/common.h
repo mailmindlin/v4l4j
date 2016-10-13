@@ -62,22 +62,40 @@ enum output_format {
 
 
 struct v4l4j_device {
+	/**
+	 * Method for v4l4j conversion
+	 */
 	void (*convert) (struct v4l4j_device *, unsigned char *, unsigned char *);
 	unsigned char *conversion_buffer;
+	/**
+	 * Conversion buffer used when two conversions are required
+	 */
 	unsigned char *double_conversion_buffer;
 	struct video_device *vdev;	//the libvideo struct
 	union {
 		struct jpeg_data *j;	//the converter's data
 		struct rgb_data *r;
 	};
-	enum output_format output_fmt;	//the output format (see enum above)
-	int capture_len;			//the size of last captured frame by libvideo
-	int len;					//the size of the frame after conversion
-	int need_conv;				//this flag is set by
-								//Java_au_edu_jcu_v4l4j_FrameGrabber_doInit
-								//and says whether v4l4j (1) or libvideo (0)
-								//does the output format conversion.
-								//0 means no conversion needed at all
+	/**
+	 * The output format (see enum above)
+	 */
+	enum output_format output_fmt;
+	/**
+	 * The size of the last captured frame by libvideo
+	 */
+	int capture_len;
+	/**
+	 * The size of the frame after conversion
+	 */
+	int len;
+	/**
+	 * This flag is set by Java_au_edu_jcu_v4l4j_FrameGrabber_doInit, and says
+	 * whether  v4l4j (1) or libvideo (0) does the output format conversion.
+	 * 0 means no conversion needed at all.
+	 * In practice, the only time that this will be set to 1 will be if the
+	 * output format is JPEG, which is handled in jpeg.c
+	 */
+	int need_conv;
 };
 
 #define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
