@@ -16,19 +16,27 @@ public class AbstractVideoFrameEncoderTest {
 	@Test
 	public void test() throws Exception {
 		try {
-			
 			AbstractVideoFrameEncoder encoder = new AbstractVideoFrameEncoder(5, 7, ImagePalette.RGB32, ImagePalette.YUV420);
 			
-			int numConverters = -encoder.getConverterIds(null);
-			Assert.assertEquals(numConverters, 1);
-			
-			int[] converterIds = new int[numConverters];
-			numConverters = encoder.getConverterIds(converterIds);
-			System.out.println(Arrays.toString(converterIds));
-			Assert.assertEquals(numConverters, 1);
+			int[] converters = encoder.getConverterIds();
+			System.out.println("RGB32 => YUV420 converters: " + Arrays.toString(converters));
 			
 			encoder.close();
-	//		fail("Not yet implemented");
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}
+	}
+	
+	@Test
+	public void test1() throws Exception {
+		try {
+			AbstractVideoFrameEncoder encoder = new AbstractVideoFrameEncoder(5, 7, ImagePalette.RGB32, ImagePalette.BGR32);
+			
+			int[] converters = encoder.getConverterIds();
+			System.out.println("RGB32 => BGR32 converters: " + Arrays.toString(converters));
+			
+			encoder.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw e;
