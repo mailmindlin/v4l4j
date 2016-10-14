@@ -15,17 +15,17 @@ extern "C" {
 #define N_A 0
 #endif
 
-#define GENERATE_CONVERTER_SDWH_0F(id, fn, src_fmt, dst_fmt) {(id), v4lconvert_conversion_fingerprint_sdwh_0f, {.cvt_sdwh_0f = (fn)}, (src_fmt), (dst_fmt), N_A, N_A}
+#define GENERATE_CONVERTER_SDWH_0F(id, fn, src_fmt, dst_fmt) {(id), v4lconvert_conversion_signature_sdwh_0f, {.cvt_sdwh_0f = (fn)}, (src_fmt), (dst_fmt), N_A, N_A}
 
-#define GENERATE_CONVERTER_SDWH_1F(id, fn, src_fmt, dst_fmt, flag1) {(id), v4lconvert_conversion_fingerprint_sdwh_1f, {.cvt_sdwh_1f = (fn)}, (src_fmt), (dst_fmt), (flag1), N_A}
+#define GENERATE_CONVERTER_SDWH_1F(id, fn, src_fmt, dst_fmt, flag1) {(id), v4lconvert_conversion_signature_sdwh_1f, {.cvt_sdwh_1f = (fn)}, (src_fmt), (dst_fmt), (flag1), N_A}
 
-#define GENERATE_CONVERTER_SDWH_2F(id, fn, src_fmt, dst_fmt, flag1, flag2) {(id), v4lconvert_conversion_fingerprint_sdwh_1f, {.cvt_sdwh_1f = (fn)}, (src_fmt), (dst_fmt), (flag1), (flag2)}
+#define GENERATE_CONVERTER_SDWH_2F(id, fn, src_fmt, dst_fmt, flag1, flag2) {(id), v4lconvert_conversion_signature_sdwh_1f, {.cvt_sdwh_1f = (fn)}, (src_fmt), (dst_fmt), (flag1), (flag2)}
 
-#define GENERATE_CONVERTER_SD_SF_0F(id, fn, src_fmt, dst_fmt) {(id), v4lconvert_conversion_fingerprint_sd_sf_0f, {.cvt_sd_sf_0f = (fn)}, (src_fmt), (dst_fmt), N_A, N_A}
+#define GENERATE_CONVERTER_SD_SF_0F(id, fn, src_fmt, dst_fmt) {(id), v4lconvert_conversion_signature_sd_sf_0f, {.cvt_sd_sf_0f = (fn)}, (src_fmt), (dst_fmt), N_A, N_A}
 
-#define GENERATE_CONVERTER_SD_SF_1F(id, fn, src_fmt, dst_fmt, flag1) {(id), v4lconvert_conversion_fingerprint_sd_sf_1f, {.cvt_sd_sf_1f = (fn)}, (src_fmt), (dst_fmt), (flag1), N_A}
+#define GENERATE_CONVERTER_SD_SF_1F(id, fn, src_fmt, dst_fmt, flag1) {(id), v4lconvert_conversion_signature_sd_sf_1f, {.cvt_sd_sf_1f = (fn)}, (src_fmt), (dst_fmt), (flag1), N_A}
 
-#define GENERATE_CONVERTER_SD_SF_2F(id, fn, src_fmt, dst_fmt, flag1, flag2) {(id), v4lconvert_conversion_fingerprint_sd_sf_2f, {.cvt_sd_sf_2f = (fn)}, (src_fmt), (dst_fmt), (flag1), (flag2)}
+#define GENERATE_CONVERTER_SD_SF_2F(id, fn, src_fmt, dst_fmt, flag1, flag2) {(id), v4lconvert_conversion_signature_sd_sf_2f, {.cvt_sd_sf_2f = (fn)}, (src_fmt), (dst_fmt), (flag1), (flag2)}
 
 #define GENERATE_CONVERTER_SDWH_1F_x2(id, fn, src_fmt_0, src_fmt_1, dst_fmt_0, dst_fmt_1) \
 	GENERATE_CONVERTER_SDWH_1F(id    , (fn), (src_fmt_0), (dst_fmt_0), 0),\
@@ -110,26 +110,31 @@ v4lconvert_converter_t v4lconvert_converters[NUM_CONVERTERS] = {
 	//TODO add other converters
 };
 
-void v4lconvert_encoder_doConvert(struct v4lconvert_encoder* self, const u8* src, u8* dst) {
+static int v4lconvert_transformation_applyIMFSimple(struct v4lconvert_transformation* self, const u8* src, u8* dst) {
 	v4lconvert_converter_t* converter = self->converter;
 	
-	switch (converter->fingerprint) {
-		case v4lconvert_conversion_fingerprint_unset:
+}
+
+static int v4lconvert_transformation_apply(struct v4lconvert_transformation* self, const u8* src, u8* dst) {
+	v4lconvert_converter_t* converter = &(v4lconvert_converters[self->converter_id]);
+	
+	switch (converter->signature) {
+		case v4lconvert_conversion_signature_unset:
 			//TODO maybe throw error or something
 			return;
-		case v4lconvert_conversion_fingerprint_sdwh_0f:
+		case v4lconvert_conversion_signature_sdwh_0f:
 			converter->target.cvt_sdwh_0f (src, dst, self->width, self->height);
 			return;
-		case v4lconvert_conversion_fingerprint_sdwh_1f:
+		case v4lconvert_conversion_signature_sdwh_1f:
 			converter->target.cvt_sdwh_1f (src, dst, self->width, self->height, converter->flag1);
 			return;
-		case v4lconvert_conversion_fingerprint_sdwh_2f:
+		case v4lconvert_conversion_signature_sdwh_2f:
 			converter->target.cvt_sdwh_2f (src, dst, self->width, self->height, converter->flag1, converter->flag2);
 			return;
-		case v4lconvert_conversion_fingerprint_sd_sf_1f:
+		case v4lconvert_conversion_signature_sd_sf_1f:
 			converter->target.cvt_sd_sf_1f (src, dst, self->v4l_src_fmt, converter->flag1);
 			return;
-		case v4lconvert_conversion_fingerprint_sd_sf_2f:
+		case v4lconvert_conversion_signature_sd_sf_2f:
 			converter->target.cvt_sd_sf_2f (src, dst, self->v4l_src_fmt, converter->flag1, converter->flag2);
 			return;
 		default:
@@ -144,6 +149,49 @@ void v4lconvert_encoder_init(struct v4lconvert_encoder* encoder, unsigned int co
 	encoder->dst_fmt = encoder->converter->dst_fmt;
 	encoder->width = width;
 	encoder->height = height;
+}
+
+int v4lconvert_transformer_createBuffers(struct v4lconvert_transformer* transformer, u32 num_buffers, struct v4lconvert_buffer** buffers, int preserve_input, int doAllocate) {
+	u32 bufA_len;
+	u32 bufB_len;
+	for (unsigned int i = 0; i < (transformer->num_transformations & ~1); i += 2) {
+		u32 size = transformer->transformations[i]->dst_size;
+		if (size > bufA_len)
+			bufA_len = size;
+		size = transformer->transformations[i + 1]->dst_size;
+		if (size > bufB_len)
+			bufB_len = size;
+	}
+	
+	if (transformer->num_transformations & 1) {
+		u32 tmp = bufB_len;
+		u32 endsize = transformer->transformations[transformer->num_transformations - 1]->dst_size;
+		bufB_len = bufA_len > endsize ? bufA_len : endsize;
+		bufA_len = bufB_len;
+	}
+	
+	u32 bufC_len = 0;
+	if (preserve_input) {
+		bufC_len = bufA_len;
+		bufA_len = 0;
+	}
+	
+	for (unsigned int i = 0; i < num_buffers; i++) {
+		struct v4lconvert_buffer* buffer = buffers[i];
+		if (!buffer)
+			buffers[i] = buffer = malloc(sizeof(v4lconvert_buffer));
+		buffer->preserve_input = preserve_input;
+		buffer->buf0_len = bufA_len;
+		buffer->buf1_len = bufB_len;
+		buffer->buf2_len = bufC_len;
+		if (doAllocate) {
+			//TODO test if allocations failed
+			buffer->buf0 = calloc(bufA_len, sizeof(u8*));
+			buffer->buf1 = calloc(bufB_len, sizeof(u8*));
+			buffer->buf2 = calloc(bufC_len, sizeof(u8*));
+		}
+	}
+	return EXIT_SUCCESS;
 }
 
 v4lconvert_converter_t* v4lconvert_converter_getConverterById(unsigned int converterId) {

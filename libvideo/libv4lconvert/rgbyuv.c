@@ -601,15 +601,14 @@ static inline void convert_packed_to_16bit(uint8_t *raw, uint16_t *unpacked, 			
 	}
 }
 
-int v4lconvert_y10b_to_rgb24(struct v4lconvert_data *data,
-	const u8 *src, u8 *dest, u32 width, u32 height) {
+int v4lconvert_y10b_to_rgb24(struct v4lconvert_data *data, const u8 *src, u8 *dest, u32 width, u32 height) {
 	u8 *unpacked_buffer;
 
-	unpacked_buffer = v4lconvert_alloc_buffer(width * height * 2, 			&data->convert_pixfmt_buf, 			&data->convert_pixfmt_buf_size);
+	unpacked_buffer = v4lconvert_alloc_buffer(width * height * 2, &data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
 	if (!unpacked_buffer)
 		return v4lconvert_oom_error(data);
 
-	convert_packed_to_16bit((uint8_t *)src, (uint16_t *)unpacked_buffer, 		10, width * height);
+	convert_packed_to_16bit((uint8_t *)src, (uint16_t *)unpacked_buffer, 10, width * height);
 
 	int j;
 	unsigned short *tmp = (unsigned short *)unpacked_buffer;
@@ -628,8 +627,7 @@ int v4lconvert_y10b_to_rgb24(struct v4lconvert_data *data,
 	return 0;
 }
 
-int v4lconvert_y10b_to_yuv420(struct v4lconvert_data *data,
-	const u8 *src, u8 *dest, u32 width, u32 height) {
+int v4lconvert_y10b_to_yuv420(struct v4lconvert_data *data, const u8 *src, u8 *dest, u32 width, u32 height) {
 	u8 *unpacked_buffer;
 
 	unpacked_buffer = v4lconvert_alloc_buffer(width * height * 2, &data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
