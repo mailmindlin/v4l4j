@@ -14,7 +14,7 @@ CONVERT_OBJS  = libv4lconvert.o tinyjpeg.o sn9c10x.o sn9c20x.o pac207.o \
 		jl2005bcd.o \
 		mr97310a.o flip.o crop.o jidctflt.o spca561-decompress.o \
 		rgbyuv.o sn9c2028-decomp.o spca501.o sq905c.o bayer.o hm12.o \
-		stv0680.o cpia1.o se401.o jpgl.o jpeg.o jpeg_memsrcdest.o \
+		stv0680.o se401.o jpgl.o jpeg.o jpeg_memsrcdest.o \
 		control/libv4lcontrol.o processing/libv4lprocessing.o \
 		processing/whitebalance.o processing/autogain.o \
 		processing/gamma.o helper.o \
