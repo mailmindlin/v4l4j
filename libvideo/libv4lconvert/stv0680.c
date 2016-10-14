@@ -23,15 +23,12 @@
 /* The stv0640 first sends all the red/green pixels for a line (so 1/2 width)
    and then all the green/blue pixels in that line, shuffle this to a regular
    RGGB bayer pattern. */
-void v4lconvert_decode_stv0680(const u8 *src, u8 *dst,
-		u32 width, u32 height)
-{
-	int x, y;
+void v4lconvert_decode_stv0680(const u8 *src, u8 *dst, u32 width, u32 height) {
 	const u8 *src1 = src;
 	const u8 *src2 = src + width / 2;
 
-	for (y = 0; y < height; y++) {
-		for (x = 0; x < width / 2; x++) {
+	for (unsigned int y = 0; y < height; y++) {
+		for (unsigned int x = 0; x < width / 2; x++) {
 			*dst++ = *src1++;
 			*dst++ = *src2++;
 		}

@@ -36,11 +36,10 @@ static struct {
 	signed char val;
 } table[256];
 
-	int i;
 static void init_mr97310a_decoder(void) {
 	int is_abs, val, len;
 
-	for (i = 0; i < 256; ++i) {
+	for (unsigned int i = 0; i < 256; ++i) {
 		is_abs = 0;
 		val = 0;
 		len = 0;
@@ -85,17 +84,13 @@ static void init_mr97310a_decoder(void) {
 	decoder_initialized = 1;
 }
 
-	const u8 *addr;
-
-	addr = inp + (bitpos >> 3);
 static inline u8 get_byte(const u8 *inp, unsigned int bitpos) {
+	const u8 *addr = inp + (bitpos >> 3);
 	return (addr[0] << (bitpos & 7)) | (addr[1] >> (8 - (bitpos & 7)));
 }
 
-	int row, col;
-int v4lconvert_decode_mr97310a(struct v4lconvert_data *data, const u8 *inp, int src_size, u8 *outp, u32 width, u32 height) {
+int v4lconvert_decode_mr97310a(struct v4lconvert_data *data, const u8 *inp, unsigned int src_size, u8 *outp, u32 width, u32 height) {
 	int val;
-	int bitpos;
 	u8 code;
 	u8 lp, tp, tlp, trp;
 	struct v4l2_control min_clockdiv = { .id = MIN_CLOCKDIV_CID };
@@ -105,12 +100,12 @@ int v4lconvert_decode_mr97310a(struct v4lconvert_data *data, const u8 *inp, int 
 
 	/* remove the header */
 	inp += 12;
-
-	bitpos = 0;
-
+	
+	unsigned int bitpos = 0;
+	
 	/* main decoding loop */
-	for (row = 0; row < height; ++row) {
-		col = 0;
+	for (unsigned int row = 0; row < height; ++row) {
+		unsigned int col = 0;
 
 		/* first two pixels in first two rows are stored as raw 8-bit */
 		if (row < 2) {

@@ -27,11 +27,8 @@
 #include "../libv4lconvert-priv.h" /* for PIX_FMT defines */
 #include "../libv4lsyscall-priv.h"
 
-static int autogain_active(struct v4lprocessing_data *data)
-{
-	int autogain;
-
-	autogain = v4lcontrol_get_ctrl(data->control, V4LCONTROL_AUTOGAIN);
+static int autogain_active(struct v4lprocessing_data *data) {
+	int autogain = v4lcontrol_get_ctrl(data->control, V4LCONTROL_AUTOGAIN);
 	if (!autogain) {
 		/* Reset last_correction val */
 		data->last_gain_correction = 0;
@@ -41,9 +38,7 @@ static int autogain_active(struct v4lprocessing_data *data)
 }
 
 /* Adjust ctrl value with steps steps, while not crossing limit */
-static void autogain_adjust(struct v4l2_queryctrl *ctrl, int *value,
-		int steps, int limit, int accel)
-{
+static void autogain_adjust(struct v4l2_queryctrl *ctrl, int *value, int steps, int limit, int accel) {
 	int ctrl_range = (ctrl->maximum - ctrl->minimum) / ctrl->step;
 
 	/* If we are of 3 * deadzone or more, and we have a fine grained
@@ -70,11 +65,8 @@ static void autogain_adjust(struct v4l2_queryctrl *ctrl, int *value,
 
 /* auto gain and exposure algorithm based on the knee algorithm described here:
 http://ytse.tricolour.net/docs/LowLightOptimization.html */
-static int autogain_calculate_lookup_tables(
-		struct v4lprocessing_data *data,
-		u8 *buf, const struct v4l2_format *fmt)
-{
-	int x, y, target, steps, avg_lum = 0;
+static int autogain_calculate_lookup_tables(struct v4lprocessing_data *data, u8 *buf, const struct v4l2_format *fmt) {
+	int target, steps, avg_lum = 0;
 	int gain, exposure, orig_gain, orig_exposure, exposure_low;
 	struct v4l2_control ctrl;
 	struct v4l2_queryctrl gainctrl, expoctrl;
@@ -110,11 +102,10 @@ static int autogain_calculate_lookup_tables(
 	case V4L2_PIX_FMT_SGRBG8:
 	case V4L2_PIX_FMT_SBGGR8:
 	case V4L2_PIX_FMT_SRGGB8:
-		buf += fmt->fmt.pix.height * fmt->fmt.pix.bytesperline / 4 +
-			fmt->fmt.pix.width / 4;
+		buf += fmt->fmt.pix.height * fmt->fmt.pix.bytesperline / 4 + fmt->fmt.pix.width / 4;
 
-		for (y = 0; y < fmt->fmt.pix.height / 2; y++) {
-			for (x = 0; x < fmt->fmt.pix.width / 2; x++)
+		for (unsigned int y = 0; y < fmt->fmt.pix.height / 2; y++) {
+			for (unsigned int x = 0; x < fmt->fmt.pix.width / 2; x++)
 				avg_lum += *buf++;
 			buf += fmt->fmt.pix.bytesperline - fmt->fmt.pix.width / 2;
 		}
@@ -126,8 +117,8 @@ static int autogain_calculate_lookup_tables(
 		buf += fmt->fmt.pix.height * fmt->fmt.pix.bytesperline / 4 +
 			fmt->fmt.pix.width * 3 / 4;
 
-		for (y = 0; y < fmt->fmt.pix.height / 2; y++) {
-			for (x = 0; x < fmt->fmt.pix.width / 2; x++) {
+		for (unsigned int y = 0; y < fmt->fmt.pix.height / 2; y++) {
+			for (unsigned int x = 0; x < fmt->fmt.pix.width / 2; x++) {
 				avg_lum += *buf++;
 				avg_lum += *buf++;
 				avg_lum += *buf++;

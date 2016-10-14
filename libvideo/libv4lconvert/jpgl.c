@@ -57,8 +57,7 @@ struct rqBitReader {
 	struct RingQueue *rq;
 };
 
-static inline void rqBR_init( struct rqBitReader *br, struct RingQueue *rq )
-{
+static inline void rqBR_init( struct rqBitReader *br, struct RingQueue *rq ) {
 	br->cur_bit = 16;
 	br->cur_data =
 		RING_QUEUE_PEEK( rq, 2 )        |
@@ -122,12 +121,12 @@ static char clampTbl[1280];
 #endif
 
 /* Code to initialize those tables */
-static void vlcTbl_init(void) {
+static inline void vlcTbl_init(void) {
 	/* Bases tables used to compute the bigger one
 	 * To understands theses, look at the VLC doc in the
 	 * US patent document. */
 
-	static const int vlc_num = 28;
+	static const unsigned int vlc_num = 28;
 	static const int vlc_len[] =
 		{ 2, 2, 3, 3, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 7,
 		  8 ,8 ,8 ,9, 9, 9, 10, 10, 10, 10, 10, 10 };
@@ -143,14 +142,11 @@ static void vlcTbl_init(void) {
 		  0x054, 0x057, 0x0FF, 0x0AA, 0x0AC, 0x1FC, 0x156, 0x157,
 		  0x15A, 0x15B, 0x3FA, 0x3FB };
 	
-	/* Vars */
-	int i,j;
-
 	/* Main filling loop */
-	for ( i=0 ; i<(1<<10) ; i++ ) {
+	for (unsigned int i = 0; i < (1<<10); i++ ) {
 
 		/* Find the matching one */
-		for ( j=0 ; j<vlc_num ; j++ ) {
+		for (unsigned int j=0; j < vlc_num; j++ ) {
 			if ( (i >> (10-vlc_len[j])) == vlc_cod[j] ) {
 				if ( vlc_run[j] >= 0 )
 					if ( vlc_amp[j] != 0 )
@@ -167,18 +163,15 @@ static void vlcTbl_init(void) {
 	}
 }
 
-static void yuvTbl_init(void)
-{
+static inline void yuvTbl_init(void) {
 	/* These tables are just pre-multiplied and pre-offseted
 	 * YUV by the book
 	 * R = 1.164 * (Y-16) + 1.596 * (U-128)
 	 * G = 1.164 * (Y-16) - 0.813 * (U-128) - 0.391 * (V-128)
 	 * B = 1.164 * (Y-16)                   + 2.018 * (V-128) */
 
-	int i;
-
 	/* We use fixed point << 16 */
-	for ( i=0 ; i < 256 ; i++ ) {
+	for (unsigned int i = 0 ; i < 256; i++ ) {
 		yuvTbl_y[i]  =  76284 * (i- 16);
 		yuvTbl_u1[i] = 104595 * (i-128);
 		yuvTbl_u2[i] =  53281 * (i-128);
@@ -188,8 +181,7 @@ static void yuvTbl_init(void)
 }
 
 #ifndef SAFE_CLAMP
-static void clampTbl_init(void)
-{
+static inline void clampTbl_init(void) {
 	/* Instead of doing if(...) to test for overrange, we use
 	 * a clamping table */
 	
@@ -209,8 +201,7 @@ static void clampTbl_init(void)
  * Internal helpers
  */
 
-static inline int readAC( struct rqBitReader *br, int *run, int *amp )
-{
+static inline int readAC( struct rqBitReader *br, int *run, int *amp ) {
 	/* Vars */
 	unsigned int cod;
 
@@ -288,8 +279,7 @@ static inline int readAC( struct rqBitReader *br, int *run, int *amp )
  *             deQuantization - iDCT
  * Here they are a little mixed-up to speed all this up.
  */
-static inline int decodeBlock( struct rqBitReader *br, int *block, int *dc )
-{
+static inline int decodeBlock( struct rqBitReader *br, int *block, int *dc ) {
 	/* Tables used for block decoding */
 	
 		/* deZigZag table

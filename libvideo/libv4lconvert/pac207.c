@@ -125,7 +125,7 @@ pac_decompress_row(const u8 *inp, u8 *outp, u32 width, int step_size, int abs_bi
 	bitpos = 32;
 
 	/* main decoding loop */
-	for (col = 2; col < width; col++) {
+	for (unsigned int col = 2; col < width; col++) {
 		/* get bitcode */
 
 		code = getByte(inp, bitpos);
@@ -154,16 +154,14 @@ int v4lconvert_decode_pac207(struct v4lconvert_data *data, const u8 *inp, int sr
 	   remove the header then copy line by line EOL is set with 0x0f 0xf0 marker
 	   or 0x1e 0xe1 for compressed line*/
 	const u8 *end = inp + src_size;
-	unsigned short word;
-	int row;
 
 	/* iterate over all rows */
-	for (row = 0; row < height; row++) {
+	for (unsigned int row = 0; row < height; row++) {
 		if ((inp + 2) > end) {
 			V4LCONVERT_ERR("incomplete pac207 frame\n");
 			return -1;
 		}
-		word = getShort(inp);
+		unsigned short word = getShort(inp);
 		switch (word) {
 		case 0x0FF0:
 			memcpy(outp, inp + 2, width);

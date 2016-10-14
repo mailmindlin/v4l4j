@@ -121,21 +121,17 @@
 
 /* Now the decode function itself */
 
-void v4lconvert_decode_sn9c2028(const u8 *src, u8 *dst,
-		u32 width, u32 height)
-{
+void v4lconvert_decode_sn9c2028(const u8 *src, u8 *dst, u32 width, u32 height) {
 	long dst_index = 0;
-	int starting_row = 0;
 	unsigned short bits;
 	short c1val, c2val;
-	int x, y;
 	unsigned long bitBuf = 0;
 	unsigned long bitBufCount = 0;
 	unsigned long bits_eaten = 0;
 
 	src += 12;    /* Remove the header */
 
-	for (y = starting_row; y < height; y++) {
+	for (unsigned int y = 0; y < height; y++) {
 		PEEK_BITS(8, bits);
 		EAT_BITS(8);
 		c2val = (bits & 0xff);
@@ -145,7 +141,7 @@ void v4lconvert_decode_sn9c2028(const u8 *src, u8 *dst,
 
 		PUT_PIXEL_PAIR;
 
-		for (x = 2; x < width ; x += 2) {
+		for (unsigned int x = 2; x < width ; x += 2) {
 			/* The compression reversed the even and odd columns.*/
 			PARSE_PIXEL(c2val);
 			PARSE_PIXEL(c1val);

@@ -22,17 +22,13 @@
 
 #define CLIP(color) (u8)(((color) > 0xff) ? 0xff : (((color) < 0) ? 0 : (color)))
 
-static int gamma_active(struct v4lprocessing_data *data)
-{
+static int gamma_active(struct v4lprocessing_data *data) {
 	int gamma = v4lcontrol_get_ctrl(data->control, V4LCONTROL_GAMMA);
 
 	return gamma && gamma != 1000;
 }
 
-static int gamma_calculate_lookup_tables(
-		struct v4lprocessing_data *data,
-		u8 *buf, const struct v4l2_format *fmt)
-{
+static int gamma_calculate_lookup_tables(struct v4lprocessing_data *data, u8 *buf, const struct v4l2_format *fmt) {
 	int i, x, gamma;
 
 	gamma = v4lcontrol_get_ctrl(data->control, V4LCONTROL_GAMMA);

@@ -20,17 +20,14 @@
 #include "libv4lconvert-priv.h"
 
 /* YUYV per line */
-void v4lconvert_spca501_to_yuv420(const u8 *src, u8 *dst,
-		u32 width, u32 height, int yvu)
-{
-	int i, j;
+void v4lconvert_spca501_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, int yvu) {
 	unsigned long *lsrc = (unsigned long *)src;
 
-	for (i = 0; i < height; i += 2) {
+	for (unsigned int i = 0; i < height; i += 2) {
 		/* -128 - 127 --> 0 - 255 and copy first line Y */
 		unsigned long *ldst = (unsigned long *)(dst + i * width);
 
-		for (j = 0; j < width; j += sizeof(long)) {
+		for (unsigned int j = 0; j < width; j += sizeof(long)) {
 			*ldst = *lsrc++;
 			*ldst++ ^= 0x8080808080808080ULL;
 		}
@@ -40,14 +37,14 @@ void v4lconvert_spca501_to_yuv420(const u8 *src, u8 *dst,
 			ldst = (unsigned long *)(dst + (width * height * 5) / 4 + i * width / 4);
 		else
 			ldst = (unsigned long *)(dst + width * height + i * width / 4);
-		for (j = 0; j < width/2; j += sizeof(long)) {
+		for (unsigned int j = 0; j < width/2; j += sizeof(long)) {
 			*ldst = *lsrc++;
 			*ldst++ ^= 0x8080808080808080ULL;
 		}
 
 		/* -128 - 127 --> 0 - 255 and copy second line Y */
 		ldst = (unsigned long *)(dst + i * width + width);
-		for (j = 0; j < width; j += sizeof(long)) {
+		for (unsigned int j = 0; j < width; j += sizeof(long)) {
 			*ldst = *lsrc++;
 			*ldst++ ^= 0x8080808080808080ULL;
 		}
@@ -57,7 +54,7 @@ void v4lconvert_spca501_to_yuv420(const u8 *src, u8 *dst,
 			ldst = (unsigned long *)(dst + width * height + i * width / 4);
 		else
 			ldst = (unsigned long *)(dst + (width * height * 5) / 4 + i * width / 4);
-		for (j = 0; j < width/2; j += sizeof(long)) {
+		for (unsigned int j = 0; j < width/2; j += sizeof(long)) {
 			*ldst = *lsrc++;
 			*ldst++ ^= 0x8080808080808080ULL;
 		}
@@ -65,17 +62,14 @@ void v4lconvert_spca501_to_yuv420(const u8 *src, u8 *dst,
 }
 
 /* YYUV per line */
-void v4lconvert_spca505_to_yuv420(const u8 *src, u8 *dst,
-		u32 width, u32 height, int yvu)
-{
-	int i, j;
+void v4lconvert_spca505_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, int yvu) {
 	unsigned long *lsrc = (unsigned long *)src;
 
-	for (i = 0; i < height; i += 2) {
+	for (unsigned int i = 0; i < height; i += 2) {
 		/* -128 - 127 --> 0 - 255 and copy 2 lines of Y */
 		unsigned long *ldst = (unsigned long *)(dst + i * width);
 
-		for (j = 0; j < width*2; j += sizeof(long)) {
+		for (unsigned int j = 0; j < width*2; j += sizeof(long)) {
 			*ldst = *lsrc++;
 			*ldst++ ^= 0x8080808080808080ULL;
 		}
@@ -85,7 +79,7 @@ void v4lconvert_spca505_to_yuv420(const u8 *src, u8 *dst,
 			ldst = (unsigned long *)(dst + (width * height * 5) / 4 + i * width / 4);
 		else
 			ldst = (unsigned long *)(dst + width * height + i * width / 4);
-		for (j = 0; j < width/2; j += sizeof(long)) {
+		for (unsigned int j = 0; j < width/2; j += sizeof(long)) {
 			*ldst = *lsrc++;
 			*ldst++ ^= 0x8080808080808080ULL;
 		}
@@ -95,7 +89,7 @@ void v4lconvert_spca505_to_yuv420(const u8 *src, u8 *dst,
 			ldst = (unsigned long *)(dst + width * height + i * width / 4);
 		else
 			ldst = (unsigned long *)(dst + (width * height * 5) / 4 + i * width / 4);
-		for (j = 0; j < width/2; j += sizeof(long)) {
+		for (unsigned int j = 0; j < width/2; j += sizeof(long)) {
 			*ldst = *lsrc++;
 			*ldst++ ^= 0x8080808080808080ULL;
 		}
@@ -103,16 +97,13 @@ void v4lconvert_spca505_to_yuv420(const u8 *src, u8 *dst,
 }
 
 /* YUVY per line */
-void v4lconvert_spca508_to_yuv420(const u8 *src, u8 *dst,
-		u32 width, u32 height, int yvu)
-{
-	int i, j;
+void v4lconvert_spca508_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, int yvu) {
 	unsigned long *lsrc = (unsigned long *)src;
 
-	for (i = 0; i < height; i += 2) {
+	for (unsigned int i = 0; i < height; i += 2) {
 		/* -128 - 127 --> 0 - 255 and copy first line Y */
 		unsigned long *ldst = (unsigned long *)(dst + i * width);
-		for (j = 0; j < width; j += sizeof(long)) {
+		for (unsigned int j = 0; j < width; j += sizeof(long)) {
 			*ldst = *lsrc++;
 			*ldst++ ^= 0x8080808080808080ULL;
 		}
@@ -122,7 +113,7 @@ void v4lconvert_spca508_to_yuv420(const u8 *src, u8 *dst,
 			ldst = (unsigned long *)(dst + (width * height * 5) / 4 + i * width / 4);
 		else
 			ldst = (unsigned long *)(dst + width * height + i * width / 4);
-		for (j = 0; j < width/2; j += sizeof(long)) {
+		for (unsigned int j = 0; j < width/2; j += sizeof(long)) {
 			*ldst = *lsrc++;
 			*ldst++ ^= 0x8080808080808080ULL;
 		}
@@ -132,14 +123,14 @@ void v4lconvert_spca508_to_yuv420(const u8 *src, u8 *dst,
 			ldst = (unsigned long *)(dst + width * height + i * width / 4);
 		else
 			ldst = (unsigned long *)(dst + (width * height * 5) / 4 + i * width / 4);
-		for (j = 0; j < width/2; j += sizeof(long)) {
+		for (unsigned int j = 0; j < width/2; j += sizeof(long)) {
 			*ldst = *lsrc++;
 			*ldst++ ^= 0x8080808080808080ULL;
 		}
 
 		/* -128 - 127 --> 0 - 255 and copy second line Y */
 		ldst = (unsigned long *)(dst + i * width + width);
-		for (j = 0; j < width; j += sizeof(long)) {
+		for (unsigned int j = 0; j < width; j += sizeof(long)) {
 			*ldst = *lsrc++;
 			*ldst++ ^= 0x8080808080808080ULL;
 		}
@@ -149,11 +140,7 @@ void v4lconvert_spca508_to_yuv420(const u8 *src, u8 *dst,
 /* Note this is not a spca specific format, bit it fits in this file in that
    it is another funny yuv format */
 /* one line of Y then 1 line of VYUY */
-void v4lconvert_cit_yyvyuy_to_yuv420(const u8 *src,
-		u8 *ydest,
-		u32 width, u32 height, int yvu)
-{
-	int x, y;
+void v4lconvert_cit_yyvyuy_to_yuv420(const u8 *src, u8 *ydest, u32 width, u32 height, int yvu) {
 	u8 *udest, *vdest;
 
 	if (yvu) {
@@ -164,14 +151,14 @@ void v4lconvert_cit_yyvyuy_to_yuv420(const u8 *src,
 		vdest = udest + (width * height) / 4;
 	}
 
-	for (y = 0; y < height; y += 2) {
+	for (unsigned int y = 0; y < height; y += 2) {
 		/* copy 1 line of Y */
 		memcpy(ydest, src, width);
 		src += width;
 		ydest += width;
 
 		/* Split one line of VYUY */
-		for (x = 0; x < width; x += 2) {
+		for (unsigned int x = 0; x < width; x += 2) {
 			*vdest++ = *src++;
 			*ydest++ = *src++;
 			*udest++ = *src++;
@@ -184,11 +171,7 @@ void v4lconvert_cit_yyvyuy_to_yuv420(const u8 *src,
    it is another funny yuv format */
 /* The konica gspca subdriver using cams send data in blocks of 256 pixels
    in YUV420 format. */
-void v4lconvert_konica_yuv420_to_yuv420(const u8 *src,
-		u8 *ydest,
-		u32 width, u32 height, int yvu)
-{
-	int i, no_blocks;
+void v4lconvert_konica_yuv420_to_yuv420(const u8 *src, u8 *ydest, u32 width, u32 height, int yvu) {
 	u8 *udest, *vdest;
 
 	if (yvu) {
@@ -199,8 +182,8 @@ void v4lconvert_konica_yuv420_to_yuv420(const u8 *src,
 		vdest = udest + (width * height) / 4;
 	}
 
-	no_blocks = width * height / 256;
-	for (i = 0; i < no_blocks; i++) {
+	const unsigned int no_blocks = width * height / 256;
+	for (unsigned int i = 0; i < no_blocks; i++) {
 		/* copy 256 Y pixels */
 		memcpy(ydest, src, 256);
 		src += 256;
@@ -221,11 +204,7 @@ void v4lconvert_konica_yuv420_to_yuv420(const u8 *src,
 /* And another not a spca specific format, but fitting in this file in that
    it is another funny yuv format */
 /* Two lines of Y then 1 line of UV */
-void v4lconvert_m420_to_yuv420(const u8 *src,
-		u8 *ydest,
-		u32 width, u32 height, int yvu)
-{
-	int x, y;
+void v4lconvert_m420_to_yuv420(const u8 *src, u8 *ydest, u32 width, u32 height, int yvu) {
 	u8 *udest, *vdest;
 
 	if (yvu) {
@@ -236,14 +215,14 @@ void v4lconvert_m420_to_yuv420(const u8 *src,
 		vdest = udest + (width * height) / 4;
 	}
 
-	for (y = 0; y < height; y += 2) {
+	for (unsigned int y = 0; y < height; y += 2) {
 		/* copy 2 lines of Y */
 		memcpy(ydest, src, 2 * width);
 		src += 2 * width;
 		ydest += 2 * width;
 
 		/* Split one line of UV */
-		for (x = 0; x < width; x += 2) {
+		for (unsigned int x = 0; x < width; x += 2) {
 			*udest++ = *src++;
 			*vdest++ = *src++;
 		}

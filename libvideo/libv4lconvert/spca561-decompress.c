@@ -173,8 +173,7 @@ static int fun_D(int *bitfill, int gkw)
 	return gkw;
 }
 
-static int fun_E(int cur_byte, int *bitfill)
-{
+static int fun_E(int cur_byte, int *bitfill) {
 	static int tab0[] = { 0, -1, 1, -2, 2, -3, 3, -4 };
 	static int tab1[] = { 4, -5, 5, -6, 6, -7, 7, -8 };
 	static int tab2[] = { 8, -9, 9, -10, 10, -11, 11, -12 };
@@ -184,134 +183,123 @@ static int fun_E(int cur_byte, int *bitfill)
 	if ((cur_byte & 0xf0) >= 0x80) {
 		*bitfill -= 4;
 		return tab0[(cur_byte >> 4) & 7];
-	}
-	if ((cur_byte & 0xc0) == 0x40) {
+	} else if ((cur_byte & 0xc0) == 0x40) {
 		*bitfill -= 5;
 		return tab1[(cur_byte >> 3) & 7];
-
-	}
-	if ((cur_byte & 0xe0) == 0x20) {
+	} else if ((cur_byte & 0xe0) == 0x20) {
 		*bitfill -= 6;
 		return tab2[(cur_byte >> 2) & 7];
-
-	}
-	if ((cur_byte & 0xf0) == 0x10) {
+	} else if ((cur_byte & 0xf0) == 0x10) {
 		*bitfill -= 7;
 		return tab3[(cur_byte >> 1) & 7];
-
-	}
-	if ((cur_byte & 0xf8) == 8) {
+	} else if ((cur_byte & 0xf8) == 8) {
 		*bitfill -= 8;
 		return tab4[cur_byte & 7];
 	}
 	return 0xff;
 }
 
-static int fun_F(int cur_byte, int *bitfill)
-{
+static int fun_F(int cur_byte, int *bitfill) {
 	*bitfill -= 5;
 	switch (cur_byte & 0xf8) {
-	case 0x80:
-		return 0;
-	case 0x88:
-		return -1;
-	case 0x90:
-		return 1;
-	case 0x98:
-		return -2;
-	case 0xa0:
-		return 2;
-	case 0xa8:
-		return -3;
-	case 0xb0:
-		return 3;
-	case 0xb8:
-		return -4;
-	case 0xc0:
-		return 4;
-	case 0xc8:
-		return -5;
-	case 0xd0:
-		return 5;
-	case 0xd8:
-		return -6;
-	case 0xe0:
-		return 6;
-	case 0xe8:
-		return -7;
-	case 0xf0:
-		return 7;
-	case 0xf8:
-		return -8;
+		case 0x80:
+			return 0;
+		case 0x88:
+			return -1;
+		case 0x90:
+			return 1;
+		case 0x98:
+			return -2;
+		case 0xa0:
+			return 2;
+		case 0xa8:
+			return -3;
+		case 0xb0:
+			return 3;
+		case 0xb8:
+			return -4;
+		case 0xc0:
+			return 4;
+		case 0xc8:
+			return -5;
+		case 0xd0:
+			return 5;
+		case 0xd8:
+			return -6;
+		case 0xe0:
+			return 6;
+		case 0xe8:
+			return -7;
+		case 0xf0:
+			return 7;
+		case 0xf8:
+			return -8;
 	}
 
 	*bitfill -= 1;
 	switch (cur_byte & 0xfc) {
-	case 0x40:
-		return 8;
-	case 0x44:
-		return -9;
-	case 0x48:
-		return 9;
-	case 0x4c:
-		return -10;
-	case 0x50:
-		return 10;
-	case 0x54:
-		return -11;
-	case 0x58:
-		return 11;
-	case 0x5c:
-		return -12;
-	case 0x60:
-		return 12;
-	case 0x64:
-		return -13;
-	case 0x68:
-		return 13;
-	case 0x6c:
-		return -14;
-	case 0x70:
-		return 14;
-	case 0x74:
-		return -15;
-	case 0x78:
-		return 15;
-	case 0x7c:
-		return -16;
+		case 0x40:
+			return 8;
+		case 0x44:
+			return -9;
+		case 0x48:
+			return 9;
+		case 0x4c:
+			return -10;
+		case 0x50:
+			return 10;
+		case 0x54:
+			return -11;
+		case 0x58:
+			return 11;
+		case 0x5c:
+			return -12;
+		case 0x60:
+			return 12;
+		case 0x64:
+			return -13;
+		case 0x68:
+			return 13;
+		case 0x6c:
+			return -14;
+		case 0x70:
+			return 14;
+		case 0x74:
+			return -15;
+		case 0x78:
+			return 15;
+		case 0x7c:
+			return -16;
 	}
 
 	*bitfill -= 1;
 	switch (cur_byte & 0xfe) {
-	case 0x20:
-		return 16;
-	case 0x22:
-		return -17;
-	case 0x24:
-		return 17;
-	case 0x26:
-		return -18;
-	case 0x28:
-		return 18;
-	case 0x2a:
-		return -19;
-	case 0x2c:
-		return 19;
+		case 0x20:
+			return 16;
+		case 0x22:
+			return -17;
+		case 0x24:
+			return 17;
+		case 0x26:
+			return -18;
+		case 0x28:
+			return 18;
+		case 0x2a:
+			return -19;
+		case 0x2c:
+			return 19;
 	}
 
 	*bitfill += 7;
 	return 0xff;
 }
 
-static int internal_spca561_decode(u32 width, u32 height,
-		const u8 *inbuf,
-		u8 *outbuf)
-{
+static int internal_spca561_decode(u32 width, u32 height, const u8 *inbuf, u8 *outbuf) {
 	/* buffers */
 	static int accum[8 * 8 * 8];
 	static int i_hits[8 * 8 * 8];
 
-	static const int nbits_A[] = {
+	static const unsigned int nbits_A[] = {
 		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 		1, 1,
@@ -374,7 +362,7 @@ static int internal_spca561_decode(u32 width, u32 height,
 		1
 	};
 
-	static const int nbits_B[] = {
+	static const unsigned int nbits_B[] = {
 		0, 8, 7, 7, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4,
 		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3,
 		3, 3,
@@ -437,7 +425,7 @@ static int internal_spca561_decode(u32 width, u32 height,
 		0, 0, 0, 0, 0, 0, 0,
 	};
 
-	static const int nbits_C[] = {
+	static const unsigned int nbits_C[] = {
 		0, 0, 8, 8, 7, 7, 7, 7, 6, 6, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5,
 		5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4,
 		4, 4,
@@ -501,7 +489,7 @@ static int internal_spca561_decode(u32 width, u32 height,
 		-1,
 	};
 
-	static const int nbits_D[] = {
+	static const unsigned int nbits_D[] = {
 		0, 0, 0, 0, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6, 6,
 		6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5,
 		5, 5,
@@ -684,14 +672,14 @@ static int internal_spca561_decode(u32 width, u32 height,
 		255
 	};
 	/* abs_clamp15[19 + i] = min(abs(i), 15) */
-	static const int abs_clamp15[] = {
+	static const unsigned int abs_clamp15[] = {
 		15, 15, 15, 15, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3,
 		2, 1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
 		15, 15,
 		15
 	};
 	/* diff_encoding[256 + i] = ... */
-	static const int diff_encoding[] = {
+	static const unsigned int diff_encoding[] = {
 		7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
 		7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
 		7, 7,
@@ -745,15 +733,13 @@ static int internal_spca561_decode(u32 width, u32 height,
 		6, 6,
 		6, 6, 6, 6, 6, 6
 	};
-
-	int block;
+	
 	int bitfill = 0;
-	int xwidth = width + 6;
+	unsigned int xwidth = width + 6;
 	int off_up_right = 2 - 2 * xwidth;
 	int off_up_left = -2 - 2 * xwidth;
 	int pixel_U = 0, saved_pixel_UR = 0;
-	int pixel_x = 0, pixel_y = 2;
-	u8 *output_ptr = outbuf;
+	unsigned int pixel_x = 0, pixel_y = 2;
 
 	memset(i_hits, 0, sizeof(i_hits));
 	memset(accum, 0, sizeof(accum));
@@ -762,12 +748,12 @@ static int internal_spca561_decode(u32 width, u32 height,
 	memcpy(outbuf + xwidth * 3 + 3, inbuf + 0x14 + width, width);
 
 	input_ptr = inbuf + 0x14 + width * 2;
-	output_ptr = outbuf + (xwidth) * 4 + 3;
+	u8* output_ptr = outbuf + (xwidth) * 4 + 3;
 
 	bit_bucket = 0;
 
-	for (block = 0; block < ((height - 2) * width) / 32; ++block) {
-		int b_it, var_7 = 0;
+	for (unsigned int block = 0; block < ((height - 2) * width) / 32; ++block) {
+		unsigned int var_7 = 0;
 		int cur_byte;
 
 		refill(&bitfill);
@@ -785,36 +771,30 @@ static int internal_spca561_decode(u32 width, u32 height,
 			bitfill -= 2;
 		}
 
-		for (b_it = 0; b_it < 32; b_it++) {
-			int index;
-			int pixel_L, pixel_UR, pixel_UL;
-			int multiplier;
-			int dL, dC, dR;
+		for (unsigned int b_it = 0; b_it < 32; b_it++) {
 			int gkw;	/* God knows what */
 
 			refill(&bitfill);
 			cur_byte = bit_bucket >> (bitfill & 7) & 0xff;
 
-			pixel_L = output_ptr[-2];
-			pixel_UR = output_ptr[off_up_right];
-			pixel_UL = output_ptr[off_up_left];
+			u8 pixel_L = output_ptr[-2];
+			u8 pixel_UR = output_ptr[off_up_right];
+			u8 pixel_UL = output_ptr[off_up_left];
 
-			dL = diff_encoding[0x100 + pixel_UL - pixel_L];
-			dC = diff_encoding[0x100 + pixel_U - pixel_UL];
-			dR = diff_encoding[0x100 + pixel_UR - pixel_U];
+			unsigned int dL = diff_encoding[0x100 + pixel_UL - pixel_L];
+			unsigned int dC = diff_encoding[0x100 + pixel_U - pixel_UL];
+			unsigned int dR = diff_encoding[0x100 + pixel_UR - pixel_U];
 
 			if (pixel_x < 2) {
-				pixel_L = pixel_UL = pixel_U =
-					output_ptr[-xwidth * 2];
+				pixel_L = pixel_UL = pixel_U = output_ptr[-xwidth * 2];
 				pixel_UR = output_ptr[off_up_right];
 				dL = dC = 0;
-				dR = diff_encoding[0x100 + pixel_UR -
-					pixel_U];
-			} else if (pixel_x > width - 3)
+				dR = diff_encoding[0x100 + pixel_UR - pixel_U];
+			} else if (pixel_x + 3 > width)
 				dR = 0;
 
-			multiplier = 4;
-			index = dR + dC * 8 + dL * 64;
+			unsigned int multiplier = 4;
+			unsigned int index = dR + dC * 8 + dL * 64;
 
 			if (pixel_L + pixel_U * 2 <= 144
 					&& (pixel_y & 1) == 0
@@ -861,17 +841,12 @@ static int internal_spca561_decode(u32 width, u32 height,
 				return -3;
 
 			{
-				int tmp1, tmp2;
-
-				tmp1 =
-					(pixel_U + pixel_L) * 3 - pixel_UL * 2;
+				int tmp1 = (pixel_U + pixel_L) * 3 - pixel_UL * 2;
 				tmp1 += (tmp1 < 0) ? 3 : 0;
-				tmp2 = a_curve[19 + gkw] * multiplier;
+				int tmp2 = a_curve[19 + gkw] * multiplier;
 				tmp2 += (tmp2 < 0) ? 1 : 0;
 
-				*(output_ptr++) =
-					clamp0_255[0x100 + (tmp1 >> 2) -
-					(tmp2 >> 1)];
+				*(output_ptr++) = clamp0_255[0x100 + (tmp1 >> 2) - (tmp2 >> 1)];
 			}
 			pixel_U = saved_pixel_UR;
 			saved_pixel_UR = pixel_UR;
@@ -895,17 +870,13 @@ static int internal_spca561_decode(u32 width, u32 height,
 
 /* FIXME, change internal_spca561_decode not to need the extra border
    around its dest buffer */
-void v4lconvert_decode_spca561(const u8 *inbuf,
-		u8 *outbuf, u32 width, u32 height)
-{
-	int i;
+void v4lconvert_decode_spca561(const u8 *inbuf, u8 *outbuf, u32 width, u32 height) {
 	static u8 tmpbuf[650 * 490];
 
 	if (internal_spca561_decode(width, height, inbuf, tmpbuf) != 0)
 		return;
-	for (i = 0; i < height; i++)
-		memcpy(outbuf + i * width,
-				tmpbuf + (i + 2) * (width + 6) + 3, width);
+	for (unsigned int i = 0; i < height; i++)
+		memcpy(outbuf + i * width, tmpbuf + (i + 2) * (width + 6) + 3, width);
 }
 
 /*************** License Change Permission Notice ***************

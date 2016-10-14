@@ -120,20 +120,17 @@ static int whitebalance_calculate_lookup_tables_generic(
 	return 1;
 }
 
-static int whitebalance_calculate_lookup_tables_bayer(
-		struct v4lprocessing_data *data, u8 *buf,
-		const struct v4l2_format *fmt, int starts_with_green)
-{
-	int x, y, a1 = 0, a2 = 0, b1 = 0, b2 = 0;
+static int whitebalance_calculate_lookup_tables_bayer(struct v4lprocessing_data *data, u8 *buf, const struct v4l2_format *fmt, int starts_with_green) {
+	int a1 = 0, a2 = 0, b1 = 0, b2 = 0;
 	int green_avg, comp1_avg, comp2_avg;
 
-	for (y = 0; y < fmt->fmt.pix.height; y += 2) {
-		for (x = 0; x < fmt->fmt.pix.width; x += 2) {
+	for (unsigned int y = 0; y < fmt->fmt.pix.height; y += 2) {
+		for (unsigned int x = 0; x < fmt->fmt.pix.width; x += 2) {
 			a1 += *buf++;
 			a2 += *buf++;
 		}
 		buf += fmt->fmt.pix.bytesperline - fmt->fmt.pix.width;
-		for (x = 0; x < fmt->fmt.pix.width; x += 2) {
+		for (unsigned int x = 0; x < fmt->fmt.pix.width; x += 2) {
 			b1 += *buf++;
 			b2 += *buf++;
 		}
@@ -155,18 +152,14 @@ static int whitebalance_calculate_lookup_tables_bayer(
 	comp1_avg /= fmt->fmt.pix.width * fmt->fmt.pix.height / 64;
 	comp2_avg /= fmt->fmt.pix.width * fmt->fmt.pix.height / 64;
 
-	return whitebalance_calculate_lookup_tables_generic(data, green_avg,
-			comp1_avg, comp2_avg);
+	return whitebalance_calculate_lookup_tables_generic(data, green_avg, comp1_avg, comp2_avg);
 }
 
-static int whitebalance_calculate_lookup_tables_rgb(
-		struct v4lprocessing_data *data, u8 *buf,
-		const struct v4l2_format *fmt)
-{
-	int x, y, green_avg = 0, comp1_avg = 0, comp2_avg = 0;
+static int whitebalance_calculate_lookup_tables_rgb(struct v4lprocessing_data *data, u8 *buf, const struct v4l2_format *fmt) {
+	unsigned int green_avg = 0, comp1_avg = 0, comp2_avg = 0;
 
-	for (y = 0; y < fmt->fmt.pix.height; y++) {
-		for (x = 0; x < fmt->fmt.pix.width; x++) {
+	for (unsigned int y = 0; y < fmt->fmt.pix.height; y++) {
+		for (unsigned int x = 0; x < fmt->fmt.pix.width; x++) {
 			comp1_avg += *buf++;
 			green_avg += *buf++;
 			comp2_avg += *buf++;
@@ -179,15 +172,11 @@ static int whitebalance_calculate_lookup_tables_rgb(
 	comp1_avg /= fmt->fmt.pix.width * fmt->fmt.pix.height / 16;
 	comp2_avg /= fmt->fmt.pix.width * fmt->fmt.pix.height / 16;
 
-	return whitebalance_calculate_lookup_tables_generic(data, green_avg,
-			comp1_avg, comp2_avg);
+	return whitebalance_calculate_lookup_tables_generic(data, green_avg, comp1_avg, comp2_avg);
 }
 
 
-static int whitebalance_calculate_lookup_tables(
-		struct v4lprocessing_data *data,
-		u8 *buf, const struct v4l2_format *fmt)
-{
+static int whitebalance_calculate_lookup_tables(struct v4lprocessing_data *data, u8 *buf, const struct v4l2_format *fmt) {
 	switch (fmt->fmt.pix.pixelformat) {
 	case V4L2_PIX_FMT_SGBRG8:
 	case V4L2_PIX_FMT_SGRBG8: /* Bayer patterns starting with green */

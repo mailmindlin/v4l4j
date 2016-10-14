@@ -47,17 +47,13 @@ struct v4lprocessing_data *v4lprocessing_create(int fd, struct v4lcontrol_data *
 	return data;
 }
 
-void v4lprocessing_destroy(struct v4lprocessing_data *data)
-{
+void v4lprocessing_destroy(struct v4lprocessing_data *data) {
 	free(data);
 }
 
-int v4lprocessing_pre_processing(struct v4lprocessing_data *data)
-{
-	int i;
-
+int v4lprocessing_pre_processing(struct v4lprocessing_data *data) {
 	data->do_process = 0;
-	for (i = 0; i < ARRAY_SIZE(filters); i++) {
+	for (unsigned int i = 0; i < ARRAY_SIZE(filters); i++) {
 		if (filters[i]->active(data))
 			data->do_process = 1;
 	}
@@ -67,19 +63,15 @@ int v4lprocessing_pre_processing(struct v4lprocessing_data *data)
 	return data->do_process;
 }
 
-static void v4lprocessing_update_lookup_tables(struct v4lprocessing_data *data,
-		u8 *buf, const struct v4l2_format *fmt)
-{
-	int i;
-
-	for (i = 0; i < 256; i++) {
+static void v4lprocessing_update_lookup_tables(struct v4lprocessing_data *data, u8 *buf, const struct v4l2_format *fmt) {
+	for (unsigned int i = 0; i < 256; i++) {
 		data->comp1[i] = i;
 		data->green[i] = i;
 		data->comp2[i] = i;
 	}
 
 	data->lookup_table_active = 0;
-	for (i = 0; i < ARRAY_SIZE(filters); i++) {
+	for (unsigned int i = 0; i < ARRAY_SIZE(filters); i++) {
 		if (filters[i]->active(data)) {
 			if (filters[i]->calculate_lookup_tables(data, buf, fmt))
 				data->lookup_table_active = 1;
@@ -87,23 +79,20 @@ static void v4lprocessing_update_lookup_tables(struct v4lprocessing_data *data,
 	}
 }
 
-static void v4lprocessing_do_processing(struct v4lprocessing_data *data,
-		u8 *buf, const struct v4l2_format *fmt)
-{
-	int x, y;
+static void v4lprocessing_do_processing(struct v4lprocessing_data *data, u8 *buf, const struct v4l2_format *fmt) {
 
 	switch (fmt->fmt.pix.pixelformat) {
 	case V4L2_PIX_FMT_SGBRG8:
 	case V4L2_PIX_FMT_SGRBG8: /* Bayer patterns starting with green */
-		for (y = 0; y < fmt->fmt.pix.height / 2; y++) {
-			for (x = 0; x < fmt->fmt.pix.width / 2; x++) {
+		for (unsigned int y = 0; y < fmt->fmt.pix.height / 2; y++) {
+			for (unsigned int x = 0; x < fmt->fmt.pix.width / 2; x++) {
 				*buf = data->green[*buf];
 				buf++;
 				*buf = data->comp1[*buf];
 				buf++;
 			}
 			buf += fmt->fmt.pix.bytesperline - fmt->fmt.pix.width;
-			for (x = 0; x < fmt->fmt.pix.width / 2; x++) {
+			for (unsigned int x = 0; x < fmt->fmt.pix.width / 2; x++) {
 				*buf = data->comp2[*buf];
 				buf++;
 				*buf = data->green[*buf];
@@ -115,15 +104,15 @@ static void v4lprocessing_do_processing(struct v4lprocessing_data *data,
 
 	case V4L2_PIX_FMT_SBGGR8:
 	case V4L2_PIX_FMT_SRGGB8: /* Bayer patterns *NOT* starting with green */
-		for (y = 0; y < fmt->fmt.pix.height / 2; y++) {
-			for (x = 0; x < fmt->fmt.pix.width / 2; x++) {
+		for (unsigned int y = 0; y < fmt->fmt.pix.height / 2; y++) {
+			for (unsigned int x = 0; x < fmt->fmt.pix.width / 2; x++) {
 				*buf = data->comp1[*buf];
 				buf++;
 				*buf = data->green[*buf];
 				buf++;
 			}
 			buf += fmt->fmt.pix.bytesperline - fmt->fmt.pix.width;
-			for (x = 0; x < fmt->fmt.pix.width / 2; x++) {
+			for (unsigned int x = 0; x < fmt->fmt.pix.width / 2; x++) {
 				*buf = data->green[*buf];
 				buf++;
 				*buf = data->comp2[*buf];
@@ -135,8 +124,8 @@ static void v4lprocessing_do_processing(struct v4lprocessing_data *data,
 
 	case V4L2_PIX_FMT_RGB24:
 	case V4L2_PIX_FMT_BGR24:
-		for (y = 0; y < fmt->fmt.pix.height; y++) {
-			for (x = 0; x < fmt->fmt.pix.width; x++) {
+		for (unsigned int y = 0; y < fmt->fmt.pix.height; y++) {
+			for (unsigned int x = 0; x < fmt->fmt.pix.width; x++) {
 				*buf = data->comp1[*buf];
 				buf++;
 				*buf = data->green[*buf];
@@ -150,9 +139,7 @@ static void v4lprocessing_do_processing(struct v4lprocessing_data *data,
 	}
 }
 
-void v4lprocessing_processing(struct v4lprocessing_data *data,
-		u8 *buf, const struct v4l2_format *fmt)
-{
+void v4lprocessing_processing(struct v4lprocessing_data *data, u8 *buf, const struct v4l2_format *fmt) {
 	if (!data->do_process)
 		return;
 

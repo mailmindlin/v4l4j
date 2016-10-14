@@ -36,7 +36,7 @@ static const unsigned int UVTranslate[32] = {
 	28, 29, 30, 31
 };
 
-static const int Y_coords_624x[128][2] = {
+static const unsigned int Y_coords_624x[128][2] = {
 	{ 0,  0}, { 1,  0}, { 2,  0}, { 3,  0}, { 4,  0}, { 5,  0}, { 6,  0}, { 7,  0},
 	{ 0,  1}, { 1,  1}, { 2,  1}, { 3,  1}, { 4,  1}, { 5,  1}, { 6,  1}, { 7,  1},
 	{ 0,  2}, { 1,  2}, { 2,  2}, { 3,  2}, { 4,  2}, { 5,  2}, { 6,  2}, { 7,  2},
@@ -66,57 +66,55 @@ static inline void do_write_v(const u8 *buf, u8 *ptr, unsigned int i, unsigned i
 	*ptr = buf[i + 160 + j];
 }
 
-	int i = 0, x = 0, y = 0, j, relX, relY, x_div2, y_div2;
 void v4lconvert_sn9c20x_to_yuv420(const u8 *raw, u8 *i420, u32 width, u32 height, int yvu) {
+	unsigned int i = 0, x = 0, y = 0;
 	const u8 *buf = raw;
-	u8 *ptr;
-	int frame_size = width * height;
-	int frame_size_div2 = frame_size >> 1;
-	int frame_size_div4 = frame_size >> 2;
+	unsigned int frame_size = width * height;
+	unsigned int frame_size_div2 = frame_size >> 1;
+	unsigned int frame_size_div4 = frame_size >> 2;
 	u32 width_div2 = width >> 1;
 #if (DO_SANITY_CHECKS == 1)
 	u32 height_div2 = height >> 1;
 #endif
-	void (*do_write_uv1)(const u8 *buf, u8 *ptr, int i, int j) = NULL;
-	void (*do_write_uv2)(const u8 *buf, u8 *ptr, int i, int j) = NULL;
+	void (*do_write_uv1)(const u8 *buf, u8 *ptr, unsigned int i, unsigned int j) = NULL;
+	void (*do_write_uv2)(const u8 *buf, u8 *ptr, unsigned int i, unsigned int j) = NULL;
 
 	if (yvu) {
-		do_write_uv1 = do_write_v;
-		do_write_uv2 = do_write_u;
+		do_write_uv1 = &do_write_v;
+		do_write_uv2 = &do_write_u;
 	} else {
-		do_write_uv1 = do_write_u;
-		do_write_uv2 = do_write_v;
+		do_write_uv1 = &do_write_u;
+		do_write_uv2 = &do_write_v;
 	}
 
 	while (i < (frame_size + frame_size_div2)) {
-		for (j = 0; j < 128; j++) {
-			relX = x + Y_coords_624x[j][0];
-			relY = y + Y_coords_624x[j][1];
+		for (unsigned int j = 0; j < 128; j++) {
+			unsigned int relX = x + Y_coords_624x[j][0];
+			unsigned int relY = y + Y_coords_624x[j][1];
 
 #if (DO_SANITY_CHECKS == 1)
 			if ((relX < width) && (relY < height)) {
 #endif
-				ptr = i420 + relY * width + relX;
+				u8* ptr = i420 + relY * width + relX;
 				*ptr = buf[i + j];
 #if (DO_SANITY_CHECKS == 1)
 			}
 #endif
 
 		}
-		x_div2 = x >> 1;
-		y_div2 = y >> 1;
-		for (j = 0; j < 32; j++) {
-			relX = (x_div2) + (j & 0x07);
-			relY = (y_div2) + (j >> 3);
+		unsigned int x_div2 = x >> 1;
+		unsigned int y_div2 = y >> 1;
+		for (unsigned int j = 0; j < 32; j++) {
+			unsigned int relX = (x_div2) + (j & 0x07);
+			unsigned int relY = (y_div2) + (j >> 3);
 
 #if (DO_SANITY_CHECKS == 1)
 			if ((relX < width_div2) && (relY < height_div2)) {
 #endif
-				ptr = i420 + frame_size +
-					relY * width_div2 + relX;
-				do_write_uv1(buf, ptr, i, j);
+				u8* ptr = i420 + frame_size + relY * width_div2 + relX;
+				(*do_write_uv1)(buf, ptr, i, j);
 				ptr += frame_size_div4;
-				do_write_uv2(buf, ptr, i, j);
+				(*do_write_uv2)(buf, ptr, i, j);
 #if (DO_SANITY_CHECKS == 1)
 			}
 #endif

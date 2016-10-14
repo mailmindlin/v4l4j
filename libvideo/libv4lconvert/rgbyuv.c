@@ -43,12 +43,11 @@
 	} while (0)
 
 void v4lconvert_rgb24_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt, int bgr, int yvu) {
-	int x, y;
 	u8 *udest, *vdest;
 
 	/* Y */
-	for (y = 0; y < src_fmt->fmt.pix.height; y++) {
-		for (x = 0; x < src_fmt->fmt.pix.width; x++) {
+	for (unsigned int y = 0; y < src_fmt->fmt.pix.height; y++) {
+		for (unsigned int x = 0; x < src_fmt->fmt.pix.width; x++) {
 			if (bgr)
 				RGB2Y(src[2], src[1], src[0], *dest++);
 			else
@@ -68,16 +67,13 @@ void v4lconvert_rgb24_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_forma
 		vdest = dest + src_fmt->fmt.pix.width * src_fmt->fmt.pix.height / 4;
 	}
 
-	for (y = 0; y < src_fmt->fmt.pix.height / 2; y++) {
-		for (x = 0; x < src_fmt->fmt.pix.width / 2; x++) {
+	for (unsigned int y = 0; y < src_fmt->fmt.pix.height / 2; y++) {
+		for (unsigned int x = 0; x < src_fmt->fmt.pix.width / 2; x++) {
 			int avg_src[3];
 
-			avg_src[0] = (src[0] + src[3] + src[src_fmt->fmt.pix.bytesperline] +
-					src[src_fmt->fmt.pix.bytesperline + 3]) / 4;
-			avg_src[1] = (src[1] + src[4] + src[src_fmt->fmt.pix.bytesperline + 1] +
-					src[src_fmt->fmt.pix.bytesperline + 4]) / 4;
-			avg_src[2] = (src[2] + src[5] + src[src_fmt->fmt.pix.bytesperline + 2] +
-					src[src_fmt->fmt.pix.bytesperline + 5]) / 4;
+			avg_src[0] = (src[0] + src[3] + src[src_fmt->fmt.pix.bytesperline + 0] + src[src_fmt->fmt.pix.bytesperline + 3]) / 4;
+			avg_src[1] = (src[1] + src[4] + src[src_fmt->fmt.pix.bytesperline + 1] + src[src_fmt->fmt.pix.bytesperline + 4]) / 4;
+			avg_src[2] = (src[2] + src[5] + src[src_fmt->fmt.pix.bytesperline + 2] + src[src_fmt->fmt.pix.bytesperline + 5]) / 4;
 			if (bgr)
 				RGB2UV(avg_src[2], avg_src[1], avg_src[0], *udest++, *vdest++);
 			else
@@ -98,8 +94,6 @@ void v4lconvert_rgb24_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_forma
 #define CLIP(color) (u8)(((color) > 0xFF) ? 0xff : (((color) < 0) ? 0 : (color)))
 
 void v4lconvert_yuv420_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height, int yvu) {
-	int i, j;
-
 	const u8 *ysrc = src;
 	const u8 *usrc, *vsrc;
 
@@ -111,12 +105,11 @@ void v4lconvert_yuv420_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height, 
 		vsrc = usrc + (width * height) / 4;
 	}
 
-	for (i = 0; i < height; i++) {
-		for (j = 0; j < width; j += 2) {
+	for (unsigned int i = 0; i < height; i++) {
+		for (unsigned int j = 0; j < width; j += 2) {
 #if 1 /* fast slightly less accurate multiplication free code */
 			int u1 = (((*usrc - 128) << 7) +  (*usrc - 128)) >> 6;
-			int rg = (((*usrc - 128) << 1) +  (*usrc - 128) +
-					((*vsrc - 128) << 2) + ((*vsrc - 128) << 1)) >> 3;
+			int rg = (((*usrc - 128) << 1) +  (*usrc - 128) + ((*vsrc - 128) << 2) + ((*vsrc - 128) << 1)) >> 3;
 			int v1 = (((*vsrc - 128) << 1) +  (*vsrc - 128)) >> 1;
 
 			*dest++ = CLIP(*ysrc + u1);
@@ -150,8 +143,6 @@ void v4lconvert_yuv420_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height, 
 }
 
 void v4lconvert_yuv420_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height, int yvu) {
-	int i, j;
-
 	const u8 *ysrc = src;
 	const u8 *usrc, *vsrc;
 
@@ -163,12 +154,11 @@ void v4lconvert_yuv420_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height, 
 		vsrc = usrc + (width * height) / 4;
 	}
 
-	for (i = 0; i < height; i++) {
-		for (j = 0; j < width; j += 2) {
+	for (unsigned int i = 0; i < height; i++) {
+		for (unsigned int j = 0; j < width; j += 2) {
 #if 1 /* fast slightly less accurate multiplication free code */
 			int u1 = (((*usrc - 128) << 7) +  (*usrc - 128)) >> 6;
-			int rg = (((*usrc - 128) << 1) +  (*usrc - 128) +
-					((*vsrc - 128) << 2) + ((*vsrc - 128) << 1)) >> 3;
+			int rg = (((*usrc - 128) << 1) +  (*usrc - 128) + ((*vsrc - 128) << 2) + ((*vsrc - 128) << 1)) >> 3;
 			int v1 = (((*vsrc - 128) << 1) +  (*vsrc - 128)) >> 1;
 
 			*dest++ = CLIP(*ysrc + v1);
@@ -202,15 +192,12 @@ void v4lconvert_yuv420_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height, 
 }
 
 void v4lconvert_yuyv_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height) {
-	int j;
-
-	while (--height >= 0) {
-		for (j = 0; j < width; j += 2) {
+	for (unsigned int i = 0; i < height; i++) {
+		for (unsigned int j = 0; j < width; j += 2) {
 			int u = src[1];
 			int v = src[3];
 			int u1 = (((u - 128) << 7) +  (u - 128)) >> 6;
-			int rg = (((u - 128) << 1) +  (u - 128) +
-					((v - 128) << 2) + ((v - 128) << 1)) >> 3;
+			int rg = (((u - 128) << 1) +  (u - 128) + ((v - 128) << 2) + ((v - 128) << 1)) >> 3;
 			int v1 = (((v - 128) << 1) +  (v - 128)) >> 1;
 
 			*dest++ = CLIP(src[0] + u1);
@@ -229,14 +216,12 @@ void v4lconvert_yuyv_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
 #ifdef CONVERT_ARM_NEON
 	v4lconvert_neon_yuyv_to_rgb24(src, dest, width / 2, height);
 #else
-	u32 j;
-	while (--height >= 0) {
-		for (j = 0; j < width; j += 2) {
+	for (unsigned int i = 0; i < height; i++) {
+		for (unsigned int j = 0; j < width; j += 2) {
 			int u = src[1];
 			int v = src[3];
 			int u1 = (((u - 128) << 7) +  (u - 128)) >> 6;
-			int rg = (((u - 128) << 1) +  (u - 128) +
-					((v - 128) << 2) + ((v - 128) << 1)) >> 3;
+			int rg = (((u - 128) << 1) +  (u - 128) + ((v - 128) << 2) + ((v - 128) << 1)) >> 3;
 			int v1 = (((v - 128) << 1) +  (v - 128)) >> 1;
 
 			*dest++ = CLIP(src[0] + v1);
@@ -260,14 +245,13 @@ void v4lconvert_yuyv_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
  * @param yvu whether to output in yuv420 or yvu420
  */
 void v4lconvert_yuyv_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height, int yvu) {
-	int i, j;
 	const u8 *src1;
 	u8 *udest, *vdest;
 
 	/* copy the Y values */
 	src1 = src;
-	for (i = 0; i < height; i++) {
-		for (j = 0; j < width; j += 2) {
+	for (unsigned int i = 0; i < height; i++) {
+		for (unsigned int j = 0; j < width; j += 2) {
 			*dest++ = src1[0];
 			*dest++ = src1[2];
 			src1 += 4;
@@ -284,8 +268,8 @@ void v4lconvert_yuyv_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height, i
 		udest = dest;
 		vdest = dest + width * height / 4;
 	}
-	for (i = 0; i < height; i += 2) {
-		for (j = 0; j < width; j += 2) {
+	for (unsigned int i = 0; i < height; i += 2) {
+		for (unsigned int j = 0; j < width; j += 2) {
 			*udest++ = ((int) src[0] + src1[0]) / 2;	/* U */
 			*vdest++ = ((int) src[2] + src1[2]) / 2;	/* V */
 			src += 4;
@@ -297,15 +281,12 @@ void v4lconvert_yuyv_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height, i
 }
 
 void v4lconvert_yvyu_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height) {
-	int j;
-
-	while (--height >= 0) {
-		for (j = 0; j < width; j += 2) {
+	for (unsigned int i = 0; i < height; i++) {
+		for (unsigned int j = 0; j < width; j += 2) {
 			int u = src[3];
 			int v = src[1];
 			int u1 = (((u - 128) << 7) +  (u - 128)) >> 6;
-			int rg = (((u - 128) << 1) +  (u - 128) +
-					((v - 128) << 2) + ((v - 128) << 1)) >> 3;
+			int rg = (((u - 128) << 1) +  (u - 128) + ((v - 128) << 2) + ((v - 128) << 1)) >> 3;
 			int v1 = (((v - 128) << 1) +  (v - 128)) >> 1;
 
 			*dest++ = CLIP(src[0] + u1);
@@ -321,15 +302,12 @@ void v4lconvert_yvyu_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height) {
 }
 
 void v4lconvert_yvyu_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
-	int j;
-
-	while (--height >= 0) {
-		for (j = 0; j < width; j += 2) {
+	for (unsigned int i = 0; i < height; i++) {
+		for (unsigned int j = 0; j < width; j += 2) {
 			int u = src[3];
 			int v = src[1];
 			int u1 = (((u - 128) << 7) +  (u - 128)) >> 6;
-			int rg = (((u - 128) << 1) +  (u - 128) +
-					((v - 128) << 2) + ((v - 128) << 1)) >> 3;
+			int rg = (((u - 128) << 1) +  (u - 128) + ((v - 128) << 2) + ((v - 128) << 1)) >> 3;
 			int v1 = (((v - 128) << 1) +  (v - 128)) >> 1;
 
 			*dest++ = CLIP(src[0] + v1);
@@ -345,15 +323,12 @@ void v4lconvert_yvyu_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
 }
 
 void v4lconvert_uyvy_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height) {
-	int j;
-
-	while (--height >= 0) {
-		for (j = 0; j < width; j += 2) {
+	for (unsigned int i = 0; i < height; i++) {
+		for (unsigned int j = 0; j < width; j += 2) {
 			int u = src[0];
 			int v = src[2];
 			int u1 = (((u - 128) << 7) +  (u - 128)) >> 6;
-			int rg = (((u - 128) << 1) +  (u - 128) +
-					((v - 128) << 2) + ((v - 128) << 1)) >> 3;
+			int rg = (((u - 128) << 1) +  (u - 128) + ((v - 128) << 2) + ((v - 128) << 1)) >> 3;
 			int v1 = (((v - 128) << 1) +  (v - 128)) >> 1;
 
 			*dest++ = CLIP(src[1] + u1);
@@ -369,15 +344,12 @@ void v4lconvert_uyvy_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height) {
 }
 
 void v4lconvert_uyvy_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
-	int j;
-
-	while (--height >= 0) {
-		for (j = 0; j < width; j += 2) {
+	for (unsigned int i = 0; i < height; i++) {
+		for (unsigned int j = 0; j < width; j += 2) {
 			int u = src[0];
 			int v = src[2];
 			int u1 = (((u - 128) << 7) +  (u - 128)) >> 6;
-			int rg = (((u - 128) << 1) +  (u - 128) +
-					((v - 128) << 2) + ((v - 128) << 1)) >> 3;
+			int rg = (((u - 128) << 1) +  (u - 128) + ((v - 128) << 2) + ((v - 128) << 1)) >> 3;
 			int v1 = (((v - 128) << 1) +  (v - 128)) >> 1;
 
 			*dest++ = CLIP(src[1] + v1);
@@ -393,14 +365,13 @@ void v4lconvert_uyvy_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
 }
 
 void v4lconvert_uyvy_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height, int yvu) {
-	int i, j;
 	const u8 *src1;
 	u8 *udest, *vdest;
 
 	/* copy the Y values */
 	src1 = src;
-	for (i = 0; i < height; i++) {
-		for (j = 0; j < width; j += 2) {
+	for (unsigned int i = 0; i < height; i++) {
+		for (unsigned int j = 0; j < width; j += 2) {
 			*dest++ = src1[1];
 			*dest++ = src1[3];
 			src1 += 4;
@@ -416,8 +387,8 @@ void v4lconvert_uyvy_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height, i
 		udest = dest;
 		vdest = dest + width * height / 4;
 	}
-	for (i = 0; i < height; i += 2) {
-		for (j = 0; j < width; j += 2) {
+	for (unsigned int i = 0; i < height; i += 2) {
+		for (unsigned int j = 0; j < width; j += 2) {
 			*udest++ = ((int) src[0] + src1[0]) / 2;	/* U */
 			*vdest++ = ((int) src[2] + src1[2]) / 2;	/* V */
 			src += 4;
@@ -429,9 +400,7 @@ void v4lconvert_uyvy_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height, i
 }
 
 void v4lconvert_swap_rgb(const u8 *src, u8 *dst, u32 width, u32 height) {
-	int i;
-
-	for (i = 0; i < (width * height); i++) {
+	for (unsigned int i = 0; i < (width * height); i++) {
 		u8 tmp0, tmp1;
 		tmp0 = *src++;
 		tmp1 = *src++;
@@ -442,10 +411,8 @@ void v4lconvert_swap_rgb(const u8 *src, u8 *dst, u32 width, u32 height) {
 }
 
 void v4lconvert_swap_uv(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt) {
-	int y;
-
 	/* Copy Y */
-	for (y = 0; y < src_fmt->fmt.pix.height; y++) {
+	for (unsigned int y = 0; y < src_fmt->fmt.pix.height; y++) {
 		memcpy(dest, src, src_fmt->fmt.pix.width);
 		dest += src_fmt->fmt.pix.width;
 		src += src_fmt->fmt.pix.bytesperline;
@@ -453,7 +420,7 @@ void v4lconvert_swap_uv(const u8 *src, u8 *dest, const struct v4l2_format *src_f
 
 	/* Copy component 2 */
 	src += src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline / 4;
-	for (y = 0; y < src_fmt->fmt.pix.height / 2; y++) {
+	for (unsigned int y = 0; y < src_fmt->fmt.pix.height / 2; y++) {
 		memcpy(dest, src, src_fmt->fmt.pix.width / 2);
 		dest += src_fmt->fmt.pix.width / 2;
 		src += src_fmt->fmt.pix.bytesperline / 2;
@@ -461,7 +428,7 @@ void v4lconvert_swap_uv(const u8 *src, u8 *dest, const struct v4l2_format *src_f
 
 	/* Copy component 1 */
 	src -= src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline / 2;
-	for (y = 0; y < src_fmt->fmt.pix.height / 2; y++) {
+	for (unsigned int y = 0; y < src_fmt->fmt.pix.height / 2; y++) {
 		memcpy(dest, src, src_fmt->fmt.pix.width / 2);
 		dest += src_fmt->fmt.pix.width / 2;
 		src += src_fmt->fmt.pix.bytesperline / 2;
@@ -469,9 +436,8 @@ void v4lconvert_swap_uv(const u8 *src, u8 *dest, const struct v4l2_format *src_f
 }
 
 void v4lconvert_rgb565_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
-	int j;
-	while (--height >= 0) {
-		for (j = 0; j < width; j++) {
+	for (unsigned int i = 0; i < height; i++) {
+		for (unsigned int j = 0; j < width; j++) {
 			unsigned short tmp = *(unsigned short *)src;
 
 			/* Original format: rrrrrggg gggbbbbb */
@@ -485,9 +451,8 @@ void v4lconvert_rgb565_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) 
 }
 
 void v4lconvert_rgb565_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height) {
-	int j;
-	while (--height >= 0) {
-		for (j = 0; j < width; j++) {
+	for (unsigned int i = 0; i < height; i++) {
+		for (unsigned int j = 0; j < width; j++) {
 			unsigned short tmp = *(unsigned short *)src;
 
 			/* Original format: rrrrrggg gggbbbbb */
@@ -501,15 +466,14 @@ void v4lconvert_rgb565_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height) 
 }
 
 void v4lconvert_rgb565_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt, int yvu) {
-	int x, y;
 	unsigned short tmp;
 	u8 *udest, *vdest;
 	unsigned r[4], g[4], b[4];
 	int avg_src[3];
 
 	/* Y */
-	for (y = 0; y < src_fmt->fmt.pix.height; y++) {
-		for (x = 0; x < src_fmt->fmt.pix.width; x++) {
+	for (unsigned int y = 0; y < src_fmt->fmt.pix.height; y++) {
+		for (unsigned int x = 0; x < src_fmt->fmt.pix.width; x++) {
 			tmp = *(unsigned short *)src;
 			r[0] = 0xf8 & (tmp << 3);
 			g[0] = 0xfc & (tmp >> 3);
@@ -530,8 +494,8 @@ void v4lconvert_rgb565_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_form
 		vdest = dest + src_fmt->fmt.pix.width * src_fmt->fmt.pix.height / 4;
 	}
 
-	for (y = 0; y < src_fmt->fmt.pix.height / 2; y++) {
-		for (x = 0; x < src_fmt->fmt.pix.width / 2; x++) {
+	for (unsigned int y = 0; y < src_fmt->fmt.pix.height / 2; y++) {
+		for (unsigned int x = 0; x < src_fmt->fmt.pix.width / 2; x++) {
 			tmp = *(unsigned short *)src;
 			r[0] = 0xf8 & (tmp << 3);
 			g[0] = 0xfc & (tmp >> 3);
@@ -563,9 +527,8 @@ void v4lconvert_rgb565_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_form
 }
 
 void v4lconvert_grey_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
-	int j;
-	while (--height >= 0) {
-		for (j = 0; j < width; j++) {
+	for (unsigned int i = 0; i < height; i++) {
+		for (unsigned int j = 0; j < width; j++) {
 			*dest++ = *src;
 			*dest++ = *src;
 			*dest++ = *src;
@@ -575,11 +538,9 @@ void v4lconvert_grey_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
 }
 
 void v4lconvert_grey_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt) {
-	int x, y;
-
 	/* Y */
-	for (y = 0; y < src_fmt->fmt.pix.height; y++)
-		for (x = 0; x < src_fmt->fmt.pix.width; x++)
+	for (unsigned int y = 0; y < src_fmt->fmt.pix.height; y++)
+		for (unsigned int x = 0; x < src_fmt->fmt.pix.width; x++)
 			*dest++ = *src++;
 
 	/* Clear U/V */
@@ -587,7 +548,7 @@ void v4lconvert_grey_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format
 }
 
 /* Unpack buffer of (vw bit) data into padded 16bit buffer. */
-static inline void convert_packed_to_16bit(uint8_t *raw, uint16_t *unpacked, 			   int vw, int unpacked_len) {
+static inline void convert_packed_to_16bit(uint8_t *raw, uint16_t *unpacked, int vw, int unpacked_len) {
 	int mask = (1 << vw) - 1;
 	uint32_t buffer = 0;
 	int bitsIn = 0;
@@ -610,10 +571,9 @@ int v4lconvert_y10b_to_rgb24(struct v4lconvert_data *data, const u8 *src, u8 *de
 
 	convert_packed_to_16bit((uint8_t *)src, (uint16_t *)unpacked_buffer, 10, width * height);
 
-	int j;
 	unsigned short *tmp = (unsigned short *)unpacked_buffer;
-	while (--height >= 0) {
-		for (j = 0; j < width; j++) {
+	for (unsigned int i = 0; i < height; i++) {
+		for (unsigned int j = 0; j < width; j++) {
 
 			/* Only 10 useful bits, so we discard the LSBs */
 			*dest++ = (*tmp & 0x3ff) >> 2;
@@ -627,21 +587,18 @@ int v4lconvert_y10b_to_rgb24(struct v4lconvert_data *data, const u8 *src, u8 *de
 	return 0;
 }
 
-	u8 *unpacked_buffer;
-
-	unpacked_buffer = v4lconvert_alloc_buffer(width * height * 2, &data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
 int v4lconvert_y10b_to_yuv420(struct v4lconvert_data *data,	const u8 *src, u8 *dest, u32 width, u32 height) {
+	u8 *unpacked_buffer = v4lconvert_alloc_buffer(width * height * 2, &data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
 	if (!unpacked_buffer)
 		return v4lconvert_oom_error(data);
 
 	convert_packed_to_16bit((uint8_t *)src, (uint16_t *)unpacked_buffer, 10, width * height);
 
-	int x, y;
 	unsigned short *tmp = (unsigned short *)unpacked_buffer;
 
 	/* Y */
-	for (y = 0; y < height; y++)
-		for (x = 0; x < width; x++) {
+	for (unsigned int y = 0; y < height; y++)
+		for (unsigned int x = 0; x < width; x++) {
 
 			/* Only 10 useful bits, so we discard the LSBs */
 			*dest++ = (*tmp & 0x3ff) >> 2;

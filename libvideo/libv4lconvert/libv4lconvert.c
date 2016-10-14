@@ -92,7 +92,7 @@ static const struct v4lconvert_pixfmt supported_dst_pixfmts[] = {
 
 /* List of well known resolutions which we can get by cropping somewhat larger
    resolutions */
-static const int v4lconvert_crop_res[][2] = {
+static const unsigned int v4lconvert_crop_res[][2] = {
 	/* low res VGA resolutions, can be made by software cropping SIF resolutions
 	   for cam/drivers which do not support this in hardware */
 	{ 320, 240 },
@@ -315,13 +315,13 @@ static int v4lconvert_get_rank(struct v4lconvert_data *data,
 static int v4lconvert_do_try_format_uvc(struct v4lconvert_data *data,
 		struct v4l2_format *dest_fmt, struct v4l2_format *src_fmt)
 {
-	int i, rank;
+	int rank;
 	unsigned int closest_fmt_size_diff = -1;
-	int best_framesize = 0;/* Just use the first format if no small enough one */
+	unsigned int best_framesize = 0;/* Just use the first format if no small enough one */
 	int best_format = 0;
 	int best_rank = 100;
 
-	for (i = 0; i < data->no_framesizes; i++) {
+	for (unsigned int i = 0; i < data->no_framesizes; i++) {
 		if (data->framesizes[i].discrete.width <= dest_fmt->fmt.pix.width
 				&& data->framesizes[i].discrete.height <= dest_fmt->fmt.pix.height) {
 			int size_x_diff = dest_fmt->fmt.pix.width - data->framesizes[i].discrete.width;
@@ -335,7 +335,7 @@ static int v4lconvert_do_try_format_uvc(struct v4lconvert_data *data,
 		}
 	}
 
-	for (i = 0; i < ARRAY_SIZE(supported_src_pixfmts); i++) {
+	for (unsigned int i = 0; i < ARRAY_SIZE(supported_src_pixfmts); i++) {
 		/* is this format supported? */
 		if (!(data->framesizes[best_framesize].pixel_format & (1 << i)))
 			continue;
@@ -658,7 +658,7 @@ static void refresh_pixfc(struct v4lconvert_data *data, u32 width,
 }
 
 static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
-	u8 *src, int src_size, u8 *dest, int dest_size,
+	u8 *src, unsigned int src_size, u8 *dest, int dest_size,
 	struct v4l2_format *fmt, unsigned int dest_pix_fmt) {
 	int result = 0;
 	unsigned int src_pix_fmt = fmt->fmt.pix.pixelformat;
@@ -1389,16 +1389,16 @@ const char *v4lconvert_get_error_message(struct v4lconvert_data *data) {
 }
 
 static void v4lconvert_get_framesizes(struct v4lconvert_data *data, u32 pixelformat, u32 index) {
-	int i, j, match;
 	struct v4l2_frmsizeenum frmsize = { .pixel_format = pixelformat };
 
-	for (i = 0; ; i++) {
+	for (int i = 0; ; i++) {
 		frmsize.index = i;
 		if (SYS_IOCTL(data->fd, VIDIOC_ENUM_FRAMESIZES, &frmsize))
 			break;
 
 		/* We got a framesize, check we don't have the same one already */
-		match = 0;
+		int match = 0;
+		unsigned int j;
 		for (j = 0; j < data->no_framesizes; j++) {
 			if (frmsize.type != data->framesizes[j].type)
 				continue;
