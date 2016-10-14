@@ -65,7 +65,7 @@ struct frame_encoder {
 static jclass AbstractVideoFrameEncoder_class = NULL;
 static jfieldID AbstractVideoFrameEncoder_object_fid = NULL;
 
-static struct frame_encoder* getPointer(JNIEnv* env, jobject self) {
+static inline struct frame_encoder* getPointer(JNIEnv* env, jobject self) {
 	if (AbstractVideoFrameEncoder_class == NULL) {
 		AbstractVideoFrameEncoder_class = (*env)->FindClass(env, "au/edu/jcu/v4l4j/encoder/AbstractVideoFrameEncoder");
 		AbstractVideoFrameEncoder_object_fid = (*env)->GetFieldID(env, AbstractVideoFrameEncoder_class, "object", "J");
@@ -91,37 +91,66 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_
 	XMALLOC(encoder->in_buffer, struct frame_buffer*, sizeof(struct frame_buffer));
 	XMALLOC(encoder->out_buffer, struct frame_buffer*, sizeof(struct frame_buffer));
 	
-	encoder->is_series = FALSE;
+	int converterId = v4lconvert_converter_lookupConverterByConversion(from, to);
 	
-	struct v4lconvert_encoder* v4lencoder;
-	XMALLOC(v4lencoder, struct v4lconvert_encoder*, sizeof(struct v4lconvert_encoder));
+	if (converterId >= 0) {
+		struct v4lconvert_encoder* v4lencoder;
+		XMALLOC(v4lencoder, struct v4lconvert_encoder*, sizeof(struct v4lconvert_encoder));
+		if (!v4lconvert_encoder_init(v4lencoder, converterId, width, height)) {
+			XFREE(v4lencoder);
+			THROW_EXCEPTION(env, JNI_EXCP, "Error initializing encoder (fmt %d => %d; converter #%d)", from, to, converterId);
+			return NULL;
+		}
+		encoder->is_series = FALSE;
+		encoder->v4lenc.encoder = v4lencoder;
+		encoder->out_buffer->buffer_capacity = (*v4lencoder->estimate_result_size)();
+	} else {
+		//Attempt to upgrade to series
+		struct v4lconvert_encoder_series* series;
+		XMALLOC(series, struct v4lconvert_encoder_series*, sizeof(struct v4lconvert_encoder_series));
+		if (!v4lconvert_encoder_series_computeConversion(series, width, height, from, to, 4)) {
+			XFREE(series);
+			THROW_EXCEPTION(env, JNI_EXCP, "Error initializing encoder series (fmt %d => %d; 4 iterations)", from, to);
+			return NULL;
+		}
+		encoder->is_series = TRUE;
+		encoder->v4lenc.encoder_series = series;
+		encoder->out_buffer->buffer_capacity = (*series->encoders[series->num_encoders].estimate_result_size)();
+	}
 	
-	unsigned int converterId = v4lconvert_converter_lookupConverterByConversion(from, to);
-	v4lconvert_encoder_init(v4lencoder, converterId, width, height);
-	
-	encoder->v4lenc.encoder = v4lencoder;
+	XMALLOC(encoder->out_buffer->buffer, void*, encoder->out_buffer->buffer_capacity * sizeof(void*));
 	
 	return (uintptr_t) encoder;
 }
+
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_doRelease(JNIEnv *env, jobject self) {
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	dprint(LOG_CALLS, "[CALL] Entering %s\n", __PRETTY_FUNCTION__);	
 	
 	struct frame_encoder* encoder = getPointer(env, self);
 	
-	if (encoder->in_buffer->buffer != NULL)
-		XFREE(encoder->in_buffer->buffer);
-	XFREE(encoder->in_buffer);
+	if (encoder->in_buffer) {
+		if (encoder->in_buffer->buffer)
+			XFREE(encoder->in_buffer->buffer);
+		XFREE(encoder->in_buffer);
+		encoder->in_buffer = NULL;
+	}
 	
-	if (encoder->out_buffer->buffer != NULL)
-		XFREE(encoder->out_buffer->buffer);
-	XFREE(encoder->out_buffer);
+	if (encoder->out_buffer) {
+		if (encoder->out_buffer->buffer)
+			XFREE(encoder->out_buffer->buffer);
+		XFREE(encoder->out_buffer);
+		encoder->out_buffer = NULL;
+	}
 	
-	if (!(encoder->is_series)) {
+	if (encoder->is_series) {
+		dprint(LOG_V4L4J, "[V4L4J] Freeing v4lconvert encoder series\n");
+		v4lconvert_encoder_series_doRelease(encoder->v4lenc.encoder_series);
+		XFREE(encoder->v4lenc.encoder_series);
+	} else {
 		dprint(LOG_V4L4J, "[V4L4J] Freeing v4lconvert encoder\n");
 		XFREE(encoder->v4lenc.encoder);
-	} else {
-		//TODO finish
 	}
+	encoder->v4lenc = NULL;
 	
 	dprint(LOG_V4L4J, "[V4L4J] Freeing frame encoder\n");
 	XFREE(encoder);
@@ -138,7 +167,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_s
 	} else if (bufferNum == 2) {
 		buffer = encoder->out_buffer;
 	} else {
-		THROW_EXCEPTION(env, JNI_EXCP, "Illegal buffer #");
+		THROW_EXCEPTION(env, JNI_EXCP, "Illegal buffer #%d. Only 2 buffers exist", bufferNum);
 		return;
 	}
 	
@@ -160,7 +189,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_s
  * 
  */
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getBufferCapacity(JNIEnv* env, jobject self, jint buffer) {
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	dprint(LOG_CALLS, "[CALL] Entering %s\n", __PRETTY_FUNCTION__);
 	
 	struct frame_encoder* encoder = getPointer(env, self);
 	
@@ -175,7 +204,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_g
 
 
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getBufferLimit(JNIEnv* env, jobject self, jint buffer) {
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	dprint(LOG_CALLS, "[CALL] Entering %s\n", __PRETTY_FUNCTION__);
 	
 	struct frame_encoder* encoder = getPointer(env, self);
 	
@@ -273,57 +302,41 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_d
 	}
 	
 	if (encoder->is_series) {
-		struct v4lconvert_encoder_series* v4lencoders = encoder->v4lenc.encoder_series;
-		//TODO finish
+		struct v4lconvert_encoder_series* series = encoder->v4lenc.encoder_series;
+		(*series->convert)(series, encoder->in_buffer->buffer, encoder->out_buffer->buffer);
 	} else {
 		struct v4lconvert_encoder* v4lencoder = encoder->v4lenc.encoder;
-		v4lencoder->convert(v4lencoder, encoder->in_buffer->buffer, encoder->out_buffer->buffer);
+		(*v4lencoder->convert)(v4lencoder, encoder->in_buffer->buffer, encoder->out_buffer->buffer);
 	}
 	
+	//Release locks
 	encoder->in_buffer->lock = 0;
 	encoder->out_buffer->lock = 0;
 }
 /**
  * 
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getConverterIds(JNIEnv* env, jobject self, jintArray out) {
+JNIEXPORT jintarray JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getConverterIds(JNIEnv* env, jobject self) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct frame_encoder* encoder = getPointer(env, self);
 	
-	jsize out_length;
-	if (out == NULL) {
-		//array was null, so we're just goint to return the number of encoders
-		out_length = 0;
-	} else {
-		out_length = (*env)->GetArrayLength(env, out);
-	}
-	
-	int num_converters = 1;
+	int num_encoders;
 	if (encoder->is_series)
-		num_converters = encoder->v4lenc.encoder_series->num_converters;
+		num_encoders = encoder->v4lenc.encoder_series->num_encoders;
+	else
+		num_encoders = 1;
 	
-	if (num_converters >  out_length)
-		return -num_converters;
+	jintarray result = (*env)->NewIntArray(env, num_encoders);
+	int* array = (*env)->GetIntArrayElements(env, result, NULL);
 	
-	jint* converter_ids;
-	XCALLOC(converter_ids, jint*, sizeof(jint), out_length);
-	if (converter_ids == NULL) {
-		THROW_EXCEPTION(env, JNI_EXCP, "Unable to allocate memory.");
-		return 0;
-	}
-	
-	if (encoder->is_series) {
-		struct v4lconvert_encoder_series* v4lcvt_series = encoder->v4lenc.encoder_series;
-		for (int i=0; i < num_converters; i++)
-			converter_ids[i] = v4lcvt_series->encoders[i]->converter->id;
+	if (encoders->is_series) {
+		for (int i = 0; i < encoder->v4lenc.encoder_series->num_converters; i++)
+			array[i] = encoder->v4lenc.encoder_series->encoders[i].converter->id;
 	} else {
-		converter_ids[0] = encoder->v4lenc.encoder->converter->id;
+		array[0] = encoder->v4lenc.encoder->converter->id;
 	}
 	
-	(*env)->SetIntArrayRegion(env, out, 0, num_converters, converter_ids);
-	
-	XFREE(converter_ids);
-	//TODO check that it was freed
+	(*env)->ReleaseIntArrayElements(env, array, 0);
 	
 	return num_converters;
 }
