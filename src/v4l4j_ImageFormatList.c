@@ -68,7 +68,7 @@ static int add_format(JNIEnv *e, jobject list, jmethodID add_method, jclass form
 }
 
 static jobject lookupMember(JNIEnv* env, jobject self, jclass self_class, const char* name) {
-	jfieldID member_fid = (*env)->GetFieldID(env, self_class, name, "Ljava/util/List");
+	jfieldID member_fid = (*env)->GetFieldID(env, self_class, name, "Ljava/util/List;");
 	if(member_fid == NULL) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Error looking up the fieldID for %s", name);
 		return NULL;
