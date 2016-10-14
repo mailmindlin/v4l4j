@@ -74,7 +74,7 @@ public class AbstractVideoFrameEncoder implements VideoFrameEncoder {
 	 * @param object
 	 * 	a pointer to the struct
 	 */
-	private native void doRelease(long object);
+	private native void doRelease();
 	protected native void setBufferCapacity(int buffer, int capacity);
 	protected native int getBufferCapacity(int buffer);
 	protected native int getBufferLimit(int buffer);
@@ -102,27 +102,15 @@ public class AbstractVideoFrameEncoder implements VideoFrameEncoder {
 	protected native void doConvert();
 	
 	/**
-	 * Get ids of the converters used internally by libv4lconvert.
+	 * Get the ids of the converters used internally by libv4lconvert.
 	 * <p>
 	 * I don't see how anyone would need to use this method for anything,
 	 * because the actual IDs of the converters may be subject to change,
 	 * but it's here for debugging.
 	 * </p>
-	 * <p>
-	 * If the array passed to this method is too small, or null,
-	 * it will not write any ids to it, and return the 0 - [number of ids
-	 * used]. This behavior can be used like this:
-	 * <pre><code>
-	 *     int numIds = getConverterIds(null);
-	 *     int[] ids = new int[-numIds];
-	 *     assert(ids.length == getConverterIds(ids));
-	 * </code></pre>
-	 * </p>
-	 * @param out array of integers to write ids to
-	 * @return number of ids written to the array, or, if the array is too small (or null),
-	 * a negative number representing the number of ids.
+	 * @return IDs of converters used
 	 */
-	protected native int getConverterIds(int[] out);
+	public native int[] getConverterIds();
 	
 	protected AbstractVideoFrameEncoder(int width, int height, ImagePalette from, ImagePalette to) {
 		this.width = width;
@@ -138,9 +126,7 @@ public class AbstractVideoFrameEncoder implements VideoFrameEncoder {
 		this.object = doInit(from.getIndex(), to.getIndex(), width, height);
 		
 		System.out.println("Built encoder from " + from + " to " + to + '.');
-		int[] ids = new int[getConverterIds(null)];
-		getConverterIds(ids);
-		System.out.println("\tIds " + Arrays.toString(ids));
+		System.out.println("\tIds " + Arrays.toString(getConverterIds()));
 	}
 	
 	public void init() {
@@ -175,8 +161,9 @@ public class AbstractVideoFrameEncoder implements VideoFrameEncoder {
 		outFrame.prepareForDelivery(length, 0, frame.getSequenceNumber(), frame.getCaptureTime());
 		return outFrame;
 	}
+	
 	@Override
 	public void close() throws Exception {
-		doRelease(object);
+		doRelease();
 	}
 }
