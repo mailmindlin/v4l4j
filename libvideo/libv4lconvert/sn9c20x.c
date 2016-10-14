@@ -25,12 +25,12 @@
 
 #define DO_SANITY_CHECKS 0
 
-static const int UVTranslate[32] = {
-	0, 1, 2, 3,
-	8, 9, 10, 11,
+static const unsigned int UVTranslate[32] = {
+	0,  1,  2,  3,
+	8,  9,  10, 11,
 	16, 17, 18, 19,
 	24, 25, 26, 27,
-	4, 5, 6, 7,
+	4,  5,  6,  7,
 	12, 13, 14, 15,
 	20, 21, 22, 23,
 	28, 29, 30, 31
@@ -58,22 +58,16 @@ static const int Y_coords_624x[128][2] = {
 	{ 8,  7}, { 9,  7}, {10,  7}, {11,  7}, {12,  7}, {13,  7}, {14,  7}, {15,  7}
 };
 
-static void do_write_u(const u8 *buf, u8 *ptr,
-		int i, int j)
-{
+static inline void do_write_u(const u8 *buf, u8 *ptr, unsigned int i, unsigned int j) {
 	*ptr = buf[i + 128 + j];
 }
 
-static void do_write_v(const u8 *buf, u8 *ptr,
-		int i, int j)
-{
+static inline void do_write_v(const u8 *buf, u8 *ptr, unsigned int i, unsigned int j) {
 	*ptr = buf[i + 160 + j];
 }
 
-void v4lconvert_sn9c20x_to_yuv420(const u8 *raw, u8 *i420,
-		u32 width, u32 height, int yvu)
-{
 	int i = 0, x = 0, y = 0, j, relX, relY, x_div2, y_div2;
+void v4lconvert_sn9c20x_to_yuv420(const u8 *raw, u8 *i420, u32 width, u32 height, int yvu) {
 	const u8 *buf = raw;
 	u8 *ptr;
 	int frame_size = width * height;
@@ -83,10 +77,8 @@ void v4lconvert_sn9c20x_to_yuv420(const u8 *raw, u8 *i420,
 #if (DO_SANITY_CHECKS == 1)
 	u32 height_div2 = height >> 1;
 #endif
-	void (*do_write_uv1)(const u8 *buf, u8 *ptr, int i,
-			int j) = NULL;
-	void (*do_write_uv2)(const u8 *buf, u8 *ptr, int i,
-			int j) = NULL;
+	void (*do_write_uv1)(const u8 *buf, u8 *ptr, int i, int j) = NULL;
+	void (*do_write_uv2)(const u8 *buf, u8 *ptr, int i, int j) = NULL;
 
 	if (yvu) {
 		do_write_uv1 = do_write_v;

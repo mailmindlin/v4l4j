@@ -24,11 +24,8 @@
 #include "libv4lconvert-priv.h"
 
 
-static void v4lconvert_reduceandcrop_rgbbgr24(
-		u8 *src, u8 *dest,
-		const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt)
-{
 	int x, y;
+static void v4lconvert_reduceandcrop_rgbbgr24(u8 *src, u8 *dest, const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt) {
 	int startx = src_fmt->fmt.pix.width / 2 - dest_fmt->fmt.pix.width;
 	int starty = src_fmt->fmt.pix.height / 2 - dest_fmt->fmt.pix.height;
 
@@ -46,10 +43,8 @@ static void v4lconvert_reduceandcrop_rgbbgr24(
 	}
 }
 
-static void v4lconvert_crop_rgbbgr24(u8 *src, u8 *dest,
-		const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt)
-{
 	int x;
+static void v4lconvert_crop_rgbbgr24(u8 *src, u8 *dest, const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt) {
 	int startx = (src_fmt->fmt.pix.width - dest_fmt->fmt.pix.width) / 2;
 	int starty = (src_fmt->fmt.pix.height - dest_fmt->fmt.pix.height) / 2;
 
@@ -62,13 +57,10 @@ static void v4lconvert_crop_rgbbgr24(u8 *src, u8 *dest,
 	}
 }
 
-static void v4lconvert_reduceandcrop_yuv420(
-		u8 *src, u8 *dest,
-		const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt)
-{
 	int x, y;
 	int dest_height_half = dest_fmt->fmt.pix.height / 2;
 	int dest_width_half = dest_fmt->fmt.pix.width / 2;
+static void v4lconvert_reduceandcrop_yuv420(u8 *src, u8 *dest, const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt) {
 	int startx = (src_fmt->fmt.pix.width / 2 - dest_fmt->fmt.pix.width) & ~1;
 	int starty = (src_fmt->fmt.pix.height / 2 - dest_fmt->fmt.pix.height) & ~1;
 	u8 *mysrc, *mysrc2;
@@ -109,10 +101,8 @@ static void v4lconvert_reduceandcrop_yuv420(
 	}
 }
 
-static void v4lconvert_crop_yuv420(u8 *src, u8 *dest,
-		const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt)
-{
 	int x;
+static void v4lconvert_crop_yuv420(u8 *src, u8 *dest, const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt) {
 	int startx = ((src_fmt->fmt.pix.width - dest_fmt->fmt.pix.width) / 2) & ~1;
 	int starty = ((src_fmt->fmt.pix.height - dest_fmt->fmt.pix.height) / 2) & ~1;
 	u8 *mysrc = src + starty * src_fmt->fmt.pix.bytesperline + startx;
@@ -144,11 +134,8 @@ static void v4lconvert_crop_yuv420(u8 *src, u8 *dest,
 }
 
 /* Ok, so this is not really cropping, but more the reverse, whatever */
-static void v4lconvert_add_border_rgbbgr24(
-		u8 *src, u8 *dest,
-		const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt)
-{
 	int y;
+static void v4lconvert_add_border_rgbbgr24(u8 *src, u8 *dest, const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt) {
 	int borderx = (dest_fmt->fmt.pix.width - src_fmt->fmt.pix.width) / 2;
 	int bordery = (dest_fmt->fmt.pix.height - src_fmt->fmt.pix.height) / 2;
 
@@ -176,11 +163,8 @@ static void v4lconvert_add_border_rgbbgr24(
 	}
 }
 
-static void v4lconvert_add_border_yuv420(
-		u8 *src, u8 *dest,
-		const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt)
-{
 	int y;
+static void v4lconvert_add_border_yuv420(u8 *src, u8 *dest, const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt) {
 	int borderx = ((dest_fmt->fmt.pix.width - src_fmt->fmt.pix.width) / 2) & ~1;
 	int bordery = ((dest_fmt->fmt.pix.height - src_fmt->fmt.pix.height) / 2) & ~1;
 
@@ -199,8 +183,7 @@ static void v4lconvert_add_border_yuv420(
 		dest += src_fmt->fmt.pix.width;
 
 		memset(dest, 16, borderx);
-		dest += dest_fmt->fmt.pix.bytesperline -
-			(borderx + src_fmt->fmt.pix.width);
+		dest += dest_fmt->fmt.pix.bytesperline - (borderx + src_fmt->fmt.pix.width);
 	}
 
 	for (y = 0; y < bordery; y++) {
@@ -223,8 +206,7 @@ static void v4lconvert_add_border_yuv420(
 		dest += src_fmt->fmt.pix.width / 2;
 
 		memset(dest, 128, borderx / 2);
-		dest += (dest_fmt->fmt.pix.bytesperline -
-				(borderx + src_fmt->fmt.pix.width)) / 2;
+		dest += (dest_fmt->fmt.pix.bytesperline - (borderx + src_fmt->fmt.pix.width)) / 2;
 	}
 
 	for (y = 0; y < bordery / 2; y++) {
@@ -257,17 +239,15 @@ static void v4lconvert_add_border_yuv420(
 	}
 }
 
-void v4lconvert_crop(u8 *src, u8 *dest,
-		const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt)
-{
+void v4lconvert_crop(u8 *src, u8 *dest, const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt) {
 	switch (dest_fmt->fmt.pix.pixelformat) {
 	case V4L2_PIX_FMT_RGB24:
 	case V4L2_PIX_FMT_BGR24:
-		if (src_fmt->fmt.pix.width  <= dest_fmt->fmt.pix.width &&
-				src_fmt->fmt.pix.height <= dest_fmt->fmt.pix.height)
+		if (src_fmt->fmt.pix.width  <= dest_fmt->fmt.pix.width
+				&& src_fmt->fmt.pix.height <= dest_fmt->fmt.pix.height)
 			v4lconvert_add_border_rgbbgr24(src, dest, src_fmt, dest_fmt);
-		else if (src_fmt->fmt.pix.width  >= 2 * dest_fmt->fmt.pix.width &&
-				src_fmt->fmt.pix.height >= 2 * dest_fmt->fmt.pix.height)
+		else if (src_fmt->fmt.pix.width  >= 2 * dest_fmt->fmt.pix.width
+				&& src_fmt->fmt.pix.height >= 2 * dest_fmt->fmt.pix.height)
 			v4lconvert_reduceandcrop_rgbbgr24(src, dest, src_fmt, dest_fmt);
 		else
 			v4lconvert_crop_rgbbgr24(src, dest, src_fmt, dest_fmt);
@@ -275,11 +255,11 @@ void v4lconvert_crop(u8 *src, u8 *dest,
 
 	case V4L2_PIX_FMT_YUV420:
 	case V4L2_PIX_FMT_YVU420:
-		if (src_fmt->fmt.pix.width  <= dest_fmt->fmt.pix.width &&
-				src_fmt->fmt.pix.height <= dest_fmt->fmt.pix.height)
+		if (src_fmt->fmt.pix.width  <= dest_fmt->fmt.pix.width
+				&& src_fmt->fmt.pix.height <= dest_fmt->fmt.pix.height)
 			v4lconvert_add_border_yuv420(src, dest, src_fmt, dest_fmt);
-		else if (src_fmt->fmt.pix.width  >= 2 * dest_fmt->fmt.pix.width &&
-				src_fmt->fmt.pix.height >= 2 * dest_fmt->fmt.pix.height)
+		else if (src_fmt->fmt.pix.width  >= 2 * dest_fmt->fmt.pix.width
+				&& src_fmt->fmt.pix.height >= 2 * dest_fmt->fmt.pix.height)
 			v4lconvert_reduceandcrop_yuv420(src, dest, src_fmt, dest_fmt);
 		else
 			v4lconvert_crop_yuv420(src, dest, src_fmt, dest_fmt);

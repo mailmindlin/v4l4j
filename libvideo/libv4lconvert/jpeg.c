@@ -125,8 +125,7 @@ static void jerr_emit_message(j_common_ptr cinfo, int msg_level)
 		 "v4l-convert: libjpeg error: %s\n", buffer);
 }
 
-static void init_libjpeg_cinfo(struct v4lconvert_data *data)
-{
+static void init_libjpeg_cinfo(struct v4lconvert_data *data) {
 	struct jpeg_compress_struct cinfo;
 	u8 *jpeg_header = NULL;
 	unsigned long jpeg_header_size = 0;

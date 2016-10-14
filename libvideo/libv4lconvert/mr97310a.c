@@ -36,9 +36,8 @@ static struct {
 	signed char val;
 } table[256];
 
-static void init_mr97310a_decoder(void)
-{
 	int i;
+static void init_mr97310a_decoder(void) {
 	int is_abs, val, len;
 
 	for (i = 0; i < 256; ++i) {
@@ -86,20 +85,15 @@ static void init_mr97310a_decoder(void)
 	decoder_initialized = 1;
 }
 
-static inline u8 get_byte(const u8 *inp,
-		unsigned int bitpos)
-{
 	const u8 *addr;
 
 	addr = inp + (bitpos >> 3);
+static inline u8 get_byte(const u8 *inp, unsigned int bitpos) {
 	return (addr[0] << (bitpos & 7)) | (addr[1] >> (8 - (bitpos & 7)));
 }
 
-int v4lconvert_decode_mr97310a(struct v4lconvert_data *data,
-		const u8 *inp, int src_size,
-		u8 *outp, u32 width, u32 height)
-{
 	int row, col;
+int v4lconvert_decode_mr97310a(struct v4lconvert_data *data, const u8 *inp, int src_size, u8 *outp, u32 width, u32 height) {
 	int val;
 	int bitpos;
 	u8 code;

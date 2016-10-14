@@ -120,10 +120,8 @@ static void sonix_decompress_init(void)
    Returns <0 if operation failed.
 
  */
-void v4lconvert_decode_sn9c10x(const u8 *inp, u8 *outp,
-		u32 width, u32 height)
-{
-	int row, col;
+void v4lconvert_decode_sn9c10x(const u8 *inp, u8 *outp, u32 width, u32 height) {
+	unsigned int row, col;
 	int val;
 	int bitpos;
 	u8 code;

@@ -41,7 +41,7 @@
 /*
  * converts 'height' lines in YUV formats into Y, U, V planes.
  */
-EXTERN_INLINE void	convert_yuyv_to_yuv422p(uint8_t* yuyv_src, uint8_t* yuv422p_dst, uint32_t width, uint32_t height) {
+EXTERN_INLINE void convert_yuyv_to_yuv422p(uint8_t* yuyv_src, uint8_t* yuv422p_dst, uint32_t width, uint32_t height) {
 	uint32_t 	nb_pixels = width * height;
 	uint8_t		*y, *u, *v;
 

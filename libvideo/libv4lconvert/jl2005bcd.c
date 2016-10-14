@@ -34,9 +34,7 @@
 #define JPEG_HEADER_SIZE	338
 #define JPEG_HEIGHT_OFFSET	 94
 
-static int find_eoi(struct v4lconvert_data *data,
-        const u8 *jpeg_data, int jpeg_data_idx, int jpeg_data_size)
-{
+static int find_eoi(struct v4lconvert_data *data, const u8 *jpeg_data, unsigned int jpeg_data_idx, int jpeg_data_size) {
 	int i;
 
 	for (i = jpeg_data_idx; i < (jpeg_data_size - 1); i++)
@@ -52,10 +50,7 @@ static int find_eoi(struct v4lconvert_data *data,
 }
 
 
-int v4lconvert_decode_jl2005bcd(struct v4lconvert_data *data,
-		const u8 *src, int src_size,
-                u8 *dest, u32 width, u32 height)
-{
+int v4lconvert_decode_jl2005bcd(struct v4lconvert_data *data, const u8 *src, int src_size, u8 *dest, u32 width, u32 height) {
 	u8 jpeg_stripe[50000];
 	int q;
 	struct jpeg_compress_struct cinfo;

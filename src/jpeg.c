@@ -69,7 +69,7 @@ static void init_destination( j_compress_ptr cinfo ){}
 static boolean empty_output_buffer( j_compress_ptr cinfo ){return TRUE;}
 static void term_destination( j_compress_ptr cinfo ){}
 
-static void jpeg_encode_jpeg(struct v4l4j_device *d, unsigned char *src, unsigned char *dst){
+static void jpeg_encode_jpeg(struct v4l4j_device *d, unsigned char *src, unsigned char *dst) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	memcpy(dst, src, d->capture_len);
 	dprint(LOG_JPEG, "[JPEG] Finished compression (%d bytes)\n", d->capture_len);
@@ -80,23 +80,23 @@ static void jpeg_encode_mjpeg(struct v4l4j_device *d, unsigned char *src, unsign
 	uint32_t has_dht = 0, ptr = 0, size;
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 
-	if(src[0]!=0xff && src[1]!=0xD8) {
+	if(src[0] != 0xff && src[1] != 0xD8) {
 		dprint(LOG_JPEG, "[JPEG] Invalid JPEG frame\n");
 		return;
 	}
 
 	dprint(LOG_JPEG, "[JPEG] Adding Huffman tables\n");
-	memcpy(dst,src,2);
+	memcpy(dst, src, 2);
 	ptr += 2;
 
 	while(!has_dht) {
-		if(src[ptr]!=0xFF) {
+		if(src[ptr] != 0xFF) {
 			dprint(LOG_JPEG, "[JPEG] Invalid JPEG frame\n");
 			return;
 		}
 
 		if(src[ptr+1] == 0xC4)
-			has_dht=1;
+			has_dht = 1;
 		else if (src[ptr+1] == 0xDA)
 			break;
 
@@ -106,12 +106,12 @@ static void jpeg_encode_mjpeg(struct v4l4j_device *d, unsigned char *src, unsign
 	}
 
 	if(!has_dht) {
-		memcpy((dst+ptr), huffman_table, DHT_SIZE);
-		memcpy((dst+ptr+DHT_SIZE), (src+ptr), (d->capture_len-ptr));
-		ptr += (DHT_SIZE+d->capture_len-ptr);
+		memcpy((dst + ptr), huffman_table, DHT_SIZE);
+		memcpy((dst + ptr + DHT_SIZE), (src + ptr), (d->capture_len - ptr));
+		ptr += (DHT_SIZE + d->capture_len - ptr);
 	} else {
-		memcpy((dst+ptr), (src+ptr), (d->capture_len-ptr));
-		ptr += (d->capture_len-ptr);
+		memcpy((dst + ptr), (src + ptr), (d->capture_len - ptr));
+		ptr += (d->capture_len - ptr);
 	}
 
 	dprint(LOG_JPEG, "[JPEG] Frame now has %d bytes\n", ptr);
@@ -240,7 +240,7 @@ static void jpeg_encode_rgb32(struct v4l4j_device *d, unsigned char *src, unsign
 	//init JPEG dest mgr
 	d->j->destmgr->next_output_byte = dst;
 	d->j->destmgr->free_in_buffer = rgb_size;
-	jpeg_set_quality(cinfo, d->j->jpeg_quality,TRUE);
+	jpeg_set_quality(cinfo, d->j->jpeg_quality, TRUE);
 
 	jpeg_start_compress(cinfo, TRUE );
 	dprint(LOG_JPEG, "[JPEG] Starting compression (%d bytes)\n", d->vdev->capture->imagesize);

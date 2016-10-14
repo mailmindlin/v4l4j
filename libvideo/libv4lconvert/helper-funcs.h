@@ -31,50 +31,46 @@
 #include <string.h>
 #include "types.h"
 
-static int v4lconvert_helper_write(int fd, const void *b, size_t count,
-  char *progname)
-{
-  const u8 *buf = b;
-  size_t ret, written = 0;
+static int v4lconvert_helper_write(int fd, const void *b, size_t count, char *progname) {
+	const u8 *buf = b;
+	size_t written = 0;
 
-  while (written < count) {
-    ret = write(fd, buf + written, count - written);
-    if (ret == -1) {
-      if (errno == EINTR)
-	continue;
+	while (written < count) {
+		int ret = write(fd, buf + written, count - written);
+		if (ret == -1) {
+			if (errno == EINTR)
+				continue;
 
-      if (errno == EPIPE) /* Main program has quited */
-	exit(0);
+			if (errno == EPIPE) /* Main program has quited */
+				exit(0);
 
-      fprintf(stderr, "%s: error writing: %s\n", progname, strerror(errno));
-      return -1;
-    }
-    written += ret;
-  }
-
-  return 0;
+			fprintf(stderr, "%s: error writing: %s\n", progname, strerror(errno));
+			return -1;
+		}
+		written += ret;
+	}
+		
+	return 0;
 }
 
-static int v4lconvert_helper_read(int fd, void *b, size_t count,
-  char *progname)
-{
-  u8 *buf = b;
-  size_t ret, r = 0;
+static int v4lconvert_helper_read(int fd, void *b, size_t count, char *progname) {
+	u8 *buf = b;
+	size_t r = 0;
 
-  while (r < count) {
-    ret = read(fd, buf + r, count - r);
-    if (ret == -1) {
-      if (errno == EINTR)
-	continue;
+	while (r < count) {
+		int ret = read(fd, buf + r, count - r);
+		if (ret == -1) {
+			if (errno == EINTR)
+				continue;
 
-      fprintf(stderr, "%s: error reading: %s\n", progname, strerror(errno));
-      return -1;
-    }
-    if (ret == 0) /* EOF */
-      exit(0);
+			fprintf(stderr, "%s: error reading: %s\n", progname, strerror(errno));
+			return -1;
+		}
+		if (ret == 0) /* EOF */
+			exit(0);
 
-    r += ret;
-  }
+		r += ret;
+	}
 
-  return 0;
+	return 0;
 }

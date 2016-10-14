@@ -111,10 +111,7 @@ static inline unsigned short getShort(const u8 *pt)
 }
 
 static int
-pac_decompress_row(const u8 *inp, u8 *outp, u32 width,
-		int step_size, int abs_bits)
-{
-	int col;
+pac_decompress_row(const u8 *inp, u8 *outp, u32 width, int step_size, int abs_bits) {
 	int val;
 	int bitpos;
 	u8 code;
@@ -151,10 +148,7 @@ pac_decompress_row(const u8 *inp, u8 *outp, u32 width,
 	return 2 * ((bitpos + 15) / 16);
 }
 
-int v4lconvert_decode_pac207(struct v4lconvert_data *data,
-		const u8 *inp, int src_size, u8 *outp,
-		u32 width, u32 height)
-{
+int v4lconvert_decode_pac207(struct v4lconvert_data *data, const u8 *inp, int src_size, u8 *outp, u32 width, u32 height) {
 	/* we should received a whole frame with header and EOL marker
 	   in myframe->data and return a GBRG pattern in frame->tmpbuffer
 	   remove the header then copy line by line EOL is set with 0x0f 0xf0 marker

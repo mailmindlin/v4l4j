@@ -322,14 +322,11 @@ static int v4lconvert_do_try_format_uvc(struct v4lconvert_data *data,
 	int best_rank = 100;
 
 	for (i = 0; i < data->no_framesizes; i++) {
-		if (data->framesizes[i].discrete.width <= dest_fmt->fmt.pix.width &&
-				data->framesizes[i].discrete.height <= dest_fmt->fmt.pix.height) {
-			int size_x_diff = dest_fmt->fmt.pix.width -
-				data->framesizes[i].discrete.width;
-			int size_y_diff = dest_fmt->fmt.pix.height -
-				data->framesizes[i].discrete.height;
-			unsigned int size_diff = size_x_diff * size_x_diff +
-				size_y_diff * size_y_diff;
+		if (data->framesizes[i].discrete.width <= dest_fmt->fmt.pix.width
+				&& data->framesizes[i].discrete.height <= dest_fmt->fmt.pix.height) {
+			int size_x_diff = dest_fmt->fmt.pix.width - data->framesizes[i].discrete.width;
+			int size_y_diff = dest_fmt->fmt.pix.height - data->framesizes[i].discrete.height;
+			unsigned int size_diff = size_x_diff * size_x_diff + size_y_diff * size_y_diff;
 
 			if (size_diff < closest_fmt_size_diff) {
 				closest_fmt_size_diff = size_diff;
@@ -444,9 +441,7 @@ void v4lconvert_fixup_fmt(struct v4l2_format *fmt)
 }
 
 /* See libv4lconvert.h for description of in / out parameters */
-int v4lconvert_try_format(struct v4lconvert_data *data,
-		struct v4l2_format *dest_fmt, struct v4l2_format *src_fmt)
-{
+int v4lconvert_try_format(struct v4lconvert_data *data, struct v4l2_format *dest_fmt, struct v4l2_format *src_fmt) {
 	int i, result;
 	unsigned int desired_width = dest_fmt->fmt.pix.width;
 	unsigned int desired_height = dest_fmt->fmt.pix.height;
@@ -1451,9 +1446,7 @@ static void v4lconvert_get_framesizes(struct v4lconvert_data *data, u32 pixelfor
 	}
 }
 
-int v4lconvert_enum_framesizes(struct v4lconvert_data *data,
-		struct v4l2_frmsizeenum *frmsize)
-{
+int v4lconvert_enum_framesizes(struct v4lconvert_data *data, struct v4l2_frmsizeenum *frmsize) {
 	if (!v4lconvert_supported_dst_format(frmsize->pixel_format)) {
 		if (v4lconvert_supported_dst_fmt_only(data)) {
 			errno = EINVAL;
@@ -1484,9 +1477,7 @@ int v4lconvert_enum_framesizes(struct v4lconvert_data *data,
 	return 0;
 }
 
-int v4lconvert_enum_frameintervals(struct v4lconvert_data *data,
-		struct v4l2_frmivalenum *frmival)
-{
+int v4lconvert_enum_frameintervals(struct v4lconvert_data *data, struct v4l2_frmivalenum *frmival) {
 	int res;
 	struct v4l2_format src_fmt, dest_fmt;
 

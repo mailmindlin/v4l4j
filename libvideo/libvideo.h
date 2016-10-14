@@ -75,13 +75,14 @@ struct mmap {
 //YUV411 is the same as YUV411P
 //DO NOT USE YUV420P, YUV422 or YUV411 - they re here for compatibility
 //USE YUV420, YUYV and YUV411P INSTEAD !!!!
+//See linuxtv.org/downloads/v4l-dvb-apis/ for some reference
 enum {
 	// RGB formats
-	RGB332 = 0,			// 0
-	RGB444,				// 1
-	RGB555,				// 2
-	RGB565,				// 3
-	RGB555X,			// 4
+	RGB332 = 0,			// 0 3 bits red, 3 bits green, 2 bits blue
+	RGB444,				// 1 4 bits/channel
+	RGB555,				// 2 5 bits/channel, MSB ignored
+	RGB565,				// 3 5 bits R & B, 6 bits G
+	RGB555X,			// 4 Pretty sure it's the same as RGB555
 	RGB565X,			// 5
 	BGR24,				// 6
 	RGB24,				// 7
@@ -89,14 +90,14 @@ enum {
 	RGB32,				// 9
 
 	// Grey formats
-	GREY,				//10
-	Y4,
+	GREY,				//10 Like YUV, but Y channel only. 8 bits/px
+	Y4,					// 4 bits/px
 	Y6,
 	Y10,
 	Y16,
 
 	// palette formats
-	PAL8,
+	PAL8,				// 256b palette (see stackoverflow.com/a/25019042/2759984)
 
 	// YUV formats
 	YVU410,
