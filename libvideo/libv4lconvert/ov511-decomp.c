@@ -27,8 +27,7 @@ static void DecompressYHI(u8 *pIn,
 		int           *iIn,	/* in/out */
 		int           *iOut,	/* in/out */
 		const int      w,
-		const int      YUVFlag)
-{
+		const int      YUVFlag) {
 	short ZigZag[64];
 	int temp[64];
 	int Zcnt_Flag = 0;
@@ -372,21 +371,14 @@ static void DecompressYHI(u8 *pIn,
 #define DECOMP_V() DecompressYHI(pIn, pV, &iIn, &iV, w / 2, 2)
 
 #if 0
-static inline int
-Decompress400HiNoMMX(u8 *pIn,
-		u8 *pOut,
-		const int      w,
-		const int      h,
-		const int      inSize)
-{
+static inline int Decompress400HiNoMMX(u8 *pIn, u8 *pOut, const unsigned int w, const unsigned int h, const int inSize) {
 	u8 *pY = pOut;
-	int x, y, iIn, iY;
 
-	iIn = 0;
-	for (y = 0; y < h; y += 8) {
-		iY = w * y;
+	int iIn = 0;
+	for (unsigned int y = 0; y < h; y += 8) {
+		int iY = w * y;
 
-		for (x = 0; x < w; x += 8)
+		for (unsigned x = 0; x < w; x += 8)
 			DECOMP_Y();
 	}
 
@@ -394,24 +386,14 @@ Decompress400HiNoMMX(u8 *pIn,
 }
 #endif
 
-static inline int
-Decompress420HiNoMMX(u8 *pIn,
-		u8 *pOut,
-		const int      w,
-		const int      h,
-		const int      inSize)
-{
+static inline int Decompress420HiNoMMX(u8 *pIn, u8 *pOut, const unsigned int w, const unsigned int h) {
 	u8 *pY = pOut;
 	u8 *pU = pY + w * h;
 	u8 *pV = pU + w * h / 4;
-	int xY, xUV, iY, iU, iV, iIn, count;
-	const int nBlocks = (w * h) / (32 * 8);
-
-	iIn = 0;
-	iY = iU = iV = 0;
-	xY = xUV = 0;
-
-	for (count = 0; count < nBlocks; count++) {
+	int iIn = 0, iY = 0, iU = 0, iV = 0;
+	unsigned int xY = 0, xUV = 0;
+	const unsigned int nBlocks = (w * h) / (32 * 8);
+	for (unsigned int count = 0; count < nBlocks; count++) {
 		DECOMP_U();
 		DECOMP_V();	xUV += 16;
 		if (xUV >= w) {
@@ -440,15 +422,10 @@ Decompress420HiNoMMX(u8 *pIn,
 /* Copies a 64-byte segment at pIn to an 8x8 block at pOut. The width of the
  * image at pOut is specified by w.
  */
-	static inline void
-make_8x8(u8 *pIn, u8 *pOut, int w)
-{
-	u8 *pOut1 = pOut;
-	int x, y;
-
-	for (y = 0; y < 8; y++) {
-		pOut1 = pOut;
-		for (x = 0; x < 8; x++)
+static inline void make_8x8(u8 *pIn, u8 *pOut, unsigned int w) {
+	for (unsigned int y = 0; y < 8; y++) {
+		u8* pOut1 = pOut;
+		for (unsigned x = 0; x < 8; x++)
 			*pOut1++ = *pIn++;
 		pOut += w;
 	}
@@ -465,19 +442,14 @@ make_8x8(u8 *pIn, u8 *pOut, int w)
  *     56 57 ... 63   120 121 ... 127        248 249 ... 255
  *
  */
-	static void
-yuv400raw_to_yuv400p(struct ov511_frame *frame,
-		u8 *pIn0, u8 *pOut0)
-{
-	int x, y;
-	u8 *pIn, *pOut, *pOutLine;
+static void yuv400raw_to_yuv400p(struct ov511_frame *frame, u8 *pIn0, u8 *pOut0) {
 
 	/* Copy Y */
-	pIn = pIn0;
-	pOutLine = pOut0;
-	for (y = 0; y < frame->rawheight - 1; y += 8) {
-		pOut = pOutLine;
-		for (x = 0; x < frame->rawwidth - 1; x += 8) {
+	u8* pIn = pIn0;
+	u8* pOutLine = pOut0;
+	for (unsigned int y = 0; y + 1 < frame->rawheight; y += 8) {
+		u8* pOut = pOutLine;
+		for (unsigned int x = 0; x < frame->rawwidth - 1; x += 8) {
 			make_8x8(pIn, pOut, frame->rawwidth);
 			pIn += 64;
 			pOut += 8;
@@ -523,11 +495,8 @@ yuv400raw_to_yuv400p(struct ov511_frame *frame,
  *
  * FIXME: Currently only handles width and height that are multiples of 16
  */
-	static void
-yuv420raw_to_yuv420p(u8 *pIn0, u8 *pOut0,
-		u32 width, u32 height)
-{
-	int k, x, y;
+static void yuv420raw_to_yuv420p(u8 *pIn0, u8 *pOut0, u32 width, u32 height) {
+	int k;
 	u8 *pIn, *pOut, *pOutLine;
 	const unsigned int a = width * height;
 	const unsigned int w = width / 2;
@@ -535,9 +504,9 @@ yuv420raw_to_yuv420p(u8 *pIn0, u8 *pOut0,
 	/* Copy U and V */
 	pIn = pIn0;
 	pOutLine = pOut0 + a;
-	for (y = 0; y < height - 1; y += 16) {
+	for (unsigned int y = 0; y + 1 < height; y += 16) {
 		pOut = pOutLine;
-		for (x = 0; x < width - 1; x += 16) {
+		for (unsigned int x = 0; x + 1< width; x += 16) {
 			make_8x8(pIn, pOut, w);
 			make_8x8(pIn + 64, pOut + a / 4, w);
 			pIn += 384;
@@ -550,9 +519,9 @@ yuv420raw_to_yuv420p(u8 *pIn0, u8 *pOut0,
 	pIn = pIn0 + 128;
 	pOutLine = pOut0;
 	k = 0;
-	for (y = 0; y < height - 1; y += 8) {
+	for (unsigned int y = 0; y + 1 < height; y += 8) {
 		pOut = pOutLine;
-		for (x = 0; x < width - 1; x += 8) {
+		for (unsigned int x = 0; x + 1 < width; x += 8) {
 			make_8x8(pIn, pOut, width);
 			pIn += 64;
 			pOut += 8;
@@ -567,8 +536,7 @@ yuv420raw_to_yuv420p(u8 *pIn0, u8 *pOut0,
 
 
 /* Remove all 0 blocks from input */
-static void remove0blocks(u8 *pIn, int *inSize)
-{
+static void remove0blocks(u8 *pIn, int *inSize) {
 	long long *in = (long long *)pIn;
 	long long *out = (long long *)pIn;
 	int i, j;
@@ -592,9 +560,7 @@ static void remove0blocks(u8 *pIn, int *inSize)
 	*inSize -= (in - out) * 8;
 }
 
-static int v4lconvert_ov511_to_yuv420(u8 *src, u8 *dest,
-		int w, int h, int yvu, int src_size)
-{
+static int v4lconvert_ov511_to_yuv420(u8 *src, u8 *dest, int w, int h, int yvu, int src_size) {
 	int rc = 0;
 
 	src_size -= 11; /* Remove footer */
@@ -603,18 +569,22 @@ static int v4lconvert_ov511_to_yuv420(u8 *src, u8 *dest,
 
 	/* Compressed ? */
 	if (src[8] & 0x40)
-		rc = Decompress420HiNoMMX(src + 9, dest, w, h, src_size);
+		rc = Decompress420HiNoMMX(src + 9, dest, w, h);
 	else
 		yuv420raw_to_yuv420p(src + 9, dest, w, h);
 
 	return rc;
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	u32 width, height, yvu, src_size, dest_size;
 	u8 src_buf[500000];
 	u8 dest_buf[500000];
+	
+	if (argc < 1) {
+		fprintf(stderr, "1 argument required");
+		return 2;
+	}
 
 	while (1) {
 		if (v4lconvert_helper_read(STDIN_FILENO, &width, sizeof(int), argv[0]))
@@ -641,18 +611,17 @@ int main(int argc, char *argv[])
 
 		dest_size = width * height * 3 / 2;
 		if (dest_size > sizeof(dest_buf)) {
-			fprintf(stderr, "%s: error: dest_buf too small, need: %d\n",
-					argv[0], dest_size);
-			dest_size = -1;
+			fprintf(stderr, "%s: error: dest_buf too small, need: %d\n", argv[0], dest_size);
+			dest_size = (unsigned) -1;
 		} else if (v4lconvert_ov511_to_yuv420(src_buf, dest_buf, width, height,
 					yvu, src_size))
-			dest_size = -1;
+			dest_size = (unsigned) -1;
 
 		if (v4lconvert_helper_write(STDOUT_FILENO, &dest_size, sizeof(int),
 					argv[0]))
 			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
-		if (dest_size == -1)
+		if (dest_size == (unsigned) -1)
 			continue;
 
 		if (v4lconvert_helper_write(STDOUT_FILENO, dest_buf, dest_size, argv[0]))
