@@ -31,16 +31,12 @@
 #define CLIP(x) ((x) < 0 ? 0 : ((x) > 0xff) ? 0xff : (x))
 
 
-	static int
-sq905c_first_decompress(u8 *output, const u8 *input,
-		unsigned int outputsize)
-{
+static int sq905c_first_decompress(u8 *output, const u8 *input, unsigned int outputsize) {
 	u8 parity = 0;
 	u8 nibble_to_keep[2];
-	u8 temp1 = 0, temp2 = 0;
+	u8 temp1 = 0;
 	u8 input_byte;
 	u8 lookup = 0;
-	unsigned int i = 0;
 	unsigned int bytes_used = 0;
 	unsigned int bytes_done = 0;
 	unsigned int bit_counter = 8;
@@ -60,11 +56,10 @@ sq905c_first_decompress(u8 *output, const u8 *input,
 
 	while (bytes_done < outputsize) {
 		while (parity < 2) {
+			unsigned int temp2 = 0;
 			while (lookup > table[cycles]) {
 				if (bit_counter == 8) {
-					input_byte = input[bytes_used];
-					bytes_used++;
-					temp1 = input_byte;
+					temp1 = input[bytes_used++];
 					bit_counter = 0;
 				}
 				input_byte = temp1;
@@ -78,8 +73,7 @@ sq905c_first_decompress(u8 *output, const u8 *input,
 					return -1;
 				lookup = temp2 & 0xff;
 			}
-			temp2 = 0;
-			for (i = 0; i < 17; i++) {
+			for (unsigned int i = 0; i < 17; i++) {
 				if (i == 16)
 					return -1;
 				if (lookup == lookup_table[i]) {
@@ -96,59 +90,48 @@ sq905c_first_decompress(u8 *output, const u8 *input,
 	}
 	return 0;
 }
-
-	static int
-sq905c_second_decompress(u8 *uncomp, u8 *in,
-		u32 width, u32 height)
-{
-	int diff = 0;
+static int sq905c_second_decompress(u8 *uncomp, u8 *in, u32 width, u32 height) {
 	int tempval = 0;
-	int i, m;
-	u8 delta_left = 0;
-	u8 delta_right = 0;
-	int input_counter = 0;
+	unsigned int input_counter = 0;
 	int delta_table[] = {
 		-144, -110, -77, -53, -35, -21, -11, -3,
 		2, 10, 20, 34, 52, 76, 110, 144
 	};
-	u8 *templine_red;
-	u8 *templine_green;
-	u8 *templine_blue;
 
-	templine_red = malloc(width);
+	u8* templine_red = malloc(width);
 	if (!templine_red) {
 		free(templine_red);
 		return -1;
 	}
-	for (i = 0; i < width; i++)
+	for (unsigned int i = 0; i < width; i++)
 		templine_red[i] = 0x80;
-	templine_green = malloc(width);
+	
+	u8* templine_green = malloc(width);
 	if (!templine_green) {
 		free(templine_green);
 		return -1;
 	}
-	for (i = 0; i < width; i++)
+	for (unsigned int i = 0; i < width; i++)
 		templine_green[i] = 0x80;
-	templine_blue = malloc(width);
+	u8* templine_blue = malloc(width);
 	if (!templine_blue) {
 		free(templine_blue);
 		return -1;
 	}
-	for (i = 0; i < width; i++)
+	for (unsigned int i = 0; i < width; i++)
 		templine_blue[i] = 0x80;
-	for (m = 0; m < height / 2; m++) {
+	for (unsigned int m = 0; m < height / 2; m++) {
 		/* First we do an even-numbered line */
-		for (i = 0; i < width / 2; i++) {
-			delta_right = in[input_counter] & 0x0f;
-			delta_left = (in[input_counter] >> 4) & 0xff;
+		for (unsigned int i = 0; i < width / 2; i++) {
+			u8 delta_right = in[input_counter] & 0x0f;
+			u8 delta_left = (in[input_counter] >> 4) & 0xff;
 			input_counter++;
 			/* left pixel (red) */
-			diff = delta_table[delta_left];
+			int diff = delta_table[delta_left];
 			if (!i)
 				tempval = templine_red[0] + diff;
 			else
-				tempval = (templine_red[i] +
-					uncomp[2 * m * width + 2 * i - 2]) / 2 + diff;
+				tempval = (templine_red[i] + uncomp[2 * m * width + 2 * i - 2]) / 2 + diff;
 			tempval = CLIP(tempval);
 			uncomp[2 * m * width + 2 * i] = tempval;
 			templine_red[i] = tempval;
@@ -157,37 +140,33 @@ sq905c_second_decompress(u8 *uncomp, u8 *in,
 			if (!i)
 				tempval = templine_green[1] + diff;
 			else if (2 * i == width - 2)
-				tempval = (templine_green[i] +
-					uncomp[2 * m * width + 2 * i - 1]) / 2 + diff;
+				tempval = (templine_green[i] + uncomp[2 * m * width + 2 * i - 1]) / 2 + diff;
 			else
-				tempval = (templine_green[i + 1] +
-					uncomp[2 * m * width + 2 * i - 1]) / 2 + diff;
+				tempval = (templine_green[i + 1] + uncomp[2 * m * width + 2 * i - 1]) / 2 + diff;
 			tempval = CLIP(tempval);
 			uncomp[2 * m * width + 2 * i + 1] = tempval;
 			templine_green[i] = tempval;
 		}
 		/* then an odd-numbered line */
-		for (i = 0; i < width/2; i++) {
-			delta_right = in[input_counter] & 0x0f;
-			delta_left = (in[input_counter] >> 4) & 0xff;
+		for (unsigned int i = 0; i < width/2; i++) {
+			u8 delta_right = in[input_counter] & 0x0f;
+			u8 delta_left = (in[input_counter] >> 4) & 0xff;
 			input_counter++;
 			/* left pixel (green) */
-			diff = delta_table[delta_left];
+			int diff = delta_table[delta_left];
 			if (!i)
 				tempval = templine_green[0] + diff;
 			else
-				tempval = (templine_green[i] +
-					uncomp[(2 * m + 1) * width + 2 * i - 2]) / 2 + diff;
+				tempval = (templine_green[i] + uncomp[(2 * m + 1) * width + 2 * i - 2]) / 2 + diff;
 			tempval = CLIP(tempval);
-			uncomp[(2*m+1)*width+2*i] = tempval;
+			uncomp[(2 * m + 1) * width + 2 * i] = tempval;
 			templine_green[i] = tempval;
 			/* right pixel (blue) */
 			diff = delta_table[delta_right];
 			if (!i)
 				tempval = templine_blue[0] + diff;
 			else
-				tempval = (templine_blue[i] +
-					uncomp[(2 * m + 1) * width + 2 * i - 1]) / 2 + diff;
+				tempval = (templine_blue[i] + uncomp[(2 * m + 1) * width + 2 * i - 1]) / 2 + diff;
 			tempval = CLIP(tempval);
 			uncomp[(2 * m + 1) * width + 2 * i + 1] = tempval;
 			templine_blue[i] = tempval;
@@ -199,20 +178,14 @@ sq905c_second_decompress(u8 *uncomp, u8 *in,
 	return 0;
 }
 
-void v4lconvert_decode_sq905c(const u8 *src, u8 *dst,
-		u32 width, u32 height)
-{
-	int size;
-	u8 *temp_data;
-	const u8 *raw;
+void v4lconvert_decode_sq905c(const u8 *src, u8 *dst, u32 width, u32 height) {
 	/* here we get rid of the 0x50 bytes of header in src. */
-	raw = src + 0x50;
-	size = width * height / 2;
-	temp_data = malloc(size);
-	if (!temp_data)
-		goto out;
-	sq905c_first_decompress(temp_data, raw, size);
-	sq905c_second_decompress(dst, temp_data, width, height);
-out:
+	const u8* raw = src + 0x50;
+	unsigned int size = width * height / 2;
+	u8* temp_data = malloc(size);
+	if (temp_data) {
+		sq905c_first_decompress(temp_data, raw, size);
+		sq905c_second_decompress(dst, temp_data, width, height);
+	}
 	free(temp_data);
 }
