@@ -46,7 +46,7 @@
  * 		The index of the palette to add
  * @param dev
  * 		A pointer to the video device that the format is created for
- * @return 0 on success, else -1
+ * @return 1 on success, else 0
  * @throws JNIException if there's a problem creating the given object
  */
 static int add_format(JNIEnv *e, jobject list, jmethodID add_method, jclass format_class, jmethodID format_ctor, int index, struct v4l4j_device *dev){
@@ -56,15 +56,15 @@ static int add_format(JNIEnv *e, jobject list, jmethodID add_method, jclass form
 	jobject obj = (*e)->NewObject(e, format_class, format_ctor, name, index, (jlong) (uintptr_t) dev);
 	if(obj == NULL) {
 		THROW_EXCEPTION(e, JNI_EXCP, "Error creating the ImageFormat object for palette %s (index %d)", libvideo_palettes[index].name, index);
-		return -1;
+		return EXIT_FAILURE;
 	}
 	
 	//Add the ImageFormat object to the list
 	(*e)->CallVoidMethod(e, list, add_method, obj);
 	
 	if ((*e)->ExceptionCheck(e))
-		return -1;
-	return 0;
+		return EXIT_FAILURE;
+	return EXIT_SUCCESS;
 }
 
 static jobject lookupMember(JNIEnv* env, jobject self, jclass self_class, const char* name) {
@@ -74,7 +74,7 @@ static jobject lookupMember(JNIEnv* env, jobject self, jclass self_class, const 
 		return NULL;
 	}
 	
-	jobject member = (*env)->GetObjectField(env, self, memberfid);
+	jobject member = (*env)->GetObjectField(env, self, member_fid);
 	if(member == NULL)
 		THROW_EXCEPTION(env, JNI_EXCP, "Error getting the value of member %s", name);
 	return member;
@@ -86,8 +86,8 @@ static jobject lookupMember(JNIEnv* env, jobject self, jclass self_class, const 
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(JNIEnv *e, jobject t, jlong o){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-	jobject obj;
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
+	struct device_info *di = d->vdev->info;
 	
 	/* Get handles on Java stuff */
 	jclass this_class = (*e)->GetObjectClass(e, t);
@@ -199,35 +199,34 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(JNIEnv 
 		
 		//check if V4L4J can convert the format to JPEG
 		//TODO optimize
-		for(int j = 0; j < ARRAY_SIZE(jpeg_conv_formats); j++) {
+		for(unsigned int j = 0; j < ARRAY_SIZE(jpeg_conv_formats); j++) {
 			// V4L4J knows how to convert it to JPEG
 			if(jpeg_conv_formats[j] == palette_idx) {
 				dprint(LOG_V4L4J, "[V4L4J] Found v4l4j-convertible JPEG format from %s format - add it\n", libvideo_palettes[jpeg_conv_formats[j]].name);
-				if(add_format(e, jpeg_formats, jpeg_formats_add, format_class, format_ctor, jpeg_conv_formats[j], d) == -1)
-					return -1;
+				if(!add_format(e, jpeg_formats, jpeg_formats_add, format_class, format_ctor, jpeg_conv_formats[j], d))
+					return;
 			}
 		}
 		
 		if (palette.raw_palettes != NULL) {
 			if (format_list == NULL)
 				continue;
-			for (int j = 0, raw_palette; (raw_palette = palette.raw_palettes[j]) != -1; j++) {
+			for (unsigned int j = 0, raw_palette; (raw_palette = palette.raw_palettes[j]) != -1; j++) {
 				dprint(LOG_V4L4J, "[V4L4J] Found libvideo-converted %s format from %s format - add it\n", name, libvideo_palettes[di->palettes[i].raw_palettes[j]].name);
-				if (add_format(e, format_list, format_list_add, format_class, format_ctor, raw_palette, d) == -1)
-					return -1;
+				if (!add_format(e, format_list, format_list_add, format_class, format_ctor, raw_palette, d))
+					return;
 			}
 		} else {
 			//Add to native format list
-			if (add_format(e, formats, formats_add_method, format_class, format_ctor, palette_idx, d) == -1)
-				return -1;
+			if (!add_format(e, formats, formats_add_method, format_class, format_ctor, palette_idx, d))
+				return;
 			//Add to other format list, if applicable
 			if (format_list != NULL) {
 				dprint(LOG_V4L4J, "[V4L4J] Found native %s format - adding it to list\n", name);
-				if (add_format(e, format_list, format_list_add, format_class, format_ctor, palette_idx, d) == -1)
-					return -1;
+				if (!add_format(e, format_list, format_list_add, format_class, format_ctor, palette_idx, d))
+					return;
 			}
 		}	
 	}
-	return 0;
 }
 

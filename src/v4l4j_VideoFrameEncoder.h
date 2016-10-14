@@ -63,7 +63,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_d
  * Method:    getConverterIds
  * Signature: (J[I)I
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getConverterIds(JNIEnv * env, jobject self, jintArray out);
+JNIEXPORT jintArray JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEncoder_getConverterIds(JNIEnv * env, jobject self);
 #ifdef __cplusplus
 }
 #endif
