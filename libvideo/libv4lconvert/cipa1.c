@@ -34,11 +34,8 @@
 #define FRAME_HEADER_SIZE	64
 
 /* CPIA YUYV (sometimes sort of compressed) */
-int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data,
-		const u8 *src, int src_size,
-		u8 *dest, u32 width, u32 height, int yvu)
-{
-	int x, y, ll, compressed;
+int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dest, u32 width, u32 height, int yvu) {
+	unsigned int y, ll;
 	u8 *udest, *vdest;
 
 	if (width > 352 || height > 288) {
@@ -67,8 +64,8 @@ int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data,
 			src[0] != MAGIC_0 || src[1] != MAGIC_1 ||
 			src[17] != SUBSAMPLE_420 ||
 			src[18] != YUVORDER_YUYV ||
-			(src[25] - src[24]) * 8 != width ||
-			(src[27] - src[26]) * 4 != height ||
+			(u32)((src[25] - src[24]) * 8) != width ||
+			(u32)((src[27] - src[26]) * 4) != height ||
 			(src[28] != NOT_COMPRESSED && src[28] != COMPRESSED) ||
 			(src[29] != NO_DECIMATION && src[29] != DECIMATION_ENAB)) {
 		fprintf(stderr, "cpia1 decode error: invalid header\n");
@@ -80,7 +77,7 @@ int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data,
 		return -1;
 	}
 
-	compressed = src[28] == COMPRESSED;
+	int compressed = src[28] == COMPRESSED;
 
 	src += FRAME_HEADER_SIZE;
 	src_size -= FRAME_HEADER_SIZE;
@@ -105,20 +102,14 @@ int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data,
 					return -1;
 				}
 
-				/* copy the Y values */
-				for (x = 0; x < width; x += 2) {
-					*dest++ = src[0];
-					*dest++ = src[2];
-					src += 4;
+				/* Copy the values */
+				for (unsigned int x = 0; x < width; x += 2) {
+					*dest++ = *src++;
+					*udest++ = *src++;
+					*dest++ = *src++;
+					*vdest++ = *src++;
 				}
-
-				/* copy the UV values */
-				src -= 2 * width;
-				for (x = 0; x < width; x += 2) {
-					*udest++ = src[1];
-					*vdest++ = src[3];
-					src += 4;
-				}
+				
 			} else { /* Odd line only Y values */
 				if (ll != width + 1) {
 					fprintf(stderr, "cpia1 decode error: invalid uncompressed odd ll\n");
@@ -152,6 +143,7 @@ int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data,
 
 			/* Do this now as we use ll as loop variable below */
 			src_size -= ll;
+			unsigned int x;
 			for (x = 0; x < width && ll > 1; ) {
 				if (*src & 1) { /* skip N pixels */
 					int skip = *src >> 1;
