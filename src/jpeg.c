@@ -359,7 +359,7 @@ static void jpeg_encode_bgr24(struct v4l4j_device *d, unsigned char *src, unsign
 
 
 int init_jpeg_compressor(struct v4l4j_device *d, int q){
-	dprint(LOG_JPEG, "[JPEG] Initialising the JPEG compressor\n");
+	dprint(LOG_JPEG, "[JPEG] Initializing the JPEG compressor\n");
 	XMALLOC(d->j, struct jpeg_data *, sizeof(struct jpeg_data));
 
 	if(d->vdev->capture->palette == YUV420 || d->vdev->capture->palette == YUYV ||
