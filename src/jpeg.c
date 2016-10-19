@@ -135,7 +135,7 @@ static void jpeg_encode_yuv420(struct v4l4j_device *d, unsigned char *src, unsig
 	rgb_size = width * height * 3;
 	d->j->destmgr->next_output_byte = dst;
 	d->j->destmgr->free_in_buffer = rgb_size;
-	jpeg_set_quality(cinfo,d->j->jpeg_quality,TRUE);
+	jpeg_set_quality(cinfo, d->j->jpeg_quality, TRUE);
 
 #if JPEG_LIB_VERSION >= 70 
     cinfo->do_fancy_downsampling = FALSE;  // Without this, libjpeg8 (but not libjpeg8-turbo) crashes on ARM cpus
@@ -180,7 +180,7 @@ static inline void jpeg_encode_yuv422p(struct v4l4j_device *d, unsigned char *ds
 	// init JPEG dest mgr
 	d->j->destmgr->next_output_byte = dst;
 	d->j->destmgr->free_in_buffer = d->vdev->capture->imagesize;
-	jpeg_set_quality(cinfo, d->j->jpeg_quality,TRUE);
+	jpeg_set_quality(cinfo, d->j->jpeg_quality, TRUE);
 
 	dprint(LOG_JPEG, "[JPEG] Starting compression (%d bytes)\n", d->vdev->capture->imagesize);
 

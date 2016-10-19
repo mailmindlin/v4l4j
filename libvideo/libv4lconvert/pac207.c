@@ -85,7 +85,7 @@ static void init_pixart_decoder(void) {
 			val = 0;
 			len = 5;
 		}
-		table[i].is_abs = is_abs;
+		table[i].is_abs = (u8) is_abs;
 		table[i].val = val;
 		table[i].len = len;
 	}

@@ -318,19 +318,17 @@ static void v4lconvert_border_bayer_line_to_y(const u8 *bayer, const u8 *adjacen
 	if (start_with_green) {
 		/* First pixel */
 		if (blue_line) {
-			*y++ = (8453 * adjacent_bayer[0] + 16594 * bayer[0] +
-					3223 * bayer[1] + 524288) >> 15;
+			*y++ = (u8) (8453 * adjacent_bayer[0] + 16594 * bayer[0] + 3223 * bayer[1] + 524288) >> 15;
 		} else {
-			*y++ = (8453 * bayer[1] + 16594 * bayer[0] +
-					3223 * adjacent_bayer[0] + 524288) >> 15;
+			*y++ = (u8) (8453 * bayer[1] + 16594 * bayer[0] + 3223 * adjacent_bayer[0] + 524288) >> 15;
 		}
 		/* Second pixel */
 		t0 = bayer[0] + bayer[2] + adjacent_bayer[1];
 		t1 = adjacent_bayer[0] + adjacent_bayer[2];
 		if (blue_line)
-			*y++ = (4226 * t1 + 5531 * t0 + 3223 * bayer[1] + 524288) >> 15;
+			*y++ = (u8) (4226 * t1 + 5531 * t0 + 3223 * bayer[1] + 524288) >> 15;
 		else
-			*y++ = (8453 * bayer[1] + 5531 * t0 + 1611 * t1 + 524288) >> 15;
+			*y++ = (u8) (8453 * bayer[1] + 5531 * t0 + 1611 * t1 + 524288) >> 15;
 		bayer++;
 		adjacent_bayer++;
 		width -= 2;
@@ -338,11 +336,9 @@ static void v4lconvert_border_bayer_line_to_y(const u8 *bayer, const u8 *adjacen
 		/* First pixel */
 		t0 = bayer[1] + adjacent_bayer[0];
 		if (blue_line) {
-			*y++ = (8453 * adjacent_bayer[1] + 8297 * t0 +
-					3223 * bayer[0] + 524288) >> 15;
+			*y++ = (u8) (8453 * adjacent_bayer[1] + 8297 * t0 + 3223 * bayer[0] + 524288) >> 15;
 		} else {
-			*y++ = (8453 * bayer[0] + 8297 * t0 +
-					3223 * adjacent_bayer[1] + 524288) >> 15;
+			*y++ = (u8) (8453 * bayer[0] + 8297 * t0 + 3223 * adjacent_bayer[1] + 524288) >> 15;
 		}
 		width--;
 	}
@@ -350,28 +346,26 @@ static void v4lconvert_border_bayer_line_to_y(const u8 *bayer, const u8 *adjacen
 	if (blue_line) {
 		for ( ; width > 2; width -= 2) {
 			t0 = bayer[0] + bayer[2];
-			*y++ = (8453 * adjacent_bayer[1] + 16594 * bayer[1] +
-					1611 * t0 + 524288) >> 15;
+			*y++ = (u8) (8453 * adjacent_bayer[1] + 16594 * bayer[1] + 1611 * t0 + 524288) >> 15;
 			bayer++;
 			adjacent_bayer++;
 
 			t0 = bayer[0] + bayer[2] + adjacent_bayer[1];
 			t1 = adjacent_bayer[0] + adjacent_bayer[2];
-			*y++ = (4226 * t1 + 5531 * t0 + 3223 * bayer[1] + 524288) >> 15;
+			*y++ = (u8) (4226 * t1 + 5531 * t0 + 3223 * bayer[1] + 524288) >> 15;
 			bayer++;
 			adjacent_bayer++;
 		}
 	} else {
 		for ( ; width > 2; width -= 2) {
 			t0 = bayer[0] + bayer[2];
-			*y++ = (4226 * t0 + 16594 * bayer[1] +
-					3223 * adjacent_bayer[1] + 524288) >> 15;
+			*y++ = (u8) (4226 * t0 + 16594 * bayer[1] + 3223 * adjacent_bayer[1] + 524288) >> 15;
 			bayer++;
 			adjacent_bayer++;
 
 			t0 = bayer[0] + bayer[2] + adjacent_bayer[1];
 			t1 = adjacent_bayer[0] + adjacent_bayer[2];
-			*y++ = (8453 * bayer[1] + 5531 * t0 + 1611 * t1 + 524288) >> 15;
+			*y++ = (u8) (8453 * bayer[1] + 5531 * t0 + 1611 * t1 + 524288) >> 15;
 			bayer++;
 			adjacent_bayer++;
 		}
@@ -381,29 +375,23 @@ static void v4lconvert_border_bayer_line_to_y(const u8 *bayer, const u8 *adjacen
 		/* Second to last pixel */
 		t0 = bayer[0] + bayer[2];
 		if (blue_line) {
-			*y++ = (8453 * adjacent_bayer[1] + 16594 * bayer[1] +
-					1611 * t0 + 524288) >> 15;
+			*y++ = (u8) (8453 * adjacent_bayer[1] + 16594 * bayer[1] + 1611 * t0 + 524288) >> 15;
 		} else {
-			*y++ = (4226 * t0 + 16594 * bayer[1] +
-					3223 * adjacent_bayer[1] + 524288) >> 15;
+			*y++ = (u8) (4226 * t0 + 16594 * bayer[1] + 3223 * adjacent_bayer[1] + 524288) >> 15;
 		}
 		/* Last pixel */
 		t0 = bayer[1] + adjacent_bayer[2];
 		if (blue_line) {
-			*y++ = (8453 * adjacent_bayer[1] + 8297 * t0 +
-					3223 * bayer[2] + 524288) >> 15;
+			*y++ = (u8) (8453 * adjacent_bayer[1] + 8297 * t0 + 3223 * bayer[2] + 524288) >> 15;
 		} else {
-			*y++ = (8453 * bayer[2] + 8297 * t0 +
-					3223 * adjacent_bayer[1] + 524288) >> 15;
+			*y++ = (u8) (8453 * bayer[2] + 8297 * t0 + 3223 * adjacent_bayer[1] + 524288) >> 15;
 		}
 	} else {
 		/* Last pixel */
 		if (blue_line) {
-			*y++ = (8453 * adjacent_bayer[1] + 16594 * bayer[1] +
-					3223 * bayer[0] + 524288) >> 15;
+			*y++ = (u8) (8453 * adjacent_bayer[1] + 16594 * bayer[1] + 3223 * bayer[0] + 524288) >> 15;
 		} else {
-			*y++ = (8453 * bayer[0] + 16594 * bayer[1] +
-					3223 * adjacent_bayer[1] + 524288) >> 15;
+			*y++ = (u8) (8453 * bayer[0] + 16594 * bayer[1] + 3223 * adjacent_bayer[1] + 524288) >> 15;
 		}
 	}
 }
@@ -430,8 +418,8 @@ void v4lconvert_bayer_to_yuv420(const u8 *bayer, u8 *yuv, u32 width, u32 height,
 				int g  = bayer[x + 1];
 				g += bayer[x + width];
 				int r  = bayer[x + width + 1];
-				*udst++ = (-4878 * r - 4789 * g + 14456 * b + 4210688) >> 15;
-				*vdst++ = (14456 * r - 6052 * g -  2351 * b + 4210688) >> 15;
+				*udst++ = (u8) (-4878 * r - 4789 * g + 14456 * b + 4210688) >> 15;
+				*vdst++ = (u8) (14456 * r - 6052 * g -  2351 * b + 4210688) >> 15;
 			}
 			bayer += 2 * width;
 		}
@@ -445,8 +433,8 @@ void v4lconvert_bayer_to_yuv420(const u8 *bayer, u8 *yuv, u32 width, u32 height,
 				int g  = bayer[x + 1];
 				g += bayer[x + width];
 				int b  = bayer[x + width + 1];
-				*udst++ = (-4878 * r - 4789 * g + 14456 * b + 4210688) >> 15;
-				*vdst++ = (14456 * r - 6052 * g -  2351 * b + 4210688) >> 15;
+				*udst++ = (u8) (-4878 * r - 4789 * g + 14456 * b + 4210688) >> 15;
+				*vdst++ = (u8) (14456 * r - 6052 * g -  2351 * b + 4210688) >> 15;
 			}
 			bayer += 2 * width;
 		}
@@ -461,8 +449,8 @@ void v4lconvert_bayer_to_yuv420(const u8 *bayer, u8 *yuv, u32 width, u32 height,
 				b  = bayer[x + 1];
 				r  = bayer[x + width];
 				g += bayer[x + width + 1];
-				*udst++ = (-4878 * r - 4789 * g + 14456 * b + 4210688) >> 15;
-				*vdst++ = (14456 * r - 6052 * g -  2351 * b + 4210688) >> 15;
+				*udst++ = (u8) (-4878 * r - 4789 * g + 14456 * b + 4210688) >> 15;
+				*vdst++ = (u8) (14456 * r - 6052 * g -  2351 * b + 4210688) >> 15;
 			}
 			bayer += 2 * width;
 		}
@@ -479,8 +467,8 @@ void v4lconvert_bayer_to_yuv420(const u8 *bayer, u8 *yuv, u32 width, u32 height,
 				r  = bayer[x + 1];
 				b  = bayer[x + width];
 				g += bayer[x + width + 1];
-				*udst++ = (-4878 * r - 4789 * g + 14456 * b + 4210688) >> 15;
-				*vdst++ = (14456 * r - 6052 * g -  2351 * b + 4210688) >> 15;
+				*udst++ = (u8) (-4878 * r - 4789 * g + 14456 * b + 4210688) >> 15;
+				*vdst++ = (u8) (14456 * r - 6052 * g -  2351 * b + 4210688) >> 15;
 			}
 			bayer += 2 * width;
 		}
@@ -497,7 +485,7 @@ void v4lconvert_bayer_to_yuv420(const u8 *bayer, u8 *yuv, u32 width, u32 height,
 
 	/* reduce height by 2 because of the border */
 	for (height -= 2; height; height--) {
-		int t0, t1;
+		u8 t0, t1;
 		/* (width - 2) because of the border */
 		const u8 *bayer_end = bayer + (width - 2);
 
@@ -506,24 +494,24 @@ void v4lconvert_bayer_to_yuv420(const u8 *bayer, u8 *yuv, u32 width, u32 height,
 			/* Write first pixel */
 			t1 = bayer[0] + bayer[width * 2] + bayer[width + 1];
 			if (blue_line)
-				*ydst++ = (8453 * bayer[width] + 5516 * t1 + 1661 * t0 + 524288) >> 15;
+				*ydst++ = (u8) (8453 * bayer[width] + 5516 * t1 + 1661 * t0 + 524288) >> 15;
 			else
-				*ydst++ = (4226 * t0 + 5516 * t1 + 3223 * bayer[width] + 524288) >> 15;
+				*ydst++ = (u8) (4226 * t0 + 5516 * t1 + 3223 * bayer[width] + 524288) >> 15;
 
 			/* Write second pixel */
 			t1 = bayer[width] + bayer[width + 2];
 			if (blue_line)
-				*ydst++ = (4226 * t1 + 16594 * bayer[width + 1] + 1611 * t0 + 524288) >> 15;
+				*ydst++ = (u8) (4226 * t1 + 16594 * bayer[width + 1] + 1611 * t0 + 524288) >> 15;
 			else
-				*ydst++ = (4226 * t0 + 16594 * bayer[width + 1] + 1611 * t1 + 524288) >> 15;
+				*ydst++ = (u8) (4226 * t0 + 16594 * bayer[width + 1] + 1611 * t1 + 524288) >> 15;
 			bayer++;
 		} else {
 			/* Write first pixel */
 			t0 = bayer[0] + bayer[width * 2];
 			if (blue_line) {
-				*ydst++ = (8453 * bayer[width + 1] + 16594 * bayer[width] + 1661 * t0 + 524288) >> 15;
+				*ydst++ = (u8) (8453 * bayer[width + 1] + 16594 * bayer[width] + 1661 * t0 + 524288) >> 15;
 			} else {
-				*ydst++ = (4226 * t0 + 16594 * bayer[width] + 3223 * bayer[width + 1] + 524288) >> 15;
+				*ydst++ = (u8) (4226 * t0 + 16594 * bayer[width] + 3223 * bayer[width + 1] + 524288) >> 15;
 			}
 		}
 

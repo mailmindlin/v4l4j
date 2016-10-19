@@ -248,7 +248,7 @@ int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt) 
 	fmt->description[0] = faked_fmts[i] & 0xff;
 	fmt->description[1] = (faked_fmts[i] >> 8) & 0xff;
 	fmt->description[2] = (faked_fmts[i] >> 16) & 0xff;
-	fmt->description[3] = faked_fmts[i] >> 24;
+	fmt->description[3] = (u8) (faked_fmts[i] >> 24);
 	fmt->description[4] = '\0';
 	memset(fmt->reserved, 0, sizeof(fmt->reserved));
 
@@ -269,10 +269,7 @@ int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt) 
    
    Note grey scale formats start at 20 rather then 1-10, because we want to
    never autoselect them, unless they are the only choice */
-static int v4lconvert_get_rank(struct v4lconvert_data *data,
-	int src_index, int src_width, int src_height,
-	unsigned int dest_pixelformat)
-{
+static int v4lconvert_get_rank(struct v4lconvert_data *data, int src_index, int src_width, int src_height, unsigned int dest_pixelformat) {
 	int needed, rank = 0;
 
 	switch (dest_pixelformat) {

@@ -23,7 +23,7 @@
 
 #include "libv4lconvert-priv.h"
 
-#define CLAMP(x)	((x) < 0 ? 0 : ((x) > 255) ? 255 : (x))
+#define CLAMP(x)	(u8) ((x) < 0 ? 0 : ((x) > 255) ? 255 : (x))
 
 struct code_table {
 	int is_abs;
