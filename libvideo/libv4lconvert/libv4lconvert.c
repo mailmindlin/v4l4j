@@ -312,7 +312,7 @@ static int v4lconvert_do_try_format_uvc(struct v4lconvert_data *data,
 		struct v4l2_format *dest_fmt, struct v4l2_format *src_fmt)
 {
 	int rank;
-	unsigned int closest_fmt_size_diff = -1;
+	unsigned int closest_fmt_size_diff = -1u;
 	unsigned int best_framesize = 0;/* Just use the first format if no small enough one */
 	int best_format = 0;
 	int best_rank = 100;
@@ -368,7 +368,7 @@ static int v4lconvert_do_try_format(struct v4lconvert_data *data,
 		struct v4l2_format *dest_fmt, struct v4l2_format *src_fmt)
 {
 	int i, size_x_diff, size_y_diff, rank, best_rank = 0;
-	unsigned int size_diff, closest_fmt_size_diff = -1;
+	unsigned int size_diff, closest_fmt_size_diff = -1u;
 	unsigned int desired_pixfmt = dest_fmt->fmt.pix.pixelformat;
 	struct v4l2_format try_fmt, closest_fmt = { .type = 0 };
 
@@ -1409,7 +1409,7 @@ static void v4lconvert_get_framesizes(struct v4lconvert_data *data, u32 pixelfor
 			data->framesizes[data->no_framesizes].type = frmsize.type;
 			/* We use the pixel_format member to store a bitmask of all
 			   supported src_formats which can do this size */
-			data->framesizes[data->no_framesizes].pixel_format = 1 << index;
+			data->framesizes[data->no_framesizes].pixel_format = 1u << index;
 
 			switch (frmsize.type) {
 			case V4L2_FRMSIZE_TYPE_DISCRETE:
@@ -1422,7 +1422,7 @@ static void v4lconvert_get_framesizes(struct v4lconvert_data *data, u32 pixelfor
 			}
 			data->no_framesizes++;
 		} else {
-			data->framesizes[j].pixel_format |= 1 << index;
+			data->framesizes[j].pixel_format |= 1u << index;
 		}
 	}
 }
@@ -1446,8 +1446,8 @@ int v4lconvert_enum_framesizes(struct v4lconvert_data *data, struct v4l2_frmsize
 	case V4L2_FRMSIZE_TYPE_DISCRETE:
 		frmsize->discrete = data->framesizes[frmsize->index].discrete;
 		/* Apply the same rounding algorithm as v4lconvert_try_format */
-		frmsize->discrete.width &= ~7;
-		frmsize->discrete.height &= ~1;
+		frmsize->discrete.width &= ~7u;
+		frmsize->discrete.height &= ~1u;
 		break;
 	case V4L2_FRMSIZE_TYPE_CONTINUOUS:
 	case V4L2_FRMSIZE_TYPE_STEPWISE:
