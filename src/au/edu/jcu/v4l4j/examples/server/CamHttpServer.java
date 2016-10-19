@@ -202,8 +202,7 @@ public class CamHttpServer implements Runnable, CaptureCallback {
 
 		// Wait for new incoming connection
 		Socket clientSocket = serverSocket.accept();
-		System.out.println(
-				"Connection from " + clientSocket.getInetAddress().getHostAddress() + ":" + clientSocket.getPort());
+		System.out.println("Connection from " + clientSocket.getInetAddress().getHostAddress() + ":" + clientSocket.getPort());
 
 		// Create input/output streams then check what page
 		// was requested

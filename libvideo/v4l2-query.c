@@ -543,7 +543,7 @@ static void add_supported_std(struct video_input_info *vi, int std){
 	vi->supported_stds[(vi->nb_stds - 1)] = std;
 }
 
-int check_inputs_v4l2(struct video_device *vdev){
+int check_inputs_v4l2(struct video_device *vdev) {
 	struct v4l2_input vi;
 	int i, ret = 0;
 	struct device_info *di = vdev->info;
