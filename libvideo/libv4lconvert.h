@@ -77,7 +77,6 @@ LIBV4L_PUBLIC int v4lconvert_try_format(struct v4lconvert_data *data,
    supported destination formats are listed */
 LIBV4L_PUBLIC int v4lconvert_enum_fmt(struct v4lconvert_data *data,
 		struct v4l2_fmtdesc *fmt);
-
 /* Is conversion necessary or can the app use the data directly? */
 LIBV4L_PUBLIC int v4lconvert_needs_conversion(struct v4lconvert_data *data,
 		const struct v4l2_format *src_fmt,   /* in */
@@ -88,7 +87,7 @@ LIBV4L_PUBLIC int v4lconvert_needs_conversion(struct v4lconvert_data *data,
 LIBV4L_PUBLIC int v4lconvert_convert(struct v4lconvert_data *data,
 		const struct v4l2_format *src_fmt,  /* in */
 		const struct v4l2_format *dest_fmt, /* in */
-		unsigned char *src, int src_size, unsigned char *dest, int dest_size);
+		unsigned char *src, unsigned int src_size, unsigned char *dest, unsigned int dest_size);
 
 /* get a string describing the last error */
 LIBV4L_PUBLIC const char *v4lconvert_get_error_message(struct v4lconvert_data *data);

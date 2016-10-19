@@ -21,7 +21,7 @@
 #include "libv4lconvert-priv.h"
 #include "jpeg_memsrcdest.h"
 
-int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data, u8 *src, int src_size, u8 *dest, struct v4l2_format *fmt, unsigned int dest_pix_fmt, int flags) {
+int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data, u8 *src, unsigned int src_size, u8 *dest, struct v4l2_format *fmt, unsigned int dest_pix_fmt, int flags) {
 	int result = 0;
 	u8 *components[3];
 	unsigned int header_width, header_height;
@@ -104,15 +104,13 @@ int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data, u8 *src, int s
 	return 0;
 }
 
-static void jerr_error_exit(j_common_ptr cinfo)
-{
+static void jerr_error_exit(j_common_ptr cinfo) {
 	struct v4lconvert_data *data = cinfo->client_data;
 
 	longjmp(data->jerr_jmp_state, data->jerr_errno);
 }
 
-static void jerr_emit_message(j_common_ptr cinfo, int msg_level)
-{
+static void jerr_emit_message(j_common_ptr cinfo, int msg_level) {
 	char buffer[JMSG_LENGTH_MAX];
 	struct v4lconvert_data *data = cinfo->client_data;
 
@@ -164,24 +162,17 @@ static void init_libjpeg_cinfo(struct v4lconvert_data *data) {
 	data->cinfo_initialized = 1;
 }
 
-static int decode_libjpeg_h_samp1(struct v4lconvert_data *data,
-	u8 *ydest, u8 *udest, u8 *vdest,
-	int v_samp)
-{
+static int decode_libjpeg_h_samp1(struct v4lconvert_data *data, u8 *ydest, u8 *udest, u8 *vdest, unsigned int v_samp) {
 	struct jpeg_decompress_struct *cinfo = &data->cinfo;
-	int x, y;
-	u8 *uv_buf;
 	u32 width = cinfo->image_width;
 	JSAMPROW y_rows[16], u_rows[8], v_rows[8];
 	JSAMPARRAY rows[3] = { y_rows, u_rows, v_rows };
 
-	uv_buf = v4lconvert_alloc_buffer(width * 16,
-					 &data->convert_pixfmt_buf,
-					 &data->convert_pixfmt_buf_size);
+	u8* uv_buf = v4lconvert_alloc_buffer(width * 16, &data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
 	if (!uv_buf)
 		return v4lconvert_oom_error(data);
 
-	for (y = 0; y < 8; y++) {
+	for (unsigned int y = 0; y < 8; y++) {
 		u_rows[y] = uv_buf;
 		uv_buf += width;
 		v_rows[y] = uv_buf;
@@ -190,12 +181,11 @@ static int decode_libjpeg_h_samp1(struct v4lconvert_data *data,
 	uv_buf -= width * 16;
 
 	while (cinfo->output_scanline < cinfo->image_height) {
-		for (y = 0; y < 8 * v_samp; y++) {
+		for (unsigned int y = 0; y < 8 * v_samp; y++) {
 			y_rows[y] = ydest;
 			ydest += cinfo->image_width;
 		}
-		y = jpeg_read_raw_data(cinfo, rows, 8 * v_samp);
-		if (y != 8 * v_samp)
+		if (jpeg_read_raw_data(cinfo, rows, 8 * v_samp) != 8 * v_samp)
 			return -1;
 
 		/* For v_samp == 1 skip copying uv vals every other time */
@@ -203,12 +193,12 @@ static int decode_libjpeg_h_samp1(struct v4lconvert_data *data,
 			continue;
 
 		/* Copy over every other u + v pixel for 8 lines */
-		for (y = 0; y < 8; y++) {
-			for (x = 0; x < width; x += 2) {
+		for (unsigned int y = 0; y < 8; y++) {
+			for (unsigned int x = 0; x < width; x += 2) {
 				*udest++ = *uv_buf++;
 				uv_buf++;
 			}
-			for (x = 0; x < width; x += 2) {
+			for (unsigned int x = 0; x < width; x += 2) {
 				*vdest++ = *uv_buf++;
 				uv_buf++;
 			}
@@ -218,12 +208,9 @@ static int decode_libjpeg_h_samp1(struct v4lconvert_data *data,
 	return 0;
 }
 
-static int decode_libjpeg_h_samp2(struct v4lconvert_data *data,
-	u8 *ydest, u8 *udest, u8 *vdest,
-	int v_samp)
-{
+static int decode_libjpeg_h_samp2(struct v4lconvert_data *data, u8 *ydest, u8 *udest, u8 *vdest, unsigned int v_samp) {
 	struct jpeg_decompress_struct *cinfo = &data->cinfo;
-	int y;
+	unsigned int y;
 	u32 width = cinfo->image_width;
 	JSAMPROW y_rows[16], u_rows[8], v_rows[8];
 	JSAMPARRAY rows[3] = { y_rows, u_rows, v_rows };
@@ -254,10 +241,7 @@ static int decode_libjpeg_h_samp2(struct v4lconvert_data *data,
 	return 0;
 }
 
-int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data,
-	u8 *src, int src_size, u8 *dest,
-	struct v4l2_format *fmt, unsigned int dest_pix_fmt)
-{
+int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data, u8 *src, unsigned int src_size, u8 *dest, struct v4l2_format *fmt, unsigned int dest_pix_fmt) {
 	u32 width  = fmt->fmt.pix.width;
 	u32 height = fmt->fmt.pix.height;
 	int result = 0;
@@ -316,7 +300,7 @@ int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data,
 			v4lconvert_swap_rgb(dest, dest, width, height);
 #endif
 	} else {
-		int h_samp, v_samp;
+		unsigned int h_samp, v_samp;
 		u8 *udest, *vdest;
 
 		if (data->cinfo.max_h_samp_factor == 2 &&
@@ -367,8 +351,7 @@ int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data,
 
 		/* We don't want any padding as that may overflow our dest */
 		if (width % (8 * h_samp) || height % (8 * v_samp)) {
-			V4LCONVERT_ERR(
-				"resolution is not a multiple of dctsize");
+			V4LCONVERT_ERR("resolution is not a multiple of dctsize");
 			errno = EIO;
 			return -1;
 		}
@@ -387,11 +370,9 @@ int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data,
 		/* Make libjpeg errors report that we've got some data */
 		data->jerr_errno = EPIPE;
 		if (h_samp == 1) {
-			result = decode_libjpeg_h_samp1(data, dest, udest,
-							vdest, v_samp);
+			result = decode_libjpeg_h_samp1(data, dest, udest, vdest, v_samp);
 		} else {
-			result = decode_libjpeg_h_samp2(data, dest, udest,
-							vdest, v_samp);
+			result = decode_libjpeg_h_samp2(data, dest, udest, vdest, v_samp);
 		}
 		if (result)
 			jpeg_abort_decompress(&data->cinfo);

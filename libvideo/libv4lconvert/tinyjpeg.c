@@ -313,14 +313,10 @@ static void resync(struct jdec_private *priv);
  *
  * If the code is not present for any reason, -1 is return.
  */
-static int get_next_huffman_code(struct jdec_private *priv, struct huffman_table *huffman_table)
-{
-	int value, hcode;
-	unsigned int extra_nbits, nbits;
-	uint16_t *slowtable;
-
+static int get_next_huffman_code(struct jdec_private *priv, struct huffman_table *huffman_table) {
+	unsigned int hcode;
 	look_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, HUFFMAN_HASH_NBITS, hcode);
-	value = huffman_table->lookup[hcode];
+	int value = huffman_table->lookup[hcode];
 	if (value >= 0) {
 		unsigned int code_size = huffman_table->code_size[value];
 
@@ -329,11 +325,11 @@ static int get_next_huffman_code(struct jdec_private *priv, struct huffman_table
 	}
 
 	/* Decode more bits each time ... */
-	for (extra_nbits = 0; extra_nbits < 16 - HUFFMAN_HASH_NBITS; extra_nbits++) {
-		nbits = HUFFMAN_HASH_NBITS + 1 + extra_nbits;
+	for (unsigned int extra_nbits = 0; extra_nbits < 16 - HUFFMAN_HASH_NBITS; extra_nbits++) {
+		unsigned int nbits = HUFFMAN_HASH_NBITS + 1 + extra_nbits;
 
 		look_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, nbits, hcode);
-		slowtable = huffman_table->slowtable[extra_nbits];
+		uint16_t* slowtable = huffman_table->slowtable[extra_nbits];
 		/* Search if the code is in this array */
 		while (slowtable[0]) {
 			if (slowtable[0] == hcode) {
@@ -343,8 +339,7 @@ static int get_next_huffman_code(struct jdec_private *priv, struct huffman_table
 			slowtable += 2;
 		}
 	}
-	snprintf(priv->error_string, sizeof(priv->error_string),
-			"unknown huffman code: %08x\n", (unsigned int)hcode);
+	snprintf(priv->error_string, sizeof(priv->error_string), "unknown huffman code: %08x\n", hcode);
 	longjmp(priv->jump_state, -EIO);
 	return 0;
 }
@@ -355,10 +350,8 @@ static int get_next_huffman_code(struct jdec_private *priv, struct huffman_table
  * The table coefficients is already dezigzaged at the end of the operation.
  *
  */
-static void process_Huffman_data_unit(struct jdec_private *priv, int component)
-{
+static void process_Huffman_data_unit(struct jdec_private *priv, int component) {
 	u8 j;
-	unsigned int huff_code;
 	u8 size_val, count_0;
 
 	struct component *c = &priv->component_infos[component];
@@ -368,7 +361,7 @@ static void process_Huffman_data_unit(struct jdec_private *priv, int component)
 	memset(DCT, 0, sizeof(DCT));
 
 	/* DC coefficient decoding */
-	huff_code = get_next_huffman_code(priv, c->DC_table);
+	unsigned int huff_code = get_next_huffman_code(priv, c->DC_table);
 	if (huff_code) {
 		get_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, huff_code, DCT[0]);
 		DCT[0] += c->previous_DC;
@@ -417,8 +410,7 @@ static void process_Huffman_data_unit(struct jdec_private *priv, int component)
  * code_size will be used to known how many bits this symbol is encoded.
  * slowtable will be used when the first lookup didn't give the result.
  */
-static int build_huffman_table(struct jdec_private *priv, const u8 *bits, const u8 *vals, struct huffman_table *table)
-{
+static int build_huffman_table(struct jdec_private *priv, const u8 *bits, const u8 *vals, struct huffman_table *table) {
 	unsigned int i, j, code, code_size, val, nbits;
 	u8 huffsize[257], *hz;
 	unsigned int huffcode[257], *hc;
@@ -498,8 +490,7 @@ static int build_huffman_table(struct jdec_private *priv, const u8 *bits, const 
 	return 0;
 }
 
-static int build_default_huffman_tables(struct jdec_private *priv)
-{
+static int build_default_huffman_tables(struct jdec_private *priv) {
 	if ((priv->flags & TINYJPEG_FLAGS_MJPEG_TABLE)
 			&& priv->default_huffman_table_initialized)
 		return 0;
@@ -535,8 +526,7 @@ static int build_default_huffman_tables(struct jdec_private *priv)
  *
  ******************************************************************************/
 
-static u8 clamp(int i)
-{
+static u8 clamp(int i) {
 	if (i < 0)
 		return 0;
 	if (i > 255)
@@ -551,8 +541,7 @@ static u8 clamp(int i)
  *  | 1 |
  *  `---'
  */
-static void YCrCB_to_YUV420P_1x1(struct jdec_private *priv)
-{
+static void YCrCB_to_YUV420P_1x1(struct jdec_private *priv) {
 	const u8 *s, *y;
 	u8 *p;
 	int i, j;
@@ -590,8 +579,7 @@ static void YCrCB_to_YUV420P_1x1(struct jdec_private *priv)
  *  | 1 | 2 |
  *  `-------'
  */
-static void YCrCB_to_YUV420P_2x1(struct jdec_private *priv)
-{
+static void YCrCB_to_YUV420P_2x1(struct jdec_private *priv) {
 	u8 *p;
 	const u8 *s, *y1;
 	unsigned int i;
@@ -630,8 +618,7 @@ static void YCrCB_to_YUV420P_2x1(struct jdec_private *priv)
  *  | 2 |
  *  `---'
  */
-static void YCrCB_to_YUV420P_1x2(struct jdec_private *priv)
-{
+static void YCrCB_to_YUV420P_1x2(struct jdec_private *priv) {
 	const u8 *s, *y;
 	u8 *p;
 	int i, j;
@@ -669,8 +656,7 @@ static void YCrCB_to_YUV420P_1x2(struct jdec_private *priv)
  *  | 3 | 4 |
  *  `-------'
  */
-static void YCrCB_to_YUV420P_2x2(struct jdec_private *priv)
-{
+static void YCrCB_to_YUV420P_2x2(struct jdec_private *priv) {
 	u8 *p;
 	const u8 *s, *y1;
 	unsigned int i;
@@ -706,8 +692,7 @@ static void YCrCB_to_YUV420P_2x2(struct jdec_private *priv)
  *  | 1 |
  *  `---'
  */
-static void YCrCB_to_RGB24_1x1(struct jdec_private *priv)
-{
+static void YCrCB_to_RGB24_1x1(struct jdec_private *priv) {
 	const u8 *Y, *Cb, *Cr;
 	u8 *p;
 	int i, j;
@@ -999,26 +984,20 @@ static void YCrCB_to_RGB24_1x2(struct jdec_private *priv)
  *  | 2 |
  *  `---'
  */
-static void YCrCB_to_BGR24_1x2(struct jdec_private *priv)
-{
-	const u8 *Y, *Cb, *Cr;
-	u8 *p, *p2;
-	int i, j;
-	int offset_to_next_row;
-
+static void YCrCB_to_BGR24_1x2(struct jdec_private *priv) {
 #define SCALEBITS       10
 #define ONE_HALF        (1UL << (SCALEBITS - 1))
 #define FIX(x)          ((int)((x) * (1UL << SCALEBITS) + 0.5))
 
-	p = priv->plane[0];
-	p2 = priv->plane[0] + priv->width * 3;
-	Y = priv->Y;
-	Cb = priv->Cb;
-	Cr = priv->Cr;
-	offset_to_next_row = 2 * priv->width * 3 - 8 * 3;
+	u8* p = priv->plane[0];
+	u8* p2 = priv->plane[0] + priv->width * 3;
+	const u8* Y = priv->Y;
+	const u8* Cb = priv->Cb;
+	const u8* Cr = priv->Cr;
+	unsigned int offset_to_next_row = 2 * priv->width * 3 - 8 * 3;
 
-	for (i = 0; i < 8; i++) {
-		for (j = 0; j < 8; j++) {
+	for (unsigned int i = 0; i < 8; i++) {
+		for (unsigned int j = 0; j < 8; j++) {
 			int y, cb, cr;
 			int add_r, add_g, add_b;
 			int r, g , b;
@@ -1146,12 +1125,9 @@ static void YCrCB_to_RGB24_2x2(struct jdec_private *priv)
  *  | 3 | 4 |
  *  `-------'
  */
-static void YCrCB_to_BGR24_2x2(struct jdec_private *priv)
-{
+static void YCrCB_to_BGR24_2x2(struct jdec_private *priv) {
 	const u8 *Y, *Cb, *Cr;
 	u8 *p, *p2;
-	int i, j;
-	int offset_to_next_row;
 
 #define SCALEBITS       10
 #define ONE_HALF        (1UL << (SCALEBITS - 1))
@@ -1162,10 +1138,10 @@ static void YCrCB_to_BGR24_2x2(struct jdec_private *priv)
 	Y = priv->Y;
 	Cb = priv->Cb;
 	Cr = priv->Cr;
-	offset_to_next_row = (priv->width * 3 * 2) - 16 * 3;
+	u32 offset_to_next_row = (priv->width * 3 * 2) - 16 * 3;
 
-	for (i = 0; i < 8; i++) {
-		for (j = 0; j < 8; j++) {
+	for (unsigned i = 0; i < 8; i++) {
+		for (unsigned j = 0; j < 8; j++) {
 			int y, cb, cr;
 			int add_r, add_g, add_b;
 			int r, g , b;
@@ -1226,8 +1202,7 @@ static void YCrCB_to_BGR24_2x2(struct jdec_private *priv)
  *  | 1 |
  *  `---'
  */
-static void YCrCB_to_Grey_1x1(struct jdec_private *priv)
-{
+static void YCrCB_to_Grey_1x1(struct jdec_private *priv) {
 	const u8 *y;
 	u8 *p;
 	unsigned int i;
@@ -1250,8 +1225,7 @@ static void YCrCB_to_Grey_1x1(struct jdec_private *priv)
  *  | 1 | 2 |
  *  `-------'
  */
-static void YCrCB_to_Grey_2x1(struct jdec_private *priv)
-{
+static void YCrCB_to_Grey_2x1(struct jdec_private *priv) {
 	const u8 *y;
 	u8 *p;
 	unsigned int i;

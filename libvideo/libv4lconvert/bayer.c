@@ -43,7 +43,7 @@
 
 /* inspired by OpenCV's Bayer decoding */
 static void v4lconvert_border_bayer_line_to_bgr24(const u8 *bayer, const u8 *adjacent_bayer, u8 *bgr, u32 width, int start_with_green, int blue_line) {
-	int t0, t1;
+	u8 t0, t1;
 
 	if (start_with_green) {
 		/* First pixel */
@@ -169,7 +169,7 @@ static void bayer_to_rgbbgr24(const u8 *bayer, u8 *bgr, u32 width, u32 height, i
 
 	/* reduce height by 2 because of the special case top/bottom line */
 	for (height -= 2; height; height--) {
-		int t0, t1;
+		u8 t0, t1;
 		/* (width - 2) because of the border */
 		const u8 *bayer_end = bayer + (width - 2);
 

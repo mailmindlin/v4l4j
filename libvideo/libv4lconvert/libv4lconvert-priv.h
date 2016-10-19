@@ -61,11 +61,11 @@ struct v4lconvert_data {
 	unsigned int no_framesizes;
 	int bandwidth;
 	int fps;
-	int convert1_buf_size;
-	int convert2_buf_size;
-	int rotate90_buf_size;
-	int flip_buf_size;
-	int convert_pixfmt_buf_size;
+	unsigned int convert1_buf_size;
+	unsigned int convert2_buf_size;
+	unsigned int rotate90_buf_size;
+	unsigned int flip_buf_size;
+	unsigned int convert_pixfmt_buf_size;
 	u8 *convert1_buf;
 	u8 *convert2_buf;
 	u8 *rotate90_buf;
@@ -96,7 +96,7 @@ struct v4lconvert_pixfmt {
 
 void v4lconvert_fixup_fmt(struct v4l2_format *fmt);
 
-u8 *v4lconvert_alloc_buffer(int needed, u8 **buf, int *buf_size);
+u8 *v4lconvert_alloc_buffer(unsigned int needed, u8 **buf, unsigned int *buf_size);
 
 int v4lconvert_oom_error(struct v4lconvert_data *data);
 
@@ -158,9 +158,9 @@ void v4lconvert_sn9c20x_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height,
 
 int v4lconvert_se401_to_rgb24(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dest, u32 width, u32 height);
 
-int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data, u8 *src, int src_size, u8 *dest, struct v4l2_format *fmt, unsigned int dest_pix_fmt, int flags);
+int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data, u8 *src, unsigned int src_size, u8 *dest, struct v4l2_format *fmt, unsigned int dest_pix_fmt, int flags);
 
-int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data, u8 *src, int src_size, u8 *dest, struct v4l2_format *fmt, unsigned int dest_pix_fmt);
+int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data, u8 *src, unsigned int src_size, u8 *dest, struct v4l2_format *fmt, unsigned int dest_pix_fmt);
 
 int v4lconvert_decode_jpgl(const u8 *src, u32 src_size, unsigned int dest_pix_fmt, u8 *dest, u32 width, u32 height);
 
@@ -168,11 +168,11 @@ void v4lconvert_decode_spca561(const u8 *src, u8 *dst, u32 width, u32 height);
 
 void v4lconvert_decode_sn9c10x(const u8 *src, u8 *dst, u32 width, u32 height);
 
-int v4lconvert_decode_pac207(struct v4lconvert_data *data, const u8 *inp, int src_size, u8 *outp, u32 width, u32 height);
+int v4lconvert_decode_pac207(struct v4lconvert_data *data, const u8 *inp, unsigned int src_size, u8 *outp, u32 width, u32 height);
 
 int v4lconvert_decode_mr97310a(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dst, u32 width, u32 height);
 
-int v4lconvert_decode_jl2005bcd(struct v4lconvert_data *data, const u8 *src, int src_size, u8 *dest, u32 width, u32 height);
+int v4lconvert_decode_jl2005bcd(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dest, u32 width, u32 height);
 
 void v4lconvert_decode_sn9c2028(const u8 *src, u8 *dst, u32 width, u32 height);
 

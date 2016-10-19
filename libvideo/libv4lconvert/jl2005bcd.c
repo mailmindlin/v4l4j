@@ -50,7 +50,7 @@ static int find_eoi(struct v4lconvert_data *data, const u8 *jpeg_data, unsigned 
 }
 
 
-int v4lconvert_decode_jl2005bcd(struct v4lconvert_data *data, const u8 *src, int src_size, u8 *dest, u32 width, u32 height) {
+int v4lconvert_decode_jl2005bcd(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dest, u32 width, u32 height) {
 	u8 jpeg_stripe[50000];
 	int q;
 	struct jpeg_compress_struct cinfo;

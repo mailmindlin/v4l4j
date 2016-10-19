@@ -38,15 +38,11 @@ static struct {
 	signed char val;
 } table[256];
 
-static void init_pixart_decoder(void)
-{
-	int i;
-	int is_abs, val, len;
-
-	for (i = 0; i < 256; i++) {
-		is_abs = 0;
-		val = 0;
-		len = 0;
+static void init_pixart_decoder(void) {
+	for (unsigned i = 0; i < 256; i++) {
+		u8 is_abs = 0;
+		signed char val = 0;
+		u8 len = 0;
 		if ((i & 0xC0) == 0) {
 			/* code 00 */
 			val = 0;
@@ -96,25 +92,17 @@ static void init_pixart_decoder(void)
 	decoder_initialized = 1;
 }
 
-static inline u8 getByte(const u8 *inp,
-		unsigned int bitpos)
-{
-	const u8 *addr;
-
-	addr = inp + (bitpos >> 3);
-	return (addr[0] << (bitpos & 7)) | (addr[1] >> (8 - (bitpos & 7)));
+static inline u8 getByte(const u8 *inp, unsigned int bitpos) {
+	const u8 *addr = inp + (bitpos >> 3);
+	return (u8) (addr[0] << (bitpos & 7)) | (addr[1] >> (8 - (bitpos & 7)));
 }
 
-static inline unsigned short getShort(const u8 *pt)
-{
-	return ((pt[0] << 8) | pt[1]);
+static inline unsigned short getShort(const u8 *pt) {
+	return (unsigned short) ((pt[0] << 8) | pt[1]);
 }
 
-static int
-pac_decompress_row(const u8 *inp, u8 *outp, u32 width, int step_size, int abs_bits) {
+static int pac_decompress_row(const u8 *inp, u8 *outp, u32 width, u8 step_size, u8 abs_bits) {
 	int val;
-	int bitpos;
-	u8 code;
 
 	if (!decoder_initialized)
 		init_pixart_decoder();
@@ -122,13 +110,13 @@ pac_decompress_row(const u8 *inp, u8 *outp, u32 width, int step_size, int abs_bi
 	/* first two pixels are stored as raw 8-bit */
 	*outp++ = inp[2];
 	*outp++ = inp[3];
-	bitpos = 32;
+	unsigned int bitpos = 32;
 
 	/* main decoding loop */
 	for (unsigned int col = 2; col < width; col++) {
 		/* get bitcode */
 
-		code = getByte(inp, bitpos);
+		u8 code = getByte(inp, bitpos);
 		bitpos += table[code].len;
 
 		/* calculate pixel value */
@@ -148,7 +136,7 @@ pac_decompress_row(const u8 *inp, u8 *outp, u32 width, int step_size, int abs_bi
 	return 2 * ((bitpos + 15) / 16);
 }
 
-int v4lconvert_decode_pac207(struct v4lconvert_data *data, const u8 *inp, int src_size, u8 *outp, u32 width, u32 height) {
+int v4lconvert_decode_pac207(struct v4lconvert_data *data, const u8 *inp, unsigned int src_size, u8 *outp, u32 width, u32 height) {
 	/* we should received a whole frame with header and EOL marker
 	   in myframe->data and return a GBRG pattern in frame->tmpbuffer
 	   remove the header then copy line by line EOL is set with 0x0f 0xf0 marker

@@ -65,8 +65,7 @@ int tinyjpeg_decode(struct jdec_private *priv, int pixel_format);
 const char *tinyjpeg_get_errorstring(struct jdec_private *priv);
 void tinyjpeg_get_size(struct jdec_private *priv, unsigned int *width, unsigned int *height);
 int tinyjpeg_get_components(struct jdec_private *priv, u8 **components);
-int tinyjpeg_set_components(struct jdec_private *priv, u8 **components,
-				unsigned int ncomponents);
+int tinyjpeg_set_components(struct jdec_private *priv, u8 **components, unsigned int ncomponents);
 int tinyjpeg_set_flags(struct jdec_private *priv, int flags);
 
 #ifdef __cplusplus

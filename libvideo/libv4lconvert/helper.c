@@ -140,9 +140,7 @@ static int v4lconvert_helper_write(struct v4lconvert_data *data,
 	return 0;
 }
 
-static int v4lconvert_helper_read(struct v4lconvert_data *data, void *b,
-		size_t count)
-{
+static int v4lconvert_helper_read(struct v4lconvert_data *data, void *b, size_t count) {
 	u8 *buf = b;
 	size_t ret, r = 0;
 
@@ -165,12 +163,7 @@ static int v4lconvert_helper_read(struct v4lconvert_data *data, void *b,
 	return 0;
 }
 
-int v4lconvert_helper_decompress(struct v4lconvert_data *data,
-		const char *helper, const u8 *src, int src_size,
-		u8 *dest, int dest_size, u32 width, u32 height, int flags)
-{
-	int r;
-
+int v4lconvert_helper_decompress(struct v4lconvert_data *data, const char *helper, const u8 *src, unsigned int src_size, u8 *dest, unsigned int dest_size, u32 width, u32 height, int flags) {
 	if (data->decompress_pid == -1) {
 		if (v4lconvert_helper_start(data, helper))
 			return -1;
@@ -190,7 +183,8 @@ int v4lconvert_helper_decompress(struct v4lconvert_data *data,
 
 	if (v4lconvert_helper_write(data, src, src_size))
 		return -1;
-
+	
+	int r;
 	if (v4lconvert_helper_read(data, &r, sizeof(int)))
 		return -1;
 
@@ -207,8 +201,7 @@ int v4lconvert_helper_decompress(struct v4lconvert_data *data,
 	return v4lconvert_helper_read(data, dest, r);
 }
 
-void v4lconvert_helper_cleanup(struct v4lconvert_data *data)
-{
+void v4lconvert_helper_cleanup(struct v4lconvert_data *data) {
 	int status;
 
 	if (data->decompress_pid != -1) {
