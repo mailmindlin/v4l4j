@@ -613,8 +613,7 @@ int main(int argc, char *argv[]) {
 		if (dest_size > sizeof(dest_buf)) {
 			fprintf(stderr, "%s: error: dest_buf too small, need: %d\n", argv[0], dest_size);
 			dest_size = (unsigned) -1;
-		} else if (v4lconvert_ov511_to_yuv420(src_buf, dest_buf, width, height,
-					yvu, src_size))
+		} else if (v4lconvert_ov511_to_yuv420(src_buf, dest_buf, width, height, yvu, src_size))
 			dest_size = (unsigned) -1;
 
 		if (v4lconvert_helper_write(STDOUT_FILENO, &dest_size, sizeof(int),

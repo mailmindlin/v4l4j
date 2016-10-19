@@ -25,8 +25,8 @@
 
 
 static void v4lconvert_reduceandcrop_rgbbgr24(u8 *src, u8 *dest, const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt) {
-	int startx = src_fmt->fmt.pix.width / 2 - dest_fmt->fmt.pix.width;
-	int starty = src_fmt->fmt.pix.height / 2 - dest_fmt->fmt.pix.height;
+	unsigned int startx = src_fmt->fmt.pix.width / 2 - dest_fmt->fmt.pix.width;
+	unsigned int starty = src_fmt->fmt.pix.height / 2 - dest_fmt->fmt.pix.height;
 
 	src += starty * src_fmt->fmt.pix.bytesperline + 3 * startx;
 
@@ -43,8 +43,8 @@ static void v4lconvert_reduceandcrop_rgbbgr24(u8 *src, u8 *dest, const struct v4
 }
 
 static void v4lconvert_crop_rgbbgr24(u8 *src, u8 *dest, const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt) {
-	int startx = (src_fmt->fmt.pix.width - dest_fmt->fmt.pix.width) / 2;
-	int starty = (src_fmt->fmt.pix.height - dest_fmt->fmt.pix.height) / 2;
+	unsigned int startx = (src_fmt->fmt.pix.width - dest_fmt->fmt.pix.width) / 2;
+	unsigned int starty = (src_fmt->fmt.pix.height - dest_fmt->fmt.pix.height) / 2;
 
 	src += starty * src_fmt->fmt.pix.bytesperline + 3 * startx;
 
@@ -58,8 +58,8 @@ static void v4lconvert_crop_rgbbgr24(u8 *src, u8 *dest, const struct v4l2_format
 static void v4lconvert_reduceandcrop_yuv420(u8 *src, u8 *dest, const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt) {
 	unsigned int dest_height_half = dest_fmt->fmt.pix.height / 2;
 	unsigned int dest_width_half = dest_fmt->fmt.pix.width / 2;
-	int startx = (src_fmt->fmt.pix.width / 2 - dest_fmt->fmt.pix.width) & ~1;
-	int starty = (src_fmt->fmt.pix.height / 2 - dest_fmt->fmt.pix.height) & ~1;
+	unsigned int startx = (src_fmt->fmt.pix.width / 2 - dest_fmt->fmt.pix.width) & ~1u;
+	unsigned int starty = (src_fmt->fmt.pix.height / 2 - dest_fmt->fmt.pix.height) & ~1u;
 	u8 *mysrc, *mysrc2;
 
 	/* Y */
@@ -74,8 +74,7 @@ static void v4lconvert_reduceandcrop_yuv420(u8 *src, u8 *dest, const struct v4l2
 	}
 
 	/* U */
-	mysrc = src + src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline
-		+ (starty / 2) * src_fmt->fmt.pix.bytesperline / 2 + startx / 2;
+	mysrc = src + src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline + (starty / 2) * src_fmt->fmt.pix.bytesperline / 2 + startx / 2;
 	for (unsigned int y = 0; y < dest_height_half; y++) {
 		mysrc2 = mysrc;
 		for (unsigned int x = 0; x < dest_width_half; x++) {
@@ -86,8 +85,7 @@ static void v4lconvert_reduceandcrop_yuv420(u8 *src, u8 *dest, const struct v4l2
 	}
 
 	/* V */
-	mysrc = src + src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline * 5 / 4
-		+ (starty / 2) * src_fmt->fmt.pix.bytesperline / 2 + startx / 2;
+	mysrc = src + src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline * 5 / 4 + (starty / 2) * src_fmt->fmt.pix.bytesperline / 2 + startx / 2;
 	for (unsigned int y = 0; y < dest_height_half; y++) {
 		mysrc2 = mysrc;
 		for (unsigned int x = 0; x < dest_width_half; x++) {
@@ -99,8 +97,8 @@ static void v4lconvert_reduceandcrop_yuv420(u8 *src, u8 *dest, const struct v4l2
 }
 
 static void v4lconvert_crop_yuv420(u8 *src, u8 *dest, const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt) {
-	int startx = ((src_fmt->fmt.pix.width - dest_fmt->fmt.pix.width) / 2) & ~1;
-	int starty = ((src_fmt->fmt.pix.height - dest_fmt->fmt.pix.height) / 2) & ~1;
+	unsigned int startx = ((src_fmt->fmt.pix.width - dest_fmt->fmt.pix.width) / 2) & ~1u;
+	unsigned int starty = ((src_fmt->fmt.pix.height - dest_fmt->fmt.pix.height) / 2) & ~1u;
 	u8 *mysrc = src + starty * src_fmt->fmt.pix.bytesperline + startx;
 
 	/* Y */
@@ -111,8 +109,7 @@ static void v4lconvert_crop_yuv420(u8 *src, u8 *dest, const struct v4l2_format *
 	}
 
 	/* U */
-	mysrc = src + src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline +
-		(starty / 2) * src_fmt->fmt.pix.bytesperline / 2 + startx / 2;
+	mysrc = src + src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline + (starty / 2) * src_fmt->fmt.pix.bytesperline / 2 + startx / 2;
 	for (unsigned int x = 0; x < dest_fmt->fmt.pix.height / 2; x++) {
 		memcpy(dest, mysrc, dest_fmt->fmt.pix.width / 2);
 		mysrc += src_fmt->fmt.pix.bytesperline / 2;
@@ -120,8 +117,7 @@ static void v4lconvert_crop_yuv420(u8 *src, u8 *dest, const struct v4l2_format *
 	}
 
 	/* V */
-	mysrc = src + src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline * 5 / 4
-		+ (starty / 2) * src_fmt->fmt.pix.bytesperline / 2 + startx / 2;
+	mysrc = src + src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline * 5 / 4 + (starty / 2) * src_fmt->fmt.pix.bytesperline / 2 + startx / 2;
 	for (unsigned int x = 0; x < dest_fmt->fmt.pix.height / 2; x++) {
 		memcpy(dest, mysrc, dest_fmt->fmt.pix.width / 2);
 		mysrc += src_fmt->fmt.pix.bytesperline / 2;
@@ -131,10 +127,10 @@ static void v4lconvert_crop_yuv420(u8 *src, u8 *dest, const struct v4l2_format *
 
 /* Ok, so this is not really cropping, but more the reverse, whatever */
 static void v4lconvert_add_border_rgbbgr24(u8 *src, u8 *dest, const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt) {
-	int borderx = (dest_fmt->fmt.pix.width - src_fmt->fmt.pix.width) / 2;
-	int bordery = (dest_fmt->fmt.pix.height - src_fmt->fmt.pix.height) / 2;
+	unsigned int borderx = (dest_fmt->fmt.pix.width - src_fmt->fmt.pix.width) / 2;
+	unsigned int bordery = (dest_fmt->fmt.pix.height - src_fmt->fmt.pix.height) / 2;
 
-	for (int y = 0; y < bordery; y++) {
+	for (unsigned int y = 0; y < bordery; y++) {
 		memset(dest, 0, dest_fmt->fmt.pix.width * 3);
 		dest += dest_fmt->fmt.pix.bytesperline;
 	}
@@ -151,18 +147,18 @@ static void v4lconvert_add_border_rgbbgr24(u8 *src, u8 *dest, const struct v4l2_
 		dest += dest_fmt->fmt.pix.bytesperline - (borderx + src_fmt->fmt.pix.width) * 3;
 	}
 
-	for (int y = 0; y < bordery; y++) {
+	for (unsigned int y = 0; y < bordery; y++) {
 		memset(dest, 0, dest_fmt->fmt.pix.width * 3);
 		dest += dest_fmt->fmt.pix.bytesperline;
 	}
 }
 
 static void v4lconvert_add_border_yuv420(u8 *src, u8 *dest, const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt) {
-	int borderx = ((dest_fmt->fmt.pix.width - src_fmt->fmt.pix.width) / 2) & ~1;
-	int bordery = ((dest_fmt->fmt.pix.height - src_fmt->fmt.pix.height) / 2) & ~1;
+	unsigned int borderx = ((dest_fmt->fmt.pix.width - src_fmt->fmt.pix.width) / 2) & ~1u;
+	unsigned int bordery = ((dest_fmt->fmt.pix.height - src_fmt->fmt.pix.height) / 2) & ~1u;
 
 	/* Y */
-	for (int y = 0; y < bordery; y++) {
+	for (unsigned int y = 0; y < bordery; y++) {
 		memset(dest, 16, dest_fmt->fmt.pix.width);
 		dest += dest_fmt->fmt.pix.bytesperline;
 	}
@@ -179,13 +175,13 @@ static void v4lconvert_add_border_yuv420(u8 *src, u8 *dest, const struct v4l2_fo
 		dest += dest_fmt->fmt.pix.bytesperline - (borderx + src_fmt->fmt.pix.width);
 	}
 
-	for (int y = 0; y < bordery; y++) {
+	for (unsigned int y = 0; y < bordery; y++) {
 		memset(dest, 16, dest_fmt->fmt.pix.width);
 		dest += dest_fmt->fmt.pix.bytesperline;
 	}
 
 	/* U */
-	for (int y = 0; y < bordery / 2; y++) {
+	for (unsigned int y = 0; y < bordery / 2; y++) {
 		memset(dest, 128, dest_fmt->fmt.pix.width / 2);
 		dest += dest_fmt->fmt.pix.bytesperline / 2;
 	}
@@ -202,13 +198,13 @@ static void v4lconvert_add_border_yuv420(u8 *src, u8 *dest, const struct v4l2_fo
 		dest += (dest_fmt->fmt.pix.bytesperline - (borderx + src_fmt->fmt.pix.width)) / 2;
 	}
 
-	for (int y = 0; y < bordery / 2; y++) {
+	for (unsigned int y = 0; y < bordery / 2; y++) {
 		memset(dest, 128, dest_fmt->fmt.pix.width / 2);
 		dest += dest_fmt->fmt.pix.bytesperline / 2;
 	}
 
 	/* V */
-	for (int y = 0; y < bordery / 2; y++) {
+	for (unsigned int y = 0; y < bordery / 2; y++) {
 		memset(dest, 128, dest_fmt->fmt.pix.width / 2);
 		dest += dest_fmt->fmt.pix.bytesperline / 2;
 	}
@@ -226,7 +222,7 @@ static void v4lconvert_add_border_yuv420(u8 *src, u8 *dest, const struct v4l2_fo
 				(borderx + src_fmt->fmt.pix.width)) / 2;
 	}
 
-	for (int y = 0; y < bordery / 2; y++) {
+	for (unsigned int y = 0; y < bordery / 2; y++) {
 		memset(dest, 128, dest_fmt->fmt.pix.width / 2);
 		dest += dest_fmt->fmt.pix.bytesperline / 2;
 	}
