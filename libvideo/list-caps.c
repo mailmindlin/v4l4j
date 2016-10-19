@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
 	printf("Listing available controls (%d)\n", l->count);
 	for(i=0;i<l->count; i++){
 		qc = l->controls[i].v4l2_ctrl;
-		printf("Control: id: 0x%x - name: %s - min: %d -max: %d - step: %d - type: %d(%s) - flags: %d (%s%s%s%s%s%s)\n",
+		printf("Control: id: 0x%x - name: %s - min: %d -max: %d - step: %d - type: %d(%s) - flags: %d (%s%s%s%s%s%s%s)\n",
 				qc->id, (char *) &qc->name, qc->minimum, qc->maximum, qc->step, qc->type,
 				qc->type == V4L2_CTRL_TYPE_INTEGER ? "Integer" :
 				qc->type == V4L2_CTRL_TYPE_BOOLEAN ? "Boolean" :
