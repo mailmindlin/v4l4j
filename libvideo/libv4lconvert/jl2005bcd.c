@@ -34,8 +34,8 @@
 #define JPEG_HEADER_SIZE	338
 #define JPEG_HEIGHT_OFFSET	 94
 
-static int find_eoi(struct v4lconvert_data *data, const u8 *jpeg_data, unsigned int jpeg_data_idx, int jpeg_data_size) {
-	int i;
+static int find_eoi(struct v4lconvert_data *data, const u8 *jpeg_data, unsigned int jpeg_data_idx, unsigned int jpeg_data_size) {
+	unsigned int i;
 
 	for (i = jpeg_data_idx; i < (jpeg_data_size - 1); i++)
 		if (jpeg_data[i] == 0xff && jpeg_data[i + 1] == 0xd9)
@@ -46,7 +46,7 @@ static int find_eoi(struct v4lconvert_data *data, const u8 *jpeg_data, unsigned 
 		return -1;
 	}
 
-	return i + 2; /* + 2 -> Point to after EOI marker */
+	return (signed) i + 2; /* + 2 -> Point to after EOI marker */
 }
 
 
@@ -142,8 +142,8 @@ int v4lconvert_decode_jl2005bcd(struct v4lconvert_data *data, const u8 *src, uns
 				     blue_row_pointer };
 
 	memcpy(jpeg_stripe, jpeg_header, JPEG_HEADER_SIZE);
-	jpeg_stripe[JPEG_HEIGHT_OFFSET    ] = height >> 8;
-	jpeg_stripe[JPEG_HEIGHT_OFFSET + 1] = height;
+	jpeg_stripe[JPEG_HEIGHT_OFFSET    ] = (height >> 8) & 0xFF;
+	jpeg_stripe[JPEG_HEIGHT_OFFSET + 1] = (height) & 0xFF;
 	jpeg_stripe[JPEG_HEIGHT_OFFSET + 2] = 0;
 	jpeg_stripe[JPEG_HEIGHT_OFFSET + 3] = 8;
 	free (jpeg_header);
@@ -161,7 +161,7 @@ int v4lconvert_decode_jl2005bcd(struct v4lconvert_data *data, const u8 *src, uns
 		if (eoi < 0)
 			return eoi;
 
-		unsigned int size = eoi - jpeg_data_idx;
+		unsigned int size = (unsigned) eoi - jpeg_data_idx;
 		if ((JPEG_HEADER_SIZE + size) > sizeof(jpeg_stripe)) {
 			V4LCONVERT_ERR("stripe size too big %d > %u\n",
 				       JPEG_HEADER_SIZE + size,
@@ -191,7 +191,7 @@ int v4lconvert_decode_jl2005bcd(struct v4lconvert_data *data, const u8 *src, uns
 		jpeg_finish_decompress (&dinfo);
 
 		/* Set jpeg_data_idx for the next stripe */
-		jpeg_data_idx = (jpeg_data_idx + size + 0x0f) & ~0x0f;
+		jpeg_data_idx = (jpeg_data_idx + size + 0x0fu) & ~0x0fu;
 	}
 	jpeg_destroy_decompress(&dinfo);
 	return 0;

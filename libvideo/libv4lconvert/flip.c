@@ -134,7 +134,7 @@ static void v4lconvert_rotate90_rgbbgr24(const u8 *src, u8 *dst, unsigned int de
 
 	for (unsigned int y = 0; y < destheight; y++)
 		for (unsigned int x = 0; x < destwidth; x++) {
-			int offset = ((srcheight - x - 1) * srcwidth + y) * 3;
+			unsigned int offset = ((srcheight - x - 1) * srcwidth + y) * 3;
 			*dst++ = src[offset++];
 			*dst++ = src[offset++];
 			*dst++ = src[offset];
@@ -145,7 +145,7 @@ static void v4lconvert_rotate90_yuv420(const u8 *src, u8 *dst, unsigned int dest
 	/* Y-plane */
 	for (unsigned int y = 0; y < destheight; y++)
 		for (unsigned int x = 0; x < destwidth; x++) {
-			int offset = (srcheight - x - 1) * srcwidth + y;
+			unsigned int offset = (srcheight - x - 1) * srcwidth + y;
 			*dst++ = src[offset];
 		}
 
@@ -155,7 +155,7 @@ static void v4lconvert_rotate90_yuv420(const u8 *src, u8 *dst, unsigned int dest
 	destheight /= 2;
 	for (unsigned int y = 0; y < destheight; y++)
 		for (unsigned int x = 0; x < destwidth; x++) {
-			int offset = (srcheight - x - 1) * srcwidth + y;
+			unsigned int offset = (srcheight - x - 1) * srcwidth + y;
 			*dst++ = src[offset];
 		}
 
@@ -163,7 +163,7 @@ static void v4lconvert_rotate90_yuv420(const u8 *src, u8 *dst, unsigned int dest
 	src += srcwidth * srcheight;
 	for (unsigned int y = 0; y < destheight; y++)
 		for (unsigned int x = 0; x < destwidth; x++) {
-			int offset = (srcheight - x - 1) * srcwidth + y;
+			unsigned int offset = (srcheight - x - 1) * srcwidth + y;
 			*dst++ = src[offset];
 		}
 }

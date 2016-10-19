@@ -38,7 +38,7 @@ Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
 #define CLIP(color) \
 	(u8)(((color) > 0xff) ? 0xff : (((color) < 0) ? 0 : (color)))
 
-static const int stride = 720;
+static const unsigned int stride = 720;
 
 static void v4lconvert_hm12_to_rgb(const u8 *src, u8 *dest, u32 width, u32 height, int rgb) {
 	const u8 *y_base = src;
@@ -48,8 +48,8 @@ static void v4lconvert_hm12_to_rgb(const u8 *src, u8 *dest, u32 width, u32 heigh
 	unsigned int b = 2 - r;
 
 	for (unsigned int y = 0; y < height; y += 16) {
-		int mb_y = (y / 16) * (stride / 16);
-		int mb_uv = (y / 32) * (stride / 16);
+		unsigned int mb_y = (y / 16) * (stride / 16);
+		unsigned int mb_uv = (y / 32) * (stride / 16);
 		unsigned int maxy = (height - y < 16 ? height - y : 16);
 
 		for (unsigned int x = 0; x < width; x += 16, mb_y++, mb_uv++) {
@@ -62,11 +62,11 @@ static void v4lconvert_hm12_to_rgb(const u8 *src, u8 *dest, u32 width, u32 heigh
 				src_uv += mb_size / 2;
 
 			for (unsigned int i = 0; i < maxy; i++) {
-				int idx = (x + (y + i) * width) * 3;
+				unsigned int idx = (x + (y + i) * width) * 3;
 
 				for (unsigned int j = 0; j < maxx; j++) {
 					int y = src_y[j];
-					int u = src_uv[j & ~1];
+					int u = src_uv[j & ~1u];
 					int v = src_uv[j | 1];
 					int u1 = (((u - 128) << 7) + (u - 128)) >> 6;
 					int rg = (((u - 128) << 1) + (u - 128) + ((v - 128) << 2) + ((v - 128) << 1)) >> 3;
@@ -101,11 +101,11 @@ static inline void de_macro_uv(u8 *dstu, u8 *dstv, const u8 *src, unsigned int w
 			unsigned int maxx = (w - x < 8 ? w - x : 8);
 
 			for (unsigned int i = 0; i < maxy; i++) {
-				int idx = x + (y + i) * w;
+				unsigned int idx = x + (y + i) * w;
 
 				for (unsigned int j = 0; j < maxx; j++) {
-					dstu[idx+j] = src_uv[2 * j];
-					dstv[idx+j] = src_uv[2 * j + 1];
+					dstu[idx + j] = src_uv[2 * j];
+					dstv[idx + j] = src_uv[2 * j + 1];
 				}
 				src_uv += 16;
 			}

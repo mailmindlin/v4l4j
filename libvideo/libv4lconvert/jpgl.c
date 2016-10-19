@@ -403,10 +403,7 @@ int v4lconvert_decode_jpgl(const u8 *inp, u32 src_size, unsigned int dest_pix_fm
 	/* Vars */
 	struct RingQueue rq;
 	struct rqBitReader br;
-
-	int row, col;	/* Row & Column in the image */
-
-	int x,y;
+	
 	int block_idx;
 
 	u8 *Yline_baseptr, *Uline_baseptr, *Vline_baseptr;
@@ -468,12 +465,12 @@ int v4lconvert_decode_jpgl(const u8 *inp, u32 src_size, unsigned int dest_pix_fm
 	UVline_baseofs = (img_width >> 2) - 3;
 
 	/* Process 4 lines at a time ( one block height ) */
-	for ( row=0 ; row<img_height ; row++ ) {
+	for (unsigned int row = 0; row < img_height; row++ ) {
 		/* Line start reset DC */
 		dc_y = dc_u = dc_v = 0;
 
 		/* Process 16 columns at a time ( 4 block width ) */
-		for ( col=0 ; col<img_width ; col+=16 ) {
+		for (unsigned int col = 0; col < img_width; col += 16 ) {
 			/* Decode blocks
 			 * Block order : Y Y Y Y V U ( Why V before U ?
 			 * that just depends what you call U&V ... I took the
@@ -496,9 +493,9 @@ int v4lconvert_decode_jpgl(const u8 *inp, u32 src_size, unsigned int dest_pix_fm
 			Uline = Uline_baseptr + (col >> 2);
 			Vline = Vline_baseptr + (col >> 2);
 
-			for ( y=0 ; y<4 ; y++) {
+			for (unsigned int y = 0; y < 4; y++) {
 				/* Scan line */
-				for ( x=0 ; x<4 ; x++ ) {
+				for (unsigned int x = 0; x < 4; x++) {
 					/* Y block */
 					Yline[ 0] = clamp_adjust(block_y[block_idx   ]);
 					Yline[ 4] = clamp_adjust(block_y[block_idx+16]);
@@ -528,7 +525,7 @@ int v4lconvert_decode_jpgl(const u8 *inp, u32 src_size, unsigned int dest_pix_fm
 		/* Handle interpolation special case ( at the end of the lines ) */
 		Uline = Uline_baseptr + (UVline_baseofs+2);
 		Vline = Vline_baseptr + (UVline_baseofs+2);
-		for ( y=0 ; y<4 ; y++ ) {
+		for (unsigned int y = 0; y < 4; y++) {
 			/* Copy the last pixel */
 			Uline[1] = Uline[0];
 			Vline[1] = Vline[0];
@@ -546,108 +543,108 @@ int v4lconvert_decode_jpgl(const u8 *inp, u32 src_size, unsigned int dest_pix_fm
 		    Yline = Yline_baseptr;
 		    Uline = Uline_baseptr;
 		    Vline = Vline_baseptr;
-		    for ( y=0 ; y<4 ; y++ ) {
-			/* Process 4 pixel at a time to handle interpolation
-			 * for U & V values */
-			for ( x=0 ; x<img_width ; x+=4 ) {
-				/* First pixel */
-				yc = yuvTbl_y[*(Yline++)];
-				uc = Uline[0];
-				vc = Vline[0];
+		    for (unsigned int y = 0; y < 4; y++) {
+				/* Process 4 pixel at a time to handle interpolation
+				 * for U & V values */
+				for (unsigned int x = 0; x < img_width; x += 4) {
+					/* First pixel */
+					yc = yuvTbl_y[*(Yline++)];
+					uc = Uline[0];
+					vc = Vline[0];
 
-				*(fb++) = clamp(( yc + yuvTbl_u1[uc] ) >> 16);
-				*(fb++) = clamp(( yc - yuvTbl_u2[uc] - yuvTbl_v1[vc] ) >> 16);
-				*(fb++) = clamp(( yc + yuvTbl_v2[vc] ) >> 16);
+					*(fb++) = clamp(( yc + yuvTbl_u1[uc] ) >> 16);
+					*(fb++) = clamp(( yc - yuvTbl_u2[uc] - yuvTbl_v1[vc] ) >> 16);
+					*(fb++) = clamp(( yc + yuvTbl_v2[vc] ) >> 16);
 
-				/* Second pixel */
-				yc = yuvTbl_y[*(Yline++)];
-				uc = ( 3*Uline[0] + Uline[1] ) >> 2;
-				vc = ( 3*Vline[0] + Vline[1] ) >> 2;
-				
-				*(fb++) = clamp(( yc + yuvTbl_u1[uc] ) >> 16);
-				*(fb++) = clamp(( yc - yuvTbl_u2[uc] - yuvTbl_v1[vc] ) >> 16);
-				*(fb++) = clamp(( yc + yuvTbl_v2[vc] ) >> 16);
+					/* Second pixel */
+					yc = yuvTbl_y[*(Yline++)];
+					uc = ( 3*Uline[0] + Uline[1] ) >> 2;
+					vc = ( 3*Vline[0] + Vline[1] ) >> 2;
+					
+					*(fb++) = clamp(( yc + yuvTbl_u1[uc] ) >> 16);
+					*(fb++) = clamp(( yc - yuvTbl_u2[uc] - yuvTbl_v1[vc] ) >> 16);
+					*(fb++) = clamp(( yc + yuvTbl_v2[vc] ) >> 16);
 
-				/* Third pixel */
-				yc = yuvTbl_y[*(Yline++)];
-				uc = ( Uline[0] + Uline[1] ) >> 1;
-				vc = ( Vline[0] + Vline[1] ) >> 1;
+					/* Third pixel */
+					yc = yuvTbl_y[*(Yline++)];
+					uc = ( Uline[0] + Uline[1] ) >> 1;
+					vc = ( Vline[0] + Vline[1] ) >> 1;
 
-				*(fb++) = clamp(( yc + yuvTbl_u1[uc] ) >> 16);
-				*(fb++) = clamp(( yc - yuvTbl_u2[uc] - yuvTbl_v1[vc] ) >> 16);
-				*(fb++) = clamp(( yc + yuvTbl_v2[vc] ) >> 16);
+					*(fb++) = clamp(( yc + yuvTbl_u1[uc] ) >> 16);
+					*(fb++) = clamp(( yc - yuvTbl_u2[uc] - yuvTbl_v1[vc] ) >> 16);
+					*(fb++) = clamp(( yc + yuvTbl_v2[vc] ) >> 16);
 
-				/* Fourth pixel */
-				yc = yuvTbl_y[*(Yline++)];
-				uc = ( Uline[0] + 3*Uline[1] ) >> 2;
-				vc = ( Vline[0] + 3*Vline[1] ) >> 2;
+					/* Fourth pixel */
+					yc = yuvTbl_y[*(Yline++)];
+					uc = ( Uline[0] + 3*Uline[1] ) >> 2;
+					vc = ( Vline[0] + 3*Vline[1] ) >> 2;
 
-				*(fb++) = clamp(( yc + yuvTbl_u1[uc] ) >> 16);
-				*(fb++) = clamp(( yc - yuvTbl_u2[uc] - yuvTbl_v1[vc] ) >> 16);
-				*(fb++) = clamp(( yc + yuvTbl_v2[vc] ) >> 16);
+					*(fb++) = clamp(( yc + yuvTbl_u1[uc] ) >> 16);
+					*(fb++) = clamp(( yc - yuvTbl_u2[uc] - yuvTbl_v1[vc] ) >> 16);
+					*(fb++) = clamp(( yc + yuvTbl_v2[vc] ) >> 16);
 
+					/* Adjust pointers */
+					Uline++;
+					Vline++;
+				}
+					
 				/* Adjust pointers */
 				Uline++;
 				Vline++;
-			}
-				
-			/* Adjust pointers */
-			Uline++;
-			Vline++;
 		    }
 		    break;
 		case V4L2_PIX_FMT_BGR24:
 		    Yline = Yline_baseptr;
 		    Uline = Uline_baseptr;
 		    Vline = Vline_baseptr;
-		    for ( y=0 ; y<4 ; y++ ) {
-			/* Process 4 pixel at a time to handle interpolation
-			 * for U & V values */
-			for ( x=0 ; x<img_width ; x+=4 ) {
-				/* First pixel */
-				yc = yuvTbl_y[*(Yline++)];
-				uc = Uline[0];
-				vc = Vline[0];
+		    for (unsigned int y = 0; y < 4; y++) {
+				/* Process 4 pixel at a time to handle interpolation
+				 * for U & V values */
+				for (unsigned int x = 0; x < img_width; x += 4) {
+					/* First pixel */
+					yc = yuvTbl_y[*(Yline++)];
+					uc = Uline[0];
+					vc = Vline[0];
 
-				*(fb++) = clamp(( yc + yuvTbl_v2[vc] ) >> 16);
-				*(fb++) = clamp(( yc - yuvTbl_u2[uc] - yuvTbl_v1[vc] ) >> 16);
-				*(fb++) = clamp(( yc + yuvTbl_u1[uc] ) >> 16);
+					*(fb++) = clamp(( yc + yuvTbl_v2[vc] ) >> 16);
+					*(fb++) = clamp(( yc - yuvTbl_u2[uc] - yuvTbl_v1[vc] ) >> 16);
+					*(fb++) = clamp(( yc + yuvTbl_u1[uc] ) >> 16);
 
-				/* Second pixel */
-				yc = yuvTbl_y[*(Yline++)];
-				uc = ( 3*Uline[0] + Uline[1] ) >> 2;
-				vc = ( 3*Vline[0] + Vline[1] ) >> 2;
+					/* Second pixel */
+					yc = yuvTbl_y[*(Yline++)];
+					uc = ( 3*Uline[0] + Uline[1] ) >> 2;
+					vc = ( 3*Vline[0] + Vline[1] ) >> 2;
+					
+					*(fb++) = clamp(( yc + yuvTbl_v2[vc] ) >> 16);
+					*(fb++) = clamp(( yc - yuvTbl_u2[uc] - yuvTbl_v1[vc] ) >> 16);
+					*(fb++) = clamp(( yc + yuvTbl_u1[uc] ) >> 16);
+
+					/* Third pixel */
+					yc = yuvTbl_y[*(Yline++)];
+					uc = ( Uline[0] + Uline[1] ) >> 1;
+					vc = ( Vline[0] + Vline[1] ) >> 1;
+
+					*(fb++) = clamp(( yc + yuvTbl_v2[vc] ) >> 16);
+					*(fb++) = clamp(( yc - yuvTbl_u2[uc] - yuvTbl_v1[vc] ) >> 16);
+					*(fb++) = clamp(( yc + yuvTbl_u1[uc] ) >> 16);
+
+					/* Fourth pixel */
+					yc = yuvTbl_y[*(Yline++)];
+					uc = ( Uline[0] + 3*Uline[1] ) >> 2;
+					vc = ( Vline[0] + 3*Vline[1] ) >> 2;
+
+					*(fb++) = clamp(( yc + yuvTbl_v2[vc] ) >> 16);
+					*(fb++) = clamp(( yc - yuvTbl_u2[uc] - yuvTbl_v1[vc] ) >> 16);
+					*(fb++) = clamp(( yc + yuvTbl_u1[uc] ) >> 16);
+
+					/* Adjust pointers */
+					Uline++;
+					Vline++;
+				}
 				
-				*(fb++) = clamp(( yc + yuvTbl_v2[vc] ) >> 16);
-				*(fb++) = clamp(( yc - yuvTbl_u2[uc] - yuvTbl_v1[vc] ) >> 16);
-				*(fb++) = clamp(( yc + yuvTbl_u1[uc] ) >> 16);
-
-				/* Third pixel */
-				yc = yuvTbl_y[*(Yline++)];
-				uc = ( Uline[0] + Uline[1] ) >> 1;
-				vc = ( Vline[0] + Vline[1] ) >> 1;
-
-				*(fb++) = clamp(( yc + yuvTbl_v2[vc] ) >> 16);
-				*(fb++) = clamp(( yc - yuvTbl_u2[uc] - yuvTbl_v1[vc] ) >> 16);
-				*(fb++) = clamp(( yc + yuvTbl_u1[uc] ) >> 16);
-
-				/* Fourth pixel */
-				yc = yuvTbl_y[*(Yline++)];
-				uc = ( Uline[0] + 3*Uline[1] ) >> 2;
-				vc = ( Vline[0] + 3*Vline[1] ) >> 2;
-
-				*(fb++) = clamp(( yc + yuvTbl_v2[vc] ) >> 16);
-				*(fb++) = clamp(( yc - yuvTbl_u2[uc] - yuvTbl_v1[vc] ) >> 16);
-				*(fb++) = clamp(( yc + yuvTbl_u1[uc] ) >> 16);
-
 				/* Adjust pointers */
 				Uline++;
 				Vline++;
-			}
-				
-			/* Adjust pointers */
-			Uline++;
-			Vline++;
 		    }
 		    break;
 		case V4L2_PIX_FMT_YUV420:

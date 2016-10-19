@@ -82,27 +82,24 @@
 
 #if defined(__GNUC__) && (defined(__i686__) || defined(__x86_64__))
 
-static inline u8 descale_and_clamp(int x, int shift)
-{
+static inline u8 descale_and_clamp(unsigned int x, unsigned int shift) {
 	__asm__ (
-		"add %3,%1\n"
-		"\tsar %2,%1\n"
-		"\tsub $-128,%1\n"
-		"\tcmovl %5,%1\n"	/* Use the sub to compare to 0 */
-		"\tcmpl %4,%1\n"
-		"\tcmovg %4,%1\n"
+		"add %3,%1 \n\t"
+		"sar %2,%1 \n\t"
+		"sub $-128,%1 \n\t"
+		"cmovl %5,%1 \n\t"	/* Use the sub to compare to 0 */
+		"cmpl %4,%1 \n\t"
+		"cmovg %4,%1"
 		: "=r"(x)
 		: "0"(x), "Ic"((u8)shift), "ir" (1U << (shift - 1)), "r" (0xff), "r" (0)
 		);
-	return x;
+	return (u8) x;
 }
-
 #else
-static inline u8 descale_and_clamp(int x, int shift)
-{
-	x += 1UL << (shift - 1);
+static inline u8 descale_and_clamp(int x, unsigned int shift) {
+	x += (int) (1UL << (shift - 1));
 	if (x < 0)
-		x = (x >> shift) | ((~(0UL)) << (32 - (shift)));
+		x = (x >> shift) | (int) ((~(0UL)) << (32 - (shift)));
 	else
 		x >>= shift;
 	x += 128;
@@ -110,7 +107,7 @@ static inline u8 descale_and_clamp(int x, int shift)
 		return 255;
 	if (x < 0)
 		return 0;
-	return x;
+	return (u8) x;
 }
 #endif
 
@@ -267,6 +264,9 @@ void tinyjpeg_idct_float(struct component *compptr, uint8_t *output_buf, int str
 
 		/* Final output stage: scale down by a factor of 8 and range-limit */
 
+		#if defined(__GNUC__) && defined(__arm__)
+			//TODO NEON stuff
+		#endif
 		outptr[0] = descale_and_clamp((int)(tmp0 + tmp7), 3);
 		outptr[7] = descale_and_clamp((int)(tmp0 - tmp7), 3);
 		outptr[1] = descale_and_clamp((int)(tmp1 + tmp6), 3);

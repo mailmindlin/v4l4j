@@ -118,23 +118,20 @@ error:
    decompressor crashes, which in case of an embedded decompressor
    would mean end of program, so by not handling SIGPIPE we treat
    external decompressors identical. */
-static int v4lconvert_helper_write(struct v4lconvert_data *data,
-		const void *b, size_t count)
-{
+static int v4lconvert_helper_write(struct v4lconvert_data *data, const void *b, size_t count) {
 	const u8 *buf = b;
-	size_t ret, written = 0;
+	size_t written = 0;
 
 	while (written < count) {
-		ret = write(data->decompress_out_pipe[WRITE_END], buf + written,
-				count - written);
-		if (ret == -1) {
+		int ret = write(data->decompress_out_pipe[WRITE_END], buf + written, count - written);
+		if (ret < 0) {
 			if (errno == EINTR)
 				continue;
 
 			V4LCONVERT_ERR("writing to helper: %s\n", strerror(errno));
 			return -1;
 		}
-		written += ret;
+		written += (size_t) ret;
 	}
 
 	return 0;
@@ -142,11 +139,11 @@ static int v4lconvert_helper_write(struct v4lconvert_data *data,
 
 static int v4lconvert_helper_read(struct v4lconvert_data *data, void *b, size_t count) {
 	u8 *buf = b;
-	size_t ret, r = 0;
+	size_t r = 0;
 
 	while (r < count) {
-		ret = read(data->decompress_in_pipe[READ_END], buf + r, count - r);
-		if (ret == -1) {
+		int ret = read(data->decompress_in_pipe[READ_END], buf + r, count - r);
+		if (ret < 0) {
 			if (errno == EINTR)
 				continue;
 
@@ -157,7 +154,7 @@ static int v4lconvert_helper_read(struct v4lconvert_data *data, void *b, size_t 
 			V4LCONVERT_ERR("reading from helper: unexpected EOF\n");
 			return -1;
 		}
-		r += ret;
+		r += (size_t) ret;
 	}
 
 	return 0;
@@ -193,12 +190,12 @@ int v4lconvert_helper_decompress(struct v4lconvert_data *data, const char *helpe
 		return -1;
 	}
 
-	if (dest_size < r) {
+	if (dest_size < (unsigned) r) {
 		V4LCONVERT_ERR("destination buffer to small\n");
 		return -1;
 	}
 
-	return v4lconvert_helper_read(data, dest, r);
+	return v4lconvert_helper_read(data, dest, (unsigned) r);
 }
 
 void v4lconvert_helper_cleanup(struct v4lconvert_data *data) {

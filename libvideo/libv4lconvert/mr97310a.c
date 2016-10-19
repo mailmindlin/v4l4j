@@ -23,7 +23,7 @@
 #include "libv4lconvert-priv.h"
 #include "libv4lsyscall-priv.h"
 
-#define CLIP(x) ((x) < 0 ? 0 : ((x) > 0xff) ? 0xff : (x))
+#define CLIP(x) (u8) ((x) < 0 ? 0 : ((x) > 0xff) ? 0xff : (x))
 
 #define MIN_CLOCKDIV_CID V4L2_CID_PRIVATE_BASE
 
@@ -37,12 +37,10 @@ static struct {
 } table[256];
 
 static void init_mr97310a_decoder(void) {
-	int is_abs, val, len;
-
 	for (unsigned int i = 0; i < 256; ++i) {
-		is_abs = 0;
-		val = 0;
-		len = 0;
+		u8 is_abs = 0;
+		signed char val = 0;
+		u8 len = 0;
 		if ((i & 0x80) == 0) {
 			/* code 0 */
 			val = 0;
@@ -86,7 +84,7 @@ static void init_mr97310a_decoder(void) {
 
 static inline u8 get_byte(const u8 *inp, unsigned int bitpos) {
 	const u8 *addr = inp + (bitpos >> 3);
-	return (addr[0] << (bitpos & 7)) | (addr[1] >> (8 - (bitpos & 7)));
+	return (u8) ((addr[0] << (bitpos & 7)) | (addr[1] >> (8 - (bitpos & 7))));
 }
 
 int v4lconvert_decode_mr97310a(struct v4lconvert_data *data, const u8 *inp, unsigned int src_size, u8 *outp, u32 width, u32 height) {
@@ -138,9 +136,9 @@ int v4lconvert_decode_mr97310a(struct v4lconvert_data *data, const u8 *inp, unsi
 				val = table[code].val;
 				lp = outp[-2];
 				if (row > 1) {
-					tlp = outp[-2 * width - 2];
-					tp  = outp[-2 * width];
-					trp = outp[-2 * width + 2];
+					tlp = outp[-2 * (signed) width - 2];
+					tp  = outp[-2 * (signed) width];
+					trp = outp[-2 * (signed) width + 2];
 				}
 				if (row < 2) {
 					/* top row: relative to left pixel */

@@ -198,7 +198,7 @@ void v4lconvert_flip(u8 *src, u8 *dest, struct v4l2_format *fmt, int hflip, int 
 
 void v4lconvert_crop(u8 *src, u8 *dest, const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt);
 
-int v4lconvert_helper_decompress(struct v4lconvert_data *data, const char *helper, const u8 *src, int src_size, u8 *dest, int dest_size, u32 width, u32 height, int command);
+int v4lconvert_helper_decompress(struct v4lconvert_data *data, const char *helper, const u8 *src, unsigned int src_size, u8 *dest, unsigned int dest_size, u32 width, u32 height, int command);
 
 void v4lconvert_helper_cleanup(struct v4lconvert_data *data);
 
