@@ -91,8 +91,8 @@ OBJ := v4l2-input.o v4l1-input.o libvideo.o pwc-probe.o gspca-probe.o \
   qc-probe.o fps-param-probe.o v4l1-query.o v4l2-query.o v4l1-tuner.o \
   v4l2-tuner.o palettes.o
 
-CFLAGS += $(DBG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) \
-  $(OPTIMISATION) -fPIC -I.
+CFLAGS += $(DBG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) $(OPTIMISATION) -fPIC -I.
+CFLAGS += -Wall -Wpointer-arith -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wconversion -fdiagnostics-color=auto -mcpu=native -mfpu=neon-vfpv4 -mfloat-abi=hard -ftree-vectorize
 
 LDFLAGS += -lm -lrt -shared -ljpeg
 

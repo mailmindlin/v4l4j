@@ -2,11 +2,10 @@ V4L_UTILS_VERSION=0.8.6
 
 # These ones can be overriden from the cmdline
 
-CFLAGS := -g -O1
-CFLAGS += -Wall -Wpointer-arith -Wextra -Wmissing-prototypes -Wstrict-prototypes
-CXXFLAGS := $(CFLAGS) -std=gnu++11
-CPPFLAGS += 
-CFLAGS += -Wstrict-prototypes -Wmissing-prototypes -std=gnu11
+CFLAGS := -g -O2
+override CFLAGS += -std=gnu11
+override CXXFLAGS := -std=gnu++11
+override CPPFLAGS += -Wall -Wpointer-arith -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wconversion -fdiagnostics-color=auto -mcpu=native -mfpu=neon-vfpv4 -mfloat-abi=hard -ftree-vectorize
 AFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -march=armv7-a -mapcs-reentrant -k --warn --statistics
 
 PREFIX = /usr/local
