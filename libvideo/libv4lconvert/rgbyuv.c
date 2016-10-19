@@ -38,8 +38,8 @@
 
 #define RGB2UV(r, g, b, u, v) \
 	do { \
-		(u) = ((-4878 * (r) - 9578 * (g) + 14456 * (b) + 4210688) >> 15); \
-		(v) = ((14456 * (r) - 12105 * (g) - 2351 * (b) + 4210688) >> 15); \
+		(u) = (u8) ((-4878 * (r) - 9578 * (g) + 14456 * (b) + 4210688) >> 15); \
+		(v) = (u8) ((14456 * (r) - 12105 * (g) - 2351 * (b) + 4210688) >> 15); \
 	} while (0)
 
 void v4lconvert_rgb24_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt, int bgr, int yvu) {
@@ -469,7 +469,7 @@ void v4lconvert_rgb565_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_form
 	unsigned short tmp;
 	u8 *udest, *vdest;
 	unsigned r[4], g[4], b[4];
-	int avg_src[3];
+	unsigned int avg_src[3];
 
 	/* Y */
 	for (unsigned int y = 0; y < src_fmt->fmt.pix.height; y++) {
@@ -549,7 +549,7 @@ void v4lconvert_grey_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format
 
 /* Unpack buffer of (vw bit) data into padded 16bit buffer. */
 static inline void convert_packed_to_16bit(uint8_t *raw, uint16_t *unpacked, int vw, int unpacked_len) {
-	int mask = (1 << vw) - 1;
+	uint16_t mask = (1 << vw) - 1;
 	uint32_t buffer = 0;
 	int bitsIn = 0;
 	while (unpacked_len--) {
@@ -576,9 +576,9 @@ int v4lconvert_y10b_to_rgb24(struct v4lconvert_data *data, const u8 *src, u8 *de
 		for (unsigned int j = 0; j < width; j++) {
 
 			/* Only 10 useful bits, so we discard the LSBs */
-			*dest++ = (*tmp & 0x3ff) >> 2;
-			*dest++ = (*tmp & 0x3ff) >> 2;
-			*dest++ = (*tmp & 0x3ff) >> 2;
+			*dest++ = (u8) ((*tmp & 0x3ff) >> 2);
+			*dest++ = (u8) ((*tmp & 0x3ff) >> 2);
+			*dest++ = (u8) ((*tmp & 0x3ff) >> 2);
 
 			/* +1 means two bytes as we are dealing with (unsigned short) */
 			tmp += 1;
