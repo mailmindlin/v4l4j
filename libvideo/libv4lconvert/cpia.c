@@ -35,7 +35,7 @@
 
 /* CPIA YUYV (sometimes sort of compressed) */
 int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dest, u32 width, u32 height, int yvu) {
-	unsigned int y, ll;
+	unsigned int y;
 	u8 *udest, *vdest;
 
 	if (width > 352 || height > 288) {
@@ -84,7 +84,7 @@ int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data, const u8 *src, unsi
 
 	if (!compressed) {
 		for (y = 0; y < height && src_size > 2; y++) {
-			ll = src[0] | (src[1] << 8);
+			unsigned int ll = (unsigned) (src[0] | (src[1] << 8));
 			src += 2;
 			src_size -= 2;
 			if (src_size < ll) {
@@ -129,7 +129,7 @@ int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data, const u8 *src, unsi
 		memcpy(dest, data->previous_frame, width * height * 3 / 2);
 
 		for (y = 0; y < height && src_size > 2; y++) {
-			ll = src[0] | (src[1] << 8);
+			unsigned int ll = (unsigned) (src[0] | (src[1] << 8));
 			src += 2;
 			src_size -= 2;
 			if (src_size < ll) {
@@ -146,7 +146,7 @@ int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data, const u8 *src, unsi
 			unsigned int x;
 			for (x = 0; x < width && ll > 1; ) {
 				if (*src & 1) { /* skip N pixels */
-					int skip = *src >> 1;
+					unsigned int skip = *src >> 1;
 
 					if (skip & 1) {
 						fprintf(stderr, "cpia1 decode error: odd number of pixels to skip");
