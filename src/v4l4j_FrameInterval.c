@@ -72,33 +72,27 @@ static struct frame_intv_discrete *get_discrete(jlong o, jint type) {
 	struct frame_intv_discrete *d = NULL;
 
 	switch(type) {
-	//frame_size_discrete
-	case 0:
-		d =	((struct frame_size_discrete*) (uintptr_t) o)->intv.discrete;
-		break;
+		//frame_size_discrete
+		case 0:
+			return ((struct frame_size_discrete*) (uintptr_t) o)->intv.discrete;
 
-	//frame_size_stepwise (min res)
-	case 1:
-		d =	((struct frame_size_continuous*) (uintptr_t) o)->intv_min_res.discrete;
-		break;
+		//frame_size_stepwise (min res)
+		case 1:
+			return ((struct frame_size_continuous*) (uintptr_t) o)->intv_min_res.discrete;
 
-	//frame_size_stepwise (max res)
-	case 2:
-		d = ((struct frame_size_continuous*) (uintptr_t) o)->intv_max_res.discrete;
-		break;
+		//frame_size_stepwise (max res)
+		case 2:
+			return ((struct frame_size_continuous*) (uintptr_t) o)->intv_max_res.discrete;
 
-	//frame_intv_discrete
-	case 4:
-		d = (struct frame_intv_discrete*) (uintptr_t) o;
-		break;
-	//error
-	default:
-		info("[V4L4J] Error looking up the frame interval "
-				"(wrong struct type %d)\n", type);
-		break;
+		//frame_intv_discrete
+		case 4:
+			return (struct frame_intv_discrete*) (uintptr_t) o;
+
+		//error
+		default:
+			info("[V4L4J] Error looking up the frame interval (wrong struct type %d)\n", type);
+			return NULL;
 	}
-
-	return d;
 }
 
 /*
@@ -134,8 +128,7 @@ static struct frame_intv_continuous *get_continuous(jlong o, jint type) {
 
 	//error
 	default:
-		info("[V4L4J] Error looking up the frame interval "
-				"(wrong struct type %d)\n", type);
+		info("[V4L4J] Error looking up the frame interval (wrong struct type %d)\n", type);
 		break;
 	}
 
@@ -156,7 +149,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetDiscrete(JNIEnv 
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 
 	//get our pointer to struct frame_intv_discrete
-	if((d=get_discrete(o, type)) == NULL) {
+	if((d = get_discrete(o, type)) == NULL) {
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up frame intervals");
 		return;
 	}
@@ -164,14 +157,14 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetDiscrete(JNIEnv 
 
 	/* Get handles on Java stuff */
 	jclass this_class = (*e)->GetObjectClass(e, t);
-	if(this_class == NULL){
+	if(this_class == NULL) {
 		info("[V4L4J] Error looking up the FrameInterval class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up FrameInterval class");
 		return;
 	}
 
 	jfieldID field = (*e)->GetFieldID(e, this_class, "discreteValues", "Ljava/util/List;");
-	if(field == NULL){
+	if(field == NULL) {
 		info("[V4L4J] Error looking up the discreteValues fieldID\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the discreteValues fieldID");
 		return;
@@ -191,7 +184,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetDiscrete(JNIEnv 
 
 
 	jclass discrete_intv_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/FrameInterval$DiscreteInterval");
-	if(discrete_intv_class == NULL){
+	if(discrete_intv_class == NULL) {
 		info("[V4L4J] Error looking up the DiscreteInterval class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, \
 				"Error looking up DiscreteInterval class");
@@ -199,13 +192,13 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetDiscrete(JNIEnv 
 	}
 
 	jmethodID ctor = (*e)->GetMethodID(e, discrete_intv_class, "<init>", "(II)V");
-	if(ctor == NULL){
+	if(ctor == NULL) {
 		info("[V4L4J] Error looking up the ctor of DiscreteInterval class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the ctor of DiscreteInterval class");
 		return;
 	}
 
-	while(d[++i].numerator != 0){
+	while(d[++i].numerator != 0) {
 		//create DiscreteInterval object
 		jobject discrete = (*e)->NewObject(e, discrete_intv_class, ctor, d[i].numerator, d[i].denominator);
 		if(discrete == NULL){
@@ -226,63 +219,53 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetDiscrete(JNIEnv 
  * (0: struct frame_size_discrete, 1: struct frame_size_continuous (min res),
  * 2: struct frame_size_continuous(max res) )
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetStepwise(
-		JNIEnv *e, jobject t, jint type, jlong o) {
-	struct frame_intv_continuous *d;
-	jclass this_class, stepwise_intv_class;
-	jmethodID ctor;
-	jfieldID fid;
-	jobject stepwise;
-
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetStepwise(JNIEnv *env, jobject t, jint type, jlong o) {
+	dprint(LOG_CALLS, "[CALL] Entering %s\n", __PRETTY_FUNCTION__);
 
 	//get our pointer to struct frame_intv_continuous
-	if((d=get_continuous(o, type)) == NULL){
+	struct frame_intv_continuous* d = get_continuous(o, type);
+	if(d == NULL){
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up frame intervals");
 		return;
 	}
+
 	/* Get handles on Java stuff */
-	this_class = (*e)->GetObjectClass(e, t);
-	if(this_class == NULL){
-		info("[V4L4J] Error looking up the FrameInterval class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up FrameInterval class");
+	jclass this_class = (*env)->GetObjectClass(env, t);
+	if(this_class == NULL) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Error looking up FrameInterval class");
 		return;
 	}
 
-	stepwise_intv_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/FrameInterval$StepwiseInterval");
-	if(stepwise_intv_class == NULL){
-		info("[V4L4J] Error looking up the StepwiseInterval class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up StepwiseInterval class");
+	jclass stepwise_intv_class = (*env)->FindClass(env, "au/edu/jcu/v4l4j/FrameInterval$StepwiseInterval");
+	if(stepwise_intv_class == NULL) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Error looking up StepwiseInterval class");
 		return;
 	}
 
-	ctor = (*e)->GetMethodID(e, stepwise_intv_class, "<init>", "(IIIIII)V");
-	if(ctor == NULL){
-		info("[V4L4J] Error looking up the ctor of StepwiseInterval class\n");
+	jmethodID ctor = (*env)->GetMethodID(env, stepwise_intv_class, "<init>", "(IIIIII)V");
+	if(ctor == NULL) {
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the ctor of StepwiseInterval class");
 		return;
 	}
 
 	//create StepwiseInterval object
-	stepwise = (*e)->NewObject(e, stepwise_intv_class, ctor,
+	jobject stepwise = (*env)->NewObject(env, stepwise_intv_class, ctor,
 			d->min.numerator, d->min.denominator,
 			d->max.numerator, d->max.denominator,
 			d->step.numerator, d->step.denominator);
 	if(stepwise == NULL){
 		info("[V4L4J] Error creating StepwiseInterval object\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error creating StepwiseInterval object");
+		THROW_EXCEPTION(env, JNI_EXCP, "Error creating StepwiseInterval object");
 		return;
 	}
 
 	//assign it to the stepwiseInterval member
-	fid = (*e)->GetFieldID(e, this_class, "stepwiseInterval",
-			"Lau/edu/jcu/v4l4j/FrameInterval$StepwiseInterval;");
+	jfieldID fid = (*env)->GetFieldID(env, this_class, "stepwiseInterval", "Lau/edu/jcu/v4l4j/FrameInterval$StepwiseInterval;");
 	if(fid == NULL){
-		info("[V4L4J] Error looking up the StepwiseInterval fieldID\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the StepwiseInterval fieldID");
+		THROW_EXCEPTION(env, JNI_EXCP, "Error looking up the StepwiseInterval fieldID");
 		return;
 	}
-	(*e)->SetObjectField(e, t, fid, stepwise);
+	(*env)->SetObjectField(env, t, fid, stepwise);
 
 	dprint(LOG_V4L4J, "[V4L4J] Stepwise frame interval: min:%d/%d max:%d/%d step:%d/%d\n",
 			d->min.numerator, d->min.denominator,
