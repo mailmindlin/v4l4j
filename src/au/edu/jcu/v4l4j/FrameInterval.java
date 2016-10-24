@@ -275,9 +275,9 @@ public class FrameInterval {
 		 */
 		public final int denominator;
 
-		DiscreteInterval(int n, int d) {
-			numerator = n;
-			denominator = d;
+		DiscreteInterval(int numerator, int denominator) {
+			this.numerator = numerator;
+			this.denominator = denominator;
 		}
 
 		/**
@@ -285,7 +285,7 @@ public class FrameInterval {
 		 * 
 		 * @return the numerator of the frame interval
 		 */
-		public int getNum() {
+		public int getNumerator() {
 			return numerator;
 		}
 
@@ -294,8 +294,12 @@ public class FrameInterval {
 		 * 
 		 * @return the denominator of this frame interval
 		 */
-		public int getDenom() {
+		public int getDenominator() {
 			return denominator;
+		}
+		
+		public double toDouble() {
+			return getNumerator() / (double) getDenominator();
 		}
 
 		@Override

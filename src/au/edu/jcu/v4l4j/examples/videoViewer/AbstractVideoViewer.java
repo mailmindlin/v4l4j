@@ -556,20 +556,20 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
 					throw new NumberFormatException();
 				}
 
-				if ((compareFrac(intv.getStepwiseInterval().minIntv.getNum(),
-						intv.getStepwiseInterval().minIntv.getDenom(), num, denom) <= 0)
-						&& (compareFrac(intv.getStepwiseInterval().minIntv.getNum(),
-								intv.getStepwiseInterval().minIntv.getDenom(), num, denom) >= 0)) {
+				if ((compareFrac(intv.getStepwiseInterval().minIntv.getNumerator(),
+						intv.getStepwiseInterval().minIntv.getDenominator(), num, denom) <= 0)
+						&& (compareFrac(intv.getStepwiseInterval().minIntv.getNumerator(),
+								intv.getStepwiseInterval().minIntv.getDenominator(), num, denom) >= 0)) {
 					// values are ok
 					return new Interval(num, denom);
 
 				} else {
 					// values are outside frame intv range
 					String msg = "The frame interval (" + num + "/" + denom + ") is " + "outside the\nallowed range ("
-							+ intv.getStepwiseInterval().minIntv.getNum() + "/"
-							+ intv.getStepwiseInterval().minIntv.getDenom() + " to"
-							+ intv.getStepwiseInterval().maxIntv.getNum() + "/"
-							+ intv.getStepwiseInterval().minIntv.getDenom() + ")";
+							+ intv.getStepwiseInterval().minIntv.getNumerator() + "/"
+							+ intv.getStepwiseInterval().minIntv.getDenominator() + " to"
+							+ intv.getStepwiseInterval().maxIntv.getNumerator() + "/"
+							+ intv.getStepwiseInterval().minIntv.getDenominator() + ")";
 
 					JOptionPane.showMessageDialog(null, msg);
 					return null;
