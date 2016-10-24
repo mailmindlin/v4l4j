@@ -210,6 +210,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetDiscrete(JNIEnv 
 		dprint(LOG_V4L4J, "[V4L4J] Adding discrete interval %d/%d\n", d[i].numerator, d[i].denominator);
 		//add to list
 		(*e)->CallVoidMethod(e, discreteValues, add_method, discrete);
+		(*e)->DeleteLocalRef(e, discrete);
 	}
 }
 
