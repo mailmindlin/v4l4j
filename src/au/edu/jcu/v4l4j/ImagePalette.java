@@ -109,6 +109,12 @@ public enum ImagePalette {
 	@Deprecated
 	YUV411(16, 77);
 	
+	public static ImagePalette lookup(int palette) {
+		if (palette < 0 || palette > ImagePalette.values().length)
+			return null;
+		return ImagePalette.values()[palette];
+	}
+	
 	protected final int depth, index;
 	
 	ImagePalette(int depth, int index) {
