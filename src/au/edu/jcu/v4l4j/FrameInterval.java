@@ -165,9 +165,9 @@ public class FrameInterval {
 			} catch (Exception e) {
 				// error checking frame interval type
 				e.printStackTrace();
-				System.err.println("There was an error checking the supported"
-						+ " interval types.\nPlease report this error to the"
-						+ "v4l4j mailing list.\nSee REAME file for " + "information on reporting bugs");
+				System.err.println("There was an error checking the supported interval types.\n"
+						+ "Please report this error to the v4l4j mailing list.\n"
+						+ "See README file for information on reporting bugs");
 				type = Type.UNSUPPORTED;
 				return;
 			}
@@ -185,8 +185,9 @@ public class FrameInterval {
 			// error checking supported intervals
 			e.printStackTrace();
 			System.err.println(
-					"There was an error checking the supported" + " intervals.\nPlease report this error to the"
-							+ "v4l4j mailing list.\nSee REAME file for " + "information on reporting bugs");
+					"There was an error checking the supported intervals.\n"
+					+ "Please report this error to the v4l4j mailing list.\n"
+					+ "See README file for information on reporting bugs");
 			type = Type.UNSUPPORTED;
 			return;
 		}
