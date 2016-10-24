@@ -144,6 +144,8 @@ struct v4lconvert_encoder_series {
 	struct v4lconvert_encoder** encoders;
 };
 
+u32 v4lconvert_estimateBufferSize(u32 fmt, u32 width, u32 height);
+
 int v4lconvert_encoder_initWithConverter(struct v4lconvert_encoder* encoder, v4lconvert_converter_t* converter, u32 width, u32 height);
 int v4lconvert_encoder_initForIMF(struct v4lconvert_encoder* encoder, u32 src_fmt, u32 dst_fmt, u32 width, u32 height);
 

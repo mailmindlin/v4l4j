@@ -123,7 +123,6 @@ static u32 v4lconvert_encoder_encodePixelJPEG(struct v4lconvert_encoder* self, c
 static u32 v4lconvert_encoder_encodePlanarJPEG(struct v4lconvert_encoder* self, const u8* src, u8* dst, u32 src_len);
 static int v4lconvert_encoder_releaseIMF(struct v4lconvert_encoder* self);
 static int v4lconvert_encoder_releaseJPEG(struct v4lconvert_encoder* self);
-static u32 v4lconvert_estimateBufferSize(u32 fmt, u32 width, u32 height);
 static u32 v4lconvert_encoder_series_doConvert(struct v4lconvert_encoder_series* self, struct v4lconvert_buffer* buffer);
 static inline int computeEncoderPath(unsigned int* map, unsigned int* distances, u32 from, u32 to, unsigned int maxIterations);
 
@@ -250,7 +249,7 @@ static int v4lconvert_encoder_releaseJPEG(struct v4lconvert_encoder* self) {
 	return EXIT_SUCCESS;
 }
 
-static u32 v4lconvert_estimateBufferSize(u32 fmt, u32 width, u32 height) {
+u32 v4lconvert_estimateBufferSize(u32 fmt, u32 width, u32 height) {
 	u32 pixels = width * height;
 	switch (fmt) {
 		case RGB32:
