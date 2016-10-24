@@ -122,6 +122,9 @@ struct v4l4j_device {
 #define INVALID_VAL_EXCP		EXCEPTION_PACKAGE "InvalidValueException"
 #define UNSUPPORTED_METH_EXCP	EXCEPTION_PACKAGE "UnsupportedMethod"
 #define JNI_EXCP				EXCEPTION_PACKAGE "JNIException"
+#define OVERFLOW_EXCP			EXCEPTION_PACKAGE "BufferOverflowException"
+#define UNDERFLOW_EXCP			EXCEPTION_PACKAGE "BufferUnderflowException"
+#define NULL_EXCP				"java/lang/NullPointerException"
 
 
 /* Exception throwing helper */
