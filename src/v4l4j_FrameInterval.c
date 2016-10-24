@@ -1,7 +1,7 @@
 /*
 * Copyright (C) 2007-2009 Gilles Gigan (gilles.gigan@gmail.com)
 * This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public  License as published by the
+* it under the terms of the GNU General Public License as published by the
 * Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
 *
@@ -11,7 +11,7 @@
 * See the GNU General Public License for more details.
 *
 * You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
 *
 */
 #include <jni.h>
@@ -69,8 +69,6 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetFrameIntvType(JN
  * associated with it, or NULL if not found
  */
 static struct frame_intv_discrete *get_discrete(jlong o, jint type) {
-	struct frame_intv_discrete *d = NULL;
-
 	switch(type) {
 		//frame_size_discrete
 		case 0:
@@ -90,7 +88,7 @@ static struct frame_intv_discrete *get_discrete(jlong o, jint type) {
 
 		//error
 		default:
-			info("[V4L4J] Error looking up the frame interval (wrong struct type %d)\n", type);
+			info("[V4L4J] Error looking up the frame interval (unknown struct type %d)\n", type);
 			return NULL;
 	}
 }
@@ -103,36 +101,28 @@ static struct frame_intv_discrete *get_discrete(jlong o, jint type) {
  * associated with it, or NULL if not found
  */
 static struct frame_intv_continuous *get_continuous(jlong o, jint type) {
-	struct frame_intv_continuous *d = NULL;
-
 	switch(type) {
-	//frame_size_discrete
-	case 0:
-		d =	((struct frame_size_discrete*) (uintptr_t) o)->intv.continuous;
-		break;
+		//frame_size_discrete
+		case 0:
+			return ((struct frame_size_discrete*) (uintptr_t) o)->intv.continuous;
+			
+		//frame_size_stepwise (min res)
+		case 1:
+			return ((struct frame_size_continuous*) (uintptr_t) o)->intv_min_res.continuous;
+			
+		//frame_size_stepwise (max res)
+		case 2:
+			return ((struct frame_size_continuous*) (uintptr_t) o)->intv_max_res.continuous;
 
-	//frame_size_stepwise (min res)
-	case 1:
-		d =	((struct frame_size_continuous*) (uintptr_t) o)->intv_min_res.continuous;
-		break;
-
-	//frame_size_stepwise (max res)
-	case 2:
-		d = ((struct frame_size_continuous*) (uintptr_t) o)->intv_max_res.continuous;
-		break;
-
-	//frame_intv_continuous
-	case 5:
-		d = (struct frame_intv_continuous*) (uintptr_t) o;
-		break;
-
-	//error
-	default:
-		info("[V4L4J] Error looking up the frame interval (wrong struct type %d)\n", type);
-		break;
+		//frame_intv_continuous
+		case 5:
+			return (struct frame_intv_continuous*) (uintptr_t) o;
+			
+		//error
+		default:
+			info("[V4L4J] Error looking up the frame interval (unknown struct type %d)\n", type);
+			return NULL;
 	}
-
-	return d;
 }
 
 /*
