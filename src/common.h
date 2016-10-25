@@ -31,7 +31,7 @@
 #include "libvideo.h"
 #include "debug.h"
 
-#define LOG_FN_ENTER dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__)
+#define LOG_FN_ENTER() dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__)
 struct v4l4j_device;
 
 struct jpeg_data {
@@ -133,9 +133,18 @@ struct v4l4j_device {
 		do {\
 			info("[V4L4J] " format "\n", ## __VA_ARGS__);\
 			char msg[EXCEPTION_MSG_LENGTH+1];\
-			jclass JV4L4JException = (*e)->FindClass(e,c);\
-			snprintf(msg, EXCEPTION_MSG_LENGTH, format, ## __VA_ARGS__);\
-			if(JV4L4JException!=0) (*e)->ThrowNew(e, JV4L4JException, msg);\
+			jclass JV4L4JException = (*e)->FindClass(e, c);\
+			int msglen = snprintf(msg, EXCEPTION_MSG_LENGTH, format, ## __VA_ARGS__);\
+			if (JV4L4JException) {\
+				jmethodID ctor;\
+				if ((*e)->ExceptionCheck(e) && (ctor = (*e)->GetMethodID(e, JV4L4JException, "<init>", "(Ljava/lang/String;Ljava/lang/Throwable)V"))) {\
+					jstring msgStr = (*e)->NewString(e, (const jchar*)msg, msglen > EXCEPTION_MSG_LENGTH ? EXCEPTION_MSG_LENGTH : msglen);\
+					jthrowable exception = (*e)->NewObject(e, JV4L4JException, ctor, msgStr, (*e)->ExceptionOccurred(e));\
+					(*e)->Throw(e, exception);\
+				} else {\
+					(*e)->ThrowNew(e, JV4L4JException, msg);\
+				}\
+			}\
 		} while(0)
 
 #define CLIP(x) (unsigned char) ((x) > 255) ? 255 : (((x) < 0) ? 0 : (x));

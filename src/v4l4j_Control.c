@@ -112,6 +112,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_Control_doSetStringValue(JNIEnv *e,
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
+	//TODO replace with GetStringRegion
 	const char* value = (*e)->GetStringUTFChars(e, jvalue, 0);
 	if (value == NULL) {
 		// OOM exception already thrown
