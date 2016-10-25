@@ -108,7 +108,7 @@ public class FrameInterval {
 	 *            0:frame_size_discrete, 1:frame_size_stepwise (min res),
 	 *            2:frame_size_stepwise (max res)
 	 */
-	private native void doGetDiscrete(int t, long o);
+	private native List<DiscreteInterval> doGetDiscrete(int t, long o, List<DiscreteInterval> values);
 
 	/**
 	 * this method populates the continuousInterval member for the given frame
@@ -122,7 +122,7 @@ public class FrameInterval {
 	 *            0:frame_size_discrete, 1:frame_size_stepwise (min res),
 	 *            2:frame_size_stepwise (max res)
 	 */
-	private native void doGetStepwise(int t, long o);
+	private native StepwiseInterval doGetStepwise(int t, long o);
 
 	/**
 	 * This method builds a new FrameInterval object. It must be called while
@@ -175,11 +175,10 @@ public class FrameInterval {
 
 		try {
 			if (frameIntvType == 1) {
-				discreteValues = new ArrayList<DiscreteInterval>();
-				doGetDiscrete(ptr_type, o);
-				((ArrayList<?>)discreteValues).trimToSize();
+				this.discreteValues = doGetDiscrete(ptr_type, o, new ArrayList<>());
+				((ArrayList<?>)this.discreteValues).trimToSize();
 			} else if (frameIntvType == 2) {
-				doGetStepwise(ptr_type, o);
+				this.stepwiseInterval = doGetStepwise(ptr_type, o);
 			}
 		} catch (Exception e) {
 			// error checking supported intervals

@@ -45,14 +45,11 @@ static jfieldID		last_captured_frame_buffer_index_fID = NULL;
  * Updates the width, height, standard & format fields in a framegrabber object
  */
 static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d){
-	LOG_FN_ENTER;
-	jclass this_class;
-	jfieldID field;
-	int i;
+	LOG_FN_ENTER();
 
 	//Updates the FrameGrabber class width, height & format fields with the
 	//values returned by V4L2
-	this_class = (*e)->GetObjectClass(e,this);
+	jclass this_class = (*e)->GetObjectClass(e, this);
 	if(this_class == NULL) {
 		info("[V4L4J] error looking up FrameGrabber class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up FrameGrabber class");
@@ -60,56 +57,51 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 	}
 
 	//width
-	field = (*e)->GetFieldID(e, this_class, "width", "I");
-	if(field == NULL) {
-		info("[V4L4J] error looking up width field in FrameGrabber class\n");
+	jfieldID widthFID = (*e)->GetFieldID(e, this_class, "width", "I");
+	if(widthFID == NULL) {
 		THROW_EXCEPTION(e, JNI_EXCP, "error looking up width field in FrameGrabber class");
 		return;
 	}
-	(*e)->SetIntField(e, this, field, d->vdev->capture->width);
+	(*e)->SetIntField(e, this, widthFID, d->vdev->capture->width);
 
 	//height
-	field = (*e)->GetFieldID(e, this_class, "height", "I");
-	if(field==NULL) {
-		info("[V4L4J] error looking up height field in FrameGrabber class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "error looking up height field in "
-				"FrameGrabber class");
+	jfieldID heightFID = (*e)->GetFieldID(e, this_class, "height", "I");
+	if(heightFID == NULL) {
+		THROW_EXCEPTION(e, JNI_EXCP, "error looking up height field in FrameGrabber class");
 		return;
 	}
-	(*e)->SetIntField(e, this, field, d->vdev->capture->height);
+	(*e)->SetIntField(e, this, heightFID, d->vdev->capture->height);
 
 	//standard
-	field = (*e)->GetFieldID(e, this_class, "standard", "I");
-	if(field == NULL) {
-		info("[V4L4J] error looking up height standard in FrameGrabber class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "error looking up standard field in "
-				"FrameGrabber class");
+	jfieldID standardFID = (*e)->GetFieldID(e, this_class, "standard", "I");
+	if(standardFID == NULL) {
+		THROW_EXCEPTION(e, JNI_EXCP, "error looking up standard field in FrameGrabber class");
 		return;
 	}
-	(*e)->SetIntField(e, this, field, d->vdev->capture->std);
+	(*e)->SetIntField(e, this, standardFID, d->vdev->capture->std);
 
 
 	//format
 	if(d->output_fmt != OUTPUT_RAW){
-		field = (*e)->GetFieldID(e, this_class, "format", "I");
-		if(field == NULL) {
-			info("[V4L4J] error looking up format field in FrameGrabber class\n");
-			THROW_EXCEPTION(e, JNI_EXCP, "error looking up format field in FrameGrabber class");
+		jfieldID formatFID = (*e)->GetFieldID(e, this_class, "format", "I");
+		if(formatFID == NULL) {
+			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up format field in FrameGrabber class");
 			return;
 		}
 
+		int fmt;
 		if(d->vdev->capture->is_native == 1)
-			i = d->vdev->capture->palette;
+			fmt = d->vdev->capture->palette;
 		else
-			i = d->vdev->capture->convert->src_palette;
+			fmt = d->vdev->capture->convert->src_palette;
 
-		dprint(LOG_V4L4J, "[V4L4J] Setting format field to '%s' image format\n", libvideo_palettes[i].name);
-		(*e)->SetIntField(e, this, field, i);
+		dprint(LOG_V4L4J, "[V4L4J] Setting format field to '%s' image format\n", libvideo_palettes[fmt].name);
+		(*e)->SetIntField(e, this, formatFID, fmt);
 	}
 }
 
 static int get_buffer_length(struct v4l4j_device *d){
-	LOG_FN_ENTER;
+	LOG_FN_ENTER();
 	switch (d->output_fmt) {
 		case OUTPUT_RAW:
 		case OUTPUT_JPG:
@@ -143,7 +135,7 @@ static int get_buffer_length(struct v4l4j_device *d){
  * output image format
  */
 static int init_format_converter(struct v4l4j_device *d) {
-	LOG_FN_ENTER;
+	LOG_FN_ENTER();
 
 	if(d->need_conv) {
 		int ret = 0;
@@ -167,7 +159,7 @@ static int init_format_converter(struct v4l4j_device *d) {
 }
 
 static void release_format_converter(struct v4l4j_device *d){
-	LOG_FN_ENTER;
+	LOG_FN_ENTER();
 	if(d->need_conv) {
 		if(d->output_fmt == OUTPUT_JPG)
 			destroy_jpeg_compressor(d);
@@ -184,7 +176,7 @@ static void release_format_converter(struct v4l4j_device *d){
  * the returned value is a libvideo palette index
  */
 static int init_capture_format(struct v4l4j_device *d, int fg_out_fmt, int* src_fmt, int* dest_fmt){
-	LOG_FN_ENTER;
+	LOG_FN_ENTER();
 	dprint(LOG_LIBVIDEO, "[V4L4J] Setting output to %s - input format: %s\n",
 			fg_out_fmt == OUTPUT_RAW ? "RAW":
 			fg_out_fmt == OUTPUT_JPG ? "JPEG":
@@ -248,7 +240,7 @@ static int init_capture_format(struct v4l4j_device *d, int fg_out_fmt, int* src_
  * return 0 if an exception is thrown, 1 otherwise
  */
 static int get_lastFrame_field_ids(JNIEnv *e, jobject this, struct v4l4j_device *d){
-	LOG_FN_ENTER;
+	LOG_FN_ENTER();
 	jclass this_class;
 
 	//gets the fields of members updated every frame captured.
@@ -293,7 +285,7 @@ static int get_lastFrame_field_ids(JNIEnv *e, jobject this, struct v4l4j_device 
  */
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doInit(JNIEnv *e, jobject self, jlong object, jint num_buffers, jint w, jint h, jint ch, jint std,
 		jint in_fmt, jint fg_out_fmt) {
-	LOG_FN_ENTER;
+	LOG_FN_ENTER();
 	int i = 0;
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 	int src_fmt = in_fmt, dest_fmt;
@@ -380,7 +372,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doInit(JNIEnv *e, j
  * returns an appropriate size for a byte array holding converted frames
  */
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_getBufferSize(JNIEnv *e, jobject t, jlong object) {
-	LOG_FN_ENTER;
+	LOG_FN_ENTER();
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
 	return get_buffer_length(d);
@@ -390,7 +382,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_getBufferSize(JNIEn
  * tell LIBVIDEO to start the capture
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_start(JNIEnv *e, jobject t, jlong object){
-	LOG_FN_ENTER;
+	LOG_FN_ENTER();
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
 	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling 'start_capture(dev: %s)'\n", d->vdev->file);
@@ -404,7 +396,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_start(JNIEnv *e, jo
  * tell the JPEG compressor the new compression factor
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_setQuality(JNIEnv *env, jobject this, jlong object, jint quality) {
-	LOG_FN_ENTER;
+	LOG_FN_ENTER();
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 	if(dev->output_fmt != OUTPUT_JPG)
 		return;
@@ -416,7 +408,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_setQuality(JNIEnv *
  * sets the frame interval
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doSetFrameIntv(JNIEnv *e, jobject t, jlong object, jint num, jint denom) {
-	LOG_FN_ENTER;
+	LOG_FN_ENTER();
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
 	dprint(LOG_V4L4J, "[LIBVIDEO] Setting frame interval to %d/%d\n",num, denom);
@@ -439,7 +431,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doSetFrameIntv(JNIE
  * frac part of the frame intv does NOT interleave with doSetFrameIntv())
  */
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetFrameIntv(JNIEnv *e, jobject t, jlong object, jint what) {
-	LOG_FN_ENTER;
+	LOG_FN_ENTER();
 
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
@@ -459,7 +451,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetFrameIntv(JNIE
  * sets the video input and standard
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doSetVideoInputNStandard(JNIEnv *e, jobject t, jlong object, jint input_num, jint standard) {
-	LOG_FN_ENTER;
+	LOG_FN_ENTER();
 	
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
@@ -481,7 +473,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doSetVideoInputNSta
  * gets the video input
  */
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoInput(JNIEnv *e, jobject t, jlong object) {
-	LOG_FN_ENTER;
+	LOG_FN_ENTER();
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
 	int input_num, standard;
@@ -494,7 +486,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoInput(JNI
  * gets the video standard
  */
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoStandard(JNIEnv *e, jobject t, jlong object) {
-	LOG_FN_ENTER;
+	LOG_FN_ENTER();
 	
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
@@ -509,7 +501,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoStandard(
  * enqueue a buffer
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_enqueueBuffer(JNIEnv *e, jobject t, jlong object, jint buffer_index){
-	LOG_FN_ENTER;
+	LOG_FN_ENTER();
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
 	(*dev->vdev->capture->actions->enqueue_buffer)(dev->vdev, buffer_index);
@@ -519,7 +511,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_enqueueBuffer(JNIEn
  * dequeue a buffer, perform conversion if required and return frame
  */
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *e, jobject this, jlong object, jarray byteArray) {
-	LOG_FN_ENTER;
+	LOG_FN_ENTER();
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
 	//get frame from libvideo
@@ -589,7 +581,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
  * tell LIBVIDEO to stop the capture
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_stop(JNIEnv *e, jobject t, jlong object) {
-	LOG_FN_ENTER;
+	LOG_FN_ENTER();
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
 	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling stop_capture(dev: %s)\n", d->vdev->file);
@@ -606,7 +598,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_stop(JNIEnv *e, job
  * free LIBVIDEO (free_capture, free_capture_device)
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doRelease(JNIEnv *e, jobject t, jlong object) {
-	LOG_FN_ENTER;
+	LOG_FN_ENTER();
 
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
