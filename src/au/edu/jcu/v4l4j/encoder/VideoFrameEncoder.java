@@ -1,7 +1,10 @@
 package au.edu.jcu.v4l4j.encoder;
 
-import au.edu.jcu.v4l4j.BaseVideoFrame;
-import au.edu.jcu.v4l4j.VideoFrame;
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
+
+import au.edu.jcu.v4l4j.ImagePalette;
+import au.edu.jcu.v4l4j.exceptions.BufferOverflowException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 /**
@@ -10,13 +13,19 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  */
 public interface VideoFrameEncoder extends AutoCloseable {
 	/**
-	 * Encode the frame to another frame. NOTE: the input frame is not implicitly released, nor is the
-	 * output frame, nor is the output frame the same as the input.
-	 * @param frame
-	 * @return encoded frame
+	 * 
 	 * @throws V4L4JException
 	 */
-	VideoFrame encode(BaseVideoFrame frame) throws V4L4JException;
+	int encode(V4lconvertBuffer buffer) throws BufferUnderflowException, BufferOverflowException, NullPointerException, V4L4JException;
+	ImagePalette getSourcePalette();
+	int getSourceWidth();
+	int getSourceHeight();
+	ImagePalette getOutputPalette();
+	int getOutputWidth();
+	int getOutputHeight();
+	int minimumSourceBufferLength();
+	int minimumOutputBufferLength();
+	int minimumIntermediateBufferLength();
 	/**
 	 * Close encoder & release
 	 */
