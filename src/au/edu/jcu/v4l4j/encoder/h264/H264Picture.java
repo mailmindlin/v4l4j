@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.io.Closeable;
+import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 
 import au.edu.jcu.v4l4j.FrameGrabber;
@@ -27,24 +28,28 @@ public class H264Picture implements Closeable, VideoFrame {
 	
 	protected static native long alloc();
 	
+	protected static native int doGetStride(long ptr, int plane);
+	
+	protected static native int doGetNumPlanes(long ptr);
+	
+	protected static native ByteBuffer doGetBuffer(long ptr, int plane);
+	
+	protected static native void putInPlane(long ptr, int plane, ByteBuffer buf);
+	
+	protected static native void getFromPlane(long ptr, int plane, int offset, int len, ByteBuffer buf);
+	
+	protected static native long init(int width, int height, int csp);
+	
 	public static H264Picture allocate(int width, int height, int csp) {
-		return new H264Picture(alloc(), width, height, csp);
+		return new H264Picture(init(width, height, csp), width, height, csp);
 	}
 	
+	@SuppressWarnings("unchecked")
+	protected WeakReference<ByteBuffer>[] buffer = (WeakReference<ByteBuffer>[])new WeakReference[4];
 	protected final long object;
 	protected final int csp;
 	protected final int width;
 	protected final int height;
-	/**
-	 * Allocates native struct and initializes it.
-	 * @param csp
-	 * @param width
-	 * @param height
-	 * @return
-	 */
-	protected native long init(int width, int height, int csp);
-	
-	protected native void putInPlane(int planeNum, ByteBuffer buf);
 	
 	/**
 	 * Release the native memory behind this picture
@@ -56,14 +61,14 @@ public class H264Picture implements Closeable, VideoFrame {
 	 * Initialize picture with given pointer
 	 * @param pointer address of struct
 	 */
-	public H264Picture(long pointer) {
+	protected H264Picture(long pointer) {
 		this.object = pointer;
 		this.width = 0;
 		this.height = 0;
 		this.csp = 0;
 	}
 	
-	public H264Picture(long pointer, int width, int height, int csp) {
+	protected H264Picture(long pointer, int width, int height, int csp) {
 		this.object = pointer;
 		this.width = width;
 		this.height = height;
@@ -111,14 +116,12 @@ public class H264Picture implements Closeable, VideoFrame {
 
 	@Override
 	public FrameGrabber getFrameGrabber() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public int getFrameLength() {
-		// TODO Auto-generated method stub
-		return 0;
+		return getBuffer().limit();
 	}
 
 	@Override
@@ -136,31 +139,50 @@ public class H264Picture implements Closeable, VideoFrame {
 
 	@Override
 	public byte[] getBytes() {
-		// TODO Auto-generated method stub
-		return null;
+		ByteBuffer buf = this.getBuffer();
+		if (buf.hasArray())
+			return buf.array();
+		byte[] result = new byte[buf.remaining()];
+		buf.get(result);
+		return result;
 	}
 
 	@Override
 	public DataBuffer getDataBuffer() {
-		// TODO Auto-generated method stub
-		return null;
+		return new DataBuffer(DataBuffer.TYPE_UNDEFINED, 0, 4) {
+			@Override
+			public int getElem(int bank, int i) {
+				ByteBuffer buf = getBuffer();
+				return 0;
+			}
+
+			@Override
+			public void setElem(int bank, int i, int val) {
+				
+			}
+		};
 	}
 
 	@Override
 	public Raster getRaster() throws UnsupportedMethod {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedMethod("Cannot get raster for H264 image");
 	}
 
 	@Override
 	public BufferedImage getBufferedImage() throws UnsupportedMethod {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedMethod("Cannot get BufferedImage for H264 image");
 	}
 
 	@Override
 	public void recycle() {
 		// TODO Auto-generated method stub
 		
+	}
+
+	public ByteBuffer getBuffer(int plane) {
+		ByteBuffer result;
+		if (this.buffer == null || (result = this.buffer.get()) == null)
+			this.buffer = new WeakReference<>(result = doGetBuffer(this.object, plane));
+		return result.duplicate();
 	}
 }
