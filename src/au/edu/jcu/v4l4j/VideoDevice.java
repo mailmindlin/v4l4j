@@ -182,7 +182,7 @@ public class VideoDevice {
 	 * @throws V4L4JException
 	 *             if there is an error
 	 */
-	private native long doInit(String device) throws V4L4JException;
+	private static native long doInit(String device) throws V4L4JException;
 
 	/**
 	 * This JNI method releases resources used by libvideo's struct
@@ -193,7 +193,7 @@ public class VideoDevice {
 	 * @throws ReleaseException
 	 *             if the device is still in use.
 	 */
-	private native void doRelease(long o);
+	private static native void doRelease(long o);
 
 	/**
 	 * This JNI method initializes the control interface and returns an array of
@@ -205,7 +205,7 @@ public class VideoDevice {
 	 * @throws JNIException
 	 *             if there is an error in the JNI code
 	 */
-	private native Control[] doGetControlList(long o);
+	private static native Control[] doGetControlList(long o);
 
 	/**
 	 * This JNI method releases the control interface
@@ -215,7 +215,7 @@ public class VideoDevice {
 	 * @throws ReleaseException
 	 *             if this device is sill in use, and has not been released.
 	 */
-	private native void doReleaseControlList(long o);
+	private static native void doReleaseControlList(long o);
 
 	/**
 	 * This JNI method gets the tuner interface
@@ -225,7 +225,7 @@ public class VideoDevice {
 	 * @throws JNIException
 	 *             if there is an error in the JNI code
 	 */
-	private native void doGetTunerActions(long o);
+	private static native void doGetTunerActions(long o);
 
 	/**
 	 * This JNI method releases the tuner interface
@@ -235,7 +235,7 @@ public class VideoDevice {
 	 * @throws ReleaseException
 	 *             if this device is sill in use, and has not been released.
 	 */
-	private native void doReleaseTunerActions(long o);
+	private static native void doReleaseTunerActions(long o);
 
 	/**
 	 * The FrameGrabber interface associated with this video device

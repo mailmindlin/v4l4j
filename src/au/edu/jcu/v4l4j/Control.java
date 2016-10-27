@@ -25,12 +25,10 @@
 package au.edu.jcu.v4l4j;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 import au.edu.jcu.v4l4j.exceptions.ControlException;
 import au.edu.jcu.v4l4j.exceptions.StateException;
@@ -97,7 +95,7 @@ public class Control {
 	 * @throws ControlException
 	 *             if the value cant be retrieved.
 	 */
-	private native int doGetValue(long o, int id) throws ControlException;
+	private static native int doGetValue(long o, int id) throws ControlException;
 
 	/**
 	 * This JNI method sets the value of a control given its id.
@@ -111,7 +109,7 @@ public class Control {
 	 * @throws ControlException
 	 *             if the value cant be set.
 	 */
-	private native int doSetValue(long o, int id, int v) throws ControlException;
+	private static native int doSetValue(long o, int id, int v) throws ControlException;
 
 	/**
 	 * This JNI method returns the string value of a control given its id.
@@ -124,7 +122,7 @@ public class Control {
 	 * @throws ControlException
 	 *             if the value cant be retrieved.
 	 */
-	private native String doGetStringValue(long o, int id) throws ControlException;
+	private static native String doGetStringValue(long o, int id) throws ControlException;
 
 	/**
 	 * This JNI method sets the value of a control given its id.
@@ -138,7 +136,7 @@ public class Control {
 	 * @throws ControlException
 	 *             if the value cant be set.
 	 */
-	private native void doSetStringValue(long o, int id, String v) throws ControlException;
+	private static native void doSetStringValue(long o, int id, String v) throws ControlException;
 
 	/**
 	 * This JNI method returns the value of a control given its id.
@@ -151,7 +149,7 @@ public class Control {
 	 * @throws ControlException
 	 *             if the value cant be retrieved.
 	 */
-	private native long doGetLongValue(long o, int id) throws ControlException;
+	private static native long doGetLongValue(long o, int id) throws ControlException;
 
 	/**
 	 * This JNI method sets the value of a control given its id.
@@ -165,7 +163,7 @@ public class Control {
 	 * @throws ControlException
 	 *             if the value cant be set.
 	 */
-	private native int doSetLongValue(long o, int id, long v) throws ControlException;
+	private static native int doSetLongValue(long o, int id, long v) throws ControlException;
 
 	private int id;
 	private String name;
