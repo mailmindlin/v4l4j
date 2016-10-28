@@ -154,7 +154,7 @@ public class BaseVideoFrame implements VideoFrame {
 	 */
 	protected BufferedImage refreshBufferedImage() {
 		if (bufferedImage == null)
-			throw new UnsupportedMethod("A Bufferedimage can not be generated for this " + "image format ("
+			throw new UnsupportedMethod("A Bufferedimage can not be generated for this image format ("
 					+ frameGrabber.getImageFormat().toString() + ")");
 
 		return bufferedImage;
