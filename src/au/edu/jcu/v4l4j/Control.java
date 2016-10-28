@@ -25,6 +25,7 @@
 package au.edu.jcu.v4l4j;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -206,17 +207,13 @@ public class Control {
 		this.max = max;
 		this.step = step;
 		this.type = type;
-		if (names != null) {
-			this.names = new ArrayList<String>(names.length);
-			for (String n : names)
-				this.names.add(n);
-		}
+		this.names = names == null ? null : Arrays.asList(names);
 		this.values = values;
 
 		if (min <= 0 && 0 <= max)
 			this.defaultValue = 0;
 		else
-			this.defaultValue = (int) Math.round((max - min) / 2.0) + min;
+			this.defaultValue = (int) (Math.round((max - min) / 2.0) + min);
 		this.object = o;
 		this.state = new State();
 	}
@@ -242,12 +239,12 @@ public class Control {
 	 */
 	public int getValue() throws ControlException, UnsupportedMethod, StateException {
 		int v = 0;
-
+		
 		if (type == V4L4JConstants.CTRL_TYPE_STRING)
 			throw new UnsupportedMethod("This control is a string control and does not accept calls to getValue()");
 		if (type == V4L4JConstants.CTRL_TYPE_LONG)
 			throw new UnsupportedMethod("This control is a long control and does not support calls to setValue()");
-
+		
 		state.get();
 		try {
 			if (type == V4L4JConstants.CTRL_TYPE_BUTTON) {
