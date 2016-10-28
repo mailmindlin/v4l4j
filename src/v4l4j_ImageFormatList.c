@@ -49,11 +49,14 @@
  * @return 1 on success, else 0
  * @throws JNIException if there's a problem creating the given object
  */
-static int add_format(JNIEnv *e, jobject list, jmethodID add_method, jclass format_class, jmethodID format_ctor, int index, struct v4l4j_device *dev){
-	
-	//Create an object to wrap the image format
+static inline int add_format(JNIEnv *e, jobject list, jmethodID add_method, jclass format_class, jmethodID format_ctor, int index, struct v4l4j_device *dev) {
+	//Wrap the name with a Java String
 	jstring name = (*e)->NewStringUTF(e, (const char*) libvideo_palettes[index].name);
+	//Create an object to wrap the image format
 	jobject obj = (*e)->NewObject(e, format_class, format_ctor, name, index, (jlong) (uintptr_t) dev);
+	//Delete ref to name
+	(*e)->DeleteLocalRef(e, name);
+	
 	if(obj == NULL) {
 		THROW_EXCEPTION(e, JNI_EXCP, "Error creating the ImageFormat object for palette %s (index %d)", libvideo_palettes[index].name, index);
 		return EXIT_FAILURE;
@@ -62,12 +65,15 @@ static int add_format(JNIEnv *e, jobject list, jmethodID add_method, jclass form
 	//Add the ImageFormat object to the list
 	(*e)->CallVoidMethod(e, list, add_method, obj);
 	
+	//Release reference to the created ImageFormat
+	(*e)->DeleteLocalRef(e, obj);
+	
 	if ((*e)->ExceptionCheck(e))
 		return EXIT_FAILURE;
 	return EXIT_SUCCESS;
 }
 
-static jobject lookupMember(JNIEnv* env, jobject self, jclass self_class, const char* name) {
+static inline jobject lookupMember(JNIEnv* env, jobject self, jclass self_class, const char* name) {
 	jfieldID member_fid = (*env)->GetFieldID(env, self_class, name, "Ljava/util/List;");
 	if(member_fid == NULL) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Error looking up the fieldID for %s", name);
