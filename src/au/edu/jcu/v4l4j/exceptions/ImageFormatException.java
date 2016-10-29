@@ -38,7 +38,7 @@ public class ImageFormatException extends V4L4JException {
 		return new ImageFormatException("This video device does not support " + format + " encoding of its frames.");
 	}
 	public static ImageFormatException cannotConvert(String from, String to) {
-		return new ImageFormatException(new StringBuffer()
+		return new ImageFormatException(new StringBuilder()
 				.append("The image format ")
 				.append(from)
 				.append(" cannot be converted to")
