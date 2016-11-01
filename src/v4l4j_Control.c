@@ -38,13 +38,13 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_Control_doGetValue(JNIEnv *e, jclas
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
 	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling get_control_value(dev: %s, ctrl name:%s)\n", dev->vdev->file, dev->vdev->control->controls[id].v4l2_ctrl->name);
+	int val = 0;
 	int ret = get_control_value(dev->vdev, dev->vdev->control->controls[id].v4l2_ctrl, &val, 0);
 	if(ret != 0) {
 		THROW_EXCEPTION(e, CTRL_EXCP, "Error getting current value for control '%s'", dev->vdev->control->controls[id].v4l2_ctrl->name);
 		return -1;
 	}
 	
-	int val = 0;
 	dprint(LOG_V4L4J, "[V4L4J] get_control_value(dev: %s, ctrl name:%s) = %d\n", dev->vdev->file, dev->vdev->control->controls[id].v4l2_ctrl->name, val);
 	return val;
 }
