@@ -174,8 +174,8 @@ static int translate_type(JNIEnv *e, int t) {
 	}
 	
 	jclass constants = (*e)->FindClass(e, CONSTANTS_CLASS);
-	if(!constants == NULL) {
-		info("[V4L4J] Error looking up the V4L4JConstants class\n");
+	if(constants == NULL) {
+		info("[V4L4J] Error looking up the V4L4JConstants class (%s)\n", CONSTANTS_CLASS);
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the V4L4JConstants class");
 		return -1;
 	}
