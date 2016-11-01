@@ -53,11 +53,11 @@ static jobject create_tuner_object(JNIEnv *e, struct tuner_info *tuner) {
 			tuner->index, tuner->name, tuner->rangelow, tuner->rangehigh, tuner->unit, tuner->type);
 
 	jstring name = (*e)->NewStringUTF(e, (const char*) tuner->name);
-	jobject tuner = (*e)->NewObject(e, tuner_class, ctor,
+	jobject result = (*e)->NewObject(e, tuner_class, ctor,
 			name, tuner->index, tuner->unit, tuner->type, (jlong) (tuner->rangelow & 0xFFFFFFFF), (jlong) (tuner->rangehigh & 0xFFFFFFFF));
 	(*e)->DeleteLocalRef(e, tuner_class);
 	(*e)->DeleteLocalRef(e, name);
-	return tuner;
+	return result;
 }
 
 static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct video_device *vd){
