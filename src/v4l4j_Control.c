@@ -132,17 +132,17 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_Control_doSetStringValue(JNIEnv *e,
 	int size = strlen(copy) + 1;
 
 	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling set_control_value(dev: %s, ctrl name:%s, val: %s - byte size: %d)\n", d->vdev->file, d->vdev->control->controls[id].v4l2_ctrl->name, copy, size);
-	int ret = set_control_value(d->vdev, d->vdev->control->controls[id].v4l2_ctrl, copy, size);
-
+	int err = set_control_value(d->vdev, d->vdev->control->controls[id].v4l2_ctrl, copy, size);
+	
 	free(copy);
-
-	if(ret != 0) {
-		if(ret == LIBVIDEO_ERR_OUT_OF_RANGE) {
+	
+	if(err) {
+		if(err == LIBVIDEO_ERR_OUT_OF_RANGE) {
 			THROW_EXCEPTION(e, INVALID_VAL_EXCP, "Invalid value for string control %s : value out of range", d->vdev->control->controls[id].v4l2_ctrl->name);
-		} else if(ret == LIBVIDEO_ERR_STREAMING) {
+		} else if(err == LIBVIDEO_ERR_STREAMING) {
 			THROW_EXCEPTION(e, CTRL_EXCP, "Cannot set value for string control '%s' while streaming", d->vdev->control->controls[id].v4l2_ctrl->name);
 		} else {
-			THROW_EXCEPTION(e, CTRL_EXCP, "Error setting current value for string control '%s'", d->vdev->control->controls[id].v4l2_ctrl->name);
+			THROW_EXCEPTION(e, CTRL_EXCP, "Error (#%d) setting current value for string control '%s'", err, d->vdev->control->controls[id].v4l2_ctrl->name);
 		}
 	}
 }

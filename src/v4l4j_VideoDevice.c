@@ -93,7 +93,9 @@ static jintArray get_values(JNIEnv *e, struct control *l) {
 		return NULL;
 	}
 	
-	for(int i = 0; i < len; i++)
+	//FIXME can I change this from a 2-copy to a 1-copy method by
+	//using GetIntArrayElements (or would that be even slower?)
+	for(unsigned int i = 0; i < len; i++)
 		values[i] = l->v4l2_menu[i].index;
 
 	(*e)->SetIntArrayRegion(e, values_array, 0, l->count_menu, values);
@@ -118,7 +120,7 @@ static jobjectArray get_names(JNIEnv *e, struct control *l) {
 		return NULL;
 	}
 
-	for(int i = 0; i < l->count_menu; i++) {
+	for(unsigned int i = 0; i < l->count_menu; i++) {
 		const char* name;
 		if(l->v4l2_ctrl->type == V4L2_CTRL_TYPE_MENU) {
 			name = (const char*) l->v4l2_menu[i].name;
@@ -278,7 +280,7 @@ JNIEXPORT jobjectArray JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doGetControlLis
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doReleaseControlList(JNIEnv *e, jclass t, jlong o){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
-
+	
 	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling release_control_list()\n");
 	release_control_list(d->vdev);
 }
@@ -286,7 +288,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doReleaseControlList(JN
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doGetTunerActions(JNIEnv *e, jclass t, jlong o){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
-
+	
 	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling get_tuner_actions()\n");
 	get_tuner_actions(d->vdev);
 }
@@ -294,7 +296,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doGetTunerActions(JNIEn
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_VideoDevice_doReleaseTunerActions(JNIEnv *e, jclass t, jlong o){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
-
+	
 	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling release_tuner_actions()\n");
 	release_tuner_actions(d->vdev);
 }

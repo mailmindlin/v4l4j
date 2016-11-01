@@ -32,21 +32,18 @@
 
 jmethodID lookupAddMethod(JNIEnv *env, jobject list);
 
-static jobject create_tuner_object(JNIEnv *e, jobject t, struct tuner_info *tuner) {
-	jclass tuner_class;
-	jmethodID ctor;
-
+static jobject create_tuner_object(JNIEnv *e, struct tuner_info *tuner) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 
-	tuner_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/TunerInfo");
-	if(tuner_class == NULL){
+	jclass tuner_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/TunerInfo");
+	if(!tuner_class) {
 		info("[V4L4J] Error looking up the tuner class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up tuner class");
 		return 0;
 	}
 
-	ctor = (*e)->GetMethodID(e, tuner_class, "<init>", "(Ljava/lang/String;IIIJJ)V");
-	if(ctor == NULL){
+	jmethodID ctor = (*e)->GetMethodID(e, tuner_class, "<init>", "(Ljava/lang/String;IIIJJ)V");
+	if(!ctor) {
 		info("[V4L4J] Error looking up the constructor of tuner class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up constructor of tuner class");
 		return 0;
@@ -55,9 +52,12 @@ static jobject create_tuner_object(JNIEnv *e, jobject t, struct tuner_info *tune
 	dprint(LOG_V4L4J, "[V4L4J] Creating tunerInfo object: index: %d - name '%s' - low: %lu - high: %lu - unit: %d - type: %d\n",
 			tuner->index, tuner->name, tuner->rangelow, tuner->rangehigh, tuner->unit, tuner->type);
 
-	return (*e)->NewObject(e, tuner_class, ctor,
-			(*e)->NewStringUTF(e,(const char *)tuner->name), tuner->index, tuner->unit , tuner->type,
-			(jlong) (tuner->rangelow & 0xffffffff), (jlong) (tuner->rangehigh & 0xffffffff));
+	jstring name = (*e)->NewStringUTF(e, (const char*) tuner->name);
+	jobject tuner = (*e)->NewObject(e, tuner_class, ctor,
+			name, tuner->index, tuner->unit, tuner->type, (jlong) (tuner->rangelow & 0xFFFFFFFF), (jlong) (tuner->rangehigh & 0xFFFFFFFF));
+	(*e)->DeleteLocalRef(e, tuner_class);
+	(*e)->DeleteLocalRef(e, name);
+	return tuner;
 }
 
 static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct video_device *vd){
@@ -104,7 +104,7 @@ static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct
 
 		//create the short[] with the supported standards
 		jintArray stds = (*e)->NewIntArray(e, vi->nb_stds);
-		if(stds == NULL){
+		if(!stds) {
 			THROW_EXCEPTION(e, JNI_EXCP, "Error creating array");
 			return;
 		}
@@ -119,8 +119,11 @@ static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct
 			obj = (*e)->NewObject(e, input_class, ctor_wotuner, name, stds, vi->index);
 		} else {
 			dprint(LOG_V4L4J, "[V4L4J] Creating input object (with tuner): name '%s' - supported standards(%d): %p - index: %d\n", vi->name, vi->nb_stds, vi->supported_stds, vi->index);
-			obj = (*e)->NewObject(e, input_class, ctor_wtuner, name, stds, create_tuner_object(e, t, vi->tuner), vi->index);
+			jobject tuner = create_tuner_object(e, vi->tuner);
+			obj = (*e)->NewObject(e, input_class, ctor_wtuner, name, stds, tuner, vi->index);
+			(*e)->DeleteLocalRef(e, tuner);
 		}
+		(*e)->DeleteLocalRef(e, stds);
 
 		//store it in the list
 		if(obj == NULL) {
@@ -128,82 +131,59 @@ static void create_inputs_object(JNIEnv *e, jobject t, jclass this_class, struct
 			return;
 		}
 		(*e)->CallVoidMethod(e, input_list_object, add_method, obj);
+		(*e)->DeleteLocalRef(e, obj);
 	}
-
-
+	(*e)->DeleteLocalRef(e, input_class);
+	(*e)->DeleteLocalRef(e, input_list_object);
 }
 
-static void create_formats_object(JNIEnv *e, jobject t, jclass this_class,
-		struct v4l4j_device *d){
-	jclass format_list_class;
-	jfieldID formats_field;
-	jmethodID format_list_ctor;
-	jobject obj;
-
+static void create_formats_object(JNIEnv *e, jobject t, jclass this_class, struct v4l4j_device *d) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-
-	format_list_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/ImageFormatList");
+	
+	jclass format_list_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/ImageFormatList");
 	if(format_list_class == NULL){
-		info("[V4L4J] Error looking up the ImageFormatList class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up ImageFormatList class");
 		return;
 	}
-
-	format_list_ctor = (*e)->GetMethodID(e, format_list_class, "<init>", "(J)V");
-	if(format_list_ctor == NULL){
-		info("[V4L4J] Error looking up the constructor of ImageFormatList class\n");
+	
+	jmethodID format_list_ctor = (*e)->GetMethodID(e, format_list_class, "<init>", "(J)V");
+	if(format_list_ctor == NULL) {
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of ImageFormatList class");
 		return;
 	}
 
-	formats_field = (*e)->GetFieldID(e, this_class, "formats", "Lau/edu/jcu/v4l4j/ImageFormatList;");
-	if(formats_field == NULL){
-		info("[V4L4J] Error looking up the formats attribute ID\n");
+	jfieldID formats_field = (*e)->GetFieldID(e, this_class, "formats", "Lau/edu/jcu/v4l4j/ImageFormatList;");
+	if(formats_field == NULL) {
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the formats attribute ID");
 		return;
 	}
-
-
+	
 	//Creates an ImageFormatList
-	obj = (*e)->NewObject(e, format_list_class, format_list_ctor, (jlong) (uintptr_t)d);
-	if(obj == NULL){
-		if ((*e)->ExceptionCheck(e)) {
-			info("[V4L4J] Error creating the format list\n");
-			jthrowable except = (*e)->ExceptionOccurred(e);
-			(*e)->ExceptionDescribe(e);
-			(*e)->ExceptionClear(e);
-			(*e)->Throw(e, except);
-		} else {
-			THROW_EXCEPTION(e, JNI_EXCP, "Error creating the format list");
-		}
+	jobject obj = (*e)->NewObject(e, format_list_class, format_list_ctor, (jlong) (uintptr_t)d);
+	if(obj == NULL) {
+		THROW_EXCEPTION(e, JNI_EXCP, "Error creating the format list");
 		return;
 	}
 	(*e)->SetObjectField(e, t, formats_field, obj);
-
-
 }
 
 /*
  * Get info about a v4l device given its device file
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobject t, jlong v4l4j_device){
-//void Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobject t, jlong v4l4j_device){
-
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) v4l4j_device;
-	jfieldID name_field;
-	jclass this_class;
 	struct video_device *vd = d->vdev;
-
-	//get handles on needed java objects
-	this_class = (*e)->GetObjectClass(e,t);
+	
+	// Get handles on needed Java objects
+	jclass this_class = (*e)->GetObjectClass(e,t);
 	if(this_class == NULL){
 		info("[V4L4J] Error looking up the DeviceInfo class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the DeviceInfo class");
 		return;
 	}
 
-	name_field = (*e)->GetFieldID(e, this_class, "name", "Ljava/lang/String;");
+	jfieldID name_field = (*e)->GetFieldID(e, this_class, "name", "Ljava/lang/String;");
 	if(name_field == NULL){
 		info("[V4L4J] Error looking up the name attribute\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the name attribute");
@@ -216,7 +196,10 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobje
 	if(get_device_info(vd) != NULL){
 		//fill in values in DeviceInfo object
 		/* set the name field */
-		(*e)->SetObjectField(e, t, name_field, (*e)->NewStringUTF(e, vd->info->name));
+		jstring name = (*e)->NewStringUTF(e, vd->info->name);
+		(*e)->SetObjectField(e, t, name_field, name);
+		//We don't *have* to release this, but it makes me feel better
+		(*e)->DeleteLocalRef(e, name);
 
 		/* set the inputs field */
 		dprint(LOG_V4L4J, "[V4L4J] Creating inputInfo objects\n");
@@ -230,18 +213,12 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *e, jobje
 
 }
 
-JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_doListIntervals(
-		JNIEnv *e, jobject t, jlong o, jint imf, jint w, jint h){
+JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_doListIntervals(JNIEnv *e, jobject t, jlong o, jint imf, jint w, jint h) {
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
-	void *p;
-	int type;
-	jobject frame_intv;
-	jclass frame_intv_class;
-	jmethodID ctor;
 
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 
-	frame_intv_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/FrameInterval");
+	jclass frame_intv_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/FrameInterval");
 	if(frame_intv_class == NULL){
 		info("[V4L4J] Error looking up the FrameInterval class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, \
@@ -249,7 +226,7 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_doListIntervals(
 		return NULL;
 	}
 
-	ctor = (*e)->GetMethodID(e, frame_intv_class, "<init>",	"(IJ)V");
+	jmethodID ctor = (*e)->GetMethodID(e, frame_intv_class, "<init>",	"(IJ)V");
 	if(ctor == NULL){
 		info("[V4L4J] Error looking up the ctor of FrameInterval class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, \
@@ -257,52 +234,45 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_doListIntervals(
 		return NULL;
 	}
 
-	type = d->vdev->info->list_frame_intv(d->vdev->info, imf, w, h, &p);
+	void* p;
+	int type = d->vdev->info->list_frame_intv(d->vdev->info, imf, w, h, &p);
 
+	jobject frame_intv;
 	switch(type){
-	case FRAME_INTV_UNSUPPORTED:
-		dprint(LOG_V4L4J, "[V4L4L] Creating the frame interval (unsupported)\n");
-		//create the frame interval object
-		frame_intv = (*e)->NewObject(e, frame_intv_class, ctor,
-				3, (jlong) (uintptr_t) p);
-		if(frame_intv == NULL){
-			info("[V4L4J] Error creating FrameInterval object\n");
-			THROW_EXCEPTION(e, JNI_EXCP, \
-					"Error creating FrameInterval object");
+		case FRAME_INTV_UNSUPPORTED:
+			dprint(LOG_V4L4J, "[V4L4L] Creating the frame interval (unsupported)\n");
+			//create the frame interval object
+			frame_intv = (*e)->NewObject(e, frame_intv_class, ctor, 3, (jlong) (uintptr_t) p);
+			if(frame_intv == NULL) {
+				THROW_EXCEPTION(e, JNI_EXCP, "Error creating FrameInterval object");
+				return NULL;
+			}
+			break;
+		case FRAME_INTV_DISCRETE:
+			dprint(LOG_V4L4J, "[V4L4L] Creating the frame interval (discrete)\n");
+			//create the frame interval object
+			frame_intv = (*e)->NewObject(e, frame_intv_class, ctor, 4, (jlong) (uintptr_t) p);
+			XFREE(p);
+			if(frame_intv == NULL) {
+				THROW_EXCEPTION(e, JNI_EXCP, "Error creating FrameInterval object");
+				return NULL;
+			}
+			break;
+		case FRAME_INTV_CONTINUOUS:
+			dprint(LOG_V4L4J, "[V4L4L] Creating the frame interval (stepwise)\n");
+			//create the frame interval object
+			frame_intv = (*e)->NewObject(e, frame_intv_class, ctor, 5, (jlong) (uintptr_t) p);
+			XFREE(p);
+			if(frame_intv == NULL) {
+				THROW_EXCEPTION(e, JNI_EXCP, "Error creating FrameInterval object");
+				return NULL;
+			}
+			break;
+		default:
+			info("[V4L4J] There is a bug in v4l4j. Please report this on the\n");
+			info("[V4L4J] V4L4J mailing list.\n");
+			THROW_EXCEPTION(e, JNI_EXCP, "Error creating the FrameInterval object");
 			return NULL;
-		}
-		break;
-	case FRAME_INTV_DISCRETE:
-		dprint(LOG_V4L4J, "[V4L4L] Creating the frame interval (discrete)\n");
-		//create the frame interval object
-		frame_intv = (*e)->NewObject(e, frame_intv_class, ctor,
-				4, (jlong) (uintptr_t) p);
-		XFREE(p);
-		if(frame_intv == NULL){
-			info("[V4L4J] Error creating FrameInterval object\n");
-			THROW_EXCEPTION(e, JNI_EXCP, \
-					"Error creating FrameInterval object");
-			return NULL;
-		}
-		break;
-	case FRAME_INTV_CONTINUOUS:
-		dprint(LOG_V4L4J, "[V4L4L] Creating the frame interval (stepwise)\n");
-		//create the frame interval object
-		frame_intv = (*e)->NewObject(e, frame_intv_class, ctor,
-				5, (jlong) (uintptr_t) p);
-		XFREE(p);
-		if(frame_intv == NULL){
-			info("[V4L4J] Error creating FrameInterval object\n");
-			THROW_EXCEPTION(e, JNI_EXCP, \
-					"Error creating FrameInterval object");
-			return NULL;
-		}
-		break;
-	default:
-		info("[V4L4J] There is a bug in v4l4j. Please report this on the\n");
-		info("[V4L4J] V4L4J mailing list.\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error creating the FrameInterval object");
-		return NULL;
 	}
 	return frame_intv;
 }
@@ -310,8 +280,7 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_doListIntervals(
 /*
  * Get info about a v4l device given its device file
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_doRelease(
-		JNIEnv *e, jobject t, jlong v4l4j_device){
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_doRelease(JNIEnv *e, jobject t, jlong v4l4j_device) {
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) v4l4j_device;
 	dprint(LOG_LIBVIDEO, "[LIBVIDEO] call to release_device_info\n");
 	release_device_info(d->vdev);
