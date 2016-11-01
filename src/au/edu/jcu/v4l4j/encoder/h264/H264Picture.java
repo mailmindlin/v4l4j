@@ -45,7 +45,7 @@ public class H264Picture implements Closeable, VideoFrame {
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected WeakReference<ByteBuffer>[] buffer = (WeakReference<ByteBuffer>[])new WeakReference[4];
+	protected WeakReference<ByteBuffer>[] buffers = (WeakReference<ByteBuffer>[])new WeakReference[4];
 	protected final long object;
 	protected final int csp;
 	protected final int width;
@@ -121,7 +121,8 @@ public class H264Picture implements Closeable, VideoFrame {
 
 	@Override
 	public int getFrameLength() {
-		return getBuffer().limit();
+		// TODO Auto-generated method stub
+		return 0;
 	}
 
 	@Override
@@ -139,12 +140,7 @@ public class H264Picture implements Closeable, VideoFrame {
 
 	@Override
 	public byte[] getBytes() {
-		ByteBuffer buf = this.getBuffer();
-		if (buf.hasArray())
-			return buf.array();
-		byte[] result = new byte[buf.remaining()];
-		buf.get(result);
-		return result;
+		return null;
 	}
 
 	@Override
@@ -152,13 +148,14 @@ public class H264Picture implements Closeable, VideoFrame {
 		return new DataBuffer(DataBuffer.TYPE_UNDEFINED, 0, 4) {
 			@Override
 			public int getElem(int bank, int i) {
-				ByteBuffer buf = getBuffer();
-				return 0;
+				ByteBuffer buf = getBuffer(bank);
+				return buf.getInt(i);
 			}
 
 			@Override
 			public void setElem(int bank, int i, int val) {
-				
+				ByteBuffer buf = getBuffer(bank);
+				buf.putInt(i, val);
 			}
 		};
 	}
@@ -181,8 +178,14 @@ public class H264Picture implements Closeable, VideoFrame {
 
 	public ByteBuffer getBuffer(int plane) {
 		ByteBuffer result;
-		if (this.buffer == null || (result = this.buffer.get()) == null)
-			this.buffer = new WeakReference<>(result = doGetBuffer(this.object, plane));
+		WeakReference<ByteBuffer> bufferRef = this.buffers[plane];
+		if (bufferRef == null || (result = bufferRef.get()) == null) {
+			synchronized (this.buffers) {
+				//Check again, now that we have a lock on the buffers
+				if (bufferRef == null || (result = bufferRef.get()) == null)
+					this.buffers[plane] = new WeakReference<>(result = doGetBuffer(this.object, plane));
+			}
+		}
 		return result.duplicate();
 	}
 }
