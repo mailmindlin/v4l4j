@@ -1514,8 +1514,7 @@ public class VideoDevice {
 	 */
 	public RawFrameGrabber getRawFrameGrabber(int width, int height, int input, int std) throws V4L4JException {
 		if (deviceInfo == null)
-			throw new ImageFormatException(
-					"No DeviceInfo could be obtained. The device is probably used by another application");
+			throw new ImageFormatException("No DeviceInfo could be obtained. The device is probably used by another application");
 		return getRawFrameGrabber(width, height, input, std, deviceInfo.getFormatList().getNativeFormats().get(0));
 	}
 

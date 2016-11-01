@@ -29,19 +29,18 @@ static int gamma_active(struct v4lprocessing_data *data) {
 }
 
 static int gamma_calculate_lookup_tables(struct v4lprocessing_data *data, u8 *buf, const struct v4l2_format *fmt) {
-	int i, x, gamma;
-
-	gamma = v4lcontrol_get_ctrl(data->control, V4LCONTROL_GAMMA);
+	int gamma = v4lcontrol_get_ctrl(data->control, V4LCONTROL_GAMMA);
 
 	if (gamma != data->last_gamma) {
+		const float invGamma = 1000.0 / ((float) gamma);
 		for (i = 0; i < 256; i++) {
-			x = powf(i / 255.0, 1000.0 / gamma) * 255;
+			int x = (int) (powf(i / 255.0, invGamma) * 255.0 + .5);
 			data->gamma_table[i] = CLIP(x);
 		}
 		data->last_gamma = gamma;
 	}
 
-	for (i = 0; i < 256; i++) {
+	for (unsigned int i = 0; i < 256; i++) {
 		data->comp1[i] = data->gamma_table[data->comp1[i]];
 		data->green[i] = data->gamma_table[data->green[i]];
 		data->comp2[i] = data->gamma_table[data->comp2[i]];
@@ -53,3 +52,4 @@ static int gamma_calculate_lookup_tables(struct v4lprocessing_data *data, u8 *bu
 struct v4lprocessing_filter gamma_filter = {
 	gamma_active, gamma_calculate_lookup_tables
 };
+#undef CLIP

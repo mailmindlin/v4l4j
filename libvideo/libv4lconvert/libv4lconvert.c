@@ -702,7 +702,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data, u8 *src, unsi
 	case V4L2_PIX_FMT_OV511:
 	case V4L2_PIX_FMT_OV518: {
 		u8 *d;
-		int d_size;
+		unsigned int d_size;
 		int yvu = 0;
 
 		if (dest_pix_fmt != V4L2_PIX_FMT_YUV420 &&
@@ -751,16 +751,14 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data, u8 *src, unsi
 			}
 			break;
 		case V4L2_PIX_FMT_OV511:
-			if (v4lconvert_helper_decompress(data, LIBDIR "/" LIBSUBDIR "/ov511-decomp",
-						src, src_size, d, d_size, width, height, yvu)) {
+			if (v4lconvert_helper_decompress(data, LIBDIR "/" LIBSUBDIR "/ov511-decomp", src, src_size, d, d_size, width, height, yvu)) {
 				/* Corrupt frame, better get another one */
 				errno = EAGAIN;
 				return -1;
 			}
 			break;
 		case V4L2_PIX_FMT_OV518:
-			if (v4lconvert_helper_decompress(data, LIBDIR "/" LIBSUBDIR "/ov518-decomp",
-						src, src_size, d, d_size, width, height, yvu)) {
+			if (v4lconvert_helper_decompress(data, LIBDIR "/" LIBSUBDIR "/ov518-decomp", src, src_size, d, d_size, width, height, yvu)) {
 				/* Corrupt frame, better get another one */
 				errno = EAGAIN;
 				return -1;
@@ -770,12 +768,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data, u8 *src, unsi
 
 		switch (dest_pix_fmt) {
 		case V4L2_PIX_FMT_RGB24:
-			v4lconvert_yuv420_to_rgb24(data->convert_pixfmt_buf, dest, width,
-					height, yvu);
+			v4lconvert_yuv420_to_rgb24(data->convert_pixfmt_buf, dest, width, height, yvu);
 			break;
 		case V4L2_PIX_FMT_BGR24:
-			v4lconvert_yuv420_to_bgr24(data->convert_pixfmt_buf, dest, width,
-					height, yvu);
+			v4lconvert_yuv420_to_bgr24(data->convert_pixfmt_buf, dest, width, height, yvu);
 			break;
 		}
 		break;

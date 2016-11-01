@@ -66,8 +66,7 @@ static void autogain_adjust(struct v4l2_queryctrl *ctrl, int *value, int steps, 
 /* auto gain and exposure algorithm based on the knee algorithm described here:
 http://ytse.tricolour.net/docs/LowLightOptimization.html */
 static int autogain_calculate_lookup_tables(struct v4lprocessing_data *data, u8 *buf, const struct v4l2_format *fmt) {
-	int target, steps, avg_lum = 0;
-	int gain, exposure, orig_gain, orig_exposure, exposure_low;
+	int exposure, orig_gain, orig_exposure;
 	struct v4l2_control ctrl;
 	struct v4l2_queryctrl gainctrl, expoctrl;
 	const int deadzone = 6;
@@ -83,9 +82,9 @@ static int autogain_calculate_lookup_tables(struct v4lprocessing_data *data, u8 
 	   as most exposure controls tend to jump with big steps in the low
 	   range, causing oscilation, so we prefer to use gain when exposure
 	   has hit this value */
-	exposure_low = (expoctrl.maximum - expoctrl.minimum) / 10;
+	int exposure_low = (expoctrl.maximum - expoctrl.minimum) / 10;
 	/* If we have a fine grained exposure control only avoid the last 10 steps */
-	steps = exposure_low / expoctrl.step;
+	int steps = exposure_low / expoctrl.step;
 	if (steps > 10)
 		steps = 10;
 	exposure_low = steps * expoctrl.step + expoctrl.minimum;
@@ -95,43 +94,44 @@ static int autogain_calculate_lookup_tables(struct v4lprocessing_data *data, u8 
 	if (SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &gainctrl) ||
 			SYS_IOCTL(data->fd, VIDIOC_G_CTRL, &ctrl))
 		return 0;
-	gain = orig_gain = ctrl.value;
+	int gain = orig_gain = ctrl.value;
 
+	unsigned int avg_lum = 0;
 	switch (fmt->fmt.pix.pixelformat) {
-	case V4L2_PIX_FMT_SGBRG8:
-	case V4L2_PIX_FMT_SGRBG8:
-	case V4L2_PIX_FMT_SBGGR8:
-	case V4L2_PIX_FMT_SRGGB8:
-		buf += fmt->fmt.pix.height * fmt->fmt.pix.bytesperline / 4 + fmt->fmt.pix.width / 4;
+		case V4L2_PIX_FMT_SGBRG8:
+		case V4L2_PIX_FMT_SGRBG8:
+		case V4L2_PIX_FMT_SBGGR8:
+		case V4L2_PIX_FMT_SRGGB8:
+			buf += fmt->fmt.pix.height * fmt->fmt.pix.bytesperline / 4 + fmt->fmt.pix.width / 4;
 
-		for (unsigned int y = 0; y < fmt->fmt.pix.height / 2; y++) {
-			for (unsigned int x = 0; x < fmt->fmt.pix.width / 2; x++)
-				avg_lum += *buf++;
-			buf += fmt->fmt.pix.bytesperline - fmt->fmt.pix.width / 2;
-		}
-		avg_lum /= fmt->fmt.pix.height * fmt->fmt.pix.width / 4;
-		break;
-
-	case V4L2_PIX_FMT_RGB24:
-	case V4L2_PIX_FMT_BGR24:
-		buf += fmt->fmt.pix.height * fmt->fmt.pix.bytesperline / 4 +
-			fmt->fmt.pix.width * 3 / 4;
-
-		for (unsigned int y = 0; y < fmt->fmt.pix.height / 2; y++) {
-			for (unsigned int x = 0; x < fmt->fmt.pix.width / 2; x++) {
-				avg_lum += *buf++;
-				avg_lum += *buf++;
-				avg_lum += *buf++;
+			for (unsigned int y = 0; y < fmt->fmt.pix.height / 2; y++) {
+				for (unsigned int x = 0; x < fmt->fmt.pix.width / 2; x++)
+					avg_lum += *buf++;
+				buf += fmt->fmt.pix.bytesperline - fmt->fmt.pix.width / 2;
 			}
-			buf += fmt->fmt.pix.bytesperline - fmt->fmt.pix.width * 3 / 2;
-		}
-		avg_lum /= fmt->fmt.pix.height * fmt->fmt.pix.width * 3 / 4;
-		break;
+			avg_lum /= fmt->fmt.pix.height * fmt->fmt.pix.width / 4;
+			break;
+
+		case V4L2_PIX_FMT_RGB24:
+		case V4L2_PIX_FMT_BGR24:
+			buf += fmt->fmt.pix.height * fmt->fmt.pix.bytesperline / 4 +
+				fmt->fmt.pix.width * 3 / 4;
+
+			for (unsigned int y = 0; y < fmt->fmt.pix.height / 2; y++) {
+				for (unsigned int x = 0; x < fmt->fmt.pix.width / 2; x++) {
+					avg_lum += *buf++;
+					avg_lum += *buf++;
+					avg_lum += *buf++;
+				}
+				buf += fmt->fmt.pix.bytesperline - fmt->fmt.pix.width * 3 / 2;
+			}
+			avg_lum /= fmt->fmt.pix.height * fmt->fmt.pix.width * 3 / 4;
+			break;
 	}
 
 	/* If we are off a multiple of deadzone, do multiple steps to reach the
 	   desired lumination fast (with the risc of a slight overshoot) */
-	target = v4lcontrol_get_ctrl(data->control, V4LCONTROL_AUTOGAIN_TARGET);
+	int target = v4lcontrol_get_ctrl(data->control, V4LCONTROL_AUTOGAIN_TARGET);
 	steps = (target - avg_lum) / deadzone;
 
 	/* If we were decreasing and are now increasing, or vica versa, half the
