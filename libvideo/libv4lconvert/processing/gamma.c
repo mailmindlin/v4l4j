@@ -32,8 +32,9 @@ static int gamma_calculate_lookup_tables(struct v4lprocessing_data *data, u8 *bu
 	int gamma = v4lcontrol_get_ctrl(data->control, V4LCONTROL_GAMMA);
 
 	if (gamma != data->last_gamma) {
+		//Build & cache gamma table
 		const float invGamma = 1000.0 / ((float) gamma);
-		for (i = 0; i < 256; i++) {
+		for (unsigned int i = 0; i < 256; i++) {
 			int x = (int) (powf(i / 255.0, invGamma) * 255.0 + .5);
 			data->gamma_table[i] = CLIP(x);
 		}

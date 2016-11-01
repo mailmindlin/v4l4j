@@ -132,7 +132,8 @@ static int autogain_calculate_lookup_tables(struct v4lprocessing_data *data, u8 
 	/* If we are off a multiple of deadzone, do multiple steps to reach the
 	   desired lumination fast (with the risc of a slight overshoot) */
 	int target = v4lcontrol_get_ctrl(data->control, V4LCONTROL_AUTOGAIN_TARGET);
-	steps = (target - avg_lum) / deadzone;
+	// Blalantly disregard type safety here
+	steps = (target - (signed) avg_lum) / deadzone;
 
 	/* If we were decreasing and are now increasing, or vica versa, half the
 	   number of steps to avoid overshooting and oscilating */
