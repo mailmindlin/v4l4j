@@ -12,6 +12,12 @@
 
 #include <stdint.h>
 
-extern void v4lconvert_neon_yuyv_to_rgb24(const u8* src, u8* dest, u32 width, u32 height);
+/**
+ * Quickly converts YUYV to RGB24
+ * @param src Pointer to source buffer
+ * @param dst Pointer to output buffer
+ * @param len Number of (macro)pixels to convert. Optimal if multiple of 16.
+ */
+extern void v4lconvert_neon_yuyv_to_rgb24(const u8* src, u8* dest, u32 len);
 
 #endif
