@@ -1,109 +1,101 @@
 package au.edu.jcu.v4l4j.encoder;
 
+import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
 
 import au.edu.jcu.v4l4j.ImagePalette;
-import au.edu.jcu.v4l4j.exceptions.BufferOverflowException;
-import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
-import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 public class ImageFormatConverter implements VideoFrameEncoder {
-	protected static native int lookupConverterByConversion(int srcPalette, int dstPalette);
+	protected final long ptr;
+	protected final int converterId;
+	protected final ImagePalette inFormat;
+	protected final int inWidth;
+	protected final int inHeight;
+	protected final int estimatedSrcLen;
+	protected final ImagePalette outFormat;
+	protected final int outWidth;
+	protected final int outHeight;
+	protected final int estimatedDstLen;
 	
-	private static native long init(int converterId, int width, int height);
+	protected static native int getConverterIDForTransformation(int srcFmt, int dstFmt);
+	protected static int getConverterIDForTransformation(ImagePalette src, ImagePalette dst) {
+		return getConverterIDForTransformation(src.getIndex(), dst.getIndex());
+	}
+	protected static native long initWithConverter(int converterId, int width, int height);
+	private static native int[] getData(long ptr);
 	
-	protected final int width;
-	protected final int height;
-	protected final int srcPaletteIdx;
-	protected final int dstPaletteIdx;
-	protected final long object;
-	
-	public static ImageFormatConverter forConversion(ImagePalette src, ImagePalette dst, int width, int height) {
-		int converterId = lookupConverterByConversion(src.getIndex(), dst.getIndex());
-		if (converterId < 0)
-			throw new UnsupportedMethod("Cannot convert " + src.name() + " to " + dst.name());
-		return new ImageFormatConverter(converterId, width, height);
+	protected ImageFormatConverter(long ptr) {
+		this.ptr = ptr;
+		int[] data = getData(ptr);
+		this.converterId = data[0];
+		this.inFormat = ImagePalette.lookup(data[1]);
+		this.inWidth = data[2];
+		this.inHeight = data[3];
+		this.estimatedSrcLen = data[4];
+		this.outFormat = ImagePalette.lookup(data[5]);
+		this.outWidth = data[6];
+		this.outHeight = data[7];
+		this.estimatedDstLen = data[8];
 	}
 	
 	public ImageFormatConverter(int converterId, int width, int height) {
-		this(converterId, width, height, null, null);
+		this(initWithConverter(converterId, width, height));
 	}
 	
-	protected ImageFormatConverter(int converterId, int width, int height, ImagePalette src, ImagePalette dst) {
-		this(init(converterId, width, height), width, height, src, dst);
+	public ImageFormatConverter(ImagePalette src, ImagePalette dst, int width, int height) {
+		this(getConverterIDForTransformation(src, dst), width, height);
 	}
-	
-	protected ImageFormatConverter(long ptr, int width, int height, ImagePalette src, ImagePalette dst) {
-		this.object = ptr;
-		this.width = width;
-		this.height = height;
-		this.srcPaletteIdx = src == null ? getSourcePaletteId() : src.getIndex();
-		this.dstPaletteIdx = dst == null ? getOutputPaletteId() : dst.getIndex();
-	}
-	
-	private native int getSourcePaletteId();
-	
-	private native int getOutputPaletteId();
-	
-	public native int getConverterId();
-	
+
 	@Override
-	public ImagePalette getSourcePalette() {
-		return ImagePalette.lookup(this.srcPaletteIdx);
+	public int getConverterId() {
+		return this.converterId;
 	}
-	
+
 	@Override
 	public int getSourceWidth() {
-		return this.width;
+		return this.inWidth;
 	}
-	
+
 	@Override
 	public int getSourceHeight() {
-		return this.height;
+		return this.inHeight;
+	}
+
+	@Override
+	public ImagePalette getSourceFormat() {
+		return this.inFormat;
+	}
+
+	@Override
+	public int getDestinationWidth() {
+		return this.outWidth;
+	}
+
+	@Override
+	public int getDestinationHeight() {
+		return this.outHeight;
 	}
 	
 	@Override
-	public ImagePalette getOutputPalette() {
-		return ImagePalette.lookup(this.dstPaletteIdx);
+	public ImagePalette getDestinationFormat() {
+		return this.outFormat;
 	}
-	
+
 	@Override
-	public int getOutputWidth() {
-		return this.getSourceWidth();
-	}
-	
+	public native int apply(ByteBuffer src, ByteBuffer dst) throws BufferUnderflowException,
+			BufferOverflowException, IllegalArgumentException;
+
 	@Override
-	public int getOutputHeight() {
-		return this.getSourceHeight();
+	public int estimateSourceLength() {
+		return this.estimatedSrcLen;
 	}
-	
+
 	@Override
-	public int minimumSourceBufferLength() {
-		// TODO use JNI to call v4lconvert_estimateBufferSize
-		return getSourcePalette().getColorDepth() * width * height;
+	public int estimateDestinationLength() {
+		return this.estimatedDstLen;
 	}
-	
-	@Override
-	public int minimumOutputBufferLength() {
-		return getOutputPalette().getColorDepth() * width * height;
-	}
-	
-	@Override
-	public int minimumIntermediateBufferLength() {
-		return 0;
-	}
-	
+
 	@Override
 	public native void close() throws Exception;
-	
-	protected native int encode(long bufferPtr) throws BufferUnderflowException, BufferOverflowException, NullPointerException, V4L4JException;
-	
-	@Override
-	public int encode(V4lconvertBuffer buffer) throws BufferUnderflowException, BufferOverflowException, NullPointerException, V4L4JException {
-		buffer.push();
-		int result = this.encode(buffer.getPointer());
-		buffer.pull();
-		return result;
-	}
-	
 }

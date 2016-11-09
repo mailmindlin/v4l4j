@@ -37,9 +37,9 @@ static inline struct v4lconvert_encoder* lookupNative(JNIEnv* env, jobject self)
  * Method:    lookupConverterByConversion
  * Signature: (II)I
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_ImageFormatConverter_lookupConverterByConversion (JNIEnv *env, jclass clazz, jint from, jint to) {
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_ImageFormatConverter_lookupConverterByConversion (JNIEnv *env, jclass me, jint from, jint to) {
 	LOG_FN_ENTER();
-	return v4lconvert_converter_lookupConverterByConversion(from, to);
+	return v4lconvert_converter_lookupConverterByConversion((u32) from, (u32) to);
 }
 
 /*
@@ -47,7 +47,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_ImageFormatConverter_lookup
  * Method:    init
  * Signature: (III)J
  */
-JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_encoder_ImageFormatConverter_init(JNIEnv *env, jclass clazz, jint converterId, jint width, jint height) {
+JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_encoder_ImageFormatConverter_initWithConverter(JNIEnv *env, jclass clazz, jint converterId, jint width, jint height) {
 	LOG_FN_ENTER();
 	v4lconvert_converter_t* converter = v4lconvert_converter_getConverterById(converterId);
 	if (!converter) {
@@ -74,12 +74,22 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_encoder_ImageFormatConverter_init(
  * Method:    getSourcePaletteId
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_ImageFormatConverter_getSourcePaletteId(JNIEnv *env, jobject self) {
+JNIEXPORT jintArray JNICALL Java_au_edu_jcu_v4l4j_encoder_ImageFormatConverter_getData(JNIEnv *env, jclass me, jlong ptr) {
 	LOG_FN_ENTER();
-	struct v4lconvert_encoder* encoder = lookupNative(env, self);
-	if (!encoder)
-		return -1;
-	return (int) encoder->src_fmt;
+	v4lconvert_converter_t* converter = (v4lconvert_converter_t*) (uintptr_t) ptr;
+	jintArray result = (*env)->NewIntArray(env, 9);
+	if (!result) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Could not create int array");
+		return NULL;
+	}
+	jint* data = (*env)->GetIntArrayElements(env, result, NULL);
+	if (!data) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Could not get pointer to array");
+		return NULL;
+	}
+	//TODO populate array
+	(*env)->ReleaseIntArrayElements(env, result, data, 0);
+	return result;
 }
 
 /*

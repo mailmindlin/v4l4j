@@ -57,21 +57,20 @@ public class TunerInfo {
 	/**
 	 * The name of this tuner
 	 */
-	private String name;
+	private final String name;
 
 	/**
 	 * The V4L index of this tuner
 	 */
-	private int index;
+	private final int index;
 
 	TunerInfo(String n, int id, int u, int t, long low, long high) {
-		type = t;
-		unit = u;
-		rangeLow = low & 0xffff_ffff;
-		rangeHigh = high & 0xffff_ffff;
-		name = n;
-		index = id;
-
+		this.type = t;
+		this.unit = u;
+		this.rangeLow = low & 0xffff_ffff;
+		this.rangeHigh = high & 0xffff_ffff;
+		this.name = n;
+		this.index = id;
 	}
 
 	/**

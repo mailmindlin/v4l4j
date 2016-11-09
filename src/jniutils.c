@@ -19,7 +19,7 @@ inline jmethodID lookupAddMethod(JNIEnv *env, jobject list) {
 	}
 	jmethodID addMethod = (*env)->GetMethodID(env, listClass, "add", "(Ljava/lang/Object;)Z");
 	(*env)->DeleteLocalRef(env, listClass);
-	if (addMethod == NULL)
+	if (addMethod == NULL || (*env)->ExceptionCheck(env))
 		THROW_EXCEPTION(env, JNI_EXCP, "Error looking up add method of list");
 	return addMethod;
 }

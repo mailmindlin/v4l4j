@@ -23,7 +23,6 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Picture_init(JNIE
 	XMALLOC(result, x264_picture_t*, sizeof(x264_picture_t));
 	
 	x264_picture_alloc(result, csp, width, height);
-	x264_picture_init(result);
 	
 	return (uintptr_t) result;
 }
