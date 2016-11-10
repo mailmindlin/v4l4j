@@ -30,10 +30,8 @@
 #include "libvideo-err.h"
 #include "log.h"
 
-static void set_palette_info(struct device_info *di, int idx, int palette,
-		struct frame_size_continuous *cont){
-	XREALLOC(di->palettes,
-			struct palette_info *,(idx+1) * sizeof(struct palette_info));
+static void set_palette_info(struct device_info *di, unsigned int idx, int palette, struct frame_size_continuous *cont) {
+	XREALLOC(di->palettes, struct palette_info *, (idx + 1) * sizeof(struct palette_info));
 	di->palettes[idx].index = palette;
 	di->palettes[idx].raw_palettes = NULL;
 	di->palettes[idx].size_type = FRAME_SIZE_CONTINUOUS;
@@ -49,7 +47,7 @@ static int check_palettes_v4l1(struct video_device *vdev){
 	struct video_capability vc;
 	struct frame_size_continuous *cont;
 
-	int palette = 0, index=0;
+	unsigned int index = 0;
 	struct device_info *di = vdev->info;
 	di->palettes = NULL;
 
@@ -61,8 +59,7 @@ static int check_palettes_v4l1(struct video_device *vdev){
 		return 0;
 	}
 
-	XMALLOC(cont, struct frame_size_continuous *,
-			sizeof(struct frame_size_continuous ));
+	XMALLOC(cont, struct frame_size_continuous *, sizeof(struct frame_size_continuous ));
 	cont->max_height = vc.maxheight;
 	cont->min_height = vc.minheight;
 	cont->max_width = vc.maxwidth;
@@ -72,12 +69,10 @@ static int check_palettes_v4l1(struct video_device *vdev){
 	cont->step_width = 1;
 	cont->step_height = 1;
 
-	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
-			"QRY: Checking supported palettes.\n");
-	for(palette = 0; palette < libvideo_palettes_size-3; palette++){
-		if(libvideo_palettes[palette].v4l1_palette!=VIDEO_PALETTE_UNDEFINED_V4L1){
-			dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
-					"QRY: trying %s\n", libvideo_palettes[palette].name);
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: Checking supported palettes.\n");
+	for(unsigned palette = 0; palette < libvideo_palettes_size - 3; palette++) {
+		if(libvideo_palettes[palette].v4l1_palette != VIDEO_PALETTE_UNDEFINED_V4L1) {
+			dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, "QRY: trying %s\n", libvideo_palettes[palette].name);
 			CLEAR(pic);
 			pic.palette = libvideo_palettes[palette].v4l1_palette;
 			pic.depth = libvideo_palettes[palette].depth;
@@ -87,8 +82,7 @@ static int check_palettes_v4l1(struct video_device *vdev){
 	}
 
 	//v4l1 weirdness
-	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
-			"QRY: trying %s\n", libvideo_palettes[YUV420P].name);
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, "QRY: trying %s\n", libvideo_palettes[YUV420P].name);
 	CLEAR(pic);
 	pic.palette = libvideo_palettes[YUV420P].v4l1_palette;
 	pic.depth = libvideo_palettes[YUV420P].depth;
@@ -96,8 +90,7 @@ static int check_palettes_v4l1(struct video_device *vdev){
 		set_palette_info(di, index++, YUV420, cont);
 
 	//v4l1 weirdness
-	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
-			"QRY: trying %s\n", libvideo_palettes[YUV422].name);
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, "QRY: trying %s\n", libvideo_palettes[YUV422].name);
 	CLEAR(pic);
 	pic.palette = libvideo_palettes[YUV422].v4l1_palette;
 	pic.depth = libvideo_palettes[YUV422].depth;
@@ -105,15 +98,14 @@ static int check_palettes_v4l1(struct video_device *vdev){
 		set_palette_info(di, index++, YUYV, cont);
 
 	//v4l1 weirdness
-	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
-			"QRY: trying %s\n", libvideo_palettes[YUV411].name);
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, "QRY: trying %s\n", libvideo_palettes[YUV411].name);
 	CLEAR(pic);
 	pic.palette = libvideo_palettes[YUV411].v4l1_palette;
 	pic.depth = libvideo_palettes[YUV411].depth;
 	if(ioctl(vdev->fd, VIDIOCSPICT, &pic) >= 0)
 		set_palette_info(di, index++, YUV411P, cont);
-
-
+	
+	
 	return index;
 }
 static int query_tuner(struct video_input_info *vi, int fd){

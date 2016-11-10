@@ -190,8 +190,7 @@ static int set_std(struct capture_device *c, int fd){
 					if(detect_standard(c, fd)!=0) {
 						//failed, exit
 						dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
-								"CAP: Couldnt autodetect a standard for this "
-							"input.\n");
+								"CAP: Couldnt autodetect a standard for this input.\n");
 						return -1;
 					}
 					//autodetect succeeded, keep going
@@ -578,12 +577,10 @@ int set_cap_param_v4l2(struct video_device *vdev, int src_palette, int dest_pale
 
 	//Set image format
 	if (src_palette != -1) {
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-					"Native format '%s' requested\n", libvideo_palettes[src_palette].name);
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "Native format '%s' requested\n", libvideo_palettes[src_palette].name);
 	}
 
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-					"Output format '%s' requested\n", libvideo_palettes[dest_palette].name);
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "Output format '%s' requested\n", libvideo_palettes[dest_palette].name);
 
 	if (set_image_format(c, src_palette, dest_palette, vdev->fd) != 0) {
 		ret = LIBVIDEO_ERR_FORMAT;
@@ -832,8 +829,7 @@ void free_capture_v4l2(struct video_device *vdev) {
 	// them. According to v4l2 specs, releasing buffers can be done by requesting
 	// 0 buffers using VIDIOC_REQBUFS. Problem is: as of today, not all drivers
 	// support this. So for now, we try it anyway and ignore the returned value.
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-			"CAP: Applying workaround - releasing v4l2 buffers\n");
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: Applying workaround - releasing v4l2 buffers\n");
 
 	CLEAR(req);
 
@@ -1115,20 +1111,17 @@ static void fix_quirky_struct(struct v4l2_queryctrl *v){
 	} else if(v->type==V4L2_CTRL_TYPE_BUTTON) {
 		if(v->step!=0){
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: QUIRK: adjusted step value for BUTTON control "
-					"'%s' from %d to 0\n", v->name, v->step);
+					"CTRL: QUIRK: adjusted step value for BUTTON control '%s' from %d to 0\n", v->name, v->step);
 			v->step = 0;
 		}
 		if(v->minimum!=0){
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: QUIRK: adjusted minimum value for BUTTON control "
-					"'%s' from %d to 0\n", v->name, v->minimum);
+					"CTRL: QUIRK: adjusted minimum value for BUTTON control '%s' from %d to 0\n", v->name, v->minimum);
 			v->minimum = 0;
 		}
 		if(v->maximum!=0){
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: QUIRK: adjusted maximum value for BUTTON control "
-					"'%s' from %d to 0\n", v->name, v->maximum);
+					"CTRL: QUIRK: adjusted maximum value for BUTTON control '%s' from %d to 0\n", v->name, v->maximum);
 			v->maximum = 0;
 		}
 	} else if(v->type==V4L2_CTRL_TYPE_INTEGER64) {
@@ -1197,14 +1190,11 @@ int create_v4l2_controls(struct video_device *vdev, struct control *controls,
             if (errno == EINVAL)
             	break;
 
-            dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-            		"CTRL: we shouldnt be here...\n");
+            dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR, "CTRL: we shouldnt be here...\n");
     	}
 	}
 
-	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-			"CTRL: Creating ext controls (created %d std/priv ctrl so far)\n",
-			count);
+	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: Creating ext controls (created %d std/priv ctrl so far)\n", count);
 	//create ext ctrls
 	//TODO Add support for group-changes of extended controls. For now,
 	//TODO reported ext ctrl can only be changed one at a time.
@@ -1228,12 +1218,10 @@ int create_v4l2_controls(struct video_device *vdev, struct control *controls,
 			dprint_v4l2_control(controls[count]);
 			count++;
 		} else {
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-					"CTRL: duplicate ext ctrl\n");
+			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: duplicate ext ctrl\n");
 		}
 		if(qctrl.id<=current){
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-					"CTRL: found buggy driver\n");
+			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: found buggy driver\n");
 			qctrl.id++;
 		}
 		current = qctrl.id & ~V4L2_CTRL_FLAG_NEXT_CTRL;
@@ -1340,12 +1328,10 @@ int get_control_value_v4l2(struct video_device *vdev,
 		} else {
 			if (errno == ENOSPC) {
 				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: Error getting current value: not enough space"
-						" to store result - need %d bytes, got %d\n", ctrl.size,
-						size);
+					"CTRL: Error getting current value: not enough space to store result - need %d bytes, got %d\n",
+					ctrl.size, size);
 			} else {
-				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: Error getting current value (%d) for ext ctrl\n", errno);
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR, "CTRL: Error getting current value (%d) for ext ctrl\n", errno);
 			}
 
 			ret = LIBVIDEO_ERR_IOCTL;
@@ -1356,8 +1342,7 @@ int get_control_value_v4l2(struct video_device *vdev,
 }
 
 //sets the value of a control
-int set_control_value_v4l2(struct video_device *vdev,
-		struct v4l2_queryctrl *qctrl, void *val, int size) {
+int set_control_value_v4l2(struct video_device *vdev, struct v4l2_queryctrl *qctrl, void *val, int size) {
 
 	// Check the class of the control
 	if(V4L2_CTRL_ID2CLASS(qctrl->id)==V4L2_CID_USER_CLASS) {
@@ -1367,17 +1352,13 @@ int set_control_value_v4l2(struct video_device *vdev,
 		vc.value = *(int32_t*)val;
 
 		if( v4lconvert_vidioc_s_ctrl(vdev->control->priv, &vc) != 0 ){
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: Error setting value\n");
+			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR, "CTRL: Error setting value\n");
 			if(errno == EINVAL)
-				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-						"CTRL: einval\n");
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR, "CTRL: einval\n");
 			else if(errno == ERANGE)
-				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-						"CTRL: erange\n");
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR, "CTRL: erange\n");
 			else
-				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-						"CTRL: unknown error %d\n", errno);
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR, "CTRL: unknown error %d\n", errno);
 			return LIBVIDEO_ERR_IOCTL;
 		}
 	} else {
@@ -1399,19 +1380,16 @@ int set_control_value_v4l2(struct video_device *vdev,
 			ctrl.size = size;
 			ctrl.string = (char *)val;
 
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
-					"CTRL: Writing string val: %s - size: %d\n", ctrl.string, ctrl.size);
+			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1, "CTRL: Writing string val: %s - size: %d\n", ctrl.string, ctrl.size);
 		} else {
 			ctrl.size = 0;
 
 			if (qctrl->type == V4L2_CTRL_TYPE_INTEGER64) {
 				ctrl.value64 = *(int64_t*) val;
-				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
-						"CTRL: Writing 64-bit val: %lld\n", ctrl.value64);
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1, "CTRL: Writing 64-bit val: %lld\n", ctrl.value64);
 			} else {
 				ctrl.value = *(int32_t*) val;
-				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
-						"CTRL: Writing 32-bit val: %d\n", ctrl.value);
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1, "CTRL: Writing 32-bit val: %d\n", ctrl.value);
 			}
 		}
 
@@ -1420,8 +1398,7 @@ int set_control_value_v4l2(struct video_device *vdev,
 			// older kernels may not support extended controls - retry with VIDIOC_S_CTRL
 			struct v4l2_control vc;
 
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1,
-						"CTRL: workaround: s_ext_ctrl failed with ENOTTY, trying s_ctrl\n");
+			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1, "CTRL: workaround: s_ext_ctrl failed with ENOTTY, trying s_ctrl\n");
 
 			vc.id = qctrl->id;
 			vc.value = *(int32_t*)val;
@@ -1430,17 +1407,13 @@ int set_control_value_v4l2(struct video_device *vdev,
 		}
 
 		if (result != 0) {
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: Error setting value\n");
+			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR, "CTRL: Error setting value\n");
 			if(errno == EINVAL)
-				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-						"CTRL: einval\n");
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR, "CTRL: einval\n");
 			else if(errno == ERANGE)
-				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-						"CTRL: erange\n");
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR, "CTRL: erange\n");
 			else
-				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-						"CTRL: unknown error %d\n", errno);
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR, "CTRL: unknown error %d\n", errno);
 			return LIBVIDEO_ERR_IOCTL;
 		}
 	}

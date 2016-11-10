@@ -94,14 +94,14 @@ static void init_pixart_decoder(void) {
 
 static inline u8 getByte(const u8 *inp, unsigned int bitpos) {
 	const u8 *addr = inp + (bitpos >> 3);
-	return (u8) (addr[0] << (bitpos & 7)) | (addr[1] >> (8 - (bitpos & 7)));
+	return (u8) ((addr[0] << (bitpos & 7)) | (addr[1] >> (8 - (bitpos & 7))));
 }
 
 static inline unsigned short getShort(const u8 *pt) {
 	return (unsigned short) ((pt[0] << 8) | pt[1]);
 }
 
-static int pac_decompress_row(const u8 *inp, u8 *outp, u32 width, u8 step_size, u8 abs_bits) {
+static unsigned int pac_decompress_row(const u8 *inp, u8 *outp, u32 width, u8 step_size, u8 abs_bits) {
 	int val;
 
 	if (!decoder_initialized)
@@ -124,7 +124,7 @@ static int pac_decompress_row(const u8 *inp, u8 *outp, u32 width, u8 step_size, 
 			/* absolute value: get 6 more bits */
 			code = getByte(inp, bitpos);
 			bitpos += abs_bits;
-			*outp++ = code & ~(0xff >> abs_bits);
+			*outp++ = (u8) (code & ~(0xff >> abs_bits));
 		} else {
 			/* relative to left pixel */
 			val = outp[-2] + table[code].val * step_size;

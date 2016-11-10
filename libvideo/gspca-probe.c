@@ -173,22 +173,22 @@ int gspca_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val
 	switch (q->id) {
 		case 0:
 			p.chg_para = CHGABRIGHT;
-			p.autobright = *val;
+			p.autobright = (__u8) *val;
 			break;
 		case 1:
 			p.chg_para = CHGQUALITY;
-			p.quality = *val;
+			p.quality = (__u8) *val;
 			break;
 		case 2:
 			p.chg_para = CHGTINTER;
-			p.time_interval = *val;
+			p.time_interval = (__u16) *val;
 			break;
 		case 3:
 			p.chg_para = CHGLIGHTFREQ;
-			p.light_freq = *val;
+			p.light_freq = (__u8) *val;
 			break;
 		default:
-			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "GSPCA: Cant identify control %d\n",q->id);
+			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "GSPCA: Cant identify control %d\n", q->id);
 			return -1;
 	}
 
@@ -201,7 +201,7 @@ int gspca_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val
 }
 
 int gspca_list_ctrl(struct video_device *vdev, struct control *c, void *d){
-	int i=0;
+	unsigned int i=0;
 	struct gspca_probe_private *priv = (struct gspca_probe_private *) d;
 	if(priv->ok==1) {
 
@@ -267,6 +267,6 @@ int gspca_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 	} else{
 			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "GSPCA: GSPCA not found\n");
 	}
-	return i;
+	return (signed) i;
 }
 

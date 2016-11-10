@@ -34,23 +34,20 @@
 static unsigned int bit_bucket;
 static const u8 *input_ptr;
 
-static inline void refill(int *bitfill)
-{
+static inline void refill(int *bitfill) {
 	if (*bitfill < 8) {
 		bit_bucket = (bit_bucket << 8) | *(input_ptr++);
 		*bitfill += 8;
 	}
 }
 
-static inline int nbits(int *bitfill, int n)
-{
+static inline int nbits(int *bitfill, int n) {
 	bit_bucket = (bit_bucket << 8) | *(input_ptr++);
 	*bitfill -= n;
 	return (bit_bucket >> (*bitfill & 0xff)) & ((1 << n) - 1);
 }
 
-static inline int _nbits(int *bitfill, int n)
-{
+static inline int _nbits(int *bitfill, int n) {
 	*bitfill -= n;
 	return (bit_bucket >> (*bitfill & 0xff)) & ((1 << n) - 1);
 }
