@@ -609,17 +609,15 @@ int get_control_value(struct video_device *vdev,
 	return ret;
 }
 
-int set_control_value(struct video_device *vdev,
-		struct v4l2_queryctrl *ctrl, void *value, int size){
+int set_control_value(struct video_device *vdev, struct v4l2_queryctrl *ctrl, void *value, int size) {
 
 	int ret = 0;
-	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-			"CTRL: setting value for control %s\n", ctrl->name);
+	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: setting value for control %s\n", ctrl->name);
 
 	// Ensure the value is within the bounds
 	if ((ctrl->type == V4L2_CTRL_TYPE_INTEGER) || (ctrl->type == V4L2_CTRL_TYPE_BOOLEAN) ||
 			(ctrl->type == V4L2_CTRL_TYPE_MENU) || (ctrl->type == V4L2_CTRL_TYPE_BUTTON)) {
-		if(*(int32_t*)value<ctrl->minimum || *(int32_t*)value > ctrl->maximum){
+		if(*(int32_t*)value < ctrl->minimum || *(int32_t*)value > ctrl->maximum){
 			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
 					"CTRL: control value (%d) out of range (%d - %d)\n",
 					*(int32_t*)value, ctrl->minimum, ctrl->maximum);
