@@ -23,6 +23,22 @@ public class ImageFormatConverter implements VideoFrameEncoder {
 		return getConverterIDForTransformation(src.getIndex(), dst.getIndex());
 	}
 	protected static native long initWithConverter(int converterId, int width, int height);
+	/**
+	 * Returns an array of properties that can be accessed on the native struct. The array will contain the following values:
+	 * <ol start=0>
+	 * <li>Converter ID</li>
+	 * <li>Input format</li>
+	 * <li>Output format</li>
+	 * <li>Estimated source length</li>
+	 * <li>Estimated output length</li>
+	 * <li>Input width</li>
+	 * <li>Input height</li>
+	 * <li>Output width</li>
+	 * <li>Output height</li>
+	 * </ol>
+	 * @param ptr Pointer to native struct
+	 * @return
+	 */
 	private static native int[] getData(long ptr);
 	
 	protected ImageFormatConverter(long ptr) {
@@ -30,13 +46,14 @@ public class ImageFormatConverter implements VideoFrameEncoder {
 		int[] data = getData(ptr);
 		this.converterId = data[0];
 		this.inFormat = ImagePalette.lookup(data[1]);
-		this.inWidth = data[2];
-		this.inHeight = data[3];
-		this.estimatedSrcLen = data[4];
-		this.outFormat = ImagePalette.lookup(data[5]);
-		this.outWidth = data[6];
-		this.outHeight = data[7];
-		this.estimatedDstLen = data[8];
+		this.outFormat = ImagePalette.lookup(data[2]);
+		this.estimatedSrcLen = data[3];
+		this.estimatedDstLen = data[4];
+
+		this.inWidth = data[5];
+		this.inHeight = data[6];
+		this.outWidth = data[7];
+		this.outHeight = data[8];
 	}
 	
 	public ImageFormatConverter(int converterId, int width, int height) {
