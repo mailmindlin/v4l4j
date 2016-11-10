@@ -28,7 +28,6 @@
 #include "libvideo-palettes.h"
 #include "common.h"
 #include "debug.h"
-#include "jniutils.c"
 
 /**
  * Creates a ImageFormat object to wrap the given palette, and adds it to the list
@@ -68,8 +67,10 @@ static inline int add_format(JNIEnv *e, jobject list, jmethodID add_method, jcla
 	//Release reference to the created ImageFormat
 	(*e)->DeleteLocalRef(e, obj);
 	
-	if ((*e)->ExceptionCheck(e))
+	if ((*e)->ExceptionCheck(e)) {
+		(*e)->ExceptionDescribe(e);
 		return EXIT_FAILURE;
+	}
 	return EXIT_SUCCESS;
 }
 
@@ -161,10 +162,11 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(JNIEnv 
 	
 	int jpeg_conv_formats[] = JPEG_CONVERTIBLE_FORMATS;
 	
+	dprint(LOG_V4L4J, "[V4L4J] Found %d formats\n", di->nb_palettes);
 	for (int i = 0; i < di->nb_palettes; i++) {
 		struct palette_info palette = di->palettes[i];
 		int palette_idx = palette.index;
-		dprint(LOG_V4L4J, "[V4L4J] Checking format %s - index: %d - raw ? %s\n", libvideo_palettes[palette_idx].name, palette_idx, (!palette.raw_palettes?"Yes-adding it":"No-skipping it"));
+		dprint(LOG_V4L4J, "[V4L4J] Checking format %s - index: %d - raw ? %s\n", libvideo_palettes[palette_idx].name, palette_idx, ((palette.raw_palettes == NULL) ? "Yes-adding it" : "No-skipping it"));
 		
 		jobject format_list = NULL; //The list to add the format to
 		jmethodID format_list_add = NULL; //The add method for format_list
@@ -189,48 +191,65 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(JNIEnv 
 			case BGR24:
 				format_list = bgr_formats;
 				format_list_add = bgr_formats_add;
-				name = "RGB24";
+				name = "BGR24";
 				break;
 			case JPEG:
 				format_list = jpeg_formats;
 				format_list_add = jpeg_formats_add;
-				name = "RGB24";
+				name = "JPEG";
 				break;
 			default:
 				format_list = NULL;
 				format_list_add = NULL;
-				name = NULL;
+				char tmpbuf[64];
+				snprintf(tmpbuf, 63, "Unknown format %d/%#06x", palette_idx, palette_idx	);
+ 				name = tmpbuf;
 				break;
 		}
+		dprint(LOG_V4L4J, "[V4L4J] Format list selected: %s\n", name);
+		
 		
 		//check if V4L4J can convert the format to JPEG
 		//TODO optimize
 		for(unsigned int j = 0; j < ARRAY_SIZE(jpeg_conv_formats); j++) {
 			// V4L4J knows how to convert it to JPEG
-			if(jpeg_conv_formats[j] == palette_idx) {
-				dprint(LOG_V4L4J, "[V4L4J] Found v4l4j-convertible JPEG format from %s format - add it\n", libvideo_palettes[jpeg_conv_formats[j]].name);
-				if(!add_format(e, jpeg_formats, jpeg_formats_add, format_class, format_ctor, jpeg_conv_formats[j], d))
+			int fmt = jpeg_conv_formats[j];
+			if(fmt == palette_idx) {
+				dprint(LOG_V4L4J, "[V4L4J] Found v4l4j-convertible JPEG format from %s format - add it\n", libvideo_palettes[fmt].name);
+				if(add_format(e, jpeg_formats, jpeg_formats_add, format_class, format_ctor, fmt, d) != EXIT_SUCCESS) {
+					dprint(LOG_V4L4J, "[V4L4J] Error adding format to JPEG format list\n");
 					return;
+				}
+				dprint(LOG_V4L4J, "[V4L4J] \tDone.\n");
 			}
 		}
 		
+		dprint(LOG_V4L4J, "[V4L4J] Format raw_palettes: %d\n", (unsigned int) palette.raw_palettes);
+		
 		if (palette.raw_palettes != NULL) {
-			if (format_list == NULL)
-				continue;
 			for (unsigned int j = 0, raw_palette; (raw_palette = palette.raw_palettes[j]) != -1; j++) {
 				dprint(LOG_V4L4J, "[V4L4J] Found libvideo-converted %s format from %s format - add it\n", name, libvideo_palettes[di->palettes[i].raw_palettes[j]].name);
-				if (!add_format(e, format_list, format_list_add, format_class, format_ctor, raw_palette, d))
+				if (format_list == NULL)
+					continue;
+				if (add_format(e, format_list, format_list_add, format_class, format_ctor, raw_palette, d) != EXIT_SUCCESS) {
+					dprint(LOG_V4L4J, "[V4L4J] Error adding format to %s format list\n", name);
 					return;
+				}
 			}
 		} else {
 			//Add to native format list
-			if (!add_format(e, formats, formats_add_method, format_class, format_ctor, palette_idx, d))
+			dprint(LOG_V4L4J, "[V4L4J] Adding format to native list");
+			if (add_format(e, formats, formats_add_method, format_class, format_ctor, palette_idx, d) != EXIT_SUCCESS) {
+				dprint(LOG_V4L4J, "[V4L4J] Error adding format to native format list\n");
 				return;
+			}
 			//Add to other format list, if applicable
 			if (format_list != NULL) {
 				dprint(LOG_V4L4J, "[V4L4J] Found native %s format - adding it to list\n", name);
-				if (!add_format(e, format_list, format_list_add, format_class, format_ctor, palette_idx, d))
+				if (add_format(e, format_list, format_list_add, format_class, format_ctor, palette_idx, d) != EXIT_SUCCESS) {
+					dprint(LOG_V4L4J, "[V4L4J] Error adding format to special format list\n");
 					return;
+				}
 			}
 		}	
 	}
