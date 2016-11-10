@@ -170,32 +170,31 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetDiscrete(JNIEnv
 
 	jclass frame_intv_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/FrameInterval");
 	if(frame_intv_class == NULL) {
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up FrameInterval class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up class au.edu.jcu.v4l4j.FrameInterval");
 		return;
 	}
 
 	jmethodID frame_intv_ctor = (*e)->GetMethodID(e, frame_intv_class, "<init>", "(IJ)V");
 	if(frame_intv_ctor == NULL){
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the ctor of FrameInterval class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of class FrameInterval");
 		return;
 	}
 
 	jclass discrete_res_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/ResolutionInfo$DiscreteResolution");
 	if(discrete_res_class == NULL) {
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up DiscreteResolution class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up class au.edu.jcu.v4l4j.ResolutionInfo.DiscreteResolution");
 		return;
 	}
 
 	jmethodID discrete_res_ctor = (*e)->GetMethodID(e, discrete_res_class, "<init>", "(IILau/edu/jcu/v4l4j/FrameInterval;)V");
 	if(discrete_res_ctor == NULL) {
-		info("[V4L4J] Error looking up the ctor of DiscreteResolution class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the ctor of DiscreteResolution class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor of class DiscreteResolution");
 		return;
 	}
 
 	unsigned int i = 0;
-	while(p->discrete[i++].width != 0) {
-		struct frame_size_discrete* resolution = &p->discrete[i];
+	struct frame_size_discrete* resolution;
+	while((resolution = &p->discrete[i++])->width != 0) {
 		dprint(LOG_V4L4J, "[V4L4J] creating discrete resolution %dx%d\n",
 							resolution->width,
 							resolution->height);
@@ -216,9 +215,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetDiscrete(JNIEnv
 				intv);
 		(*e)->DeleteLocalRef(e, intv);
 		if(discrete == NULL){
-			info("[V4L4J] Error creating DiscreteResolution object\n");
-			THROW_EXCEPTION(e, JNI_EXCP, \
-					"Error creating DiscreteResolution object");
+			THROW_EXCEPTION(e, JNI_EXCP, "Error creating DiscreteResolution object");
 			return;
 		}
 

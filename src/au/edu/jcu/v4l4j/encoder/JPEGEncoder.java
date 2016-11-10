@@ -19,7 +19,7 @@ public class JPEGEncoder extends ImageFormatConverter {
 	}
 	
 	protected JPEGEncoder(int width, int height, ImagePalette from, ImagePalette to) {
-		super(ImageFormatConverter.lookupConverterByConversion(from.getIndex(), to.getIndex()), width, height);
+		super(ImageFormatConverter.getConverterIDForTransformation(from, to), width, height);
 	}
 	
 	public JPEGEncoder(int width, int height, ImagePalette from) {

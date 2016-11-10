@@ -236,7 +236,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(JNIEnv 
 			}
 		} else {
 			//Add to native format list
-			dprint(LOG_V4L4J, "[V4L4J] Adding format to native list");
+			dprint(LOG_V4L4J, "[V4L4J] Adding format to native list\n");
 			if (add_format(e, formats, formats_add_method, format_class, format_ctor, palette_idx, d) != EXIT_SUCCESS) {
 				dprint(LOG_V4L4J, "[V4L4J] Error adding format to native format list\n");
 				return;
