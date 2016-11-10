@@ -27,7 +27,7 @@
  * 2: struct frame_size_continuous(max res) )
  * 0: unsupported, 1:discrete, 2: stepwise
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetFrameIntvType(JNIEnv *e, jobject obj, jint type, jlong o) {
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetFrameIntvType(JNIEnv *e, jclass me, jint type, jlong o) {
 	int t = 0;
 
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
@@ -129,7 +129,7 @@ static struct frame_intv_continuous *get_continuous(jlong o, jint type) {
  * (0: struct frame_size_discrete, 1: struct frame_size_continuous (min res),
  * 2: struct frame_size_continuous(max res),  )
  */
-JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetDiscrete(JNIEnv *e, jobject t, jint type, jlong o, jobject result) {
+JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetDiscrete(JNIEnv *e, jclass me, jobject result, jint type, jlong o) {
 
 	int i = -1;
 
@@ -185,7 +185,7 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetDiscrete(JNIE
  * (0: struct frame_size_discrete, 1: struct frame_size_continuous (min res),
  * 2: struct frame_size_continuous(max res) )
  */
-JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetStepwise(JNIEnv *env, jobject t, jint type, jlong o) {
+JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetStepwise(JNIEnv *env, jclass me, jint type, jlong o) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n", __PRETTY_FUNCTION__);
 
 	//get our pointer to struct frame_intv_continuous

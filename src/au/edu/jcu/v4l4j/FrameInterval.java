@@ -20,7 +20,6 @@ package au.edu.jcu.v4l4j;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Vector;
 
 import au.edu.jcu.v4l4j.ResolutionInfo.DiscreteResolution;
 import au.edu.jcu.v4l4j.ResolutionInfo.StepwiseResolution;
@@ -94,7 +93,7 @@ public class FrameInterval {
 	 *            2:frame_size_stepwise (max res)
 	 * @return the interval type (0: unsupported, 1: discrete, 2: continuous)
 	 */
-	private native int doGetFrameIntvType(int t, long o);
+	private static final native int doGetFrameIntvType(int t, long o);
 
 	/**
 	 * this method populates the discreteIntervals member for the given frame
@@ -108,7 +107,7 @@ public class FrameInterval {
 	 *            0:frame_size_discrete, 1:frame_size_stepwise (min res),
 	 *            2:frame_size_stepwise (max res)
 	 */
-	private native List<DiscreteInterval> doGetDiscrete(int t, long o, List<DiscreteInterval> values);
+	private static final native List<DiscreteInterval> doGetDiscrete(List<DiscreteInterval> values, int t, long o);
 
 	/**
 	 * this method populates the continuousInterval member for the given frame
@@ -122,7 +121,7 @@ public class FrameInterval {
 	 *            0:frame_size_discrete, 1:frame_size_stepwise (min res),
 	 *            2:frame_size_stepwise (max res)
 	 */
-	private native StepwiseInterval doGetStepwise(int t, long o);
+	private static final native StepwiseInterval doGetStepwise(int t, long o);
 
 	/**
 	 * This method builds a new FrameInterval object. It must be called while
@@ -166,8 +165,7 @@ public class FrameInterval {
 				// error checking frame interval type
 				e.printStackTrace();
 				System.err.println("There was an error checking the supported interval types.\n"
-						+ "Please report this error to the v4l4j mailing list.\n"
-						+ "See README file for information on reporting bugs");
+						+ V4L4JConstants.REPORT_ERROR_MSG);
 				type = Type.UNSUPPORTED;
 				return;
 			}
@@ -175,7 +173,7 @@ public class FrameInterval {
 
 		try {
 			if (frameIntvType == 1) {
-				this.discreteValues = doGetDiscrete(ptr_type, o, new ArrayList<>());
+				this.discreteValues = doGetDiscrete(new ArrayList<>(), ptr_type, o);
 				((ArrayList<?>)this.discreteValues).trimToSize();
 			} else if (frameIntvType == 2) {
 				this.stepwiseInterval = doGetStepwise(ptr_type, o);
@@ -183,10 +181,7 @@ public class FrameInterval {
 		} catch (Exception e) {
 			// error checking supported intervals
 			e.printStackTrace();
-			System.err.println(
-					"There was an error checking the supported intervals.\n"
-					+ "Please report this error to the v4l4j mailing list.\n"
-					+ "See README file for information on reporting bugs");
+			System.err.println("There was an error checking the supported intervals.\n" + V4L4JConstants.REPORT_ERROR_MSG);
 			type = Type.UNSUPPORTED;
 			return;
 		}
@@ -268,12 +263,12 @@ public class FrameInterval {
 		/**
 		 * The numerator for this discrete frame interval.
 		 */
-		public final int numerator;
+		private final int numerator;
 
 		/**
 		 * The denominator for this discrete frame interval.
 		 */
-		public final int denominator;
+		private final int denominator;
 
 		DiscreteInterval(int numerator, int denominator) {
 			this.numerator = numerator;
@@ -298,6 +293,10 @@ public class FrameInterval {
 			return denominator;
 		}
 		
+		/**
+		 * Get a floating-point number value for this frame interval.
+		 * @return as a double
+		 */
 		public double toDouble() {
 			return getNumerator() / (double) getDenominator();
 		}
