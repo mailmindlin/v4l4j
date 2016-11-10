@@ -45,7 +45,7 @@ static struct palette_info *find_palette_info(int index, struct v4l4j_device *d)
  * for a given image format (index) and pointer to v4l4j_device struct (o)
  * returns: int from enum frame_size_types
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetType(JNIEnv *e, jobject t, jint index, jlong o) {
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetType(JNIEnv *e, jclass me, jint index, jlong o) {
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 
@@ -62,35 +62,29 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetType(JNIEnv *e,
 }
 
 /*
- * this function sets the min,max,step width & height attributes
+ * this function sets the min, max, step width & height attributes
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetStepwise(JNIEnv *e, jobject t, jint index, jlong o) {
+JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetStepwise(JNIEnv *e, jclass me, jint index, jlong o) {
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
-
+	
 	/* Get handles on Java stuff */
-	struct palette_info* p = find_palette_info(index,d);
+	struct palette_info* p = find_palette_info(index, d);
 	if(p == NULL) {
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up image format (could not look up palette with index %d)", index);
-		return;
-	}
-
-	jclass this_class = (*e)->GetObjectClass(e, t);
-	if(this_class == NULL) {
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up ResolutionInfo class");
-		return;
+		return NULL;
 	}
 
 	jclass frame_intv_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/FrameInterval");
 	if(frame_intv_class == NULL) {
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up class au.edu.jcu.v4l4j.FrameInterval");
-		return;
+		return NULL;
 	}
 
-	jmethodID frameIntervalConstructor = (*e)->GetMethodID(e, frame_intv_class, "<init>",	"(IJ)V");
+	jmethodID frameIntervalConstructor = (*e)->GetMethodID(e, frame_intv_class, "<init>", "(IJ)V");
 	if(frameIntervalConstructor == NULL) {
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor for class FrameInterval");
-		return;
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the constructor au.edu.jcu.v4l4j.FrameInterval(int ptr_type, long o)");
+		return NULL;
 	}
 
 	dprint(LOG_V4L4J, "[V4L4L] Creating the frame interval for the min res\n");
@@ -98,28 +92,28 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetStepwise(JNIEnv
 	jobject intv_min = (*e)->NewObject(e, frame_intv_class, frameIntervalConstructor, 1, (jlong) (uintptr_t) p->continuous);
 	if(intv_min == NULL) {
 		THROW_EXCEPTION(e, JNI_EXCP, "Error creating FrameInterval object");
-		return;
+		return NULL;
 	}
-
+	
 	dprint(LOG_V4L4J, "[V4L4L] Creating the frame interval for the max res\n");
 	//create the frame interval object for the max res
 	jobject intv_max = (*e)->NewObject(e, frame_intv_class, frameIntervalConstructor, 2, (jlong) (uintptr_t) p->continuous);
 	(*e)->DeleteLocalRef(e, frame_intv_class);
 	if(intv_max == NULL) {
 		THROW_EXCEPTION(e, JNI_EXCP, "Error creating FrameInterval object");
-		return;
+		return NULL;
 	}
-
+	
 	jclass stepwise_res_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/ResolutionInfo$StepwiseResolution");
 	if(stepwise_res_class == NULL) {
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up StepwiseResolution class");
-		return;
+		return NULL;
 	}
-
+	
 	jmethodID stepwiseResolutionConstructor = (*e)->GetMethodID(e, stepwise_res_class, "<init>", "(IIIIIILau/edu/jcu/v4l4j/FrameInterval;Lau/edu/jcu/v4l4j/FrameInterval;)V");
 	if(stepwiseResolutionConstructor == NULL) {
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the ctor of StepwiseResolution class");
-		return;
+		return NULL;
 	}
 
 	dprint(LOG_V4L4J, "[V4L4L] Creating the stepwise res obj\n");
@@ -129,19 +123,12 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetStepwise(JNIEnv
 			p->continuous->max_width, p->continuous->max_height,
 			p->continuous->step_width, p->continuous->step_height,
 			intv_min, intv_max);
+	
 	if(stepwise == NULL) {
 		THROW_EXCEPTION(e, JNI_EXCP, "Error creating StepwiseResolution object");
-		return;
+		return NULL;
 	}
-
-	//assign it to the stepwiseObject member
-	jfieldID fid = (*e)->GetFieldID(e, this_class, "stepwiseObject", "Lau/edu/jcu/v4l4j/ResolutionInfo$StepwiseResolution;");
-	if(fid == NULL) {
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the StepwiseResolution fieldID");
-		return;
-	}
-	(*e)->SetObjectField(e, t, fid, stepwise);
-
+	
 	dprint(LOG_V4L4J, "[V4L4J] Created stepwise resolution: %d/%d/%d x %d/%d/%d\n",
 			p->continuous->min_width,
 			p->continuous->max_width,
@@ -150,14 +137,15 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetStepwise(JNIEnv
 			p->continuous->max_height,
 			p->continuous->step_height
 	);
-
+	
+	return stepwise;
 }
 
 /*
  * this function sets the discreteValues attribute with a list of supported
  * resolutions
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetDiscrete(JNIEnv *e, jobject t, jint index, jlong o){
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetDiscrete(JNIEnv *e, jclass me, jobject discreteValues, jint index, jlong o){
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
 
@@ -168,55 +156,32 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetDiscrete(JNIEnv
 		return;
 	}
 
-	jclass this_class = (*e)->GetObjectClass(e, t);
-	if(this_class == NULL) {
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up ResolutionInfo class");
-		return;
-	}
-
-	jfieldID field = (*e)->GetFieldID(e, this_class, "discreteValues", "Ljava/util/List;");
-	if(field == NULL) {
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the discreteValues fieldID");
-		return;
-	}
-
-	jobject discreteValues = (*e)->GetObjectField(e, t, field);
-	if(discreteValues == NULL) {
-		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the discreteValues member");
-		return;
-	}
-
 	jclass discreteValues_class = (*e)->GetObjectClass(e, discreteValues);
 	if(discreteValues_class == NULL) {
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up discreteValues List class");
 		return;
 	}
 
-	jmethodID add_method = (*e)->GetMethodID(e, discreteValues_class, "add", "(Ljava/lang/Object;)Z");
-	(*e)->DeleteLocalRef(e, discreteValues_class);
+	jmethodID add_method = lookupAddMethod(e, discreteValues);
 	if(add_method == NULL) {
-		info("[V4L4J] Error looking up the add method of discreteValues List class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the add method of discreteValues List class");
 		return;
 	}
 
 	jclass frame_intv_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/FrameInterval");
 	if(frame_intv_class == NULL) {
-		info("[V4L4J] Error looking up the FrameInterval class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up FrameInterval class");
 		return;
 	}
 
 	jmethodID frame_intv_ctor = (*e)->GetMethodID(e, frame_intv_class, "<init>", "(IJ)V");
 	if(frame_intv_ctor == NULL){
-		info("[V4L4J] Error looking up the ctor of FrameInterval class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the ctor of FrameInterval class");
 		return;
 	}
 
 	jclass discrete_res_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/ResolutionInfo$DiscreteResolution");
 	if(discrete_res_class == NULL) {
-		info("[V4L4J] Error looking up the DiscreteResolution class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up DiscreteResolution class");
 		return;
 	}
@@ -224,8 +189,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetDiscrete(JNIEnv
 	jmethodID discrete_res_ctor = (*e)->GetMethodID(e, discrete_res_class, "<init>", "(IILau/edu/jcu/v4l4j/FrameInterval;)V");
 	if(discrete_res_ctor == NULL) {
 		info("[V4L4J] Error looking up the ctor of DiscreteResolution class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, \
-				"Error looking up the ctor of DiscreteResolution class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up the ctor of DiscreteResolution class");
 		return;
 	}
 

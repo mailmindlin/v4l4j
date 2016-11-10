@@ -73,7 +73,7 @@ public class ResolutionInfo {
 	 * @author gilles
 	 *
 	 */
-	public enum Type {
+	public static enum Type {
 		/**
 		 * An UNSUPPORTED type means supported resolution information cannot be
 		 * obtained from the driver. Calling any methods on the
@@ -105,12 +105,12 @@ public class ResolutionInfo {
 	/**
 	 * The stepwise resolution object Valid only if type==STEPWISE
 	 */
-	private StepwiseResolution stepwiseObject;
+	private final StepwiseResolution stepwiseObject;
 
 	/**
 	 * A list of {@link DiscreteResolution} object if type==DISCRETE
 	 */
-	private List<DiscreteResolution> discreteValues;
+	private final List<DiscreteResolution> discreteValues;
 
 	/**
 	 * This native method returns the type of the supported resolutions.
@@ -119,7 +119,7 @@ public class ResolutionInfo {
 	 *            a C pointer to a struct v4l4j_device
 	 * @return 0: unsupported, 1: discrete, 2: continuous
 	 */
-	private native int doGetType(int index, long o);
+	private static final native int doGetType(int index, long o);
 
 	/**
 	 * This native method sets the stepwise attributes (min, max & step width &
@@ -130,8 +130,8 @@ public class ResolutionInfo {
 	 * @param o
 	 *            a C pointer to a struct v4l4j_device
 	 */
-	private native void doGetStepwise(int index, long o);
-
+	private static final native StepwiseResolution doGetStepwise(int index, long o);
+	
 	/**
 	 * This native method sets the discrete resolution list (discreteValues)
 	 * 
@@ -140,7 +140,7 @@ public class ResolutionInfo {
 	 * @param o
 	 *            a C pointer to a struct v4l4j_device
 	 */
-	private native void doGetDiscrete(int index, long o);
+	private static final native void doGetDiscrete(List<DiscreteResolution> discreteValues, int index, long o);
 
 	/**
 	 * This method builds a new resolution information object. It MUST be called
@@ -153,33 +153,36 @@ public class ResolutionInfo {
 	 *            a C pointer to a struct v4l4j_device
 	 */
 	ResolutionInfo(int index, long object) {
-		int t;
+		Type type = Type.UNSUPPORTED;
+		StepwiseResolution stepwise = null;
+		ArrayList<DiscreteResolution> discrete = null;
 		try {
-			t = doGetType(index, object);
-			if (t == 1) {
-				this.discreteValues = new ArrayList<DiscreteResolution>();
-				doGetDiscrete(index, object);
-				//Compress arraylist
-				((ArrayList<?>)discreteValues).trimToSize();
-			} else if (t == 2) {
-				doGetStepwise(index, object);
+			int t = doGetType(index, object);
+			switch (t) {
+				case 1:
+					type = Type.DISCRETE;
+					discrete = new ArrayList<DiscreteResolution>();
+					doGetDiscrete(discrete, index, object);
+					discrete.trimToSize();
+					break;
+				case 2:
+					type = Type.STEPWISE;
+					stepwise = doGetStepwise(index, object);
+					break;
+				case 0:
+				default:
+					type = Type.UNSUPPORTED;
+					break;
 			}
 		} catch (Exception e) {
 			// error checking supported resolutions
 			e.printStackTrace();
-			System.err.println("There was an error checking the supported resolutions.\n"
-					+ "Please report this error to the v4l4j mailing list.\n"
-					+ "See REAME file for information on reporting bugs");
+			System.err.println("There was an error checking the supported resolutions.\n" + V4L4JConstants.REPORT_ERROR_MSG);
 			type = Type.UNSUPPORTED;
-			return;
-		}
-
-		if (t == 0)
-			type = Type.UNSUPPORTED;
-		else if (t == 1) {
-			type = Type.DISCRETE;
-		} else {
-			type = Type.STEPWISE;
+		} finally {
+			this.type = type;
+			this.stepwiseObject = stepwise;
+			this.discreteValues = discrete;
 		}
 	}
 
@@ -233,7 +236,10 @@ public class ResolutionInfo {
 			StringBuilder sb = new StringBuilder();
 			for (DiscreteResolution d : discreteValues)
 				sb.append(d).append(" - ");
-			sb.setLength(sb.length() - 3);
+			if (sb.length() > 3)
+				sb.setLength(sb.length() - 3);
+			else
+				sb.append("[no resolutions]");
 			return sb.toString();
 		} else {
 			return "no resolution information";
@@ -252,28 +258,28 @@ public class ResolutionInfo {
 	 * 
 	 * @author gilles
 	 */
-	public static class DiscreteResolution {
+	public static final class DiscreteResolution {
 
 		/**
 		 * The resolution width
 		 */
-		public final int width;
+		private final int width;
 
 		/**
 		 * The resolution height
 		 */
-		public final int height;
+		private final int height;
 
 		/**
 		 * The frame interval object containing information on supported frame
 		 * intervals for capture at this resolution.
 		 */
-		public final FrameInterval interval;
+		private final FrameInterval interval;
 
-		private DiscreteResolution(int width, int height, FrameInterval f) {
+		private DiscreteResolution(int width, int height, FrameInterval interval) {
 			this.width = width;
 			this.height = height;
-			interval = f;
+			this.interval = interval;
 		}
 
 		/**
@@ -282,7 +288,7 @@ public class ResolutionInfo {
 		 * @return the resolution width
 		 */
 		public int getWidth() {
-			return width;
+			return this.width;
 		}
 
 		/**
@@ -291,7 +297,7 @@ public class ResolutionInfo {
 		 * @return the resolution height
 		 */
 		public int getHeight() {
-			return height;
+			return this.height;
 		}
 
 		/**
@@ -301,23 +307,31 @@ public class ResolutionInfo {
 		 * @return the frame intervals supported at this resolution
 		 */
 		public FrameInterval getFrameInterval() {
-			return interval;
+			return this.interval;
 		}
 
 		@Override
 		public String toString() {
-			return width + "x" + height + " (" + interval + ")";
+			return new StringBuilder()
+					.append(width).append('x').append(height)
+					.append(" (").append(interval).append(')')
+					.toString();
 		}
 	}
 
 	/**
+	 * <p>
 	 * This class encapsulates information about supported capture resolutions
 	 * for a video device. The supported resolutions are continuous values,
 	 * comprised between a minimum and a maximum, in given increments (called
-	 * the step value).<br>
+	 * the step value).
+	 * </p>
+	 * <p>
 	 * For instance, for a device supporting capture resolutions between 160x120
 	 * and 800x600 in increments of 160x120, the following resolutions are
-	 * supported: 160x120, 320x240, 480x360, 640x480, 800x600.<br>
+	 * supported: 160x120, 320x240, 480x360, 640x480, 800x600.
+	 * </p>
+	 * <p>
 	 * A <code>StepwiseResolution<code> object matching the above criteria will
 	 * contain:
 	 * <ul>
@@ -328,8 +342,9 @@ public class ResolutionInfo {
 	 * <li><code>StepwiseResolution.maxWidth = 800</code></li>
 	 * <li><code>StepwiseResolution.maxHeight = 600</code></li>
 	 * </ul>
-	 * These values can also be obtained using the accessor methods. <br>
-	 * <br>
+	 * These values can also be obtained using the accessor methods.
+	 * </p>
+	 * <p>
 	 * Objects of this class also contains two {@link FrameInterval} objects
 	 * providing information on supported frame intervals for capture at the
 	 * minimum resolution ({@link StepwiseResolution#getMinResFrameInterval()})
@@ -339,6 +354,7 @@ public class ResolutionInfo {
 	 * calling {@link DeviceInfo#listIntervals(ImageFormat, int, int)}. A
 	 * StepwiseResolution object is not directly instantiated. Instead, it can
 	 * be obtained through a {@link ResolutionInfo}.
+	 * </p>
 	 * 
 	 * @author gilles
 	 */
@@ -353,25 +369,25 @@ public class ResolutionInfo {
 		 * intervals for capture at the minimum resolution (minWidth x
 		 * minHeight).
 		 */
-		public final FrameInterval minInterval;
+		private final FrameInterval minInterval;
 
 		/**
 		 * The frame interval object containing information on supported frame
 		 * intervals for capture at the maximum resolution (maxWidth x
 		 * maxHeight).
 		 */
-		public final FrameInterval maxInterval;
+		private final FrameInterval maxInterval;
 
-		StepwiseResolution(int minw, int minh, int maxw, int maxh, int stepw, int steph, FrameInterval minI,
-				FrameInterval maxI) {
-			minWidth = minw;
-			maxWidth = maxw;
-			stepWidth = stepw;
-			minHeight = minh;
-			maxHeight = maxh;
-			stepHeight = steph;
-			minInterval = minI;
-			maxInterval = maxI;
+		StepwiseResolution(int minWidth, int minHeight, int maxWidth, int maxHeight, int stepWidth, int stepHeight,
+				FrameInterval minInterval, FrameInterval maxInterval) {
+			this.minWidth = minWidth;
+			this.maxWidth = maxWidth;
+			this.stepWidth = stepWidth;
+			this.stepHeight = stepHeight;
+			this.minHeight = minHeight;
+			this.maxHeight = maxHeight;
+			this.minInterval = minInterval;
+			this.maxInterval = maxInterval;
 		}
 
 		/**
@@ -454,8 +470,15 @@ public class ResolutionInfo {
 
 		@Override
 		public String toString() {
-			return "min: " + minWidth + "x" + minHeight + " (" + minInterval + ") - max: " + maxWidth + "x" + maxHeight
-					+ " (" + maxInterval + ") - step: " + stepWidth + "x" + stepHeight + ")\n";
+			//TODO find some good initial size
+			return new StringBuilder()
+					.append("min: ").append(this.getMinWidth()).append('x').append(this.getMinHeight())
+					.append(" (").append(this.getMinResFrameInterval()).append(") - max: ")
+					.append(this.getMaxWidth()).append('x').append(this.getMaxHeight())
+					.append(" (").append(this.getMaxResFrameInterval()).append(") - step: ")
+					.append(this.getWidthStep()).append('x').append(this.getHeightStep())
+					.append(')')
+					.toString();
 		}
 	}
 }
