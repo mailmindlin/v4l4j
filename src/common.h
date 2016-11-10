@@ -27,11 +27,11 @@
 
 #include <stdio.h>
 #include <jpeglib.h>
+#include <jni.h>
 
 #include "libvideo.h"
 #include "debug.h"
 
-#define LOG_FN_ENTER() dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__)
 struct v4l4j_device;
 
 struct jpeg_data {
@@ -148,5 +148,14 @@ struct v4l4j_device {
 		} while(0)
 
 #define CLIP(x) (unsigned char) ((x) > 255) ? 255 : (((x) < 0) ? 0 : (x));
+
+jmethodID lookupAddMethod(JNIEnv *env, jobject list) __attribute__ ((pure));
+jclass lookupClassSafe(JNIEnv *env, jobject obj) __attribute__ ((pure));
+int getBufferPosition(JNIEnv *env, jobject buffer) __attribute__ ((pure));
+unsigned char* getBufferPointer(JNIEnv *env, jobject buffer, jbyteArray* arrayRef, unsigned int* len);
+void setBufferPosition(JNIEnv *env, jobject buffer, int position);
+void setBufferLimit(JNIEnv *env, jobject buffer, int limit);
+int getBufferLimit(JNIEnv *env, jobject limit) __attribute__ ((pure));
+unsigned char* getBufferPointer(JNIEnv *env, jobject buffer, jbyteArray* arrayRef, unsigned int* len);
 
 #endif /*H_COMMON_*/

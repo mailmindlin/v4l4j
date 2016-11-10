@@ -134,6 +134,7 @@
 #define END_TIMING
 #endif
 
+#define LOG_FN_ENTER() dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__)
 
 #endif //#ifdef DEBUG
 

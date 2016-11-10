@@ -15,7 +15,6 @@
 #include "libvideo.h"
 #include "libv4lconvert/types.h"
 #include "libv4lconvert/libv4lconvert-flat.h"
-#include "jniutils.c"
 
 static inline jclass getOwnClass(JNIEnv* env) __attribute__((pure));
 static inline struct v4lconvert_buffer* lookupNative(JNIEnv* env, jobject self) __attribute__ ((pure));
