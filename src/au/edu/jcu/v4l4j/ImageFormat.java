@@ -50,21 +50,15 @@ package au.edu.jcu.v4l4j;
  *
  */
 public class ImageFormat {
-
 	/**
 	 * The name of this format
 	 */
-	private ImagePalette palette;
-
-	/**
-	 * the libvideo Id for this format
-	 */
-	private int libvideoID;
-
+	private final ImagePalette palette;
+	
 	/**
 	 * Info on supported resolutions for this image format
 	 */
-	private ResolutionInfo resolutions;
+	private final ResolutionInfo resolutions;
 
 	/**
 	 * This method builds a new Image format with the given name and index. It
@@ -72,17 +66,16 @@ public class ImageFormat {
 	 * Therefore, it MUST be called while the device info interface of libvideo
 	 * is checked out
 	 * 
-	 * @param n
+	 * @param name
 	 *            the name of this image format
-	 * @param i
+	 * @param paletteId
 	 *            the index of this image format
-	 * @param o
+	 * @param object
 	 *            a C pointer to a struct v4l4j_device
 	 */
-	ImageFormat(String name, int i, long o) {
-		this.palette = ImagePalette.values()[i];
-		libvideoID = i;
-		resolutions = new ResolutionInfo(i, o);
+	ImageFormat(String name, int paletteId, long object) {
+		this.palette = ImagePalette.lookup(paletteId);
+		this.resolutions = new ResolutionInfo(paletteId, object);
 	}
 
 	/**
@@ -121,15 +114,14 @@ public class ImageFormat {
 	 * @return the index of this format
 	 */
 	public int getIndex() {
-		return libvideoID;
+		return this.palette.getIndex();
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + libvideoID;
-		result = prime * result + ((palette == null) ? 0 : palette.hashCode());
+		result = prime * result + ((palette == null) ? 0 : palette.getIndex());
 		return result;
 	}
 
@@ -142,7 +134,7 @@ public class ImageFormat {
 		if (!(obj instanceof ImageFormat))
 			return false;
 		ImageFormat other = (ImageFormat) obj;
-		if (libvideoID != other.libvideoID)
+		if (this.palette != other.palette)
 			return false;
 		if (palette == null) {
 			if (other.palette != null)
@@ -154,10 +146,10 @@ public class ImageFormat {
 
 	@Override
 	public String toString() {
-		return palette + " - " + libvideoID;
+		return palette + " - " + this.palette;
 	}
 
 	public String toNiceString() {
-		return palette + " - " + libvideoID + " - " + resolutions;
+		return palette + " - " + this.palette + " - " + resolutions;
 	}
 }
