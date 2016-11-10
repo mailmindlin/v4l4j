@@ -25,7 +25,7 @@
 package au.edu.jcu.v4l4j;
 
 public class V4L4JConstants {
-
+	
 	/**
 	 * Input from a tuner
 	 */
@@ -120,7 +120,7 @@ public class V4L4JConstants {
 	 * {@link Control#setValue(int)} and {@link Control#getValue()}.
 	 */
 	public final static int CTRL_TYPE_BITMASK = 6;
-
+	
 	/**
 	 * A tuner with a type (as returned by {@link TunerInfo#getType()}) equal to
 	 * TUNER_TYPE_RADIO is a radio tuner
@@ -141,7 +141,7 @@ public class V4L4JConstants {
 	 * expressed in MHz
 	 */
 	public static final int FREQ_MHZ = 2;
-
+	
 	// RGB image formats
 	/**
 	 * RGB332 image format
@@ -183,12 +183,12 @@ public class V4L4JConstants {
 	 * RGB32 image format
 	 */
 	public static final int IMF_RGB32 = 9;
-
+	
 	// Grey image formats
 	/**
 	 * GREY image format
 	 */
-	public static final int IMF_GREY = 10;
+	public static final int IMF_GRAY = 10;
 	/**
 	 * Y4 image format
 	 */
@@ -205,13 +205,13 @@ public class V4L4JConstants {
 	 * Y16 image format
 	 */
 	public static final int IMF_Y16 = 14;
-
+	
 	// PAL 8 format
 	/**
 	 * PAL8 image format
 	 */
 	public static final int IMF_PAL8 = 15;
-
+	
 	// YUV formats
 	/**
 	 * YVU410 image format
@@ -285,7 +285,7 @@ public class V4L4JConstants {
 	 * HM12 image format
 	 */
 	public static final int IMF_HM12 = 33;
-
+	
 	// two planes - Y and Cb/Cr interleaved
 	/**
 	 * NV12 image format
@@ -303,7 +303,7 @@ public class V4L4JConstants {
 	 * NV61 image format
 	 */
 	public static final int IMF_NV61 = 37;
-
+	
 	// Bayer formats
 	/**
 	 * SBGGR8 bayer image format
@@ -345,7 +345,7 @@ public class V4L4JConstants {
 	 * SBGGR16 bayer image format
 	 */
 	public static final int IMF_SBGGR16 = 47;
-
+	
 	// compressed formats
 	/**
 	 * MJPEG image format
@@ -363,7 +363,7 @@ public class V4L4JConstants {
 	 * MPEG image format
 	 */
 	public static final int IMF_MPEG = 51;
-
+	
 	// vendor specific
 	/**
 	 * CPIA1 image format
@@ -451,6 +451,15 @@ public class V4L4JConstants {
 	public static final int IMF_CIT_YYVYUY = 72;
 	/**
 	 * KONICA420 image format
+	 * @see ImagePalette#KONICA420
 	 */
 	public static final int IMF_KONICA420 = 73;
+	
+	/**
+	 * String to display for errors that should be reported. Should only appear
+	 * in error messages if we're reasonably sure that the exception would only
+	 * be thrown if there's a problem with V4L4J, <i>NOT</i> the user's code.
+	 */
+	public static final String REPORT_ERROR_MSG = "Please report this problem to github.com/mailmindlin/v4l4j\n"
+			+ "See README for information on reporting bugs.";
 }
