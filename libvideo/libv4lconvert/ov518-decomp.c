@@ -28,6 +28,7 @@
  * calculated picture, but I'm not sure, so the choice is still in here. */
 #undef APPROXIMATE_MUL_BY_SHIFT
 
+#define CLIP(x) ((u8) ((x) > 0xFF ? 0xFF : (x) < 0 ? 0 : (x)))
 /******************************************************************************
  * Local Data Types
  ******************************************************************************/
@@ -782,8 +783,7 @@ huffmanDecoderUV(int *C, int *pIn, struct comp_info *cinfo)
 
 #endif
 
-static void
-DCT_8x4(int *coeff, u8 *out)
+static void DCT_8x4(int *coeff, u8 *out)
 	/* pre: coeff == coefficients
 	   post: coeff != coefficients
 	 ** DO NOT ASSUME coeff TO BE THE SAME BEFORE AND AFTER CALLING THIS FUNCTION!
@@ -950,13 +950,13 @@ DCT_8x4(int *coeff, u8 *out)
 	tmp2 = TIMES_41986(coeff[15]) + TIMES_17391(coeff[31]);
 
 	t = (base + val1 + val2 + val3 - tmp1 - tmp2 - C4 - C20) >> 17;
-	out[3] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[3] = CLIP(t);
 	t = (base - val1 - val2 + val3) >> 17;
-	out[4] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[4] = CLIP(t);
 	t = (base - val1 + val2 - val3 - tmp1 + tmp2) >> 17;
-	out[27] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[27] = CLIP(t);
 	t = (base + val1 - val2 - val3 - C16 - C20) >> 17;
-	out[28] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[28] = CLIP(t);
 
 	// Second half
 	C2_18 = coeff[2] - coeff[18];
@@ -994,13 +994,13 @@ DCT_8x4(int *coeff, u8 *out)
 	val3 += TIMES_12538(coeff[8] + coeff[12]);
 
 	t = (base + val1 + val2 + val3) >> 17;
-	out[8] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[8] = CLIP(t);
 	t = (base - val1 - val2 + val3 - C4 + C16 + C20) >> 17;
-	out[15] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[15] = CLIP(t);
 	t = (base - val1 + val2 - val3) >> 17;
-	out[16] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[16] = CLIP(t);
 	t = (base + val1 - val2 - val3 - C4 + C20) >> 17;
-	out[23] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[23] = CLIP(t);
 
 	//9,14,17,22
 
@@ -1030,13 +1030,13 @@ DCT_8x4(int *coeff, u8 *out)
 	val3 -= TIMES_30270(coeff[24] - coeff[28]);
 
 	t = (base + val1 + val2 + val3 + C4 + C16 - C20) >> 17;
-	out[9] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[9] = CLIP(t);
 	t = (base - val1 - val2 + val3 + C16) >> 17;
-	out[14] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[14] = CLIP(t);
 	t = (base - val1 + val2 - val3 + C4) >> 17;
-	out[17] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[17] = CLIP(t);
 	t = (base + val1 - val2 - val3) >> 17;
-	out[22] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[22] = CLIP(t);
 
 	//10,13,18,21
 
@@ -1066,13 +1066,13 @@ DCT_8x4(int *coeff, u8 *out)
 	val3 -= TIMES_30270(coeff[24] - coeff[28]);
 
 	t = (base + val1 + val2 + val3) >> 17;
-	out[10] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[10] = CLIP(t);
 	t = (base - val1 - val2 + val3 + C4 + C16 - C20) >> 17;
-	out[13] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[13] = CLIP(t);
 	t = (base - val1 + val2 - val3) >> 17;
-	out[18] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[18] = CLIP(t);
 	t = (base + val1 - val2 - val3 + C4) >> 17;
-	out[21] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[21] = CLIP(t);
 
 	// 11,12,19,20
 
@@ -1102,13 +1102,13 @@ DCT_8x4(int *coeff, u8 *out)
 	tmp2 = -TIMES_17391(coeff[15]) + TIMES_41986(coeff[31]);
 
 	t = (base + val1 + val2 + val3 - tmp1 + tmp2 + C16 + C20) >> 17;
-	out[11] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[11] = CLIP(t);
 	t = (base - val1 - val2 + val3 + C16 + C20) >> 17;
-	out[12] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[12] = CLIP(t);
 	t = (base - val1 + val2 - val3 - tmp1 - tmp2 - C4 + C20) >> 17;
-	out[19] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[19] = CLIP(t);
 	t = (base + val1 - val2 - val3) >> 17;
-	out[20] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[20] = CLIP(t);
 }
 
 #undef TIMES_16382
@@ -1254,16 +1254,11 @@ decompress400NoMMXOV518(u8	 *pIn,
 }
 #endif
 
-static inline int
-decompress420NoMMXOV518(u8	 *pIn,
-		u8	 *pOut,
-		u8	 *pTmp,
-		const int	 w,
+static inline int decompress420NoMMXOV518(u8	 *pIn, u8 *pOut, u8 *pTmp, const int w,
 		const int	 h,
 		const int	 numpix,
 		struct comp_info *cinfo,
-		int yvu)
-{
+		int yvu) {
 	u8 *pOutU, *pOutV;
 	int iOutY, iOutU, iOutV, x, y;
 	int lastYDC = 0;
@@ -1332,9 +1327,7 @@ decompress420NoMMXOV518(u8	 *pIn,
 
 /* Get quantization tables from input
  * Returns: <0 if error, or >=0 otherwise */
-static int
-get_qt_dynamic(u8 *pIn, struct comp_info *cinfo)
-{
+static int get_qt_dynamic(u8 *pIn, struct comp_info *cinfo) {
 	int rawLen = cinfo->rawLen;
 
 	/* Make sure input is actually big enough to hold trailer */
@@ -1347,13 +1340,11 @@ get_qt_dynamic(u8 *pIn, struct comp_info *cinfo)
 }
 
 /* Remove all 0 blocks from input */
-static void remove0blocks(u8 *pIn, int *inSize)
-{
+static void remove0blocks(u8 *pIn, unsigned int *inSize) {
 	long long *in = (long long *)pIn;
 	long long *out = (long long *)pIn;
-	int i;
 
-	for (i = 0; i < *inSize; i += 8, in++)
+	for (unsigned int i = 0; i < *inSize; i += 8, in++)
 		/* Skip 8 byte blocks of all 0 */
 		if (*in)
 			*out++ = *in;
@@ -1367,13 +1358,7 @@ static void remove0blocks(u8 *pIn, int *inSize)
  * Output format is planar YUV400
  * Returns uncompressed data length if success, or zero if error
  */
-static int
-Decompress400(u8 *pIn,
-		u8 *pOut,
-		int	     w,
-		int	     h,
-		int	     inSize)
-{
+static int Decompress400(u8 *pIn, u8 *pOut, int w, int h, unsigned int inSize) {
 	struct comp_info cinfo;
 	int numpix = w * h;
 	u8 pTmp[32];
@@ -1472,3 +1457,4 @@ int main(int argc, char *argv[]) {
 			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 	}
 }
+#undef CLIP
