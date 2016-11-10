@@ -224,13 +224,11 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(JNIEnv 
 			}
 		}
 		
-		dprint(LOG_V4L4J, "[V4L4J] Format raw_palettes: %d\n", (unsigned int) palette.raw_palettes);
-		
 		if (palette.raw_palettes != NULL) {
+			if (format_list == NULL)
+				continue;
 			for (unsigned int j = 0, raw_palette; (raw_palette = palette.raw_palettes[j]) != -1; j++) {
-				dprint(LOG_V4L4J, "[V4L4J] Found libvideo-converted %s format from %s format - add it\n", name, libvideo_palettes[di->palettes[i].raw_palettes[j]].name);
-				if (format_list == NULL)
-					continue;
+				dprint(LOG_V4L4J, "[V4L4J] Found libvideo-converted %s format from %s format - add it\n", name, libvideo_palettes[palette.raw_palettes[j]].name);
 				if (add_format(e, format_list, format_list_add, format_class, format_ctor, raw_palette, d) != EXIT_SUCCESS) {
 					dprint(LOG_V4L4J, "[V4L4J] Error adding format to %s format list\n", name);
 					return;
