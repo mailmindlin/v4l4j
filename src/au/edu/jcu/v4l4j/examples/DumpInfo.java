@@ -26,9 +26,11 @@ import au.edu.jcu.v4l4j.FrameInterval;
 import au.edu.jcu.v4l4j.FrameInterval.DiscreteInterval;
 import au.edu.jcu.v4l4j.FrameInterval.StepwiseInterval;
 import au.edu.jcu.v4l4j.ImageFormat;
+import au.edu.jcu.v4l4j.ImageFormatList;
 import au.edu.jcu.v4l4j.InputInfo;
 import au.edu.jcu.v4l4j.ResolutionInfo;
 import au.edu.jcu.v4l4j.ResolutionInfo.DiscreteResolution;
+import au.edu.jcu.v4l4j.ResolutionInfo.StepwiseResolution;
 import au.edu.jcu.v4l4j.TunerInfo;
 import au.edu.jcu.v4l4j.V4L4JConstants;
 import au.edu.jcu.v4l4j.VideoDevice;
@@ -60,8 +62,8 @@ public class DumpInfo {
 	 *             if there is an error getting the device information
 	 */
 	public DumpInfo(String deviceFile) throws V4L4JException {
-		videoDevice = new VideoDevice(deviceFile);
-		deviceInfo = videoDevice.getDeviceInfo();
+		this.videoDevice = new VideoDevice(deviceFile);
+		this.deviceInfo = videoDevice.getDeviceInfo();
 		dumpInfo();
 		videoDevice.releaseControlList();
 		videoDevice.release();
@@ -76,35 +78,35 @@ public class DumpInfo {
 		System.out.println("Camera name:  " + deviceInfo.getName());
 		System.out.println("Device file: " + deviceInfo.getDeviceFile());
 		System.out.println("Supported formats:");
+		System.out.println("\t- Native Formats (" + deviceInfo.getFormatList().getNativeFormats().size() + "): ");
 		for (ImageFormat f : deviceInfo.getFormatList().getNativeFormats())
 			System.out.println("\t" + f.toNiceString());
-
-		System.out.println(
-				"\tFormats that can be RGB24-converted: " + (videoDevice.supportRGBConversion() ? "" : "None"));
+		
+		ImageFormatList formats = deviceInfo.getFormatList();
+		System.out.println("\tFormats that can be RGB24-converted (" + formats.getRGBEncodableFormats().size() + ") :");
 		if (videoDevice.supportRGBConversion())
 			for (ImageFormat f : deviceInfo.getFormatList().getRGBEncodableFormats())
 				dumpFormatInfo(f);
 
-		System.out.println(
-				"\tFormats that can be BGR24-converted: " + (videoDevice.supportBGRConversion() ? "" : "None"));
+		System.out.println("\tFormats that can be BGR24-converted (" + formats.getBGREncodableFormats().size() + ") :");
 		if (videoDevice.supportBGRConversion())
 			for (ImageFormat f : deviceInfo.getFormatList().getBGREncodableFormats())
 				dumpFormatInfo(f);
 
 		System.out.println(
-				"\tFormats that can be YUV420-converted: " + (videoDevice.supportYUVConversion() ? "" : "None"));
+				"\tFormats that can be YUV420-converted (" + formats.getYUVEncodableFormats().size() + ") :");
 		if (videoDevice.supportYUVConversion())
 			for (ImageFormat f : deviceInfo.getFormatList().getYUVEncodableFormats())
 				dumpFormatInfo(f);
 
 		System.out.println(
-				"\tFormats that can be YVU420-converted: " + (videoDevice.supportYVUConversion() ? "" : "None"));
+				"\tFormats that can be YVU420-converted (" + formats.getYVUEncodableFormats().size() + ") :");
 		if (videoDevice.supportYVUConversion())
 			for (ImageFormat f : deviceInfo.getFormatList().getYVUEncodableFormats())
 				dumpFormatInfo(f);
 
 		System.out
-				.println("\tFormats that can be JPEG-encoded: " + (videoDevice.supportJPEGConversion() ? "" : "None"));
+				.println("\tFormats that can be JPEG-encoded (" + formats.getJPEGEncodableFormats().size() + ") :");
 		if (videoDevice.supportJPEGConversion())
 			for (ImageFormat f : deviceInfo.getFormatList().getJPEGEncodableFormats())
 				dumpFormatInfo(f);
@@ -193,26 +195,39 @@ public class DumpInfo {
 		}
 	}
 	private void dumpFormatInfo(ImageFormat format) {
-		System.out.println("\t" + format.toString());
+		System.out.println("\t\t" + format.toString());
 		
 		ResolutionInfo resolutions = format.getResolutionInfo();
+		System.out.println("Type: " + resolutions.getType());
 		if (resolutions.getType() == ResolutionInfo.Type.DISCRETE) {
+			System.out.println(resolutions.getDiscreteResolutions().size());
 			for (DiscreteResolution resolution : resolutions.getDiscreteResolutions()) {
-				System.out.println("\t\t" + resolution.getWidth() + "x" + resolution.getHeight());
-				
+				System.out.println("\t\t\t" + resolution.getWidth() + "x" + resolution.getHeight());
+				System.out.println("Printing intv info");
 				dumpFrameIntervalInfo(resolution.getFrameInterval());
 			}
+		} else if (resolutions.getType() == ResolutionInfo.Type.STEPWISE) {
+			StepwiseResolution resolution = resolutions.getStepwiseResolution();
+			System.out.println("\t\t\tFrom " + resolution.getMinWidth() + "x" + resolution.getMinHeight());
+			dumpFrameIntervalInfo(resolution.getMinResFrameInterval());
+			System.out.println("\t\t\tStep " + resolution.getWidthStep() + "x" + resolution.getHeightStep());
+			System.out.println("\t\t\tTo   " + resolution.getMaxWidth() + "x" + resolution.getMaxHeight());
+			dumpFrameIntervalInfo(resolution.getMaxResFrameInterval());
+		} else {
+			System.out.println("\t\t\tUnknown resolution type: " + resolutions.getType());
 		}
 	}
 	private void dumpFrameIntervalInfo(FrameInterval intervals) {
 		if (intervals.getType() == FrameInterval.Type.DISCRETE) {
 			for (DiscreteInterval interval : intervals.getDiscreteIntervals())
-				System.out.println("\t\t\t" + getIntervalPrettyString(interval));
+				System.out.println("\t\t\t\t" + getIntervalPrettyString(interval));
 		} else if (intervals.getType() == FrameInterval.Type.STEPWISE) {
 			StepwiseInterval interval = intervals.getStepwiseInterval();
-			System.out.println("\t\t\tFrom " + getIntervalPrettyString(interval.getMinInterval()));
-			System.out.println("\t\t\tStep " + getIntervalPrettyString(interval.getStepInterval()));
-			System.out.println("\t\t\tTo   " + getIntervalPrettyString(interval.getMaxInterval()));
+			System.out.println("\t\t\t\tFrom " + getIntervalPrettyString(interval.getMinInterval()));
+			System.out.println("\t\t\t\tStep " + getIntervalPrettyString(interval.getStepInterval()));
+			System.out.println("\t\t\t\tTo   " + getIntervalPrettyString(interval.getMaxInterval()));
+		} else {
+			System.out.println("\t\t\t\tUnknown interval type " + intervals.getType());
 		}
 	}
 	private String getIntervalPrettyString(DiscreteInterval interval) {
