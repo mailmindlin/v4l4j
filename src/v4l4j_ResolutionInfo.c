@@ -229,8 +229,8 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetDiscrete(JNIEnv
 		return;
 	}
 
-	unsigned int i = -1;
-	while(p->discrete[i++].width != 0){
+	unsigned int i = 0;
+	while(p->discrete[i++].width != 0) {
 		struct frame_size_discrete* resolution = &p->discrete[i];
 		dprint(LOG_V4L4J, "[V4L4J] creating discrete resolution %dx%d\n",
 							resolution->width,
