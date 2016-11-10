@@ -198,12 +198,10 @@ public class DumpInfo {
 		System.out.println("\t\t" + format.toString());
 		
 		ResolutionInfo resolutions = format.getResolutionInfo();
-		System.out.println("Type: " + resolutions.getType());
+		System.out.println("\t\t\tType: " + resolutions.getType());
 		if (resolutions.getType() == ResolutionInfo.Type.DISCRETE) {
-			System.out.println(resolutions.getDiscreteResolutions().size());
 			for (DiscreteResolution resolution : resolutions.getDiscreteResolutions()) {
 				System.out.println("\t\t\t" + resolution.getWidth() + "x" + resolution.getHeight());
-				System.out.println("Printing intv info");
 				dumpFrameIntervalInfo(resolution.getFrameInterval());
 			}
 		} else if (resolutions.getType() == ResolutionInfo.Type.STEPWISE) {
