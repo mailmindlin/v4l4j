@@ -217,10 +217,9 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(JNIEnv 
 			if(fmt == palette_idx) {
 				dprint(LOG_V4L4J, "[V4L4J] Found v4l4j-convertible JPEG format from %s format - add it\n", libvideo_palettes[fmt].name);
 				if(add_format(e, jpeg_formats, jpeg_formats_add, format_class, format_ctor, fmt, d) != EXIT_SUCCESS) {
-					dprint(LOG_V4L4J, "[V4L4J] Error adding format to JPEG format list\n");
+					info("[V4L4J] Error adding format to JPEG format list\n");
 					return;
 				}
-				dprint(LOG_V4L4J, "[V4L4J] \tDone.\n");
 			}
 		}
 		
@@ -230,7 +229,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(JNIEnv 
 			for (unsigned int j = 0, raw_palette; (raw_palette = palette.raw_palettes[j]) != -1; j++) {
 				dprint(LOG_V4L4J, "[V4L4J] Found libvideo-converted %s format from %s format - add it\n", name, libvideo_palettes[palette.raw_palettes[j]].name);
 				if (add_format(e, format_list, format_list_add, format_class, format_ctor, raw_palette, d) != EXIT_SUCCESS) {
-					dprint(LOG_V4L4J, "[V4L4J] Error adding format to %s format list\n", name);
+					info("[V4L4J] Error adding format to %s format list\n", name);
 					return;
 				}
 			}
@@ -238,14 +237,14 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(JNIEnv 
 			//Add to native format list
 			dprint(LOG_V4L4J, "[V4L4J] Adding format to native list\n");
 			if (add_format(e, formats, formats_add_method, format_class, format_ctor, palette_idx, d) != EXIT_SUCCESS) {
-				dprint(LOG_V4L4J, "[V4L4J] Error adding format to native format list\n");
+				info("[V4L4J] Error adding format to native format list\n");
 				return;
 			}
 			//Add to other format list, if applicable
 			if (format_list != NULL) {
 				dprint(LOG_V4L4J, "[V4L4J] Found native %s format - adding it to list\n", name);
 				if (add_format(e, format_list, format_list_add, format_class, format_ctor, palette_idx, d) != EXIT_SUCCESS) {
-					dprint(LOG_V4L4J, "[V4L4J] Error adding format to special format list\n");
+					info("[V4L4J] Error adding format to special format list\n");
 					return;
 				}
 			}
