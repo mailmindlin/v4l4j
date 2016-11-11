@@ -37,7 +37,7 @@ static int v4lconvert_helper_write(int fd, const void *b, size_t count, char *pr
 
 	while (written < count) {
 		int ret = write(fd, buf + written, count - written);
-		if (ret == -1) {
+		if (ret < 0) {
 			if (errno == EINTR)
 				continue;
 
@@ -47,7 +47,7 @@ static int v4lconvert_helper_write(int fd, const void *b, size_t count, char *pr
 			fprintf(stderr, "%s: error writing: %s\n", progname, strerror(errno));
 			return -1;
 		}
-		written += ret;
+		written += (unsigned) ret;
 	}
 		
 	return 0;
@@ -59,7 +59,7 @@ static int v4lconvert_helper_read(int fd, void *b, size_t count, char *progname)
 
 	while (r < count) {
 		int ret = read(fd, buf + r, count - r);
-		if (ret == -1) {
+		if (ret < 0) {
 			if (errno == EINTR)
 				continue;
 
@@ -69,7 +69,7 @@ static int v4lconvert_helper_read(int fd, void *b, size_t count, char *progname)
 		if (ret == 0) /* EOF */
 			exit(0);
 
-		r += ret;
+		r += (unsigned) ret;
 	}
 
 	return 0;
