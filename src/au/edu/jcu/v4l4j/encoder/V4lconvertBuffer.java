@@ -8,6 +8,16 @@ import au.edu.jcu.v4l4j.exceptions.JNIException;
 import au.edu.jcu.v4l4j.exceptions.ReleaseException;
 
 public final class V4lconvertBuffer implements Closeable {
+	
+	static {
+		try {
+			System.loadLibrary("v4l4j");
+		} catch (UnsatisfiedLinkError e) {
+			System.err.println("Cant load v4l4j JNI library");
+			throw e;
+		}
+	}
+	
 	private static native long allocate(int srcLen, int dstLen, int imedLen, boolean allocSrc, boolean allocDst);
 	
 	/**
