@@ -16,6 +16,12 @@
 #include "libv4lconvert/types.h"
 #include "libv4lconvert/libv4lconvert-flat.h"
 
+#ifndef _Included_au_edu_jcu_v4l4j_encoder_V4lconvertBuffer
+#define _Included_au_edu_jcu_v4l4j_encoder_V4lconvertBuffer
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 static inline jclass getOwnClass(JNIEnv* env) __attribute__((pure));
 static inline struct v4lconvert_buffer* lookupNative(JNIEnv* env, jobject self) __attribute__ ((pure));
 static inline jclass getOwnClass(JNIEnv* env) {
@@ -34,7 +40,12 @@ static inline struct v4lconvert_buffer* lookupNative(JNIEnv* env, jobject self) 
 	return result;
 }
 
-JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_encoder_V4lconvertBuffer_allocate(JNIEnv* env, jclass clazz, jint srcLen, jint dstLen, jint imedLen, jboolean allocSrc, jboolean allocDst) {
+/*
+ * Class:     au_edu_jcu_v4l4j_encoder_V4lconvertBuffer
+ * Method:    allocate
+ * Signature: (IIIZZ)J
+ */
+JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_encoder_V4lconvertBuffer_allocate(JNIEnv *env, jclass clazz, jint srcLen, jint dstLen, jint imedLen, jboolean allocSrc, jboolean allocDst) {
 	LOG_FN_ENTER();
 	struct v4lconvert_buffer* buffer;
 	XMALLOC(buffer, struct v4lconvert_buffer*, sizeof(struct v4lconvert_buffer));
@@ -191,7 +202,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_V4lconvertBuffer_createBuff
 		return;
 	
 	if (buffer->buf0) {
-		jfieldID srcFID = (*env)->GetFieldID(env, V4lconvertBuffer_class, "src", "Ljava/nio/ByteBuffer");
+		jfieldID srcFID = (*env)->GetFieldID(env, V4lconvertBuffer_class, "src", "Ljava/nio/ByteBuffer;");
 		if (!srcFID) {
 			THROW_EXCEPTION(env, JNI_EXCP, "Unable to lookup FID for V4lconvertBuffer#src");
 			return;
@@ -202,7 +213,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_V4lconvertBuffer_createBuff
 		(*env)->DeleteLocalRef(env, src);
 	}
 	if (buffer->buf1) {
-		jfieldID dstFID = (*env)->GetFieldID(env, V4lconvertBuffer_class, "dst", "Ljava/nio/ByteBuffer");
+		jfieldID dstFID = (*env)->GetFieldID(env, V4lconvertBuffer_class, "dst", "Ljava/nio/ByteBuffer;");
 		if (!dstFID) {
 			THROW_EXCEPTION(env, JNI_EXCP, "Unable to lookup FID for V4lconvertBuffer#dst");
 			return;
@@ -213,7 +224,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_V4lconvertBuffer_createBuff
 		(*env)->DeleteLocalRef(env, dst);
 	}
 	if (buffer->buf2) {
-		jfieldID imedFID = (*env)->GetFieldID(env, V4lconvertBuffer_class, "imed", "Ljava/nio/ByteBuffer");
+		jfieldID imedFID = (*env)->GetFieldID(env, V4lconvertBuffer_class, "imed", "Ljava/nio/ByteBuffer;");
 		if (!imedFID) {
 			THROW_EXCEPTION(env, JNI_EXCP, "Unable to lookup FID for V4lconvertBuffer#imed");
 			return;
@@ -235,7 +246,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_V4lconvertBuffer_pull(JNIEn
 	if (!buffer)
 		return;
 	
-	jfieldID srcFID = (*env)->GetFieldID(env, V4lconvertBuffer_class, "src", "Ljava/nio/ByteBuffer");
+	jfieldID srcFID = (*env)->GetFieldID(env, V4lconvertBuffer_class, "src", "Ljava/nio/ByteBuffer;");
 	if (!srcFID) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Unable to lookup FID for V4lconvertBuffer#src");
 		return;
@@ -247,7 +258,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_V4lconvertBuffer_pull(JNIEn
 		return;
 	(*env)->DeleteLocalRef(env, src);
 	
-	jfieldID dstFID = (*env)->GetFieldID(env, V4lconvertBuffer_class, "dst", "Ljava/nio/ByteBuffer");
+	jfieldID dstFID = (*env)->GetFieldID(env, V4lconvertBuffer_class, "dst", "Ljava/nio/ByteBuffer;");
 	if (!dstFID) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Unable to lookup FID for V4lconvertBuffer#dst");
 		return;
@@ -268,7 +279,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_V4lconvertBuffer_push(JNIEn
 	if (!buffer)
 		return;
 	
-	jfieldID srcFID = (*env)->GetFieldID(env, V4lconvertBuffer_class, "src", "Ljava/nio/ByteBuffer");
+	jfieldID srcFID = (*env)->GetFieldID(env, V4lconvertBuffer_class, "src", "Ljava/nio/ByteBuffer;");
 	if (!srcFID) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Unable to lookup FID for V4lconvertBuffer#src");
 		return;
@@ -287,7 +298,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_V4lconvertBuffer_push(JNIEn
 	(*env)->DeleteLocalRef(env, src);
 	//TODO check whether it makes sense to clean up the local references here (profile)
 	
-	jfieldID dstFID = (*env)->GetFieldID(env, V4lconvertBuffer_class, "dst", "Ljava/nio/ByteBuffer");
+	jfieldID dstFID = (*env)->GetFieldID(env, V4lconvertBuffer_class, "dst", "Ljava/nio/ByteBuffer;");
 	if (!dstFID) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Unable to lookup FID for V4lconvertBuffer#dst");
 		return;
@@ -349,24 +360,25 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_V4lconvertBuffer_release(JN
 	}
 	
 	// Set the ByteBuffers to 0
-	jfieldID srcFID = (*env)->GetFieldID(env, V4lconvertBuffer_class, "src", "Ljava/nio/ByteBuffer");
+	jfieldID srcFID = (*env)->GetFieldID(env, V4lconvertBuffer_class, "src", "Ljava/nio/ByteBuffer;");
 	if (!srcFID) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Unable to lookup FID for ByteBuffer V4lconvertBuffer#src");
 		return;
 	}
 	(*env)->SetObjectField(env, self, srcFID, NULL);
 	
-	jfieldID dstFID = (*env)->GetFieldID(env, V4lconvertBuffer_class, "dst", "Ljava/nio/ByteBuffer");
+	jfieldID dstFID = (*env)->GetFieldID(env, V4lconvertBuffer_class, "dst", "Ljava/nio/ByteBuffer;");
 	if (!dstFID) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Unable to lookup FID for ByteBuffer V4lconvertBuffer#dst");
 		return;
 	}
 	(*env)->SetObjectField(env, self, dstFID, NULL);
 	
-	jfieldID imedFID = (*env)->GetFieldID(env, V4lconvertBuffer_class, "imed", "Ljava/nio/ByteBuffer");
+	jfieldID imedFID = (*env)->GetFieldID(env, V4lconvertBuffer_class, "imed", "Ljava/nio/ByteBuffer;");
 	if (!imedFID) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Unable to lookup FID for ByteBuffer V4lconvertBuffer#imed");
 		return;
 	}
 	(*env)->SetObjectField(env, self, imedFID, NULL);
 }
+#endif

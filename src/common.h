@@ -125,6 +125,7 @@ struct v4l4j_device {
 #define OVERFLOW_EXCP			EXCEPTION_PACKAGE "BufferOverflowException"
 #define UNDERFLOW_EXCP			EXCEPTION_PACKAGE "BufferUnderflowException"
 #define NULL_EXCP				"java/lang/NullPointerException"
+#define ARG_EXCP				"java/lang/IllegalArgumentException"
 
 
 /* Exception throwing helper */

@@ -100,7 +100,7 @@ inline void setBufferPosition(JNIEnv *env, jobject buffer, int position) {
 	jclass bufferClass = lookupClassSafe(env, buffer);
 	if (!bufferClass)
 		return;
-	jmethodID positionSetMethodID = (*env)->GetMethodID(env, bufferClass, "position", "(I)Ljava/nio/Buffer");
+	jmethodID positionSetMethodID = (*env)->GetMethodID(env, bufferClass, "position", "(I)Ljava/nio/Buffer;");
 	(*env)->DeleteLocalRef(env, bufferClass);
 	if (!positionSetMethodID) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Could not lookup ByteBuffer#position(I) for buffer.");
@@ -134,7 +134,7 @@ inline void setBufferLimit(JNIEnv *env, jobject buffer, int limit) {
 	jclass bufferClass = lookupClassSafe(env, buffer);
 	if (!bufferClass)
 		return;
-	jmethodID limitSetMethodID = (*env)->GetMethodID(env, bufferClass, "limit", "(I)Ljava/nio/Buffer");
+	jmethodID limitSetMethodID = (*env)->GetMethodID(env, bufferClass, "limit", "(I)Ljava/nio/Buffer;");
 	(*env)->DeleteLocalRef(env, bufferClass);
 	if (!limitSetMethodID) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Could not lookup ByteBuffer#limit(I) for buffer.");
