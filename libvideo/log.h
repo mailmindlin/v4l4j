@@ -36,10 +36,6 @@
 									__FILE__, __LINE__, ## __VA_ARGS__);\
 								 fflush(stderr); } while(0)
 
-#define CLEAR_ARR(x,s) memset((x), 0x0, (s));
-#define ARRAY_SIZE(x) ( ((x)==NULL)?0:((int)sizeof(x)/(int)sizeof((x)[0])) )
-
-
 //debug stuff
 #ifdef DEBUG
 
@@ -78,7 +74,7 @@
 #define LIBVIDEO_LOG_SOURCE 		LIBVIDEO_SOURCE_ALL
 #endif
 
-#define dprint(source, level,format, ...) \
+#define dprint(source, level, format, ...) \
 	do {\
 		if(((source) & LIBVIDEO_LOG_SOURCE) && ((level) & LIBVIDEO_LOG_LEVEL)){\
 			fprintf (stderr, "[%s:%d %s] " format,\
