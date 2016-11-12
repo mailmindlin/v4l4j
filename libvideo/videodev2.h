@@ -258,37 +258,37 @@ struct v4l2_capability {
 };
 
 /* Values for 'capabilities' field */
-#define V4L2_CAP_VIDEO_CAPTURE		0x00000001  /* Is a video capture device */
-#define V4L2_CAP_VIDEO_OUTPUT		0x00000002  /* Is a video output device */
-#define V4L2_CAP_VIDEO_OVERLAY		0x00000004  /* Can do video overlay */
-#define V4L2_CAP_VBI_CAPTURE		0x00000010  /* Is a raw VBI capture device */
+#define V4L2_CAP_VIDEO_CAPTURE		0x00000001u  /* Is a video capture device */
+#define V4L2_CAP_VIDEO_OUTPUT		0x00000002u  /* Is a video output device */
+#define V4L2_CAP_VIDEO_OVERLAY		0x00000004u  /* Can do video overlay */
+#define V4L2_CAP_VBI_CAPTURE		0x00000010u  /* Is a raw VBI capture device */
 #define V4L2_CAP_VBI_OUTPUT		0x00000020  /* Is a raw VBI output device */
-#define V4L2_CAP_SLICED_VBI_CAPTURE	0x00000040  /* Is a sliced VBI capture device */
-#define V4L2_CAP_SLICED_VBI_OUTPUT	0x00000080  /* Is a sliced VBI output device */
-#define V4L2_CAP_RDS_CAPTURE		0x00000100  /* RDS data capture */
-#define V4L2_CAP_VIDEO_OUTPUT_OVERLAY	0x00000200  /* Can do video output overlay */
-#define V4L2_CAP_HW_FREQ_SEEK		0x00000400  /* Can do hardware frequency seek  */
-#define V4L2_CAP_RDS_OUTPUT		0x00000800  /* Is an RDS encoder */
+#define V4L2_CAP_SLICED_VBI_CAPTURE	0x00000040u  /* Is a sliced VBI capture device */
+#define V4L2_CAP_SLICED_VBI_OUTPUT	0x00000080u  /* Is a sliced VBI output device */
+#define V4L2_CAP_RDS_CAPTURE		0x00000100u  /* RDS data capture */
+#define V4L2_CAP_VIDEO_OUTPUT_OVERLAY	0x00000200u  /* Can do video output overlay */
+#define V4L2_CAP_HW_FREQ_SEEK		0x00000400u  /* Can do hardware frequency seek  */
+#define V4L2_CAP_RDS_OUTPUT		0x00000800u  /* Is an RDS encoder */
 
 /* Is a video capture device that supports multiplanar formats */
-#define V4L2_CAP_VIDEO_CAPTURE_MPLANE	0x00001000
+#define V4L2_CAP_VIDEO_CAPTURE_MPLANE	0x00001000u
 /* Is a video output device that supports multiplanar formats */
-#define V4L2_CAP_VIDEO_OUTPUT_MPLANE	0x00002000
+#define V4L2_CAP_VIDEO_OUTPUT_MPLANE	0x00002000u
 /* Is a video mem-to-mem device that supports multiplanar formats */
-#define V4L2_CAP_VIDEO_M2M_MPLANE	0x00004000
+#define V4L2_CAP_VIDEO_M2M_MPLANE	0x00004000u
 /* Is a video mem-to-mem device */
-#define V4L2_CAP_VIDEO_M2M		0x00008000
+#define V4L2_CAP_VIDEO_M2M		0x00008000u
 
-#define V4L2_CAP_TUNER			0x00010000  /* has a tuner */
-#define V4L2_CAP_AUDIO			0x00020000  /* has audio support */
-#define V4L2_CAP_RADIO			0x00040000  /* is a radio device */
-#define V4L2_CAP_MODULATOR		0x00080000  /* has a modulator */
+#define V4L2_CAP_TUNER			0x00010000u  /* has a tuner */
+#define V4L2_CAP_AUDIO			0x00020000u  /* has audio support */
+#define V4L2_CAP_RADIO			0x00040000u  /* is a radio device */
+#define V4L2_CAP_MODULATOR		0x00080000u  /* has a modulator */
 
-#define V4L2_CAP_READWRITE              0x01000000  /* read/write systemcalls */
-#define V4L2_CAP_ASYNCIO                0x02000000  /* async I/O */
-#define V4L2_CAP_STREAMING              0x04000000  /* streaming I/O ioctls */
+#define V4L2_CAP_READWRITE              0x01000000u  /* read/write systemcalls */
+#define V4L2_CAP_ASYNCIO                0x02000000u  /* async I/O */
+#define V4L2_CAP_STREAMING              0x04000000u  /* streaming I/O ioctls */
 
-#define V4L2_CAP_DEVICE_CAPS            0x80000000  /* sets device capabilities field */
+#define V4L2_CAP_DEVICE_CAPS            0x80000000u  /* sets device capabilities field */
 
 /*
  *	V I D E O   I M A G E   F O R M A T
