@@ -35,7 +35,7 @@
 
 struct RingQueue {
 	const u8 *queue;
-	int length;
+	unsigned int length;
 	int ri;
 };
 

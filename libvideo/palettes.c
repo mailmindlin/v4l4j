@@ -25,6 +25,7 @@
 #include "libvideo.h"
 #include "log.h"
 #include "libvideo-palettes.h"
+#include "utils.h"
 
 const struct libvideo_palette libvideo_palettes[] = {
 	// RGB palettes

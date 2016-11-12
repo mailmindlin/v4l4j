@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include "libv4lprocessing.h"
 #include "libv4lprocessing-priv.h"
+#include "../../utils.h"
 #include "../libv4lconvert-priv.h" /* for PIX_FMT defines */
 
 static struct v4lprocessing_filter *filters[] = {
@@ -65,9 +66,9 @@ int v4lprocessing_pre_processing(struct v4lprocessing_data *data) {
 
 static void v4lprocessing_update_lookup_tables(struct v4lprocessing_data *data, u8 *buf, const struct v4l2_format *fmt) {
 	for (unsigned int i = 0; i < 256; i++) {
-		data->comp1[i] = i;
-		data->green[i] = i;
-		data->comp2[i] = i;
+		data->comp1[i] = (u8) i;
+		data->green[i] = (u8) i;
+		data->comp2[i] = (u8) i;
 	}
 
 	data->lookup_table_active = 0;

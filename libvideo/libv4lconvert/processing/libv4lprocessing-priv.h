@@ -45,9 +45,9 @@ struct v4lprocessing_data {
 	u8 comp2[256];
 	/* Filter private data for filters which need it */
 	/* whitebalance.c data */
-	int green_avg;
-	int comp1_avg;
-	int comp2_avg;
+	unsigned int green_avg;
+	unsigned int comp1_avg;
+	unsigned int comp2_avg;
 	/* gamma.c data */
 	int last_gamma;
 	u8 gamma_table[256];

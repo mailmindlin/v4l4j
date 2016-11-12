@@ -20,7 +20,10 @@
 #include "libv4lprocessing.h"
 #include "libv4lprocessing-priv.h"
 
-#define CLIP(color) (u8)(((color) > 0xff) ? 0xff : (((color) < 0) ? 0 : (color)))
+#define CLIP(value) ((u8) ((value) > 254.5f ? 255 : ((value) < 0 ? 0 : ((value) + 0.5f))))
+#ifndef UNUSED
+#define UNUSED(x) ((void)x)
+#endif
 
 static int gamma_active(struct v4lprocessing_data *data) {
 	int gamma = v4lcontrol_get_ctrl(data->control, V4LCONTROL_GAMMA);
@@ -29,14 +32,16 @@ static int gamma_active(struct v4lprocessing_data *data) {
 }
 
 static int gamma_calculate_lookup_tables(struct v4lprocessing_data *data, u8 *buf, const struct v4l2_format *fmt) {
+	UNUSED(buf);
+	UNUSED(fmt);
 	int gamma = v4lcontrol_get_ctrl(data->control, V4LCONTROL_GAMMA);
 
 	if (gamma != data->last_gamma) {
 		//Build & cache gamma table
-		const float invGamma = 1000.0 / ((float) gamma);
+		const float invGamma = 1000.0f / ((float) gamma);
 		for (unsigned int i = 0; i < 256; i++) {
-			int x = (int) (powf(i / 255.0, invGamma) * 255.0 + .5);
-			data->gamma_table[i] = CLIP(x);
+			float val = powf((float)i / 255.0f, invGamma) * 255.0f;
+			data->gamma_table[i] = CLIP(val);
 		}
 		data->last_gamma = gamma;
 	}

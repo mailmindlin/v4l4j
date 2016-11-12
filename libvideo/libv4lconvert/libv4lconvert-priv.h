@@ -30,8 +30,6 @@
 #include "tinyjpeg.h"
 #include "pixfc-sse/pixfc-sse.h"
 
-#define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
-
 #define V4LCONVERT_ERROR_MSG_SIZE 256
 #define V4LCONVERT_MAX_FRAMESIZES 256
 
@@ -59,8 +57,8 @@ struct v4lconvert_data {
 	struct PixFcSSE *pixfc;
 	struct v4l2_frmsizeenum framesizes[V4LCONVERT_MAX_FRAMESIZES];
 	unsigned int no_framesizes;
-	int bandwidth;
-	int fps;
+	unsigned int bandwidth;
+	unsigned int fps;
 	unsigned int convert1_buf_size;
 	unsigned int convert2_buf_size;
 	unsigned int rotate90_buf_size;
@@ -88,7 +86,7 @@ struct v4lconvert_data {
 
 struct v4lconvert_pixfmt {
 	unsigned int fmt;	/* v4l2 fourcc */
-	int bpp;		/* bits per pixel, 0 for compressed formats */
+	unsigned int bpp;		/* bits per pixel, 0 for compressed formats */
 	int rgb_rank;		/* rank for converting to rgb32 / bgr32 */
 	int yuv_rank;		/* rank for converting to yuv420 / yvu420 */
 	int needs_conversion;

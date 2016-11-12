@@ -24,18 +24,18 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "libv4lconvert-priv.h"
 
 
-#define CLIP(x) ((x) < 0 ? 0 : ((x) > 0xff) ? 0xff : (x))
+#define CLIP(x) ((u8) ((x) < 0 ? 0 : ((x) > 0xff) ? 0xff : (x)))
 
 
 static int sq905c_first_decompress(u8 *output, const u8 *input, unsigned int outputsize) {
 	u8 parity = 0;
 	u8 nibble_to_keep[2];
 	u8 temp1 = 0;
-	u8 input_byte;
 	u8 lookup = 0;
 	unsigned int bytes_used = 0;
 	unsigned int bytes_done = 0;
@@ -62,11 +62,11 @@ static int sq905c_first_decompress(u8 *output, const u8 *input, unsigned int out
 					temp1 = input[bytes_used++];
 					bit_counter = 0;
 				}
-				input_byte = temp1;
+				u8 input_byte = temp1;
 				temp2 = (temp2 << 1) & 0xFF;
 				input_byte = input_byte >> 7;
 				temp2 = temp2 | input_byte;
-				temp1 = (temp1 << 1) & 0xFF;
+				temp1 = (u8) ((temp1 << 1u) & 0xFF);
 				bit_counter++;
 				cycles++;
 				if (cycles > 8)
@@ -84,14 +84,13 @@ static int sq905c_first_decompress(u8 *output, const u8 *input, unsigned int out
 			cycles = 0;
 			parity++;
 		}
-		output[bytes_done] = (nibble_to_keep[0]<<4)|nibble_to_keep[1];
+		output[bytes_done] = (u8) ((nibble_to_keep[0] << 4) | nibble_to_keep[1]);
 		bytes_done++;
 		parity = 0;
 	}
 	return 0;
 }
 static int sq905c_second_decompress(u8 *uncomp, u8 *in, u32 width, u32 height) {
-	int tempval = 0;
 	unsigned int input_counter = 0;
 	int delta_table[] = {
 		-144, -110, -77, -53, -35, -21, -11, -3,
@@ -103,23 +102,23 @@ static int sq905c_second_decompress(u8 *uncomp, u8 *in, u32 width, u32 height) {
 		free(templine_red);
 		return -1;
 	}
-	for (unsigned int i = 0; i < width; i++)
-		templine_red[i] = 0x80;
 	
 	u8* templine_green = malloc(width);
 	if (!templine_green) {
 		free(templine_green);
 		return -1;
 	}
-	for (unsigned int i = 0; i < width; i++)
-		templine_green[i] = 0x80;
+	
 	u8* templine_blue = malloc(width);
 	if (!templine_blue) {
 		free(templine_blue);
 		return -1;
 	}
-	for (unsigned int i = 0; i < width; i++)
-		templine_blue[i] = 0x80;
+	
+	memset(templine_red, 0x80, width);
+	memset(templine_green, 0x80, width);
+	memset(templine_blue, 0x80, width);
+	
 	for (unsigned int m = 0; m < height / 2; m++) {
 		/* First we do an even-numbered line */
 		for (unsigned int i = 0; i < width / 2; i++) {
@@ -128,48 +127,41 @@ static int sq905c_second_decompress(u8 *uncomp, u8 *in, u32 width, u32 height) {
 			input_counter++;
 			/* left pixel (red) */
 			int diff = delta_table[delta_left];
-			if (!i)
-				tempval = templine_red[0] + diff;
-			else
-				tempval = (templine_red[i] + uncomp[2 * m * width + 2 * i - 2]) / 2 + diff;
-			tempval = CLIP(tempval);
-			uncomp[2 * m * width + 2 * i] = tempval;
-			templine_red[i] = tempval;
+			int tempval = (signed) templine_red[i];
+			if (i)
+				tempval = (tempval + (signed) uncomp[2 * m * width + 2 * i - 2]) / 2;
+			tempval += diff;
+			templine_red[i] = uncomp[2 * m * width + 2 * i] = CLIP(tempval);
 			/* right pixel (green) */
 			diff = delta_table[delta_right];
 			if (!i)
-				tempval = templine_green[1] + diff;
+				tempval = (signed) templine_green[1];
 			else if (2 * i == width - 2)
-				tempval = (templine_green[i] + uncomp[2 * m * width + 2 * i - 1]) / 2 + diff;
+				tempval = (signed) (templine_green[i] + uncomp[2 * m * width + 2 * i - 1]) / 2;
 			else
-				tempval = (templine_green[i + 1] + uncomp[2 * m * width + 2 * i - 1]) / 2 + diff;
-			tempval = CLIP(tempval);
-			uncomp[2 * m * width + 2 * i + 1] = tempval;
-			templine_green[i] = tempval;
+				tempval = (signed) (templine_green[i + 1] + uncomp[2 * m * width + 2 * i - 1]) / 2;
+			tempval += diff;
+			templine_green[i] = uncomp[2 * m * width + 2 * i + 1] = CLIP(tempval);
 		}
 		/* then an odd-numbered line */
-		for (unsigned int i = 0; i < width/2; i++) {
+		for (unsigned int i = 0; i < width / 2; i++) {
 			u8 delta_right = in[input_counter] & 0x0f;
 			u8 delta_left = (in[input_counter] >> 4) & 0xff;
 			input_counter++;
 			/* left pixel (green) */
 			int diff = delta_table[delta_left];
-			if (!i)
-				tempval = templine_green[0] + diff;
-			else
-				tempval = (templine_green[i] + uncomp[(2 * m + 1) * width + 2 * i - 2]) / 2 + diff;
-			tempval = CLIP(tempval);
-			uncomp[(2 * m + 1) * width + 2 * i] = tempval;
-			templine_green[i] = tempval;
+			int tempval = (signed) templine_green[i];
+			if (i)
+				tempval = (tempval + (signed) uncomp[(2 * m + 1) * width + 2 * i - 2])/2;
+			tempval += diff;
+			templine_green[i] = uncomp[(2 * m + 1) * width + 2 * i] = CLIP(tempval);
 			/* right pixel (blue) */
 			diff = delta_table[delta_right];
-			if (!i)
-				tempval = templine_blue[0] + diff;
-			else
-				tempval = (templine_blue[i] + uncomp[(2 * m + 1) * width + 2 * i - 1]) / 2 + diff;
-			tempval = CLIP(tempval);
-			uncomp[(2 * m + 1) * width + 2 * i + 1] = tempval;
-			templine_blue[i] = tempval;
+			tempval = (signed) templine_blue[i];
+			if (i)
+				tempval = (tempval + (signed) uncomp[(2 * m + 1) * width + 2 * i - 1]) / 2;
+			tempval += diff;
+			templine_blue[i] = uncomp[(2 * m + 1) * width + 2 * i + 1] = CLIP(tempval);
 		}
 	}
 	free(templine_green);

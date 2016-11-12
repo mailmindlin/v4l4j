@@ -31,6 +31,7 @@
 #include <sys/time.h>
 
 #include "libvideo.h"
+#include "utils.h"
 
 #define info(format, ...) do { fprintf (stderr, "[ %s:%d ] " format,\
 									__FILE__, __LINE__, ## __VA_ARGS__);\

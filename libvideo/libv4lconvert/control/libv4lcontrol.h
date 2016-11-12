@@ -19,6 +19,8 @@
 # Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
  */
 
+#include <stdbool.h>
+
 #ifndef __LIBV4LCONTROL_H
 #define __LIBV4LCONTROL_H
 
@@ -51,11 +53,11 @@ struct v4lcontrol_data;
 struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion);
 void v4lcontrol_destroy(struct v4lcontrol_data *data);
 
-int v4lcontrol_get_bandwidth(struct v4lcontrol_data *data);
+unsigned int v4lcontrol_get_bandwidth(struct v4lcontrol_data *data);
 
 /* Functions used by v4lprocessing to get the control state */
 int v4lcontrol_get_flags(struct v4lcontrol_data *data);
-int v4lcontrol_get_ctrl(struct v4lcontrol_data *data, int ctrl);
+bool v4lcontrol_get_ctrl(struct v4lcontrol_data *data, int ctrl);
 /* Check if the controls have changed since the last time this function
    was called */
 int v4lcontrol_controls_changed(struct v4lcontrol_data *data);

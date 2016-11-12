@@ -27,8 +27,8 @@
 #include "libv4lprocessing-priv.h"
 #include "../libv4lconvert-priv.h" /* for PIX_FMT defines */
 
-#define CLIP256(color) (((color) > 0xff) ? 0xff : (((color) < 0) ? 0 : (color)))
-#define CLIP(color, min, max) (((color) > (max)) ? (max) : (((color) < (min)) ? (min) : (color)))
+#define CLIP(color, min, max) (((color) >= (max)) ? (max) : (((color) <= (min)) ? (min) : (color)))
+#define CLIP256(color) ((u8) CLIP(color, 0, 0xFF))
 
 static int whitebalance_active(struct v4lprocessing_data *data) {
 	int wb = v4lcontrol_get_ctrl(data->control, V4LCONTROL_WHITEBALANCE);
@@ -39,9 +39,9 @@ static int whitebalance_active(struct v4lprocessing_data *data) {
 	return wb;
 }
 
-static int whitebalance_calculate_lookup_tables_generic(struct v4lprocessing_data *data, int green_avg, int comp1_avg, int comp2_avg) {
+static int whitebalance_calculate_lookup_tables_generic(struct v4lprocessing_data *data, unsigned int green_avg, unsigned int comp1_avg, unsigned int comp2_avg) {
 	const int threshold = 64;
-	const int max_step = 128;
+	const unsigned int max_step = 128;
 
 	/* Clip averages (restricts maximum white balance correction) */
 	green_avg = CLIP(green_avg, 512, 3072);
@@ -58,7 +58,7 @@ static int whitebalance_calculate_lookup_tables_generic(struct v4lprocessing_dat
 		   we do not get a sudden change in colors */
 		int throttling = 0;
 
-		if (abs(data->green_avg - green_avg) > max_step) {
+		if (abs((signed)data->green_avg - (signed)green_avg) > max_step) {
 			if (data->green_avg < green_avg)
 				data->green_avg += max_step;
 			else
@@ -67,7 +67,7 @@ static int whitebalance_calculate_lookup_tables_generic(struct v4lprocessing_dat
 		} else
 			data->green_avg = green_avg;
 
-		if (abs(data->comp1_avg - comp1_avg) > max_step) {
+		if (abs((signed)data->comp1_avg - (signed)comp1_avg) > max_step) {
 			if (data->comp1_avg < comp1_avg)
 				data->comp1_avg += max_step;
 			else
@@ -76,7 +76,7 @@ static int whitebalance_calculate_lookup_tables_generic(struct v4lprocessing_dat
 		} else
 			data->comp1_avg = comp1_avg;
 
-		if (abs(data->comp2_avg - comp2_avg) > max_step) {
+		if (abs((signed)data->comp2_avg - (signed)comp2_avg) > max_step) {
 			if (data->comp2_avg < comp2_avg)
 				data->comp2_avg += max_step;
 			else
@@ -96,9 +96,9 @@ static int whitebalance_calculate_lookup_tables_generic(struct v4lprocessing_dat
 			data->lookup_table_update_counter = V4L2PROCESSING_UPDATE_RATE;
 	}
 
-	if (abs(data->green_avg - data->comp1_avg) < threshold &&
-			abs(data->green_avg - data->comp2_avg) < threshold &&
-			abs(data->comp1_avg - data->comp2_avg) < threshold)
+	if (abs((signed)data->green_avg - (signed)data->comp1_avg) < threshold &&
+			abs((signed)data->green_avg - (signed)data->comp2_avg) < threshold &&
+			abs((signed)data->comp1_avg - (signed)data->comp2_avg) < threshold)
 		return 0;
 
 	unsigned int avg_avg = (data->green_avg + data->comp1_avg + data->comp2_avg) / 3;

@@ -31,7 +31,7 @@ struct v4lcontrol_flags_info;
 
 struct v4lcontrol_data {
 	int fd;                   /* Device fd */
-	int bandwidth;            /* Connection bandwidth (0 = unknown) */
+	unsigned int bandwidth;   /* Connection bandwidth (0 = unknown) */
 	int flags;                /* Flags for this device */
 	int priv_flags;           /* Internal use only flags */
 	int controls;             /* Which controls to use for this device */

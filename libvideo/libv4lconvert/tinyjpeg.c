@@ -2283,8 +2283,7 @@ int tinyjpeg_decode(struct jdec_private *priv, int pixfmt)
 	return 0;
 }
 
-int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt)
-{
+int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt) {
 	unsigned int i, x, y;
 	uint8_t *y_buf, *u_buf, *v_buf, *p, *p2;
 
@@ -2296,7 +2295,7 @@ int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt)
 	case TINYJPEG_FMT_RGB24:
 	case TINYJPEG_FMT_BGR24:
 		if (priv->tmp_buf_y_size < (priv->width * priv->height)) {
-			for (i = 0; i < COMPONENTS; i++) {
+			for (unsigned int i = 0; i < COMPONENTS; i++) {
 				free(priv->tmp_buf[i]);
 				priv->tmp_buf[i] = malloc(priv->width * priv->height / (i ? 4 : 1));
 				if (!priv->tmp_buf[i])
@@ -2327,8 +2326,8 @@ int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt)
 
 	resync(priv);
 
-	for (y = 0; y < priv->height / 8; y++) {
-		for (x = 0; x < priv->width / 8; x++) {
+	for (unsigned int y = 0; y < priv->height / 8; y++) {
+		for (unsigned int x = 0; x < priv->width / 8; x++) {
 			process_Huffman_data_unit(priv, cY);
 			IDCT(&priv->component_infos[cY], y_buf, priv->width);
 			y_buf += 8;
@@ -2349,8 +2348,8 @@ int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt)
 				priv->current_cid, priv->component_infos[cCb].cid);
 #endif
 
-	for (y = 0; y < priv->height / 16; y++) {
-		for (x = 0; x < priv->width / 16; x++) {
+	for (unsigned int y = 0; y < priv->height / 16; y++) {
+		for (unsigned int x = 0; x < priv->width / 16; x++) {
 			process_Huffman_data_unit(priv, cCb);
 			IDCT(&priv->component_infos[cCb], u_buf, priv->width / 2);
 			u_buf += 8;
@@ -2371,8 +2370,8 @@ int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt)
 				priv->current_cid, priv->component_infos[cCr].cid);
 #endif
 
-	for (y = 0; y < priv->height / 16; y++) {
-		for (x = 0; x < priv->width / 16; x++) {
+	for (unsigned int y = 0; y < priv->height / 16; y++) {
+		for (unsigned int x = 0; x < priv->width / 16; x++) {
 			process_Huffman_data_unit(priv, cCr);
 			IDCT(&priv->component_infos[cCr], v_buf, priv->width / 2);
 			v_buf += 8;
@@ -2392,8 +2391,8 @@ int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt)
 		p = priv->components[0];
 		p2 = priv->components[0] + priv->width * 3;
 
-		for (y = 0; y < priv->height / 2; y++) {
-			for (x = 0; x < priv->width / 2; x++) {
+		for (unsigned int y = 0; y < priv->height / 2; y++) {
+			for (unsigned int x = 0; x < priv->width / 2; x++) {
 				int l, cb, cr;
 				int add_r, add_g, add_b;
 				int r, g , b;
@@ -2453,24 +2452,20 @@ int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt)
 		p = priv->components[0];
 		p2 = priv->components[0] + priv->width * 3;
 
-		for (y = 0; y < priv->height / 2; y++) {
-			for (x = 0; x < priv->width / 2; x++) {
-				int l, cb, cr;
-				int add_r, add_g, add_b;
-				int r, g , b;
+		for (unsigned int y = 0; y < priv->height / 2; y++) {
+			for (unsigned int x = 0; x < priv->width / 2; x++) {
+				int cb = *u_buf++ - 128;
+				int cr = *v_buf++ - 128;
+				int add_r = FIX(1.40200) * cr + (int) ONE_HALF;
+				int add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + (int) ONE_HALF;
+				int add_b = FIX(1.77200) * cb + (int) ONE_HALF;
 
-				cb = *u_buf++ - 128;
-				cr = *v_buf++ - 128;
-				add_r = FIX(1.40200) * cr + ONE_HALF;
-				add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
-				add_b = FIX(1.77200) * cb + ONE_HALF;
-
-				l  = (*y_buf) << SCALEBITS;
-				b = (l + add_b) >> SCALEBITS;
+				int l  = (*y_buf) << SCALEBITS;
+				int b = (l + add_b) >> SCALEBITS;
 				*p++ = clamp(b);
-				g = (l + add_g) >> SCALEBITS;
+				int g = (l + add_g) >> SCALEBITS;
 				*p++ = clamp(g);
-				r = (l + add_r) >> SCALEBITS;
+				int r = (l + add_r) >> SCALEBITS;
 				*p++ = clamp(r);
 
 				l  = (y_buf[priv->width]) << SCALEBITS;

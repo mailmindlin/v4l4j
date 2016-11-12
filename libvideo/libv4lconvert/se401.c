@@ -27,17 +27,17 @@
    feature. This needs to exactly match what is in the SE401 driver! */
 #define SE401_QUANT_FACT 8
 
-static inline void wr_pixel(int p, uint8_t **dest, int pitch, int *x) {
-	int i = *x;
+static inline void wr_pixel(int p, uint8_t **dest, unsigned int pitch, unsigned int *x) {
+	unsigned int i = *x;
 
 	/* First 3 pixels of each line are absolute */
 	if (i < 3) {
-		(*dest)[i] = p * SE401_QUANT_FACT;
+		(*dest)[i] = (u8) (p * SE401_QUANT_FACT);
 	} else {
-		(*dest)[i] = (*dest)[i - 3] + p * SE401_QUANT_FACT;
+		(*dest)[i] = (u8) ((*dest)[i - 3] + p * SE401_QUANT_FACT);
 	}
 
-	*x += 1;
+	(*x)++;
 	if (*x == pitch) {
 		*x = 0;
 		*dest += pitch;
@@ -50,7 +50,7 @@ enum decode_state {
 	other_bits,
 };
 
-static inline int decode_JangGu(const uint8_t *data, int bits, int plen, int pixels, uint8_t **dest, int pitch, int *x) {
+static inline int decode_JangGu(const uint8_t *data, unsigned int bits, unsigned int plen, unsigned int pixels, uint8_t **dest, unsigned int pitch, unsigned int *x) {
 	enum decode_state state = get_len;
 	unsigned int len = 0;
 	int value = 0;
@@ -85,7 +85,7 @@ static inline int decode_JangGu(const uint8_t *data, int bits, int plen, int pix
 				   len == 1 handling */
 			case other_bits:
 				len--;
-				value += bit << len;
+				value += (signed) (bit << len);
 				if (len == 0) {
 					/* Done write pixel and get bit len of
 					   the next one */
@@ -106,14 +106,15 @@ static inline int decode_JangGu(const uint8_t *data, int bits, int plen, int pix
 }
 
 int v4lconvert_se401_to_rgb24(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dest, u32 width, u32 height) {
-	unsigned int in, plen, total_pixels = 0;
-	int x = 0;
+	unsigned int total_pixels = 0;
+	unsigned int x = 0;
 
-	for (in = 0; in + 4 < src_size; in += plen) {
-		unsigned int bits   = src[in + 3] + (src[in + 2] << 8);
-		unsigned int pixels = src[in + 1] + ((src[in + 0] & 0x3f) << 8);
+	unsigned int in = 0;
+	while(in + 4 < src_size) {
+		unsigned int bits   = src[in + 3] + (unsigned) (src[in + 2] << 8);
+		unsigned int pixels = src[in + 1] + (unsigned) ((src[in + 0] & 0x3f) << 8);
 		unsigned int info   = (src[in + 0] & 0xc0) >> 6;
-		plen   = ((bits + 47) >> 4) << 1;
+		unsigned int plen   = ((bits + 47) >> 4) << 1;
 		/* Sanity checks */
 		if (plen > 1024) {
 			V4LCONVERT_ERR("invalid se401 packet len %d", plen);
@@ -139,6 +140,7 @@ int v4lconvert_se401_to_rgb24(struct v4lconvert_data *data, const u8 *src, unsig
 			goto error;
 		}
 		total_pixels += pixels;
+		in += plen;
 	}
 
 	if (in != src_size || total_pixels != width * height) {

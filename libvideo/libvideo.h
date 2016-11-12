@@ -266,13 +266,13 @@ struct frame_intv_discrete{
 	unsigned int denominator;
 };
 
-struct frame_intv_continuous{
+struct frame_intv_continuous {
 	struct frame_intv_discrete min;
 	struct frame_intv_discrete max;
 	struct frame_intv_discrete step;
 };
 
-enum frame_intv_types{
+enum frame_intv_types {
 	FRAME_INTV_UNSUPPORTED=0,
 	FRAME_INTV_DISCRETE,
 	FRAME_INTV_CONTINUOUS
@@ -346,7 +346,7 @@ enum frame_size_types{
  * A converted palette is a palette which is converted by libvideo from
  * a raw palette
  */
-struct palette_info{
+struct palette_info {
 	//this palette's index
 	int index;
 
@@ -378,9 +378,9 @@ struct palette_info{
 };
 
 struct device_info {
-	int nb_inputs;
+	unsigned int nb_inputs;
 	struct video_input_info *inputs;
-	int nb_palettes;
+	unsigned int nb_palettes;
 	struct palette_info *palettes;
 	char name[NAME_FIELD_LENGTH];
 	//this function enumerates the frame intervals for a given video format
@@ -415,10 +415,8 @@ struct video_device;
 struct v4l_driver_probe {
 	int (*probe) (struct video_device *, void **);
 	int (*list_ctrl)(struct video_device *, struct control *, void *);
-	int (*get_ctrl)(struct video_device *, struct v4l2_queryctrl *,
-			void *, int *);
-	int (*set_ctrl)(struct video_device *,  struct v4l2_queryctrl *,
-			int *, void *);
+	int (*get_ctrl)(struct video_device *, struct v4l2_queryctrl *, void *, int *);
+	int (*set_ctrl)(struct video_device *,  struct v4l2_queryctrl *, int *, void *);
 	void *priv;
 };
 /*
@@ -431,10 +429,9 @@ typedef struct struct_elem {
 
 
 struct control_list {
-	int count;						//how many controls are available
+	unsigned int count;				//how many controls are available
 	struct control *controls;		//array of 'count' struct control's
-	driver_probe *probes; 			//linked list of driver probes, allocated in
-									//libvideo.c:get_control_list()
+	driver_probe *probes; 			//linked list of driver probes, allocated in libvideo.c:get_control_list()
 	struct v4lconvert_data *priv;//the libv4l convert struct (used only if V4L2)
 								//DO NOT TOUCH
 };

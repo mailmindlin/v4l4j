@@ -92,66 +92,66 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL, NULL },
 	{ 0x04f2, 0xb071, 0, "PEGATRON CORP.", NULL,
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
-		"Philco", "S\202rie PHN10050" },
+		"Philco", "S\202rie PHN10050", NULL, NULL },
 	{ 0x04f2, 0xb169, 0, "FUJITSU", "FJNB206",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
-		"FUJITSU", "LifeBook T4410" },
+		"FUJITSU", "LifeBook T4410", NULL, NULL },
 	{ 0x04f2, 0xb169, 0, "FUJITSU", "FJNB219",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
-		"FUJITSU", "LIFEBOOK T730" },
+		"FUJITSU", "LIFEBOOK T730", NULL, NULL },
 	{ 0x04f2, 0xb169, 0, "FUJITSU", "FJNB21A",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
-		"FUJITSU", "LIFEBOOK TH700" },
+		"FUJITSU", "LIFEBOOK TH700", NULL, NULL },
 	{ 0x04f2, 0xb16b, 0, "ASUSTeK Computer Inc.        ", "U20A      ",
-		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL, NULL },
 	/* 1 report:
 	   Unknown laptop model -> System Vendor: "  IDEALMAX"
 	   But given that the System Vendor is "unstable" for the other
 	   H34 entry, we put NULL in the dmi_system_vendor field. */
 	{ 0x04f2, 0xb16b, 0, "To be filled by O.E.M.", "H34",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
-		NULL, "H34" },
+		NULL, "H34", NULL, NULL },
 	{ 0x04f2, 0xb186, 0, "FUJITSU", "FJNB206",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
-		"FUJITSU SIEMENS", "LifeBook T4310" },
+		"FUJITSU SIEMENS", "LifeBook T4310", NULL, NULL },
 	{ 0x04f2, 0xb186, 0, "FUJITSU", "FJNB206",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
-		"FUJITSU", "LifeBook T4310" },
+		"FUJITSU", "LifeBook T4310", NULL, NULL },
 	{ 0x04f2, 0xb213, 0, "FUJITSU", "FJNBB11",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
-		"FUJITSU", "LIFEBOOK PH521" },
+		"FUJITSU", "LIFEBOOK PH521", NULL, NULL },
 	{ 0x04f2, 0xb213, 0, "FUJITSU", "FJNBB13",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
-		"FUJITSU", "LIFEBOOK SH531" },
+		"FUJITSU", "LIFEBOOK SH531", NULL, NULL },
 	{ 0x04f2, 0xb213, 0, "FUJITSU", "FJNBB16",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
-		"FUJITSU", "LIFEBOOK LH531" },
+		"FUJITSU", "LIFEBOOK LH531", NULL, NULL },
 	{ 0x04f2, 0xb213, 0, "FUJITSU", "FJNBB19",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
-		"FUJITSU", "LIFEBOOK NH751" },
+		"FUJITSU", "LIFEBOOK NH751", NULL, NULL },
 	{ 0x04f2, 0xb217, 0, "LENOVO", "42992QG",
-		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL, NULL },
 	{ 0x064e, 0xa111, 0, "Acer, Inc.", "Prespa1         ", 
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
-		"Acer, inc.", "Aspire 5570     " },
+		"Acer, inc.", "Aspire 5570     ", NULL, NULL },
 	{ 0x064e, 0xa111, 0, "PEGATRON CORPORATION         ", "F5C     ",
-		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL, NULL },
 	{ 0x064e, 0xa111, 0, "PEGATRON CORPORATION         ", "F5SR    ",
-		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL, NULL },
 	/* 2 reports:
 	   Unknown laptop model -> System Vendor: "  IDEALMAX"
 	   Síragon SL-6120      -> System Vendor: "PEGA PC"
 	   So we just put NULL in the dmi_system_vendor field. */
 	{ 0x064e, 0xa116, 0, "To be filled by O.E.M.", "H34",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
-		NULL, "H34" },
+		NULL, "H34", NULL, NULL },
 	{ 0x064e, 0xa212, 0, "MEDIONAG", "WeTab ",
-		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL, NULL },
 	{ 0x174f, 0x5a35, 0, "PEGATRON CORPORATION         ", "F5SL    ",
-		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL, NULL },
 	{ 0x174f, 0x6a51, 0, NULL, "S96S",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
-		"MicroLink", "S96S" },
+		"MicroLink", "S96S", NULL, NULL },
 	{ 0x5986, 0x0200, 0, "LENOVO", "SPEEDY    ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL,
 		"Lenovo IdeaPad Y510" },
@@ -162,77 +162,77 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL,
 		"Lenovo IdeaPad Y330" },
 	{ 0xeb1a, 0x2750, 0, "CLEVO", "D900K",
-		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL, NULL },
 
 	/* Second: devices which should use some software processing by default */
 	/* jl2005bcd devices */
-	{ 0x0979, 0x0227, 0,    NULL, NULL, V4LCONTROL_WANTS_WB },
+	{ 0x0979, 0x0227, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 0, NULL, NULL, NULL, NULL },
 	/* sn9c101 / sn9c102 based devices (sonixb) */
-	{ 0x0c45, 0x6011, 0,    NULL, NULL, 0, 1500 }, /* OV6650, no WB needed */
-	{ 0x0c45, 0x6019, 0,    NULL, NULL, 0, 1500 }, /* OV7630, no WB needed */
-	{ 0x0c45, 0x608f, 0,    NULL, NULL, 0, 1500 }, /* OV7630, no WB needed */
-	{ 0x0c45, 0x60b0, 0,    NULL, NULL, 0, 1500 }, /* OV7630, no WB needed */
-	{ 0x0c45, 0x6000, 0x1f, NULL, NULL, V4LCONTROL_WANTS_WB, 1500 }, /* other */
-	{ 0x0c45, 0x6020, 0x0f, NULL, NULL, V4LCONTROL_WANTS_WB, 1500 }, /* other */
-	{ 0x0c45, 0x60af, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 1500 }, /* PAS202 */
+	{ 0x0c45, 0x6011, 0,    NULL, NULL, 0, 1500, NULL, NULL, NULL, NULL }, /* OV6650, no WB needed */
+	{ 0x0c45, 0x6019, 0,    NULL, NULL, 0, 1500, NULL, NULL, NULL, NULL }, /* OV7630, no WB needed */
+	{ 0x0c45, 0x608f, 0,    NULL, NULL, 0, 1500, NULL, NULL, NULL, NULL }, /* OV7630, no WB needed */
+	{ 0x0c45, 0x60b0, 0,    NULL, NULL, 0, 1500, NULL, NULL, NULL, NULL }, /* OV7630, no WB needed */
+	{ 0x0c45, 0x6000, 0x1f, NULL, NULL, V4LCONTROL_WANTS_WB, 1500, NULL, NULL, NULL, NULL }, /* other */
+	{ 0x0c45, 0x6020, 0x0f, NULL, NULL, V4LCONTROL_WANTS_WB, 1500, NULL, NULL, NULL, NULL }, /* other */
+	{ 0x0c45, 0x60af, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 1500, NULL, NULL, NULL, NULL }, /* PAS202 */
 	/* sn9c105 / sn9c120 based devices (sonixj) */
-	{ 0x0c45, 0x60fe, 0,    NULL, NULL, V4LCONTROL_WANTS_WB }, /* OV7630 */
-	{ 0x0c45, 0x610e, 0,    NULL, NULL, V4LCONTROL_WANTS_WB }, /* OV7630 */
-	{ 0x0c45, 0x6128, 0,    NULL, NULL, V4LCONTROL_WANTS_WB }, /* OM6802 */
-	{ 0x0c45, 0x612e, 0,    NULL, NULL, V4LCONTROL_WANTS_WB }, /* OV7630 */
-	{ 0x0c45, 0x613e, 0,    NULL, NULL, V4LCONTROL_WANTS_WB }, /* OV7630 */
+	{ 0x0c45, 0x60fe, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 0, NULL, NULL, NULL, NULL }, /* OV7630 */
+	{ 0x0c45, 0x610e, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 0, NULL, NULL, NULL, NULL }, /* OV7630 */
+	{ 0x0c45, 0x6128, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 0, NULL, NULL, NULL, NULL }, /* OM6802 */
+	{ 0x0c45, 0x612e, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 0, NULL, NULL, NULL, NULL }, /* OV7630 */
+	{ 0x0c45, 0x613e, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 0, NULL, NULL, NULL, NULL }, /* OV7630 */
 	/* Pac207 based devices */
-	{ 0x041e, 0x4028, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 1500 },
-	{ 0x093a, 0x2460, 0x1f, NULL, NULL, V4LCONTROL_WANTS_WB, 1500 },
-	{ 0x145f, 0x013a, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 1500 },
-	{ 0x2001, 0xf115, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 1500 },
+	{ 0x041e, 0x4028, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 1500, NULL, NULL, NULL, NULL },
+	{ 0x093a, 0x2460, 0x1f, NULL, NULL, V4LCONTROL_WANTS_WB, 1500, NULL, NULL, NULL, NULL },
+	{ 0x145f, 0x013a, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 1500, NULL, NULL, NULL, NULL },
+	{ 0x2001, 0xf115, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 1500, NULL, NULL, NULL, NULL },
 	/* Pac7302 based devices */
 	{ 0x093a, 0x2620, 0x0f, NULL, NULL,
-		V4LCONTROL_ROTATED_90_JPEG | V4LCONTROL_WANTS_WB, 1500 },
+		V4LCONTROL_ROTATED_90_JPEG | V4LCONTROL_WANTS_WB, 1500, NULL, NULL, NULL, NULL },
 	{ 0x06f8, 0x3009, 0,    NULL, NULL,
-		V4LCONTROL_ROTATED_90_JPEG | V4LCONTROL_WANTS_WB, 1500 },
+		V4LCONTROL_ROTATED_90_JPEG | V4LCONTROL_WANTS_WB, 1500, NULL, NULL, NULL, NULL },
 	{ 0x145f, 0x013c, 0,    NULL, NULL,
-		V4LCONTROL_ROTATED_90_JPEG | V4LCONTROL_WANTS_WB, 1500 },
+		V4LCONTROL_ROTATED_90_JPEG | V4LCONTROL_WANTS_WB, 1500, NULL, NULL, NULL, NULL },
 	/* Pac7311 based devices */
-	{ 0x093a, 0x2600, 0x0f, NULL, NULL, V4LCONTROL_WANTS_WB },
+	{ 0x093a, 0x2600, 0x0f, NULL, NULL, V4LCONTROL_WANTS_WB, 0, NULL, NULL, NULL, NULL },
 	/* sq905 devices */
-	{ 0x2770, 0x9120, 0,    NULL, NULL, V4LCONTROL_WANTS_WB },
+	{ 0x2770, 0x9120, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 0, NULL, NULL, NULL, NULL },
 	/* spca561 revison 12a devices */
-	{ 0x041e, 0x403b, 0,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN },
-	{ 0x046d, 0x0928, 7,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN },
+	{ 0x041e, 0x403b, 0,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN, 0, NULL, NULL, NULL, NULL },
+	{ 0x046d, 0x0928, 7,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN, 0, NULL, NULL, NULL, NULL },
 	/* logitech quickcam express stv06xx 2 versions:
 	   pb0100   only needs whitebalance, see software autogain code enable below
 	   hdcs10xx needs both whitebalance and autogain. */
-	{ 0x046d, 0x0840, 0,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN },
+	{ 0x046d, 0x0840, 0,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN, 0, NULL, NULL, NULL, NULL },
 	/* logitech quickcam messenger variants, st6422 */
-	{ 0x046d, 0x08f0, 0,    NULL, NULL, V4LCONTROL_WANTS_AUTOGAIN },
-	{ 0x046d, 0x08f5, 0,    NULL, NULL, V4LCONTROL_WANTS_AUTOGAIN },
-	{ 0x046d, 0x08f6, 0,    NULL, NULL, V4LCONTROL_WANTS_AUTOGAIN },
-	{ 0x046d, 0x08da, 0,    NULL, NULL, V4LCONTROL_WANTS_AUTOGAIN },
+	{ 0x046d, 0x08f0, 0,    NULL, NULL, V4LCONTROL_WANTS_AUTOGAIN, 0, NULL, NULL, NULL, NULL },
+	{ 0x046d, 0x08f5, 0,    NULL, NULL, V4LCONTROL_WANTS_AUTOGAIN, 0, NULL, NULL, NULL, NULL },
+	{ 0x046d, 0x08f6, 0,    NULL, NULL, V4LCONTROL_WANTS_AUTOGAIN, 0, NULL, NULL, NULL, NULL },
+	{ 0x046d, 0x08da, 0,    NULL, NULL, V4LCONTROL_WANTS_AUTOGAIN, 0, NULL, NULL, NULL, NULL },
 	/* mr97310a cams, note some models do not have the necessary controls, for
 	   those we will only do whitebal. see software autogain code enable below */
-	{ 0x08ca, 0x0111, 0,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN },
-	{ 0x093a, 0x010e, 1,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN },
+	{ 0x08ca, 0x0111, 0,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN, 0, NULL, NULL, NULL, NULL },
+	{ 0x093a, 0x010e, 1,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN, 0, NULL, NULL, NULL, NULL },
 	/* stv0680 based cams */
-	{ 0x0553, 0x0202, 0,    NULL, NULL, V4LCONTROL_WANTS_WB },
-	{ 0x041e, 0x4007, 0,    NULL, NULL, V4LCONTROL_WANTS_WB },
+	{ 0x0553, 0x0202, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 0, NULL, NULL, NULL, NULL },
+	{ 0x041e, 0x4007, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 0, NULL, NULL, NULL, NULL },
 	/* vicam based cams */
-	{ 0x04c1, 0x009d, 0,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN, 1500 },
-	{ 0x0602, 0x1001, 0,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN, 1500 },
+	{ 0x04c1, 0x009d, 0,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN, 1500, NULL, NULL, NULL, NULL },
+	{ 0x0602, 0x1001, 0,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN, 1500, NULL, NULL, NULL, NULL },
 	/* se401 cams, mirrored and need wb + autogain */
 	{ 0x03e8, 0x0004, 0,    NULL, NULL,
-		V4LCONTROL_HFLIPPED | V4LCONTROL_WANTS_WB_AUTOGAIN },
+		V4LCONTROL_HFLIPPED | V4LCONTROL_WANTS_WB_AUTOGAIN, 0, NULL, NULL, NULL, NULL },
 	{ 0x0471, 0x030b, 0,    NULL, NULL,
-		V4LCONTROL_HFLIPPED | V4LCONTROL_WANTS_WB_AUTOGAIN },
+		V4LCONTROL_HFLIPPED | V4LCONTROL_WANTS_WB_AUTOGAIN, 0, NULL, NULL, NULL, NULL },
 	{ 0x047d, 0x5001, 0,    NULL, NULL,
-		V4LCONTROL_HFLIPPED | V4LCONTROL_WANTS_WB_AUTOGAIN },
+		V4LCONTROL_HFLIPPED | V4LCONTROL_WANTS_WB_AUTOGAIN, 0, NULL, NULL, NULL, NULL },
 	{ 0x047d, 0x5002, 0,    NULL, NULL,
-		V4LCONTROL_HFLIPPED | V4LCONTROL_WANTS_WB_AUTOGAIN },
+		V4LCONTROL_HFLIPPED | V4LCONTROL_WANTS_WB_AUTOGAIN, 0, NULL, NULL, NULL, NULL },
 	{ 0x047d, 0x5003, 0,    NULL, NULL,
-		V4LCONTROL_HFLIPPED | V4LCONTROL_WANTS_WB_AUTOGAIN },
+		V4LCONTROL_HFLIPPED | V4LCONTROL_WANTS_WB_AUTOGAIN, 0, NULL, NULL, NULL, NULL },
 	/* W996xCF based cams, must use jpeglite because of funky JPEG fmt */
-	{ 0x041e, 0x4003, 0,    NULL, NULL, V4LCONTROL_FORCE_TINYJPEG },
-	{ 0x1046, 0x9967, 0,    NULL, NULL, V4LCONTROL_FORCE_TINYJPEG },
+	{ 0x041e, 0x4003, 0,    NULL, NULL, V4LCONTROL_FORCE_TINYJPEG, 0, NULL, NULL, NULL, NULL },
+	{ 0x1046, 0x9967, 0,    NULL, NULL, V4LCONTROL_FORCE_TINYJPEG, 0, NULL, NULL, NULL, NULL },
 };
 
 static const struct v4l2_queryctrl fake_controls[];
@@ -328,8 +328,7 @@ static void v4lcontrol_get_dmi_string(const char *sysfs_prefix, const char *stri
 static int v4lcontrol_get_usb_info(struct v4lcontrol_data *data,
 		const char *sysfs_prefix,
 		unsigned short *vendor_id, unsigned short *product_id,
-		int *speed)
-{
+		int *speed) {
 	FILE *f;
 	int i, minor;
 	struct stat st;
@@ -351,7 +350,7 @@ static int v4lcontrol_get_usb_info(struct v4lcontrol_data *data,
 		fclose(f);
 
 		if (s && sscanf(buf, "%*d:%d%c", &minor, &c) == 2 &&
-		    c == '\n' && minor == minor(st.st_rdev))
+		    c == '\n' && minor == (signed) minor(st.st_rdev))
 			break;
 	}
 	if (i == 256)
@@ -573,7 +572,7 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 			break;
 		default:
 			/* heuh, low speed device, or ... ? */
-			data->bandwidth = speed / 20;
+			data->bandwidth = (unsigned) speed / 20;
 		}
 	} else
 		data->bandwidth = 0;
@@ -700,13 +699,13 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 		memset(data->shm_values, 0, V4LCONTROL_SHM_SIZE);
 
 		for (i = 0; i < V4LCONTROL_COUNT; i++)
-			data->shm_values[i] = fake_controls[i].default_value;
+			data->shm_values[i] = (unsigned) fake_controls[i].default_value;
 
 		if (data->flags & V4LCONTROL_WANTS_WB)
 			data->shm_values[V4LCONTROL_WHITEBALANCE] = 1;
 
 		if (data->flags_info && data->flags_info->default_gamma)
-			data->shm_values[V4LCONTROL_GAMMA] = data->flags_info->default_gamma;
+			data->shm_values[V4LCONTROL_GAMMA] = (unsigned) data->flags_info->default_gamma;
 	}
 
 	return data;
@@ -764,7 +763,16 @@ static const struct v4l2_queryctrl fake_controls[V4LCONTROL_COUNT] = {
 		.step = 1,
 		.default_value = 1000, /* == 1.0 */
 		.flags = 0
-	}, { /* Dummy place holder for V4LCONTROL_AUTO_ENABLE_COUNT */
+	}, { 
+		// Dummy place holder for V4LCONTROL_AUTO_ENABLE_COUNT
+		.id = 0,
+		.type = 0,
+		.name = "",
+		.minimum = 0,
+		.maximum = 0,
+		.step = 0,
+		.default_value = 0,
+		.flags = 0,
 	}, {
 		.id = V4L2_CID_AUTOGAIN,
 		.type = V4L2_CTRL_TYPE_BOOLEAN,
@@ -786,30 +794,24 @@ static const struct v4l2_queryctrl fake_controls[V4LCONTROL_COUNT] = {
 	},
 };
 
-static void v4lcontrol_copy_queryctrl(struct v4lcontrol_data *data,
-		struct v4l2_queryctrl *ctrl, int i)
-{
+static void v4lcontrol_copy_queryctrl(struct v4lcontrol_data *data, struct v4l2_queryctrl *ctrl, unsigned int i) {
 	memcpy(ctrl, &fake_controls[i], sizeof(struct v4l2_queryctrl));
 
 	/* Hmm, not pretty */
-	if (ctrl->id == V4L2_CID_AUTO_WHITE_BALANCE &&
-			(data->flags & V4LCONTROL_WANTS_WB))
+	if (ctrl->id == V4L2_CID_AUTO_WHITE_BALANCE && (data->flags & V4LCONTROL_WANTS_WB))
 		ctrl->default_value = 1;
 
-	if (ctrl->id == V4L2_CID_GAMMA && data->flags_info &&
-			data->flags_info->default_gamma)
+	if (ctrl->id == V4L2_CID_GAMMA && data->flags_info && data->flags_info->default_gamma)
 		ctrl->default_value = data->flags_info->default_gamma;
 }
 
-int v4lcontrol_vidioc_queryctrl(struct v4lcontrol_data *data, void *arg)
-{
-	int i;
+int v4lcontrol_vidioc_queryctrl(struct v4lcontrol_data *data, void *arg) {
 	struct v4l2_queryctrl *ctrl = arg;
 	int retval;
 	uint32_t orig_id = ctrl->id;
 
 	/* if we have an exact match return it */
-	for (i = 0; i < V4LCONTROL_COUNT; i++)
+	for (unsigned i = 0; i < V4LCONTROL_COUNT; i++)
 		if ((data->controls & (1 << i)) &&
 				ctrl->id == fake_controls[i].id) {
 			v4lcontrol_copy_queryctrl(data, ctrl, i);
@@ -830,7 +832,7 @@ int v4lcontrol_vidioc_queryctrl(struct v4lcontrol_data *data, void *arg)
 		   ctrl->id then return that control instead. Note we do not
 		   break when we have a match, but keep iterating, so that
 		   we end up with the fake ctrl with the lowest CID > orig_id. */
-		for (i = 0; i < V4LCONTROL_COUNT; i++)
+		for (unsigned i = 0; i < V4LCONTROL_COUNT; i++)
 			if ((data->controls & (1 << i)) &&
 					(fake_controls[i].id > (orig_id & ~V4L2_CTRL_FLAG_NEXT_CTRL)) &&
 					(fake_controls[i].id <= ctrl->id)) {
@@ -842,27 +844,23 @@ int v4lcontrol_vidioc_queryctrl(struct v4lcontrol_data *data, void *arg)
 	return retval;
 }
 
-int v4lcontrol_vidioc_g_ctrl(struct v4lcontrol_data *data, void *arg)
-{
-	int i;
+int v4lcontrol_vidioc_g_ctrl(struct v4lcontrol_data *data, void *arg) {
 	struct v4l2_control *ctrl = arg;
-
-	for (i = 0; i < V4LCONTROL_COUNT; i++)
+	
+	for (unsigned i = 0; i < V4LCONTROL_COUNT; i++)
 		if ((data->controls & (1 << i)) &&
 				ctrl->id == fake_controls[i].id) {
-			ctrl->value = data->shm_values[i];
+			ctrl->value = (__s32) data->shm_values[i];
 			return 0;
 		}
 
 	return SYS_IOCTL(data->fd, VIDIOC_G_CTRL, arg);
 }
 
-int v4lcontrol_vidioc_s_ctrl(struct v4lcontrol_data *data, void *arg)
-{
-	int i;
+int v4lcontrol_vidioc_s_ctrl(struct v4lcontrol_data *data, void *arg) {
 	struct v4l2_control *ctrl = arg;
 
-	for (i = 0; i < V4LCONTROL_COUNT; i++)
+	for (unsigned i = 0; i < V4LCONTROL_COUNT; i++)
 		if ((data->controls & (1 << i)) &&
 				ctrl->id == fake_controls[i].id) {
 			if (ctrl->value > fake_controls[i].maximum ||
@@ -871,25 +869,22 @@ int v4lcontrol_vidioc_s_ctrl(struct v4lcontrol_data *data, void *arg)
 				return -1;
 			}
 
-			data->shm_values[i] = ctrl->value;
+			data->shm_values[i] = (__u32) ctrl->value;
 			return 0;
 		}
 
 	return SYS_IOCTL(data->fd, VIDIOC_S_CTRL, arg);
 }
 
-int v4lcontrol_get_bandwidth(struct v4lcontrol_data *data)
-{
+unsigned int v4lcontrol_get_bandwidth(struct v4lcontrol_data *data) {
 	return data->bandwidth;
 }
 
-int v4lcontrol_get_flags(struct v4lcontrol_data *data)
-{
+int v4lcontrol_get_flags(struct v4lcontrol_data *data) {
 	return data->flags;
 }
 
-int v4lcontrol_get_ctrl(struct v4lcontrol_data *data, int ctrl)
-{
+bool v4lcontrol_get_ctrl(struct v4lcontrol_data *data, int ctrl) {
 	if (data->controls & (1 << ctrl)) {
 		/* Special case for devices with flipped input */
 		if ((ctrl == V4LCONTROL_HFLIP && (data->flags & V4LCONTROL_HFLIPPED)) ||
@@ -902,8 +897,7 @@ int v4lcontrol_get_ctrl(struct v4lcontrol_data *data, int ctrl)
 	return 0;
 }
 
-int v4lcontrol_controls_changed(struct v4lcontrol_data *data)
-{
+int v4lcontrol_controls_changed(struct v4lcontrol_data *data) {
 	int res;
 
 	if (!data->controls)
@@ -919,7 +913,6 @@ int v4lcontrol_controls_changed(struct v4lcontrol_data *data)
 }
 
 /* See the comment about this in libv4lconvert.h */
-int v4lcontrol_needs_conversion(struct v4lcontrol_data *data)
-{
+int v4lcontrol_needs_conversion(struct v4lcontrol_data *data) {
 	return data->flags || data->controls;
 }
