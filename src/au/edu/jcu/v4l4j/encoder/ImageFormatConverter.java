@@ -8,14 +8,41 @@ import au.edu.jcu.v4l4j.ImagePalette;
 
 public class ImageFormatConverter implements VideoFrameEncoder {
 	protected final long ptr;
+	/**
+	 * ID of converter used
+	 */
 	protected final int converterId;
+	/**
+	 * Input frame format
+	 */
 	protected final ImagePalette inFormat;
+	/**
+	 * Input frame width
+	 */
 	protected final int inWidth;
+	/**
+	 * Input frame height
+	 */
 	protected final int inHeight;
+	/**
+	 * Estimated (upper bound) source buffer size
+	 */
 	protected final int estimatedSrcLen;
+	/**
+	 * Output frame format
+	 */
 	protected final ImagePalette outFormat;
+	/**
+	 * Output frame width
+	 */
 	protected final int outWidth;
+	/**
+	 * Output frame height
+	 */
 	protected final int outHeight;
+	/**
+	 * Estimated (upper bound) output buffer size
+	 */
 	protected final int estimatedDstLen;
 	
 	protected static native int getConverterIDForTransformation(int srcFmt, int dstFmt);
@@ -42,7 +69,7 @@ public class ImageFormatConverter implements VideoFrameEncoder {
 	private static native int[] getData(long ptr);
 	
 	protected ImageFormatConverter(long ptr) {
-		this.ptr = ptr;
+		this.object = ptr;
 		int[] data = getData(ptr);
 		this.converterId = data[0];
 		this.inFormat = ImagePalette.lookup(data[1]);
@@ -56,12 +83,25 @@ public class ImageFormatConverter implements VideoFrameEncoder {
 		this.outHeight = data[8];
 	}
 	
+	/**
+	 * Create an ImageFormatConverter wrapping the given converter's id
+	 * @param converterId
+	 * @param width
+	 * @param height
+	 */
 	public ImageFormatConverter(int converterId, int width, int height) {
 		this(initWithConverter(converterId, width, height));
 	}
 	
+	/**
+	 * Create an ImageFormatConverter for a given transformation.
+	 * @param src
+	 * @param dst
+	 * @param width
+	 * @param height
+	 */
 	public ImageFormatConverter(ImagePalette src, ImagePalette dst, int width, int height) {
-		this(getConverterIDForTransformation(src, dst), width, height);
+		this(lookupConverterByConversion(src, dst), width, height);
 	}
 
 	@Override
