@@ -36,7 +36,7 @@ static inline struct v4lconvert_encoder* lookupNative(JNIEnv* env, jobject self)
  * Method:    lookupConverterByConversion
  * Signature: (II)I
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_ImageFormatConverter_lookupConverterByConversion (JNIEnv *env, jclass me, jint from, jint to) {
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_ImageFormatConverter_lookupConverterByConversion(JNIEnv *env, jclass me, jint from, jint to) {
 	LOG_FN_ENTER();
 	return v4lconvert_converter_lookupConverterByConversion((u32) from, (u32) to);
 }

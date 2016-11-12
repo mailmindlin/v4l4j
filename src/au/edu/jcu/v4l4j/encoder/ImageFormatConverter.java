@@ -7,7 +7,20 @@ import java.nio.ByteBuffer;
 import au.edu.jcu.v4l4j.ImagePalette;
 
 public class ImageFormatConverter implements VideoFrameEncoder {
-	protected final long ptr;
+	
+	static {
+		try {
+			System.loadLibrary("v4l4j");
+		} catch (UnsatisfiedLinkError e) {
+			System.err.println("Cant load v4l4j JNI library");
+			throw e;
+		}
+	}
+	
+	/**
+	 * Pointer to native object
+	 */
+	protected final long object;
 	/**
 	 * ID of converter used
 	 */
@@ -45,9 +58,15 @@ public class ImageFormatConverter implements VideoFrameEncoder {
 	 */
 	protected final int estimatedDstLen;
 	
-	protected static native int getConverterIDForTransformation(int srcFmt, int dstFmt);
-	protected static int getConverterIDForTransformation(ImagePalette src, ImagePalette dst) {
-		return getConverterIDForTransformation(src.getIndex(), dst.getIndex());
+	/**
+	 * Lookup a <code>v4lconvert_converter_t</code>'s id for a given transformation
+	 * @param srcFmt
+	 * @param dstFmt
+	 * @return
+	 */
+	protected static native int lookupConverterByConversion(int srcFmt, int dstFmt);
+	protected static int lookupConverterByConversion(ImagePalette src, ImagePalette dst) {
+		return lookupConverterByConversion(src.getIndex(), dst.getIndex());
 	}
 	protected static native long initWithConverter(int converterId, int width, int height);
 	/**
