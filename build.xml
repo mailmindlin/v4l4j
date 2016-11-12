@@ -23,6 +23,19 @@
 			<include name="*.jar"/>
 		</fileset>
 	</path>
+	
+	<macrodef name="make">
+		<attribute name="dir"/>
+		<attribute name="debug" default="0"/>
+		<attribute name="failonerror" default="false"/>
+		<sequential>
+			<exec executable="make" failonerror="@{failonerror}">
+				<env if:set="debug" key="DEBUG" value="@{debug}"/>
+				<arg line="-j ${make.jobs}" />
+				<arg if:set="dir" line="-C @{dir}" />
+			</exec>
+		</sequential>
+	</macrodef>
 
 	
 	<!-- default target that displays usage -->
@@ -55,6 +68,7 @@
 		<echo message=" test-server :      Runs a TCP server to and MJPEG video stream to a web browser"/>
 		<echo message=" test-dual :        Display video streams from two webcams in a windows"/>
 		<echo message=" test-getsnapshot :        Get snapshots from a camera"/>
+		<echo message=" test-encoder:      Test experimental encoder features"/>
 		<echo message=" deviceInfo:        Display information about a video source"/>
 
 		<echo message=""/>
