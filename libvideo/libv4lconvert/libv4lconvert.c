@@ -23,6 +23,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <stdint.h>
+#include "../utils.h"
 #include "libv4lconvert.h"
 #include "libv4lconvert-priv.h"
 #include "libv4lsyscall-priv.h"
@@ -202,19 +203,14 @@ void v4lconvert_destroy(struct v4lconvert_data *data) {
 }
 
 int v4lconvert_supported_dst_format(unsigned int pixelformat) {
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(supported_dst_pixfmts); i++)
+	for (unsigned int i = 0; i < ARRAY_SIZE(supported_dst_pixfmts); i++)
 		if (supported_dst_pixfmts[i].fmt == pixelformat)
-			break;
-
-	return i != ARRAY_SIZE(supported_dst_pixfmts);
+			return FALSE;
+	return TRUE;
 }
 
-int v4lconvert_supported_dst_fmt_only(struct v4lconvert_data *data)
-{
-	return v4lcontrol_needs_conversion(data->control) &&
-		data->supported_src_formats;
+int v4lconvert_supported_dst_fmt_only(struct v4lconvert_data *data) {
+	return v4lcontrol_needs_conversion(data->control) && data->supported_src_formats;
 }
 
 /* See libv4lconvert.h for description of in / out parameters */
@@ -269,8 +265,8 @@ int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt) 
    
    Note grey scale formats start at 20 rather then 1-10, because we want to
    never autoselect them, unless they are the only choice */
-static int v4lconvert_get_rank(struct v4lconvert_data *data, int src_index, int src_width, int src_height, unsigned int dest_pixelformat) {
-	int needed, rank = 0;
+static int v4lconvert_get_rank(struct v4lconvert_data *data, unsigned int src_index, unsigned int src_width, unsigned int src_height, unsigned int dest_pixelformat) {
+	int rank = 0;
 
 	switch (dest_pixelformat) {
 	case V4L2_PIX_FMT_RGB24:
@@ -289,8 +285,7 @@ static int v4lconvert_get_rank(struct v4lconvert_data *data, int src_index, int 
 		rank--;
 
 	/* check bandwidth needed */
-	needed = src_width * src_height * data->fps *
-		 supported_src_pixfmts[src_index].bpp / 8;
+	unsigned int needed = src_width * src_height * data->fps * supported_src_pixfmts[src_index].bpp / 8;
 	if (data->bandwidth && needed > data->bandwidth)
 		rank += 10;
 #if 0
@@ -314,15 +309,15 @@ static int v4lconvert_do_try_format_uvc(struct v4lconvert_data *data,
 	int rank;
 	unsigned int closest_fmt_size_diff = -1u;
 	unsigned int best_framesize = 0;/* Just use the first format if no small enough one */
-	int best_format = 0;
+	unsigned int best_format = 0;
 	int best_rank = 100;
 
 	for (unsigned int i = 0; i < data->no_framesizes; i++) {
 		if (data->framesizes[i].discrete.width <= dest_fmt->fmt.pix.width
 				&& data->framesizes[i].discrete.height <= dest_fmt->fmt.pix.height) {
-			int size_x_diff = dest_fmt->fmt.pix.width - data->framesizes[i].discrete.width;
-			int size_y_diff = dest_fmt->fmt.pix.height - data->framesizes[i].discrete.height;
-			unsigned int size_diff = size_x_diff * size_x_diff + size_y_diff * size_y_diff;
+			int size_x_diff = (int) dest_fmt->fmt.pix.width - (int) data->framesizes[i].discrete.width;
+			int size_y_diff = (int) dest_fmt->fmt.pix.height - (int) data->framesizes[i].discrete.height;
+			unsigned int size_diff = (unsigned) (size_x_diff * size_x_diff) + (unsigned) (size_y_diff * size_y_diff);
 
 			if (size_diff < closest_fmt_size_diff) {
 				closest_fmt_size_diff = size_diff;
@@ -333,7 +328,7 @@ static int v4lconvert_do_try_format_uvc(struct v4lconvert_data *data,
 
 	for (unsigned int i = 0; i < ARRAY_SIZE(supported_src_pixfmts); i++) {
 		/* is this format supported? */
-		if (!(data->framesizes[best_framesize].pixel_format & (1 << i)))
+		if (!(data->framesizes[best_framesize].pixel_format & (1u << i)))
 			continue;
 
 		/* Note the hardcoded use of discrete is based on this function
@@ -365,17 +360,16 @@ static int v4lconvert_do_try_format_uvc(struct v4lconvert_data *data,
 }
 
 static int v4lconvert_do_try_format(struct v4lconvert_data *data,
-		struct v4l2_format *dest_fmt, struct v4l2_format *src_fmt)
-{
-	int i, size_x_diff, size_y_diff, rank, best_rank = 0;
-	unsigned int size_diff, closest_fmt_size_diff = -1u;
+		struct v4l2_format *dest_fmt, struct v4l2_format *src_fmt) {
+	unsigned int closest_fmt_size_diff = -1u;
 	unsigned int desired_pixfmt = dest_fmt->fmt.pix.pixelformat;
 	struct v4l2_format try_fmt, closest_fmt = { .type = 0 };
 
 	if (data->flags & V4LCONVERT_IS_UVC)
 		return v4lconvert_do_try_format_uvc(data, dest_fmt, src_fmt);
 
-	for (i = 0; i < ARRAY_SIZE(supported_src_pixfmts); i++) {
+	int best_rank = 0;
+	for (unsigned int i = 0; i < ARRAY_SIZE(supported_src_pixfmts); i++) {
 		/* is this format supported? */
 		if (!(data->supported_src_formats & (1 << i)))
 			continue;
@@ -390,14 +384,11 @@ static int v4lconvert_do_try_format(struct v4lconvert_data *data,
 			continue;
 
 		/* Did we get a better match then before? */
-		size_x_diff = (int)try_fmt.fmt.pix.width -
-			      (int)dest_fmt->fmt.pix.width;
-		size_y_diff = (int)try_fmt.fmt.pix.height -
-			      (int)dest_fmt->fmt.pix.height;
-		size_diff = size_x_diff * size_x_diff +
-			    size_y_diff * size_y_diff;
+		int size_x_diff = (int)try_fmt.fmt.pix.width - (int)dest_fmt->fmt.pix.width;
+		int size_y_diff = (int)try_fmt.fmt.pix.height - (int)dest_fmt->fmt.pix.height;
+		unsigned int size_diff = (unsigned) (size_x_diff * size_x_diff) + (unsigned) (size_y_diff * size_y_diff);
 
-		rank = v4lconvert_get_rank(data, i,
+		int rank = v4lconvert_get_rank(data, i,
 					   try_fmt.fmt.pix.width,
 					   try_fmt.fmt.pix.height,
 					   desired_pixfmt);
@@ -438,7 +429,7 @@ void v4lconvert_fixup_fmt(struct v4l2_format *fmt)
 
 /* See libv4lconvert.h for description of in / out parameters */
 int v4lconvert_try_format(struct v4lconvert_data *data, struct v4l2_format *dest_fmt, struct v4l2_format *src_fmt) {
-	int i, result;
+	int result;
 	unsigned int desired_width = dest_fmt->fmt.pix.width;
 	unsigned int desired_height = dest_fmt->fmt.pix.height;
 	struct v4l2_format try_src, try_dest, try2_src, try2_dest;
@@ -489,7 +480,7 @@ int v4lconvert_try_format(struct v4lconvert_data *data, struct v4l2_format *dest
 	   black border to a slightly smaller resolution */
 	if (try_dest.fmt.pix.width != desired_width ||
 			try_dest.fmt.pix.height != desired_height) {
-		for (i = 0; i < ARRAY_SIZE(v4lconvert_crop_res); i++) {
+		for (unsigned i = 0; i < ARRAY_SIZE(v4lconvert_crop_res); i++) {
 			if (v4lconvert_crop_res[i][0] == desired_width &&
 					v4lconvert_crop_res[i][1] == desired_height) {
 				try2_dest = *dest_fmt;
@@ -531,8 +522,8 @@ int v4lconvert_try_format(struct v4lconvert_data *data, struct v4l2_format *dest
 	   or the height is not a multiple of 2. With RGB formats these apps require
 	   the width to be a multiple of 4. We apply the same rounding to all
 	   formats to not end up with 2 close but different resolutions. */
-	try_dest.fmt.pix.width &= ~7;
-	try_dest.fmt.pix.height &= ~1;
+	try_dest.fmt.pix.width &= ~7u;
+	try_dest.fmt.pix.height &= ~1u;
 
 	/* Are we converting / cropping ? */
 	if (try_src.fmt.pix.width != try_dest.fmt.pix.width ||
@@ -550,8 +541,7 @@ int v4lconvert_try_format(struct v4lconvert_data *data, struct v4l2_format *dest
 /* Is conversion necessary ? */
 int v4lconvert_needs_conversion(struct v4lconvert_data *data,
 		const struct v4l2_format *src_fmt,  /* in */
-		const struct v4l2_format *dest_fmt) /* in */
-{
+		const struct v4l2_format *dest_fmt) {/* in */
 	if (src_fmt->fmt.pix.width != dest_fmt->fmt.pix.width ||
 			src_fmt->fmt.pix.height != dest_fmt->fmt.pix.height ||
 			src_fmt->fmt.pix.pixelformat != dest_fmt->fmt.pix.pixelformat ||
@@ -743,8 +733,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data, u8 *src, unsi
 			v4lconvert_sn9c20x_to_yuv420(src, d, width, height, yvu);
 			break;
 		case V4L2_PIX_FMT_CPIA1:
-			if (v4lconvert_cpia1_to_yuv420(data, src, src_size, d,
-						width, height, yvu)) {
+			if (v4lconvert_cpia1_to_yuv420(data, src, src_size, d, width, height, yvu)) {
 				/* Corrupt frame, better get another one */
 				errno = EAGAIN;
 				return -1;
@@ -1200,7 +1189,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 		const struct v4l2_format *src_fmt,  /* in */
 		const struct v4l2_format *dest_fmt, /* in */
 		u8 *src, unsigned int src_size, u8 *dest, unsigned int dest_size) {
-	int res, processing, convert = 0;
+	int processing, convert = 0;
 	unsigned int dest_needed, temp_needed;
 	int rotate90, vflip, hflip, crop;
 	u8 *convert1_dest = dest;
@@ -1228,7 +1217,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 			!v4lconvert_supported_dst_format(dest_fmt->fmt.pix.pixelformat)) {
 		unsigned int to_copy = MIN(dest_size, src_size);
 		memcpy(dest, src, to_copy);
-		return to_copy;
+		return (signed) to_copy;
 	}
 
 	/* When field is V4L2_FIELD_ALTERNATE, each buffer only contains half the
@@ -1319,7 +1308,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 	/* Done setting sources / dest and allocating intermediate buffers,
 	   real conversion / processing / ... starts here. */
 	if (convert == 2) {
-		res = v4lconvert_convert_pixfmt(data, src, src_size,
+		int res = v4lconvert_convert_pixfmt(data, src, src_size,
 				convert1_dest, convert1_dest_size,
 				&my_src_fmt,
 				V4L2_PIX_FMT_RGB24);
@@ -1333,7 +1322,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 		v4lprocessing_processing(data->processing, convert2_src, &my_src_fmt);
 
 	if (convert) {
-		res = v4lconvert_convert_pixfmt(data, convert2_src, src_size,
+		int res = v4lconvert_convert_pixfmt(data, convert2_src, src_size,
 				convert2_dest, convert2_dest_size,
 				&my_src_fmt,
 				my_dest_fmt.fmt.pix.pixelformat);
@@ -1358,7 +1347,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 	if (crop)
 		v4lconvert_crop(crop_src, dest, &my_src_fmt, &my_dest_fmt);
 
-	return dest_needed;
+	return (signed) dest_needed;
 }
 
 const char *v4lconvert_get_error_message(struct v4lconvert_data *data) {
@@ -1382,14 +1371,12 @@ static void v4lconvert_get_framesizes(struct v4lconvert_data *data, u32 pixelfor
 
 			switch (frmsize.type) {
 			case V4L2_FRMSIZE_TYPE_DISCRETE:
-				if (!memcmp(&frmsize.discrete, &data->framesizes[j].discrete,
-							sizeof(frmsize.discrete)))
+				if (!memcmp(&frmsize.discrete, &data->framesizes[j].discrete, sizeof(frmsize.discrete)))
 					match = 1;
 				break;
 			case V4L2_FRMSIZE_TYPE_CONTINUOUS:
 			case V4L2_FRMSIZE_TYPE_STEPWISE:
-				if (!memcmp(&frmsize.stepwise, &data->framesizes[j].stepwise,
-							sizeof(frmsize.stepwise)))
+				if (!memcmp(&frmsize.stepwise, &data->framesizes[j].stepwise, sizeof(frmsize.stepwise)))
 					match = 1;
 				break;
 			}
@@ -1548,10 +1535,10 @@ int v4lconvert_vidioc_s_ctrl(struct v4lconvert_data *data, void *arg) {
 	return v4lcontrol_vidioc_s_ctrl(data->control, arg);
 }
 
-int v4lconvert_get_fps(struct v4lconvert_data *data) {
+unsigned int v4lconvert_get_fps(struct v4lconvert_data *data) {
 	return data->fps;
 }
 
-void v4lconvert_set_fps(struct v4lconvert_data *data, int fps) {
+void v4lconvert_set_fps(struct v4lconvert_data *data, unsigned int fps) {
 	data->fps = fps;
 }
