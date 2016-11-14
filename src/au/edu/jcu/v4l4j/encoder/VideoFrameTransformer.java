@@ -11,7 +11,7 @@ import au.edu.jcu.v4l4j.exceptions.BufferUnderflowException;
  * 
  * @author mailmindlin
  */
-public interface VideoFrameEncoder extends AutoCloseable {
+public interface VideoFrameTransformer extends AutoCloseable {
 	
 	default int apply(V4lconvertBuffer buf) {
 		buf.pull();
@@ -40,6 +40,11 @@ public interface VideoFrameEncoder extends AutoCloseable {
 	
 	int estimateDestinationLength();
 	
+	/**
+	 * Gets a pointer to a native <code>v4lconvert_converter</code> object.
+	 * @return Pointer, or 0 if not applicable
+	 */
+	long getPointer();
 	/**
 	 * Close encoder & release
 	 */
