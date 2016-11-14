@@ -453,7 +453,7 @@ static void empty_list(driver_probe *list) {
 // ****************************************
 struct control_list *get_control_list(struct video_device *vdev) {
 	struct v4l2_control ctrl;
-	int v4l_count = 0, priv_ctrl_count = 0, nb=0;
+	int v4l_count = 0, priv_ctrl_count = 0;
 	driver_probe *e = NULL;
 	struct control_list *l;
 
