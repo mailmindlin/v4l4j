@@ -27,6 +27,10 @@ static inline struct v4lconvert_encoder* lookupNative(JNIEnv* env, jobject self)
 	if (!ImageFormatConverter_class)
 		return NULL;
 	jfieldID objectFID = (*env)->GetFieldID(env, ImageFormatConverter_class, "object", "J");
+	if (!objectFID) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Unable to lookup ImageFormatConverter#object");
+		return NULL;
+	}
 	struct v4lconvert_encoder* result = (struct v4lconvert_encoder*) (uintptr_t) (*env)->GetLongField(env, self, objectFID);
 	return result;
 }
@@ -48,11 +52,16 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_ImageFormatConverter_lookup
  */
 JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_encoder_ImageFormatConverter_initWithConverter(JNIEnv *env, jclass me, jint converterId, jint width, jint height) {
 	LOG_FN_ENTER();
-	v4lconvert_converter_t* converter = v4lconvert_converter_getConverterById(converterId);
-	if (!converter) {
-		THROW_EXCEPTION(env, NULL_EXCP, "No converter found with id %d", converterId);
+	if (converterId < 0) {
+		THROW_EXCEPTION(env, ARG_EXCP, "Converter ID must be positive (was %d)", converterId);
 		return -1;
 	}
+	v4lconvert_converter_t* converter = v4lconvert_converter_getConverterById((unsigned int) converterId);
+	if (!converter) {
+		THROW_EXCEPTION(env, NULL_EXCP, "No converter found with id #%d", converterId);
+		return -1;
+	}
+	dprint(LOG_V4L4J, "[V4L4J] Using converter #%d (type %d)\n", converter->id, converter->signature);
 	
 	struct v4lconvert_encoder* encoder;
 	XMALLOC(encoder, struct v4lconvert_encoder*, sizeof(struct v4lconvert_encoder));
@@ -60,9 +69,9 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_encoder_ImageFormatConverter_initW
 		THROW_EXCEPTION(env, JNI_EXCP, "Error allocating memory for v4lconvert_encoder");
 		return -1;
 	}
-	if (!v4lconvert_encoder_initWithConverter(encoder, converter, width, height)) {
+	if (v4lconvert_encoder_initWithConverter(encoder, converter, width, height) != EXIT_SUCCESS) {
 		XFREE(encoder);
-		THROW_EXCEPTION(env, INIT_EXCP, "Error initializing v4lconvert_encoder (converter #%d, width %d, height %d)", converter->id, width, height);
+		THROW_EXCEPTION(env, INIT_EXCP, "Error initializing struct v4lconvert_encoder (converter #%d, width %d, height %d)", converter->id, width, height);
 		return -1;
 	}
 	return (jlong)(uintptr_t) encoder;
