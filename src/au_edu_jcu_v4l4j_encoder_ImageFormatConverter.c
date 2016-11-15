@@ -87,19 +87,15 @@ JNIEXPORT jintArray JNICALL Java_au_edu_jcu_v4l4j_encoder_ImageFormatConverter_g
 		return NULL;
 	}
 	v4lconvert_converter_t* converter = encoder->converter;
-	data[0] = converter ? (signed) converter->id : -1;
-	data[1] = encoder->src_fmt;
-	data[2] = encoder->dst_fmt;
-	data[3] = encoder->src_len;
-	data[4] = encoder->dst_len;
-	if (encoder->getDimensions) {
-		encoder->getDimensions(encoder, &(data[5]), &(data[6]), &(data[7]), &(data[8]));
-	} else {
-		data[5] = -1;
-		data[6] = -1;
-		data[7] = -1;
-		data[8] = -1;
-	}
+	data[0] = converter ? (int) converter->id : -1;
+	data[1] = (int) encoder->src_fmt;
+	data[2] = (int) encoder->dst_fmt;
+	data[3] = (int) encoder->src_len;
+	data[4] = (int) encoder->dst_len;
+	data[5] = (int) encoder->src_width;
+	data[6] = (int) encoder->src_height;
+	data[7] = (int) encoder->dst_width;
+	data[8] = (int) encoder->dst_height;
 	(*env)->ReleaseIntArrayElements(env, result, data, 0);
 	return result;
 }
@@ -114,7 +110,9 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_ImageFormatConverter_close(
 	struct v4lconvert_encoder* encoder = lookupNative(env, self);
 	if (!encoder)
 		return;
+	dprint(LOG_V4L4J, "Release method is%s null\n", (encoder->release == NULL) ? "" : "n't");
 	encoder->release(encoder);
+	dprint(LOG_V4L4J, "Released encoder @ %d\n", (uintptr_t) encoder);
 	XFREE(encoder);
 }
 
