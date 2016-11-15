@@ -499,14 +499,14 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
 				contentPanel.add(discreteList);
 			} else if (intv.getType() == Type.STEPWISE) {
 				stepwiseValue = new JTextField(8);
-				stepwiseValue.setText(intv.getStepwiseInterval().maxIntv.numerator + "/"
-						+ intv.getStepwiseInterval().maxIntv.denominator);
-				stepwiseValue.setToolTipText("Min:" + intv.getStepwiseInterval().minIntv.numerator + "/"
-						+ intv.getStepwiseInterval().minIntv.denominator + " - Max: "
-						+ intv.getStepwiseInterval().maxIntv.numerator + "/"
-						+ intv.getStepwiseInterval().maxIntv.denominator + " - Step: "
-						+ intv.getStepwiseInterval().stepIntv.numerator + "/"
-						+ intv.getStepwiseInterval().stepIntv.denominator);
+				stepwiseValue.setText(intv.getStepwiseInterval().getMaxInterval().getNumerator() + "/"
+						+ intv.getStepwiseInterval().getMaxInterval().getDenominator());
+				stepwiseValue.setToolTipText("Min:" + intv.getStepwiseInterval().getMinInterval().getNumerator() + "/"
+						+ intv.getStepwiseInterval().getMinInterval().getDenominator() + " - Max: "
+						+ intv.getStepwiseInterval().getMaxInterval().getNumerator() + "/"
+						+ intv.getStepwiseInterval().getMaxInterval().getDenominator() + " - Step: "
+						+ intv.getStepwiseInterval().getStepInterval().getNumerator() + "/"
+						+ intv.getStepwiseInterval().getStepInterval().getDenominator());
 				contentPanel.add(stepwiseValue);
 			} // else unsupported: do nothing
 		}
@@ -516,7 +516,7 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
 				return null;
 			else if (intv.getType() == Type.DISCRETE) {
 				DiscreteInterval i = (DiscreteInterval) discreteList.getSelectedItem();
-				return new Interval(i.numerator, i.denominator);
+				return new Interval(i.getNumerator(), i.getDenominator());
 			} else if (intv.getType() == Type.STEPWISE) {
 				return validateStepwsiseValue();
 			} else
