@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 
 import au.edu.jcu.v4l4j.ImagePalette;
 
-public class ImageFormatConverter implements VideoFrameEncoder {
+public class ImageFormatConverter implements VideoFrameConverter {
 	
 	static {
 		try {
@@ -170,6 +170,11 @@ public class ImageFormatConverter implements VideoFrameEncoder {
 	@Override
 	public int estimateDestinationLength() {
 		return this.estimatedDstLen;
+	}
+	
+	@Override
+	public long getPointer() {
+		return this.object;
 	}
 
 	@Override
