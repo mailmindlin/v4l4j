@@ -97,11 +97,11 @@ static signed char vlcTbl_run[1<<10];	/* Run */
 static signed char vlcTbl_amp[1<<10];	/* Amplitude (without the sign) */
 
 /* YUV->RGB conversion table */
-static int yuvTbl_y[256];
-static int yuvTbl_u1[256];
-static int yuvTbl_u2[256];
-static int yuvTbl_v1[256];
-static int yuvTbl_v2[256];
+static unsigned int yuvTbl_y[256];
+static unsigned int yuvTbl_u1[256];
+static unsigned int yuvTbl_u2[256];
+static unsigned int yuvTbl_v1[256];
+static unsigned int yuvTbl_v2[256];
 
 /* Clamping table */
 #define SAFE_CLAMP
@@ -111,7 +111,7 @@ static inline u8 clamp(int x) {
 		return 255;
 	if (x < 0)
 		return 0;
-	return x;
+	return (u8) x;
 }
 #define clamp_adjust(x) clamp(x+128)
 #else
@@ -147,7 +147,7 @@ static inline void vlcTbl_init(void) {
 
 		/* Find the matching one */
 		for (unsigned int j=0; j < vlc_num; j++ ) {
-			if ( (i >> (10-vlc_len[j])) == vlc_cod[j] ) {
+			if ( (i >> (10 - vlc_len[j])) == vlc_cod[j] ) {
 				if ( vlc_run[j] >= 0 )
 					if ( vlc_amp[j] != 0 )
 						vlcTbl_len[i] = vlc_len[j] + 1;
@@ -417,7 +417,7 @@ int v4lconvert_decode_jpgl(const u8 *inp, u32 src_size, unsigned int dest_pix_fm
 
 	u8 *mainbuffer;
 
-	int yc,uc,vc;
+	unsigned int yc,uc,vc;
 
 	/* init the decoder */
 	if (yuvTbl_y[0] == 0) {
