@@ -157,6 +157,25 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_ImageFormatConverter_apply(
 	return 0;
 }
 
+// Methods for JPEG encoder
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_JPEGEncoder_setQuality(JNIEnv* env, jobject self, jint value) {
+	LOG_FN_ENTER();
+	struct v4lconvert_encoder* encoder = lookupNative(env, self);
+	if (!encoder)
+		return;
+	if (value < 0 || value > 100) {
+		THROW_EXCEPTION(env, ARG_EXCP, "Illegal quality (%d; expected between 0 and 100)", value);
+		return;
+	}
+	encoder->jpeg_encode_params.quality = value;
+}
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_JPEGEncoder_getQuality(JNIEnv* env, jobject self) {
+	LOG_FN_ENTER();
+	struct v4lconvert_encoder* encoder = lookupNative(env, self);
+	if (!encoder)
+		return -1;
+	return encoder->jpeg_encode_params.quality;
+}
 #ifdef __cplusplus
 }
 #endif
