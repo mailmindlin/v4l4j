@@ -153,8 +153,21 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_ImageFormatConverter_apply(
 		THROW_EXCEPTION(env, JNI_EXCP, "Unable to get direct pointer to buffer");
 		return -1;
 	}
-	//TODO finish
-	return 0;
+	
+	if (!encoder->apply) {
+		THROW_EXCEPTION(env, NULL_EXCP, "Method encoder->apply is null");
+		return -1;
+	}
+	int srcLen = getBufferLimit(env, src);
+	if (srcLen < 0)
+		return -1;
+	
+	dprint(LOG_V4L4J, "[V4L4J] Calling apply (0x%X)\n", *(encoder->apply));
+	u32 result = encoder->apply(encoder, (const u8*) srcPtr, (u8*) dstPtr, (u32) srcLen);
+	dprint(LOG_V4L4J, "[V4L4J] Converted %u => %u bytes.\n", srcLen, result);
+	//Set capacity of output buffer
+	setBufferLimit(env, dst, (int) result);
+	return result;
 }
 
 // Methods for JPEG encoder
