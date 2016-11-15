@@ -1,17 +1,12 @@
 package au.edu.jcu.v4l4j.encoder.h264;
 
-import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
-import au.edu.jcu.v4l4j.BaseVideoFrame;
 import au.edu.jcu.v4l4j.ImagePalette;
-import au.edu.jcu.v4l4j.VideoFrame;
-import au.edu.jcu.v4l4j.encoder.V4lconvertBuffer;
-import au.edu.jcu.v4l4j.encoder.VideoFrameEncoder;
+import au.edu.jcu.v4l4j.encoder.VideoFrameTransformer;
 import au.edu.jcu.v4l4j.exceptions.BufferOverflowException;
-import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
-public class H264Encoder implements VideoFrameEncoder {
+public class H264Encoder implements VideoFrameTransformer {
 	
 	protected final long object;
 	protected final long csp;
@@ -81,17 +76,6 @@ public class H264Encoder implements VideoFrameEncoder {
 		this.doSetParams(params.object);
 	}
 	@Override
-	public int encode(V4lconvertBuffer buffer)
-			throws BufferUnderflowException, BufferOverflowException, NullPointerException, V4L4JException {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-	@Override
-	public ImagePalette getSourcePalette() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	@Override
 	public int getSourceWidth() {
 		// TODO Auto-generated method stub
 		return 0;
@@ -102,33 +86,48 @@ public class H264Encoder implements VideoFrameEncoder {
 		return 0;
 	}
 	@Override
-	public ImagePalette getOutputPalette() {
+	public int apply(ByteBuffer src, ByteBuffer dst) throws au.edu.jcu.v4l4j.exceptions.BufferUnderflowException,
+			BufferOverflowException, IllegalArgumentException {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+	@Override
+	public int getConverterId() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+	@Override
+	public ImagePalette getSourceFormat() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 	@Override
-	public int getOutputWidth() {
+	public int estimateSourceLength() {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 	@Override
-	public int getOutputHeight() {
+	public ImagePalette getDestinationFormat() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public int getDestinationWidth() {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 	@Override
-	public int minimumSourceBufferLength() {
+	public int getDestinationHeight() {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 	@Override
-	public int minimumOutputBufferLength() {
+	public int estimateDestinationLength() {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 	@Override
-	public int minimumIntermediateBufferLength() {
-		// TODO Auto-generated method stub
+	public long getPointer() {
 		return 0;
 	}
 }
