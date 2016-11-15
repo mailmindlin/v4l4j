@@ -1,10 +1,10 @@
 
 #include <stdlib.h>
 #include "libv4lconvert-flat.h"
-#include "libv4lconvert-priv.h"
 #include "jpeg_memsrcdest.h"
 #include "types.h"
 #include "libvideo.h"
+#include "../log.h"
 
 #ifndef __LIBVIDEO_LIBV4LCONVERT_LIBV4LCONVERT_FLAT_CPP
 #define __LIBVIDEO_LIBV4LCONVERT_LIBV4LCONVERT_FLAT_CPP
@@ -50,8 +50,10 @@ extern "C" {
 	GENERATE_CONVERTER_SD_SF_2F(id + 2, (fn), (src_fmt_0), (dst_fmt_1), 0, 1),\
 	GENERATE_CONVERTER_SD_SF_2F(id + 3, (fn), (src_fmt_1), (dst_fmt_1), 1, 1)
 
-#define NUM_CONVERTERS 47
-v4lconvert_converter_t v4lconvert_converters[NUM_CONVERTERS] = {
+//Number of converters in array
+#define NUM_V4L_CONVERTERS 51
+//Very const
+static v4lconvert_converter_t const v4lconvert_converters[NUM_V4L_CONVERTERS] = {
 	GENERATE_CONVERTER_SD_SF_2F_x4(0, v4lconvert_rgb24_to_yuv420, RGB32, BGR32, YUV420, YVU420),
 	GENERATE_CONVERTER_SDWH_1F_x2(4, v4lconvert_yuv420_to_rgb24, YUV420, YVU420, RGB24, RGB24),
 	GENERATE_CONVERTER_SDWH_1F_x2(6, v4lconvert_yuv420_to_bgr24, YUV420, YVU420, BGR24, BGR24),
@@ -125,6 +127,7 @@ static u32 v4lconvert_encoder_applyIMF_sdwh(struct v4lconvert_encoder* self, con
 static u32 v4lconvert_encoder_applyIMF_sd_sf(struct v4lconvert_encoder* self, const u8* src, u8* dst, u32 src_len);
 static u32 v4lconvert_encoder_encodePixelJPEG(struct v4lconvert_encoder* self, const u8* src, u8* dst, u32 src_len);
 static u32 v4lconvert_encoder_encodePlanarJPEG(struct v4lconvert_encoder* self, const u8* src, u8* dst, u32 src_len);
+
 static int v4lconvert_encoder_releaseIMF(struct v4lconvert_encoder* self);
 static int v4lconvert_encoder_releaseJPEG(struct v4lconvert_encoder* self);
 static u32 v4lconvert_encoder_series_doConvert(struct v4lconvert_encoder_series* self, struct v4lconvert_buffer* buffer);
@@ -133,9 +136,9 @@ static inline int computeEncoderPath(unsigned int* map, unsigned int* distances,
 
 static u32 v4lconvert_encoder_applyIMF_sdwh(struct v4lconvert_encoder* self, const u8* src, u8* dst, u32 src_len) {
 	UNUSED(src_len);
-	struct v4lconvert_converter* converter = self->converter;
-	u32 width = self->imf_params.width;
-	u32 height = self->imf_params.height;
+	v4lconvert_converter_t* converter = self->converter;
+	const u32 width = self->src_width;
+	const u32 height = self->src_height;
 	switch (converter->signature) {
 		case v4lconvert_conversion_signature_sdwh_0f:
 			(*converter->target.cvt_sdwh_0f)(src, dst, width, height);
@@ -155,7 +158,7 @@ static u32 v4lconvert_encoder_applyIMF_sdwh(struct v4lconvert_encoder* self, con
 static u32 v4lconvert_encoder_applyIMF_sd_sf(struct v4lconvert_encoder* self, const u8* src, u8* dst, u32 src_len) {
 	UNUSED(src_len);
 	v4lconvert_converter_t* converter = self->converter;
-	struct v4l2_format* src_fmt = self->imf_v4l2_params.v4l_src_fmt;
+	struct v4l2_format* src_fmt = self->imf_v4l2_src_fmt;
 	switch (converter->signature) {
 		case v4lconvert_conversion_signature_sd_sf_0f:
 			converter->target.cvt_sd_sf_0f(src, dst, src_fmt);
@@ -176,20 +179,20 @@ static u32 v4lconvert_encoder_applyIMF_sd_sf(struct v4lconvert_encoder* self, co
  * v4lconvert_encoder::apply method for encoding pixel formats to JPEG.
  */
 static u32 v4lconvert_encoder_encodePixelJPEG(struct v4lconvert_encoder* self, const u8* src, u8* dst, u32 src_len) {
-	struct jpeg_compress_struct* cinfo = &(self->jpeg_encode_params.cinfo);
+	struct jpeg_compress_struct* cinfo = self->jpeg_encode_params.cinfo;
 	if (!cinfo)
 		return 0;
 	jpeg_set_quality(cinfo, self->jpeg_encode_params.quality, TRUE);
 	
 	// Configure the output to write to the destination buffer
-	cinfo->dest->next_output_byte = dst;
-	cinfo->dest->free_in_buffer = self->dst_len;
+	unsigned long dst_lencpy = (unsigned long) self->dst_len;
+	jpeg_mem_dest(cinfo, &dst, &dst_lencpy);
 	
 	jpeg_start_compress(cinfo, TRUE);
 	
-	JSAMPROW row_ptr[1];
-	u32 row_stride  = self->jpeg_encode_params.row_stride;
-	u32 height = self->jpeg_encode_params.height;
+	const JSAMPLE* row_ptr;
+	const u32 row_stride  = self->jpeg_encode_params.row_stride;
+	const u32 height = self->src_height;
 	#ifdef SANITY_CHECK
 		u32 max_scanline = src_len / row_stride;
 	#else
@@ -202,19 +205,21 @@ static u32 v4lconvert_encoder_encodePixelJPEG(struct v4lconvert_encoder* self, c
 				return 0;
 			}
 		#endif
-		row_ptr[0] = src + cinfo->next_scanline * row_stride;
-		jpeg_write_scanlines(cinfo, row_ptr, 1);
+		row_ptr = src + cinfo->next_scanline * row_stride;
+		jpeg_write_scanlines(cinfo, (JSAMPARRAY) &row_ptr, 1);
 	}
 	
 	//Finish compressing the JPEG
 	jpeg_finish_compress(cinfo);
+	
+	//info("G %u, %u, %u\n", self->dst_len, dst_lencpy, cinfo->dest->free_in_buffer);
 	
 	// Calculate the length of the resulting JPEG
 	return self->dst_len - cinfo->dest->free_in_buffer;
 }
 
 static u32 v4lconvert_encoder_encodePlanarJPEG(struct v4lconvert_encoder* self, const u8* src, u8* dst, u32 src_len) {
-	struct jpeg_compress_struct* cinfo = &(self->jpeg_encode_params.cinfo);
+	struct jpeg_compress_struct* cinfo = self->jpeg_encode_params.cinfo;
 	if (!cinfo)
 		return 0;
 	
@@ -240,8 +245,10 @@ static int v4lconvert_encoder_releaseIMF(struct v4lconvert_encoder* self) {
 		case v4lconvert_conversion_signature_sd_sf_0f:
 		case v4lconvert_conversion_signature_sd_sf_1f:
 		case v4lconvert_conversion_signature_sd_sf_2f:
-			free(self->imf_v4l2_params.v4l_src_fmt);
-			self->imf_v4l2_params.v4l_src_fmt = NULL;
+			if (self->imf_v4l2_src_fmt) {
+				free(self->imf_v4l2_src_fmt);
+				self->imf_v4l2_src_fmt = NULL;
+			}
 			return EXIT_SUCCESS;
 		default:
 			return EXIT_FAILURE;
@@ -249,7 +256,15 @@ static int v4lconvert_encoder_releaseIMF(struct v4lconvert_encoder* self) {
 }
 
 static int v4lconvert_encoder_releaseJPEG(struct v4lconvert_encoder* self) {
-	jpeg_destroy_compress(&self->jpeg_encode_params.cinfo);
+	if (self->jpeg_encode_params.cinfo) {
+		jpeg_destroy_compress(self->jpeg_encode_params.cinfo);
+		free(self->jpeg_encode_params.cinfo);
+		self->jpeg_encode_params.cinfo = NULL;
+	}
+	if (self->jpeg_encode_params.cerr) {
+		free(self->jpeg_encode_params.cerr);
+		self->jpeg_encode_params.cerr = NULL;
+	}
 	return EXIT_SUCCESS;
 }
 
@@ -313,47 +328,76 @@ u32 v4lconvert_estimateBufferSize(u32 fmt, u32 width, u32 height) {
 }
 
 int v4lconvert_encoder_initWithConverter(struct v4lconvert_encoder* encoder, v4lconvert_converter_t* converter, u32 width, u32 height) {
+	if (!encoder || !converter)
+		return EXIT_FAILURE;
 	encoder->converter = converter;
 	encoder->src_fmt = converter->src_fmt;
 	encoder->dst_fmt = converter->dst_fmt;
+	encoder->src_width = width;
+	encoder->src_height = height;
+	//Not necessarily true, but the default
+	encoder->dst_width = width;
+	encoder->dst_height = height;
 	
 	switch (converter->signature) {
 		case v4lconvert_conversion_signature_unset:
 			break;
 		case v4lconvert_conversion_signature_sdwh_0f:
-			encoder->imf_params.width = width;
-			encoder->imf_params.height = width;
 			encoder->apply = v4lconvert_encoder_applyIMF_sdwh;
 			encoder->release = v4lconvert_encoder_releaseIMF;
 			break;
 		case v4lconvert_conversion_signature_sd_sf_0f:
 		case v4lconvert_conversion_signature_sd_sf_1f:
 		case v4lconvert_conversion_signature_sd_sf_2f:
-			if (!(encoder->imf_v4l2_params.v4l_src_fmt = malloc(sizeof(struct v4l2_format)))) {
-				free(encoder->imf_v4l2_params.v4l_src_fmt);
-				return EXIT_FAILURE;
-			}
-			//TODO finish
 			encoder->apply = v4lconvert_encoder_applyIMF_sd_sf;
 			encoder->release = v4lconvert_encoder_releaseIMF;
+			if (!(encoder->imf_v4l2_src_fmt = malloc(sizeof(struct v4l2_format))))
+				return EXIT_FAILURE;
+			//TODO finish
+			switch (encoder->imf_v4l2_src_fmt->type) {
+				case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+					encoder->imf_v4l2_src_fmt->fmt.pix.width = width;
+					encoder->imf_v4l2_src_fmt->fmt.pix.height = height;
+					break;
+				case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+					encoder->imf_v4l2_src_fmt->fmt.pix_mp.width = width;
+					encoder->imf_v4l2_src_fmt->fmt.pix_mp.height = height;
+					break;
+				case V4L2_BUF_TYPE_VIDEO_OVERLAY:
+				case V4L2_BUF_TYPE_VBI_CAPTURE:
+				case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
+					//Not sure how to handle these
+				default:
+					return EXIT_FAILURE;
+			}
 			break;
 		case v4lconvert_conversion_signature_special:
 			//This gets tricky
 			if (converter->dst_fmt == JPEG) {
-				encoder->release = v4lconvert_encoder_releaseJPEG;
-				encoder->apply = v4lconvert_encoder_encodePixelJPEG;
 				//JPEG encoder
+				encoder->apply = v4lconvert_encoder_encodePixelJPEG;
+				encoder->release = v4lconvert_encoder_releaseJPEG;
+				
+				//Default to quality of 100%
 				encoder->jpeg_encode_params.quality = 100;
-				struct jpeg_compress_struct* cinfo = &(encoder->jpeg_encode_params.cinfo);
+				
+				//Create jpeg encoder
+				if (!(encoder->jpeg_encode_params.cinfo = malloc(sizeof(struct jpeg_compress_struct))))
+					return EXIT_FAILURE;
+				
+				if (!(encoder->jpeg_encode_params.cerr = malloc(sizeof(struct jpeg_error_mgr)))) {
+					free(encoder->jpeg_encode_params.cinfo);
+					return EXIT_FAILURE;
+				}
+				
+				struct jpeg_compress_struct* cinfo = encoder->jpeg_encode_params.cinfo;
 				//Initialize the error buffer
-				cinfo->err = jpeg_std_error(&(encoder->jpeg_encode_params.cerr));
+				cinfo->err = jpeg_std_error(encoder->jpeg_encode_params.cerr);
 				//Initialize the compressor
 				jpeg_create_compress(cinfo);
 				//Set the image dimensions
 				cinfo->image_width = width;
 				cinfo->image_height = height;
-				encoder->jpeg_encode_params.width = width;
-				encoder->jpeg_encode_params.height = height;
 				switch (converter->src_fmt) {
 					case GREY:
 						cinfo->input_components = 1;
@@ -368,12 +412,13 @@ int v4lconvert_encoder_initWithConverter(struct v4lconvert_encoder* encoder, v4l
 						jpeg_set_defaults(cinfo);
 						break;
 					case YUV420:
+						//Different apply method
 						encoder->apply = v4lconvert_encoder_encodePlanarJPEG;
 						cinfo->input_components = 3;
 						encoder->jpeg_encode_params.row_stride = width * 3;
 						jpeg_set_defaults(cinfo);
 						jpeg_set_colorspace(cinfo, JCS_YCbCr);
-						cinfo->raw_data_in = TRUE; // supply downsampled data
+						cinfo->raw_data_in = TRUE; // Supply downsampled data
 						cinfo->comp_info[0].v_samp_factor = 2;
 						cinfo->comp_info[0].h_samp_factor = 2;
 						// cinfo->comp_info[0].v_samp_factor set below depending on source format
@@ -391,6 +436,7 @@ int v4lconvert_encoder_initWithConverter(struct v4lconvert_encoder* encoder, v4l
 			} else {
 				return EXIT_FAILURE;
 			}
+			break;
 		default:
 			return EXIT_FAILURE;
 	}
@@ -458,10 +504,10 @@ static u32 v4lconvert_encoder_series_doConvert(struct v4lconvert_encoder_series*
 		return 0;
 	for (unsigned int i = 1; i < (self->num_encoders / 2) * 2; i++) {
 		encoder = self->encoders[i];
-		if ((src_len = encoder->apply(encoder, bufA, bufB, src_len)) <= 0)
+		if ((src_len = encoder->apply(encoder, bufA, bufB, src_len)) == 0)
 			return 0;
 		encoder = self->encoders[++i];
-		if ((src_len = encoder->apply(encoder, bufB, bufA, src_len)) <= 0)
+		if ((src_len = encoder->apply(encoder, bufB, bufA, src_len)) == 0)
 			return 0;
 	}
 	if (self->num_encoders & 1)
@@ -557,7 +603,7 @@ static inline int computeEncoderPath(unsigned int* map, unsigned int* distances,
 	// Works backwards from the 'to' format to the 'from' format
 	for (unsigned int i = 0; i < maxIterations; i++) {
 		int progress = 0;
-		for (unsigned int j = 0; j < NUM_CONVERTERS; j++) {
+		for (unsigned int j = 0; j < NUM_V4L_CONVERTERS; j++) {
 			v4lconvert_converter_t* converter = &(v4lconvert_converters[j]);
 			unsigned int distanceTo = distances[converter->dst_fmt];
 			if (distanceTo < 1)
@@ -599,13 +645,25 @@ int v4lconvert_encoder_series_computeConversion(struct v4lconvert_encoder_series
 	free(distances);
 	free(map);
 	
+	#if defined(DEBUG) || true
+		dprint(LIBVIDEO_LOG_SOURCE, LIBVIDEO_LOG_DEBUG, "Computed conversion path from %d to %d (len %d): %d", from, to, distance, route[0]);
+		for (unsigned i = 1; i < distance; i++)
+			dprint(LIBVIDEO_LOG_SOURCE, LIBVIDEO_LOG_DEBUG, " => %d", route[i]);
+		dprint(LIBVIDEO_LOG_SOURCE, LIBVIDEO_LOG_DEBUG, "\nFormats: %s", libvideo_palettes[route[0].src_fmt].name);
+		for (unsigned i = 0; i < distance; i++)
+			dprint(LIBVIDEO_LOG_SOURCE, LIBVIDEO_LOG_DEBUG, " => %s", libvideo_palettes[route[i].dst_fmt].name);
+		dprint(LIBVIDEO_LOG_SOURCE, LIBVIDEO_LOG_DEBUG, "\n");
+	#endif
+	
 	//Now initialize the encoder series with the route just computed
 	int result = v4lconvert_encoder_series_init(self, width, height, distance, route);
 	free(route);
 	return result;
 }
 
-v4lconvert_converter_t* v4lconvert_converter_getConverterById(u32 converterId) {
+v4lconvert_converter_t* v4lconvert_converter_getConverterById(unsigned int converterId) {
+	if (converterId > NUM_V4L_CONVERTERS)
+		return NULL;
 	return &(v4lconvert_converters[converterId]);
 }
 
@@ -616,7 +674,7 @@ int v4lconvert_converter_lookupConverterByConversion(u32 from, u32 to) {
 	v4lconvert_converter_t* converter;
 	
 	//TODO use better lookup algorithm than O(n)
-	for (int i = 0; i < NUM_CONVERTERS; i++) {
+	for (int i = 0; i < NUM_V4L_CONVERTERS; i++) {
 		converter = &(v4lconvert_converters[i]);
 		if ((converter->src_fmt == from) && (converter->dst_fmt == to))
 			return i;
@@ -629,7 +687,7 @@ int v4lconvert_converter_lookupConverterByConversion(u32 from, u32 to) {
  */
 v4lconvert_converter_t* v4lconvert_converter_getConverterByConversion(u32 from, u32 to) {
 	//TODO use better lookup algorithm than O(n)
-	for (int i = 0; i < NUM_CONVERTERS; i++) {
+	for (int i = 0; i < NUM_V4L_CONVERTERS; i++) {
 		v4lconvert_converter_t* converter = &(v4lconvert_converters[i]);
 		if ((converter->src_fmt == from) && (converter->dst_fmt == to))
 			return converter;
