@@ -104,6 +104,8 @@ void v4lconvert_yuv420_to_rgb24(const u8 *src, u8 *dst, u32 width, u32 height, i
 
 void v4lconvert_yuv420_to_bgr24(const u8 *src, u8 *dst, u32 width, u32 height, int yvu);
 
+void v4lconvert_cvt_yuv420_to_bgr24(const u8 *ysrc, const u8* usrc, const u8* vsrc, u8 *dest, u32 width, u32 height);
+
 void v4lconvert_yuyv_to_rgb24(const u8 *src, u8 *dst, u32 width, u32 height);
 
 void v4lconvert_yuyv_to_bgr24(const u8 *src, u8 *dst, u32 width, u32 height);

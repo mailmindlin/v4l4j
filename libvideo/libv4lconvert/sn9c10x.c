@@ -26,10 +26,10 @@
 #define CLAMP(x)	(u8) ((x) < 0 ? 0 : ((x) > 255) ? 255 : (x))
 
 struct code_table {
-	int is_abs;
-	int len;
-	int val;
-	int unk;
+	bool is_abs;
+	unsigned int len;
+	signed int val;
+	bool unk;
 };
 
 
@@ -47,16 +47,12 @@ static int init_done;
    present at the MSB of byte x.
 
  */
-static void sonix_decompress_init(void)
-{
-	int i;
-	int is_abs, val, len, unk;
-
-	for (i = 0; i < 256; i++) {
-		is_abs = 0;
-		val = 0;
-		len = 0;
-		unk = 0;
+static void sonix_decompress_init(void) {
+	for (unsigned int i = 0; i < 256; i++) {
+		bool is_abs = FALSE;
+		signed int val = 0;
+		unsigned int len = 0;
+		bool unk = FALSE;
 		if ((i & 0x80) == 0) {
 			/* code 0 */
 			val = 0;
@@ -89,10 +85,10 @@ static void sonix_decompress_init(void)
 			/* code 110001xx: unknown */
 			val = 0;
 			len = 8;
-			unk = 1;
+			unk = TRUE;
 		} else if ((i & 0xF0) == 0xE0) {
 			/* code 1110xxxx */
-			is_abs = 1;
+			is_abs = TRUE;
 			val = (i & 0x0F) << 4;
 			len = 8;
 		}
@@ -121,38 +117,33 @@ static void sonix_decompress_init(void)
 
  */
 void v4lconvert_decode_sn9c10x(const u8 *inp, u8 *outp, u32 width, u32 height) {
-	unsigned int row, col;
-	int val;
-	int bitpos;
-	u8 code;
-	const u8 *addr;
-
 	if (!init_done)
 		sonix_decompress_init();
 
-	bitpos = 0;
-	for (row = 0; row < height; row++) {
-		col = 0;
+	unsigned int bitpos = 0;
+	for (unsigned int row = 0; row < height; row++) {
+		unsigned int col = 0;
 
 		/* first two pixels in first two rows are stored as raw 8-bit */
 		if (row < 2) {
-			addr = inp + (bitpos >> 3);
-			code = (addr[0] << (bitpos & 7)) | (addr[1] >> (8 - (bitpos & 7)));
+			const u8* addr = &inp[bitpos / 8];
+			const u8 shift = bitpos & 7;
+			u8 code = (u8) ((addr[0] << shift) | (addr[1] >> (8 - shift)));
 			bitpos += 8;
 			*outp++ = code;
 
-			addr = inp + (bitpos >> 3);
-			code = (addr[0] << (bitpos & 7)) | (addr[1] >> (8 - (bitpos & 7)));
+			addr = &inp[bitpos / 8];
+			code = (u8) ((addr[0] << shift) | (addr[1] >> (8 - shift)));
 			bitpos += 8;
 			*outp++ = code;
 
 			col += 2;
 		}
-
-		while (col < width) {
+		
+		for (; col < width; col++) {
 			/* get bitcode from bitstream */
-			addr = inp + (bitpos >> 3);
-			code = (addr[0] << (bitpos & 7)) | (addr[1] >> (8 - (bitpos & 7)));
+			const u8* addr = &inp[bitpos / 3];
+			u8 code = (u8) ((addr[0] << (bitpos & 7)) | (addr[1] >> (8 - (bitpos & 7))));
 
 			/* update bit position */
 			bitpos += table[code].len;
@@ -163,18 +154,18 @@ void v4lconvert_decode_sn9c10x(const u8 *inp, u8 *outp, u32 width, u32 height) {
 				continue;
 
 			/* calculate pixel value */
-			val = table[code].val;
+			int val = table[code].val;
 			if (!table[code].is_abs) {
 				/* value is relative to top and left pixel */
 				if (col < 2) {
 					/* left column: relative to top pixel */
-					val += outp[-2 * width];
+					val += outp[-2 * (signed) width];
 				} else if (row < 2) {
 					/* top row: relative to left pixel */
 					val += outp[-2];
 				} else {
 					/* main area: average of left pixel and top pixel */
-					val += (outp[-2] + outp[-2 * width]) / 2;
+					val += (outp[-2] + outp[-2 * (signed) width]) / 2;
 				}
 			}
 
