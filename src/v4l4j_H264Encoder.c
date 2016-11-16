@@ -21,7 +21,7 @@ static jclass getH264EncoderClass(JNIEnv* env, jobject self) {
 	}
 }
 
-static x264_t* getPointer(JNIEnv* env, jobject self) {
+static inline x264_t* getPointer(JNIEnv* env, jobject self) {
 	if (H264Encoder_object_fid == NULL) {
 		if ((H264Encoder_object_fid = (*env)->GetFieldID(env, getH264EncoderClass(env, self), "object", "J")) == NULL) {
 			info("[V4L4J] Error looking up the object fieldID of H264Encoder\n");

@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "debug.h"
+#include "jniutils.h"
 
 inline jmethodID lookupAddMethod(JNIEnv *env, jobject list) {
 	jclass listClass = (*env)->GetObjectClass(env, list);
@@ -30,6 +31,21 @@ inline jclass lookupClassSafe(JNIEnv *env, jobject obj) {
 	return result;
 }
 
+static void __doReleaseDirectBuffer(JNIEnv* env, jbyteArray* arrayRef, unsigned char* ptr) {
+	//Suppress unused parameter warning messages
+	(void)(env);
+	(void)(arrayRef);
+	(void)(ptr);
+	//NOP
+	dprint(LOG_V4L4J, "Releasing direct pointer\n");
+}
+
+static void __doReleaseArray(JNIEnv* env, jbyteArray* arrayRef, unsigned char* ptr) {
+	dprint(LOG_V4L4J, "Releasing array ref\n");
+	(*env)->ReleaseByteArrayElements(env, arrayRef, ptr, 0);
+	(*env)->DeleteLocalRef(arrayRef);
+}
+
 /**
  * Get a pointer from a buffer, whether direct or not.
  * @param env the JNI environment for this thread
@@ -37,13 +53,15 @@ inline jclass lookupClassSafe(JNIEnv *env, jobject obj) {
  * @param arrayRef If not null, will be set to NULL if a direct pointer can be recieved, else the array that is backing the returned pointer
  * @param len If not null, will be set to the length of the returned pointer, in bytes.
  */
-inline unsigned char* getBufferPointer(JNIEnv *env, jobject buffer, jbyteArray* arrayRef, unsigned int* len) {
+inline unsigned char* getBufferPointer(JNIEnv *env, jobject buffer, jbyteArray* arrayRef, unsigned int* len, void (*release)(JNIEnv* env, jbyteArray* arrayRef, unsigned char* ptr)) {
 	unsigned char* result = (*env)->GetDirectBufferAddress(env, buffer);
 	if (result) {
 		if (arrayRef)
 			*arrayRef = NULL;
 		if (len)
 			*len = (*env)->GetDirectBufferCapacity(env, buffer);
+		if (release)
+			*release = __doReleaseDirectBuffer;
 		return result;
 	}
 	if ((*env)->ExceptionCheck(env))
@@ -89,6 +107,8 @@ inline unsigned char* getBufferPointer(JNIEnv *env, jobject buffer, jbyteArray* 
 		*len = (*env)->GetArrayLength(env, array);
 	if (arrayRef)
 		*arrayRef = array;
+	if (release)
+		*release = __doReleaseArray;
 	return (unsigned char*) arrayElements;
 }
 /**

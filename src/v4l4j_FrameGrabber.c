@@ -241,12 +241,11 @@ static int init_capture_format(struct v4l4j_device *d, int fg_out_fmt, int* src_
  */
 static int get_lastFrame_field_ids(JNIEnv *e, jobject this, struct v4l4j_device *d){
 	LOG_FN_ENTER();
-	jclass this_class;
-
+	
 	//gets the fields of members updated every frame captured.
-	this_class = (*e)->GetObjectClass(e, this);
+	jclass this_class = (*e)->GetObjectClass(e, this);
 	if(this_class == NULL) {
-		THROW_EXCEPTION(e, JNI_EXCP, "error looking up FrameGrabber class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up FrameGrabber class");
 		return 0;
 	}
 
@@ -386,7 +385,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_start(JNIEnv *e, jo
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
 	dprint(LOG_LIBVIDEO, "[LIBVIDEO] Calling 'start_capture(dev: %s)'\n", d->vdev->file);
-	if((*d->vdev->capture->actions->start_capture)(d->vdev) < 0){
+	if((*d->vdev->capture->actions->start_capture)(d->vdev) < 0) {
 		dprint(LOG_V4L4J, "[V4L4J] start_capture failed\n");
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error starting the capture");
 	}
@@ -524,22 +523,19 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 	}
 
 	// get a pointer to the java array
-	jboolean isCopy;
-	jbyteArray arrayRef;
-	unsigned int arrayLength;
-	u8* array = getBufferPointer(env, buffer, &arrayRef, &arrayLength);
-	if (*arrayRef != NULL)
-		dprintf(LOG_V4L4J, "[V4L4J] Slow path: Can't get a direct pointer to buffer");
-	unsigned char* array = (*e)->GetPrimitiveArrayCritical(e, byteArray, &isCopy);
-	if (isCopy == JNI_TRUE)
-		dprintf(LOG_V4L4J, "[V4L4J] Slow path: can't get direct pointer to byte array\n");
-	
+	jbyteArray arrayRef = NULL;
+	unsigned int arrayLength = NULL;
+	void (*releaseArray)(JNIEnv* env, jbyteArray* arrayRef, unsigned char* ptr);
+	unsigned char* array = getBufferPointer(env, buffer, &arrayRef, &arrayLength, releaseArray);	
 	// check we have a valid pointer
 	if (!array) {
 		(*d->vdev->capture->actions->enqueue_buffer)(d->vdev, buffer_index);
 		THROW_EXCEPTION(e, GENERIC_EXCP, "Error getting the byte array");
 		return 0;
 	}
+	
+	if (arrayRef != NULL)
+		dprintf(LOG_V4L4J, "[V4L4J] Slow path: Can't get a direct pointer to buffer");
 
 	START_TIMING;
 	// Perform required conversion
@@ -570,10 +566,10 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 		}
 	}
 	END_TIMING("JNI Conversion took ");
-
+	
 	// release pointer to java byte array
-	(*e)->ReleasePrimitiveArrayCritical(e, byteArray, array, 0);
-
+	releaseArray(env, arrayRef, array);
+	
 	// update class members
 	(*e)->SetLongField(e, this, last_captured_frame_sequence_fID, sequence);
 	(*e)->SetLongField(e, this, last_captured_frame_time_usec_fID, captureTime);
