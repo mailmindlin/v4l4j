@@ -91,27 +91,15 @@ enum std_markers {
 
 
 #if 0
-static char *print_bits(unsigned int value, char *bitstr)
-{
-	int i, j;
-
-	i = 31;
-	while (i > 0) {
-		if (value & (1UL << i))
-			break;
-		i--;
-	}
-	j = 0;
-	while (i >= 0) {
-		bitstr[j++] = (value & (1UL << i)) ? '1' : '0';
-		i--;
-	}
-	bitstr[j] = 0;
+static char *print_bits(unsigned int value, char *bitstr) {
+	char* cpy = bitstr;
+	for (unsigned int i = 31 - __builtin_clz(value); i >= 0; i--)
+		*cpy++ = (value & (1ul << i)) ? '1' : '0';
+	*cpy = 0;
 	return bitstr;
 }
 
-static void print_next_16bytes(int offset, const u8 *stream)
-{
+static void print_next_16bytes(int offset, const u8 *stream) {
 	trace("%4.4x: %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x\n",
 			offset,
 			stream[0], stream[1], stream[2], stream[3],
