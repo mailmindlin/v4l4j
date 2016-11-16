@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import au.edu.jcu.v4l4j.ImagePalette;
 import au.edu.jcu.v4l4j.encoder.VideoFrameTransformer;
 import au.edu.jcu.v4l4j.exceptions.BufferOverflowException;
+import au.edu.jcu.v4l4j.exceptions.BufferUnderflowException;
 
 public class H264Encoder implements VideoFrameTransformer {
 	
@@ -28,8 +29,8 @@ public class H264Encoder implements VideoFrameTransformer {
 	 * @return pointer to allocated memory
 	 */
 	protected native long doInit(long params);
-	protected native long doGetParams();
-	protected native void doSetParams(long pointer);
+	protected native long doGetParams(long object);
+	protected native void doSetParams(long object, long pointer);
 	
 	@Override
 	public native void close() throws Exception;
@@ -51,17 +52,18 @@ public class H264Encoder implements VideoFrameTransformer {
 			params.setRepeatHeaders(true);
 			params.setAnnexb(true);
 			params.applyProfile(X264.Profile.HIGH);
-		
+			
 			this.object = doInit(params.object);
 		}
-		buffer = ByteBuffer.allocate(width * height * 3);
+		this.buffer = ByteBuffer.allocate(width * height * 3);
 	}
+	
 	public H264Encoder(H264Parameters params) {
 		this.csp = params.getCsp();
 		this.object = doInit(params.object);
 		int width = params.getWidth();
 		int height = params.getHeight();
-		buffer = ByteBuffer.allocateDirect(width * height * 3);//TODO better buffer size
+		this.buffer = ByteBuffer.allocateDirect(width * height * 3);//TODO better buffer size
 	}
 
 	/**
@@ -69,65 +71,70 @@ public class H264Encoder implements VideoFrameTransformer {
 	 * @return parameters
 	 */
 	public H264Parameters getParameters() {
-		return new H264Parameters(this.doGetParams());
+		return new H264Parameters(this.doGetParams(this.object));
 	}
 	
 	public void setParameters(H264Parameters params) {
-		this.doSetParams(params.object);
+		this.doSetParams(this.object, params.object);
 	}
+	
 	@Override
 	public int getSourceWidth() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.getParameters().getWidth();
 	}
+	
 	@Override
 	public int getSourceHeight() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.getParameters().getHeight();
 	}
+	
 	@Override
-	public int apply(ByteBuffer src, ByteBuffer dst) throws au.edu.jcu.v4l4j.exceptions.BufferUnderflowException,
-			BufferOverflowException, IllegalArgumentException {
+	public int apply(ByteBuffer src, ByteBuffer dst) throws BufferUnderflowException, BufferOverflowException, IllegalArgumentException {
 		// TODO Auto-generated method stub
 		return 0;
 	}
+	
 	@Override
 	public int getConverterId() {
-		// TODO Auto-generated method stub
-		return 0;
+		//Not applicable
+		return -1;
 	}
+	
 	@Override
 	public ImagePalette getSourceFormat() {
-		// TODO Auto-generated method stub
 		return null;
 	}
+	
 	@Override
 	public int estimateSourceLength() {
 		// TODO Auto-generated method stub
-		return 0;
+		return -1;
 	}
+	
 	@Override
 	public ImagePalette getDestinationFormat() {
-		// TODO Auto-generated method stub
-		return null;
+		return ImagePalette.OTHER_KNOWN;
 	}
+	
 	@Override
 	public int getDestinationWidth() {
-		// TODO Auto-generated method stub
-		return 0;
+		return getSourceWidth();
 	}
+	
 	@Override
 	public int getDestinationHeight() {
-		// TODO Auto-generated method stub
-		return 0;
+		return getSourceHeight();
 	}
+	
 	@Override
 	public int estimateDestinationLength() {
 		// TODO Auto-generated method stub
-		return 0;
+		return -1;
 	}
+	
 	@Override
 	public long getPointer() {
+		//Even though we have a pointer, it's not to a v4lconvert_encoder
 		return 0;
 	}
 }

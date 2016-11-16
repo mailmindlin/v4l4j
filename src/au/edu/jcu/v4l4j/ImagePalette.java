@@ -207,7 +207,13 @@ public enum ImagePalette {
 	 * Use {@value #YUV411P}
 	 */
 	@Deprecated
-	YUV411(16, 77);
+	YUV411(16, 77),
+	/**
+	 * A known format that isn't on this list.
+	 * Contrasts with null, which should be returned for unknown formats
+	 * that are may be on this list.
+	 */
+	OTHER_KNOWN(-1, -1);
 	
 	public static ImagePalette lookup(int palette) {
 		if (palette < 0 || palette > ImagePalette.values().length) {
