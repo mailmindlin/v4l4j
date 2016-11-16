@@ -177,6 +177,7 @@ static u32 v4lconvert_encoder_applyIMF_sd_sf(struct v4lconvert_encoder* self, co
 
 /**
  * v4lconvert_encoder::apply method for encoding pixel formats to JPEG.
+ * e.g, RGB or GREY
  */
 static u32 v4lconvert_encoder_encodePixelJPEG(struct v4lconvert_encoder* self, const u8* src, u8* dst, u32 src_len) {
 	struct jpeg_compress_struct* cinfo = self->jpeg_encode_params.cinfo;
@@ -212,8 +213,6 @@ static u32 v4lconvert_encoder_encodePixelJPEG(struct v4lconvert_encoder* self, c
 	//Finish compressing the JPEG
 	jpeg_finish_compress(cinfo);
 	
-	//info("G %u, %u, %u\n", self->dst_len, dst_lencpy, cinfo->dest->free_in_buffer);
-	
 	// Calculate the length of the resulting JPEG
 	return self->dst_len - cinfo->dest->free_in_buffer;
 }
@@ -225,13 +224,15 @@ static u32 v4lconvert_encoder_encodePlanarJPEG(struct v4lconvert_encoder* self, 
 	
 	jpeg_set_quality(cinfo, self->jpeg_encode_params.quality, TRUE);
 	
-	cinfo->dest->next_output_byte = dst;
-	cinfo->dest->free_in_buffer = self->dst_len;
+	// Configure the output to write to the destination buffer
+	unsigned long dst_lencpy = (unsigned long) self->dst_len;
+	jpeg_mem_dest(cinfo, &dst, &dst_lencpy);
 	
-	//TODO finish
-	//jpeg_start_compress(cinfo, TRUE);
+	jpeg_start_compress(cinfo, TRUE);
 	
-	//jpeg_finish_compress(cinfo);
+	//TODO fix
+	
+	jpeg_finish_compress(cinfo);
 	return 0;
 }
 
@@ -412,6 +413,10 @@ int v4lconvert_encoder_initWithConverter(struct v4lconvert_encoder* encoder, v4l
 						jpeg_set_defaults(cinfo);
 						break;
 					case YUV420:
+					case YUYV:
+					case YVYU:
+					case UYVY:
+					case VYUY:
 						//Different apply method
 						encoder->apply = v4lconvert_encoder_encodePlanarJPEG;
 						cinfo->input_components = 3;
@@ -419,7 +424,7 @@ int v4lconvert_encoder_initWithConverter(struct v4lconvert_encoder* encoder, v4l
 						jpeg_set_defaults(cinfo);
 						jpeg_set_colorspace(cinfo, JCS_YCbCr);
 						cinfo->raw_data_in = TRUE; // Supply downsampled data
-						cinfo->comp_info[0].v_samp_factor = 2;
+						cinfo->comp_info[0].v_samp_factor = converter->src_fmt == YUV420 ? 2 : 1;
 						cinfo->comp_info[0].h_samp_factor = 2;
 						// cinfo->comp_info[0].v_samp_factor set below depending on source format
 						cinfo->comp_info[1].h_samp_factor = 1;
