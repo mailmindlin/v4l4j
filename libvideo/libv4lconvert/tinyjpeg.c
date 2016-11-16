@@ -240,38 +240,36 @@ const u8 pixart_quantization[][64] = { {
  *                 result = (reservoir >> 15) & 3
  *
  */
-#define fill_nbits(reservoir, nbits_in_reservoir, stream, nbits_wanted) do { \
-	while (nbits_in_reservoir < nbits_wanted) { \
-		u8 c; \
-		if (stream >= priv->stream_end) { \
-			snprintf(priv->error_string, sizeof(priv->error_string), \
-					"fill_nbits error: need %u more bits\n", \
-					nbits_wanted - nbits_in_reservoir); \
-			longjmp(priv->jump_state, -EIO); \
-		} \
-		c = *stream++; \
-		reservoir <<= 8; \
-		if (c == 0xff && *stream == 0x00) \
-			stream++; \
-		reservoir |= c; \
-		nbits_in_reservoir += 8; \
-	} \
-}  while (0);
+static inline void fill_nbits(struct jdec_private *priv, unsigned int nbits_wanted) {
+	while (priv->nbits_in_reservoir < nbits_wanted) {
+		if (priv->stream >= priv->stream_end) {
+			snprintf(priv->error_string, sizeof(priv->error_string),
+					"fill_nbits error: need %u more bits\n",
+					nbits_wanted - priv->nbits_in_reservoir);
+			longjmp(priv->jump_state, -EIO);
+		}
+		u8 c = *priv->stream++;
+		priv->reservoir <<= 8;
+		if (c == 0xff && *priv->stream == 0x00)
+			priv->stream++;
+		priv->reservoir |= c;
+		priv->nbits_in_reservoir += 8;
+	}
+}
+static inline unsigned int get_nbits(struct jdec_private* priv, unsigned int nbits_wanted) {
+	fill_nbits(priv, nbits_wanted);
+	unsigned int result = priv->reservoir >> (priv->nbits_in_reservoir - nbits_wanted);
+	priv->nbits_in_reservoir -= nbits_wanted;
+	priv->reservoir &= ((1U << priv->nbits_in_reservoir) - 1);
+	if (result < (1UL << (nbits_wanted - 1)))
+		result += (0xFFFFFFFFUL << nbits_wanted) + 1;
+	return result;
+}
 
-/* Signed version !!!! */
-#define get_nbits(reservoir, nbits_in_reservoir, stream, nbits_wanted, result) do { \
-	fill_nbits(reservoir, nbits_in_reservoir, stream, (nbits_wanted)); \
-	result = ((reservoir) >> (nbits_in_reservoir - (nbits_wanted))); \
-	nbits_in_reservoir -= (nbits_wanted);  \
-	reservoir &= ((1U << nbits_in_reservoir) - 1); \
-	if ((unsigned int)result < (1UL << ((nbits_wanted) - 1))) \
-		result += (0xFFFFFFFFUL << (nbits_wanted)) + 1; \
-}  while (0);
-
-#define look_nbits(reservoir, nbits_in_reservoir, stream, nbits_wanted, result) do { \
-	fill_nbits(reservoir, nbits_in_reservoir, stream, (nbits_wanted)); \
-	result = ((reservoir) >> (nbits_in_reservoir - (nbits_wanted))); \
-}  while (0);
+static inline unsigned int look_nbits(struct jdec_private* priv, unsigned int nbits_wanted) {
+	fill_nbits(priv, nbits_wanted);
+	return priv->reservoir >> (priv->nbits_in_reservoir - nbits_wanted);
+}
 
 /* To speed up the decoding, we assume that the reservoir have enough bit
  * slow version:
@@ -281,10 +279,10 @@ const u8 pixart_quantization[][64] = { {
  *   reservoir &= ((1U << nbits_in_reservoir) - 1); \
  * }  while(0);
  */
-#define skip_nbits(reservoir, nbits_in_reservoir, stream, nbits_wanted) do { \
-	nbits_in_reservoir -= (nbits_wanted); \
-	reservoir &= ((1U << nbits_in_reservoir) - 1); \
-}  while (0);
+static inline void skip_nbits(struct jdec_private* priv, unsigned int nbits_wanted) {
+	priv->nbits_in_reservoir -= nbits_wanted;
+	priv->reservoir &= ((1U << priv->nbits_in_reservoir) - 1);
+}
 
 #define be16_to_cpu(x) (((x)[0] << 8) | (x)[1])
 
@@ -302,26 +300,25 @@ static void resync(struct jdec_private *priv);
  * If the code is not present for any reason, -1 is return.
  */
 static unsigned int get_next_huffman_code(struct jdec_private *priv, struct huffman_table *huffman_table) {
-	unsigned int hcode;
-	look_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, HUFFMAN_HASH_NBITS, hcode);
-	unsigned int value = (unsigned int) huffman_table->lookup[hcode];
+	unsigned int hcode = look_nbits(priv, HUFFMAN_HASH_NBITS);
+	int value = huffman_table->lookup[hcode];
 	if (value >= 0) {
 		unsigned int code_size = huffman_table->code_size[value];
-
-		skip_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, code_size);
-		return value;
+		skip_nbits(priv, code_size);
+		
+		return (unsigned) value;
 	}
 
 	/* Decode more bits each time ... */
 	for (unsigned int extra_nbits = 0; extra_nbits < 16 - HUFFMAN_HASH_NBITS; extra_nbits++) {
 		unsigned int nbits = HUFFMAN_HASH_NBITS + 1 + extra_nbits;
 
-		look_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, nbits, hcode);
+		hcode = look_nbits(priv, nbits);
 		uint16_t* slowtable = huffman_table->slowtable[extra_nbits];
 		/* Search if the code is in this array */
 		while (slowtable[0]) {
 			if (slowtable[0] == hcode) {
-				skip_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, nbits);
+				skip_nbits(priv, nbits);
 				return slowtable[1];
 			}
 			slowtable += 2;
@@ -348,7 +345,7 @@ static void process_Huffman_data_unit(struct jdec_private *priv, int component) 
 	/* DC coefficient decoding */
 	unsigned int huff_code = get_next_huffman_code(priv, c->DC_table);
 	if (huff_code) {
-		get_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, huff_code, DCT[0]);
+		DCT[0] = get_nbits(priv, huff_code);
 		DCT[0] += c->previous_DC;
 		c->previous_DC = DCT[0];
 	} else {
@@ -372,7 +369,7 @@ static void process_Huffman_data_unit(struct jdec_private *priv, int component) 
 		} else {
 			j += count_0;	/* skip count_0 zeroes */
 			if (j < 64) {
-				get_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, size_val, DCT[j]);
+				DCT[j] = get_nbits(priv, size_val);
 				j++;
 			}
 		}
@@ -1308,7 +1305,7 @@ static void pixart_decode_MCU_2x1_3planes(struct jdec_private *priv)
 				(unsigned int)marker);
 		longjmp(priv->jump_state, -EIO);
 	}
-	skip_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, 8);
+	skip_nbits(priv, 8);
 
 	// Y
 	process_Huffman_data_unit(priv, cY);
