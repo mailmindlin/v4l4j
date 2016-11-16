@@ -33,9 +33,10 @@
 #include "libvideo.h"
 #include "utils.h"
 
-#define info(format, ...) do { fprintf (stderr, "[ %s:%d ] " format,\
-									__FILE__, __LINE__, ## __VA_ARGS__);\
-								 fflush(stderr); } while(0)
+#define info(format, ...) do {\
+				fprintf (stderr, "[ %s:%d ] " format, __FILE__, __LINE__, ## __VA_ARGS__);\
+				fflush(stderr);\
+				} while(0)
 
 //debug stuff
 #ifdef DEBUG
@@ -85,41 +86,8 @@
 		}\
 	} while(0)
 
-#define START_TIMING	\
-	struct timeval start, end;\
-	gettimeofday(&start, NULL);
-
-#define END_TIMING(str_prefix)	\
-	gettimeofday(&end, NULL);\
-	timersub(&end, &start, &start);\
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2, str_prefix " %llu us\n",\
-	(unsigned long long) (start.tv_sec * 1000000 + start.tv_usec));
-
-#else  //if not DEBUG
-
-#define dprint(source, level, format, ...)
-
-//#define SHOW_CONVERSION_TIMING
-#ifdef SHOW_CONVERSION_TIMING
-#define START_TIMING	\
-	struct timeval start, end;\
-	gettimeofday(&start, NULL);
-
-#define END_TIMING(str_prefix)	\
-	gettimeofday(&end, NULL);\
-	timersub(&end, &start, &start);\
-	fprintf(stdout, str_prefix " %llu us\n", (unsigned long long) (start.tv_sec * 1000000 + start.tv_usec));\
-	fflush(stdout);
-#else
-#define START_TIMING
-#define END_TIMING
-#endif
-
-#endif // if DEBUG
-
 #define dprint_v4l2_control(ctrl)\
 	do { \
-		int i = 0;\
 		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1, \
 				"CTRL: control id: 0x%x - name: %s - min: %d - max: %d - "\
 				"step: %d - type: %d(%s) - flags: %d (%s%s%s%s%s%s%s)\n", \
@@ -142,15 +110,43 @@
 				ctrl.v4l2_ctrl->flags & V4L2_CTRL_FLAG_INACTIVE ? "Inactive " : "", \
 				ctrl.v4l2_ctrl->flags & V4L2_CTRL_FLAG_SLIDER ? "slider " : "",\
 				ctrl.v4l2_ctrl->flags & V4L2_CTRL_FLAG_WRITE_ONLY ? "write-only" : ""); \
-		for(i=0; i<ctrl.count_menu; i++) {\
+		for(unsigned int i=0; i<ctrl.count_menu; i++) {\
 			if (ctrl.v4l2_ctrl->type==V4L2_CTRL_TYPE_MENU)\
-				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1, \
-					"   Menu %d - index: %d - '%s'\n", i, ctrl.v4l2_menu[i].index, ctrl.v4l2_menu[i].name);\
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1, "   Menu %d - index: %d - '%s'\n", i, ctrl.v4l2_menu[i].index, ctrl.v4l2_menu[i].name);\
 			else\
-				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1, \
-					"   Menu %d - index: %d - '%lld'\n", i, ctrl.v4l2_menu[i].index, ctrl.v4l2_menu[i].value);\
+				dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1, "   Menu %d - index: %d - '%lld'\n", i, ctrl.v4l2_menu[i].index, ctrl.v4l2_menu[i].value);\
 		}\
 	} while(0);
+#else  //if not DEBUG
+
+#define dprint(source, level, format, ...) UNUSED(0)
+#define dprint_v4l2_control(ctrl) UNUSED(ctrl)
+#endif // if DEBUG
+
+//#define SHOW_CONVERSION_TIMING
+#if defined(DEBUG) || defined(SHOW_CONVERSION_TIMING)
+#define START_TIMING	\
+	struct timeval start, end;\
+	gettimeofday(&start, NULL);
+
+#ifdef DEBUG
+#define PRINT(...) fprintf(stdout, ## __VA_ARGS__)
+#else
+#define PRINT(...) dprint(dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2, ## __VA_ARGS__)
+#endif
+#define END_TIMING(str_prefix)	\
+	gettimeofday(&end, NULL);\
+	timersub(&end, &start, &start);\
+	PRINT(str_prefix " %llu us\n", (unsigned long long) (start.tv_sec * 1000000 + start.tv_usec));\
+	fflush(stdout);
+#undef PRINT
+
+#else
+#define START_TIMING UNUSED(0)
+#define END_TIMING(...) UNUSED(0)
+#endif
+
+
 
 #define XMALLOC(var, type, size)	\
 	do { \
@@ -206,4 +202,6 @@
 		var = NULL;\
 	} while (0)
 
+#define PRINT_MEA_CULPA() info("This is most likely a bug in v4l4j. Please\nlet the author know about this issue. See README file.\n");
+#define PRINT_REPORT_ERROR() info("Please let the author know about this error.\nSee the ISSUES section in the libvideo README file.\n");
 #endif
