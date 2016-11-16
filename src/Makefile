@@ -29,7 +29,7 @@ V4L4J_LOG_SOURCE ?= 63
 ifneq ($(DEBUG),)
 DBG := -DDEBUG -Wall -DLOG_SOURCE=$(V4L4J_LOG_SOURCE) -ggdb
 else
-OPTIMISATION := -O2
+OPTIMISATION := -Os
 endif
 
 LIBVIDEO_NAME := video

@@ -47,10 +47,9 @@ LIBV4L_HELPERS_INSTALL_DIR := $(PREFIX)/lib/v4l4j
 
 
 ifneq ($(DEBUG),)
-DBG := -DDEBUG -ggdb -Wall -DLIBVIDEO_LOG_LEVEL=$(LIBVIDEO_LOG_LEVEL) \
-  -DLIBVIDEO_LOG_SOURCE=$(LIBVIDEO_LOG_SOURCE)
+DBG := -DDEBUG -ggdb -Wall -DLIBVIDEO_LOG_LEVEL=$(LIBVIDEO_LOG_LEVEL) -DLIBVIDEO_LOG_SOURCE=$(LIBVIDEO_LOG_SOURCE)
 else
-OPTIMISATION := -O3
+OPTIMISATION := -Os
 endif
 
 USER_INCLUDES := libvideo.h libvideo-err.h libvideo-palettes.h
@@ -60,7 +59,7 @@ VERSION_MINOR := 9
 LIB_RELEASE := 0
 
 LIBV4LCONVERT_DIR := libv4lconvert
-LIBV4LCONVERT_AR := libv4lconvert.a
+LIBV4LCONVERT_AR := $(LIBV4LCONVERT_DIR)/libv4lconvert.a
 LIBV4LCONVERT_NAME := v4lconvert
 LIBV4LCONVERT_HELPERS := ov511-decomp ov518-decomp
 
@@ -76,7 +75,7 @@ else ifeq ($(shell arch | grep -ic "arm"), 1)
 	LIBPIXFC ?= pixfc-sse/libpixfc-sse-armv7-hf.a
 
 ifeq ($(origin LIBPIXFC), undefined)
-$(error ARM architecture detected - define LIBPIFXC explicitly)
+$(error ARM architecture detected - define LIBPIXFC explicitly)
 endif
 endif
 
@@ -89,7 +88,7 @@ LIB := lib$(LIB_NAME).so
 TESTOBJ := test-capture.o dump-capture.o list-caps.o
 OBJ := v4l2-input.o v4l1-input.o libvideo.o pwc-probe.o gspca-probe.o \
   qc-probe.o fps-param-probe.o v4l1-query.o v4l2-query.o v4l1-tuner.o \
-  v4l2-tuner.o palettes.o
+  v4l2-tuner.o palettes.o libv4lconvert/libv4lconvert-flat.o
 
 CFLAGS += $(DBG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) $(OPTIMISATION) -fPIC -I. -std=gnu11
 CFLAGS += -Wall -Wpointer-arith -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wconversion -fdiagnostics-color=auto -mcpu=native -mfpu=neon-vfpv4 -mfloat-abi=hard -ftree-vectorize
@@ -99,14 +98,13 @@ LDFLAGS += -lm -lrt -shared -ljpeg
 all: $(LIB).$(LIB_RELEASE)
 
 $(LIB).$(LIB_RELEASE): version.h $(OBJ) $(LIBV4LCONVERT_AR)
-	$(CC) $(OBJ) $(LIBV4LCONVERT_AR) $(LIBPIXFC) -Wl,-soname,$(LIB).$(LIB_RELEASE) \
-  $(LDFLAGS) -o $(LIB).$(LIB_RELEASE)
+	$(CC) $(OBJ) -Wl,-soname,$(LIB).$(LIB_RELEASE) \
+		-o $(LIB).$(LIB_RELEASE) $(LDFLAGS) \
+		$(LIBPIXFC) $(LIBV4LCONVERT_AR)
 	ln -f -s $(LIB).$(LIB_RELEASE) $(LIB)
 
 $(LIBV4LCONVERT_AR):
-	LINKTYPE=static LIBDIR=$(LIBV4L_HELPERS_INSTALL_DIR) \
-		$(MAKE) -C $(LIBV4LCONVERT_DIR)
-	cp $(LIBV4LCONVERT_DIR)/$(LIBV4LCONVERT_AR) .
+	LINKTYPE=static LIBDIR=$(LIBV4L_HELPERS_INSTALL_DIR) $(MAKE) -C $(LIBV4LCONVERT_DIR)
 
 install: $(LIB).$(LIB_RELEASE)
 	mkdir -p $(DESTDIR)$(INC_INSTALL_DIR)
