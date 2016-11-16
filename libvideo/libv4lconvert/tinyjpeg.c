@@ -354,18 +354,18 @@ static void process_Huffman_data_unit(struct jdec_private *priv, int component) 
 	
 	
 	/* AC coefficient decoding */
-	u8 j = 1;
+	unsigned int j = 1;
 	while (j < 64) {
 		huff_code = get_next_huffman_code(priv, c->AC_table);
 
-		u8 size_val = huff_code & 0xF;
-		u8 count_0 = huff_code >> 4;
+		u8 size_val = (u8) (huff_code & 0xF);
+		u8 count_0 = (u8) (huff_code >> 4);
 
 		if (size_val == 0) { /* RLE */
 			if (count_0 == 0)
 				break;	/* EOB found, go out */
 			else if (count_0 == 0xF)
-				j += 16;	/* skip 16 zeros */
+				j += 16u;	/* skip 16 zeros */
 		} else {
 			j += count_0;	/* skip count_0 zeroes */
 			if (j < 64) {
@@ -392,49 +392,51 @@ static void process_Huffman_data_unit(struct jdec_private *priv, int component) 
  * slowtable will be used when the first lookup didn't give the result.
  */
 static int build_huffman_table(struct jdec_private *priv, const u8 *bits, const u8 *vals, struct huffman_table *table) {
-	unsigned int j, code, code_size, val, nbits;
-	u8 huffsize[257], *hz;
-	unsigned int huffcode[257], *hc;
+	u8 huffsize[257];
+	unsigned int huffcode[257];
 	int slowtable_used[16 - HUFFMAN_HASH_NBITS];
 
 	/*
 	 * Build a temp array
 	 *   huffsize[X] => numbers of bits to write vals[X]
 	 */
-	hz = huffsize;
-	for (unsigned i = 1; i <= 16; i++) {
-		for (j = 1; j <= bits[i]; j++)
-			*hz++ = i;
+	u8* hz = huffsize;
+	for (unsigned int i = 1; i <= 16; i++) {
+		for (unsigned int j = 1; j <= bits[i]; j++)
+			*hz++ = (u8) i;
 	}
 	*hz = 0;
 
 	memset(table->lookup, 0xff, sizeof(table->lookup));
+	//TODO replace with call to memset
 	for (unsigned i = 0; i < (16 - HUFFMAN_HASH_NBITS); i++)
 		slowtable_used[i] = 0;
 
 	/* Build a temp array
 	 *   huffcode[X] => code used to write vals[X]
 	 */
-	code = 0;
-	hc = huffcode;
-	hz = huffsize;
-	nbits = *hz;
-	while (*hz) {
-		while (*hz == nbits) {
-			*hc++ = code++;
-			hz++;
+	{
+		unsigned int code = 0;
+		unsigned int* hc = huffcode;
+		hz = huffsize;
+		unsigned int nbits = *hz;
+		while (*hz) {
+			while (*hz == nbits) {
+				*hc++ = code++;
+				hz++;
+			}
+			code <<= 1;
+			nbits++;
 		}
-		code <<= 1;
-		nbits++;
 	}
-
+	
 	/*
 	 * Build the lookup table, and the slowtable if needed.
 	 */
 	for (unsigned i = 0; huffsize[i]; i++) {
-		val = vals[i];
-		code = huffcode[i];
-		code_size = huffsize[i];
+		u8 val = vals[i];
+		unsigned int code = huffcode[i];
+		u8 code_size = huffsize[i];
 
 		trace("val=%2.2x code=%8.8x codesize=%2.2d\n", i, code, code_size);
 
@@ -444,7 +446,7 @@ static int build_huffman_table(struct jdec_private *priv, const u8 *bits, const 
 			 * Good: val can be put in the lookup table, so fill all value of this
 			 * column with value val
 			 */
-			int repeat = 1UL << (HUFFMAN_HASH_NBITS - code_size);
+			unsigned int repeat = 1u << (HUFFMAN_HASH_NBITS - code_size);
 
 			code <<= HUFFMAN_HASH_NBITS - code_size;
 			while (repeat--)
@@ -1246,8 +1248,7 @@ static void decode_MCU_1x1_3planes(struct jdec_private *priv)
 /*
  * Decode a 1x1 directly in 1 color
  */
-static void decode_MCU_1x1_1plane(struct jdec_private *priv)
-{
+static void decode_MCU_1x1_1plane(struct jdec_private *priv) {
 	// Y
 	process_Huffman_data_unit(priv, cY);
 	IDCT(&priv->component_infos[cY], priv->Y, 8);
@@ -1285,11 +1286,8 @@ static void decode_MCU_2x1_3planes(struct jdec_private *priv)
 	IDCT(&priv->component_infos[cCr], priv->Cr, 8);
 }
 
-static void pixart_decode_MCU_2x1_3planes(struct jdec_private *priv)
-{
-	u8 marker;
-
-	look_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, 8, marker);
+static void pixart_decode_MCU_2x1_3planes(struct jdec_private *priv) {
+	u8 marker = look_nbits(priv, 8);
 	/* I think the marker indicates which quantization table to use, iow
 	   a Pixart JPEG may have a different quantization table per MCU, most
 	   MCU's have 0x44 as marker for which our special Pixart quantization
@@ -1328,8 +1326,7 @@ static void pixart_decode_MCU_2x1_3planes(struct jdec_private *priv)
  *  | 1 | 2 |
  *  `-------'
  */
-static void decode_MCU_2x1_1plane(struct jdec_private *priv)
-{
+static void decode_MCU_2x1_1plane(struct jdec_private *priv) {
 	// Y
 	process_Huffman_data_unit(priv, cY);
 	IDCT(&priv->component_infos[cY], priv->Y, 16);
@@ -1381,8 +1378,7 @@ static void decode_MCU_2x2_3planes(struct jdec_private *priv)
  *  | 3 | 4 |
  *  `-------'
  */
-static void decode_MCU_2x2_1plane(struct jdec_private *priv)
-{
+static void decode_MCU_2x2_1plane(struct jdec_private *priv) {
 	// Y
 	process_Huffman_data_unit(priv, cY);
 	IDCT(&priv->component_infos[cY], priv->Y, 16);
@@ -1408,8 +1404,7 @@ static void decode_MCU_2x2_1plane(struct jdec_private *priv)
  *  | 2 |
  *  `---'
  */
-static void decode_MCU_1x2_3planes(struct jdec_private *priv)
-{
+static void decode_MCU_1x2_3planes(struct jdec_private *priv) {
 	// Y
 	process_Huffman_data_unit(priv, cY);
 	IDCT(&priv->component_infos[cY], priv->Y, 8);
@@ -1433,8 +1428,7 @@ static void decode_MCU_1x2_3planes(struct jdec_private *priv)
  *  | 2 |
  *  `---'
  */
-static void decode_MCU_1x2_1plane(struct jdec_private *priv)
-{
+static void decode_MCU_1x2_1plane(struct jdec_private *priv) {
 	// Y
 	process_Huffman_data_unit(priv, cY);
 	IDCT(&priv->component_infos[cY], priv->Y, 8);
@@ -1448,8 +1442,7 @@ static void decode_MCU_1x2_1plane(struct jdec_private *priv)
 	process_Huffman_data_unit(priv, cCr);
 }
 
-static void print_SOF(const u8 *stream)
-{
+static void print_SOF(const u8 *stream) {
 #if DEBUG
 	u32 width, height, nr_components, precision;
 	const char *nr_components_to_string[] = {
@@ -1995,7 +1988,7 @@ static const convert_colorspace_fct convert_colorspace_grey[4] = {
 	YCrCB_to_Grey_2x2,
 };
 
-int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt);
+static int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt);
 
 /* This function parses and removes the special Pixart JPEG chunk headers */
 static unsigned int pixart_filter(struct jdec_private *priv, u8 *dest, const u8 *src, unsigned int n) {
@@ -2046,9 +2039,7 @@ kernel: 0xff 0xff 0x00 0xff 0x96, and we skip one unknown byte */
  *
  * Note: components will be automaticaly allocated if no memory is attached.
  */
-int tinyjpeg_decode(struct jdec_private *priv, int pixfmt)
-{
-	unsigned int x, y, xstride_by_mcu, ystride_by_mcu;
+int tinyjpeg_decode(struct jdec_private *priv, int pixfmt) {
 	unsigned int bytes_per_blocklines[3], bytes_per_mcu[3];
 	decode_MCU_fct decode_MCU;
 	const decode_MCU_fct *decode_mcu_table;
@@ -2133,7 +2124,8 @@ int tinyjpeg_decode(struct jdec_private *priv, int pixfmt)
 		error("Bad pixel format\n");
 	}
 
-	xstride_by_mcu = ystride_by_mcu = 8;
+	unsigned int xstride_by_mcu = 8;
+	unsigned int ystride_by_mcu = 8;
 	if ((priv->component_infos[cY].Hfactor | priv->component_infos[cY].Vfactor) == 1) {
 		decode_MCU = decode_mcu_table[0];
 		convert_to_pixfmt = colorspace_array_conv[0];
@@ -2171,12 +2163,12 @@ int tinyjpeg_decode(struct jdec_private *priv, int pixfmt)
 	bytes_per_mcu[2] *= xstride_by_mcu / 8;
 
 	/* Just the decode the image by macroblock (size is 8x8, 8x16, or 16x16) */
-	for (y = 0; y < priv->height / ystride_by_mcu; y++) {
+	for (unsigned int y = 0; y < priv->height / ystride_by_mcu; y++) {
 		//trace("Decoding row %d\n", y);
 		priv->plane[0] = priv->components[0] + (y * bytes_per_blocklines[0]);
 		priv->plane[1] = priv->components[1] + (y * bytes_per_blocklines[1]);
 		priv->plane[2] = priv->components[2] + (y * bytes_per_blocklines[2]);
-		for (x = 0; x < priv->width; x += xstride_by_mcu) {
+		for (unsigned int x = 0; x < priv->width; x += xstride_by_mcu) {
 			decode_MCU(priv);
 			convert_to_pixfmt(priv);
 			priv->plane[0] += bytes_per_mcu[0];
@@ -2203,7 +2195,7 @@ int tinyjpeg_decode(struct jdec_private *priv, int pixfmt)
 	return 0;
 }
 
-int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt) {
+static int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt) {
 	uint8_t *y_buf, *u_buf, *v_buf, *p, *p2;
 
 	switch (pixfmt) {
@@ -2429,28 +2421,22 @@ int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt) {
 	return 0;
 }
 
-const char *tinyjpeg_get_errorstring(struct jdec_private *priv)
-{
+const char *tinyjpeg_get_errorstring(struct jdec_private *priv) {
 	return priv->error_string;
 }
 
-void tinyjpeg_get_size(struct jdec_private *priv, unsigned int *width, unsigned int *height)
-{
+void tinyjpeg_get_size(struct jdec_private *priv, unsigned int *width, unsigned int *height) {
 	*width = priv->width;
 	*height = priv->height;
 }
 
-int tinyjpeg_get_components(struct jdec_private *priv, u8 **components)
-{
-	int i;
-
-	for (i = 0; priv->components[i] && i < COMPONENTS; i++)
+int tinyjpeg_get_components(struct jdec_private *priv, u8 **components) {
+	for (int i = 0; priv->components[i] && i < COMPONENTS; i++)
 		components[i] = priv->components[i];
 	return 0;
 }
 
-int tinyjpeg_set_components(struct jdec_private *priv, u8 **components, unsigned int ncomponents)
-{
+int tinyjpeg_set_components(struct jdec_private *priv, u8 **components, unsigned int ncomponents) {
 	unsigned int i;
 
 	if (ncomponents > COMPONENTS)
