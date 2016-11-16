@@ -34,8 +34,7 @@
 #define V4LCONVERT_MAX_FRAMESIZES 256
 
 #define V4LCONVERT_ERR(...) \
-	snprintf(data->error_msg, V4LCONVERT_ERROR_MSG_SIZE, \
-			"v4l-convert: error " __VA_ARGS__)
+	snprintf(data->error_msg, V4LCONVERT_ERROR_MSG_SIZE, "v4l-convert: error " __VA_ARGS__)
 
 /* Card flags */
 #define V4LCONVERT_IS_UVC                0x01
@@ -92,114 +91,117 @@ struct v4lconvert_pixfmt {
 	int needs_conversion;
 };
 
-void v4lconvert_fixup_fmt(struct v4l2_format *fmt);
+#define LIBV4LCONVERT_LOCAL __attribute__((visibility ("hidden")))
+#define LIBV4LCONVERT_PUBLIC __attribute__((visibility ("default")))
+#pragma GCC visibility push(hidden)
+LIBV4LCONVERT_LOCAL void v4lconvert_fixup_fmt(struct v4l2_format *fmt);
 
-u8 *v4lconvert_alloc_buffer(unsigned int needed, u8 **buf, unsigned int *buf_size);
+LIBV4LCONVERT_LOCAL u8 *v4lconvert_alloc_buffer(unsigned int needed, u8 **buf, unsigned int *buf_size);
 
-int v4lconvert_oom_error(struct v4lconvert_data *data);
+LIBV4LCONVERT_LOCAL int v4lconvert_oom_error(struct v4lconvert_data *data);
 
-void v4lconvert_rgb24_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt, int bgr, int yvu);
+LIBV4LCONVERT_LOCAL void v4lconvert_rgb24_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt, int bgr, int yvu);
 
-void v4lconvert_yuv420_to_rgb24(const u8 *src, u8 *dst, u32 width, u32 height, int yvu);
+LIBV4LCONVERT_LOCAL void v4lconvert_yuv420_to_rgb24(const u8 *src, u8 *dst, u32 width, u32 height, int yvu);
 
-void v4lconvert_yuv420_to_bgr24(const u8 *src, u8 *dst, u32 width, u32 height, int yvu);
+LIBV4LCONVERT_LOCAL void v4lconvert_yuv420_to_bgr24(const u8 *src, u8 *dst, u32 width, u32 height, int yvu);
 
-void v4lconvert_cvt_yuv420_to_bgr24(const u8 *ysrc, const u8* usrc, const u8* vsrc, u8 *dest, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL void v4lconvert_cvt_yuv420_to_bgr24(const u8 *ysrc, const u8* usrc, const u8* vsrc, u8 *dest, u32 width, u32 height);
 
-void v4lconvert_yuyv_to_rgb24(const u8 *src, u8 *dst, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL void v4lconvert_yuyv_to_rgb24(const u8 *src, u8 *dst, u32 width, u32 height);
 
-void v4lconvert_yuyv_to_bgr24(const u8 *src, u8 *dst, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL void v4lconvert_yuyv_to_bgr24(const u8 *src, u8 *dst, u32 width, u32 height);
 
-void v4lconvert_yuyv_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, int yvu);
+LIBV4LCONVERT_LOCAL void v4lconvert_yuyv_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, int yvu);
 
-void v4lconvert_yvyu_to_rgb24(const u8 *src, u8 *dst, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL void v4lconvert_yvyu_to_rgb24(const u8 *src, u8 *dst, u32 width, u32 height);
 
-void v4lconvert_yvyu_to_bgr24(const u8 *src, u8 *dst, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL void v4lconvert_yvyu_to_bgr24(const u8 *src, u8 *dst, u32 width, u32 height);
 
-void v4lconvert_uyvy_to_rgb24(const u8 *src, u8 *dst, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL void v4lconvert_uyvy_to_rgb24(const u8 *src, u8 *dst, u32 width, u32 height);
 
-void v4lconvert_uyvy_to_bgr24(const u8 *src, u8 *dst, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL void v4lconvert_uyvy_to_bgr24(const u8 *src, u8 *dst, u32 width, u32 height);
 
-void v4lconvert_uyvy_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, int yvu);
+LIBV4LCONVERT_LOCAL void v4lconvert_uyvy_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, int yvu);
 
-void v4lconvert_swap_rgb(const u8 *src, u8 *dst, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL void v4lconvert_swap_rgb(const u8 *src, u8 *dst, u32 width, u32 height);
 
-void v4lconvert_swap_uv(const u8 *src, u8 *dst, const struct v4l2_format *src_fmt);
+LIBV4LCONVERT_LOCAL void v4lconvert_swap_uv(const u8 *src, u8 *dst, const struct v4l2_format *src_fmt);
 
-void v4lconvert_grey_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL void v4lconvert_grey_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height);
 
-void v4lconvert_grey_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt);
+LIBV4LCONVERT_LOCAL void v4lconvert_grey_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt);
 
-int v4lconvert_y10b_to_rgb24(struct v4lconvert_data *data, const u8 *src, u8 *dest, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL int v4lconvert_y10b_to_rgb24(struct v4lconvert_data *data, const u8 *src, u8 *dest, u32 width, u32 height);
 
-int v4lconvert_y10b_to_yuv420(struct v4lconvert_data *data, const u8 *src, u8 *dest, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL int v4lconvert_y10b_to_yuv420(struct v4lconvert_data *data, const u8 *src, u8 *dest, u32 width, u32 height);
 
-void v4lconvert_rgb565_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL void v4lconvert_rgb565_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height);
 
-void v4lconvert_rgb565_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL void v4lconvert_rgb565_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height);
 
-void v4lconvert_rgb565_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt, int yvu);
+LIBV4LCONVERT_LOCAL void v4lconvert_rgb565_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt, int yvu);
 
-void v4lconvert_spca501_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, int yvu);
+LIBV4LCONVERT_LOCAL void v4lconvert_spca501_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, int yvu);
 
-void v4lconvert_spca505_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, int yvu);
+LIBV4LCONVERT_LOCAL void v4lconvert_spca505_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, int yvu);
 
-void v4lconvert_spca508_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, int yvu);
+LIBV4LCONVERT_LOCAL void v4lconvert_spca508_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, int yvu);
 
-void v4lconvert_cit_yyvyuy_to_yuv420(const u8 *src, u8 *ydest, u32 width, u32 height, int yvu);
+LIBV4LCONVERT_LOCAL void v4lconvert_cit_yyvyuy_to_yuv420(const u8 *src, u8 *ydest, u32 width, u32 height, int yvu);
 
-void v4lconvert_konica_yuv420_to_yuv420(const u8 *src, u8 *ydest, u32 width, u32 height, int yvu);
+LIBV4LCONVERT_LOCAL void v4lconvert_konica_yuv420_to_yuv420(const u8 *src, u8 *ydest, u32 width, u32 height, int yvu);
 
-void v4lconvert_m420_to_yuv420(const u8 *src, u8 *ydest, u32 width, u32 height, int yvu);
+LIBV4LCONVERT_LOCAL void v4lconvert_m420_to_yuv420(const u8 *src, u8 *ydest, u32 width, u32 height, int yvu);
 
-int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dst, u32 width, u32 height, int yvu);
+LIBV4LCONVERT_PUBLIC int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dst, u32 width, u32 height, int yvu);
 
-void v4lconvert_sn9c20x_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, int yvu);
+LIBV4LCONVERT_LOCAL void v4lconvert_sn9c20x_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, int yvu);
 
-int v4lconvert_se401_to_rgb24(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dest, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL int v4lconvert_se401_to_rgb24(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dest, u32 width, u32 height);
 
-int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data, u8 *src, unsigned int src_size, u8 *dest, struct v4l2_format *fmt, unsigned int dest_pix_fmt, int flags);
+LIBV4LCONVERT_LOCAL int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data, u8 *src, unsigned int src_size, u8 *dest, struct v4l2_format *fmt, unsigned int dest_pix_fmt, int flags);
 
-int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data, u8 *src, unsigned int src_size, u8 *dest, struct v4l2_format *fmt, unsigned int dest_pix_fmt);
+LIBV4LCONVERT_LOCAL int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data, u8 *src, unsigned int src_size, u8 *dest, struct v4l2_format *fmt, unsigned int dest_pix_fmt);
 
-int v4lconvert_decode_jpgl(const u8 *src, u32 src_size, unsigned int dest_pix_fmt, u8 *dest, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL int v4lconvert_decode_jpgl(const u8 *src, u32 src_size, unsigned int dest_pix_fmt, u8 *dest, u32 width, u32 height);
 
-void v4lconvert_decode_spca561(const u8 *src, u8 *dst, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL void v4lconvert_decode_spca561(const u8 *src, u8 *dst, u32 width, u32 height);
 
-void v4lconvert_decode_sn9c10x(const u8 *src, u8 *dst, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL void v4lconvert_decode_sn9c10x(const u8 *src, u8 *dst, u32 width, u32 height);
 
-int v4lconvert_decode_pac207(struct v4lconvert_data *data, const u8 *inp, unsigned int src_size, u8 *outp, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL int v4lconvert_decode_pac207(struct v4lconvert_data *data, const u8 *inp, unsigned int src_size, u8 *outp, u32 width, u32 height);
 
-int v4lconvert_decode_mr97310a(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dst, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL int v4lconvert_decode_mr97310a(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dst, u32 width, u32 height);
 
-int v4lconvert_decode_jl2005bcd(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dest, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL int v4lconvert_decode_jl2005bcd(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dest, u32 width, u32 height);
 
-void v4lconvert_decode_sn9c2028(const u8 *src, u8 *dst, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL void v4lconvert_decode_sn9c2028(const u8 *src, u8 *dst, u32 width, u32 height);
 
-void v4lconvert_decode_sq905c(const u8 *src, u8 *dst, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL void v4lconvert_decode_sq905c(const u8 *src, u8 *dst, u32 width, u32 height);
 
-void v4lconvert_decode_stv0680(const u8 *src, u8 *dst, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL void v4lconvert_decode_stv0680(const u8 *src, u8 *dst, u32 width, u32 height);
 
-void v4lconvert_bayer_to_rgb24(const u8 *bayer, u8 *rgb, u32 width, u32 height, unsigned int pixfmt);
+LIBV4LCONVERT_LOCAL void v4lconvert_bayer_to_rgb24(const u8 *bayer, u8 *rgb, u32 width, u32 height, unsigned int pixfmt);
 
-void v4lconvert_bayer_to_bgr24(const u8 *bayer, u8 *rgb, u32 width, u32 height, unsigned int pixfmt);
+LIBV4LCONVERT_LOCAL void v4lconvert_bayer_to_bgr24(const u8 *bayer, u8 *rgb, u32 width, u32 height, unsigned int pixfmt);
 
-void v4lconvert_bayer_to_yuv420(const u8 *bayer, u8 *yuv, u32 width, u32 height, unsigned int src_pixfmt, int yvu);
+LIBV4LCONVERT_LOCAL void v4lconvert_bayer_to_yuv420(const u8 *bayer, u8 *yuv, u32 width, u32 height, unsigned int src_pixfmt, int yvu);
 
-void v4lconvert_hm12_to_rgb24(const u8 *src, u8 *dst, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL void v4lconvert_hm12_to_rgb24(const u8 *src, u8 *dst, u32 width, u32 height);
 
-void v4lconvert_hm12_to_bgr24(const u8 *src, u8 *dst, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL void v4lconvert_hm12_to_bgr24(const u8 *src, u8 *dst, u32 width, u32 height);
 
-void v4lconvert_hm12_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, int yvu);
+LIBV4LCONVERT_LOCAL void v4lconvert_hm12_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, int yvu);
 
-void v4lconvert_rotate90(u8 *src, u8 *dest, struct v4l2_format *fmt);
+LIBV4LCONVERT_LOCAL void v4lconvert_rotate90(u8 *src, u8 *dest, struct v4l2_format *fmt);
 
-void v4lconvert_flip(u8 *src, u8 *dest, struct v4l2_format *fmt, int hflip, int vflip);
+LIBV4LCONVERT_LOCAL void v4lconvert_flip(u8 *src, u8 *dest, struct v4l2_format *fmt, int hflip, int vflip);
 
-void v4lconvert_crop(u8 *src, u8 *dest, const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt);
+LIBV4LCONVERT_LOCAL void v4lconvert_crop(u8 *src, u8 *dest, const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt);
 
-int v4lconvert_helper_decompress(struct v4lconvert_data *data, const char *helper, const u8 *src, unsigned int src_size, u8 *dest, unsigned int dest_size, u32 width, u32 height, int command);
+LIBV4LCONVERT_LOCAL int v4lconvert_helper_decompress(struct v4lconvert_data *data, const char *helper, const u8 *src, unsigned int src_size, u8 *dest, unsigned int dest_size, u32 width, u32 height, int command);
 
-void v4lconvert_helper_cleanup(struct v4lconvert_data *data);
+LIBV4LCONVERT_LOCAL void v4lconvert_helper_cleanup(struct v4lconvert_data *data);
 
 #endif
