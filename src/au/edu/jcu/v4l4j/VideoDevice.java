@@ -164,6 +164,14 @@ public class VideoDevice {
 		File dev = new File("/dev");
 		return new HashSet<>(Arrays.asList(dev.list((file, name) -> (file == dev && name.startsWith("video")))));
 	}
+	
+	public static VideoDevice getDefault() throws V4L4JException {
+		Set<String> fds = available();
+		if (fds.isEmpty())
+			throw new IllegalStateException("No available video devices");
+		String dev = available().iterator().next();
+		return new VideoDevice(dev);
+	}
 
 	static {
 		try {
