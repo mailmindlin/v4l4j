@@ -20,6 +20,7 @@ package au.edu.jcu.v4l4j;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
+import java.nio.ByteBuffer;
 
 import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
@@ -31,8 +32,8 @@ import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
  * <code>VideoFrame</code>s and passes them the registered
  * {@link CaptureCallback} object. Check the {@link FrameGrabber} class for more
  * information on how to perform a capture.<br>
- * When accessing the image data as a byte array, as returned by
- * {@link #getBytes()}, note that the size of returned byte array can be longer
+ * When accessing the image data as a byte buffer, as returned by
+ * {@link #getBuffer()}, note that the capacity of the buffer can be larger
  * than the actual image size. What this means is that you should use
  * {@link #getFrameLength()} to figure out how many elements in the byte array
  * are actually used by the image instead of relying on
@@ -66,8 +67,8 @@ public interface VideoFrame {
 	 * 
 	 * @return the frame grabber object which captured this frame.
 	 */
-	public FrameGrabber getFrameGrabber();
-
+	FrameGrabber getFrameGrabber();
+	
 	/**
 	 * This method returns the length of this video frame in bytes.
 	 * 
@@ -75,8 +76,8 @@ public interface VideoFrame {
 	 * @throws StateException
 	 *             if this video frame has been recycled already.
 	 */
-	public int getFrameLength();
-
+	int getFrameLength();
+	
 	/**
 	 * This method returns this video frame's sequence number (a monotonically
 	 * increasing number for each captured frame). This number can be used to
@@ -88,7 +89,7 @@ public interface VideoFrame {
 	 * @throws StateException
 	 *             if this video frame has been recycled already.
 	 */
-	public long getSequenceNumber();
+	long getSequenceNumber();
 
 	/**
 	 * This method returns the OS time (number of microseconds elapsed since
@@ -99,7 +100,7 @@ public interface VideoFrame {
 	 * @throws StateException
 	 *             if this video frame has been recycled already.
 	 */
-	public long getCaptureTime();
+	long getCaptureTime();
 
 	/**
 	 * This method returns the image data as a byte array.<b>Please note that
@@ -113,8 +114,17 @@ public interface VideoFrame {
 	 * @throws StateException
 	 *             if this video frame has been recycled already.
 	 */
-	public byte[] getBytes();
-
+	ByteBuffer getBuffer();
+	
+	default byte[] getBytes() {
+		ByteBuffer buffer = getBuffer();
+		if (buffer.hasArray())
+			return buffer.array();
+		byte[] result = new byte[buffer.capacity()];
+		buffer.get(result);
+		return result;
+	}
+	
 	/**
 	 * This method returns the image data encapsulated in a {@link DataBuffer}
 	 * object. The data is stored as bytes in the data buffer.
@@ -123,8 +133,8 @@ public interface VideoFrame {
 	 * @throws StateException
 	 *             if this video frame has been recycled already.
 	 */
-	public DataBuffer getDataBuffer();
-
+	DataBuffer getDataBuffer();
+	
 	/**
 	 * This method returns the image data encapsulated in a {@link Raster}
 	 * object. Rasters cannot be created for some image formats (including
@@ -138,8 +148,8 @@ public interface VideoFrame {
 	 * @throws StateException
 	 *             if this video frame has been recycled already.
 	 */
-	public Raster getRaster() throws UnsupportedMethod;
-
+	Raster getRaster() throws UnsupportedMethod;
+	
 	/**
 	 * This method returns the image data encapsulated in a
 	 * {@link BufferedImage} object. Buffered images cannot be created for some
@@ -153,13 +163,13 @@ public interface VideoFrame {
 	 * @throws StateException
 	 *             if this video frame has been recycled already.
 	 */
-	public BufferedImage getBufferedImage() throws UnsupportedMethod;
-
+	BufferedImage getBufferedImage() throws UnsupportedMethod;
+	
 	/**
 	 * This method marks this video frame as being no longer used, and ready to
 	 * be reused by v4l4j. After calling this method, do not use either this
 	 * object or any of the objects obtained through it (byte array, data
 	 * buffer, raster, buffered image, ...) <b> or bad things WILL happen</b>.
 	 */
-	public void recycle();
+	void recycle();
 }

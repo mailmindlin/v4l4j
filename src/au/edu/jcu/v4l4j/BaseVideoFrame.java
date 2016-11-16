@@ -20,6 +20,8 @@ package au.edu.jcu.v4l4j;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.WritableRaster;
+import java.nio.ByteBuffer;
+import java.util.function.Function;
 
 import au.edu.jcu.v4l4j.exceptions.StateException;
 import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
@@ -36,20 +38,20 @@ import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
 public class BaseVideoFrame implements VideoFrame {
 	protected int frameLength;
 	protected AbstractGrabber frameGrabber;
-	protected byte frameBuffer[];
+	protected final ByteBuffer buffer;
 
 	protected long sequenceNumber;
 	protected long captureTime;
 	protected int bufferIndex;
-
-	protected V4L4JDataBuffer dataBuffer;
 	protected boolean recycled;
-	protected V4L4JRaster raster;
-	protected BufferedImage bufferedImage;
+
+	protected final V4L4JDataBuffer dataBuffer;
+	protected final V4L4JRaster raster;
+	protected final BufferedImage bufferedImage;
 
 	/**
 	 * This method creates the base for a video frame. It will instantiate and
-	 * initialise all members except raster and bufferedImage, which falls under
+	 * initialize all members except raster and bufferedImage, which falls under
 	 * the responsibility of the subclass.
 	 * 
 	 * @param grabber
@@ -59,15 +61,25 @@ public class BaseVideoFrame implements VideoFrame {
 	 *            the size of the byte array to create for this frame.
 	 */
 	protected BaseVideoFrame(AbstractGrabber grabber, int bufferSize) {
-		frameGrabber = grabber;
-		frameBuffer = new byte[bufferSize];
-		dataBuffer = new V4L4JDataBuffer(frameBuffer);
-		raster = null;
-		bufferedImage = null;
-		bufferIndex = 0;
-		recycled = true;
+		this.frameGrabber = grabber;
+		this.buffer = ByteBuffer.allocateDirect(bufferSize);
+		this.dataBuffer = new V4L4JDataBuffer(this.buffer);
+		this.raster = null;
+		this.bufferedImage = null;
+		this.bufferIndex = 0;
+		this.recycled = true;
 	}
-
+	
+	protected BaseVideoFrame(AbstractGrabber grabber, int bufferSize, Function<BaseVideoFrame, V4L4JRaster> rasterGenerator, Function<BaseVideoFrame, BufferedImage> imageGenerator) {
+		this.frameGrabber = grabber;
+		this.buffer = ByteBuffer.allocateDirect(bufferSize);
+		this.dataBuffer = new V4L4JDataBuffer(this.buffer);
+		this.raster = rasterGenerator.apply(this);
+		this.bufferedImage = imageGenerator.apply(this);
+		this.bufferIndex = 0;
+		this.recycled = true;
+	}
+	
 	/**
 	 * This method marks this frame as ready to be delivered to the user, as its
 	 * buffer has just been filled with a new frame of the given length.
@@ -81,12 +93,13 @@ public class BaseVideoFrame implements VideoFrame {
 	 *            startup
 	 */
 	protected synchronized void prepareForDelivery(int length, int index, long sequence, long timeUs) {
-		frameLength = length;
-		dataBuffer.setNewFrameSize(length);
-		sequenceNumber = sequence;
-		captureTime = timeUs;
-		bufferIndex = index;
-		recycled = false;
+		this.buffer.position(0);
+		this.buffer.limit(length);
+		this.dataBuffer.setNewFrameSize(length);
+		this.sequenceNumber = sequence;
+		this.captureTime = timeUs;
+		this.bufferIndex = index;
+		this.recycled = false;
 	}
 
 	/**
@@ -101,15 +114,20 @@ public class BaseVideoFrame implements VideoFrame {
 		while (!recycled)
 			wait();
 	}
-
+	
 	/**
 	 * This method is used by the owning frame grabber to get a reference to the
 	 * byte array used to hold the frame data.
 	 * 
 	 * @return the byte array used to hold the frame data
 	 */
-	final byte[] getByteArray() {
-		return frameBuffer;
+	final ByteBuffer getRawBuffer() {
+		return buffer;
+	}
+
+	@Override
+	public final ByteBuffer getBuffer() {
+		return buffer.asReadOnlyBuffer();
 	}
 
 	/**
@@ -135,9 +153,8 @@ public class BaseVideoFrame implements VideoFrame {
 	 */
 	protected WritableRaster refreshRaster() {
 		if (raster == null)
-			throw new UnsupportedMethod("A raster can not be generated for this image format ("
-					+ frameGrabber.getImageFormat().toString() + ")");
-
+			throw new UnsupportedMethod("A raster can not be generated for this image format (" + frameGrabber.getImageFormat() + ")");
+		
 		return raster;
 	}
 
@@ -154,9 +171,7 @@ public class BaseVideoFrame implements VideoFrame {
 	 */
 	protected BufferedImage refreshBufferedImage() {
 		if (bufferedImage == null)
-			throw new UnsupportedMethod("A Bufferedimage can not be generated for this image format ("
-					+ frameGrabber.getImageFormat().toString() + ")");
-
+			throw new UnsupportedMethod("A Bufferedimage can not be generated for this image format (" + frameGrabber.getImageFormat() + ")");
 		return bufferedImage;
 	}
 
@@ -185,13 +200,13 @@ public class BaseVideoFrame implements VideoFrame {
 	@Override
 	public final synchronized int getFrameLength() {
 		checkIfRecycled();
-		return frameLength;
+		return buffer.remaining();
 	}
 
 	@Override
 	public final synchronized byte[] getBytes() {
 		checkIfRecycled();
-		return frameBuffer;
+		return VideoFrame.super.getBytes();
 	}
 
 	@Override

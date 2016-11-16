@@ -103,7 +103,7 @@ public class H264Parameters implements Externalizable, Closeable {
 	 * x264_encoder_reconfig(). value=NULL means "true" for boolean options, but
 	 * is a BAD_VALUE for non-booleans.
 	 * 
-	 * @param ptr
+	 * @param object
 	 * @param name
 	 * @param value
 	 * @return

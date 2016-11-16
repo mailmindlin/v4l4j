@@ -18,6 +18,7 @@
 package au.edu.jcu.v4l4j;
 
 import java.awt.image.DataBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class represents a {@link DataBuffer} containing an image obtained
@@ -27,23 +28,22 @@ import java.awt.image.DataBuffer;
  *
  */
 class V4L4JDataBuffer extends DataBuffer {
-	private byte byteArray[];
+	private ByteBuffer buf;
 
-	V4L4JDataBuffer(byte array[]) {
-		super(TYPE_BYTE, array.length);
-		byteArray = array;
+	V4L4JDataBuffer(ByteBuffer buf) {
+		super(TYPE_BYTE, buf.capacity());
+		this.buf = buf;
 	}
 
 	public void setNewFrameSize(int s) {
-		size = s;
+		super.size = s;
 	}
 
 	@Override
 	public int getElem(int bank, int i) {
 		if (bank != 0)
 			throw new IndexOutOfBoundsException("Only one bank in this data buffer");
-
-		return (int) (byteArray[i]) & 0xff;
+		return buf.get(i) & 0xFF; 
 	}
 
 	@Override

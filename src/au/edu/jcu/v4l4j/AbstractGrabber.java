@@ -23,6 +23,7 @@
  */
 package au.edu.jcu.v4l4j;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -95,17 +96,16 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 * 
 	 * @param o object pointer
 	 * @param numBuffers number of buffers to create
-	 * @param w width of frame (in pixels)
-	 * @param h height of frame (in pixels)
-	 * @param ch channel
+	 * @param width width of frame (in pixels)
+	 * @param height height of frame (in pixels)
+	 * @param channel channel
 	 * @param std Standard
 	 * @param requestedFormat Input format
 	 * @param output Output format
 	 * @return Number of framebuffers created
 	 * @throws V4L4JException If there is a problem initializing the FrameGrabber
 	 */
-	private native int doInit(long o, int numBuffers, int w, int h, int ch, int std, int requestedFormat, int output)
-			throws V4L4JException;
+	private native int doInit(long o, int numBuffers, int width, int height, int channel, int std, int requestedFormat, int output) throws V4L4JException;
 
 	/**
 	 * Start capturing frames
@@ -135,7 +135,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 
 	private native int enqueueBuffer(long o, int index);
 
-	private native int fillBuffer(long o, byte[] array) throws V4L4JException;
+	private native int fillBuffer(long o, ByteBuffer output) throws V4L4JException;
 
 	/**
 	 * Stop capturing frames. Should not throw any exceptions, even in case of failure
@@ -467,7 +467,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 			nextFrame = getAvailableVideoFrame();
 
 			// get the latest frame and store it in the video frame
-			frameSize = fillBuffer(object, nextFrame.getByteArray());
+			frameSize = fillBuffer(object, nextFrame.getRawBuffer());
 
 			// mark the video frame as available for use
 			nextFrame.prepareForDelivery(frameSize, lastCapturedFrameBufferIndex, lastCapturedFrameSequence,

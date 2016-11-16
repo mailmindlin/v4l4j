@@ -48,7 +48,7 @@ class JPEGVideoFrame extends BaseVideoFrame {
 
 	@Override
 	protected BufferedImage refreshBufferedImage() {
-		try (ByteArrayInputStream bais = new ByteArrayInputStream(frameBuffer, 0, frameLength)) {
+		try (ByteArrayInputStream bais = new ByteArrayInputStream(getBytes(), 0, getFrameLength())) {
 			return ImageIO.read(bais);
 		} catch (IOException e) {
 			System.err.println("It seems your JVM is unable to decode this image.");

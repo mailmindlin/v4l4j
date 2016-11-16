@@ -53,22 +53,17 @@ class UncompressedVideoFrame extends BaseVideoFrame {
 	 *            the ColorSpace used to create a BuffereddImage, or null if no
 	 *            BufferedImage should be created
 	 */
-	UncompressedVideoFrame(AbstractGrabber grabber, int bufferSize, SampleModel sm, ColorSpace cs) {
-		super(grabber, bufferSize);
-
-		// create raster if a sample model was given
-		if (sm != null) {
-			raster = new V4L4JRaster(sm, dataBuffer, new Point(0, 0));
-
-			// create buffered image if a colorspace was given
-			if (cs != null)
-				bufferedImage = new BufferedImage(
-						new ComponentColorModel(cs, false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE), raster,
-						false, null);
-			else
-				bufferedImage = null;
-
-		} else
-			raster = null;
+	UncompressedVideoFrame(AbstractGrabber grabber, int bufferSize, final SampleModel sm, final ColorSpace cs) {
+		super(grabber, bufferSize, self-> {
+				// Create raster if a sample model was given
+				if (sm == null)
+					return null;
+				return new V4L4JRaster(sm, self.getDataBuffer(), new Point(0, 0));
+			}, self -> {
+				// Create buffered image if a colorspace was given
+				if (sm == null || cs == null)
+					return null;
+				return new BufferedImage(new ComponentColorModel(cs, false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE), self.raster, false, null);
+			});
 	}
 }

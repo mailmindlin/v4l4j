@@ -139,7 +139,7 @@ public class H264Picture implements Closeable, VideoFrame {
 	
 
 	@Override
-	public byte[] getBytes() {
+	public ByteBuffer getBuffer() {
 		return null;
 	}
 

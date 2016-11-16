@@ -16,7 +16,7 @@ public class ConvertedJPEGVideoFrame extends AbstractConvertedVideoFrame {
 	
 	@Override
 	protected BufferedImage refreshBufferedImage() {
-		try (ByteArrayInputStream bais = new ByteArrayInputStream(frameBuffer, 0, frameLength)) {
+		try (ByteArrayInputStream bais = new ByteArrayInputStream(this.getBytes(), 0, this.getFrameLength())) {
 			return ImageIO.read(bais);
 		} catch (IOException e) {
 			System.err.println("It seems your JVM is unable to decode this image.");

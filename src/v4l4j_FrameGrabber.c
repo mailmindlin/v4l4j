@@ -510,7 +510,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_enqueueBuffer(JNIEn
 /*
  * dequeue a buffer, perform conversion if required and return frame
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *e, jobject this, jlong object, jarray byteArray) {
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *e, jobject this, jlong object, jobject buffer) {
 	LOG_FN_ENTER();
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
@@ -525,10 +525,15 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 
 	// get a pointer to the java array
 	jboolean isCopy;
+	jbyteArray arrayRef;
+	unsigned int arrayLength;
+	u8* array = getBufferPointer(env, buffer, &arrayRef, &arrayLength);
+	if (*arrayRef != NULL)
+		dprintf(LOG_V4L4J, "[V4L4J] Slow path: Can't get a direct pointer to buffer");
 	unsigned char* array = (*e)->GetPrimitiveArrayCritical(e, byteArray, &isCopy);
 	if (isCopy == JNI_TRUE)
 		dprintf(LOG_V4L4J, "[V4L4J] Slow path: can't get direct pointer to byte array\n");
-
+	
 	// check we have a valid pointer
 	if (!array) {
 		(*d->vdev->capture->actions->enqueue_buffer)(d->vdev, buffer_index);
