@@ -246,6 +246,7 @@ static inline void fill_nbits(struct jdec_private *priv, unsigned int nbits_want
 			snprintf(priv->error_string, sizeof(priv->error_string),
 					"fill_nbits error: need %u more bits\n",
 					nbits_wanted - priv->nbits_in_reservoir);
+			//TODO check that this still works with it being an inline method now
 			longjmp(priv->jump_state, -EIO);
 		}
 		u8 c = *priv->stream++;
@@ -433,7 +434,7 @@ static int build_huffman_table(struct jdec_private *priv, const u8 *bits, const 
 	/*
 	 * Build the lookup table, and the slowtable if needed.
 	 */
-	for (unsigned i = 0; huffsize[i]; i++) {
+	for (unsigned int i = 0; huffsize[i]; i++) {
 		u8 val = vals[i];
 		unsigned int code = huffcode[i];
 		u8 code_size = huffsize[i];
@@ -447,33 +448,32 @@ static int build_huffman_table(struct jdec_private *priv, const u8 *bits, const 
 			 * column with value val
 			 */
 			unsigned int repeat = 1u << (HUFFMAN_HASH_NBITS - code_size);
-
+			
 			code <<= HUFFMAN_HASH_NBITS - code_size;
 			while (repeat--)
 				table->lookup[code++] = val;
-
+			
 		} else {
 			/* Perhaps sorting the array will be an optimization */
 			int slowtable_index = code_size - HUFFMAN_HASH_NBITS - 1;
-
+			
 			if (slowtable_used[slowtable_index] == 254)
 				error("slow Huffman table overflow\n");
-
+			
 			table->slowtable[slowtable_index][slowtable_used[slowtable_index]] = code;
 			table->slowtable[slowtable_index][slowtable_used[slowtable_index] + 1] = val;
 			slowtable_used[slowtable_index] += 2;
 		}
 	}
-
-	for (unsigned i = 0; i < (16 - HUFFMAN_HASH_NBITS); i++)
+	
+	for (unsigned int i = 0; i < (16 - HUFFMAN_HASH_NBITS); i++)
 		table->slowtable[i][slowtable_used[i]] = 0;
-
+	
 	return 0;
 }
 
 static int build_default_huffman_tables(struct jdec_private *priv) {
-	if ((priv->flags & TINYJPEG_FLAGS_MJPEG_TABLE)
-			&& priv->default_huffman_table_initialized)
+	if ((priv->flags & TINYJPEG_FLAGS_MJPEG_TABLE) && priv->default_huffman_table_initialized)
 		return 0;
 
 	if (build_huffman_table(priv, bits_dc_luminance, val_dc_luminance, &priv->HTDC[0]))
@@ -563,11 +563,10 @@ static void YCrCB_to_YUV420P_1x1(struct jdec_private *priv) {
 static void YCrCB_to_YUV420P_2x1(struct jdec_private *priv) {
 	u8 *p;
 	const u8 *s, *y1;
-	unsigned int i;
 
 	p = priv->plane[0];
 	y1 = priv->Y;
-	for (i = 0; i < 8; i++) {
+	for (unsigned int i = 0; i < 8; i++) {
 		memcpy(p, y1, 16);
 		p += priv->width;
 		y1 += 16;
@@ -575,7 +574,7 @@ static void YCrCB_to_YUV420P_2x1(struct jdec_private *priv) {
 
 	p = priv->plane[1];
 	s = priv->Cb;
-	for (i = 0; i < 8; i += 2) {
+	for (unsigned int i = 0; i < 8; i += 2) {
 		memcpy(p, s, 8);
 		s += 16; /* Skip one line */
 		p += priv->width / 2;
@@ -583,7 +582,7 @@ static void YCrCB_to_YUV420P_2x1(struct jdec_private *priv) {
 
 	p = priv->plane[2];
 	s = priv->Cr;
-	for (i = 0; i < 8; i += 2) {
+	for (unsigned int i = 0; i < 8; i += 2) {
 		memcpy(p, s, 8);
 		s += 16; /* Skip one line */
 		p += priv->width/2;
@@ -602,11 +601,10 @@ static void YCrCB_to_YUV420P_2x1(struct jdec_private *priv) {
 static void YCrCB_to_YUV420P_1x2(struct jdec_private *priv) {
 	const u8 *s, *y;
 	u8 *p;
-	int i, j;
 
 	p = priv->plane[0];
 	y = priv->Y;
-	for (i = 0; i < 16; i++) {
+	for (unsigned int i = 0; i < 16; i++) {
 		memcpy(p, y, 8);
 		p += priv->width;
 		y += 8;
@@ -614,16 +612,16 @@ static void YCrCB_to_YUV420P_1x2(struct jdec_private *priv) {
 
 	p = priv->plane[1];
 	s = priv->Cb;
-	for (i = 0; i < 8; i++) {
-		for (j = 0; j < 8; j += 2, s += 2)
+	for (unsigned int i = 0; i < 8; i++) {
+		for (unsigned int j = 0; j < 8; j += 2, s += 2)
 			*p++ = *s;
 		p += priv->width / 2 - 4;
 	}
 
 	p = priv->plane[2];
 	s = priv->Cr;
-	for (i = 0; i < 8; i++) {
-		for (j = 0; j < 8; j += 2, s += 2)
+	for (unsigned int i = 0; i < 8; i++) {
+		for (unsigned int j = 0; j < 8; j += 2, s += 2)
 			*p++ = *s;
 		p += priv->width / 2 - 4;
 	}
@@ -640,11 +638,10 @@ static void YCrCB_to_YUV420P_1x2(struct jdec_private *priv) {
 static void YCrCB_to_YUV420P_2x2(struct jdec_private *priv) {
 	u8 *p;
 	const u8 *s, *y1;
-	unsigned int i;
 
 	p = priv->plane[0];
 	y1 = priv->Y;
-	for (i = 0; i < 16; i++) {
+	for (unsigned int i = 0; i < 16; i++) {
 		memcpy(p, y1, 16);
 		p += priv->width;
 		y1 += 16;
@@ -652,7 +649,7 @@ static void YCrCB_to_YUV420P_2x2(struct jdec_private *priv) {
 
 	p = priv->plane[1];
 	s = priv->Cb;
-	for (i = 0; i < 8; i++) {
+	for (unsigned int i = 0; i < 8; i++) {
 		memcpy(p, s, 8);
 		s += 8;
 		p += priv->width / 2;
@@ -660,12 +657,17 @@ static void YCrCB_to_YUV420P_2x2(struct jdec_private *priv) {
 
 	p = priv->plane[2];
 	s = priv->Cr;
-	for (i = 0; i < 8; i++) {
+	for (unsigned int i = 0; i < 8; i++) {
 		memcpy(p, s, 8);
 		s += 8;
 		p += priv->width / 2;
 	}
 }
+
+
+#define SCALEBITS       10
+#define ONE_HALF        (1UL << (SCALEBITS - 1))
+#define FIX(x)          ((int)((x) * (1UL << SCALEBITS) + 0.5))
 
 /**
  *  YCrCb -> RGB24 (1x1)
@@ -674,27 +676,24 @@ static void YCrCB_to_YUV420P_2x2(struct jdec_private *priv) {
  *  `---'
  */
 static void YCrCB_to_RGB24_1x1(struct jdec_private *priv) {
-#define SCALEBITS       10
-#define ONE_HALF        (1UL << (SCALEBITS - 1))
-#define FIX(x)          ((int)((x) * (1UL << SCALEBITS) + 0.5))
-
-	u8* p = priv->plane[0];
-	const u8* Y = priv->Y;
-	const u8* Cb = priv->Cb;
-	const u8* Cr = priv->Cr;
+	u8 *p = priv->plane[0];
+	const u8 *Y = priv->Y;
+	const u8 *Cb = priv->Cb;
+	const u8 *Cr = priv->Cr;
 	const unsigned int offset_to_next_row = priv->width * 3 - 8 * 3;
-
+	
 	//TODO replace with method call
 	
 	for (unsigned int i = 0; i < 8; i++) {
 		for (unsigned int j = 0; j < 8; j++) {
-			int y  = (*Y++) << SCALEBITS;
 			int cb = *Cb++ - 128;
 			int cr = *Cr++ - 128;
+			
 			int add_r = FIX(1.40200) * cr + ONE_HALF;
 			int add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
 			int add_b = FIX(1.77200) * cb + ONE_HALF;
-
+			
+			int y  = (*Y++) << SCALEBITS;
 			int r = (y + add_r) >> SCALEBITS;
 			*p++ = clamp(r);
 			int g = (y + add_g) >> SCALEBITS;
@@ -706,10 +705,6 @@ static void YCrCB_to_RGB24_1x1(struct jdec_private *priv) {
 
 		p += offset_to_next_row;
 	}
-
-#undef SCALEBITS
-#undef ONE_HALF
-#undef FIX
 }
 
 /**
@@ -719,43 +714,31 @@ static void YCrCB_to_RGB24_1x1(struct jdec_private *priv) {
  *  `---'
  */
 static void YCrCB_to_BGR24_1x1(struct jdec_private *priv) {
-#define SCALEBITS       10
-#define ONE_HALF        (1UL << (SCALEBITS - 1))
-#define FIX(x)          ((int)((x) * (1UL << SCALEBITS) + 0.5))
-
-	u8* p = priv->plane[0];
-	const u8* Y = priv->Y;
-	const u8* Cb = priv->Cb;
-	const u8* Cr = priv->Cr;
-	const int offset_to_next_row = priv->width * 3 - 8 * 3;
+	u8 *p = priv->plane[0];
+	const u8 *Y = priv->Y;
+	const u8 *Cb = priv->Cb;
+	const u8 *Cr = priv->Cr;
+	const unsigned int offset_to_next_row = priv->width * 3 - 8 * 3;
 
 	for (unsigned int i = 0; i < 8; i++) {
 		for (unsigned int j = 0; j < 8; j++) {
-			int y, cb, cr;
-			int add_r, add_g, add_b;
-			int r, g , b;
+			int y  = (*Y++) << SCALEBITS;
+			int cb = *Cb++ - 128;
+			int cr = *Cr++ - 128;
+			int add_r = FIX(1.40200) * cr + ONE_HALF;
+			int add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
+			int add_b = FIX(1.77200) * cb + ONE_HALF;
 
-			y  = (*Y++) << SCALEBITS;
-			cb = *Cb++ - 128;
-			cr = *Cr++ - 128;
-			add_r = FIX(1.40200) * cr + ONE_HALF;
-			add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
-			add_b = FIX(1.77200) * cb + ONE_HALF;
-
-			b = (y + add_b) >> SCALEBITS;
+			int b = (y + add_b) >> SCALEBITS;
 			*p++ = clamp(b);
-			g = (y + add_g) >> SCALEBITS;
+			int g = (y + add_g) >> SCALEBITS;
 			*p++ = clamp(g);
-			r = (y + add_r) >> SCALEBITS;
+			int r = (y + add_r) >> SCALEBITS;
 			*p++ = clamp(r);
 
 		}
 		p += offset_to_next_row;
 	}
-
-#undef SCALEBITS
-#undef ONE_HALF
-#undef FIX
 }
 
 
@@ -766,34 +749,22 @@ static void YCrCB_to_BGR24_1x1(struct jdec_private *priv) {
  *  `-------'
  */
 static void YCrCB_to_RGB24_2x1(struct jdec_private *priv) {
-	const u8 *Y, *Cb, *Cr;
-	u8 *p;
-	int i, j;
-	int offset_to_next_row;
+	u8 *p = priv->plane[0];
+	const u8 *Y = priv->Y;
+	const u8 *Cb = priv->Cb;
+	const u8 *Cr = priv->Cr;
+	const unsigned int offset_to_next_row = priv->width * 3 - 16 * 3;
 
-#define SCALEBITS       10
-#define ONE_HALF        (1UL << (SCALEBITS - 1))
-#define FIX(x)          ((int)((x) * (1UL << SCALEBITS) + 0.5))
-
-	p = priv->plane[0];
-	Y = priv->Y;
-	Cb = priv->Cb;
-	Cr = priv->Cr;
-	offset_to_next_row = priv->width * 3 - 16 * 3;
-
-	for (i = 0; i < 8; i++) {
-		for (j = 0; j < 8; j++) {
-			int y, cb, cr;
-			int add_r, add_g, add_b;
-			int r, g , b;
-
-			y  = (*Y++) << SCALEBITS;
-			cb = *Cb++ - 128;
-			cr = *Cr++ - 128;
-			add_r = FIX(1.40200) * cr + ONE_HALF;
-			add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
-			add_b = FIX(1.77200) * cb + ONE_HALF;
-
+	for (unsigned int i = 0; i < 8; i++) {
+		for (unsigned int j = 0; j < 8; j++) {
+			int cb = *Cb++ - 128;
+			int cr = *Cr++ - 128;
+			
+			int add_r = FIX(1.40200) * cr + ONE_HALF;
+			int add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
+			int add_b = FIX(1.77200) * cb + ONE_HALF;
+			
+			int y  = (*Y++) << SCALEBITS;
 			r = (y + add_r) >> SCALEBITS;
 			*p++ = clamp(r);
 			g = (y + add_g) >> SCALEBITS;
@@ -812,10 +783,6 @@ static void YCrCB_to_RGB24_2x1(struct jdec_private *priv) {
 
 		p += offset_to_next_row;
 	}
-
-#undef SCALEBITS
-#undef ONE_HALF
-#undef FIX
 }
 
 /*
@@ -824,41 +791,28 @@ static void YCrCB_to_RGB24_2x1(struct jdec_private *priv) {
  *  | 1 | 2 |
  *  `-------'
  */
-static void YCrCB_to_BGR24_2x1(struct jdec_private *priv)
-{
-	const u8 *Y, *Cb, *Cr;
-	u8 *p;
-	int i, j;
-	int offset_to_next_row;
+static void YCrCB_to_BGR24_2x1(struct jdec_private *priv) {
+	u8 *p = priv->plane[0];
+	const u8 *Y = priv->Y;
+	const u8 *Cb = priv->Cb;
+	const u8 *Cr = priv->Cr;
+	const unsigned int offset_to_next_row = priv->width * 3 - 16 * 3;
 
-#define SCALEBITS       10
-#define ONE_HALF        (1UL << (SCALEBITS - 1))
-#define FIX(x)          ((int)((x) * (1UL << SCALEBITS) + 0.5))
+	for (unsigned int i = 0; i < 8; i++) {
+		for (unsigned int j = 0; j < 8; j++) {
+			int cb = *Cb++ - 128;
+			int cr = *Cr++ - 128;
+			
+			int add_r = FIX(1.40200) * cr + ONE_HALF;
+			int add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
+			int add_b = FIX(1.77200) * cb + ONE_HALF;
 
-	p = priv->plane[0];
-	Y = priv->Y;
-	Cb = priv->Cb;
-	Cr = priv->Cr;
-	offset_to_next_row = priv->width * 3 - 16 * 3;
-
-	for (i = 0; i < 8; i++) {
-		for (j = 0; j < 8; j++) {
-			int y, cb, cr;
-			int add_r, add_g, add_b;
-			int r, g , b;
-
-			cb = *Cb++ - 128;
-			cr = *Cr++ - 128;
-			add_r = FIX(1.40200) * cr + ONE_HALF;
-			add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
-			add_b = FIX(1.77200) * cb + ONE_HALF;
-
-			y  = (*Y++) << SCALEBITS;
-			b = (y + add_b) >> SCALEBITS;
+			int y  = (*Y++) << SCALEBITS;
+			int b = (y + add_b) >> SCALEBITS;
 			*p++ = clamp(b);
-			g = (y + add_g) >> SCALEBITS;
+			int g = (y + add_g) >> SCALEBITS;
 			*p++ = clamp(g);
-			r = (y + add_r) >> SCALEBITS;
+			int r = (y + add_r) >> SCALEBITS;
 			*p++ = clamp(r);
 
 			y  = (*Y++) << SCALEBITS;
@@ -872,10 +826,6 @@ static void YCrCB_to_BGR24_2x1(struct jdec_private *priv)
 
 		p += offset_to_next_row;
 	}
-
-#undef SCALEBITS
-#undef ONE_HALF
-#undef FIX
 }
 
 /**
@@ -886,44 +836,31 @@ static void YCrCB_to_BGR24_2x1(struct jdec_private *priv)
  *  | 2 |
  *  `---'
  */
-static void YCrCB_to_RGB24_1x2(struct jdec_private *priv)
-{
-	const u8 *Y, *Cb, *Cr;
-	u8 *p, *p2;
-	int i, j;
-	int offset_to_next_row;
+static void YCrCB_to_RGB24_1x2(struct jdec_private *priv) {
+	u8 *p = priv->plane[0];
+	u8 *p2 = priv->plane[0] + priv->width * 3;
+	const u8 *Y = priv->Y;
+	const u8 *Cb = priv->Cb;
+	const u8 *Cr = priv->Cr;
+	const unsigned int offset_to_next_row = 2 * priv->width * 3 - 8 * 3;
 
-#define SCALEBITS       10
-#define ONE_HALF        (1UL << (SCALEBITS - 1))
-#define FIX(x)          ((int)((x) * (1UL << SCALEBITS) + 0.5))
-
-	p = priv->plane[0];
-	p2 = priv->plane[0] + priv->width * 3;
-	Y = priv->Y;
-	Cb = priv->Cb;
-	Cr = priv->Cr;
-	offset_to_next_row = 2 * priv->width * 3 - 8 * 3;
-
-	for (i = 0; i < 8; i++) {
-		for (j = 0; j < 8; j++) {
-			int y, cb, cr;
-			int add_r, add_g, add_b;
-			int r, g , b;
-
-			cb = *Cb++ - 128;
-			cr = *Cr++ - 128;
-			add_r = FIX(1.40200) * cr + ONE_HALF;
-			add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
-			add_b = FIX(1.77200) * cb + ONE_HALF;
-
-			y  = (*Y++) << SCALEBITS;
-			r = (y + add_r) >> SCALEBITS;
+	for (unsigned int i = 0; i < 8; i++) {
+		for (unsigned int j = 0; j < 8; j++) {
+			int cb = *Cb++ - 128;
+			int cr = *Cr++ - 128;
+			
+			int add_r = FIX(1.40200) * cr + ONE_HALF;
+			int add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
+			int add_b = FIX(1.77200) * cb + ONE_HALF;
+			
+			int y  = (*Y++) << SCALEBITS;
+			int r = (y + add_r) >> SCALEBITS;
 			*p++ = clamp(r);
-			g = (y + add_g) >> SCALEBITS;
+			int g = (y + add_g) >> SCALEBITS;
 			*p++ = clamp(g);
-			b = (y + add_b) >> SCALEBITS;
+			int b = (y + add_b) >> SCALEBITS;
 			*p++ = clamp(b);
-
+			
 			y  = (Y[8-1]) << SCALEBITS;
 			r = (y + add_r) >> SCALEBITS;
 			*p2++ = clamp(r);
@@ -931,16 +868,11 @@ static void YCrCB_to_RGB24_1x2(struct jdec_private *priv)
 			*p2++ = clamp(g);
 			b = (y + add_b) >> SCALEBITS;
 			*p2++ = clamp(b);
-
 		}
 		Y += 8;
 		p += offset_to_next_row;
 		p2 += offset_to_next_row;
 	}
-
-#undef SCALEBITS
-#undef ONE_HALF
-#undef FIX
 }
 
 /*
@@ -952,10 +884,6 @@ static void YCrCB_to_RGB24_1x2(struct jdec_private *priv)
  *  `---'
  */
 static void YCrCB_to_BGR24_1x2(struct jdec_private *priv) {
-#define SCALEBITS       10
-#define ONE_HALF        (1UL << (SCALEBITS - 1))
-#define FIX(x)          ((int)((x) * (1UL << SCALEBITS) + 0.5))
-
 	u8* p = priv->plane[0];
 	u8* p2 = priv->plane[0] + priv->width * 3;
 	const u8* Y = priv->Y;
@@ -965,22 +893,18 @@ static void YCrCB_to_BGR24_1x2(struct jdec_private *priv) {
 
 	for (unsigned int i = 0; i < 8; i++) {
 		for (unsigned int j = 0; j < 8; j++) {
-			int y, cb, cr;
-			int add_r, add_g, add_b;
-			int r, g , b;
+			int cb = *Cb++ - 128;
+			int cr = *Cr++ - 128;
+			int add_r = FIX(1.40200) * cr + ONE_HALF;
+			int add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
+			int add_b = FIX(1.77200) * cb + ONE_HALF;
 
-			cb = *Cb++ - 128;
-			cr = *Cr++ - 128;
-			add_r = FIX(1.40200) * cr + ONE_HALF;
-			add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
-			add_b = FIX(1.77200) * cb + ONE_HALF;
-
-			y  = (*Y++) << SCALEBITS;
-			b = (y + add_b) >> SCALEBITS;
+			int y  = (*Y++) << SCALEBITS;
+			int b = (y + add_b) >> SCALEBITS;
 			*p++ = clamp(b);
-			g = (y + add_g) >> SCALEBITS;
+			int g = (y + add_g) >> SCALEBITS;
 			*p++ = clamp(g);
-			r = (y + add_r) >> SCALEBITS;
+			int r = (y + add_r) >> SCALEBITS;
 			*p++ = clamp(r);
 
 			y  = (Y[8-1]) << SCALEBITS;
@@ -996,10 +920,6 @@ static void YCrCB_to_BGR24_1x2(struct jdec_private *priv) {
 		p += offset_to_next_row;
 		p2 += offset_to_next_row;
 	}
-
-#undef SCALEBITS
-#undef ONE_HALF
-#undef FIX
 }
 
 
@@ -1012,35 +932,27 @@ static void YCrCB_to_BGR24_1x2(struct jdec_private *priv) {
  *  `-------'
  */
 static void YCrCB_to_RGB24_2x2(struct jdec_private *priv) {
-#define SCALEBITS       10
-#define ONE_HALF        (1UL << (SCALEBITS - 1))
-#define FIX(x)          ((int)((x) * (1UL << SCALEBITS) + 0.5))
-
-	u8* p = priv->plane[0];
-	u8* p2 = priv->plane[0] + priv->width * 3;
-	const u8* Y = priv->Y;
-	const u8* Cb = priv->Cb;
-	const u8* Cr = priv->Cr;
+	u8 *p = priv->plane[0];
+	u8 *p2 = priv->plane[0] + priv->width * 3;
+	const u8 *Y = priv->Y;
+	const u8 *Cb = priv->Cb;
+	const u8 *Cr = priv->Cr;
 	const unsigned int offset_to_next_row = (priv->width * 3 * 2) - 16 * 3;
 
 	for (unsigned int i = 0; i < 8; i++) {
 		for (unsigned int j = 0; j < 8; j++) {
-			int y, cb, cr;
-			int add_r, add_g, add_b;
-			int r, g , b;
+			int cb = *Cb++ - 128;
+			int cr = *Cr++ - 128;
+			int add_r = FIX(1.40200) * cr + ONE_HALF;
+			int add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
+			int add_b = FIX(1.77200) * cb + ONE_HALF;
 
-			cb = *Cb++ - 128;
-			cr = *Cr++ - 128;
-			add_r = FIX(1.40200) * cr + ONE_HALF;
-			add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
-			add_b = FIX(1.77200) * cb + ONE_HALF;
-
-			y  = (*Y++) << SCALEBITS;
-			r = (y + add_r) >> SCALEBITS;
+			int y  = (*Y++) << SCALEBITS;
+			int r = (y + add_r) >> SCALEBITS;
 			*p++ = clamp(r);
-			g = (y + add_g) >> SCALEBITS;
+			int g = (y + add_g) >> SCALEBITS;
 			*p++ = clamp(g);
-			b = (y + add_b) >> SCALEBITS;
+			int b = (y + add_b) >> SCALEBITS;
 			*p++ = clamp(b);
 
 			y  = (*Y++) << SCALEBITS;
@@ -1071,10 +983,6 @@ static void YCrCB_to_RGB24_2x2(struct jdec_private *priv) {
 		p  += offset_to_next_row;
 		p2 += offset_to_next_row;
 	}
-
-#undef SCALEBITS
-#undef ONE_HALF
-#undef FIX
 }
 
 
@@ -1087,33 +995,28 @@ static void YCrCB_to_RGB24_2x2(struct jdec_private *priv) {
  *  `-------'
  */
 static void YCrCB_to_BGR24_2x2(struct jdec_private *priv) {
-#define SCALEBITS       10
-#define ONE_HALF        (1UL << (SCALEBITS - 1))
-#define FIX(x)          ((int)((x) * (1UL << SCALEBITS) + 0.5))
-
-	u8* p = priv->plane[0];
-	u8* p2 = priv->plane[0] + priv->width * 3;
-	const u8* Y = priv->Y;
-	const u8* Cb = priv->Cb;
-	const u8* Cr = priv->Cr;
+	u8 *p = priv->plane[0];
+	u8 *p2 = priv->plane[0] + priv->width * 3;
+	const u8 *Y = priv->Y;
+	const u8 *Cb = priv->Cb;
+	const u8 *Cr = priv->Cr;
 	const unsigned int offset_to_next_row = (priv->width * 3 * 2) - 16 * 3;
 
 	for (unsigned i = 0; i < 8; i++) {
 		for (unsigned j = 0; j < 8; j++) {
-			int r, g , b;
-
 			int cb = *Cb++ - 128;
 			int cr = *Cr++ - 128;
+			
 			int add_r = FIX(1.40200) * cr + ONE_HALF;
 			int add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
 			int add_b = FIX(1.77200) * cb + ONE_HALF;
 
 			int y  = (*Y++) << SCALEBITS;
-			b = (y + add_b) >> SCALEBITS;
+			int b = (y + add_b) >> SCALEBITS;
 			*p++ = clamp(b);
-			g = (y + add_g) >> SCALEBITS;
+			int g = (y + add_g) >> SCALEBITS;
 			*p++ = clamp(g);
-			r = (y + add_r) >> SCALEBITS;
+			int r = (y + add_r) >> SCALEBITS;
 			*p++ = clamp(r);
 
 			y  = (*Y++) << SCALEBITS;
@@ -1159,8 +1062,8 @@ static void YCrCB_to_BGR24_2x2(struct jdec_private *priv) {
  *  `---'
  */
 static void YCrCB_to_Grey_1x1(struct jdec_private *priv) {
-	u8* p = priv->plane[0];
-	const u8* y = priv->Y;
+	u8 *p = priv->plane[0];
+	const u8 *y = priv->Y;
 	const unsigned int offset_to_next_row = priv->width;
 
 	for (unsigned int i = 0; i < 8; i++) {
@@ -1230,8 +1133,7 @@ static void YCrCB_to_Grey_2x2(struct jdec_private *priv) {
 /*
  * Decode all the 3 components for 1x1
  */
-static void decode_MCU_1x1_3planes(struct jdec_private *priv)
-{
+static void decode_MCU_1x1_3planes(struct jdec_private *priv) {
 	// Y
 	process_Huffman_data_unit(priv, cY);
 	IDCT(&priv->component_infos[cY], priv->Y, 8);
@@ -1269,8 +1171,7 @@ static void decode_MCU_1x1_1plane(struct jdec_private *priv) {
  *  | 1 | 2 |
  *  `-------'
  */
-static void decode_MCU_2x1_3planes(struct jdec_private *priv)
-{
+static void decode_MCU_2x1_3planes(struct jdec_private *priv) {
 	// Y
 	process_Huffman_data_unit(priv, cY);
 	IDCT(&priv->component_infos[cY], priv->Y, 16);
@@ -1298,9 +1199,7 @@ static void pixart_decode_MCU_2x1_3planes(struct jdec_private *priv) {
 	   within the range below, if it gets out of this range we're most likely
 	   decoding garbage */
 	if (marker < 0x20 || marker > 0x7f) {
-		snprintf(priv->error_string, sizeof(priv->error_string),
-				"Pixart JPEG error: invalid MCU marker: 0x%02x\n",
-				(unsigned int)marker);
+		snprintf(priv->error_string, sizeof(priv->error_string), "Pixart JPEG error: invalid MCU marker: 0x%02x\n", (unsigned int)marker);
 		longjmp(priv->jump_state, -EIO);
 	}
 	skip_nbits(priv, 8);
@@ -1442,7 +1341,7 @@ static void decode_MCU_1x2_1plane(struct jdec_private *priv) {
 	process_Huffman_data_unit(priv, cCr);
 }
 
-static void print_SOF(const u8 *stream) {
+static inline void print_SOF(const u8 *stream) {
 #if DEBUG
 	u32 width, height, nr_components, precision;
 	const char *nr_components_to_string[] = {
@@ -1475,8 +1374,7 @@ static void print_SOF(const u8 *stream) {
  *
  ******************************************************************************/
 
-static void build_quantization_table(float *qtable, const u8 *ref_table)
-{
+static void build_quantization_table(float *qtable, const u8 *ref_table) {
 	/* Taken from libjpeg. Copyright Independent JPEG Group's LLM idct.
 	 * For float AA&N IDCT method, divisors are equal to quantization
 	 * coefficients scaled by scalefactor[row]*scalefactor[col], where
@@ -1486,21 +1384,18 @@ static void build_quantization_table(float *qtable, const u8 *ref_table)
 	 * What's actually stored is 1/divisor so that the inner loop can
 	 * use a multiplication rather than a division.
 	 */
-	int i, j;
 	static const double aanscalefactor[8] = {
 		1.0, 1.387039845, 1.306562965, 1.175875602,
 		1.0, 0.785694958, 0.541196100, 0.275899379
 	};
 	const u8 *zz = zigzag;
-
-	for (i = 0; i < 8; i++)
-		for (j = 0; j < 8; j++)
-			*qtable++ = ref_table[*zz++] * aanscalefactor[i] * aanscalefactor[j];
-
+	
+	for (unsigned int i = 0; i < 8; i++)
+		for (unsigned  int j = 0; j < 8; j++)
+			*qtable++ = (u8) ((double) ref_table[*zz++] * aanscalefactor[i] * aanscalefactor[j]);
 }
 
-static int parse_DQT(struct jdec_private *priv, const u8 *stream)
-{
+static int parse_DQT(struct jdec_private *priv, const u8 *stream) {
 	int qi;
 	float *table;
 	const u8 *dqt_block_end;
@@ -1515,8 +1410,7 @@ static int parse_DQT(struct jdec_private *priv, const u8 *stream)
 		if (qi >> 4)
 			error("16 bits quantization table is not supported\n");
 		if (qi >= COMPONENTS)
-			error("No more than %d quantization tables supported (got %d)\n",
-					COMPONENTS, qi + 1);
+			error("No more than %d quantization tables supported (got %d)\n", COMPONENTS, qi + 1);
 #endif
 		table = priv->Q_tables[qi];
 		build_quantization_table(table, stream);
@@ -1554,10 +1448,10 @@ static int parse_SOF(struct jdec_private *priv, const u8 *stream) {
 #if SANITY_CHECK
 		c->cid = cid;
 #endif
-		c->Vfactor = sampling_factor & 0xf;
+		c->Vfactor = sampling_factor & 0x0F;
 		c->Hfactor = sampling_factor >> 4;
 		c->Q_table = priv->Q_tables[Q_table];
-		trace("Component:%d  factor:%dx%d  Quantization table:%d\n", cid, c->Hfactor, c->Hfactor, Q_table);
+		trace("Component:%u  factor:%dx%d  Quantization table:%d\n", cid, c->Hfactor, c->Hfactor, Q_table);
 	}
 	priv->width = width;
 	priv->height = height;
@@ -1567,9 +1461,8 @@ static int parse_SOF(struct jdec_private *priv, const u8 *stream) {
 	return 0;
 }
 
-static int parse_SOS(struct jdec_private *priv, const u8 *stream)
-{
-	unsigned int i, cid, table;
+static inline int parse_SOS(struct jdec_private *priv, const u8 *stream) {
+	unsigned int cid, table;
 	unsigned int nr_components = stream[2];
 
 	trace("> SOS marker\n");
@@ -1581,29 +1474,30 @@ static int parse_SOS(struct jdec_private *priv, const u8 *stream)
 
 	if (nr_components == 1)
 		priv->flags |= TINYJPEG_FLAGS_PLANAR_JPEG;
+	
 #if SANITY_CHECK
 	else if (priv->flags & TINYJPEG_FLAGS_PLANAR_JPEG)
 		error("SOS with more then 1 component while decoding planar JPEG\n");
 #endif
 
 	stream += 3;
-	for (i = 0; i < nr_components; i++) {
+	for (unsigned int i = 0; i < nr_components; i++) {
 		cid = *stream++;
 		table = *stream++;
 		if (nr_components == 1) {
-#if SANITY_CHECK
-			/* Find matching cid so we store the tables in the right component */
-			for (i = 0; i < COMPONENTS; i++)
-				if (priv->component_infos[i].cid == cid)
-					break;
+			#if SANITY_CHECK
+				/* Find matching cid so we store the tables in the right component */
+				for (i = 0; i < COMPONENTS; i++)
+					if (priv->component_infos[i].cid == cid)
+						break;
 
-			if (i == COMPONENTS)
-				error("Unknown cid in SOS: %u\n", cid);
+				if (i == COMPONENTS)
+					error("Unknown cid in SOS: %u\n", cid);
 
-			priv->current_cid = cid;
-#else
-			i = cid - 1;
-#endif
+				priv->current_cid = cid;
+			#else
+				i = cid - 1;
+			#endif
 			trace("SOS cid: %u, using component_info: %u\n", cid, i);
 		}
 #if SANITY_CHECK
@@ -1614,8 +1508,7 @@ static int parse_SOS(struct jdec_private *priv, const u8 *stream)
 			error("We do not support more than %d DC Huffman table\n",
 					HUFFMAN_TABLES);
 		if (cid != priv->component_infos[i].cid)
-			error("SOS cid order (%u:%u) isn't compatible with the SOF marker (%u:%u)\n",
-					i, cid, i, priv->component_infos[i].cid);
+			error("SOS cid order (%u:%u) isn't compatible with the SOF marker (%u:%u)\n", i, cid, i, priv->component_infos[i].cid);
 		trace("ComponentId:%u  tableAC:%d tableDC:%d\n", cid, table & 0xf, table >> 4);
 #endif
 		priv->component_infos[i].AC_table = &priv->HTAC[table & 0xf];
@@ -1625,30 +1518,27 @@ static int parse_SOS(struct jdec_private *priv, const u8 *stream)
 
 	/* ITU-T T.81 (9/92) chapter E.1.3 clearly states that RSTm is to be set to 0 at the beginning of each scan */
 	priv->last_rst_marker_seen = 0;
-
+	
 	trace("< SOS marker\n");
-
+	
 	return 0;
 }
 
-static int parse_DHT(struct jdec_private *priv, const u8 *stream)
-{
-	unsigned int count, i;
+static inline int parse_DHT(struct jdec_private *priv, const u8 *stream) {
 	u8 huff_bits[17];
-	int length, index;
-
-	length = be16_to_cpu(stream) - 2;
+	
+	unsigned int length = be16_to_cpu(stream) - 2;
 	stream += 2;	/* Skip length */
-
-	trace("> DHT marker (length=%d)\n", length);
-
+	
+	trace("> DHT marker (length=%u)\n", length);
+	
 	while (length > 0) {
-		index = *stream++;
-
+		int index = *stream++;
+		
 		/* We need to calculate the number of bytes 'vals' will takes */
 		huff_bits[0] = 0;
-		count = 0;
-		for (i = 1; i < 17; i++) {
+		unsigned int count = 0;
+		for (unsigned int i = 1; i < 17; i++) {
 			huff_bits[i] = *stream++;
 			count += huff_bits[i];
 		}
@@ -1661,14 +1551,9 @@ static int parse_DHT(struct jdec_private *priv, const u8 *stream)
 		trace("Length of the table: %d\n", count);
 #endif
 
-		if (index & 0xf0) {
-			if (build_huffman_table(priv, huff_bits, stream, &priv->HTAC[index & 0xf]))
-				return -1;
-		} else {
-			if (build_huffman_table(priv, huff_bits, stream, &priv->HTDC[index & 0xf]))
-				return -1;
-		}
-
+		if (build_huffman_table(priv, huff_bits, stream, &priv->HTDC[index & 0xf]))
+			return -1;
+		
 		length -= 1;
 		length -= 16;
 		length -= count;
@@ -1678,17 +1563,14 @@ static int parse_DHT(struct jdec_private *priv, const u8 *stream)
 	return 0;
 }
 
-static int parse_DRI(struct jdec_private *priv, const u8 *stream)
-{
-	unsigned int length;
-
+static inline int parse_DRI(struct jdec_private *priv, const u8 *stream) {
 	trace("> DRI marker\n");
-
-	length = be16_to_cpu(stream);
-
+	
+	unsigned int length = be16_to_cpu(stream);
+	
 #if SANITY_CHECK
 	if (length != 4)
-		error("Length of DRI marker need to be 4\n");
+		error("Length of DRI marker needs to be 4\n");
 #endif
 
 	priv->restart_interval = be16_to_cpu(stream + 2);
@@ -1704,12 +1586,9 @@ static int parse_DRI(struct jdec_private *priv, const u8 *stream)
 
 
 
-static void resync(struct jdec_private *priv)
-{
-	int i;
-
+static inline void resync(struct jdec_private *priv) {
 	/* Init DC coefficients */
-	for (i = 0; i < COMPONENTS; i++)
+	for (unsigned int i = 0; i < COMPONENTS; i++)
 		priv->component_infos[i].previous_DC = 0;
 
 	priv->reservoir = 0;
@@ -1720,8 +1599,7 @@ static void resync(struct jdec_private *priv)
 		priv->restarts_to_go = -1;
 }
 
-static int find_next_rst_marker(struct jdec_private *priv)
-{
+static inline int find_next_rst_marker(struct jdec_private *priv) {
 	int rst_marker_found = 0;
 	int marker;
 	const u8 *stream = priv->stream;
@@ -1755,8 +1633,7 @@ static int find_next_rst_marker(struct jdec_private *priv)
 	return 0;
 }
 
-static int find_next_sos_marker(struct jdec_private *priv)
-{
+static int find_next_sos_marker(struct jdec_private *priv) {
 	const u8 *stream = priv->stream;
 
 	/* Parse marker */
@@ -1781,8 +1658,7 @@ static int find_next_sos_marker(struct jdec_private *priv)
 	return 0;
 }
 
-static int parse_JFIF(struct jdec_private *priv, const u8 *stream)
-{
+static int parse_JFIF(struct jdec_private *priv, const u8 *stream) {
 	int chuck_len;
 	int marker;
 	int sof_marker_found = 0;
@@ -1835,8 +1711,7 @@ static int parse_JFIF(struct jdec_private *priv, const u8 *stream)
 		stream = next_chunck;
 	}
 
-	if (!sof_marker_found ||
-			(!dqt_marker_found && !(priv->flags & TINYJPEG_FLAGS_PIXART_JPEG)))
+	if (!sof_marker_found || (!dqt_marker_found && !(priv->flags & TINYJPEG_FLAGS_PIXART_JPEG)))
 		goto bogus_jpeg_format;
 
 	if (priv->flags & TINYJPEG_FLAGS_PIXART_JPEG) {
@@ -1892,11 +1767,8 @@ bogus_jpeg_format:
  *
  * Before calling any other functions, an object need to be called.
  */
-struct jdec_private *tinyjpeg_init(void)
-{
-	struct jdec_private *priv;
-
-	priv = (struct jdec_private *)calloc(1, sizeof(struct jdec_private));
+struct jdec_private *tinyjpeg_init() {
+	struct jdec_private *priv = (struct jdec_private *) calloc(1, sizeof(struct jdec_private));
 	if (priv == NULL)
 		return NULL;
 	return priv;
@@ -1907,11 +1779,8 @@ struct jdec_private *tinyjpeg_init(void)
  *
  * No others function can be called after this one.
  */
-void tinyjpeg_free(struct jdec_private *priv)
-{
-	int i;
-
-	for (i = 0; i < COMPONENTS; i++) {
+void tinyjpeg_free(struct jdec_private *priv) {
+	for (unsigned int i = 0; i < COMPONENTS; i++) {
 		free(priv->components[i]);
 		free(priv->tmp_buf[i]);
 		priv->components[i] = NULL;
@@ -1928,8 +1797,7 @@ void tinyjpeg_free(struct jdec_private *priv)
  * Check if the jpeg can be decoded with this jpeg decoder.
  * Fill some table used for preprocessing.
  */
-int tinyjpeg_parse_header(struct jdec_private *priv, const u8 *buf, unsigned int size)
-{
+int tinyjpeg_parse_header(struct jdec_private *priv, const u8 *buf, unsigned int size) {
 	/* Identify the file */
 	if ((buf[0] != 0xFF) || (buf[1] != SOI))
 		error("Not a JPG file ?\n");
@@ -1991,15 +1859,15 @@ static const convert_colorspace_fct convert_colorspace_grey[4] = {
 static int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt);
 
 /* This function parses and removes the special Pixart JPEG chunk headers */
-static unsigned int pixart_filter(struct jdec_private *priv, u8 *dest, const u8 *src, unsigned int n) {
-
+static unsigned int pixart_filter(struct jdec_private *priv, u8 *dest, const u8 *src, int n) {
 	/* Skip mysterious first data byte */
 	src++;
 	n--;
-
+	
 	/* The first chunk is always 1024 bytes, 5 bytes are dropped in the
-kernel: 0xff 0xff 0x00 0xff 0x96, and we skip one unknown byte */
+		kernel: 0xff 0xff 0x00 0xff 0x96, and we skip one unknown byte */
 	unsigned int chunksize = 1024 - 6;
+	
 	unsigned int copied = 0;
 	while (1) {
 		if (n < chunksize)
@@ -2370,7 +2238,7 @@ static int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt) {
 				int add_r = FIX(1.40200) * cr + (int) ONE_HALF;
 				int add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + (int) ONE_HALF;
 				int add_b = FIX(1.77200) * cb + (int) ONE_HALF;
-
+				
 				int l  = (*y_buf) << SCALEBITS;
 				int b = (l + add_b) >> SCALEBITS;
 				*p++ = clamp(b);
@@ -2426,22 +2294,22 @@ const char *tinyjpeg_get_errorstring(struct jdec_private *priv) {
 }
 
 void tinyjpeg_get_size(struct jdec_private *priv, unsigned int *width, unsigned int *height) {
-	*width = priv->width;
-	*height = priv->height;
+	if (width)
+		*width = priv->width;
+	if (height)
+		*height = priv->height;
 }
 
 int tinyjpeg_get_components(struct jdec_private *priv, u8 **components) {
-	for (int i = 0; priv->components[i] && i < COMPONENTS; i++)
+	for (unsigned int i = 0; priv->components[i] && i < COMPONENTS; i++)
 		components[i] = priv->components[i];
 	return 0;
 }
 
 int tinyjpeg_set_components(struct jdec_private *priv, u8 **components, unsigned int ncomponents) {
-	unsigned int i;
-
 	if (ncomponents > COMPONENTS)
 		ncomponents = COMPONENTS;
-	for (i = 0; i < ncomponents; i++)
+	for (unsigned int i = 0; i < ncomponents; i++)
 		priv->components[i] = components[i];
 	return 0;
 }
@@ -2452,4 +2320,3 @@ unsigned int tinyjpeg_set_flags(struct jdec_private *priv, unsigned int flags) {
 	priv->flags = flags;
 	return oldflags;
 }
-
