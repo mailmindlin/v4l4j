@@ -35,7 +35,7 @@
 #ifndef __JPEGDEC_H__
 #define __JPEGDEC_H__
 
-#include "types.h"
+#include "../types.h"
 
 #ifdef __cplusplus
 extern "C" {

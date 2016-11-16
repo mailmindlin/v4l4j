@@ -36,7 +36,7 @@
 #define __TINYJPEG_INTERNAL_H_
 
 #include <setjmp.h>
-#include "types.h"
+#include "../types.h"
 
 #define SANITY_CHECK 1
 
@@ -115,7 +115,7 @@ struct jdec_private {
 	char error_string[256];
 
 	/* Temp buffers for multipass planar JPG -> RGB decoding */
-	int tmp_buf_y_size;
+	unsigned int tmp_buf_y_size;
 	uint8_t *tmp_buf[COMPONENTS];
 };
 

@@ -26,11 +26,12 @@
 #define H_PALETTES
 
 #include "videodev2.h"
+#include "types.h"
 
 struct libvideo_palette{
 	int libvideo_palette;
-	int v4l1_palette;
-	int v4l2_palette;
+	u32 v4l1_palette;
+	u32 v4l2_palette;
 	int depth;
 	char name[15];
 };

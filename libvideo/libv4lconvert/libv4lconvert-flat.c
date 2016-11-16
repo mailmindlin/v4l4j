@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "libv4lconvert-flat.h"
 #include "jpeg_memsrcdest.h"
-#include "types.h"
+#include "../types.h"
 #include "libvideo.h"
 #include "../log.h"
 
