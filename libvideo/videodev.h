@@ -17,21 +17,19 @@
 
 #if defined(CONFIG_VIDEO_V4L1_COMPAT) || !defined (__KERNEL__)
 
-struct video_capability
-{
+struct video_capability {
 	char name[32];
 	int type;
-	int channels;	/* Num channels */
-	int audios;	/* Num audio devices */
-	int maxwidth;	/* Supported width */
-	int maxheight;	/* And height */
-	int minwidth;	/* Supported width */
-	int minheight;	/* And height */
+	unsigned int channels;	/* Num channels */
+	unsigned int audios;	/* Num audio devices */
+	unsigned int maxwidth;	/* Supported width */
+	unsigned int maxheight;	/* And height */
+	unsigned int minwidth;	/* Supported width */
+	unsigned int minheight;	/* And height */
 };
 
 
-struct video_channel
-{
+struct video_channel {
 	int channel;
 	char name[32];
 	int tuners;
