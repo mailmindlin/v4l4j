@@ -52,15 +52,13 @@ static inline int _nbits(int *bitfill, int n) {
 	return (bit_bucket >> (*bitfill & 0xff)) & ((1 << n) - 1);
 }
 
-static int fun_A(int *bitfill)
-{
-	int ret;
+static int fun_A(int *bitfill) {
 	static int tab[] = {
 		12, 13, 14, 15, 16, 17, 18, 19, -12, -13, -14, -15,
 		-16, -17, -18, -19, -19
 	};
 
-	ret = tab[nbits(bitfill, 4)];
+	int ret = tab[nbits(bitfill, 4)];
 
 	refill(bitfill);
 	return ret;
@@ -89,9 +87,8 @@ static int fun_B(int *bitfill)
 	return tab[tab1[tmp]];
 }
 
-static int fun_C(int *bitfill, int gkw)
-{
-	static int tab1[] = {
+static int fun_C(int *bitfill, int gkw) {
+	static unsigned int tab1[] = {
 		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 23, 23, 23, 23, 23, 23,
 		23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23,
 		12, 13,
@@ -102,7 +99,6 @@ static int fun_C(int *bitfill, int gkw)
 		8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, -9, -10, -11,
 		-12, -13, -14, -15, -16, -17, -18, -19
 	};
-	unsigned int tmp;
 
 	if (gkw == 0xfe) {
 		if (nbits(bitfill, 1) == 0)
@@ -114,7 +110,7 @@ static int fun_C(int *bitfill, int gkw)
 	if (gkw != 0xff)
 		return 0xff;
 
-	tmp = nbits(bitfill, 7) - 72;
+	unsigned int tmp = nbits(bitfill, 7) - 72;
 	if (tmp > 43)
 		return 0xff;
 
@@ -122,8 +118,7 @@ static int fun_C(int *bitfill, int gkw)
 	return tab[tab1[tmp]];
 }
 
-static int fun_D(int *bitfill, int gkw)
-{
+static int fun_D(int *bitfill, int gkw) {
 	if (gkw == 0xfd) {
 		if (nbits(bitfill, 1) == 0)
 			return 12;
@@ -733,8 +728,8 @@ static int internal_spca561_decode(u32 width, u32 height, const u8 *inbuf, u8 *o
 	
 	int bitfill = 0;
 	unsigned int xwidth = width + 6;
-	int off_up_right = 2 - 2 * xwidth;
-	int off_up_left = -2 - 2 * xwidth;
+	int off_up_right = 2 - 2 * (signed) xwidth;
+	int off_up_left = -2 - 2 * (signed) xwidth;
 	int pixel_U = 0, saved_pixel_UR = 0;
 	unsigned int pixel_x = 0, pixel_y = 2;
 

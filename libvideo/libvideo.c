@@ -183,7 +183,7 @@ static void setup_capture_actions(struct video_device *vdev) {
 
 
 //device file, width, height, channel, std, nb_buf
-struct capture_device *init_capture_device(struct video_device *vdev, int w, int h, int ch, int s, int nb_buf) {
+struct capture_device *init_capture_device(struct video_device *vdev, int w, int h, int ch, int s, unsigned int nb_buf) {
 	if(vdev->capture != NULL)
 		return vdev->capture;
 	
@@ -386,8 +386,7 @@ void release_device_info(struct video_device *vdev) {
 		free_video_device_v4l1(vdev);
 	} else {
 		info("libvideo was unable to detect the version of V4L used by device %s\n", vdev->file);
-		info("Please let the author know about this error.\n");
-		info("See the ISSUES section in the libvideo README file.\n");
+		PRINT_REPORT_ERROR();
 		return;
 	}
 

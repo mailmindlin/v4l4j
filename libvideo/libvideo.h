@@ -46,8 +46,8 @@ struct mmap_buffer {
 };
 
 struct mmap {
-	int req_buffer_nr;				//requested number of buffers
-	int buffer_nr;					//actual number of mmap buffers
+	unsigned int req_buffer_nr;				//requested number of buffers
+	unsigned int buffer_nr;					//actual number of mmap buffers
 	struct mmap_buffer *buffers;	//array of buffers
 	void * tmp;						//temp buffer pointing to the latest
 									//dequeued buffer (V4L2) - last
@@ -188,10 +188,10 @@ struct convert_data {
 //all the fields in the following structure are read only
 struct capture_device {
 	struct mmap *mmap;				//do not touch
-	int palette;					//the image format returned by libvideo
+	unsigned int palette;					//the image format returned by libvideo
 									//see #define above
-	int width;						//captured frame width
-	int height;						//captured frame width
+	unsigned int width;						//captured frame width
+	unsigned int height;						//captured frame width
 	int std;						//v4l standard - see #define enum above
 	int channel;					//channel number (0 for webcams)
 	int imagesize;					//in bytes
@@ -501,7 +501,7 @@ int close_device(struct video_device *);
 //opens the device file, checks what version of v4l the device supports,
 //and whether capture and streaming are supported. Then creates the V4L
 //control list. Arguments: device file, width, height, channel, std, nb_buf
-struct capture_device *init_capture_device(struct video_device *, int, int, int, int, int);
+struct capture_device *init_capture_device(struct video_device *vdev, int w, int h, int ch, int s, unsigned int nb_buf);
 
 
 /*
@@ -523,7 +523,7 @@ struct capture_actions {
 // LIBVIDEO_ERR_CHANNEL (the supplied channel is invalid)
 // LIBVIDEO_ERR_CROP (error applying cropping parameters)
 // or LIBVIDEO_ERR_NOCAPS (error checking capabilities)
-	int (*set_cap_param)(struct video_device *, int , int);
+	int (*set_cap_param)(struct video_device *, unsigned int src_palette, unsigned int dest_palette);
 
 //set the frame interval for capture, ie the number of seconds in between
 //each captured frame. This function is available only for V4L2 devices
@@ -533,7 +533,7 @@ struct capture_actions {
 //LIBVIDEO_ERR_FORMAT if the given parameters are incorrect, or 0 if
 //everything went fine. The driver may adjust the given values to the closest
 //supported ones, which can be check with get_frame_interval()
-	int (*set_frame_interval)(struct video_device *, int, int);
+	int (*set_frame_interval)(struct video_device *, unsigned int numerator, unsigned int denominator);
 
 //get the current frame interval for capture, ie the number of seconds in
 //between each captured frame. This function is available only for V4L2 devices
@@ -541,13 +541,13 @@ struct capture_actions {
 //This function returns LIBVIDEO_ERR_IOCTL on v4l1 devices and on v4l2
 //device which do not support setting frame intervals or 0 if
 //everything went fine
-	int (*get_frame_interval)(struct video_device *, int *, int *);
+	int (*get_frame_interval)(struct video_device *, unsigned int *numerator, unsigned int *denominator);
 
 
 //Change the current video input and standard during capture
-	int (*set_video_input_std)(struct video_device*, int, int);
+	int (*set_video_input_std)(struct video_device*, int input_num, int std);
 //Get the current video input and standard during capture
-	void (*get_video_input_std)(struct video_device*, int*, int*);
+	void (*get_video_input_std)(struct video_device*, int* input_num, int* std);
 
 //initialise streaming, request create mmap'ed buffers
 //returns 0 if ok, LIBVIDEO_ERR_REQ_MMAP if error negotiating mmap params,
