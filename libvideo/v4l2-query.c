@@ -25,6 +25,7 @@
 #include <sys/ioctl.h>		//for ioctl
 
 #include "libvideo.h"
+#include "v4l2-query.h"
 #include "v4l2-input.h"
 #include "libvideo-err.h"
 #include "log.h"
@@ -453,7 +454,7 @@ static int add_supported_palette(struct video_device *vdev, struct device_info *
 
 //this function checks the supporte palettes
 //it returns how many supported palettes there are, or LIBVIDEO_ERR_IOCTL
-static int check_palettes_v4l2(struct video_device *vdev){
+static int check_palettes_v4l2(struct video_device *vdev) {
 	vdev->info->convert = v4lconvert_create(vdev->fd);
 	struct v4l2_fmtdesc fmtd;
 	CLEAR(fmtd);
@@ -461,8 +462,7 @@ static int check_palettes_v4l2(struct video_device *vdev){
 	di->palettes = NULL;
 	int p;
 
-	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
-			"QRY: Checking supported palettes.\n");
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: Checking supported palettes.\n");
 
 	fmtd.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	fmtd.index = 0;
@@ -483,8 +483,7 @@ static int check_palettes_v4l2(struct video_device *vdev){
 		} else {
 			info("libvideo has skipped an unsupported image format:\n");
 			info("%s (%#x)\n", fmtd.description, fmtd.pixelformat);
-			info("Please let the author know about this error.\n");
-			info("See the ISSUES section in the libvideo README file.\n");
+			PRINT_REPORT_ERROR();
 		}
 		fmtd.index++;
 	}
@@ -521,16 +520,16 @@ static int query_tuner(struct video_input_info *vi, int fd, int index){
 	return 0;
 }
 
-static void free_tuner(struct tuner_info *t){
+static inline void free_tuner(struct tuner_info *t){
 	if (t)
 		XFREE(t);
 }
 
 static void free_video_inputs(struct video_input_info *vi, int nb){
-	int i;
-	for(i=0;i<nb;i++) {
+	for(unsigned int i = 0; i < nb; i++) {
 		free_tuner(vi[i].tuner);
-		if (vi[i].nb_stds) XFREE(vi[i].supported_stds);
+		if (vi[i].nb_stds)
+			XFREE(vi[i].supported_stds);
 	}
 	XFREE(vi);
 }
@@ -543,7 +542,7 @@ static void add_supported_std(struct video_input_info *vi, int std){
 	vi->supported_stds[(vi->nb_stds - 1)] = std;
 }
 
-int check_inputs_v4l2(struct video_device *vdev) {
+static inline int check_inputs_v4l2(struct video_device *vdev) {
 	struct v4l2_input vi;
 	int i, ret = 0;
 	struct device_info *di = vdev->info;
@@ -618,18 +617,15 @@ int check_inputs_v4l2(struct video_device *vdev) {
 //last struct has its members set to 0) or
 //FRAME_INTV_CONTINUOUS (p points to a struct frame_intv_continuous)
 //The returned pointer must be freed by the caller (using free()).
-static int list_frame_intv(struct device_info *dinfo, int fmt, int width,
-		int height, void **p){
-	return lookup_frame_intv(dinfo->convert,
-				libvideo_palettes[fmt].v4l2_palette, width, height, p);
+static int list_frame_intv(struct device_info *dinfo, int fmt, int width, int height, void **p){
+	return lookup_frame_intv(dinfo->convert, libvideo_palettes[fmt].v4l2_palette, width, height, p);
 }
 
-int query_device_v4l2(struct video_device *vdev){
+int query_device_v4l2(struct video_device *vdev) {
 	int ret = 0;
 	struct v4l2_capability caps;
 
-	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
-			"QRY: Querying V4L2 device.\n");
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: Querying V4L2 device.\n");
 
 	if (check_v4l2(vdev->fd, &caps)==-1) {
 		info("Error checking capabilities of V4L2 video device %s", vdev->file);
@@ -641,8 +637,7 @@ int query_device_v4l2(struct video_device *vdev){
 
 	//fill input field
 	if(check_inputs_v4l2(vdev)==-1){
-		info("Error checking available inputs on V4L2 video device %s",
-				vdev->file);
+		info("Error checking available inputs on V4L2 video device %s", vdev->file);
 		ret = LIBVIDEO_ERR_NOCAPS;
 		goto end;
 	}
@@ -650,8 +645,7 @@ int query_device_v4l2(struct video_device *vdev){
 	//fill palettes field
 	if(check_palettes_v4l2(vdev)==LIBVIDEO_ERR_IOCTL){
 		free_video_inputs(vdev->info->inputs, vdev->info->nb_inputs);
-		info("Error checking supported palettes on V4L2 video device %s\n",
-				vdev->file);
+		info("Error checking supported palettes on V4L2 video device %s\n", vdev->file);
 		ret = LIBVIDEO_ERR_NOCAPS;
 		goto end;
 	}

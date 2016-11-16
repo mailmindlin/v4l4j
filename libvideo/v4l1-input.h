@@ -44,15 +44,15 @@ int check_v4l1(int fd, struct video_capability *);
 int check_capture_capabilities_v4l1(int, char *);
 
 // set the capture parameters trying the capturing in the native palette (last arg ignored)
-int set_cap_param_v4l1(struct video_device *, int , int);
+int set_cap_param_v4l1(struct video_device *vdev, unsigned int src_palette, unsigned int palette);
 // set video channel 	VIDIOCSCHAN -
 // set picture format 	VIDIOCSPICT -
 // set window 		VIDIOCSWIN
 // get window format	VIDIOCGWIN  (to double check)
 
-int set_frame_intv_v4l1(struct video_device *, int , int);
+int set_frame_intv_v4l1(struct video_device *vdev, unsigned int num, unsigned int denom);
 
-int get_frame_intv_v4l1(struct video_device *, int *, int*);
+int get_frame_intv_v4l1(struct video_device *vdev, unsigned int *num, unsigned int *denom);
 
 int set_video_input_std_v4l1(struct video_device *, int, int);
 void get_video_input_std_v4l1(struct video_device *vdev, int *input_num, int *std);

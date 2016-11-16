@@ -26,6 +26,7 @@
 
 #include "libvideo.h"
 #include "libvideo-palettes.h"
+#include "v4l1-query.h"
 #include "v4l1-input.h"
 #include "libvideo-err.h"
 #include "log.h"
@@ -166,7 +167,7 @@ static void free_video_inputs(struct video_input_info *vi, int nb){
 	XFREE(vi);
 }
 
-int check_inputs_v4l1(struct video_device *vd){
+static inline int check_inputs_v4l1(struct video_device *vd){
 	struct video_capability vc;
 	struct video_channel chan;
 	int i, ret = 0;
@@ -206,8 +207,7 @@ int check_inputs_v4l1(struct video_device *vd){
 		if(chan.tuners > 1) {
 			info("Your V4L1 device has more than one tuner connected to this ");
 			info("input.\nThis is currently not supported by libvideo.\n");
-			info("Please let the author know about this error.\n");
-			info("See the ISSUES section in the libvideo README file.\n");
+			PRINT_REPORT_ERROR();
 			ret = LIBVIDEO_ERR_NOCAPS;
 			free_video_inputs(di->inputs,i);
 			goto end;
@@ -247,8 +247,7 @@ int check_inputs_v4l1(struct video_device *vd){
 	return ret;
 }
 
-static int list_frame_intv(struct device_info *dinfo, int fmt, int width,
-		int height, void **p){
+static int list_frame_intv(struct device_info *dinfo, int fmt, int width, int height, void **p){
 	*p = NULL;
 	return FRAME_INTV_UNSUPPORTED;
 }

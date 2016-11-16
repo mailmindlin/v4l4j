@@ -29,6 +29,9 @@
 
 int set_tuner_freq_v4l1(struct video_device *, int, unsigned int);
 int get_tuner_freq_v4l1(struct video_device *, int, unsigned int *);
+int set_tuner_freq_v4l1(struct video_device *vdev, int idx, unsigned int f);
+int get_tuner_freq_v4l1(struct video_device *vdev, int idx, unsigned int *f);
+int get_rssi_afc_v4l1(struct video_device *vdev, int idx, int *r, int *a);
 int get_rssi_afc_v4l1(struct video_device *, int, int *, int *);
 
 #endif /* V4L1TUNER_H_ */

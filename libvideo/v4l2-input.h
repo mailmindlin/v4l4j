@@ -42,11 +42,11 @@ int check_v4l2(int fd, struct v4l2_capability *);
 int check_capture_capabilities_v4l2(int, char *);
 
 // set the capture parameters (hardcoded to require YUV420 for now
-int set_cap_param_v4l2(struct video_device *, int , int);
+int set_cap_param_v4l2(struct video_device *vdev, unsigned int src_palette, unsigned int dest_palette);
 
-int set_frame_intv_v4l2(struct video_device *, int , int);
+int set_frame_intv_v4l2(struct video_device *vdev, unsigned int num, unsigned int denom);
 
-int get_frame_intv_v4l2(struct video_device *, int *, int*);
+int get_frame_intv_v4l2(struct video_device *vdev, unsigned int *num, unsigned int *denom);
 
 // Change the input and standard during capture using this function
 int set_video_input_std_v4l2(struct video_device *vdev, int input_num, int std);

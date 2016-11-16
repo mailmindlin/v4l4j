@@ -22,6 +22,7 @@
 *
 */
 #include <sys/ioctl.h>
+#include "v4l2-tuner.h"
 #include "libvideo.h"
 #include "libvideo-err.h"
 #include "log.h"
