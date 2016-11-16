@@ -44,10 +44,21 @@ LIBV4L_PUBLIC union v4lconvert_conversion_fn {
 	void* user_defined;
 };
 
+LIBV4L_PUBLIC enum v4lconvert_conversion_type {
+	v4lconvert_conversion_type_unknown = 0,
+	v4lconvert_conversion_type_imf,
+	v4lconvert_conversion_type_crop,
+	v4lconvert_conversion_type_pad,
+	v4lconvert_conversion_type_scale,
+	v4lconvert_conversion_type_rotate,
+	v4lconvert_conversion_type_flip
+};
+
 LIBV4L_PUBLIC struct v4lconvert_converter {
 	u32 id;
 	enum v4lconvert_conversion_signature signature;
 	union v4lconvert_conversion_fn target;
+	enum v4lconvert_conversion_type type;
 	u32 src_fmt;
 	u32 dst_fmt;
 	int flag1;
@@ -96,7 +107,7 @@ LIBV4L_PUBLIC struct v4lconvert_encoder {
 	u32 dst_len;
 	u32 dst_width;
 	u32 dst_height;
-	const struct v4lconvert_converter* converter;
+	v4lconvert_converter_t* converter;
 	union {
 		struct v4l2_format* imf_v4l2_src_fmt;
 		struct {

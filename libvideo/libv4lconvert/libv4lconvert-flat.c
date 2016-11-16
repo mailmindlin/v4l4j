@@ -22,19 +22,19 @@ extern "C" {
 #define UNUSED(x) (void)(x)
 #endif
 
-#define GENERATE_CONVERTER_SDWH_0F(id, fn, src_fmt, dst_fmt) {(id), v4lconvert_conversion_signature_sdwh_0f, {.cvt_sdwh_0f = (fn)}, (src_fmt), (dst_fmt), N_A, N_A}
+#define GENERATE_CONVERTER_SDWH_0F(id, fn, src_fmt, dst_fmt) {(id), v4lconvert_conversion_signature_sdwh_0f, {.cvt_sdwh_0f = (fn)}, v4lconvert_conversion_type_unknown, (src_fmt), (dst_fmt), N_A, N_A}
 
-#define GENERATE_CONVERTER_SDWH_1F(id, fn, src_fmt, dst_fmt, flag1) {(id), v4lconvert_conversion_signature_sdwh_1f, {.cvt_sdwh_1f = (fn)}, (src_fmt), (dst_fmt), (flag1), N_A}
+#define GENERATE_CONVERTER_SDWH_1F(id, fn, src_fmt, dst_fmt, flag1) {(id), v4lconvert_conversion_signature_sdwh_1f, {.cvt_sdwh_1f = (fn)}, v4lconvert_conversion_type_unknown, (src_fmt), (dst_fmt), (flag1), N_A}
 
-#define GENERATE_CONVERTER_SDWH_2F(id, fn, src_fmt, dst_fmt, flag1, flag2) {(id), v4lconvert_conversion_signature_sdwh_1f, {.cvt_sdwh_1f = (fn)}, (src_fmt), (dst_fmt), (flag1), (flag2)}
+#define GENERATE_CONVERTER_SDWH_2F(id, fn, src_fmt, dst_fmt, flag1, flag2) {(id), v4lconvert_conversion_signature_sdwh_1f, {.cvt_sdwh_1f = (fn)}, v4lconvert_conversion_type_unknown, (src_fmt), (dst_fmt), (flag1), (flag2)}
 
-#define GENERATE_CONVERTER_SD_SF_0F(id, fn, src_fmt, dst_fmt) {(id), v4lconvert_conversion_signature_sd_sf_0f, {.cvt_sd_sf_0f = (fn)}, (src_fmt), (dst_fmt), N_A, N_A}
+#define GENERATE_CONVERTER_SD_SF_0F(id, fn, src_fmt, dst_fmt) {(id), v4lconvert_conversion_signature_sd_sf_0f, {.cvt_sd_sf_0f = (fn)}, v4lconvert_conversion_type_unknown, (src_fmt), (dst_fmt), N_A, N_A}
 
-#define GENERATE_CONVERTER_SD_SF_1F(id, fn, src_fmt, dst_fmt, flag1) {(id), v4lconvert_conversion_signature_sd_sf_1f, {.cvt_sd_sf_1f = (fn)}, (src_fmt), (dst_fmt), (flag1), N_A}
+#define GENERATE_CONVERTER_SD_SF_1F(id, fn, src_fmt, dst_fmt, flag1) {(id), v4lconvert_conversion_signature_sd_sf_1f, {.cvt_sd_sf_1f = (fn)}, v4lconvert_conversion_type_unknown, (src_fmt), (dst_fmt), (flag1), N_A}
 
-#define GENERATE_CONVERTER_SD_SF_2F(id, fn, src_fmt, dst_fmt, flag1, flag2) {(id), v4lconvert_conversion_signature_sd_sf_2f, {.cvt_sd_sf_2f = (fn)}, (src_fmt), (dst_fmt), (flag1), (flag2)}
+#define GENERATE_CONVERTER_SD_SF_2F(id, fn, src_fmt, dst_fmt, flag1, flag2) {(id), v4lconvert_conversion_signature_sd_sf_2f, {.cvt_sd_sf_2f = (fn)}, v4lconvert_conversion_type_unknown, (src_fmt), (dst_fmt), (flag1), (flag2)}
 
-#define GENERATE_CONVERTER_SPECIAL(id, src_fmt, dst_fmt, flag1, flag2) {(id), v4lconvert_conversion_signature_special, {.user_defined = NULL}, (src_fmt), (dst_fmt), (flag1), (flag2)}
+#define GENERATE_CONVERTER_SPECIAL(id, src_fmt, dst_fmt, flag1, flag2) {(id), v4lconvert_conversion_signature_special, {.user_defined = NULL}, v4lconvert_conversion_type_unknown, (src_fmt), (dst_fmt), (flag1), (flag2)}
 
 #define GENERATE_CONVERTER_SDWH_1F_x2(id, fn, src_fmt_0, src_fmt_1, dst_fmt_0, dst_fmt_1) \
 	GENERATE_CONVERTER_SDWH_1F(id    , (fn), (src_fmt_0), (dst_fmt_0), 0),\
