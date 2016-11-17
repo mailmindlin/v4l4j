@@ -36,7 +36,7 @@ struct libvideo_palette{
 	char name[15];
 };
 
-#define VIDEO_PALETTE_UNDEFINED_V4L1	-1
+#define VIDEO_PALETTE_UNDEFINED_V4L1	-1u
 #define COMPRESSED_FORMAT_DEPTH			-1
 
 extern const struct libvideo_palette libvideo_palettes[];
