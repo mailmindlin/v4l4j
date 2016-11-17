@@ -48,9 +48,9 @@ OBJ := jpeg.o jniutils.o \
 
 INCLUDES := -I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ \
   -I$(LIBVIDEO_PATH) -I$(LIBVIDEO_PATH)/pixfc-sse -I. -I/usr/local/include
-CFLAGS += $(INCLUDES) $(DBG) $(OPTIMISATION) -fPIC -fno-stack-protector -std=gnu11 -pthread -ftree-vectorize -fPIC -mcpu=native -mfpu=neon-vfpv4 -mfloat-abi=hard -fpredictive-commoning
+CFLAGS += $(INCLUDES) $(DBG) $(OPTIMISATION) -fPIC -fno-stack-protector -std=gnu11 -pthread -ftree-vectorize -fPIC -mcpu=native -mfpu=neon-vfpv4 -mfloat-abi=hard -fpredictive-commoning -fdiagnostics-color=auto
 
-LDFLAGS += -shared -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME) -L/usr/local/lib -lx264 -z noexecstack
+LDFLAGS += -shared -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME) -L/usr/local/lib -z noexecstack
 
 all: $(LIB)
 
