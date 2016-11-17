@@ -203,5 +203,5 @@ LIBV4LCONVERT_LOCAL void v4lconvert_crop(u8 *src, u8 *dest, const struct v4l2_fo
 LIBV4LCONVERT_LOCAL int v4lconvert_helper_decompress(struct v4lconvert_data *data, const char *helper, const u8 *src, unsigned int src_size, u8 *dest, unsigned int dest_size, u32 width, u32 height, int command);
 
 LIBV4LCONVERT_LOCAL void v4lconvert_helper_cleanup(struct v4lconvert_data *data);
-
+#pragma GCC visibility pop
 #endif

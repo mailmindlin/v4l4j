@@ -3,18 +3,11 @@ override CPPFLAGS += -I.. -fvisibility=hidden
 LIBS_libv4lconvert = -lrt -lm -ljpeg
 
 ifeq ($(LINKTYPE),static)
-CONVERT_LIB   = libv4lconvert.a
-override CPPFLAGS += -fPIC
+	CONVERT_LIB   = libv4lconvert.a
+	override CPPFLAGS += -fPIC
 else
-CONVERT_LIB   = libv4lconvert.so
-override CPPFLAGS += -fPIC
-endif
-
-ifneq ($(DEBUG),)
-CFLAGS += -DDEBUG -ggdb -Wall -DLIBVIDEO_LOG_LEVEL=$(LIBVIDEO_LOG_LEVEL) -DLIBVIDEO_LOG_SOURCE=$(LIBVIDEO_LOG_SOURCE)
-else
-CFLAGS += -Os -flto -g
-LDFLAGS += -flto -g
+	CONVERT_LIB   = libv4lconvert.so
+	override CPPFLAGS += -fPIC
 endif
 
 CONVERT_OBJS  = libv4lconvert.o tinyjpeg.o sn9c10x.o sn9c20x.o pac207.o \
