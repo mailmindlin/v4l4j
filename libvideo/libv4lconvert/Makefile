@@ -3,11 +3,9 @@ override CPPFLAGS += -I.. -fvisibility=hidden
 LIBS_libv4lconvert = -lrt -lm -ljpeg
 
 ifeq ($(LINKTYPE),static)
-	CONVERT_LIB   = libv4lconvert.a
-	override CPPFLAGS += -fPIC
+	CONVERT_LIB = libv4lconvert.a
 else
-	CONVERT_LIB   = libv4lconvert.so
-	override CPPFLAGS += -fPIC
+	CONVERT_LIB = libv4lconvert.so
 endif
 
 CONVERT_OBJS  = libv4lconvert.o tinyjpeg.o sn9c10x.o sn9c20x.o pac207.o \
@@ -24,7 +22,7 @@ CONVERT_OBJS  = libv4lconvert.o tinyjpeg.o sn9c10x.o sn9c20x.o pac207.o \
 TARGETS       = $(CONVERT_LIB) libv4lconvert.pc ov511-decomp ov518-decomp
 INCLUDES      = ../include/libv4lconvert.h ../include/libv4lconvert-flat.h
 
-override CPPFLAGS += -DLIBDIR=\"$(LIBDIR)\" -DLIBSUBDIR=\"$(LIBSUBDIR)\" -Wunused-function -DCONVERT_ARM_NEON
+override CPPFLAGS += -fPIC -DLIBDIR=\"$(LIBDIR)\" -DLIBSUBDIR=\"$(LIBSUBDIR)\" -Wunused-function -DCONVERT_ARM_NEON
 
 all: $(TARGETS)
 
