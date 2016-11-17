@@ -5,16 +5,12 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
 import au.edu.jcu.v4l4j.ImagePalette;
+import au.edu.jcu.v4l4j.V4L4JUtils;
 
 public class ImageFormatConverter implements VideoFrameConverter {
 	
 	static {
-		try {
-			System.loadLibrary("v4l4j");
-		} catch (UnsatisfiedLinkError e) {
-			System.err.println("Cant load v4l4j JNI library");
-			throw e;
-		}
+		V4L4JUtils.loadLibrary();
 	}
 	
 	/**

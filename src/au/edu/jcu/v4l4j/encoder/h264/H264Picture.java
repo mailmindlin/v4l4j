@@ -8,6 +8,7 @@ import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 
 import au.edu.jcu.v4l4j.FrameGrabber;
+import au.edu.jcu.v4l4j.V4L4JUtils;
 import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
 
@@ -18,12 +19,7 @@ import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
 public class H264Picture implements Closeable, VideoFrame {
 	
 	static {
-		try {
-			System.loadLibrary("v4l4j");
-		} catch (UnsatisfiedLinkError e) {
-			System.err.println("Cant load v4l4j JNI library");
-			throw e;
-		}
+		V4L4JUtils.loadLibrary();
 	}
 	
 	protected static native long alloc();

@@ -3,6 +3,7 @@ package au.edu.jcu.v4l4j.encoder.h264;
 import java.nio.ByteBuffer;
 
 import au.edu.jcu.v4l4j.ImagePalette;
+import au.edu.jcu.v4l4j.V4L4JUtils;
 import au.edu.jcu.v4l4j.encoder.VideoFrameTransformer;
 import au.edu.jcu.v4l4j.exceptions.BufferOverflowException;
 import au.edu.jcu.v4l4j.exceptions.BufferUnderflowException;
@@ -14,12 +15,7 @@ public class H264Encoder implements VideoFrameTransformer {
 	protected int frameNum = 0;
 	
 	static {
-		try {
-			System.loadLibrary("v4l4j");
-		} catch (UnsatisfiedLinkError e) {
-			System.err.println("Cant load v4l4j JNI library");
-			throw e;
-		}
+		V4L4JUtils.loadLibrary();
 	}
 	
 	protected final ByteBuffer buffer;

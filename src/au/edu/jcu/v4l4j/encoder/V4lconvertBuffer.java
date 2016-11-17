@@ -4,18 +4,14 @@ import java.io.Closeable;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import au.edu.jcu.v4l4j.V4L4JUtils;
 import au.edu.jcu.v4l4j.exceptions.JNIException;
 import au.edu.jcu.v4l4j.exceptions.ReleaseException;
 
 public final class V4lconvertBuffer implements Closeable {
 	
 	static {
-		try {
-			System.loadLibrary("v4l4j");
-		} catch (UnsatisfiedLinkError e) {
-			System.err.println("Cant load v4l4j JNI library");
-			throw e;
-		}
+		V4L4JUtils.loadLibrary();
 	}
 	
 	private static native long allocate(int srcLen, int dstLen, int imedLen, boolean allocSrc, boolean allocDst);

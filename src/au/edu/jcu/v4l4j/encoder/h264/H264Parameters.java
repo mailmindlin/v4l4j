@@ -7,6 +7,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Objects;
 
+import au.edu.jcu.v4l4j.V4L4JUtils;
+
 /**
  * Wrapper for <code>x264_param_t</code>
  * 
@@ -14,12 +16,7 @@ import java.util.Objects;
  */
 public class H264Parameters implements Externalizable, Closeable {
 	static {
-		try {
-			System.loadLibrary("v4l4j");
-		} catch (UnsatisfiedLinkError e) {
-			System.err.println("Cant load v4l4j JNI library");
-			throw e;
-		}
+		V4L4JUtils.loadLibrary();
 	}
 	
 	public final long object;

@@ -133,12 +133,7 @@ public class DeviceInfo {
 	private native FrameInterval doListIntervals(long o, int imf, int w, int h);
 
 	static {
-		try {
-			System.loadLibrary("v4l4j");
-		} catch (UnsatisfiedLinkError e) {
-			System.err.println("Cant load v4l4j JNI library");
-			throw e;
-		}
+		V4L4JUtils.loadLibrary();
 	}
 
 	/**
