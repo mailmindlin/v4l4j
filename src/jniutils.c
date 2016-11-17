@@ -31,7 +31,7 @@ inline jclass lookupClassSafe(JNIEnv *env, jobject obj) {
 	return result;
 }
 
-static void __doReleaseDirectBuffer(JNIEnv* env, jbyteArray* arrayRef, unsigned char* ptr) {
+static void __doReleaseDirectBuffer(JNIEnv* env, jbyteArray arrayRef, unsigned char* ptr) {
 	//Suppress unused parameter warning messages
 	(void)(env);
 	(void)(arrayRef);
@@ -40,10 +40,10 @@ static void __doReleaseDirectBuffer(JNIEnv* env, jbyteArray* arrayRef, unsigned 
 	dprint(LOG_V4L4J, "Releasing direct pointer\n");
 }
 
-static void __doReleaseArray(JNIEnv* env, jbyteArray* arrayRef, unsigned char* ptr) {
+static void __doReleaseArray(JNIEnv* env, jbyteArray arrayRef, unsigned char* ptr) {
 	dprint(LOG_V4L4J, "Releasing array ref\n");
 	(*env)->ReleaseByteArrayElements(env, arrayRef, ptr, 0);
-	(*env)->DeleteLocalRef(arrayRef);
+	(*env)->DeleteLocalRef(env, arrayRef);
 }
 
 /**
@@ -53,7 +53,7 @@ static void __doReleaseArray(JNIEnv* env, jbyteArray* arrayRef, unsigned char* p
  * @param arrayRef If not null, will be set to NULL if a direct pointer can be recieved, else the array that is backing the returned pointer
  * @param len If not null, will be set to the length of the returned pointer, in bytes.
  */
-inline unsigned char* getBufferPointer(JNIEnv *env, jobject buffer, jbyteArray* arrayRef, unsigned int* len, void (*release)(JNIEnv* env, jbyteArray* arrayRef, unsigned char* ptr)) {
+inline unsigned char* getBufferPointer(JNIEnv *env, jobject buffer, jbyteArray* arrayRef, unsigned int* len, void (**release)(JNIEnv* env, jbyteArray arrayRef, unsigned char* ptr)) {
 	unsigned char* result = (*env)->GetDirectBufferAddress(env, buffer);
 	if (result) {
 		if (arrayRef)
