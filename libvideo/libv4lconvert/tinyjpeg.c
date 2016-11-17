@@ -765,11 +765,11 @@ static void YCrCB_to_RGB24_2x1(struct jdec_private *priv) {
 			int add_b = FIX(1.77200) * cb + ONE_HALF;
 			
 			int y  = (*Y++) << SCALEBITS;
-			r = (y + add_r) >> SCALEBITS;
+			int r = (y + add_r) >> SCALEBITS;
 			*p++ = clamp(r);
-			g = (y + add_g) >> SCALEBITS;
+			int g = (y + add_g) >> SCALEBITS;
 			*p++ = clamp(g);
-			b = (y + add_b) >> SCALEBITS;
+			int b = (y + add_b) >> SCALEBITS;
 			*p++ = clamp(b);
 
 			y  = (*Y++) << SCALEBITS;
