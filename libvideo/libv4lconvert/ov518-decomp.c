@@ -17,6 +17,7 @@
 
 #include <string.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include "helper-funcs.h"
 
 /******************************************************************************
@@ -29,6 +30,7 @@
 #undef APPROXIMATE_MUL_BY_SHIFT
 
 #define CLIP(x) ((u8) ((x) > 0xFF ? 0xFF : (x) < 0 ? 0 : (x)))
+
 /******************************************************************************
  * Local Data Types
  ******************************************************************************/
@@ -44,9 +46,9 @@ struct tree_node {
 };
 
 struct comp_info {
-	int bytes;		/* Number of processed input bytes */
-	int bits;		/* Number of unprocessed input bits */
-	int rawLen;		/* Total number of bytes in input buffer */
+	unsigned int bytes;		/* Number of processed input bytes */
+	unsigned int bits;		/* Number of unprocessed input bits */
+	unsigned int rawLen;		/* Total number of bytes in input buffer */
 	u8 *qt;	/* Current quantization table */
 };
 
@@ -438,44 +440,36 @@ static const struct tree_node treeUVDC[] = {
 
 /* If no node is found, coeffbits and skip will not be modified */
 /* Return: Depth of node found, or -1 if invalid input code */
-static int
-getNodeAC(unsigned int in, signed char *coeffbits, signed char *skip,
-		const struct tree_node *tree)
-{
+static int getNodeAC(unsigned int in, signed char *coeffbits, signed char *skip, const struct tree_node *tree) {
 	int node = 0;
-	int i = 0;
-	int depth;
-
-	do {
+	
+	for (unsigned int i = 0; i < 16; i++) {
 		if ((in & 0x80000000) == 0)
 			node = tree[node].left;
 		else
 			node = tree[node].right;
-
+		
 		if (node == -1)
 			break;
 
-		depth = tree[node].depth;
-
+		int depth = tree[node].depth;
+		
 		/* Is it a leaf? If not, branch downward */
 		if (depth != -1) {
 			*coeffbits = tree[node].coeffbits;
 			*skip = tree[node].skip;
 			return depth;
 		}
-
+		
 		in <<= 1;
-		++i;
-	} while (i <= 15);
-
+	}
+	
 	return -1;
 }
 
 /* If no node is found, coeffbits will not be modified */
 /* Return: Depth of node found, or -1 if invalid input code */
-static int
-getNodeDC(unsigned int in, signed char *coeffbits, const struct tree_node *tree)
-{
+static int getNodeDC(unsigned int in, signed char *coeffbits, const struct tree_node *tree) {
 	int node = 0;
 	int i = 0;
 	int depth;
@@ -504,76 +498,32 @@ getNodeDC(unsigned int in, signed char *coeffbits, const struct tree_node *tree)
 	return -1;
 }
 
-static inline unsigned int
-getBytes(int *rawData, struct comp_info *cinfo)
-{
-	int bufLen = cinfo->rawLen;
-	int bits = cinfo->bits;
-	int bytes = cinfo->bytes;
-	u8 *in = bytes + (u8 *) rawData;
-	u8 b1, b2, b3, b4, b5;
-	unsigned int packedIn;
-
-	/* Pull 5 bytes out of raw data */
-	if (bytes < bufLen - 4) {
-		b1 = in[0];
-		b2 = in[1];
-		b3 = in[2];
-		b4 = in[3];
-		b5 = in[4];
-	} else {
-		if (bytes < bufLen - 3) {
-			b1 = in[0];
-			b2 = in[1];
-			b3 = in[2];
-			b4 = in[3];
-		} else {
-			if (bytes < bufLen - 2) {
-				b1 = in[0];
-				b2 = in[1];
-				b3 = in[2];
-			} else {
-				if (bytes < bufLen - 1) {
-					b1 = in[0];
-					b2 = in[1];
-				} else {
-					if (bytes <= bufLen)
-						b1 = in[0];
-					else
-						b1 = 0;
-					b2 = 0;
-				}
-				b3 = 0;
-			}
-			b4 = 0;
-		}
-		b5 = 0;
-	}
-
-	/* Pack the bytes */
-	packedIn  = b1 << 24;
-	packedIn += b2 << 16;
-	packedIn += b3 << 8;
-	packedIn += b4;
-
-	if (bits != 0) {
-		packedIn = packedIn << bits;
-		packedIn += b5 >> (8 - bits);
-	}
-
-	return packedIn;
+static inline unsigned int getBytes(int *rawData, struct comp_info *cinfo) {
+	unsigned int bufLen = cinfo->rawLen;
+	unsigned int bits = cinfo->bits;
+	unsigned int bytes = cinfo->bytes;
+	u8 *in = &((u8*)rawData)[bytes];
+	unsigned int result = 0;
+	//Read up to 4 bytes, forcing LE order
+	//TODO can we replace this with a call to __bswap_32 (stackoverflow.com/a/6961239/2759984)
+	unsigned int doRead = 4;
+	if (bufLen - bytes < 3)
+		doRead = bufLen - bytes;
+	for (unsigned int i = 0; i < doRead; i++)
+		result = (result << 8) | *in++;
+	result <<= 8 * (4 - doRead);
+	// Use an optional 5th byte
+	if (bits != 0)
+		result = (result << bits) + ((bufLen - bytes < 4) ? 0 : *in++);
+	return result;
 }
 
-static int
-getACCoefficient(int *rawData, int *coeff, struct comp_info *cinfo,
-		const struct tree_node *tree)
-{
-	int input, bits, bytes, tmp_c;
+static int getACCoefficient(int *rawData, int *coeff, struct comp_info *cinfo, const struct tree_node *tree) {
 	signed char coeffbits = 0;
 	signed char skip = 0;
 
-	input = getBytes(rawData, cinfo);
-	bits = getNodeAC(input, &coeffbits, &skip, tree);
+	unsigned int input = getBytes(rawData, cinfo);
+	int bits = getNodeAC(input, &coeffbits, &skip, tree);
 
 	if (coeffbits) {
 		input = input << (bits - 1);
@@ -581,30 +531,26 @@ getACCoefficient(int *rawData, int *coeff, struct comp_info *cinfo,
 		if (!(input & 0x40000000))
 			input |= 0x80000000;
 
-		tmp_c = input >> (31 - coeffbits);
-		if (tmp_c < 0)
+		unsigned int tmp_c = input >> (31 - coeffbits);
+		if (tmp_c == -1u)//TODO check if this is dead code
 			tmp_c++;
-		*coeff = tmp_c;
+		*coeff = (signed) tmp_c;
 
 		bits += coeffbits;
 	}
-
-	bytes = (bits + cinfo->bits) >> 3;
+	
+	unsigned int bytes = ((unsigned) bits + cinfo->bits) >> 3;
 	cinfo->bytes += bytes;
-	cinfo->bits += bits - (bytes << 3);
+	cinfo->bits += (unsigned) bits - (bytes << 3);
 
 	return skip;
 }
 
-static void
-getDCCoefficient(int *rawData, int *coeff, struct comp_info *cinfo,
-		const struct tree_node *tree)
-{
-	int input, bits, bytes, tmp_c;
+static void getDCCoefficient(int *rawData, int *coeff, struct comp_info *cinfo, const struct tree_node *tree) {
 	signed char coeffbits = 0;
 
-	input = getBytes(rawData, cinfo);
-	bits = getNodeDC(input, &coeffbits, tree);
+	unsigned int input = getBytes(rawData, cinfo);
+	int bits = getNodeDC(input, &coeffbits, tree);
 
 	if (bits == -1) {
 		bits = 1;	/* Try to re-sync at the next bit */
@@ -616,17 +562,17 @@ getDCCoefficient(int *rawData, int *coeff, struct comp_info *cinfo,
 		if (!(input & 0x40000000))
 			input |= 0x80000000;
 
-		tmp_c = input >> (31 - coeffbits);
-		if (tmp_c < 0)
+		unsigned int tmp_c = input >> (31 - coeffbits);
+		if (tmp_c == -1u)//TODO check if this is effectively dead
 			tmp_c++;
-		*coeff = tmp_c;
+		*coeff = (signed) tmp_c;
 
 		bits += coeffbits;
 	}
 
-	bytes = (bits + cinfo->bits) >> 3;
+	unsigned int bytes = ((unsigned) bits + cinfo->bits) >> 3;
 	cinfo->bytes += bytes;
-	cinfo->bits += bits - (bytes << 3);
+	cinfo->bits += (unsigned) bits - (bytes << 3);
 }
 
 /* For AC coefficients, here is what the "skip" value means:
@@ -638,33 +584,31 @@ getDCCoefficient(int *rawData, int *coeff, struct comp_info *cinfo,
  * You must ensure that the C[] array not be overrun, or stack corruption will
  * result.
  */
-static void
-huffmanDecoderY(int *C, int *pIn, struct comp_info *cinfo)
-{
+static void huffmanDecoderY(int *C, int *pIn, struct comp_info *cinfo) {
 	int coeff = 0;
-	int i = 1;
-	int k, skip;
 
 	getDCCoefficient(pIn, C, cinfo, treeYDC);
 
-	i = 1;
+	unsigned int i = 1;
 	do {
-		skip = getACCoefficient(pIn, &coeff, cinfo, treeYAC);
+		int skip = getACCoefficient(pIn, &coeff, cinfo, treeYAC);
 
 		if (skip == -1) {
-			break;
+			while (i <= 31)
+				C[i++] = 0;
+			return;
 		} else if (skip == 0) {
 			C[i++] = coeff;
 		} else if (skip == 16) {
-			k = 16;
+			unsigned int k = 16;
 			if (i > 16)
 				k = 32 - i;
 
 			while (k--)
 				C[i++] = 0;
 		} else {
-			k = skip;
-			if (skip > 31 - i)
+			unsigned int k = (unsigned) skip;
+			if (skip > 31 - (signed) i)
 				k = 31 - i;
 
 			while (k--)
@@ -673,42 +617,36 @@ huffmanDecoderY(int *C, int *pIn, struct comp_info *cinfo)
 			C[i++] = coeff;
 		}
 	} while (i <= 31);
-
-	if (skip == -1)
-		while (i <= 31)
-			C[i++] = 0;
-	else
-		getACCoefficient(pIn, &coeff, cinfo, treeYAC);
+	
+	getACCoefficient(pIn, &coeff, cinfo, treeYAC);
 }
 
 /* Same as huffmanDecoderY, except for the tables used */
-static void
-huffmanDecoderUV(int *C, int *pIn, struct comp_info *cinfo)
-{
+static void huffmanDecoderUV(int *C, int *pIn, struct comp_info *cinfo) {
 	int coeff = 0;
-	int i = 1;
-	int k, skip;
 
 	getDCCoefficient(pIn, C, cinfo, treeUVDC);
 
-	i = 1;
+	unsigned int i = 1;
 	do {
-		skip = getACCoefficient(pIn, &coeff, cinfo, treeUVAC);
+		int skip = getACCoefficient(pIn, &coeff, cinfo, treeUVAC);
 
 		if (skip == -1) {
-			break;
+			while (i <= 31)
+				C[i++] = 0;
+			return;
 		} else if (skip == 0) {
 			C[i++] = coeff;
 		} else if (skip == 16) {
-			k = 16;
+			unsigned int k = 16;
 			if (i > 16)
 				k = 32 - i;
 
 			while (k--)
 				C[i++] = 0;
 		} else {
-			k = skip;
-			if (skip > 31 - i)
+			unsigned int k = (unsigned) skip;
+			if (skip > 31 - (signed) i)
 				k = 31 - i;
 
 			while (k--)
@@ -718,11 +656,7 @@ huffmanDecoderUV(int *C, int *pIn, struct comp_info *cinfo)
 		}
 	} while (i <= 31);
 
-	if (skip == -1)
-		while (i <= 31)
-			C[i++] = 0;
-	else
-		getACCoefficient(pIn, &coeff, cinfo, treeUVAC);
+	getACCoefficient(pIn, &coeff, cinfo, treeUVAC);
 }
 
 /******************************************************************************
@@ -783,12 +717,11 @@ huffmanDecoderUV(int *C, int *pIn, struct comp_info *cinfo)
 
 #endif
 
-static void DCT_8x4(int *coeff, u8 *out)
+static void DCT_8x4(int *coeff, u8 *out) {
 	/* pre: coeff == coefficients
 	   post: coeff != coefficients
 	 ** DO NOT ASSUME coeff TO BE THE SAME BEFORE AND AFTER CALLING THIS FUNCTION!
 	 */
-{
 	register int base, val1, val2, val3;
 	int tmp1, tmp2;
 	int C4, C16, C20;
@@ -842,13 +775,13 @@ static void DCT_8x4(int *coeff, u8 *out)
 	val3 += TIMES_12538(coeff[24] + coeff[28]);
 
 	t = (base + val1 + val2 + val3) >> 17;
-	out[0] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[0] = CLIP(t);
 	t = (base - val1 - val2 + val3 - C4 - C20) >> 17;
-	out[7] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[7] = CLIP(t);
 	t = (base - val1 + val2 - val3 - C16 - C20) >> 17;
-	out[24] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[24] = CLIP(t);
 	t = (base + val1 - val2 - val3 - C4 - C16 - C20) >> 17;
-	out[31] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[31] = CLIP(t);
 
 	//1,6,25,30
 
@@ -878,13 +811,13 @@ static void DCT_8x4(int *coeff, u8 *out)
 	val3 += TIMES_30270(coeff[8] - coeff[12]);
 
 	t = (base + val1 + val2 + val3 + C4 + C20) >> 17;
-	out[1] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[1] = CLIP(t);
 	t = (base - val1 - val2 + val3) >> 17;
-	out[6] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[6] = CLIP(t);
 	t = (base - val1 + val2 - val3 + C4 - C16 + C20) >> 17;
-	out[25] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[25] = CLIP(t);
 	t = (base + val1 - val2 - val3 + C20) >> 17;
-	out[30] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[30] = CLIP(t);
 
 	//2,5,26,29
 
@@ -914,13 +847,13 @@ static void DCT_8x4(int *coeff, u8 *out)
 	val3 += TIMES_30270(coeff[8] - coeff[12]);
 
 	t = (base + val1 + val2 + val3) >> 17;
-	out[2] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[2] = CLIP(t);
 	t = (base - val1 - val2 + val3) >> 17;
-	out[5] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[5] = CLIP(t);
 	t = (base - val1 + val2 - val3 - C16) >> 17;
-	out[26] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[26] = CLIP(t);
 	t = (base + val1 - val2 - val3 + C4 - C16 + C20) >> 17;
-	out[29] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (u8)t;
+	out[29] = CLIP(t);
 
 	//3,4,27,28
 
@@ -1138,25 +1071,15 @@ static void DCT_8x4(int *coeff, u8 *out)
  * independent of the palette (YUV422, YUV420, YUV400, GBR422...). cinfo->bytes
  * determines the positin in the input buffer.
  */
-static int
-decompress8x4(u8	*pOut,
-		u8	*pIn,
-		int		*lastDC,
-		int		uvFlag,
-		struct comp_info	*cinfo)
-{
-	int i, x, y, dc;
+static int decompress8x4(u8	*pOut, u8 *pIn, int *lastDC, bool uvFlag, struct comp_info *cinfo) {
 	int coeffs[32];
-	int deZigZag[32];
-	int *dest;
-	int *src;
 	u8 *qt = cinfo->qt;
 
 	if (!uvFlag) {
 		huffmanDecoderY(coeffs, (int *)pIn, cinfo);
 
 		/* iDPCM and dequantize first coefficient */
-		dc = (*lastDC) + coeffs[0];
+		int dc = (*lastDC) + coeffs[0];
 		coeffs[0] = dc * (qt[0] + 1);
 		*lastDC = dc;
 
@@ -1164,30 +1087,31 @@ decompress8x4(u8	*pOut,
 		coeffs[1] = ((qt[1] + 1) * coeffs[1]) >> 1;
 
 		/* Dequantize, starting at 3rd element */
-		for (i = 2; i < 32; i++)
+		for (unsigned int i = 2; i < 32; i++)
 			coeffs[i] = (qt[i] + 1) * coeffs[i];
 	} else {
 		huffmanDecoderUV(coeffs, (int *)pIn, cinfo);
 
 		/* iDPCM */
-		dc = (*lastDC) + coeffs[0];
+		int dc = (*lastDC) + coeffs[0];
 		coeffs[0] = dc;
 		*lastDC = dc;
 
 		/* Dequantize */
-		for (i = 0; i < 32; i++)
+		for (unsigned int i = 0; i < 32; i++)
 			coeffs[i] = (qt[32 + i] + 1) * coeffs[i];
 	}
 
 	/* Dezigzag */
-	for (i = 0; i < 32; i++)
+	int deZigZag[32];
+	for (unsigned int i = 0; i < 32; i++)
 		deZigZag[i] = coeffs[ZigZag518[i]];
 
 	/* Transpose the dezigzagged coefficient matrix */
-	src = deZigZag;
-	dest = coeffs;
-	for (y = 0; y <= 3; ++y) {
-		for (x = 0; x <= 7; ++x)
+	int *src = deZigZag;
+	int *dest = coeffs;
+	for (unsigned int y = 0; y <= 3; ++y) {
+		for (unsigned int x = 0; x <= 7; ++x)
 			dest[x] = src[x * 4];
 		src += 1;
 		dest += 8;
@@ -1199,15 +1123,10 @@ decompress8x4(u8	*pOut,
 	return 0;	/* Always returns 0 */
 }
 
-static inline void
-copyBlock(u8 *src, u8 *dest, int destInc)
-{
-	int i;
-	unsigned int *pSrc, *pDest;
-
-	for (i = 0; i <= 3; i++) {
-		pSrc = (unsigned int *) src;
-		pDest = (unsigned int *) dest;
+static inline void copyBlock(u8 *src, u8 *dest, unsigned int destInc) {
+	for (unsigned int i = 0; i <= 3; i++) {
+		unsigned int *pSrc = (unsigned int *) src;
+		unsigned int *pDest = (unsigned int *) dest;
 		pDest[0] = pSrc[0];
 		pDest[1] = pSrc[1];
 		src += 8;
@@ -1220,8 +1139,8 @@ static inline int
 decompress400NoMMXOV518(u8	 *pIn,
 		u8	 *pOut,
 		u8	 *pTmp,
-		const int	 w,
-		const int	 h,
+		const unsigned int	 w,
+		const unsigned int	 h,
 		const int	 numpix,
 		struct comp_info *cinfo)
 {
@@ -1254,35 +1173,33 @@ decompress400NoMMXOV518(u8	 *pIn,
 }
 #endif
 
-static inline int decompress420NoMMXOV518(u8	 *pIn, u8 *pOut, u8 *pTmp, const int w,
-		const int	 h,
-		const int	 numpix,
-		struct comp_info *cinfo,
-		int yvu) {
-	u8 *pOutU, *pOutV;
-	int iOutY, iOutU, iOutV, x, y;
+static inline int decompress420NoMMXOV518(u8 *pIn, u8 *pOut, u8 *pTmp,
+		const unsigned int w, const unsigned int h, const unsigned int numpix,
+		struct comp_info *cinfo, bool yvu) {
 	int lastYDC = 0;
 	int lastUDC = 0;
 	int lastVDC = 0;
 
+	u8 *pOutU = &(pOut[numpix]);
+	u8 *pOutV = &(pOutU[numpix / 4]);
+	
 	if (yvu) {
-		pOutV = pOut + numpix;
-		pOutU = pOutV + numpix / 4;
-	} else {
-		pOutU = pOut + numpix;
-		pOutV = pOutU + numpix / 4;
+		u8 *tmp = pOutU;
+		pOutU = pOutV;
+		pOutV = tmp;
 	}
 
 	/* Start Y loop */
-	y = 0;
+	unsigned int y = 0;
 	do {
-		iOutY = w * y;
-		iOutV = iOutU = iOutY / 4;
+		unsigned int iOutY = w * y;
+		unsigned int iOutU = iOutY / 4;
+		unsigned int iOutV = iOutU;
 
-		x = 0;
+		unsigned int x = 0;
 		do {
 			decompress8x4(pTmp, pIn, &lastYDC, 0, cinfo);
-			copyBlock(pTmp, pOut + iOutY, w);
+			copyBlock(pTmp, &(pOut[iOutY]), w);
 			iOutY += 8;
 			x += 8;
 		} while (x < w);
@@ -1293,21 +1210,21 @@ static inline int decompress420NoMMXOV518(u8	 *pIn, u8 *pOut, u8 *pTmp, const in
 		x = 0;
 		do {
 			decompress8x4(pTmp, pIn, &lastUDC, 1, cinfo);
-			copyBlock(pTmp, pOutU + iOutU, w/2);
+			copyBlock(pTmp, &(pOutU[iOutU]), w / 2);
 			iOutU += 8;
 
 			decompress8x4(pTmp, pIn, &lastVDC, 1, cinfo);
-			copyBlock(pTmp, pOutV + iOutV, w/2);
+			copyBlock(pTmp, &(pOutV[iOutV]), w / 2);
 			iOutV += 8;
 
 			decompress8x4(pTmp, pIn, &lastYDC, 0, cinfo);
-			copyBlock(pTmp, pOut + iOutY, w);
+			copyBlock(pTmp, &(pOut[iOutY]), w);
 			iOutY += 8;
 
 			decompress8x4(pTmp, pIn, &lastYDC, 0, cinfo);
-			copyBlock(pTmp, pOut + iOutY, w);
+			copyBlock(pTmp, &(pOut[iOutY]), w);
 			iOutY += 8;
-
+			
 			x += 16;
 		} while (x < w);
 
@@ -1328,8 +1245,8 @@ static inline int decompress420NoMMXOV518(u8	 *pIn, u8 *pOut, u8 *pTmp, const in
 /* Get quantization tables from input
  * Returns: <0 if error, or >=0 otherwise */
 static int get_qt_dynamic(u8 *pIn, struct comp_info *cinfo) {
-	int rawLen = cinfo->rawLen;
-
+	unsigned int rawLen = cinfo->rawLen;
+	
 	/* Make sure input is actually big enough to hold trailer */
 	if (rawLen < 72)
 		return -1;
@@ -1341,15 +1258,15 @@ static int get_qt_dynamic(u8 *pIn, struct comp_info *cinfo) {
 
 /* Remove all 0 blocks from input */
 static void remove0blocks(u8 *pIn, unsigned int *inSize) {
-	long long *in = (long long *)pIn;
-	long long *out = (long long *)pIn;
+	unsigned long long *in = (unsigned long long *)pIn;
+	unsigned long long *out = (unsigned long long *)pIn;
 
 	for (unsigned int i = 0; i < *inSize; i += 8, in++)
 		/* Skip 8 byte blocks of all 0 */
 		if (*in)
 			*out++ = *in;
 
-	*inSize -= (in - out) * 8;
+	*inSize -= (unsigned int) (in - out) * 8;
 }
 
 #if 0 /* not used */
@@ -1358,7 +1275,7 @@ static void remove0blocks(u8 *pIn, unsigned int *inSize) {
  * Output format is planar YUV400
  * Returns uncompressed data length if success, or zero if error
  */
-static int Decompress400(u8 *pIn, u8 *pOut, int w, int h, unsigned int inSize) {
+static int Decompress400(u8 *pIn, u8 *pOut, unsigned int w, unsigned int h, unsigned int inSize) {
 	struct comp_info cinfo;
 	int numpix = w * h;
 	u8 pTmp[32];
@@ -1386,9 +1303,9 @@ static int Decompress400(u8 *pIn, u8 *pOut, int w, int h, unsigned int inSize) {
  * Output format is planar YUV420
  * Returns uncompressed data length if success, or zero if error
  */
-static int v4lconvert_ov518_to_yuv420(u8 *src, u8 *dst, int w, int h, int yvu, int inSize) {
+static int v4lconvert_ov518_to_yuv420(u8 *src, u8 *dst, unsigned int w, unsigned int h, bool yvu, unsigned int inSize) {
 	struct comp_info cinfo;
-	int numpix = w * h;
+	unsigned int numpix = w * h;
 	u8 pTmp[32];
 
 	remove0blocks(src, &inSize);
@@ -1444,7 +1361,7 @@ int main(int argc, char *argv[]) {
 		if (dest_size > sizeof(dest_buf)) {
 			fprintf(stderr, "%s: error: dest_buf too small, need: %d\n", argv[0], dest_size);
 			dest_size = (unsigned) -1;
-		} else if (v4lconvert_ov518_to_yuv420(src_buf, dest_buf, width, height, yvu, src_size))
+		} else if (v4lconvert_ov518_to_yuv420(src_buf, dest_buf, width, height, (bool) yvu, src_size))
 			dest_size = (unsigned) -1;
 
 		if (v4lconvert_helper_write(STDOUT_FILENO, &dest_size, sizeof(int), argv[0]))
