@@ -20,6 +20,7 @@
 #include "libvideo.h"
 #include "common.h"
 #include "debug.h"
+#include "jniutils.h"
 
 /**
  * returns the type of frame interval for a given frame size struct

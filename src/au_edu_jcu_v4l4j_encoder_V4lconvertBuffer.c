@@ -12,8 +12,9 @@
 
 #include "common.h"
 #include "debug.h"
+#include "jniutils.h"
 #include "libvideo.h"
-#include "libv4lconvert/types.h"
+#include "types.h"
 #include "libv4lconvert/libv4lconvert-flat.h"
 
 #ifndef _Included_au_edu_jcu_v4l4j_encoder_V4lconvertBuffer

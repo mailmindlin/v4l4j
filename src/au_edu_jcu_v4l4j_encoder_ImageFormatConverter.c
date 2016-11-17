@@ -11,8 +11,9 @@
 
 #include "common.h"
 #include "debug.h"
+#include "jniutils.h"
 #include "libvideo.h"
-#include "libv4lconvert/types.h"
+#include "types.h"
 #include "libv4lconvert/libv4lconvert-flat.h"
 /* Header for class au_edu_jcu_v4l4j_encoder_ImageFormatConverter */
 

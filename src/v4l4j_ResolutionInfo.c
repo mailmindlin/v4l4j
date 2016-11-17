@@ -28,6 +28,7 @@
 #include "libvideo.h"
 #include "common.h"
 #include "debug.h"
+#include "jniutils.h"
 
 /*
  * this function goes through the list of struct palette_info and returns a

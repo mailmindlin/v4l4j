@@ -29,6 +29,7 @@
 
 #include "common.h"
 #include "debug.h"
+#include "jniutils.h"
 #include "libvideo.h"
 #include "libvideo-err.h"
 #include "jpeg.h"
@@ -434,7 +435,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetFrameIntv(JNIE
 
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
-	int num, denom;
+	unsigned int num, denom;
 	if(dev->vdev->capture->actions->get_frame_interval(dev->vdev, &num, &denom)) {
 		THROW_EXCEPTION(e, UNSUPPORTED_METH_EXCP, "Getting frame interval not supported");
 		return 0;
@@ -509,7 +510,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_enqueueBuffer(JNIEn
 /*
  * dequeue a buffer, perform conversion if required and return frame
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *e, jobject this, jlong object, jobject buffer) {
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *env, jobject this, jlong object, jobject buffer) {
 	LOG_FN_ENTER();
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
@@ -518,19 +519,19 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 	unsigned long long captureTime, sequence;
 	void* frame = (*d->vdev->capture->actions->dequeue_buffer)(d->vdev, &d->capture_len, &buffer_index, &captureTime, &sequence);
 	if(frame == NULL) {
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error dequeuing buffer for capture");
+		THROW_EXCEPTION(env, GENERIC_EXCP, "Error dequeuing buffer for capture");
 		return 0;
 	}
 
 	// get a pointer to the java array
 	jbyteArray arrayRef = NULL;
 	unsigned int arrayLength = NULL;
-	void (*releaseArray)(JNIEnv* env, jbyteArray* arrayRef, unsigned char* ptr);
-	unsigned char* array = getBufferPointer(env, buffer, &arrayRef, &arrayLength, releaseArray);	
+	void (*releaseArray)(JNIEnv* env, jbyteArray arrayRef, unsigned char* ptr);
+	unsigned char* array = getBufferPointer(env, buffer, &arrayRef, &arrayLength, &releaseArray);	
 	// check we have a valid pointer
 	if (!array) {
 		(*d->vdev->capture->actions->enqueue_buffer)(d->vdev, buffer_index);
-		THROW_EXCEPTION(e, GENERIC_EXCP, "Error getting the byte array");
+		THROW_EXCEPTION(env, GENERIC_EXCP, "Error getting the byte array");
 		return 0;
 	}
 	
@@ -571,9 +572,9 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 	releaseArray(env, arrayRef, array);
 	
 	// update class members
-	(*e)->SetLongField(e, this, last_captured_frame_sequence_fID, sequence);
-	(*e)->SetLongField(e, this, last_captured_frame_time_usec_fID, captureTime);
-	(*e)->SetIntField(e, this, last_captured_frame_buffer_index_fID, buffer_index);
+	(*env)->SetLongField(env, this, last_captured_frame_sequence_fID, sequence);
+	(*env)->SetLongField(env, this, last_captured_frame_time_usec_fID, captureTime);
+	(*env)->SetIntField(env, this, last_captured_frame_buffer_index_fID, buffer_index);
 
 	return d->len;
 }

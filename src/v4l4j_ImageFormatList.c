@@ -28,6 +28,7 @@
 #include "libvideo-palettes.h"
 #include "common.h"
 #include "debug.h"
+#include "jniutils.h"
 
 /**
  * Creates a ImageFormat object to wrap the given palette, and adds it to the list

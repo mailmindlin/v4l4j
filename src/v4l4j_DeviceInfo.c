@@ -28,6 +28,7 @@
 #include "libvideo-palettes.h"
 #include "common.h"
 #include "debug.h"
+#include "jniutils.h"
 
 static jobject create_tuner_object(JNIEnv *e, struct tuner_info *tuner) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
