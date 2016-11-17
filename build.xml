@@ -1,4 +1,6 @@
-<project name="v4l4j" default="usage">
+<project name="v4l4j" default="usage"
+ xmlns:if="ant:if"
+ xmlns:unless="ant:unless">
 	
 	<property file="build.properties"/>
 	
@@ -23,6 +25,14 @@
 			<include name="*.jar"/>
 		</fileset>
 	</path>
+	
+	<script language="javascript"> <![CDATA[
+		project.setProperty("project.jnilib.dst", project.getProperty("project.rsrc")
+			+ "/libv4l4j-" + (project.getProperty("os.name").toLowerCase() || "")
+			+ "-" + (project.getProperty("os.arch").toLowerCase() || "")
+			+ "-" + (project.getProperty("sun.arch.abi") || "").toLowerCase()
+			+ ".so");
+	]]> </script>
 	
 	<macrodef name="make">
 		<attribute name="dir"/>
@@ -138,6 +148,7 @@
 		<copy file="${project.dir}/${project.rsrc}/v4l4j.png" tofile="${destdir}${platform.standard.icons.location}/v4l4j.png" />
 		<copy file="${project.dir}/${project.rsrc}/v4l4j-48x48.png" tofile="${destdir}${platform.standard.icons.location}/v4l4j-48x48.png" />
 	</target>
+	
 	<target name="uninstall-v4l4j" depends="uninstall-libvideo">
 		<delete file="${destdir}${platform.standard.jar.location}/${project.jar.file}" />
 		<delete file="${destdir}${platform.standard.jni.location}/${project.jni.file}" />
@@ -172,7 +183,7 @@
 			<exclude name="**/package-info.java" />
 		</javac>
 	</target>
-
+	
 	<target name="compile-debug" depends="init">
 		<javac srcdir="${project.src}" destdir="${project.classes}" deprecation="on" source="${source}" debug="on">
 			<classpath refid="build.classpath"/>
@@ -180,7 +191,7 @@
 			<exclude name="**/package-info.java" />
 		</javac>
 	</target>
-
+	
 	<target name="jar" depends="compile">
 		<jar jarfile="${project.dir}/${project.jar.file}">
 			<manifest>
@@ -229,6 +240,10 @@
 				<include name="resources/**" />
 			</fileset>
 		</jar>
+	</target>
+	
+	<target name="include-jni" depends="jnilib">
+		<copy file="${project.src}/libv4l4j.so" tofile="${project.jnilib.dst}" />
 	</target>
 	
 	<target name="javadoc">
@@ -385,6 +400,7 @@
 		</exec>
 		<delete file="${project.dir}/${project.jar.file}" />
 		<delete file="${project.dir}/${project.jni.file}" />
+		<delete file="${project.jnilib.dst}" />
 		<delete dir="${project.classes}"/>
 		<delete dir="${project.javadoc.dir}"/>
 	</target>
