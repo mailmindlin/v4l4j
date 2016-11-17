@@ -49,7 +49,7 @@ LIBV4L_HELPERS_INSTALL_DIR := $(PREFIX)/lib/v4l4j
 ifneq ($(DEBUG),)
 DBG := -DDEBUG -ggdb -Wall -DLIBVIDEO_LOG_LEVEL=$(LIBVIDEO_LOG_LEVEL) -DLIBVIDEO_LOG_SOURCE=$(LIBVIDEO_LOG_SOURCE)
 else
-OPTIMISATION := -Os
+OPTIMISATION := -Os -g
 endif
 
 USER_INCLUDES := libvideo.h libvideo-err.h libvideo-palettes.h
@@ -63,37 +63,86 @@ LIBV4LCONVERT_AR := $(LIBV4LCONVERT_DIR)/libv4lconvert.a
 LIBV4LCONVERT_NAME := v4lconvert
 LIBV4LCONVERT_HELPERS := ov511-decomp ov518-decomp
 
-ifeq ($(shell arch), x86_64)
+ARCH ?= $(shell arch)
+HARDWARE_FLAGS = 
+ifneq ($(findstr x86_64, $(ARCH)),)
 	LIBPIXFC ?= pixfc-sse/libpixfc-sse-x86_64.a
 else ifeq ($(shell arch | grep -Eic "^i?.86"), 1)
 	LIBPIXFC ?= pixfc-sse/libpixfc-sse-x86.a
-else ifeq ($(shell arch | grep -ic "arm"), 1) 
-#
-# define LIBPIXFC explicitly for ARM archs
-#
-
-	LIBPIXFC ?= pixfc-sse/libpixfc-sse-armv7-hf.a
-
-ifeq ($(origin LIBPIXFC), undefined)
-$(error ARM architecture detected - define LIBPIXFC explicitly)
-endif
-endif
-
-ifeq ($(origin LIBPIXFC), undefined)
+else ifneq ($(findstring armv7, $(ARCH)),)
+	#Detect if hard float
+	ifneq ($(wildcard /lib/arm-linux-gnueabihf/.),)
+		LIBPIXFC ?= pixfc-sse/libpixfc-sse-armv7-hf.a
+		HARDWARE_FLAGS += -mfloat-abi=hard
+	else
+		LIBPIXFC ?= pixfc-sse/libpixfc-sse-armv7.a
+		HARDWARE_FLAGS += -mfloat-abi=softfps
+	endif
+else ifneq ($(findstring armv6, $(ARCH)),)
+	#Detect if hard float
+	ifneq ($(wildcard /lib/arm-linux-gnueabihf/.),)
+		LIBPIXFC ?= pixfc-sse/libpixfc-sse-armv6l-hardfp.a
+		HARDWARE_FLAGS += -mfloat-abi=hard
+	else
+		LIBPIXFC ?= pixfc-sse/libpixfc-sse-armv6l-softfp.a
+		HARDWARE_FLAGS += -mfloat-abi=softfp
+	endif
+else ifneq ($(findstring arm, $(ARCH)),)
+	# Fallback for ARM
+	LIBPIXFC ?= pixfc-sse/libpixfc-sse-armv6l-softfp.a
+else ifeq ($(origin LIBPIXFC), undefined)
 $(error Unable to determine architecture to select the right libpixfc)
+endif
+
+ifeq ($(shell arch),$(ARCH))
+	ifeq ($(findstring mcpu, $(HARDWARE_FLAGS)),)
+		HARDWARE_FLAGS += -mcpu=native
+	endif
+	ifneq ($(findstr arm, $(ARCH)),)
+		ifeq ($(findstr -mfpu, $(HARDWARE_FLAGS)),)
+			CPUINFO = $(shell cat /proc/cpuinfo | grep Features)
+			ifneq ($(findstr neon, $(CPUINFO)),)
+				ifneq ($(findstr vfpv4, $(CPUINFO),)
+					HARDWARE_FLAGS += -mfpu=neon-vfpv4
+				else ifneq ($(findstr armv8, $(ARCH)),)
+					# Maybe should be neon-fp-armv8
+					HARDWARE_FLAGS += -mfpu=crypto-neon-fp-armv8
+				else
+					HARDWARE_FLAGS += -mfpu=neon
+				endif
+			else ifneq ($(findstr armv8, $(ARCH)),)
+				HARDWARE_FLAGS += -mfpu=fp-armv8
+			else ifneq ($(findstr vfpv4, $(CPUINFO)),)
+				HARDWARE_FLAGS += -mfpu=vfpv4
+			else ifneq ($(findstr vfpv3d16, $(CPUINFO)),)
+				HARDWARE_FLAGS += -mfpu=vfpv3-d16
+			else ifneq ($(findstr vfpv3, $(CPUINFO)))
+				HARDWARE_FLAGS += -mfpu=vfpv3
+			else ifneq ($(findstr vfp, $(CPUINFO)),)
+				HARDWARE_FLAGS += -mfpu=vfp
+			endif
+		endif
+		ifeq ($(findst -mfloat-abi, $(HARDWARE_FLAGS)),)
+			ifneq ($(wildcard /lib/arm-linux-gnueabihf/.),)
+				HARDWARE_FLAGS += -mfloat-abi=hard
+			else
+				HARDWARE_FLAGS += -mfloat-abi=softfp
+			endif
+		endif
+	endif
 endif
 
 LIB_NAME := video
 LIB := lib$(LIB_NAME).so
 TESTOBJ := test-capture.o dump-capture.o list-caps.o
 OBJ := v4l2-input.o v4l1-input.o libvideo.o pwc-probe.o gspca-probe.o \
-  qc-probe.o fps-param-probe.o v4l1-query.o v4l2-query.o v4l1-tuner.o \
-  v4l2-tuner.o palettes.o libv4lconvert/libv4lconvert-flat.o
+	qc-probe.o fps-param-probe.o v4l1-query.o v4l2-query.o v4l1-tuner.o \
+	v4l2-tuner.o palettes.o
 
-CFLAGS += $(DBG) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) $(OPTIMISATION) -fPIC -I. -std=gnu11
-CFLAGS += -Wall -Wpointer-arith -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wconversion -fdiagnostics-color=auto -mcpu=native -mfpu=neon-vfpv4 -mfloat-abi=hard -ftree-vectorize
+CFLAGS += $(DBG) $(OPTIMISATION) $(HARDWARE_FLAGS) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) -fPIC -I. -std=gnu11
+CFLAGS += -Wall -Wpointer-arith -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wconversion -ftree-vectorize -flto -fdiagnostics-color=auto
 
-LDFLAGS += -lm -lrt -shared -ljpeg
+LDFLAGS += -lm -lrt -shared -ljpeg -lc $(HARDWARE_FLAGS)
 
 all: $(LIB).$(LIB_RELEASE)
 
@@ -101,10 +150,16 @@ $(LIB).$(LIB_RELEASE): version.h $(OBJ) $(LIBV4LCONVERT_AR)
 	$(CC) $(OBJ) -Wl,-soname,$(LIB).$(LIB_RELEASE) \
 		-o $(LIB).$(LIB_RELEASE) $(LDFLAGS) \
 		$(LIBPIXFC) $(LIBV4LCONVERT_AR)
+
+$(LIB): $(LIB).$(LIB_RELEASE)
 	ln -f -s $(LIB).$(LIB_RELEASE) $(LIB)
 
-$(LIBV4LCONVERT_AR):
-	LINKTYPE=static LIBDIR=$(LIBV4L_HELPERS_INSTALL_DIR) $(MAKE) -C $(LIBV4LCONVERT_DIR)
+$(LIBV4LCONVERT_AR): FORCE
+
+FORCE:
+	export CFLAGS
+	export HARDWARE_FLAGS
+	@LINKTYPE=static LIBDIR=$(LIBV4L_HELPERS_INSTALL_DIR) $(MAKE) --no-print-directory -C $(LIBV4LCONVERT_DIR)
 
 install: $(LIB).$(LIB_RELEASE)
 	mkdir -p $(DESTDIR)$(INC_INSTALL_DIR)
