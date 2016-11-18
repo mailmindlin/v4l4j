@@ -42,7 +42,7 @@ static void __doReleaseDirectBuffer(JNIEnv* env, jbyteArray arrayRef, unsigned c
 
 static void __doReleaseArray(JNIEnv* env, jbyteArray arrayRef, unsigned char* ptr) {
 	dprint(LOG_V4L4J, "Releasing array ref\n");
-	(*env)->ReleaseByteArrayElements(env, arrayRef, ptr, 0);
+	(*env)->ReleaseByteArrayElements(env, arrayRef, (jbyte*) ptr, 0);
 	(*env)->DeleteLocalRef(env, arrayRef);
 }
 
