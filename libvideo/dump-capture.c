@@ -130,7 +130,7 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 
-	if (c->is_native != 1) {
+	if (!c->is_native) {
 		converted_buffer = malloc(c->imagesize);
 		if (converted_buffer == NULL) {
 			printf("Error allocating converted buffer\n");
@@ -164,7 +164,7 @@ int main(int argc, char** argv) {
 	while(nb_frames-->0){
 		//get frame from v4l2
 		if((d = (*c->actions->dequeue_buffer)(v, &size, &index, NULL, NULL)) != NULL) {
-			if (c->is_native != 1) {
+			if (!c->is_native) {
 				(*c->actions->convert_buffer)(v, index, size, converted_buffer);
 				write_frame(converted_buffer, c->imagesize);
 			} else
