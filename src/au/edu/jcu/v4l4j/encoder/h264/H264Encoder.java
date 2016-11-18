@@ -24,7 +24,7 @@ public class H264Encoder implements VideoFrameTransformer {
 	 * @param params pointer to parameters object
 	 * @return pointer to allocated memory
 	 */
-	protected native long doInit(long params);
+	private static native long doInit(long params);
 	protected native long doGetParams(long object);
 	protected native void doSetParams(long object, long pointer);
 	
@@ -32,11 +32,12 @@ public class H264Encoder implements VideoFrameTransformer {
 	public native void close() throws Exception;
 	/**
 	 * Encode 
-	 * @param in pointer to the input picture
-	 * @param out pointer to the output picture
-	 * @return success
+	 * @param object Pointer to x264_t
+	 * @param picInObject Pointer to input x264_picture_t
+	 * @param output ByteBuffer to write to. Should be direct; may only probably work if not.
+	 * @return Output frame size
 	 */
-	protected native int doEncode(long in, long out);
+	private static native int doEncode(long object, long picInObject, ByteBuffer output);
 	
 	public H264Encoder(int width, int height, int csp) {
 		this.csp = csp;
@@ -84,6 +85,10 @@ public class H264Encoder implements VideoFrameTransformer {
 		return this.getParameters().getHeight();
 	}
 	
+	public int encode(H264Picture in, ByteBuffer out) {
+		in.setPts(this.frameNum++);
+		return doEncode(this.object, in.object, out);
+	}
 	@Override
 	public int apply(ByteBuffer src, ByteBuffer dst) throws BufferUnderflowException, BufferOverflowException, IllegalArgumentException {
 		// TODO Auto-generated method stub

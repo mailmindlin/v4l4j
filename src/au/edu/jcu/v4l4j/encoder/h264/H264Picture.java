@@ -24,6 +24,17 @@ public class H264Picture implements Closeable, VideoFrame {
 	
 	protected static native long alloc();
 	
+	private static native long init(int width, int height, int csp);
+	
+	/**
+	 * Sets PTS value iff parameter is positive (>=0).
+	 * Returns final PTS value.
+	 * @param object Pointer to x264_picture_t
+	 * @param pts new PTS value to set
+	 * @return PTS value
+	 */
+	private static native int doSetAndGetPts(long object, int pts);
+	
 	protected static native int doGetStride(long ptr, int plane);
 	
 	protected static native int doGetNumPlanes(long ptr);
@@ -33,8 +44,6 @@ public class H264Picture implements Closeable, VideoFrame {
 	protected static native void putInPlane(long ptr, int plane, ByteBuffer buf);
 	
 	protected static native void getFromPlane(long ptr, int plane, int offset, int len, ByteBuffer buf);
-	
-	protected static native long init(int width, int height, int csp);
 	
 	public static H264Picture allocate(int width, int height, int csp) {
 		return new H264Picture(init(width, height, csp), width, height, csp);
@@ -89,7 +98,7 @@ public class H264Picture implements Closeable, VideoFrame {
 	}
 	
 	/**
-	 * Get colorspace
+	 * Get color space
 	 * @return csp
 	 */
 	public int getCsp() {
@@ -108,6 +117,12 @@ public class H264Picture implements Closeable, VideoFrame {
 	 */
 	public int getHeight() {
 		return height;
+	}
+	
+	void setPts(int pts) {
+		if (pts < 0)
+			throw new IllegalArgumentException("PTS must be positive (was " + pts + ")");
+		doSetAndGetPts(this.object, pts);
 	}
 
 	@Override
