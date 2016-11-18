@@ -105,30 +105,23 @@ static bool try_std(int fd, unsigned int standard){
 	return ioctl(fd, VIDIOC_S_STD, &std) == 0;
 }
 
-static int detect_standard(struct capture_device *c, int fd){
-	int found=0, i=0;
-
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-			"Trying to autodetect standard\n");
-
-	while(found==0 && i<4) {
-		if (try_std(fd, i)==0){
-			found=1;
-			if(i==WEBCAM) {
-				info("Adjusted standard to WEBCAM\n");
-				c->std = WEBCAM;
-			} else if (i==PAL) {
-				info("Adjusted standard to PAL\n");
-				c->std = PAL;
-			} else if (i==NTSC) {
-				info("Adjusted standard to NTSC\n");
-				c->std = NTSC;
-			} else  {
-				info("Adjusted standard to SECAM\n");
-				c->std = SECAM;
-			}
-		}
-		i++;
+static bool detect_standard(struct capture_device *c, int fd){
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "Trying to autodetect standard\n");
+	
+	if (try_std(fd, WEBCAM)) {
+		info("Adjusted standard to WEBCAM\n");
+		c->std = WEBCAM;
+	} else if (try_std(fd, PAL)) {
+		info("Adjusted standard to PAL\n");
+	} else if (try_std(fd, NTSC)) {
+		info("Adjusted standard to NTSC\n");
+		c->std = NTSC;
+	} else if (try_std(fd, SECAM)) {
+		info("Adjusted standard to SECAM\n");
+		c->std = SECAM;
+	} else {
+		info("libvideo could not autodetect a standard for this input.\n");
+		return false;
 	}
 	return true;
 }
