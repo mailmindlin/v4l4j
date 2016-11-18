@@ -560,7 +560,7 @@ static void remove0blocks(u8 *pIn, int *inSize) {
 	*inSize -= (in - out) * 8;
 }
 
-static int v4lconvert_ov511_to_yuv420(u8 *src, u8 *dest, int w, int h, int yvu, int src_size) {
+static int v4lconvert_ov511_to_yuv420(u8 *src, u8 *dest, unsigned int w, unsigned int h, unsigned int src_size) {
 	int rc = 0;
 
 	src_size -= 11; /* Remove footer */
@@ -613,7 +613,7 @@ int main(int argc, char *argv[]) {
 		if (dest_size > sizeof(dest_buf)) {
 			fprintf(stderr, "%s: error: dest_buf too small, need: %d\n", argv[0], dest_size);
 			dest_size = (unsigned) -1;
-		} else if (v4lconvert_ov511_to_yuv420(src_buf, dest_buf, width, height, yvu, src_size))
+		} else if (v4lconvert_ov511_to_yuv420(src_buf, dest_buf, width, height, src_size))
 			dest_size = (unsigned) -1;
 
 		if (v4lconvert_helper_write(STDOUT_FILENO, &dest_size, sizeof(int),
