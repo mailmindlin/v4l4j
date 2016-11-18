@@ -3,7 +3,6 @@
 #include "libv4lconvert-flat.h"
 #include "jpeg_memsrcdest.h"
 #include "../types.h"
-#include "libvideo.h"
 #include "../log.h"
 
 #ifndef __LIBVIDEO_LIBV4LCONVERT_LIBV4LCONVERT_FLAT_CPP

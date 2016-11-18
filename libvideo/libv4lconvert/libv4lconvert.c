@@ -539,17 +539,15 @@ int v4lconvert_try_format(struct v4lconvert_data *data, struct v4l2_format *dest
 }
 
 /* Is conversion necessary ? */
-int v4lconvert_needs_conversion(struct v4lconvert_data *data,
-		const struct v4l2_format *src_fmt,  /* in */
-		const struct v4l2_format *dest_fmt) {/* in */
+bool v4lconvert_needs_conversion(struct v4lconvert_data *data, const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt) {
 	if (src_fmt->fmt.pix.width != dest_fmt->fmt.pix.width ||
 			src_fmt->fmt.pix.height != dest_fmt->fmt.pix.height ||
 			src_fmt->fmt.pix.pixelformat != dest_fmt->fmt.pix.pixelformat ||
 			(v4lcontrol_needs_conversion(data->control) &&
 			 v4lconvert_supported_dst_format(dest_fmt->fmt.pix.pixelformat)))
-		return 1;
-
-	return 0;
+		return true;
+	
+	return false;
 }
 
 static int v4lconvert_processing_needs_double_conversion(

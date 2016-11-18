@@ -42,9 +42,7 @@ typedef my_source_mgr * my_src_ptr;
 * before any data is actually read.
 */
 
-METHODDEF(void)
-init_source (j_decompress_ptr cinfo)
-{
+METHODDEF(void) init_source (j_decompress_ptr cinfo) {
 	/* No work, since jpeg_mem_src set up the buffer pointer and count.
 	* Indeed, if we want to read multiple JPEG images from one buffer,
 	* this *must* not do anything to the pointer.
@@ -140,10 +138,7 @@ term_source (j_decompress_ptr cinfo)
 * Prepare for input from a memory buffer.
 */
 
-GLOBAL(void)
-jpeg_mem_src (j_decompress_ptr cinfo, u8 * buffer,
-	unsigned long bufsize)
-{
+GLOBAL(void) jpeg_mem_src (j_decompress_ptr cinfo, u8 * buffer, unsigned long bufsize) {
 	my_src_ptr src;
 
 	/* The source object is made permanent so that a series of JPEG images
@@ -198,9 +193,7 @@ typedef my_destination_mgr * my_dest_ptr;
  * before any data is actually written.
  */
 
-METHODDEF(void)
-init_destination (j_compress_ptr cinfo)
-{
+METHODDEF(void) init_destination (j_compress_ptr cinfo) {
 	/* No work, since jpeg_mem_dest set up the buffer pointer and count.
 	* Indeed, if we want to write multiple JPEG images to one buffer,
 	* this *must* not do anything to the pointer.
@@ -230,9 +223,7 @@ init_destination (j_compress_ptr cinfo)
  * write it out when emptying the buffer externally.
  */
 
-METHODDEF(boolean)
-empty_output_buffer (j_compress_ptr cinfo)
-{
+METHODDEF(boolean) empty_output_buffer (j_compress_ptr cinfo) {
 	my_dest_ptr dest = (my_dest_ptr) cinfo->dest;
 
 	*dest->buffer = realloc (*dest->buffer, dest->buf_size + OUTPUT_BUF_SIZE);
@@ -255,20 +246,13 @@ empty_output_buffer (j_compress_ptr cinfo)
  * for error exit.
  */
 
-METHODDEF(void)
-term_destination (j_compress_ptr cinfo)
-{
+METHODDEF(void) term_destination (j_compress_ptr cinfo) {
 	my_dest_ptr dest = (my_dest_ptr) cinfo->dest;
 
 	*dest->outsize = dest->buf_size - dest->pub.free_in_buffer;
 }
 
-GLOBAL(void)
-jpeg_mem_dest (j_compress_ptr cinfo, u8 ** outbuffer,
-	unsigned long * outsize)
-{
-	my_dest_ptr dest;
-
+GLOBAL(void) jpeg_mem_dest (j_compress_ptr cinfo, u8 ** outbuffer, unsigned long * outsize) {
 	/* The destination object is made permanent so that multiple JPEG images
 	 * can be written to the same file without re-executing jpeg_stdio_dest.
 	 * This makes it dangerous to use this manager and a different destination
@@ -276,13 +260,10 @@ jpeg_mem_dest (j_compress_ptr cinfo, u8 ** outbuffer,
 	 * sizes may be different.  Caveat programmer.
 	 */
 	if (cinfo->dest == NULL) {  /* first time for this JPEG object? */
-		cinfo->dest = (struct jpeg_destination_mgr *)
-			(*cinfo->mem->alloc_small) ((j_common_ptr) cinfo,
-						    JPOOL_PERMANENT,
-						    sizeof(my_destination_mgr));
+		cinfo->dest = (struct jpeg_destination_mgr *) (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT, sizeof(my_destination_mgr));
 	}
 
-	dest = (my_dest_ptr) cinfo->dest;
+	my_dest_ptr dest = (my_dest_ptr) cinfo->dest;
 	dest->pub.init_destination = init_destination;
 	dest->pub.empty_output_buffer = empty_output_buffer;
 	dest->pub.term_destination = term_destination;

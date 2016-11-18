@@ -36,6 +36,7 @@
 
 /* end broken header workaround includes */
 
+#include <stdbool.h>
 #include "videodev2.h"
 
 #ifdef __cplusplus
@@ -78,7 +79,7 @@ LIBV4L_PUBLIC int v4lconvert_try_format(struct v4lconvert_data *data,
 LIBV4L_PUBLIC int v4lconvert_enum_fmt(struct v4lconvert_data *data,
 		struct v4l2_fmtdesc *fmt);
 /* Is conversion necessary or can the app use the data directly? */
-LIBV4L_PUBLIC int v4lconvert_needs_conversion(struct v4lconvert_data *data,
+LIBV4L_PUBLIC bool v4lconvert_needs_conversion(struct v4lconvert_data *data,
 		const struct v4l2_format *src_fmt,   /* in */
 		const struct v4l2_format *dest_fmt); /* in */
 
