@@ -45,13 +45,6 @@ LIBV4L_HELPERS_INSTALL_DIR := $(PREFIX)/lib/v4l4j
 # edit anything below at your own risk
 #
 
-
-ifneq ($(DEBUG),)
-DBG := -DDEBUG -ggdb -Wall -DLIBVIDEO_LOG_LEVEL=$(LIBVIDEO_LOG_LEVEL) -DLIBVIDEO_LOG_SOURCE=$(LIBVIDEO_LOG_SOURCE)
-else
-OPTIMISATION := -Os -g
-endif
-
 USER_INCLUDES := libvideo.h libvideo-err.h libvideo-palettes.h
 
 VERSION_MAJOR := 0
@@ -65,7 +58,7 @@ LIBV4LCONVERT_HELPERS := ov511-decomp ov518-decomp
 
 ARCH ?= $(shell arch)
 HARDWARE_FLAGS = 
-ifneq ($(findstr x86_64, $(ARCH)),)
+ifneq ($(findstring x86_64, $(ARCH)),)
 	LIBPIXFC ?= pixfc-sse/libpixfc-sse-x86_64.a
 else ifeq ($(shell arch | grep -Eic "^i?.86"), 1)
 	LIBPIXFC ?= pixfc-sse/libpixfc-sse-x86.a
@@ -91,38 +84,44 @@ else ifneq ($(findstring arm, $(ARCH)),)
 	# Fallback for ARM
 	LIBPIXFC ?= pixfc-sse/libpixfc-sse-armv6l-softfp.a
 else ifeq ($(origin LIBPIXFC), undefined)
-$(error Unable to determine architecture to select the right libpixfc)
+	$(error Unable to determine architecture to select the right libpixfc)
 endif
 
 ifeq ($(shell arch),$(ARCH))
-	ifeq ($(findstring mcpu, $(HARDWARE_FLAGS)),)
-		HARDWARE_FLAGS += -mcpu=native
+	ifeq ($(findstring march, $(HARDWARE_FLAGS)),)
+		HARDWARE_FLAGS += -march=native
+		ifeq ($(findstring mcpu, $(HARDWARE_FLAGS)),)
+			HARDWARE_FLAGS += -mcpu=native
+			ifeq ($(findstring mtune, $(HARDWARE_FLAGS)),)
+				HARDWARE_FLAGS += -mtune=native
+			endif
+		endif
 	endif
-	ifneq ($(findstr arm, $(ARCH)),)
-		ifeq ($(findstr -mfpu, $(HARDWARE_FLAGS)),)
+	ifneq ($(findstring arm, $(ARCH)),)
+		ifeq ($(findstring -mfpu, $(HARDWARE_FLAGS)),)
 			CPUINFO = $(shell cat /proc/cpuinfo | grep Features)
-			ifneq ($(findstr neon, $(CPUINFO)),)
-				ifneq ($(findstr vfpv4, $(CPUINFO),)
+			ifneq ($(findstring neon, $(CPUINFO)),)
+				ifneq ($(findstring vfpv4, $(CPUINFO)),)
 					HARDWARE_FLAGS += -mfpu=neon-vfpv4
-				else ifneq ($(findstr armv8, $(ARCH)),)
+				else ifneq ($(findstring armv8, $(ARCH)),)
 					# Maybe should be neon-fp-armv8
 					HARDWARE_FLAGS += -mfpu=crypto-neon-fp-armv8
 				else
 					HARDWARE_FLAGS += -mfpu=neon
 				endif
-			else ifneq ($(findstr armv8, $(ARCH)),)
+			else ifneq ($(findstring armv8, $(ARCH)),)
 				HARDWARE_FLAGS += -mfpu=fp-armv8
-			else ifneq ($(findstr vfpv4, $(CPUINFO)),)
+			else ifneq ($(findstring vfpv4, $(CPUINFO)),)
 				HARDWARE_FLAGS += -mfpu=vfpv4
-			else ifneq ($(findstr vfpv3d16, $(CPUINFO)),)
+			else ifneq ($(findstring vfpv3d16, $(CPUINFO)),)
 				HARDWARE_FLAGS += -mfpu=vfpv3-d16
-			else ifneq ($(findstr vfpv3, $(CPUINFO)))
+			else ifneq ($(findstring vfpv3, $(CPUINFO)))
 				HARDWARE_FLAGS += -mfpu=vfpv3
-			else ifneq ($(findstr vfp, $(CPUINFO)),)
+			else ifneq ($(findstring vfp, $(CPUINFO)),)
 				HARDWARE_FLAGS += -mfpu=vfp
 			endif
 		endif
-		ifeq ($(findst -mfloat-abi, $(HARDWARE_FLAGS)),)
+		ifeq ($(findstring -mfloat-abi, $(HARDWARE_FLAGS)),)
 			ifneq ($(wildcard /lib/arm-linux-gnueabihf/.),)
 				HARDWARE_FLAGS += -mfloat-abi=hard
 			else
@@ -135,14 +134,24 @@ endif
 LIB_NAME := video
 LIB := lib$(LIB_NAME).so
 TESTOBJ := test-capture.o dump-capture.o list-caps.o
+
 OBJ := v4l2-input.o v4l1-input.o libvideo.o pwc-probe.o gspca-probe.o \
 	qc-probe.o fps-param-probe.o v4l1-query.o v4l2-query.o v4l1-tuner.o \
 	v4l2-tuner.o palettes.o
 
-CFLAGS += $(DBG) $(OPTIMISATION) $(HARDWARE_FLAGS) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) -fPIC -I. -std=gnu11
-CFLAGS += -Wall -Wpointer-arith -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wconversion -ftree-vectorize -flto -fdiagnostics-color=auto
+WARNINGS +=  -Wall -Wpointer-arith -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wunused-function
+CFLAGS += $(HARDWARE_FLAGS) $(WARNINGS) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) -I. -std=gnu11
+CFLAGS += -fPIC -fdiagnostics-color=auto -ftree-vectorize -flto
+#CFLAGS += -funsafe-math-optimizations
+AFLAGS += $(HARDWARE_FLAGS) -mapcs-reentrant -k --warn --statistics
+LDFLAGS += $(HARDWARE_FLAGS) -lm -lrt -shared -ljpeg -lc -flto
 
-LDFLAGS += -lm -lrt -shared -ljpeg -lc $(HARDWARE_FLAGS)
+ifneq ($(DEBUG),)
+	CFLAGS += -DDEBUG -ggdb -DLIBVIDEO_LOG_LEVEL=$(LIBVIDEO_LOG_LEVEL) -DLIBVIDEO_LOG_SOURCE=$(LIBVIDEO_LOG_SOURCE)
+else
+	CFLAGS += -Os -g
+endif
+
 
 all: $(LIB).$(LIB_RELEASE)
 
@@ -184,6 +193,9 @@ test: $(LIB).$(LIB_RELEASE) $(TESTOBJ)
 
 clean:
 	$(MAKE) -C $(LIBV4LCONVERT_DIR) clean
-	rm -f $(OBJ) $(BIN) $(LIB) $(LIB).$(LIB_RELEASE) $(TESTOBJ) $(LIBV4LCONVERT_AR) ./*.o list-caps test-capture dump-capture ./*~
+	rm -f $(OBJ) $(BIN) $(LIB) $(LIB).$(LIB_RELEASE) $(TESTOBJ) $(LIBV4LCONVERT_AR) ./*.o list-caps test-capture dump-capture ./*~ version.h
+
+version.h:
+	@echo "#define VER_REV \"$(git rev-parse --abbrev-ref HEAD)$(git rev-parse --short=7 HEAD)\"" > version.h
 
 .PHONY: all install uninstall test clean
