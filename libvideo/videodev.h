@@ -20,17 +20,35 @@
 struct video_capability {
 	char name[32];
 	int type;
-	unsigned int channels;	/* Num channels */
-	unsigned int audios;	/* Num audio devices */
-	unsigned int maxwidth;	/* Supported width */
-	unsigned int maxheight;	/* And height */
-	unsigned int minwidth;	/* Supported width */
-	unsigned int minheight;	/* And height */
+	/**
+	 * Number of channels
+	 */
+	unsigned int channels;
+	/**
+	 * Number of audio devices
+	 */
+	unsigned int audios;
+	/**
+	 * Maximum supported width
+	 */
+	unsigned int maxwidth;
+	/**
+	 * Maximum supported height
+	 */
+	unsigned int maxheight;
+	/**
+	 * Minimum supported width
+	 */
+	unsigned int minwidth;
+	/**
+	 * Minimum supported height
+	 */
+	unsigned int minheight;
 };
 
 
 struct video_channel {
-	int channel;
+	unsigned int channel;
 	char name[32];
 	int tuners;
 	__u32  flags;
@@ -42,8 +60,7 @@ struct video_channel {
 	__u16 norm;			/* Norm set by channel */
 };
 
-struct video_tuner
-{
+struct video_tuner {
 	int tuner;
 	char name[32];
 	unsigned long rangelow, rangehigh;	/* Tuner range */
@@ -64,15 +81,23 @@ struct video_tuner
 	__u16 signal;			/* Signal strength 16bit scale */
 };
 
-struct video_picture
-{
+struct video_picture {
 	__u16	brightness;
 	__u16	hue;
 	__u16	colour;
 	__u16	contrast;
-	__u16	whiteness;	/* Black and white only */
-	__u16	depth;		/* Capture depth */
-	__u16   palette;	/* Palette in use */
+	/**
+	 * Black and white only
+	 */
+	__u16	whiteness;
+	/**
+	 * Capture depth
+	 */
+	__u16	depth;
+	/**
+	 * Palette in use
+	 */
+	__u16   palette;
 #define VIDEO_PALETTE_GREY	1	/* Linear greyscale */
 #define VIDEO_PALETTE_HI240	2	/* High 240 cube (BT848) */
 #define VIDEO_PALETTE_RGB565	3	/* 565 16 bit RGB */
@@ -93,10 +118,15 @@ struct video_picture
 #define VIDEO_PALETTE_COMPONENT 7	/* start of component entries */
 };
 
-struct video_audio
-{
-	int	audio;		/* Audio channel */
-	__u16	volume;		/* If settable */
+struct video_audio {
+	/**
+	 * Audio channel
+	 */
+	int	audio;
+	/**
+	 * Volume, if settable
+	 */
+	__u16	volume;
 	__u16	bass, treble;
 	__u32	flags;
 #define VIDEO_AUDIO_MUTE	1
@@ -111,24 +141,40 @@ struct video_audio
 #define VIDEO_SOUND_LANG1	4
 #define VIDEO_SOUND_LANG2	8
 	__u16   mode;
-	__u16	balance;	/* Stereo balance */
-	__u16	step;		/* Step actual volume uses */
+	/**
+	 * Stereo balance
+	 */
+	__u16	balance;
+	/**
+	 * Step that the volume actually uses
+	 */
+	__u16	step;
 };
 
-struct video_clip
-{
+struct video_clip {
 	__s32	x,y;
 	__s32	width, height;
-	struct	video_clip *next;	/* For user use/driver use only */
+	/**
+	 * For user use/driver use only
+	 */
+	struct	video_clip *next;
 };
 
-struct video_window
-{
-	__u32	x,y;			/* Position of window */
-	__u32	width,height;		/* Its size */
+struct video_window {
+	/**
+	 * Position of the window
+	 */
+	__u32	x,y;
+	/**
+	 * The window's size
+	 */
+	__u32	width,height;
 	__u32	chromakey;
 	__u32	flags;
-	struct	video_clip __user *clips;	/* Set only */
+	/**
+	 * [set only]
+	 */
+	struct	video_clip __user *clips;
 	int	clipcount;
 #define VIDEO_WINDOW_INTERLACE	1
 #define VIDEO_WINDOW_CHROMAKEY	16	/* Overlay by chromakey */
@@ -137,8 +183,7 @@ struct video_window
 #define VIDEO_CLIPMAP_SIZE	(128 * 625)
 };
 
-struct video_capture
-{
+struct video_capture {
 	__u32 	x,y;			/* Offsets into image */
 	__u32	width, height;		/* Area to capture */
 	__u16	decimation;		/* Decimation divider */
@@ -147,51 +192,80 @@ struct video_capture
 #define VIDEO_CAPTURE_EVEN		1
 };
 
-struct video_buffer
-{
+struct video_buffer {
 	void	*base;
 	int	height,width;
 	int	depth;
 	int	bytesperline;
 };
 
-struct video_mmap
-{
-	unsigned	int frame;		/* Frame (0 - n) for double buffer */
-	int		height,width;
-	unsigned	int format;		/* should be VIDEO_PALETTE_* */
+struct video_mmap {
+	/**
+	 * Frame (0 - n) for double buffer
+	 */
+	unsigned int frame;
+	unsigned int width;
+	unsigned int height;
+	unsigned int format;		/* should be VIDEO_PALETTE_* */
 };
 
-struct video_key
-{
+struct video_key {
 	__u8	key[8];
 	__u32	flags;
 };
 
-struct video_mbuf
-{
-	int	size;		/* Total memory to map */
-	int	frames;		/* Frames */
+struct video_mbuf {
+	/**
+	 * Total memory to map
+	 */
+	int	size;
+	/**
+	 * Frames
+	 */
+	int	frames;
 	int	offsets[VIDEO_MAX_FRAME];
 };
 
 #define 	VIDEO_NO_UNIT	(-1)
 
-struct video_unit
-{
-	int 	video;		/* Video minor */
-	int	vbi;		/* VBI minor */
-	int	radio;		/* Radio minor */
-	int	audio;		/* Audio minor */
-	int	teletext;	/* Teletext minor */
+struct video_unit {
+	/**
+	 * Video minor
+	 */
+	int video;
+	/**
+	 * VBI minor
+	 */
+	int	vbi;
+	/**
+	 * Radio minor
+	 */
+	int	radio;
+	/**
+	 * Audio minor
+	 */
+	int	audio;
+	/**
+	 * Teletext minor
+	 */
+	int	teletext;
 };
 
 struct vbi_format {
-	__u32	sampling_rate;	/* in Hz */
+	/**
+	 * (in Hz)
+	 */
+	__u32	sampling_rate;
 	__u32	samples_per_line;
 	__u32	sample_format;	/* VIDEO_PALETTE_RAW only (1 byte) */
-	__s32	start[2];	/* starting line for each frame */
-	__u32	count[2];	/* count of lines for each frame */
+	/**
+	 * Starting line for each frame
+	 */
+	__s32	start[2];
+	/**
+	 * Count of lines for each frame
+	 */
+	__u32	count[2];
 	__u32	flags;
 #define	VBI_UNSYNC	1	/* can distingues between top/bottom field */
 #define	VBI_INTERLACED	2	/* lines are interlaced */
@@ -199,30 +273,53 @@ struct vbi_format {
 
 /* video_info is biased towards hardware mpeg encode/decode */
 /* but it could apply generically to any hardware compressor/decompressor */
-struct video_info
-{
-	__u32	frame_count;	/* frames output since decode/encode began */
-	__u32	h_size;		/* current unscaled horizontal size */
-	__u32	v_size;		/* current unscaled veritcal size */
-	__u32	smpte_timecode;	/* current SMPTE timecode (for current GOP) */
-	__u32	picture_type;	/* current picture type */
-	__u32	temporal_reference;	/* current temporal reference */
-	__u8	user_data[256];	/* user data last found in compressed stream */
+struct video_info {
+	/**
+	 * Frames output since decode/encode began
+	 */
+	__u32	frame_count;
+	/**
+	 * Current unscaled horizontal size
+	 */
+	__u32	h_size;
+	/**
+	 * Current unscaled veritcal size
+	 */
+	__u32	v_size;
+	/**
+	 * Current SMPTE timecode (for current GOP)
+	 */
+	__u32	smpte_timecode;
+	/**
+	 * Current picture type
+	 */
+	__u32	picture_type;
+	/**
+	 * Current temporal reference
+	 */
+	__u32	temporal_reference;
+	/**
+	 * User data last found in compressed stream
+	 */
+	__u8	user_data[256];
 	/* user_data[0] contains user data flags, user_data[1] has count */
 };
 
-/* generic structure for setting playback modes */
-struct video_play_mode
-{
+/**
+ * Generic structure for setting playback modes
+ */
+struct video_play_mode {
 	int	mode;
 	int	p1;
 	int	p2;
 };
 
 /* for loading microcode / fpga programming */
-struct video_code
-{
-	char	loadwhat[16];	/* name or tag of file being passed */
+struct video_code {
+	/**
+	 * Name or tag of file being passed
+	 */
+	char	loadwhat[16];
 	int	datasize;
 	__u8	*data;
 };
