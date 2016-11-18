@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
 	height = c->height;
 	printf("Using image format %s, size: %d\n", libvideo_palettes[c->palette].name, c->imagesize);
 
-	if (c->is_native != 1) {
+	if (!c->is_native) {
 		printf("Creating conversion buffer\n");
 		converted_buffer = malloc(c->imagesize);
 	}
@@ -182,7 +182,7 @@ int main(int argc, char** argv) {
 
 		//get frame from v4l2
 		if((d = (*c->actions->dequeue_buffer)(v, &size, &index, NULL, NULL)) != NULL) {
-			if (c->is_native != 1)
+			if (!c->is_native)
 				(*c->actions->convert_buffer)(v, index, size, converted_buffer);
 
 			count++;

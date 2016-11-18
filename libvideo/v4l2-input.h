@@ -49,8 +49,8 @@ int set_frame_intv_v4l2(struct video_device *vdev, unsigned int num, unsigned in
 int get_frame_intv_v4l2(struct video_device *vdev, unsigned int *num, unsigned int *denom);
 
 // Change the input and standard during capture using this function
-int set_video_input_std_v4l2(struct video_device *vdev, int input_num, int std);
-void get_video_input_std_v4l2(struct video_device *vdev, int *input_num, int *std);
+int set_video_input_std_v4l2(struct video_device *vdev, unsigned int input_num, unsigned int std);
+void get_video_input_std_v4l2(struct video_device *vdev, unsigned int *input_num, unsigned int *std);
 
 //initialise streaming, request V4L2 buffers and create mmap'ed buffers
 int init_capture_v4l2(struct video_device *);
@@ -68,7 +68,7 @@ int start_capture_v4l2(struct video_device *);
 void *dequeue_n_convert_buffer_v4l2(struct video_device *, int *, unsigned int *, unsigned long long*, unsigned long long*);
 
 //dequeue the next buffer with available frame
-void *dequeue_buffer_v4l2(struct video_device *, int *, unsigned int *, unsigned long long*, unsigned long long*);
+void *dequeue_buffer_v4l2(struct video_device *, unsigned int *len, unsigned int *index, unsigned long long*, unsigned long long*);
 
 //dequeue the next buffer with available frame
 unsigned int convert_buffer_v4l2(struct video_device *, int , unsigned int , void *);
@@ -104,7 +104,7 @@ int count_v4l2_controls(struct video_device *);
 //and returns how many controls were created
 int create_v4l2_controls(struct video_device *, struct control *, int);
 //returns the value of a control
-int get_control_value_v4l2(struct video_device *, struct v4l2_queryctrl *, void *, int );
+int get_control_value_v4l2(struct video_device *vdev, struct v4l2_queryctrl *qctrl, void *val, unsigned int size);
 //sets the value of a control
 int set_control_value_v4l2(struct video_device *, struct v4l2_queryctrl *, void *, int);
 

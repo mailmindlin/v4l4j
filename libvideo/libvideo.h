@@ -312,8 +312,8 @@ struct tuner_info {
 struct video_input_info {
 #define INPUT_TYPE_TUNER			1
 #define INPUT_TYPE_CAMERA			2
-	int type;
-	int nb_stds;
+	unsigned int type;
+	unsigned int nb_stds;
 	int *supported_stds;
 	struct tuner_info *tuner;
 	char name[NAME_FIELD_LENGTH];
@@ -345,8 +345,8 @@ enum frame_intv_types {
  * Frame size
  */
 struct frame_size_discrete {
-	int width;
-	int height;
+	unsigned int width;
+	unsigned int height;
 
 	//the type of frame frame intervals (V4L2 only)
 	enum frame_intv_types interval_type;
@@ -366,12 +366,12 @@ struct frame_size_discrete {
 };
 
 struct frame_size_continuous {
-	int min_width;
-	int max_width;
-	int step_width;
-	int min_height;
-	int max_height;
-	int step_height;
+	unsigned int min_width;
+	unsigned int max_width;
+	unsigned int step_width;
+	unsigned int min_height;
+	unsigned int max_height;
+	unsigned int step_height;
 
 	//the type of frame frame intervals (V4L2 only)
 	//for the minimum and maximum resolutions
@@ -473,16 +473,16 @@ struct device_info {
 struct control {
 	struct v4l2_queryctrl *v4l2_ctrl;
 	struct v4l2_querymenu *v4l2_menu;//array of 'count_menu' v4l2_menus
-	int count_menu;
+	unsigned int count_menu;
 };
 
 struct video_device;
 
 struct v4l_driver_probe {
-	int (*probe) (struct video_device *, void **);
-	int (*list_ctrl)(struct video_device *, struct control *, void *);
-	int (*get_ctrl)(struct video_device *, struct v4l2_queryctrl *, void *, int *);
-	int (*set_ctrl)(struct video_device *,  struct v4l2_queryctrl *, int *, void *);
+	int (*probe)    (struct video_device *device, void **);
+	int (*list_ctrl)(struct video_device *device, struct control *, void *);
+	int (*get_ctrl) (struct video_device *device, struct v4l2_queryctrl *, void *, int *);
+	int (*set_ctrl) (struct video_device *device,  struct v4l2_queryctrl *, int *, void *);
 	void *priv;
 };
 /*

@@ -25,6 +25,11 @@
 #ifndef H_LIBVIDEOERR_LOG
 #define H_LIBVIDEOERR_LOG
 
+/**
+ * There was no error
+ */
+#define LIBVIDEO_ERR_SUCCESS				0
+
 //Cant set channel (set_cap_param_v4l2)
 #define LIBVIDEO_ERR_CHANNEL				-1
 

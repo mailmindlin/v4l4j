@@ -272,7 +272,7 @@ int get_frame_intv_v4l1(struct video_device *vdev, unsigned int *num, unsigned i
 	return LIBVIDEO_ERR_IOCTL;
 }
 
-int set_video_input_std_v4l1(struct video_device *vdev, int input_num, int std) {
+int set_video_input_std_v4l1(struct video_device *vdev, unsigned int input_num, unsigned int std) {
 	UNUSED(vdev);
 	UNUSED(input_num);
 	UNUSED(std);
@@ -281,7 +281,7 @@ int set_video_input_std_v4l1(struct video_device *vdev, int input_num, int std) 
 	return LIBVIDEO_ERR_IOCTL;
 }
 
-void get_video_input_std_v4l1(struct video_device *vdev, int *input_num, int *std) {
+void get_video_input_std_v4l1(struct video_device *vdev, unsigned int *input_num, unsigned int *std) {
 	UNUSED(vdev);
 	UNUSED(input_num);
 	UNUSED(std);
@@ -376,8 +376,7 @@ int start_capture_v4l1(struct video_device *vdev) {
 
 //dequeue the next buffer with available frame
 // start the capture of next buffer VIDIOCMCAPTURE(x)
-void *dequeue_buffer_v4l1(struct video_device *vdev, int *len, unsigned int *index,
-		unsigned long long *capture_time, unsigned long long *sequence) {
+void *dequeue_buffer_v4l1(struct video_device *vdev, unsigned int *len, unsigned int *index, unsigned long long *capture_time, unsigned long long *sequence) {
 	struct capture_device *c = vdev->capture;
 	struct video_mmap mm;
 	int curr_frame = (int) c->mmap->tmp;

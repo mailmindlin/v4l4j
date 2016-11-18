@@ -54,8 +54,8 @@ int set_frame_intv_v4l1(struct video_device *vdev, unsigned int num, unsigned in
 
 int get_frame_intv_v4l1(struct video_device *vdev, unsigned int *num, unsigned int *denom);
 
-int set_video_input_std_v4l1(struct video_device *, int, int);
-void get_video_input_std_v4l1(struct video_device *vdev, int *input_num, int *std);
+int set_video_input_std_v4l1(struct video_device *, unsigned int input_num, unsigned int std);
+void get_video_input_std_v4l1(struct video_device *vdev, unsigned int *input_num, unsigned int *std);
 
 //initialise streaming, request V4L2 buffers and create mmap'ed buffers
 int init_capture_v4l1(struct video_device *);
@@ -72,7 +72,7 @@ int start_capture_v4l1(struct video_device *);
  */
 
 //dequeue the next buffer with available frame
-void *dequeue_buffer_v4l1(struct video_device *, int *, unsigned int *, unsigned long long*, unsigned long long*	);
+void *dequeue_buffer_v4l1(struct video_device *device, unsigned int *len, unsigned int *index, unsigned long long*, unsigned long long*	);
 // start the capture of next buffer VIDIOCMCAPTURE(x)
 // wait till the previous buffer is available VIDIOCSYNC(x-1)
 
