@@ -96,18 +96,18 @@
 	
 	<target name="all" depends="jnilib,jar"/>
 
-    <target name="all-debug" depends="jnilib-debug,jar-debug"/>
+	<target name="all-debug" depends="jnilib-debug,jar-debug"/>
 
 	<target name="jnilib-debug" depends="init">
 		<exec executable="make">
 			<env key="DEBUG" value="1"/>
 			<arg line="-j ${make.jobs}" />
-		    <arg line="-C ${libvideo.dir}" />
+			<arg line="-C ${libvideo.dir}" />
 		</exec>
 		<exec executable="make" failonerror="true">
-		        <env key="DEBUG" value="1"/>
+				<env key="DEBUG" value="1"/>
 				<arg line="-j ${make.jobs}" />
-		        <arg line="-C ${project.src}" />
+				<arg line="-C ${project.src}" />
 		</exec>
 		<move file="${project.src}/libv4l4j.so" tofile="${project.dir}/libv4l4j.so" />
 	</target>
@@ -159,8 +159,8 @@
 
 	<target name="install-doc" depends="javadoc">
 		<copy todir="${destdir}${platform.standard.javadoc.location}">
-            <fileset dir="${project.javadoc.dir}"/>
-        </copy>
+			<fileset dir="${project.javadoc.dir}"/>
+		</copy>
 	</target>
 
 	<target name="uninstall-doc">
@@ -204,12 +204,15 @@
 			<fileset dir="${project.dir}">
 				<include name="resources/**" />
 			</fileset>
+			<fileset dir="${project.rsrc}">
+				<include name="**"/>
+			</fileset>
 		</jar>
 	</target>
 	
 	<target name="jar-debug" depends="compile-debug">
 		<jar jarfile="${project.dir}/${project.jar.file}">
-		        <manifest>
+			<manifest>
 				<attribute name="Main-Class" value="au.edu.jcu.v4l4j.examples.videoViewer.DeviceChooser"/>
 			</manifest>
 			<fileset dir="${project.classes}">
@@ -218,6 +221,9 @@
 			</fileset>
 			<fileset dir="${project.dir}">
 				<include name="resources/**" />
+			</fileset>
+			<fileset dir="${project.rsrc}">
+				<include name="**"/>
 			</fileset>
 		</jar>
 	</target>
@@ -239,6 +245,9 @@
 			<fileset dir="${project.dir}">
 				<include name="resources/**" />
 			</fileset>
+			<fileset dir="${project.rsrc}">
+				<include name="**"/>
+			</fileset>
 		</jar>
 	</target>
 	
@@ -259,6 +268,9 @@
 				<include name="**"/>
 			</fileset>
 			<fileset dir="${project.src}">
+				<include name="**"/>
+			</fileset>
+			<fileset dir="${project.rsrc}">
 				<include name="**"/>
 			</fileset>
 		</jar>

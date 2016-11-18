@@ -56,29 +56,45 @@ public class V4L4JUtils {
 			try {
 				synchronized (V4L4JUtils.class) {
 					//Try to load the library from the jar
+					
 					if (reallyInitialized)
 						return;
+					
+					// Find a pretty good path to load from inside the jar
 					String path = calculatePath();
-					System.out.println("Attempting to load library from " + path);
-					//Load the library to 
-					File libFile = File.createTempFile("libv4l4j", "so");
-					libFile.deleteOnExit();
+					
+					// Load the library to a temporary file
+					File libFile = null;
 					try (InputStream is = V4L4JUtils.class.getResourceAsStream(path);
 							OutputStream os = new BufferedOutputStream(new FileOutputStream(libFile))) {
 						if (is == null)
 							throw new RuntimeException("Unable to find JNI library @ " + path);
+						// Create a temporary file to write the library to
+						libFile = File.createTempFile("libv4l4j", ".so");
+						// I've heard that this can fail to delete the file because the JVM locks the file
+						// after it's loaded as a library, but it didn't seem to in my testing (Raspbian)
+						libFile.deleteOnExit();
+						
+						// Copy the file from inside the jar
 						byte[] buffer = new byte[BUFFER_SIZE];
 						int len;
 						while ((len = is.read(buffer)) >= 0)
 							os.write(buffer, 0, len);
 					} catch (IOException e) {
-						libFile.delete();
+						// Delete the temporary file, as we won't be needing it anymore
+						if (libFile != null)
+							libFile.delete();
 						throw e;
 					}
+					
 					//Now load the library from the file that we just wrote
 					runtime.load(libFile.getAbsolutePath());
+					
 					V4L4JUtils.initialized = true;
 					V4L4JUtils.reallyInitialized = true;
+					
+					//TODO only enable in debug mode
+					System.out.println("Successfully loaded libv4l4j.so from " + path + " => " + libFile);
 				}
 			} catch (Exception e1) {
 				System.err.println("Unable to load v4l4j JNI library");
@@ -92,7 +108,7 @@ public class V4L4JUtils {
 		String path = lookupPath();
 		if (path != null)
 			return path;
-		return "resources/libv4l4j-" + computeProperty("os.name", "").toLowerCase() + "-" + computeProperty("os.arch", "").toLowerCase() + "-" + computeProperty("sun.arch.abi", "").toLowerCase() + ".so";
+		return "/libv4l4j-" + computeProperty("os.name", "").toLowerCase() + "-" + computeProperty("os.arch", "").toLowerCase() + "-" + computeProperty("sun.arch.abi", "").toLowerCase() + ".so";
 	}
 	
 	private static final String lookupPath() {
