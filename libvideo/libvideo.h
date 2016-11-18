@@ -628,7 +628,7 @@ void release_device_info(struct video_device *);
  */
 struct control_list *get_control_list(struct video_device *);
 //returns 0, LIBVIDEO_ERR_WRONG_VERSION, LIBVIDEO_ERR_IOCTL
-int get_control_value(struct video_device *, struct v4l2_queryctrl *, void *, int);
+int get_control_value(struct video_device *vdev, struct v4l2_queryctrl *ctrl, void *val, unsigned int size);
 //returns 0, LIBVIDEO_ERR_WRONG_VERSION, LIBVIDEO_ERR_IOCTL or LIBVIDEO_ERR_STREAMING
 int set_control_value(struct video_device *, struct v4l2_queryctrl *,  void *, int);
 

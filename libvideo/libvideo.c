@@ -183,7 +183,7 @@ static void setup_capture_actions(struct video_device *vdev) {
 
 
 //device file, width, height, channel, std, nb_buf
-struct capture_device *init_capture_device(struct video_device *vdev, int w, int h, int ch, int s, unsigned int nb_buf) {
+struct capture_device *init_capture_device(struct video_device *vdev, unsigned int width, unsigned int height, unsigned int channel, unsigned int standard, unsigned int nb_buf) {
 	if(vdev->capture != NULL)
 		return vdev->capture;
 	
@@ -194,10 +194,10 @@ struct capture_device *init_capture_device(struct video_device *vdev, int w, int
 
 	//fill in cdev struct
 	vdev->capture->mmap->req_buffer_nr = nb_buf;
-	vdev->capture->width = w;
-	vdev->capture->height = h;
-	vdev->capture->channel = ch;
-	vdev->capture->std = s;
+	vdev->capture->width = width;
+	vdev->capture->height = height;
+	vdev->capture->channel = channel;
+	vdev->capture->std = standard;
 	
 	setup_capture_actions(vdev);
 	
@@ -540,7 +540,7 @@ struct control_list *get_control_list(struct video_device *vdev) {
 	return l;
 }
 
-int get_control_value(struct video_device *vdev, struct v4l2_queryctrl *ctrl, void *val, int size) {
+int get_control_value(struct video_device *vdev, struct v4l2_queryctrl *ctrl, void *val, unsigned int size) {
 
 	int ret = 0;
 	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: getting value for control %s\n", ctrl->name);
