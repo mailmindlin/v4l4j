@@ -202,6 +202,6 @@
 		var = NULL;\
 	} while (0)
 
-#define PRINT_MEA_CULPA() info("This is most likely a bug in v4l4j. Please\nlet the author know about this issue. See README file.\n");
-#define PRINT_REPORT_ERROR() info("Please let the author know about this error.\nSee the ISSUES section in the libvideo README file.\n");
+#define PRINT_MEA_CULPA() info("This is most likely a bug in v4l4j. Please let the author know about this issue. See README file or create an issue at github.com/mailmindlin/v4l4j.\n");
+#define PRINT_REPORT_ERROR() info("Please let the author know about this error.\nSee the ISSUES section in the libvideo README file or create an issue at github.com/mailmindlin/v4l4j.\n");
 #endif
