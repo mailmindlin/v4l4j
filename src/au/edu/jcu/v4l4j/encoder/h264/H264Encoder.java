@@ -25,8 +25,8 @@ public class H264Encoder implements VideoFrameTransformer {
 	 * @return pointer to allocated memory
 	 */
 	private static native long doInit(long params);
-	protected native long doGetParams(long object);
-	protected native void doSetParams(long object, long pointer);
+	protected static native long doGetParams(long object);
+	protected static native void doSetParams(long object, long pointer);
 	
 	@Override
 	public native void close() throws Exception;

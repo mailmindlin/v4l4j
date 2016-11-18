@@ -175,6 +175,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setRepe
 	
 	params->b_repeat_headers = value;
 }
+
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setAnnexb(JNIEnv* env, jobject self, jboolean value) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	x264_param_t* params = getPointer(env, self);
@@ -188,18 +189,21 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_getCsp(
 	
 	return params->i_csp;
 }
+
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_getWidth(JNIEnv* env, jobject self) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	x264_param_t* params = getPointer(env, self);
 	
 	return params->i_width;
 }
+
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_getHeight(JNIEnv* env, jobject self) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	x264_param_t* params = getPointer(env, self);
 	
 	return params->i_height;
 }
+
 /*
  * Class:     au_edu_jcu_v4l4j_encoder_h264_H264Parameters
  * Method:    setCrop
@@ -214,12 +218,14 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setCrop
 	params->crop_rect.i_right = right;
 	params->crop_rect.i_bottom = bottom;
 }
+
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setThreads(JNIEnv* env, jobject self, jint numThreads) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	x264_param_t* params = getPointer(env, self);
 	
 	params->i_threads = numThreads;
 }
+
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setFps(JNIEnv* env, jobject self, jint numerator, jint denominator) {
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 	x264_param_t* params = getPointer(env, self);
