@@ -45,13 +45,17 @@
 #include "v4l2-tuner.h"
 #include "videodev_additions.h"
 
-/*
+/**
  * Copies the version info in the given char *
- * It must be allocated by caller. char [40] is enough
+ * This method has the advantage over the macro that it will give the version of the
+ * library loaded at runtime, rather than the version compiled against.
+ * @param c Output string, allocated by the caller
+ * @param len Maximum
+ * @return number of chars written to string, or the number that would have been
+ * 		written if it ran out of space
  */
-char *get_libvideo_version(char * c) {
-	snprintf(c, 39,"%d.%d-%s", VER_MAJ, VER_MIN, VER_REV);
-	return c;
+size_t get_libvideo_version(char *dst, size_t len) {
+	return snprintf(dst, len,"%d.%d.%d+%s", LIBVIDEO_VERSION_MAJOR, LIBVIDEO_VERSION_MINOR, LIBVIDEO_VERSION_PATCH, LIBVIDEO_VERSION_METAD);
 }
 
 /*
@@ -65,17 +69,16 @@ struct video_device *open_device(char *file) {
 	int fd = -1;
 	char version[40];
 	if(show_ver==0) {
-		info("Using libvideo version %s\n", get_libvideo_version(version));
+		get_libvideo_version(version, sizeof(version));
+		info("Using libvideo version %.*s\n", sizeof(version), version);
 		fflush(stdout);
 		show_ver=1;
 	}
 
 	//open device
-	dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_DEBUG,
-			"VD: Opening device file %s.\n", file);
+	dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_DEBUG, "VD: Opening device file %s.\n", file);
 	if ((strlen(file) == 0) || ((fd = open(file,O_RDWR )) < 0)) {
-		info("V4L: unable to open device file %s. Check the name and "
-				"permissions\n", file);
+		info("V4L: unable to open device file %s. Check the name and permissions\n", file);
 		return NULL;
 	}
 
