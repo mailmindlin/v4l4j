@@ -86,16 +86,13 @@ struct video_device *open_device(char *file) {
 	vdev->fd = fd;
 
 	//Check v4l version (V4L2 first)
-	dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_DEBUG,
-			"VD: Checking V4L version on device %s\n", file);
+	dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_DEBUG, "VD: Checking V4L version on device %s\n", file);
 	if(check_capture_capabilities_v4l2(fd, file)==0) {
-		dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_INFO,
-				"VD: device %s is V4L2\n", file);
-		vdev->v4l_version=V4L2_VERSION;
+		dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_INFO, "VD: device %s is V4L2\n", file);
+		vdev->v4l_version = V4L2_VERSION;
 	} else if(check_capture_capabilities_v4l1(fd, file)==0) {
-		dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_INFO,
-				"VD: device %s is V4L1\n", file);
-		vdev->v4l_version=V4L1_VERSION;
+		dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_INFO, "VD: device %s is V4L1\n", file);
+		vdev->v4l_version = V4L1_VERSION;
 	} else {
 		info("libvideo was unable to detect the version of V4L used by device %s\n", file);
 		info("If it is a valid V4L device file & not currently used by any\n");
