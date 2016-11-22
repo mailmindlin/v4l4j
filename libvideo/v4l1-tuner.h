@@ -27,11 +27,32 @@
 
 #include "libvideo.h"
 
-int set_tuner_freq_v4l1(struct video_device *, int, unsigned int);
-int get_tuner_freq_v4l1(struct video_device *, int, unsigned int *);
-int set_tuner_freq_v4l1(struct video_device *vdev, int idx, unsigned int f);
-int get_tuner_freq_v4l1(struct video_device *vdev, int idx, unsigned int *f);
-int get_rssi_afc_v4l1(struct video_device *vdev, int idx, int *r, int *a);
-int get_rssi_afc_v4l1(struct video_device *, int, int *, int *);
+/**
+ * Set v4l1 device tuner frequency
+ * @param device Device to query
+ * @param idx Unused
+ * @param frequency Value to set
+ * @return 0 on success, else LIBVIDEO_ERR_IOCTL
+ */
+LIBVIDEO_LOCAL int set_tuner_freq_v4l1(struct video_device *device, int idx, unsigned int frequency) __attribute__((nonnull (1)));
+
+/**
+ * Get the v4l1 device's tuner's frequency
+ * @param device Device to query
+ * @param idx TODO figure out
+ * @param frequency Output to which the frequency is written
+ * @return 0 on success, else LIBVIDEO_ERR_IOCTL
+ */
+LIBVIDEO_LOCAL int get_tuner_freq_v4l1(struct video_device *device, int idx, unsigned int *frequency) __attribute__((nonnull (1, 3)));
+
+/**
+ * Get RSSI info for device
+ * @param device Device to query
+ * @param idx Unused
+ * @param r Signal value
+ * @param a TODO figure out
+ * @return 0 on success, else LIBVIDEO_ERR_IOCTL
+ */
+LIBVIDEO_LOCAL int get_rssi_afc_v4l1(struct video_device *device, int idx, int *r, int *a) __attribute__((nonnull (1, 3, 4)));
 
 #endif /* V4L1TUNER_H_ */

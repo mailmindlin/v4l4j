@@ -31,9 +31,10 @@ LIBVIDEO_LOG_LEVEL ?= 31
 LIBVIDEO_LOG_SOURCE ?= 127
 
 #Installation directory prefix
-PREFIX:=/usr
+PREFIX := /usr
 #Directory where libvideo.so will be installed
 LIB_INSTALL_DIR := $(PREFIX)/lib
+MANDIR := $(PREFIX)/share/man
 #Directory where the include files will be installed
 INC_INSTALL_DIR := $(PREFIX)/include
 #Directory where the libv4l helpers will be installed
@@ -49,6 +50,9 @@ USER_INCLUDES := libvideo.h libvideo-err.h libvideo-palettes.h
 
 VERSION_MAJOR := 0
 VERSION_MINOR := 9
+VERSION_PATCH := 0
+VERSION_METAD := $(shell git rev-parse --abbrev-ref HEAD).$(shell git rev-parse --short=7 HEAD)
+# You may be wondering why "METAD". If so, you come up with a way to align it without whitespace
 LIB_RELEASE := 0
 
 LIBV4LCONVERT_DIR := libv4lconvert
@@ -196,6 +200,10 @@ clean:
 	rm -f $(OBJ) $(BIN) $(LIB) $(LIB).$(LIB_RELEASE) $(TESTOBJ) $(LIBV4LCONVERT_AR) ./*.o list-caps test-capture dump-capture ./*~ version.h
 
 version.h:
-	@echo "#define VER_REV \"$(git rev-parse --abbrev-ref HEAD)$(git rev-parse --short=7 HEAD)\"" > version.h
+	@echo "#define LIBVIDEO_VERSION_MAJOR $(VERSION_MAJOR)" > version.h
+	@echo "#define LIBVIDEO_VERSION_MINOR $(VERSION_MINOR)" >> version.h
+	@echo "#define LIBVIDEO_VERSION_PATCH $(VERSION_PATCH)" >> version.h
+	@echo "#define LIBVIDEO_VERSION_METAD \"$(VERSION_METAD)\"" >> version.h
+	@echo "#define LIBVIDEO_VERSION_STR \"$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_PATCH)+$(VERSION_METAD)\"" >> version.h
 
 .PHONY: all install uninstall test clean

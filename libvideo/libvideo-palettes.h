@@ -28,11 +28,24 @@
 #include "videodev2.h"
 #include "types.h"
 
-struct libvideo_palette{
+/**
+ * Struct containing information about a libvideo palette
+ */
+struct libvideo_palette {
+	/**
+	 * Palette ID
+	 * -1 if undefined
+	 */
 	int libvideo_palette;
 	u32 v4l1_palette;
 	u32 v4l2_palette;
+	/**
+	 * Palette color depth. -1 for compressed formats
+	 */
 	int depth;
+	/**
+	 * Human-readable-ish palette name
+	 */
 	char name[15];
 };
 
@@ -40,7 +53,7 @@ struct libvideo_palette{
 #define COMPRESSED_FORMAT_DEPTH			-1
 
 extern const struct libvideo_palette libvideo_palettes[];
-extern const int libvideo_palettes_size;
+extern const unsigned int libvideo_palettes_size;
 
 
 #endif //H_PALETTES

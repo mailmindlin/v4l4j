@@ -31,6 +31,9 @@
 #include "videodev.h"
 #include "libv4lconvert.h"
 
+#define LIBVIDEO_LOCAL __attribute__((visibility ("hidden")))
+#define LIBVIDEO_PUBLIC __attribute__((visibility ("default")))
+
 #define CLEAR(x) memset(&x, 0x0, sizeof(x));
 
 
