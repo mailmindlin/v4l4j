@@ -1,5 +1,7 @@
 package au.edu.jcu.v4l4j.encoder.h264;
 
+import au.edu.jcu.v4l4j.ImagePalette;
+
 public class X264 {
 	public static final int CSP_MASK = 0x00ff;
 	public static final int CSP_NONE = 0x0000;
@@ -19,21 +21,40 @@ public class X264 {
 	 * yuv 4:2:0, with one y plane and one packed v+u
 	 */
 	public static final int CSP_NV21 = 0x0004;
-	public static final int CSP_I422 = 0x0005; /* yuv 4:2:2 planar */
-	public static final int CSP_YV16 = 0x0006; /* yvu 4:2:2 planar */
-	public static final int CSP_NV16 = 0x0007; /*
-												 * yuv 4:2:2, with one y plane
-												 * and one packed u+v
-												 */
-	public static final int CSP_V210 = 0x0008; /*
-												 * 10-bit yuv 4:2:2 packed in 32
-												 */
+	/**
+	 * yuv 4:2:2 planar
+	 */
+	public static final int CSP_I422 = 0x0005;
+	/**
+	 * yvu 4:2:2 planar
+	 */
+	public static final int CSP_YV16 = 0x0006;
+	/**
+	 * yuv 4:2:2, with one y plane and one packed u+v
+	 */
+	public static final int CSP_NV16 = 0x0007;
+	/**
+	 * 10-bit yuv 4:2:2 packed in 32
+	 */
+	public static final int CSP_V210 = 0x0008;
 	public static final int CSP_I444 = 0x0009; /* yuv 4:4:4 planar */
 	public static final int CSP_YV24 = 0x000a; /* yvu 4:4:4 planar */
 	public static final int CSP_BGR = 0x000b; /* packed bgr 24bits */
 	public static final int CSP_BGRA = 0x000c; /* packed bgr 32bits */
 	public static final int CSP_RGB = 0x000d; /* packed rgb 24bits */
 	public static final int CSP_MAX = 0x000e; /* end of list */
+	public static int mapPalette(ImagePalette palette) {
+		switch (palette) {
+			case NV12:
+				return CSP_NV12;
+			case NV21:
+				return CSP_NV21;
+			case NV16:
+				return CSP_NV16;
+			default:
+				throw new IllegalArgumentException("Cannot map palette " + palette);
+		}
+	}
 	/**
 	 * the csp is vertically flipped
 	 */
