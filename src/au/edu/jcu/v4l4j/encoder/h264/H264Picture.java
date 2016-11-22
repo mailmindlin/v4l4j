@@ -39,11 +39,11 @@ public class H264Picture implements Closeable, VideoFrame {
 	
 	protected static native int doGetNumPlanes(long ptr);
 	
-	protected static native ByteBuffer doGetBuffer(long ptr, int plane);
+	private static native ByteBuffer doGetBuffer(long ptr, int plane);
 	
-	protected static native void putInPlane(long ptr, int plane, ByteBuffer buf);
+	private static native void putInPlane(long ptr, int plane, ByteBuffer buf);
 	
-	protected static native void getFromPlane(long ptr, int plane, int offset, int len, ByteBuffer buf);
+	private static native void putImage(long ptr, int imf, ByteBuffer buf);
 	
 	public static H264Picture allocate(int width, int height, int csp) {
 		return new H264Picture(init(width, height, csp), width, height, csp);
