@@ -9,4 +9,12 @@
 #define UNUSED(x) (void)(x)
 #endif
 
+#if __GNUC__ >= 4
+#define LIBVIDEO_PUBLIC __attribute__ ((visibility("default")))
+#define LIBVIDEO_LOCAL  __attribute__ ((visibility("hidden")))
+#else
+#define LIBVIDEO_PUBLIC
+#define LIBVIDEO_LOCAL
+#endif
+
 #endif

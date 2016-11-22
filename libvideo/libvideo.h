@@ -30,9 +30,8 @@
 #include "videodev2.h"
 #include "videodev.h"
 #include "libv4lconvert.h"
+#include "utils.h"
 
-#define LIBVIDEO_LOCAL __attribute__((visibility ("hidden")))
-#define LIBVIDEO_PUBLIC __attribute__((visibility ("default")))
 
 #define CLEAR(x) memset(&x, 0x0, sizeof(x));
 
@@ -563,7 +562,7 @@ struct video_device {
  * caller.
  * Passing a char[10] should be enough.
  */
-char *get_libvideo_version(char *);
+size_t get_libvideo_version(char *dst, size_t len);
 
 /*
  *
