@@ -571,7 +571,7 @@ const struct libvideo_palette libvideo_palettes[] = {
 		12,
 		"YUV420-w"
 	},
-		{
+	{
 		YUV422,
 		VIDEO_PALETTE_YUV422,
 		0,
