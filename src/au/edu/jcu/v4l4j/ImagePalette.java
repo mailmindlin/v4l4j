@@ -123,6 +123,10 @@ public enum ImagePalette {
 	Y16(16, IMF_Y16),
 
 	// palette formats
+	/**
+	 * Starts with 256-entry ARGB palette.
+	 * Single plane, each pixel is a 1-byte (8-bit) index into the palette.
+	 */
 	PAL8(8, IMF_PAL8),
 
 	// YUV formats

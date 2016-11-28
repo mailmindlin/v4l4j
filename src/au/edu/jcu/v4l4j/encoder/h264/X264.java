@@ -6,43 +6,61 @@ public class X264 {
 	public static final int CSP_MASK = 0x00ff;
 	public static final int CSP_NONE = 0x0000;
 	/**
-	 * yuv 4:2:0 planar
+	 * YUV 4:2:0 planar
 	 */
 	public static final int CSP_I420 = 0x0001;
 	/**
-	 * yvu 4:2:0 planar
+	 * YVU 4:2:0 planar
 	 */
 	public static final int CSP_YV12 = 0x0002;
 	/**
-	 * yuv 4:2:0, with one y plane and one packed u+v
+	 * YUV 4:2:0, with one y plane and one packed u+v
 	 */
 	public static final int CSP_NV12 = 0x0003;
 	/**
-	 * yuv 4:2:0, with one y plane and one packed v+u
+	 * YUV 4:2:0, with one y plane and one packed v+u
 	 */
 	public static final int CSP_NV21 = 0x0004;
 	/**
-	 * yuv 4:2:2 planar
+	 * YUV 4:2:2 planar
 	 */
 	public static final int CSP_I422 = 0x0005;
 	/**
-	 * yvu 4:2:2 planar
+	 * YVU 4:2:2 planar
 	 */
 	public static final int CSP_YV16 = 0x0006;
 	/**
-	 * yuv 4:2:2, with one y plane and one packed u+v
+	 * YUV 4:2:2, with one y plane and one packed u+v
 	 */
 	public static final int CSP_NV16 = 0x0007;
 	/**
-	 * 10-bit yuv 4:2:2 packed in 32
+	 * 10-bit YUV 4:2:2 packed in 32
 	 */
 	public static final int CSP_V210 = 0x0008;
-	public static final int CSP_I444 = 0x0009; /* yuv 4:4:4 planar */
-	public static final int CSP_YV24 = 0x000a; /* yvu 4:4:4 planar */
-	public static final int CSP_BGR = 0x000b; /* packed bgr 24bits */
-	public static final int CSP_BGRA = 0x000c; /* packed bgr 32bits */
-	public static final int CSP_RGB = 0x000d; /* packed rgb 24bits */
-	public static final int CSP_MAX = 0x000e; /* end of list */
+	/**
+	 * YUV 4:4:4 planar
+	 */
+	public static final int CSP_I444 = 0x0009;
+	/**
+	 * YVU 4:4:4 planar
+	 */
+	public static final int CSP_YV24 = 0x000a;
+	/**
+	 * Packed BGR 24bits
+	 */
+	public static final int CSP_BGR = 0x000b;
+	/**
+	 * Packed BGR 32bits
+	 */
+	public static final int CSP_BGRA = 0x000c;
+	/**
+	 * Packed RGB 24bits
+	 */
+	public static final int CSP_RGB = 0x000d;
+	/**
+	 * end of list
+	 */
+	public static final int CSP_MAX = 0x000e;
 	public static int mapPalette(ImagePalette palette) {
 		switch (palette) {
 			case NV12:
@@ -51,8 +69,32 @@ public class X264 {
 				return CSP_NV21;
 			case NV16:
 				return CSP_NV16;
+			case BGR24:
+				return CSP_BGR;
+			case BGR32:
+				return CSP_BGRA;
+			case RGB24:
+				return CSP_RGB;
 			default:
 				throw new IllegalArgumentException("Cannot map palette " + palette);
+		}
+	}
+	public static ImagePalette unmapPalette(int csp) {
+		switch (csp) {
+			case CSP_NV12:
+				return ImagePalette.NV12;
+			case CSP_NV21:
+				return ImagePalette.NV21;
+			case CSP_NV16:
+				return ImagePalette.NV16;
+			case CSP_BGR:
+				return ImagePalette.BGR24;
+			case CSP_BGRA:
+				return ImagePalette.BGR32;
+			case CSP_RGB:
+				return ImagePalette.RGB24;
+			default:
+				throw new IllegalArgumentException("Cannot unmap CSP " + csp);
 		}
 	}
 	/**

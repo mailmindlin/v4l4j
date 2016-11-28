@@ -214,11 +214,14 @@ public class V4L4JConstants {
 	
 	// YUV formats
 	/**
-	 * YVU410 image format
+	 * YVU 4:1:0 planar image format.
+	 * 1 Y plane, 1 byte/pixel
+	 * 1 Cr plane, 1 byte/16 pixels (4x4 square)
+	 * 1 Cb plane, 1 byte/16 pixels (4x4 square)
 	 */
 	public static final int IMF_YVU410 = 16;
 	/**
-	 * YVU420 image format
+	 * YVU 4:2:0 image format
 	 */
 	public static final int IMF_YVU420 = 17;
 	/**
