@@ -222,14 +222,15 @@ static int set_input(struct capture_device *c, int fd){
 	return 0;
 }
 
-static bool apply_image_format(struct v4l2_format *fmt, int fd){
+static bool apply_image_format(struct v4l2_format *fmt, int fd) {
 	unsigned int palette = fmt->fmt.pix.pixelformat;
 	if (ioctl(fd, VIDIOC_S_FMT, fmt) == 0) {
 		if (fmt->fmt.pix.pixelformat == palette) {
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_INFO, "CAP: palette %#x  - accepted at %dx%d\n", palette, fmt->fmt.pix.width, fmt->fmt.pix.height);
 			return true;
 		} else {
-			info("CAP: VIODIOC_S_FMT succeeded but returned a different palette from the one requested: requested palette %#x  - returned palette: %#x\n", palette, fmt->fmt.pix.pixelformat);
+			info("CAP: VIODIOC_S_FMT succeeded but returned a different palette from the one requested: requested palette '%c%c%c%c' (%#x)  - returned palette: %c%c%c%c (%#x)\n",
+				v4l2_fourcc_chars(palette), palette, v4l2_fourcc_chars(fmt->fmt.pix.pixelformat), fmt->fmt.pix.pixelformat);
 			PRINT_MEA_CULPA();
 			return false;
 		}
