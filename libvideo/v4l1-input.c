@@ -33,8 +33,8 @@
 #include "v4l1-input.h"
 
 
-int check_v4l1(int fd, struct video_capability *vc) {
-	return ioctl( fd, VIDIOCGCAP, vc);
+bool check_v4l1(int fd, struct video_capability *vc) {
+	return ioctl(fd, VIDIOCGCAP, vc) != -1;
 }
 
 //Check whether the device is V4L1 and has capture and mmap capabilities

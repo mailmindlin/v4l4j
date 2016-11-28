@@ -57,7 +57,7 @@ static int check_palettes_v4l1(struct video_device *vdev) {
 	}
 	
 	struct frame_size_continuous *cont;
-	XMALLOC(cont, struct frame_size_continuous *, sizeof(struct frame_size_continuous ));
+	XMALLOC(cont, struct frame_size_continuous *, sizeof(struct frame_size_continuous));
 	cont->max_height = vc.maxheight;
 	cont->min_height = vc.minheight;
 	cont->max_width = vc.maxwidth;
@@ -134,17 +134,17 @@ static int query_tuner(struct video_input_info *vi, int fd) {
 
 	if(t.flags & VIDEO_TUNER_PAL) {
 		++vi->nb_stds;
-		XREALLOC(vi->supported_stds, int *,vi->nb_stds * sizeof(int));
+		XREALLOC(vi->supported_stds, int *, vi->nb_stds * sizeof(int));
 		vi->supported_stds[vi->nb_stds - 1] = PAL;
 	}
 	if(t.flags & VIDEO_TUNER_NTSC) {
 		++vi->nb_stds;
-		XREALLOC(vi->supported_stds, int *,vi->nb_stds * sizeof(int));
+		XREALLOC(vi->supported_stds, int *, vi->nb_stds * sizeof(int));
 		vi->supported_stds[vi->nb_stds - 1] = NTSC;
 	}
 	if(t.flags & VIDEO_TUNER_SECAM) {
 		++vi->nb_stds;
-		XREALLOC(vi->supported_stds, int *,vi->nb_stds * sizeof(int));
+		XREALLOC(vi->supported_stds, int *, vi->nb_stds * sizeof(int));
 		vi->supported_stds[vi->nb_stds - 1] = SECAM;
 	}
 	return 0;
@@ -242,7 +242,7 @@ int query_device_v4l1(struct video_device *vdev) {
 	
 	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: Querying V4L1 device.\n");
 	
-	if (check_v4l1(vdev->fd, &caps) == -1) {
+	if (!check_v4l1(vdev->fd, &caps)) {
 		info("Error checking capabilities of V4L1 video device");
 		return LIBVIDEO_ERR_NOCAPS;
 	}

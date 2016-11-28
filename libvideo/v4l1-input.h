@@ -25,6 +25,8 @@
 #ifndef H_V4L1_INPUT
 #define H_V4L1_INPUT
 
+#include <stdbool.h>
+
 #include "libvideo.h"
 
 
@@ -36,8 +38,10 @@
  */
 
 
-//Check whether the supplied device file is a v4l1 device
-int check_v4l1(int fd, struct video_capability *);
+/**
+ * Check whether the supplied device file is a v4l1 device
+ */
+bool check_v4l1(int fd, struct video_capability *);
 
 //Check whether the device is V4L1 and has capture and mmap capabilities
 // get capabilities VIDIOCGCAP - check max height and width
@@ -77,8 +81,14 @@ void *dequeue_buffer_v4l1(struct video_device *device, unsigned int *len, unsign
 // wait till the previous buffer is available VIDIOCSYNC(x-1)
 
 
-//enqueue the buffer when done using the frame
-void enqueue_buffer_v4l1(struct video_device *, unsigned int);
+/**
+ * Enqueue the buffer when done using the frame
+ * @param device
+ * 		Video device to which the frame belongs
+ * @param index
+ * 		Index of frame to enqueue
+ */
+void enqueue_buffer_v4l1(struct video_device *device, unsigned int index);
 
 
 /*
@@ -89,13 +99,15 @@ void enqueue_buffer_v4l1(struct video_device *, unsigned int);
  */
 
 //counterpart of start_capture, must be called it start_capture was successful
-int stop_capture_v4l1(struct video_device *);
+int stop_capture_v4l1(struct video_device *device);
 
 //counterpart of init_capture, must be called it init_capture was successful
-void free_capture_v4l1(struct video_device *);
+void free_capture_v4l1(struct video_device *device);
 
-//counterpart of init_capture_device, must be called it init_capture_device was successful
-void free_capture_device1(struct video_device *);
+/**
+ * Counterpart of init_capture_device, must be called it init_capture_device was successful
+ */
+void free_capture_device1(struct video_device *device);
 
 
 
@@ -103,22 +115,23 @@ void free_capture_device1(struct video_device *);
  * Control related functions
  */
 /**
- * returns the number of controls (standard and private V4L2 controls only)
+ * Returns the number of controls (standard and private V4L1 controls only)
  */
-int count_v4l1_controls(struct video_device *);
+int count_v4l1_controls(struct video_device *device);
+
 /**
  * Populate the control_list with fake V4L2 controls matching V4L1 video
  * controls and returns how many fake controls were created
  */
-int create_v4l1_controls(struct video_device *, struct control *, int);
+int create_v4l1_controls(struct video_device *device, struct control *ctrl, int);
 /**
  * returns the value of a control
  */
-int get_control_value_v4l1(struct video_device *c, struct v4l2_queryctrl *ctrl, int *);
+int get_control_value_v4l1(struct video_device *device, struct v4l2_queryctrl *ctrl, int *);
 /**
  * Sets the value of a control
  */
-int set_control_value_v4l1(struct video_device *, struct v4l2_queryctrl *, int *);
+int set_control_value_v4l1(struct video_device *device, struct v4l2_queryctrl *, int *);
 
 
 /*
