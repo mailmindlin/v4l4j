@@ -217,15 +217,12 @@ int v4lconvert_supported_dst_fmt_only(struct v4lconvert_data *data) {
 int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt) {
 	unsigned int faked_fmts[ARRAY_SIZE(supported_dst_pixfmts)];
 
-	if (fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
-			(!v4lconvert_supported_dst_fmt_only(data) &&
-			 fmt->index < data->no_formats))
+	if (fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE || (!v4lconvert_supported_dst_fmt_only(data) && fmt->index < data->no_formats))
 		return SYS_IOCTL(data->fd, VIDIOC_ENUM_FMT, fmt);
 	
 	unsigned int no_faked_fmts = 0;
 	for (unsigned int i = 0; i < ARRAY_SIZE(supported_dst_pixfmts); i++)
-		if (v4lconvert_supported_dst_fmt_only(data) ||
-				!(data->supported_src_formats & (1 << i))) {
+		if (v4lconvert_supported_dst_fmt_only(data) || !(data->supported_src_formats & (1 << i))) {
 			faked_fmts[no_faked_fmts] = supported_dst_pixfmts[i].fmt;
 			no_faked_fmts++;
 		}
