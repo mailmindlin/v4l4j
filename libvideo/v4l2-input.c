@@ -555,8 +555,7 @@ int init_capture_v4l2(struct video_device *vdev) {
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: driver said %d V4L2 buffers\n", req.count);
 	c->mmap->buffer_nr = req.count;
-	XMALLOC( c->mmap->buffers, struct mmap_buffer *,
-			(c->mmap->buffer_nr * sizeof(struct mmap_buffer)) );
+	XMALLOC( c->mmap->buffers, struct mmap_buffer *, (c->mmap->buffer_nr * sizeof(struct mmap_buffer)) );
 
 	for(unsigned int i = 0; i < c->mmap->buffer_nr; i++) {
 		CLEAR(buf);
@@ -578,7 +577,7 @@ int init_capture_v4l2(struct video_device *vdev) {
 				vdev->fd,
 				(off_t) buf.m.offset);
 
-		if (MAP_FAILED == c->mmap->buffers[i].start) {
+		if (c->mmap->buffers[i].start == MAP_FAILED) {
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: cant mmap allocated V4L2 buffers\n");
 			return LIBVIDEO_ERR_MMAP_BUF;
 		}
@@ -699,8 +698,7 @@ void free_capture_v4l2(struct video_device *vdev) {
 
 	// unmmap v4l2 buffers
 	for(unsigned int i=0; i < vdev->capture->mmap->buffer_nr; i++){
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-				"CAP: unmmap %u bytes at %p\n",
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: unmmap %u bytes at %p\n",
 				vdev->capture->mmap->buffers[i].length,
 				vdev->capture->mmap->buffers[i].start);
 
