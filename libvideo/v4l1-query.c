@@ -187,7 +187,7 @@ static inline int check_inputs_v4l1(struct video_device *vd) {
 		if (ioctl(vd->fd, VIDIOCGCHAN, &chan) != 0) {
 			info("Failed to get details of input %d on device %s\n", i, vd->file);
 			free_video_inputs(di->inputs, i);
-			return LIBVIDEO_ERR_IOCTL
+			return LIBVIDEO_ERR_IOCTL;
 		}
 
 		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: Found input %d - %s - %s - tuner: %d\n", i, chan.name,
@@ -227,7 +227,6 @@ static inline int check_inputs_v4l1(struct video_device *vd) {
 			di->inputs[i].supported_stds[0] = WEBCAM;
 			di->inputs[i].tuner = NULL;
 		}
-
 	}
 	
 	return 0;
