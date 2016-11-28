@@ -417,7 +417,7 @@ void *dequeue_buffer_v4l1(struct video_device *vdev, unsigned int *len, unsigned
 }
 
 //enqueue the buffer when done using the frame
-void enqueue_buffer_v4l1(struct video_device *v, unsigned int i) {}
+void enqueue_buffer_v4l1(struct video_device *device, unsigned int i) {}
 
 //counterpart of start_capture, must be called it start_capture was successful
 int stop_capture_v4l1(struct video_device *vdev) {
@@ -453,10 +453,9 @@ int count_v4l1_controls(struct video_device *vdev) {
 
 //Populate the control_list with fake V4L2 controls matching V4L1 video
 //controls and returns how many fake controls were created
-int create_v4l1_controls(struct video_device *vdev, struct control *controls,
-		int max){
+int create_v4l1_controls(struct video_device *vdev, struct control *controls, int max) {
 	int count = 0;
-
+	
 	//list standard V4L controls
 	//brightness
 	controls[count].v4l2_ctrl->id = V4L2_CID_BRIGHTNESS;
@@ -468,8 +467,8 @@ int create_v4l1_controls(struct video_device *vdev, struct control *controls,
 	controls[count].v4l2_ctrl->default_value = 32768;
 	controls[count].v4l2_ctrl->flags = 0;
 	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-			"CTRL: found control(id: %d - name: %s - min: %d - max: %d - "
-			"step: %d)\n", controls[count].v4l2_ctrl->id,
+			"CTRL: found control(id: %d - name: %s - min: %d - max: %d - step: %d)\n",
+			controls[count].v4l2_ctrl->id,
 			(char *) &controls[count].v4l2_ctrl->name,
 			controls[count].v4l2_ctrl->minimum,
 			controls[count].v4l2_ctrl->maximum,
@@ -486,8 +485,8 @@ int create_v4l1_controls(struct video_device *vdev, struct control *controls,
 	controls[count].v4l2_ctrl->default_value = 32768;
 	controls[count].v4l2_ctrl->flags = 0;
 	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-			"CTRL: found control(id: %d - name: %s - min: %d -max: %d - "
-			"step: %d)\n", controls[count].v4l2_ctrl->id,
+			"CTRL: found control(id: %d - name: %s - min: %d -max: %d - step: %d)\n",
+			controls[count].v4l2_ctrl->id,
 			(char *) &controls[count].v4l2_ctrl->name,
 			controls[count].v4l2_ctrl->minimum,
 			controls[count].v4l2_ctrl->maximum,
@@ -504,8 +503,8 @@ int create_v4l1_controls(struct video_device *vdev, struct control *controls,
 	controls[count].v4l2_ctrl->default_value = 32768;
 	controls[count].v4l2_ctrl->flags = 0;
 	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-			"CTRL: found control(id: %d - name: %s - min: %d -max: %d - "
-			"step: %d)\n", controls[count].v4l2_ctrl->id,
+			"CTRL: found control(id: %d - name: %s - min: %d -max: %d - step: %d)\n",
+			controls[count].v4l2_ctrl->id,
 			(char *) &controls[count].v4l2_ctrl->name,
 			controls[count].v4l2_ctrl->minimum,
 			controls[count].v4l2_ctrl->maximum,
@@ -522,8 +521,8 @@ int create_v4l1_controls(struct video_device *vdev, struct control *controls,
 	controls[count].v4l2_ctrl->default_value = 32768;
 	controls[count].v4l2_ctrl->flags = 0;
 	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-			"CTRL: found control(id: %d - name: %s - min: %d -max: %d - "
-			"step: %d)\n", controls[count].v4l2_ctrl->id,
+			"CTRL: found control(id: %d - name: %s - min: %d -max: %d - step: %d)\n",
+			controls[count].v4l2_ctrl->id,
 			(char *) &controls[count].v4l2_ctrl->name,
 			controls[count].v4l2_ctrl->minimum,
 			controls[count].v4l2_ctrl->maximum,
@@ -534,15 +533,12 @@ int create_v4l1_controls(struct video_device *vdev, struct control *controls,
 }
 
 //returns the value of a control
-int get_control_value_v4l1(struct video_device *vdev,
-		struct v4l2_queryctrl *ctrl, int *val){
+int get_control_value_v4l1(struct video_device *vdev, struct v4l2_queryctrl *ctrl, int *val) {
 	struct video_picture pict;
 	CLEAR(pict);
 	//query the current image format
-	if(-1 == ioctl(vdev->fd, VIDIOCGPICT, &pict)) {
-		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-				"CTRL: cannot get the value for control %s\n",
-				(char *) &ctrl->name );
+	if(ioctl(vdev->fd, VIDIOCGPICT, &pict) == -1) {
+		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR, "CTRL: cannot get the value for control %s\n", (char *) &ctrl->name);
 		return LIBVIDEO_ERR_IOCTL;
 	}
 	switch(ctrl->id) {
@@ -559,28 +555,23 @@ int get_control_value_v4l1(struct video_device *vdev,
 			*val = pict.contrast;
 			break;
 		default:
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: unknown control %s (id: %d)\n",
-					(char *) &ctrl->name, ctrl->id);
+			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR, "CTRL: unknown control %s (id: %d)\n", (char *) &ctrl->name, ctrl->id);
 			return LIBVIDEO_ERR_IOCTL;
 	}
 	return 0;
 }
 
 //sets the value of a control
-int set_control_value_v4l1(struct video_device *vdev,
-		struct v4l2_queryctrl *ctrl, int *v){
+int set_control_value_v4l1(struct video_device *vdev, struct v4l2_queryctrl *ctrl, int *v) {
 	struct video_picture pict;
-	int prev = 0;
 	CLEAR(pict);
 	//query the current image format
-	if(-1 == ioctl(vdev->fd, VIDIOCGPICT, &pict)) {
-		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-				"CTRL: cannot get the current value for control %s\n",
-				(char *) &ctrl->name );
+	if(ioctl(vdev->fd, VIDIOCGPICT, &pict) == -1) {
+		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR, "CTRL: cannot get the current value for control %s\n", (char *) &ctrl->name);
 		return LIBVIDEO_ERR_IOCTL;
 	}
-
+	
+	int prev;
 	switch(ctrl->id) {
 		case V4L2_CID_BRIGHTNESS:
 			prev = pict.brightness;
@@ -599,21 +590,17 @@ int set_control_value_v4l1(struct video_device *vdev,
 			pict.contrast = *v;
 			break;
 		default:
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: unknown control %s (id: %d)\n",
-					(char *) &ctrl->name, ctrl->id);
+			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR, "CTRL: unknown control %s (id: %d)\n", (char *) &ctrl->name, ctrl->id);
 			return LIBVIDEO_ERR_IOCTL;
 	}
 
 	//set the new value
-	if((-1 == ioctl(vdev->fd, VIDIOCSPICT, &pict))) {
-		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-				"CTRL: Error setting the new value (%d) for control %s\n",
-				*v, (char *) &ctrl->name );
+	if(ioctl(vdev->fd, VIDIOCSPICT, &pict) == -1) {
+		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR, "CTRL: Error setting the new value (%d) for control %s\n", *v, (char *) &ctrl->name);
 		*v = prev;
 		return LIBVIDEO_ERR_IOCTL;
 	}
-
+	
 	return 0;
 }
 
@@ -624,178 +611,62 @@ int set_control_value_v4l1(struct video_device *vdev,
 // ****************************************
 
 static void enum_image_fmt_v4l1(int fd) {
-	struct video_picture pic;
-	int i;
-	CLEAR(pic);
-
 	printf("============================================\n"
-			"Querying image format\n\n");
-
-	if(ioctl(fd, VIDIOCGPICT, &pic) >= 0) {
-		printf("brightness: %d - hue: %d - colour: %d - contrast: %d - "
-				"depth: %d (palette %d)\n",	pic.brightness, pic.hue, pic.colour,
-				pic.contrast, pic.depth, pic.palette);
-		i = pic.palette;
-
-		CLEAR(pic);
-		pic.palette = VIDEO_PALETTE_GREY;
-		printf("Palette GREY: ");
-		if(ioctl(fd, VIDIOCSPICT, &pic) < 0)
-			printf("NOT");
-		printf(" supported (%d)", pic.palette);
-		if(i==pic.palette) printf(" (current setting)");
-		printf("\n");
-
-		CLEAR(pic);
-		pic.palette = VIDEO_PALETTE_HI240;
-		printf("Palette HI240: ");
-		if(ioctl(fd, VIDIOCSPICT, &pic) < 0)
-			printf("NOT");
-		printf(" supported (%d)", pic.palette);
-		if(i==pic.palette) printf(" (current setting)");
-		printf("\n");
-
-		CLEAR(pic);
-		pic.palette = VIDEO_PALETTE_RGB565;
-		printf("Palette RGB565: ");
-		if(ioctl(fd, VIDIOCSPICT, &pic) < 0)
-			printf("NOT");
-		printf(" supported (%d)", pic.palette);
-		if(i==pic.palette) printf(" (current setting)");
-		printf("\n");
-
-		CLEAR(pic);
-		pic.palette = VIDEO_PALETTE_RGB555;
-		printf("Palette RGB555: ");
-		if(ioctl(fd, VIDIOCSPICT, &pic) < 0)
-			printf("NOT");
-		printf(" supported (%d)", pic.palette);
-		if(i==pic.palette) printf(" (current setting)");
-		printf("\n");
-
-		CLEAR(pic);
-		pic.palette = VIDEO_PALETTE_RGB24;
-		printf("Palette RGB24: ");
-		if(ioctl(fd, VIDIOCSPICT, &pic) < 0)
-			printf("NOT");
-		printf(" supported (%d)", pic.palette);
-		if(i==pic.palette) printf(" (current setting)");
-		printf("\n");
-
-		CLEAR(pic);
-		pic.palette = VIDEO_PALETTE_RGB32;
-		printf("Palette RGB32: ");
-		if(ioctl(fd, VIDIOCSPICT, &pic) < 0)
-			printf("NOT");
-		printf(" supported (%d)", pic.palette);
-		if(i==pic.palette) printf(" (current setting)");
-		printf("\n");
-
-		CLEAR(pic);
-		pic.palette = VIDEO_PALETTE_YUV422;
-		printf("Palette YUV422: ");
-		if(ioctl(fd, VIDIOCSPICT, &pic) < 0)
-			printf("NOT");
-		printf(" supported (%d)", pic.palette);
-		if(i==pic.palette) printf(" (current setting)");
-		printf("\n");
-
-		CLEAR(pic);
-		pic.palette = VIDEO_PALETTE_YUYV;
-		printf("Palette YUYV: ");
-		if(ioctl(fd, VIDIOCSPICT, &pic) < 0)
-			printf("NOT");
-		printf(" supported (%d)", pic.palette);
-		if(i==pic.palette) printf(" (current setting)");
-		printf("\n");
-
-		CLEAR(pic);
-		pic.palette = VIDEO_PALETTE_UYVY;
-		printf("Palette UYVY: ");
-		if(ioctl(fd, VIDIOCSPICT, &pic) < 0)
-			printf("NOT");
-		printf(" supported (%d)", pic.palette);
-		if(i==pic.palette) printf(" (current setting)");
-		printf("\n");
-
-		CLEAR(pic);
-		pic.palette = VIDEO_PALETTE_YUV420;
-		printf("Palette YUV420: ");
-		if(ioctl(fd, VIDIOCSPICT, &pic) < 0)
-			printf("NOT");
-		printf(" supported (%d)", pic.palette);
-		if(i==pic.palette) printf(" (current setting)");
-		printf("\n");
-
-		CLEAR(pic);
-		pic.palette = VIDEO_PALETTE_YUV411;
-		printf("Palette YUV411: ");
-		if(ioctl(fd, VIDIOCSPICT, &pic) < 0)
-			printf("NOT");
-		printf(" supported (%d)", pic.palette);
-		if(i==pic.palette) printf(" (current setting)");
-		printf("\n");
-
-		CLEAR(pic);
-		pic.palette = VIDEO_PALETTE_RAW;
-		printf("Palette RAW: ");
-		if(ioctl(fd, VIDIOCSPICT, &pic) < 0)
-			printf("NOT");
-		printf(" supported (%d)", pic.palette);
-		if(i==pic.palette) printf(" (current setting)");
-		printf("\n");
-
-		CLEAR(pic);
-		pic.palette = VIDEO_PALETTE_YUV422P;
-		printf("Palette YUV422P: ");
-		if(ioctl(fd, VIDIOCSPICT, &pic) < 0)
-			printf("NOT");
-		printf(" supported (%d)", pic.palette);
-		if(i==pic.palette) printf(" (current setting)");
-		printf("\n");
-
-		CLEAR(pic);
-		pic.palette = VIDEO_PALETTE_YUV411P;
-		printf("Palette YUV411P: ");
-		if(ioctl(fd, VIDIOCSPICT, &pic) < 0)
-			printf("NOT");
-		printf(" supported (%d)", pic.palette);
-		if(i==pic.palette) printf(" (current setting)");
-		printf("\n");
-
-		CLEAR(pic);
-		pic.palette = VIDEO_PALETTE_YUV420P;
-		printf("Palette YUV420P: ");
-		if(ioctl(fd, VIDIOCSPICT, &pic) < 0)
-			printf("NOT");
-		printf(" supported (%d)", pic.palette);
-		if(i==pic.palette) printf(" (current setting)");
-		printf("\n");
-
-		CLEAR(pic);
-		pic.palette = VIDEO_PALETTE_YUV410P;
-		printf("Palette YUV410P: ");
-		if(ioctl(fd, VIDIOCSPICT, &pic) < 0)
-			printf("NOT");
-		printf(" supported (%d)", pic.palette);
-		if(i==pic.palette) printf(" (current setting)");
-		printf("\n");
-
-	} else
+		"Querying image format\n\n");
+	
+	struct video_picture pic;
+	CLEAR(pic);
+	
+	if(ioctl(fd, VIDIOCGPICT, &pic) < 0) {
 		printf("Not supported ...\n");
+		return;
+	}
+	
+	printf("brightness: %d - hue: %d - colour: %d - contrast: %d - depth: %d (palette %d)\n",
+			pic.brightness, pic.hue, pic.colour,
+			pic.contrast, pic.depth, pic.palette);
+	const int i = pic.palette;
+#define PRINT_PALETTE_SUPPORT(palette) \
+		do {\
+			CLEAR(pic);\
+			pic.palette = VIDEO_PALETTE_ ## palette; \
+			printf("Palette %s:%s supported (%d%s)\n", \
+				#palette, \
+				ioctl(fd, VIDIOCSPICT, &pic) < 0 ? " NOT" : "", \
+				pic.palette, \
+				pic.palette == i ? "; current setting" : ""); \
+		} while (0);
+	PRINT_PALETTE_SUPPORT(GREY);
+	PRINT_PALETTE_SUPPORT(HI240);
+	PRINT_PALETTE_SUPPORT(RGB565);
+	PRINT_PALETTE_SUPPORT(RGB555);
+	PRINT_PALETTE_SUPPORT(RGB24);
+	PRINT_PALETTE_SUPPORT(RGB32);
+	PRINT_PALETTE_SUPPORT(YUV422);
+	PRINT_PALETTE_SUPPORT(YUYV);
+	PRINT_PALETTE_SUPPORT(UYVY);
+	PRINT_PALETTE_SUPPORT(YUV420);
+	PRINT_PALETTE_SUPPORT(YUV411);
+	PRINT_PALETTE_SUPPORT(RAW);
+	PRINT_PALETTE_SUPPORT(YUV422P);
+	PRINT_PALETTE_SUPPORT(YUV411P);
+	PRINT_PALETTE_SUPPORT(YUV420P);
+	PRINT_PALETTE_SUPPORT(YUV410P);
 	printf("\n");
+#undef PRINT_PALETTE_SUPPORT
 }
 
 static void query_current_image_fmt_v4l1(int fd) {
-	struct video_window win;
-	CLEAR(win);
 	printf("============================================\n"
 			"Querying current image size\n");
-
-	if(-1 == ioctl(fd, VIDIOCGWIN, &win)){
+	
+	struct video_window win;
+	CLEAR(win);
+	if(ioctl(fd, VIDIOCGWIN, &win) == -1) {
 		printf("Cannot get the image size\n");
 		return;
 	}
+	
 	printf("Current width: %d\n", win.width);
 	printf("Current height: %d\n", win.height);
 	printf("\n");
@@ -806,7 +677,7 @@ static void query_capture_intf_v4l1(int fd) {
 	struct video_channel chan;
 	CLEAR(vc);
 
-	if (-1 == ioctl( fd, VIDIOCGCAP, &vc)) {
+	if (ioctl( fd, VIDIOCGCAP, &vc) == -1) {
 		printf("Failed to get capabilities.\n");
 		return;
 	}
@@ -817,7 +688,7 @@ static void query_capture_intf_v4l1(int fd) {
 	for (unsigned int i = 0; i < vc.channels; i++) {
 		CLEAR(chan);
 		chan.channel=i;
-		if (-1 == ioctl(fd, VIDIOCGCHAN, &chan)) {
+		if (ioctl(fd, VIDIOCGCHAN, &chan) == -1) {
 			printf("Failed to get input details.");
 			return;
 		}
@@ -827,24 +698,27 @@ static void query_capture_intf_v4l1(int fd) {
 			printf("Has tuners\n");
 			printf("\tNumber of tuners: (%d) ", chan.tuners);
 			//TODO: list tuner using struct video_tuner and VIDIOCGTUNER
-		} else
-			printf("Doesnt have tuners\n");
+		} else {
+			printf("Doesn't have tuners\n");
+		}
 		if(chan.flags & VIDEO_VC_AUDIO)
 			printf("Has audio\n");
 
 		printf("Type: ");
-		if(chan.type & VIDEO_TYPE_TV) printf("TV\n");
-		if(chan.type & VIDEO_TYPE_CAMERA) printf("Camera\n");
+		if(chan.type & VIDEO_TYPE_TV)
+			printf("TV\n");
+		if(chan.type & VIDEO_TYPE_CAMERA)
+			printf("Camera\n");
 		printf("\n");
 	}
 	printf("\n");
 }
 
-static void query_frame_sizes_v4l1(int fd){
+static void query_frame_sizes_v4l1(int fd) {
 	struct video_capability vc;
 	CLEAR(vc);
 
-	if (-1 == ioctl( fd, VIDIOCGCAP, &vc)) {
+	if (ioctl(fd, VIDIOCGCAP, &vc) == -1) {
 		printf("Failed to get capabilities.");
 		return;
 	}
@@ -862,7 +736,7 @@ void list_cap_v4l1(int fd) {
 	struct video_capability vc;
 	CLEAR(vc);
 
-	if (-1 == ioctl( fd, VIDIOCGCAP, &vc)) {
+	if (ioctl( fd, VIDIOCGCAP, &vc) == -1) {
 		printf("Failed to get capabilities.");
 		return;
 	}
@@ -872,27 +746,19 @@ void list_cap_v4l1(int fd) {
 
 	//print capabilities
 	printf("Driver name: %s\n",vc.name);
-	if (vc.type & VID_TYPE_CAPTURE) printf("Has"); else printf("Does NOT have");
-	printf(" capture capability\n");
-	if (vc.type & VID_TYPE_TUNER) printf("Has"); else printf("Does NOT have");
-	printf(" tuner\n");
-	if (vc.type & VID_TYPE_TELETEXT) printf("Has"); else printf("Does NOT have");
-	printf(" teletext capability\n");
-	if (vc.type & VID_TYPE_OVERLAY) printf("Has"); else printf("Does NOT have");
-	printf(" overlay capability\n");
-	if (vc.type & VID_TYPE_CHROMAKEY) printf("Has"); else printf("Does NOT have");
-	printf(" overlay chromakey capability\n");
-	if (vc.type & VID_TYPE_CLIPPING) printf("Has"); else printf("Does NOT have");
-	printf(" clipping capability\n");
-	if (vc.type & VID_TYPE_FRAMERAM) printf("Has"); else printf("Does NOT have");
-	printf(" frame buffer overlay capability\n");
-	if (vc.type & VID_TYPE_SCALES) printf("Has"); else printf("Does NOT have");
-	printf(" scaling capability\n");
-	if (vc.type & VID_TYPE_MONOCHROME) printf("Has"); else printf("Does NOT have");
-	printf(" monochrome only capture\n");
-	if (vc.type & VID_TYPE_SUBCAPTURE) printf("Has"); else printf("Does NOT have");
-	printf(" sub capture capability\n");
-
+	#define PRINT_CAP(capability, name) printf("%s " name " capability\n", (vc.type & capability) ? "Has" : "Does NOT have")
+	PRINT_CAP(VID_TYPE_CAPTURE, "capture");
+	PRINT_CAP(VID_TYPE_TUNER, "tuner");
+	PRINT_CAP(VID_TYPE_TELETEXT, "teletext");
+	PRINT_CAP(VID_TYPE_OVERLAY, "overlay");
+	PRINT_CAP(VID_TYPE_CHROMAKEY, "overlay chromakey");
+	PRINT_CAP(VID_TYPE_CLIPPING, "clipping");
+	PRINT_CAP(VID_TYPE_FRAMERAM, "frame buffer overlay");
+	PRINT_CAP(VID_TYPE_SCALES, "scaling");
+	PRINT_CAP(VID_TYPE_MONOCHROME, "monochrome only capture");
+	PRINT_CAP(VID_TYPE_SUBCAPTURE, "sub capture");
+	#undef PRINT_CAP
+	
 	query_capture_intf_v4l1(fd);
 	enum_image_fmt_v4l1(fd);
 	query_current_image_fmt_v4l1(fd);
