@@ -154,7 +154,7 @@ LIBV4LCONVERT_LOCAL void v4lconvert_konica_yuv420_to_yuv420(const u8 *src, u8 *y
 
 LIBV4LCONVERT_LOCAL void v4lconvert_m420_to_yuv420(const u8 *src, u8 *ydest, u32 width, u32 height, int yvu);
 
-LIBV4LCONVERT_PUBLIC int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dst, u32 width, u32 height, int yvu);
+LIBV4LCONVERT_LOCAL int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dst, u32 width, u32 height, int yvu);
 
 LIBV4LCONVERT_LOCAL void v4lconvert_sn9c20x_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, int yvu);
 
