@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "libv4lconvert-flat.h"
 #include "jpeg_memsrcdest.h"
+#include "../libvideo-palettes.h"
 #include "../types.h"
 #include "../log.h"
 
@@ -656,9 +657,9 @@ int v4lconvert_encoder_series_computeConversion(struct v4lconvert_encoder_series
 		dprint(LIBVIDEO_LOG_SOURCE, LIBVIDEO_LOG_DEBUG, "Computed conversion path from %d to %d (len %d): %d", from, to, distance, route[0]);
 		for (unsigned i = 1; i < distance; i++)
 			dprint(LIBVIDEO_LOG_SOURCE, LIBVIDEO_LOG_DEBUG, " => %d", route[i]);
-		dprint(LIBVIDEO_LOG_SOURCE, LIBVIDEO_LOG_DEBUG, "\nFormats: %s", libvideo_palettes[route[0].src_fmt].name);
+		dprint(LIBVIDEO_LOG_SOURCE, LIBVIDEO_LOG_DEBUG, "\nFormats: %s", libvideo_palettes[route[0]].name);
 		for (unsigned i = 0; i < distance; i++)
-			dprint(LIBVIDEO_LOG_SOURCE, LIBVIDEO_LOG_DEBUG, " => %s", libvideo_palettes[route[i].dst_fmt].name);
+			dprint(LIBVIDEO_LOG_SOURCE, LIBVIDEO_LOG_DEBUG, " => %s", libvideo_palettes[route[i]].name);
 		dprint(LIBVIDEO_LOG_SOURCE, LIBVIDEO_LOG_DEBUG, "\n");
 	#endif
 	
