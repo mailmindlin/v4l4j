@@ -430,7 +430,6 @@ static int v4lcontrol_get_usb_info(struct v4lcontrol_data *data,
 static int find_dmi_string(const char **table_entries, const char *dmi_value) {
 	const char *start = dmi_value;
 	const char **entry_ptr;
-	char *trimmed_dmi;
 	size_t n;
 
 	if (!start) return 0;
@@ -439,15 +438,18 @@ static int find_dmi_string(const char **table_entries, const char *dmi_value) {
 	while (isspace(*start)) start++;
 	n = strlen(start);
 	while (n > 0 && isspace(start[n-1])) --n;
-	trimmed_dmi = strndupa(start, n);
+	char* trimmed_dmi = strndup(start, n);
 
 	/* find trimmed value */
 	for (entry_ptr = table_entries; *entry_ptr; entry_ptr++) {
 		const int found = fnmatch(*entry_ptr, trimmed_dmi, 0) == 0;
 		/* fprintf(stderr, "find_dmi_string('%s', '%s'->'%s')=%i\n", *entry_ptr, dmi_value, trimmed_dmi, found); */
-		if (found)
+		if (found) {
+			free(trimmed_dmi);
 			return 1;
+		}
 	}
+	free(trimmed_dmi);
 	return 0;
 }
 
