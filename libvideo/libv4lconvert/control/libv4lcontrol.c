@@ -427,8 +427,7 @@ static int v4lcontrol_get_usb_info(struct v4lcontrol_data *data,
  *
  * Returns non zero value if value is found, otherwise 0.
  */
-static int find_dmi_string(const char **table_entries, const char *dmi_value)
-{
+static int find_dmi_string(const char **table_entries, const char *dmi_value) {
 	const char *start = dmi_value;
 	const char **entry_ptr;
 	char *trimmed_dmi;
@@ -443,7 +442,7 @@ static int find_dmi_string(const char **table_entries, const char *dmi_value)
 	trimmed_dmi = strndupa(start, n);
 
 	/* find trimmed value */
-	for (entry_ptr = table_entries; *entry_ptr;  entry_ptr++) {
+	for (entry_ptr = table_entries; *entry_ptr; entry_ptr++) {
 		const int found = fnmatch(*entry_ptr, trimmed_dmi, 0) == 0;
 		/* fprintf(stderr, "find_dmi_string('%s', '%s'->'%s')=%i\n", *entry_ptr, dmi_value, trimmed_dmi, found); */
 		if (found)
