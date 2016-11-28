@@ -78,16 +78,16 @@
 /* These defines are V4L1 specific and should not be used with the V4L2 API!
    They will be removed from this header in the future. */
 
-#define VID_TYPE_CAPTURE	1	/* Can capture */
-#define VID_TYPE_TUNER		2	/* Can tune */
-#define VID_TYPE_TELETEXT	4	/* Does teletext */
-#define VID_TYPE_OVERLAY	8	/* Overlay onto frame buffer */
-#define VID_TYPE_CHROMAKEY	16	/* Overlay by chromakey */
-#define VID_TYPE_CLIPPING	32	/* Can clip */
-#define VID_TYPE_FRAMERAM	64	/* Uses the frame buffer memory */
-#define VID_TYPE_SCALES		128	/* Scalable */
-#define VID_TYPE_MONOCHROME	256	/* Monochrome only */
-#define VID_TYPE_SUBCAPTURE	512	/* Can capture subareas of the image */
+#define VID_TYPE_CAPTURE		1	/* Can capture */
+#define VID_TYPE_TUNER			2	/* Can tune */
+#define VID_TYPE_TELETEXT		4	/* Does teletext */
+#define VID_TYPE_OVERLAY		8	/* Overlay onto frame buffer */
+#define VID_TYPE_CHROMAKEY		16	/* Overlay by chromakey */
+#define VID_TYPE_CLIPPING		32	/* Can clip */
+#define VID_TYPE_FRAMERAM		64	/* Uses the frame buffer memory */
+#define VID_TYPE_SCALES			128	/* Scalable */
+#define VID_TYPE_MONOCHROME		256	/* Monochrome only */
+#define VID_TYPE_SUBCAPTURE		512	/* Can capture subareas of the image */
 #define VID_TYPE_MPEG_DECODER	1024	/* Can decode MPEG streams */
 #define VID_TYPE_MPEG_ENCODER	2048	/* Can encode MPEG streams */
 #define VID_TYPE_MJPEG_DECODER	4096	/* Can decode MJPEG streams */
@@ -101,6 +101,8 @@
 /*  Four-character-code (FOURCC) */
 #define v4l2_fourcc(a, b, c, d)\
 	((__u32)(a) | ((__u32)(b) << 8) | ((__u32)(c) << 16) | ((__u32)(d) << 24))
+
+#define v4l2_fourcc_chars(v) (char) ((v) & 0xFF), (char) (((v) >> 8) & 0xFF), (char) (((v) >> 16) & 0xFF), (char) (((v) >> 24) & 0xFF)
 
 /*
  *	E N U M S

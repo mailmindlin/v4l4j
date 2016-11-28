@@ -70,6 +70,17 @@ abstract class AbstractGrabber implements FrameGrabber {
 	protected State state;
 	protected int format;
 	private Tuner tuner;
+	/**
+	 * Frame grabber type. One of:
+	 * <ol start=0>
+	 * <li>{@link #RAW_GRABBER}</li>
+	 * <li>{@link #JPEG_GRABBER}</li>
+	 * <li>{@link #RGB24_GRABBER}</li>
+	 * <li>{@link #BGR24_GRABBER}</li>
+	 * <li>{@link #YUV_GRABBER}</li>
+	 * <li>{@link #YVU_GRABBER}</li>
+	 * </ol>
+	 */
 	private int type;
 	private long lastCapturedFrameSequence; // update v4l4j_FrameGrabber.c if
 	private long lastCapturedFrameTimeuSec; // these three names are changed
@@ -88,7 +99,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	}
 
 	/**
-	 * 
+	 * Initialize frame grabber, creating its framebuffers
 	 * @param o object pointer
 	 * @param numBuffers number of buffers to create
 	 * @param width width of frame (in pixels)
@@ -128,6 +139,12 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 */
 	private native int getBufferSize(long o);
 
+	/**
+	 * 
+	 * @param o Object pointer
+	 * @param index Buffer index
+	 * @return
+	 */
 	private native int enqueueBuffer(long o, int index);
 
 	private native int fillBuffer(long o, ByteBuffer output) throws V4L4JException;
@@ -518,9 +535,8 @@ abstract class AbstractGrabber implements FrameGrabber {
 		// If the push thread is blocked in 1), we can wake it up by
 		// interrupting it.
 		// If the push thread is blocked in 2), tell the JNI layer to stop the
-		// capture
-		// which will wake up the push thread blocked in fillBuffer() with an
-		// error.
+		// capture which will wake up the push thread blocked in fillBuffer()
+		// with an error.
 
 		// unblock thread in 1): stop the push source
 		pushSource.stopCapture();

@@ -588,4 +588,4 @@ const struct libvideo_palette libvideo_palettes[] = {
 
 };
 
-const int libvideo_palettes_size=ARRAY_SIZE(libvideo_palettes);
+const unsigned int libvideo_palettes_size=ARRAY_SIZE(libvideo_palettes);

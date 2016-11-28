@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.stream.Collectors;
 
 import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
 import au.edu.jcu.v4l4j.exceptions.ImageDimensionsException;
@@ -161,10 +162,17 @@ public class VideoDevice {
 	 * @return results
 	 */
 	public static Set<String> available() {
-		File dev = new File("/dev");
-		return new HashSet<>(Arrays.asList(dev.list((file, name) -> (file == dev && name.startsWith("video")))));
+		File dev = new File("/dev").getAbsoluteFile();
+		return Arrays.stream(dev.listFiles((file, name) -> (file == dev && name.startsWith("video"))))
+			.map(File::getAbsolutePath)
+			.collect(Collectors.toSet());
 	}
 	
+	/**
+	 * Get the default video device (e.g., {@code /dev/video0}), and open it.
+	 * @return Opened device
+	 * @throws V4L4JException
+	 */
 	public static VideoDevice getDefault() throws V4L4JException {
 		Set<String> fds = available();
 		if (fds.isEmpty())
@@ -302,7 +310,7 @@ public class VideoDevice {
 			throw new NullPointerException("The device file cannot be null");
 
 		if (!(new File(dev).canRead()))
-			throw new V4L4JException("The device file is not readable");
+			throw new V4L4JException("The device file (" + dev + ") is not readable");
 
 		this.threadFactory = Executors.defaultThreadFactory();
 		this.state = new State();

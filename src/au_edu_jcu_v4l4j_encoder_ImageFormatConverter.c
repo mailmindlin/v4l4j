@@ -173,7 +173,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_ImageFormatConverter_apply(
 		return -1;
 	
 	u32 result = encoder->apply(encoder, (const u8*) srcPtr, (u8*) dstPtr, (u32) srcLen);
-	dprint(LOG_V4L4J, "[V4L4J] Converted %u => %u bytes.\n", srcLen, result);
+	dprint(LOG_V4L4J, "[V4L4J] Converted %'u => %'u bytes.\n", srcLen, result);
 	//Set capacity of output buffer
 	setBufferLimit(env, dst, (int) result);
 	return result;
