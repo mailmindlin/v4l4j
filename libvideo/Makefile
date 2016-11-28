@@ -56,7 +56,6 @@ VERSION_METAD := $(shell git rev-parse --abbrev-ref HEAD).$(shell git rev-parse 
 LIB_RELEASE := 0
 
 LIBV4LCONVERT_DIR := libv4lconvert
-LIBV4LCONVERT_AR := $(LIBV4LCONVERT_DIR)/libv4lconvert.a
 LIBV4LCONVERT_NAME := v4lconvert
 LIBV4LCONVERT_HELPERS := ov511-decomp ov518-decomp
 
@@ -135,20 +134,22 @@ ifeq ($(shell arch),$(ARCH))
 	endif
 endif
 
+
 LIB_NAME := video
+LIBDIR := /usr/local/lib
 LIB := lib$(LIB_NAME).so
+LIBV4LCONVERT_INSTALL_SUBDIR := libv4l
 TESTOBJ := test-capture.o dump-capture.o list-caps.o
 
-OBJ := v4l2-input.o v4l1-input.o libvideo.o pwc-probe.o gspca-probe.o \
-	qc-probe.o fps-param-probe.o v4l1-query.o v4l2-query.o v4l1-tuner.o \
-	v4l2-tuner.o palettes.o
+LIBV4LCONVERT_HELPER_OBJS := $(patsubst %, $(LIBV4LCONVERT_DIR)/%.o, $(LIBV4LCONVERT_HELPERS)) 
+OBJ := $(patsubst %.c,%.o,$(wildcard *.c) $(filter-out $(patsubst %.o,%.c,$(LIBV4LCONVERT_HELPER_OBJS)),$(shell find $(LIBV4LCONVERT_DIR) -type f -name "*.c")))
 
 WARNINGS +=  -Wall -Wpointer-arith -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wunused-function
-CFLAGS += $(HARDWARE_FLAGS) $(WARNINGS) -DVER_MAJ=$(VERSION_MAJOR) -DVER_MIN=$(VERSION_MINOR) -I. -std=gnu11
-CFLAGS += -fPIC -fdiagnostics-color=auto -ftree-vectorize -flto
+CFLAGS += $(HARDWARE_FLAGS) $(WARNINGS) -DLIBDIR=\"$(LIBDIR)\" -DLIBSUBDIR=\"$(LIBV4LCONVERT_INSTALL_SUBDIR)\" -I. -std=gnu11
+CFLAGS += -fPIC -fdiagnostics-color=auto -ftree-vectorize -flto -fvisibility=default
 #CFLAGS += -funsafe-math-optimizations
 AFLAGS += $(HARDWARE_FLAGS) -mapcs-reentrant -k --warn --statistics
-LDFLAGS += $(HARDWARE_FLAGS) -lm -lrt -shared -ljpeg -lc -flto
+LDFLAGS += $(HARDWARE_FLAGS) -lm -lrt -shared -ljpeg -lc -flto=3
 
 ifneq ($(DEBUG),)
 	CFLAGS += -DDEBUG -ggdb -DLIBVIDEO_LOG_LEVEL=$(LIBVIDEO_LOG_LEVEL) -DLIBVIDEO_LOG_SOURCE=$(LIBVIDEO_LOG_SOURCE)
@@ -159,10 +160,10 @@ endif
 
 all: $(LIB).$(LIB_RELEASE)
 
-$(LIB).$(LIB_RELEASE): version.h $(OBJ) $(LIBV4LCONVERT_AR)
+$(LIB).$(LIB_RELEASE): version.h $(OBJ)
 	$(CC) $(OBJ) -Wl,-soname,$(LIB).$(LIB_RELEASE) \
 		-o $(LIB).$(LIB_RELEASE) $(LDFLAGS) \
-		$(LIBPIXFC) $(LIBV4LCONVERT_AR)
+		$(LIBPIXFC)
 
 $(LIB): $(LIB).$(LIB_RELEASE)
 	ln -f -s $(LIB).$(LIB_RELEASE) $(LIB)
@@ -174,15 +175,14 @@ FORCE:
 	export HARDWARE_FLAGS
 	@LINKTYPE=static LIBDIR=$(LIBV4L_HELPERS_INSTALL_DIR) $(MAKE) --no-print-directory -C $(LIBV4LCONVERT_DIR)
 
-install: $(LIB).$(LIB_RELEASE)
+install: $(LIB).$(LIB_RELEASE) $(patsubst %,$(LIBV4LCONVERT_DIR)/%,$(LIBV4LCONVERT_HELPERS))
 	mkdir -p $(DESTDIR)$(INC_INSTALL_DIR)
 	install -p -m 644 $(USER_INCLUDES) $(DESTDIR)$(INC_INSTALL_DIR)
 	mkdir -p $(DESTDIR)$(LIB_INSTALL_DIR)
 	install -m 755 $(LIB).$(LIB_RELEASE) $(DESTDIR)$(LIB_INSTALL_DIR)
 	cd $(DESTDIR)$(LIB_INSTALL_DIR) && ln -f -s $(LIB).$(LIB_RELEASE) $(LIB)
 	mkdir -p $(DESTDIR)$(LIBV4L_HELPERS_INSTALL_DIR)/libv4l
-	install -m 755 $(LIBV4LCONVERT_DIR)/*-decomp \
-		$(DESTDIR)$(LIBV4L_HELPERS_INSTALL_DIR)/libv4l
+	install -m 755 $(LIBV4LCONVERT_DIR)/*-decomp $(DESTDIR)$(LIBV4L_HELPERS_INSTALL_DIR)/libv4l
 
 uninstall:
 	for f in $(USER_INCLUDES); do rm -f $(DESTDIR)$(INC_INSTALL_DIR)/$${f}; done
@@ -196,8 +196,8 @@ test: $(LIB).$(LIB_RELEASE) $(TESTOBJ)
 	$(CC) dump-capture.o -lm -lrt -L. -l$(LIB_NAME) -o dump-capture
 
 clean:
-	$(MAKE) -C $(LIBV4LCONVERT_DIR) clean
-	rm -f $(OBJ) $(BIN) $(LIB) $(LIB).$(LIB_RELEASE) $(TESTOBJ) $(LIBV4LCONVERT_AR) ./*.o list-caps test-capture dump-capture ./*~ version.h
+	rm -f $(OBJ) $(BIN) $(LIB) $(LIB).$(LIB_RELEASE) $(TESTOBJ) ./*.o list-caps test-capture dump-capture ./*~ version.h
+
 
 version.h:
 	@echo "#define LIBVIDEO_VERSION_MAJOR $(VERSION_MAJOR)" > version.h
@@ -205,5 +205,7 @@ version.h:
 	@echo "#define LIBVIDEO_VERSION_PATCH $(VERSION_PATCH)" >> version.h
 	@echo "#define LIBVIDEO_VERSION_METAD \"$(VERSION_METAD)\"" >> version.h
 	@echo "#define LIBVIDEO_VERSION_STR \"$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_PATCH)+$(VERSION_METAD)\"" >> version.h
+
+$(patsubst %,$(LIBV4LCONVERT_DIR)/%,$(LIBV4LCONVERT_HELPERS)): %: $(patsubst %, %.o, $(%)) 
 
 .PHONY: all install uninstall test clean
