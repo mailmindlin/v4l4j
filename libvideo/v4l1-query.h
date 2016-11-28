@@ -27,7 +27,7 @@
 
 #include "libvideo.h"
 
-int query_device_v4l1(struct video_device *device);
-void free_video_device_v4l1(struct video_device *device);
+LIBVIDEO_LOCAL int query_device_v4l1(struct video_device *device);
+LIBVIDEO_LOCAL void free_video_device_v4l1(struct video_device *device);
 
 #endif /* V4L1QUERY_H_ */
