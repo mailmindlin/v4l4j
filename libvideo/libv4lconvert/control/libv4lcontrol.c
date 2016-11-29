@@ -149,9 +149,7 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL, NULL },
 	{ 0x174f, 0x5a35, 0, "PEGATRON CORPORATION         ", "F5SL    ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL, NULL },
-	{ 0x174f, 0x6a51, 0, NULL, "S96S",
-		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
-		"MicroLink", "S96S", NULL, NULL },
+	{ 0x174f, 0x6a51, 0, NULL, "S96S", V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0, "MicroLink", "S96S", NULL, NULL },
 	{ 0x5986, 0x0200, 0, "LENOVO", "SPEEDY    ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL,
 		"Lenovo IdeaPad Y510" },
@@ -298,20 +296,16 @@ static const struct v4lcontrol_upside_down_table upside_down[] = {
 	{ asus_board_vendor, asus_board_name, asus_camera_id },
 }; 
 
-static void v4lcontrol_get_dmi_string(const char *sysfs_prefix, const char *string, char *buf, int size)
-{
-	FILE *f;
-	char *s, sysfs_name[512];
+static void v4lcontrol_get_dmi_string(const char *sysfs_prefix, const char *string, char *buf, int size) {
+	char sysfs_name[512];
 
-	snprintf(sysfs_name, sizeof(sysfs_name),
-			"%s/sys/class/dmi/id/%s", sysfs_prefix, string);
-	f = fopen(sysfs_name, "r");
+	snprintf(sysfs_name, sizeof(sysfs_name), "%s/sys/class/dmi/id/%s", sysfs_prefix, string);
+	FILE *f = fopen(sysfs_name, "r");
 	if (!f) {
 		/* Try again with a different sysfs path, not sure if this is needed
 		   but we used to look under /sys/devices/virtual/dmi/id in older
 		   libv4l versions, but this did not work with some kernels */
-		snprintf(sysfs_name, sizeof(sysfs_name),
-				"%s/sys/devices/virtual/dmi/id/%s", sysfs_prefix, string);
+		snprintf(sysfs_name, sizeof(sysfs_name), "%s/sys/devices/virtual/dmi/id/%s", sysfs_prefix, string);
 		f = fopen(sysfs_name, "r");
 		if (!f) {
 			buf[0] = 0;
@@ -319,105 +313,93 @@ static void v4lcontrol_get_dmi_string(const char *sysfs_prefix, const char *stri
 		}
 	}
 
-	s = fgets(buf, size, f);
+	char *s = fgets(buf, size, f);
 	if (s)
 		s[strlen(s) - 1] = 0;
 	fclose(f);
 }
 
-static int v4lcontrol_get_usb_info(struct v4lcontrol_data *data,
-		const char *sysfs_prefix,
-		unsigned short *vendor_id, unsigned short *product_id,
-		int *speed) {
-	FILE *f;
-	int i, minor;
+static bool v4lcontrol_get_usb_info(struct v4lcontrol_data *data, const char *sysfs_prefix, unsigned short *vendor_id, unsigned short *product_id, int *speed) {
+	int minor;
 	struct stat st;
 	char sysfs_name[512];
 	char c, *s, buf[32];
 
 	if (fstat(data->fd, &st) || !S_ISCHR(st.st_mode))
-		return 0; /* Should never happen */
+		return false; /* Should never happen */
 
-	/* <Sigh> find ourselve in sysfs */
+	/* <Sigh> find ourselves in sysfs */
+	int i;
 	for (i = 0; i < 256; i++) {
-		snprintf(sysfs_name, sizeof(sysfs_name),
-			 "%s/sys/class/video4linux/video%d/dev", sysfs_prefix, i);
-		f = fopen(sysfs_name, "r");
+		snprintf(sysfs_name, sizeof(sysfs_name), "%s/sys/class/video4linux/video%d/dev", sysfs_prefix, i);
+		FILE *f = fopen(sysfs_name, "r");
 		if (!f)
 			continue;
 
 		s = fgets(buf, sizeof(buf), f);
 		fclose(f);
 
-		if (s && sscanf(buf, "%*d:%d%c", &minor, &c) == 2 &&
-		    c == '\n' && minor == (signed) minor(st.st_rdev))
+		if (s && sscanf(buf, "%*d:%d%c", &minor, &c) == 2 && c == '\n' && minor == (signed) minor(st.st_rdev))
 			break;
 	}
 	if (i == 256)
-		return 0; /* Not found, sysfs not mounted? */
+		return false; /* Not found, sysfs not mounted? */
 
 	/* Get vendor and product ID */
-	snprintf(sysfs_name, sizeof(sysfs_name),
-		 "%s/sys/class/video4linux/video%d/device/modalias", sysfs_prefix, i);
-	f = fopen(sysfs_name, "r");
+	snprintf(sysfs_name, sizeof(sysfs_name), "%s/sys/class/video4linux/video%d/device/modalias", sysfs_prefix, i);
+	FILE *f = fopen(sysfs_name, "r");
 	if (f) {
 		s = fgets(buf, sizeof(buf), f);
 		fclose(f);
 
-		if (!s || sscanf(s, "usb:v%4hxp%4hx%c", vendor_id, product_id,
-				 &c) != 3 || c != 'd')
-			return 0; /* Not an USB device */
+		if (!s || sscanf(s, "usb:v%4hxp%4hx%c", vendor_id, product_id, &c) != 3 || c != 'd')
+			return false; /* Not an USB device */
 
-		snprintf(sysfs_name, sizeof(sysfs_name),
-			 "%s/sys/class/video4linux/video%d/device/../speed", sysfs_prefix, i);
+		snprintf(sysfs_name, sizeof(sysfs_name), "%s/sys/class/video4linux/video%d/device/../speed", sysfs_prefix, i);
 	} else {
 		/* Try again assuming the device link points to the usb
 		   device instead of the usb interface (bug in older versions
 		   of gspca) */
 
 		/* Get vendor ID */
-		snprintf(sysfs_name, sizeof(sysfs_name),
-			 "%s/sys/class/video4linux/video%d/device/idVendor", sysfs_prefix, i);
+		snprintf(sysfs_name, sizeof(sysfs_name), "%s/sys/class/video4linux/video%d/device/idVendor", sysfs_prefix, i);
 		f = fopen(sysfs_name, "r");
 		if (!f)
-			return 0; /* Not an USB device (or no sysfs) */
+			return false; /* Not an USB device (or no sysfs) */
 
 		s = fgets(buf, sizeof(buf), f);
 		fclose(f);
 
-		if (!s || sscanf(s, "%04hx%c", vendor_id, &c) != 2 ||
-		    c != '\n')
-			return 0; /* Should never happen */
+		if (!s || sscanf(s, "%04hx%c", vendor_id, &c) != 2 || c != '\n')
+			return false; /* Should never happen */
 
 		/* Get product ID */
-		snprintf(sysfs_name, sizeof(sysfs_name),
-			 "%s/sys/class/video4linux/video%d/device/idProduct", sysfs_prefix, i);
+		snprintf(sysfs_name, sizeof(sysfs_name), "%s/sys/class/video4linux/video%d/device/idProduct", sysfs_prefix, i);
 		f = fopen(sysfs_name, "r");
 		if (!f)
-			return 0; /* Should never happen */
+			return false; /* Should never happen */
 
 		s = fgets(buf, sizeof(buf), f);
 		fclose(f);
 
 		if (!s || sscanf(s, "%04hx%c", product_id, &c) != 2 ||
 		    c != '\n')
-			return 0; /* Should never happen */
+			return false; /* Should never happen */
 
-		snprintf(sysfs_name, sizeof(sysfs_name),
-			 "%s/sys/class/video4linux/video%d/device/speed", sysfs_prefix, i);
+		snprintf(sysfs_name, sizeof(sysfs_name), "%s/sys/class/video4linux/video%d/device/speed", sysfs_prefix, i);
 	}
 
 	f = fopen(sysfs_name, "r");
 	if (!f)
-		return 0; /* Should never happen */
+		return false; /* Should never happen */
 
 	s = fgets(buf, sizeof(buf), f);
 	fclose(f);
 
 	if (!s || sscanf(s, "%d%c", speed, &c) != 2 || (c != '\n' && c != '.'))
-		return 0; /* Should never happen */
+		return false; /* Should never happen */
 
-	return 1;
+	return true;
 }
 
 /*
@@ -425,72 +407,62 @@ static int v4lcontrol_get_usb_info(struct v4lcontrol_data *data,
  * aganist the space trimmed dmi_value. The upside down table entries
  * might contain shell wildcard patterns [see glob(7)].
  *
- * Returns non zero value if value is found, otherwise 0.
+ * Returns true iff value is found
  */
-static int find_dmi_string(const char **table_entries, const char *dmi_value) {
+static bool find_dmi_string(const char **table_entries, const char *dmi_value) {
 	const char *start = dmi_value;
-	const char **entry_ptr;
-	size_t n;
 
-	if (!start) return 0;
+	if (!start)
+		return false;
 
 	/* trim value */
-	while (isspace(*start)) start++;
-	n = strlen(start);
-	while (n > 0 && isspace(start[n-1])) --n;
+	while (isspace(*start))
+		start++;
+	size_t n = strlen(start);
+	while (n > 0 && isspace(start[n - 1]))
+		--n;
 	char* trimmed_dmi = strndup(start, n);
 
 	/* find trimmed value */
-	for (entry_ptr = table_entries; *entry_ptr; entry_ptr++) {
+	for (const char **entry_ptr = table_entries; *entry_ptr; entry_ptr++) {
 		const int found = fnmatch(*entry_ptr, trimmed_dmi, 0) == 0;
 		/* fprintf(stderr, "find_dmi_string('%s', '%s'->'%s')=%i\n", *entry_ptr, dmi_value, trimmed_dmi, found); */
 		if (found) {
 			free(trimmed_dmi);
-			return 1;
+			return true;
 		}
 	}
 	free(trimmed_dmi);
-	return 0;
+	return false;
 }
 
-/*
+/**
  * Tries to find an USB id in table_entries array
  *
- * Returns non zero value if value is found, otherwise 0.
+ * Returns true iff value is found
  */
-static int find_usb_id(const struct v4lcontrol_usb_id *table_entries,
-		unsigned short vendor_id, unsigned short product_id)
-{
+static bool find_usb_id(const struct v4lcontrol_usb_id *table_entries, unsigned short vendor_id, unsigned short product_id) {
 	const struct v4lcontrol_usb_id *entry_ptr;
   	for (entry_ptr = table_entries; entry_ptr->vendor_id && entry_ptr->product_id; ++entry_ptr)
-    		if (entry_ptr->vendor_id == vendor_id && entry_ptr->product_id == product_id) return 1;
-	return 0;
+    		if (entry_ptr->vendor_id == vendor_id && entry_ptr->product_id == product_id)
+				return true;
+	return false;
 }
 
-static void v4lcontrol_get_flags_from_db(struct v4lcontrol_data *data,
-		const char *sysfs_prefix,
-		unsigned short vendor_id, unsigned short product_id)
-{
+static void v4lcontrol_get_flags_from_db(struct v4lcontrol_data *data, const char *sysfs_prefix, unsigned short vendor_id, unsigned short product_id) {
 	char dmi_system_vendor[512], dmi_system_name[512], dmi_system_version[512];
 	char dmi_board_vendor[512], dmi_board_name[512], dmi_board_version[512];
-	int i;
 
 	/* Get DMI board and system strings */
-	v4lcontrol_get_dmi_string(sysfs_prefix, "sys_vendor", dmi_system_vendor,
-			sizeof(dmi_system_vendor));
-	v4lcontrol_get_dmi_string(sysfs_prefix, "product_name", dmi_system_name,
-			sizeof(dmi_system_name));
-	v4lcontrol_get_dmi_string(sysfs_prefix, "product_version", dmi_system_version,
-			sizeof(dmi_system_version));
+	v4lcontrol_get_dmi_string(sysfs_prefix, "sys_vendor", dmi_system_vendor, sizeof(dmi_system_vendor));
+	v4lcontrol_get_dmi_string(sysfs_prefix, "product_name", dmi_system_name, sizeof(dmi_system_name));
+	v4lcontrol_get_dmi_string(sysfs_prefix, "product_version", dmi_system_version, sizeof(dmi_system_version));
 
-	v4lcontrol_get_dmi_string(sysfs_prefix, "board_vendor", dmi_board_vendor,
-			sizeof(dmi_board_vendor));
-	v4lcontrol_get_dmi_string(sysfs_prefix, "board_name", dmi_board_name,
-			sizeof(dmi_board_name));
-	v4lcontrol_get_dmi_string(sysfs_prefix, "board_version", dmi_board_version,
-			sizeof(dmi_board_version));
+	v4lcontrol_get_dmi_string(sysfs_prefix, "board_vendor", dmi_board_vendor, sizeof(dmi_board_vendor));
+	v4lcontrol_get_dmi_string(sysfs_prefix, "board_name", dmi_board_name, sizeof(dmi_board_name));
+	v4lcontrol_get_dmi_string(sysfs_prefix, "board_version", dmi_board_version, sizeof(dmi_board_version));
 
-	for (i = 0; i < ARRAY_SIZE(upside_down); i++)
+	for (unsigned int i = 0; i < ARRAY_SIZE(upside_down); i++)
 		if (find_dmi_string(upside_down[i].board_vendor, dmi_board_vendor) &&
 		    find_dmi_string(upside_down[i].board_name, dmi_board_name) &&
 		    find_usb_id(upside_down[i].camera_id, vendor_id, product_id)) {
@@ -499,7 +471,7 @@ static void v4lcontrol_get_flags_from_db(struct v4lcontrol_data *data,
 			break;
 		}
  
-	for (i = 0; i < ARRAY_SIZE(v4lcontrol_flags); i++)
+	for (unsigned int i = 0; i < ARRAY_SIZE(v4lcontrol_flags); i++)
 		if (v4lcontrol_flags[i].vendor_id == vendor_id &&
 				v4lcontrol_flags[i].product_id ==
 				(product_id & ~v4lcontrol_flags[i].product_mask) &&
@@ -523,16 +495,15 @@ static void v4lcontrol_get_flags_from_db(struct v4lcontrol_data *data,
 		}
 }
 
-struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
-{
-	int shm_fd;
-	int i, rc, got_usb_info, speed, init = 0;
-	char *s, shm_name[256], pwd_buf[1024];
+/**
+ * Create v4lcontrol data.
+ */
+struct v4lcontrol_data *v4lcontrol_create(int fd, bool always_needs_conversion) {
+	int init = 0;
+	char shm_name[256], pwd_buf[1024];
 	struct v4l2_capability cap;
 	struct v4l2_queryctrl ctrl;
 	struct passwd pwd, *pwd_p;
-	unsigned short vendor_id = 0;
-	unsigned short product_id = 0;
 	struct v4l2_input input;
 
 	struct v4lcontrol_data *data = calloc(1, sizeof(struct v4lcontrol_data));
@@ -545,35 +516,36 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 	data->fd = fd;
 
 	/* Check if the driver has indicated some form of flipping is needed */
-	if ((SYS_IOCTL(data->fd, VIDIOC_G_INPUT, &input.index) == 0) &&
-			(SYS_IOCTL(data->fd, VIDIOC_ENUMINPUT, &input) == 0)) {
+	if ((SYS_IOCTL(data->fd, VIDIOC_G_INPUT, &input.index) == 0) && (SYS_IOCTL(data->fd, VIDIOC_ENUMINPUT, &input) == 0)) {
 		if (input.status & V4L2_IN_ST_HFLIP)
 			data->flags |= V4LCONTROL_HFLIPPED;
 		if (input.status & V4L2_IN_ST_VFLIP)
 			data->flags |= V4LCONTROL_VFLIPPED;
 	}
 
-	s = getenv("LIBV4LCONTROL_SYSFS_PREFIX");
+	char *s = getenv("LIBV4LCONTROL_SYSFS_PREFIX");
 	if (!s)
 		s = "";
-
-	got_usb_info = v4lcontrol_get_usb_info(data, s, &vendor_id, &product_id,
-					       &speed);
+	
+	int speed;
+	unsigned short vendor_id = 0;
+	unsigned short product_id = 0;
+	bool got_usb_info = v4lcontrol_get_usb_info(data, s, &vendor_id, &product_id, &speed);
 	if (got_usb_info) {
 		v4lcontrol_get_flags_from_db(data, s, vendor_id, product_id);
 		switch (speed) {
-		case 12:
-			data->bandwidth = 1023 * 1000;
-			break;
-		case 480:
-			data->bandwidth = 3 * 1024 * 8000;
-			break;
-		case 5000:
-			data->bandwidth = 48 * 1024 * 8000;
-			break;
-		default:
-			/* heuh, low speed device, or ... ? */
-			data->bandwidth = (unsigned) speed / 20;
+			case 12:
+				data->bandwidth = 1023 * 1000;
+				break;
+			case 480:
+				data->bandwidth = 3 * 1024 * 8000;
+				break;
+			case 5000:
+				data->bandwidth = 48 * 1024 * 8000;
+				break;
+			default:
+				/* heuh, low speed device, or ... ? */
+				data->bandwidth = (unsigned) speed / 20;
 		}
 	} else
 		data->bandwidth = 0;
@@ -590,9 +562,9 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 	/* If the device always needs conversion, we can add fake controls at no cost
 	   (no cost when not activated by the user that is) */
 	if (always_needs_conversion || v4lcontrol_needs_conversion(data)) {
-		for (i = 0; i < V4LCONTROL_AUTO_ENABLE_COUNT; i++) {
+		for (int i = 0; i < V4LCONTROL_AUTO_ENABLE_COUNT; i++) {
 			ctrl.id = fake_controls[i].id;
-			rc = SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &ctrl);
+			int rc = SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &ctrl);
 			if (rc == -1 || (rc == 0 && (ctrl.flags & V4L2_CTRL_FLAG_DISABLED)))
 				data->controls |= 1 << i;
 		}
@@ -604,7 +576,7 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 	   different sensors with / without autogain or the necessary controls. */
 	while (data->flags & V4LCONTROL_WANTS_AUTOGAIN) {
 		ctrl.id = V4L2_CID_AUTOGAIN;
-		rc = SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &ctrl);
+		int rc = SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &ctrl);
 		if (rc == 0 && !(ctrl.flags & V4L2_CTRL_FLAG_DISABLED))
 			break;
 
@@ -618,8 +590,7 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 		if (rc != 0 || (ctrl.flags & V4L2_CTRL_FLAG_DISABLED))
 			break;
 
-		data->controls |= 1 << V4LCONTROL_AUTOGAIN |
-			1 << V4LCONTROL_AUTOGAIN_TARGET;
+		data->controls |= 1 << V4LCONTROL_AUTOGAIN | 1 << V4LCONTROL_AUTOGAIN_TARGET;
 		break;
 	}
 
@@ -632,37 +603,33 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 		return data; /* No need to create a shared memory segment */
 
 	if (SYS_IOCTL(fd, VIDIOC_QUERYCAP, &cap)) {
-		perror("libv4lcontrol: error querying device capabilities");
+		perror("libv4lcontrol: Error querying device capabilities");
 		goto error;
 	}
 
 	if (getpwuid_r(geteuid(), &pwd, pwd_buf, sizeof(pwd_buf), &pwd_p) == 0) {
 		if (got_usb_info)
-			snprintf(shm_name, 256, "/libv4l-%s:%s:%04x:%04x:%s", pwd.pw_name,
-					cap.bus_info, (int)vendor_id, (int)product_id, cap.card);
+			snprintf(shm_name, 256, "/libv4l-%s:%s:%04x:%04x:%s", pwd.pw_name, cap.bus_info, (int)vendor_id, (int)product_id, cap.card);
 		else
-			snprintf(shm_name, 256, "/libv4l-%s:%s:%s", pwd.pw_name,
-					cap.bus_info, cap.card);
+			snprintf(shm_name, 256, "/libv4l-%s:%s:%s", pwd.pw_name, cap.bus_info, cap.card);
 	} else {
-		perror("libv4lcontrol: error getting username using uid instead");
+		perror("libv4lcontrol: Error getting username using uid instead");
 		if (got_usb_info)
-			snprintf(shm_name, 256, "/libv4l-%lu:%s:%04x:%04x:%s",
-					(unsigned long)geteuid(), cap.bus_info,
-					(int)vendor_id, (int)product_id, cap.card);
+			snprintf(shm_name, 256, "/libv4l-%lu:%s:%04x:%04x:%s", (unsigned long)geteuid(), cap.bus_info, (int)vendor_id, (int)product_id, cap.card);
 		else
-			snprintf(shm_name, 256, "/libv4l-%lu:%s:%s", (unsigned long)geteuid(),
-					cap.bus_info, cap.card);
+			snprintf(shm_name, 256, "/libv4l-%lu:%s:%s", (unsigned long)geteuid(), cap.bus_info, cap.card);
 	}
 
 	/* / is not allowed inside shm names */
-	for (i = 1; shm_name[i]; i++)
+	for (int i = 1; shm_name[i]; i++)
 		if (shm_name[i] == '/')
 			shm_name[i] = '-';
 
 	/* Open the shared memory object identified by shm_name */
-	shm_fd = shm_open(shm_name, (O_CREAT | O_EXCL | O_RDWR), (S_IREAD | S_IWRITE));
+	bool init = false;
+	int shm_fd = shm_open(shm_name, (O_CREAT | O_EXCL | O_RDWR), (S_IREAD | S_IWRITE));
 	if (shm_fd >= 0)
-		init = 1;
+		init = true;
 	else
 		shm_fd = shm_open(shm_name, O_RDWR, (S_IREAD | S_IWRITE));
 
@@ -671,27 +638,26 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 		ftruncate(shm_fd, V4LCONTROL_SHM_SIZE);
 
 		/* Retreive a pointer to the shm object */
-		data->shm_values = mmap(NULL, V4LCONTROL_SHM_SIZE, (PROT_READ | PROT_WRITE),
-				MAP_SHARED, shm_fd, 0);
+		data->shm_values = mmap(NULL, V4LCONTROL_SHM_SIZE, (PROT_READ | PROT_WRITE), MAP_SHARED, shm_fd, 0);
 		close(shm_fd);
 
 		if (data->shm_values == MAP_FAILED) {
 			perror("libv4lcontrol: error shm mmap failed");
 			data->shm_values = NULL;
 		}
-	} else
+	} else {
 		perror("libv4lcontrol: error creating shm segment failed");
+	}
 
 	/* Fall back to malloc */
 	if (data->shm_values == NULL) {
-		fprintf(stderr,
-				"libv4lcontrol: falling back to malloc-ed memory for controls\n");
+		fprintf(stderr, "libv4lcontrol: falling back to malloc-ed memory for controls\n");
 		data->shm_values = malloc(V4LCONTROL_SHM_SIZE);
 		if (!data->shm_values) {
 			fprintf(stderr, "libv4lcontrol: error: out of memory!\n");
 			goto error;
 		}
-		init = 1;
+		init = true;
 		data->priv_flags |= V4LCONTROL_MEMORY_IS_MALLOCED;
 	}
 
@@ -699,7 +665,7 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 		/* Initialize the new shm object we created */
 		memset(data->shm_values, 0, V4LCONTROL_SHM_SIZE);
 
-		for (i = 0; i < V4LCONTROL_COUNT; i++)
+		for (unsigned int i = 0; i < V4LCONTROL_COUNT; i++)
 			data->shm_values[i] = (unsigned) fake_controls[i].default_value;
 
 		if (data->flags & V4LCONTROL_WANTS_WB)
@@ -716,8 +682,10 @@ error:
 	return NULL;
 }
 
-void v4lcontrol_destroy(struct v4lcontrol_data *data)
-{
+/**
+ * Release v4lcontrol data
+ */
+void v4lcontrol_destroy(struct v4lcontrol_data *data) {
 	if (data->controls) {
 		if (data->priv_flags & V4LCONTROL_MEMORY_IS_MALLOCED)
 			free(data->shm_values);
@@ -727,6 +695,9 @@ void v4lcontrol_destroy(struct v4lcontrol_data *data)
 	free(data);
 }
 
+/**
+ * Virtual (software-implemented) controls
+ */
 static const struct v4l2_queryctrl fake_controls[V4LCONTROL_COUNT] = {
 	{
 		.id = V4L2_CID_AUTO_WHITE_BALANCE,
@@ -808,22 +779,19 @@ static void v4lcontrol_copy_queryctrl(struct v4lcontrol_data *data, struct v4l2_
 
 int v4lcontrol_vidioc_queryctrl(struct v4lcontrol_data *data, void *arg) {
 	struct v4l2_queryctrl *ctrl = arg;
-	int retval;
 	uint32_t orig_id = ctrl->id;
 
 	/* if we have an exact match return it */
 	for (unsigned i = 0; i < V4LCONTROL_COUNT; i++)
-		if ((data->controls & (1 << i)) &&
-				ctrl->id == fake_controls[i].id) {
+		if ((data->controls & (1 << i)) && ctrl->id == fake_controls[i].id) {
 			v4lcontrol_copy_queryctrl(data, ctrl, i);
 			return 0;
 		}
 
 	/* find out what the kernel driver would respond. */
-	retval = SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, arg);
+	int retval = SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, arg);
 
-	if ((data->priv_flags & V4LCONTROL_SUPPORTS_NEXT_CTRL) &&
-			(orig_id & V4L2_CTRL_FLAG_NEXT_CTRL)) {
+	if ((data->priv_flags & V4LCONTROL_SUPPORTS_NEXT_CTRL) && (orig_id & V4L2_CTRL_FLAG_NEXT_CTRL)) {
 		/* If the hardware has no more controls check if we still have any
 		   fake controls with a higher id then the hardware's highest */
 		if (retval)
@@ -841,39 +809,36 @@ int v4lcontrol_vidioc_queryctrl(struct v4lcontrol_data *data, void *arg) {
 				retval = 0;
 			}
 	}
-
+	
 	return retval;
 }
 
 int v4lcontrol_vidioc_g_ctrl(struct v4lcontrol_data *data, void *arg) {
-	struct v4l2_control *ctrl = arg;
+	struct v4l2_control *ctrl = (struct v4l2_control *)arg;
 	
-	for (unsigned i = 0; i < V4LCONTROL_COUNT; i++)
-		if ((data->controls & (1 << i)) &&
-				ctrl->id == fake_controls[i].id) {
+	for (unsigned int i = 0; i < V4LCONTROL_COUNT; i++)
+		if ((data->controls & (1 << i)) && ctrl->id == fake_controls[i].id) {
 			ctrl->value = (__s32) data->shm_values[i];
 			return 0;
 		}
-
+	
 	return SYS_IOCTL(data->fd, VIDIOC_G_CTRL, arg);
 }
 
 int v4lcontrol_vidioc_s_ctrl(struct v4lcontrol_data *data, void *arg) {
-	struct v4l2_control *ctrl = arg;
-
-	for (unsigned i = 0; i < V4LCONTROL_COUNT; i++)
-		if ((data->controls & (1 << i)) &&
-				ctrl->id == fake_controls[i].id) {
-			if (ctrl->value > fake_controls[i].maximum ||
-					ctrl->value < fake_controls[i].minimum) {
+	struct v4l2_control *ctrl = (struct v4l2_control *)arg;
+	
+	for (unsigned int i = 0; i < V4LCONTROL_COUNT; i++)
+		if ((data->controls & (1 << i)) && ctrl->id == fake_controls[i].id) {
+			if (ctrl->value > fake_controls[i].maximum || ctrl->value < fake_controls[i].minimum) {
 				errno = EINVAL;
 				return -1;
 			}
-
+			
 			data->shm_values[i] = (__u32) ctrl->value;
 			return 0;
 		}
-
+	
 	return SYS_IOCTL(data->fd, VIDIOC_S_CTRL, arg);
 }
 
@@ -899,17 +864,13 @@ bool v4lcontrol_get_ctrl(struct v4lcontrol_data *data, int ctrl) {
 }
 
 int v4lcontrol_controls_changed(struct v4lcontrol_data *data) {
-	int res;
-
 	if (!data->controls)
 		return 0;
-
-	res = memcmp(data->shm_values, data->old_values,
-			V4LCONTROL_COUNT * sizeof(unsigned int));
-
-	memcpy(data->old_values, data->shm_values,
-			V4LCONTROL_COUNT * sizeof(unsigned int));
-
+	
+	int res = memcmp(data->shm_values, data->old_values, V4LCONTROL_COUNT * sizeof(unsigned int));
+	
+	memcpy(data->old_values, data->shm_values, V4LCONTROL_COUNT * sizeof(unsigned int));
+	
 	return res;
 }
 
