@@ -27,7 +27,7 @@
 #include "libvideo-err.h"
 #include "log.h"
 
-static void fix_quirky_values(struct video_device *vdev, int idx, unsigned int *f) {
+static void fix_quirky_values(struct video_device *vdev, unsigned int idx, unsigned int *f) {
 	struct v4l2_tuner t;
 	CLEAR(t);
 	t.index = idx;
@@ -44,7 +44,7 @@ static void fix_quirky_values(struct video_device *vdev, int idx, unsigned int *
 	}
 }
 
-int set_tuner_freq_v4l2(struct video_device *vdev, int idx, unsigned int f) {
+int set_tuner_freq_v4l2(struct video_device *vdev, unsigned int idx, unsigned int f) {
 	struct v4l2_frequency freq;
 	CLEAR(freq);
 
@@ -63,7 +63,7 @@ int set_tuner_freq_v4l2(struct video_device *vdev, int idx, unsigned int f) {
 	return 0;
 }
 
-int get_tuner_freq_v4l2(struct video_device *vdev, int idx, unsigned int *f) {
+int get_tuner_freq_v4l2(struct video_device *vdev, unsigned int idx, unsigned int *f) {
 	struct v4l2_frequency freq;
 	CLEAR(freq);
 
@@ -78,7 +78,7 @@ int get_tuner_freq_v4l2(struct video_device *vdev, int idx, unsigned int *f) {
 	return 0;
 }
 
-int get_rssi_afc_v4l2(struct video_device *vdev, int idx, int *r, int *a) {
+int get_rssi_afc_v4l2(struct video_device *vdev, unsigned int idx, int *r, int *a) {
 	struct v4l2_tuner t;
 	CLEAR(t);
 	t.index = idx;
