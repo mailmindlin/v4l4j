@@ -209,24 +209,20 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *env, job
 
 }
 
-JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_doListIntervals(JNIEnv *e, jobject t, jlong o, jint imf, jint w, jint h) {
+JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_doListIntervals(JNIEnv *env, jobject t, jlong o, jint imf, jint w, jint h) {
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
 
 	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 
-	jclass frame_intv_class = (*e)->FindClass(e, "au/edu/jcu/v4l4j/FrameInterval");
+	jclass frame_intv_class = (*env)->FindClass(env, "au/edu/jcu/v4l4j/FrameInterval");
 	if(frame_intv_class == NULL){
-		info("[V4L4J] Error looking up the FrameInterval class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, \
-				"Error looking up FrameInterval class");
+		THROW_EXCEPTION(env, JNI_EXCP, "Error looking up class FrameInterval");
 		return NULL;
 	}
 
-	jmethodID ctor = (*e)->GetMethodID(e, frame_intv_class, "<init>",	"(IJ)V");
+	jmethodID ctor = (*env)->GetMethodID(env, frame_intv_class, "<init>",	"(IJ)V");
 	if(ctor == NULL){
-		info("[V4L4J] Error looking up the ctor of FrameInterval class\n");
-		THROW_EXCEPTION(e, JNI_EXCP, \
-				"Error looking up the ctor of FrameInterval class");
+		THROW_EXCEPTION(env, JNI_EXCP, "Error looking up the constructor of class FrameInterval");
 		return NULL;
 	}
 
@@ -238,38 +234,29 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_doListIntervals(JNIEn
 		case FRAME_INTV_UNSUPPORTED:
 			dprint(LOG_V4L4J, "[V4L4L] Creating the frame interval (unsupported)\n");
 			//create the frame interval object
-			frame_intv = (*e)->NewObject(e, frame_intv_class, ctor, 3, (jlong) (uintptr_t) p);
-			if(frame_intv == NULL) {
-				THROW_EXCEPTION(e, JNI_EXCP, "Error creating FrameInterval object");
-				return NULL;
-			}
+			frame_intv = (*env)->NewObject(env, frame_intv_class, ctor, 3, (jlong) (uintptr_t) p);
+			//TODO do we free `p` here?
 			break;
 		case FRAME_INTV_DISCRETE:
 			dprint(LOG_V4L4J, "[V4L4L] Creating the frame interval (discrete)\n");
 			//create the frame interval object
-			frame_intv = (*e)->NewObject(e, frame_intv_class, ctor, 4, (jlong) (uintptr_t) p);
+			frame_intv = (*env)->NewObject(env, frame_intv_class, ctor, 4, (jlong) (uintptr_t) p);
 			XFREE(p);
-			if(frame_intv == NULL) {
-				THROW_EXCEPTION(e, JNI_EXCP, "Error creating FrameInterval object");
-				return NULL;
-			}
 			break;
 		case FRAME_INTV_CONTINUOUS:
 			dprint(LOG_V4L4J, "[V4L4L] Creating the frame interval (stepwise)\n");
-			//create the frame interval object
-			frame_intv = (*e)->NewObject(e, frame_intv_class, ctor, 5, (jlong) (uintptr_t) p);
+			//Create the frame interval object
+			frame_intv = (*env)->NewObject(env, frame_intv_class, ctor, 5, (jlong) (uintptr_t) p);
 			XFREE(p);
-			if(frame_intv == NULL) {
-				THROW_EXCEPTION(e, JNI_EXCP, "Error creating FrameInterval object");
-				return NULL;
-			}
 			break;
 		default:
 			info("[V4L4J] There is a bug in v4l4j. Please report this on the\n");
 			info("[V4L4J] V4L4J mailing list.\n");
-			THROW_EXCEPTION(e, JNI_EXCP, "Error creating the FrameInterval object");
+			THROW_EXCEPTION(env, JNI_EXCP, "Error creating the FrameInterval object");
 			return NULL;
 	}
+	if(frame_intv == NULL)
+		THROW_EXCEPTION(env, JNI_EXCP, "Error creating FrameInterval object");
 	return frame_intv;
 }
 
