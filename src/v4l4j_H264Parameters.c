@@ -184,21 +184,21 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setAnne
 }
 
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_getCsp(JNIEnv* env, jobject self) {
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	LOG_FN_ENTER();
 	x264_param_t* params = getPointer(env, self);
 	
 	return params->i_csp;
 }
 
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_getWidth(JNIEnv* env, jobject self) {
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	LOG_FN_ENTER();
 	x264_param_t* params = getPointer(env, self);
 	
 	return params->i_width;
 }
 
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_getHeight(JNIEnv* env, jobject self) {
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	LOG_FN_ENTER();
 	x264_param_t* params = getPointer(env, self);
 	
 	return params->i_height;
@@ -210,7 +210,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_getHeig
  * Signature: (JIIII)V
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setCrop(JNIEnv* env, jobject self, jint left, jint top, jint right, jint bottom) {
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	LOG_FN_ENTER();
 	x264_param_t* params = getPointer(env, self);
 	
 	params->crop_rect.i_left = left;
@@ -220,40 +220,40 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setCrop
 }
 
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setThreads(JNIEnv* env, jobject self, jint numThreads) {
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	LOG_FN_ENTER();
 	x264_param_t* params = getPointer(env, self);
 	
 	params->i_threads = numThreads;
 }
 
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setFps(JNIEnv* env, jobject self, jint numerator, jint denominator) {
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	LOG_FN_ENTER();
 	x264_param_t* params = getPointer(env, self);
 	
 	params->i_fps_num = numerator;
 	params->i_fps_den = denominator;
 }
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setKeyintMax(JNIEnv* env, jobject self, jint value) {
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	LOG_FN_ENTER();
 	x264_param_t* params = getPointer(env, self);
 	
 	params->i_keyint_max = value;
 }
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setIntraRefresh(JNIEnv* env, jobject self, jboolean value) {
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	LOG_FN_ENTER();
 	x264_param_t* params = getPointer(env, self);
 	
 	params->b_intra_refresh = value;
 }
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setRfConstant(JNIEnv* env, jobject self, jfloat value, jfloat max) {
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	LOG_FN_ENTER();
 	x264_param_t* params = getPointer(env, self);
 	
 	params->rc.f_rf_constant = value;
 	params->rc.f_rf_constant_max = max;
 }
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Parameters_setRcMethod(JNIEnv* env, jobject self, jint method) {
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	LOG_FN_ENTER();
 	x264_param_t* params = getPointer(env, self);
 	
 	params->rc.i_rc_method = method;
