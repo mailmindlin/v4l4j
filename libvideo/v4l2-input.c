@@ -64,8 +64,7 @@ int check_capture_capabilities_v4l2(int fd, char *file) {
 	}
 
 	if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
-		info("The device %s seems to be a valid V4L2 device but without "
-				"capture capability.\n", file);
+		info("The device %s seems to be a valid V4L2 device but without capture capability.\n", file);
 		PRINT_REPORT_ERROR();
 		info("Listing the reported capabilities:\n");
 		list_cap_v4l2(fd);
@@ -73,8 +72,7 @@ int check_capture_capabilities_v4l2(int fd, char *file) {
 	}
 
 	if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
-		info("The device %s seems to be a valid V4L2 device with capture capability, but\n", file);
-		info("does NOT support streaming.");
+		info("The device %s seems to be a valid V4L2 device with capture capability, but does NOT support streaming.\n", file);
 		PRINT_REPORT_ERROR();
 		info("Listing the reported capabilities:\n");
 		list_cap_v4l2(fd);
@@ -471,7 +469,7 @@ int get_frame_intv_v4l2(struct video_device *vdev, unsigned int *num, unsigned i
 	CLEAR(param);
 	param.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
-	if (ioctl(vdev->fd, VIDIOC_G_PARM, &param)==0){
+	if (ioctl(vdev->fd, VIDIOC_G_PARM, &param) == 0) {
 		*num = param.parm.capture.timeperframe.numerator;
 		*denom = param.parm.capture.timeperframe.denominator;
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: Get frame interval returned %d/%d\n", *num, *denom);
@@ -1269,7 +1267,7 @@ static void enum_image_fmt_v4l2(int fd) {
 	fmtd.index = 0;
 
 	while(ioctl(fd, VIDIOC_ENUM_FMT, &fmtd) >= 0) {
-		printf("%d - %s (compressed : %d) (%#x) \n", fmtd.index, fmtd.description, fmtd.flags, fmtd.pixelformat);
+		printf("%d - %s (compressed : %d) (%c%c%c%c; %#x) \n", fmtd.index, fmtd.description, fmtd.flags, v4l2_fourcc_chars(fmtd.pixelformat), fmtd.pixelformat);
 		fmtd.index++;
 	}
 
@@ -1408,8 +1406,7 @@ static void query_frame_sizes_v4l2(int fd) {
 }
 
 static void print_v4l2_control(struct v4l2_queryctrl *qc) {
-	printf( "Control: id: 0x%x - name: %s - min: %d -max: %d - step: %d - "
-			"type: %d(%s) - flags: %d (%s%s%s%s%s%s%s)\n", \
+	printf( "Control: {id: 0x%x, name:'%s', min: %d, max: %d, step: %d, type: %d (%s), flags: %d (%s%s%s%s%s%s%s)}\n", \
 			qc->id, (char *) &qc->name, qc->minimum, qc->maximum, qc->step,
 			qc->type,
 			qc->type == V4L2_CTRL_TYPE_INTEGER ? "Integer" :
@@ -1442,7 +1439,7 @@ static void query_controls_v4l2(int fd) {
 	for(unsigned int i = V4L2_CID_BASE; i< V4L2_CID_LASTP1; i++) {
 		qctrl.id = i;
 		//if((ioctl(fd, VIDIOC_QUERYCTRL, &qctrl) == 0))
-		if(v4lconvert_vidioc_queryctrl(d,&qctrl) == 0)
+		if(v4lconvert_vidioc_queryctrl(d, &qctrl) == 0)
 			print_v4l2_control(&qctrl);
 	}
 
@@ -1455,7 +1452,7 @@ static void query_controls_v4l2(int fd) {
 		} else {
 			if (errno == EINVAL)
 				break;
-
+			
 			printf("We shouldnt be here...\n");
 		}
 	}
@@ -1464,7 +1461,7 @@ static void query_controls_v4l2(int fd) {
 			"Querying extended controls\n\n");
 	//checking extended controls
 	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
-	while (v4lconvert_vidioc_queryctrl(d,&qctrl) == 0) {
+	while (v4lconvert_vidioc_queryctrl(d, &qctrl) == 0) {
 		print_v4l2_control(&qctrl);
 		qctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
 	}
@@ -1477,17 +1474,18 @@ void list_cap_v4l2(int fd) {
 	struct v4l2_capability cap;
 
 	printf("============================================\n"
-			"Querying general capabilities\n\n");
+			"Querying general capabilities (V4L2)\n\n");
 	if (ioctl(fd, VIDIOC_QUERYCAP, &cap) < 0) {
-		printf("v4l2 not supported. Maybe a v4l1 device ...");
+		printf("v4l2 not supported. Maybe this is a v4l1 device...\n");
 		return;
 	}
 	//print capabilities
 	printf("Driver name: %s\n",cap.driver);
 	printf("Device name: %s\n",cap.card);
 	printf("bus_info: %s\n", cap.bus_info);
-	printf("version: %u.%u.%u\n",
-			(cap.version >> 16) & 0xFF,(cap.version >> 8) & 0xFF,
+	printf("Version: %u.%u.%u\n",
+			(cap.version >> 16) & 0xFF,
+			(cap.version >> 8) & 0xFF,
 			cap.version & 0xFF);
 	#define PRINT_CAP(capability, name) printf("%s " name " capability\n", (cap.capabilities & capability) ? "Has" : "Does NOT have")
 	PRINT_CAP(V4L2_CAP_VIDEO_CAPTURE, "capture");
