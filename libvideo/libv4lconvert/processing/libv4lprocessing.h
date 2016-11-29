@@ -34,7 +34,7 @@ void v4lprocessing_destroy(struct v4lprocessing_data *data);
 
 /* Prepare to process 1 frame, returns 1 if processing is necesary,
    return 0 if no processing will be done */
-int v4lprocessing_pre_processing(struct v4lprocessing_data *data);
+bool v4lprocessing_pre_processing(struct v4lprocessing_data *data);
 
 /* Do the actual processing, this is a nop if v4lprocessing_pre_processing()
    returned 0, or if called more then 1 time after a single

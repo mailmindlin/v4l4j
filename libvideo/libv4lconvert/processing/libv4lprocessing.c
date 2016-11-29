@@ -52,11 +52,11 @@ void v4lprocessing_destroy(struct v4lprocessing_data *data) {
 	free(data);
 }
 
-int v4lprocessing_pre_processing(struct v4lprocessing_data *data) {
-	data->do_process = 0;
+bool v4lprocessing_pre_processing(struct v4lprocessing_data *data) {
+	data->do_process = false;
 	for (unsigned int i = 0; i < ARRAY_SIZE(filters); i++) {
 		if (filters[i]->active(data))
-			data->do_process = 1;
+			data->do_process = true;
 	}
 
 	data->controls_changed |= v4lcontrol_controls_changed(data->control);

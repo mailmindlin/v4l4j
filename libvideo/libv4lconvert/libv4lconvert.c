@@ -266,14 +266,14 @@ static int v4lconvert_get_rank(struct v4lconvert_data *data, unsigned int src_in
 	int rank = 0;
 
 	switch (dest_pixelformat) {
-	case V4L2_PIX_FMT_RGB24:
-	case V4L2_PIX_FMT_BGR24:
-		rank = supported_src_pixfmts[src_index].rgb_rank;
-		break;
-	case V4L2_PIX_FMT_YUV420:
-	case V4L2_PIX_FMT_YVU420:
-		rank = supported_src_pixfmts[src_index].yuv_rank;
-		break;
+		case V4L2_PIX_FMT_RGB24:
+		case V4L2_PIX_FMT_BGR24:
+			rank = supported_src_pixfmts[src_index].rgb_rank;
+			break;
+		case V4L2_PIX_FMT_YUV420:
+		case V4L2_PIX_FMT_YVU420:
+			rank = supported_src_pixfmts[src_index].yuv_rank;
+			break;
 	}
 
 	/* So that if both rgb32 and bgr32 are supported, or both yuv420 and
@@ -300,14 +300,9 @@ static int v4lconvert_get_rank(struct v4lconvert_data *data, unsigned int src_in
    framesizes instead of doing a zillion try_fmt calls. This function
    currently is intended for use with UVC cams only. This is esp.
    important for UVC based cams as doing try_fmt there actually causes I/O */
-static int v4lconvert_do_try_format_uvc(struct v4lconvert_data *data,
-		struct v4l2_format *dest_fmt, struct v4l2_format *src_fmt)
-{
-	int rank;
+static int v4lconvert_do_try_format_uvc(struct v4lconvert_data *data, struct v4l2_format *dest_fmt, struct v4l2_format *src_fmt) {
 	unsigned int closest_fmt_size_diff = -1u;
 	unsigned int best_framesize = 0;/* Just use the first format if no small enough one */
-	unsigned int best_format = 0;
-	int best_rank = 100;
 
 	for (unsigned int i = 0; i < data->no_framesizes; i++) {
 		if (data->framesizes[i].discrete.width <= dest_fmt->fmt.pix.width
@@ -323,6 +318,8 @@ static int v4lconvert_do_try_format_uvc(struct v4lconvert_data *data,
 		}
 	}
 
+	int best_rank = 100;
+	unsigned int best_format = 0;
 	for (unsigned int i = 0; i < ARRAY_SIZE(supported_src_pixfmts); i++) {
 		/* is this format supported? */
 		if (!(data->framesizes[best_framesize].pixel_format & (1u << i)))
@@ -330,7 +327,7 @@ static int v4lconvert_do_try_format_uvc(struct v4lconvert_data *data,
 
 		/* Note the hardcoded use of discrete is based on this function
 		   only getting called for uvc devices */
-		rank = v4lconvert_get_rank(data, i,
+		int rank = v4lconvert_get_rank(data, i,
 			    data->framesizes[best_framesize].discrete.width,
 			    data->framesizes[best_framesize].discrete.height,
 			    dest_fmt->fmt.pix.pixelformat);
@@ -356,11 +353,10 @@ static int v4lconvert_do_try_format_uvc(struct v4lconvert_data *data,
 	return 0;
 }
 
-static int v4lconvert_do_try_format(struct v4lconvert_data *data,
-		struct v4l2_format *dest_fmt, struct v4l2_format *src_fmt) {
+static int v4lconvert_do_try_format(struct v4lconvert_data *data, struct v4l2_format *dest_fmt, struct v4l2_format *src_fmt) {
 	unsigned int closest_fmt_size_diff = -1u;
 	unsigned int desired_pixfmt = dest_fmt->fmt.pix.pixelformat;
-	struct v4l2_format try_fmt, closest_fmt = { .type = 0 };
+	struct v4l2_format closest_fmt = { .type = 0 };
 
 	if (data->flags & V4LCONVERT_IS_UVC)
 		return v4lconvert_do_try_format_uvc(data, dest_fmt, src_fmt);
@@ -371,7 +367,7 @@ static int v4lconvert_do_try_format(struct v4lconvert_data *data,
 		if (!(data->supported_src_formats & (1 << i)))
 			continue;
 
-		try_fmt = *dest_fmt;
+		struct v4l2_format try_fmt = *dest_fmt;
 		try_fmt.fmt.pix.pixelformat = supported_src_pixfmts[i].fmt;
 		if (SYS_IOCTL(data->fd, VIDIOC_TRY_FMT, &try_fmt))
 			continue;
@@ -408,25 +404,23 @@ static int v4lconvert_do_try_format(struct v4lconvert_data *data,
 	return 0;
 }
 
-void v4lconvert_fixup_fmt(struct v4l2_format *fmt)
-{
+void v4lconvert_fixup_fmt(struct v4l2_format *fmt) {
 	switch (fmt->fmt.pix.pixelformat) {
-	case V4L2_PIX_FMT_RGB24:
-	case V4L2_PIX_FMT_BGR24:
-		fmt->fmt.pix.bytesperline = fmt->fmt.pix.width * 3;
-		fmt->fmt.pix.sizeimage = fmt->fmt.pix.width * fmt->fmt.pix.height * 3;
-		break;
-	case V4L2_PIX_FMT_YUV420:
-	case V4L2_PIX_FMT_YVU420:
-		fmt->fmt.pix.bytesperline = fmt->fmt.pix.width;
-		fmt->fmt.pix.sizeimage = fmt->fmt.pix.width * fmt->fmt.pix.height * 3 / 2;
-		break;
+		case V4L2_PIX_FMT_RGB24:
+		case V4L2_PIX_FMT_BGR24:
+			fmt->fmt.pix.bytesperline = fmt->fmt.pix.width * 3;
+			fmt->fmt.pix.sizeimage = fmt->fmt.pix.width * fmt->fmt.pix.height * 3;
+			break;
+		case V4L2_PIX_FMT_YUV420:
+		case V4L2_PIX_FMT_YVU420:
+			fmt->fmt.pix.bytesperline = fmt->fmt.pix.width;
+			fmt->fmt.pix.sizeimage = fmt->fmt.pix.width * fmt->fmt.pix.height * 3 / 2;
+			break;
 	}
 }
 
 /* See libv4lconvert.h for description of in / out parameters */
 int v4lconvert_try_format(struct v4lconvert_data *data, struct v4l2_format *dest_fmt, struct v4l2_format *src_fmt) {
-	int result;
 	unsigned int desired_width = dest_fmt->fmt.pix.width;
 	unsigned int desired_height = dest_fmt->fmt.pix.height;
 	struct v4l2_format try_src, try_dest, try2_src, try2_dest;
@@ -442,7 +436,7 @@ int v4lconvert_try_format(struct v4lconvert_data *data, struct v4l2_format *dest
 	if (!v4lconvert_supported_dst_format(dest_fmt->fmt.pix.pixelformat) ||
 			dest_fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
 			v4lconvert_do_try_format(data, &try_dest, &try_src)) {
-		result = SYS_IOCTL(data->fd, VIDIOC_TRY_FMT, dest_fmt);
+		int result = SYS_IOCTL(data->fd, VIDIOC_TRY_FMT, dest_fmt);
 		if (src_fmt)
 			*src_fmt = *dest_fmt;
 		return result;
@@ -452,12 +446,11 @@ int v4lconvert_try_format(struct v4lconvert_data *data, struct v4l2_format *dest
 	   resolution as some weird devices are not able to crop of the number of
 	   extra (border) pixels most sensors have compared to standard resolutions,
 	   which we will then just crop of in software */
-	if (try_dest.fmt.pix.width != desired_width ||
-			try_dest.fmt.pix.height != desired_height) {
+	if (try_dest.fmt.pix.width != desired_width || try_dest.fmt.pix.height != desired_height) {
 		try2_dest = *dest_fmt;
 		try2_dest.fmt.pix.width  = desired_width + 7;
 		try2_dest.fmt.pix.height = desired_height + 1;
-		result = v4lconvert_do_try_format(data, &try2_dest, &try2_src);
+		int result = v4lconvert_do_try_format(data, &try2_dest, &try2_src);
 		if (result == 0 &&
 				try2_dest.fmt.pix.width >= desired_width &&
 				try2_dest.fmt.pix.width <= desired_width + 7 &&
@@ -475,18 +468,16 @@ int v4lconvert_try_format(struct v4lconvert_data *data, struct v4l2_format *dest
 	   resolution some apps are hardcoded too and try to give the app what it
 	   asked for by cropping a slightly larger resolution or adding a small
 	   black border to a slightly smaller resolution */
-	if (try_dest.fmt.pix.width != desired_width ||
-			try_dest.fmt.pix.height != desired_height) {
+	if (try_dest.fmt.pix.width != desired_width || try_dest.fmt.pix.height != desired_height) {
 		for (unsigned i = 0; i < ARRAY_SIZE(v4lconvert_crop_res); i++) {
-			if (v4lconvert_crop_res[i][0] == desired_width &&
-					v4lconvert_crop_res[i][1] == desired_height) {
+			if (v4lconvert_crop_res[i][0] == desired_width && v4lconvert_crop_res[i][1] == desired_height) {
 				try2_dest = *dest_fmt;
 
 				/* Note these are chosen so that cropping to vga res just works for
 				   vv6410 sensor cams, which have 356x292 and 180x148 */
 				try2_dest.fmt.pix.width = desired_width * 113 / 100;
 				try2_dest.fmt.pix.height = desired_height * 124 / 100;
-				result = v4lconvert_do_try_format(data, &try2_dest, &try2_src);
+				int result = v4lconvert_do_try_format(data, &try2_dest, &try2_src);
 				if (result == 0 &&
 						(/* Add a small black border of max 16 pixels */
 						 (try2_dest.fmt.pix.width >= desired_width - 16 &&
@@ -547,32 +538,31 @@ bool v4lconvert_needs_conversion(struct v4lconvert_data *data, const struct v4l2
 	return false;
 }
 
-static int v4lconvert_processing_needs_double_conversion(
-		unsigned int src_pix_fmt, unsigned int dest_pix_fmt) {
+static bool v4lconvert_processing_needs_double_conversion(unsigned int src_pix_fmt, unsigned int dest_pix_fmt) {
 	switch (src_pix_fmt) {
-	case V4L2_PIX_FMT_RGB24:
-	case V4L2_PIX_FMT_BGR24:
-	case V4L2_PIX_FMT_SPCA561:
-	case V4L2_PIX_FMT_SN9C10X:
-	case V4L2_PIX_FMT_PAC207:
-	case V4L2_PIX_FMT_MR97310A:
-	case V4L2_PIX_FMT_JL2005BCD:
-	case V4L2_PIX_FMT_SN9C2028:
-	case V4L2_PIX_FMT_SQ905C:
-	case V4L2_PIX_FMT_SBGGR8:
-	case V4L2_PIX_FMT_SGBRG8:
-	case V4L2_PIX_FMT_SGRBG8:
-	case V4L2_PIX_FMT_SRGGB8:
-	case V4L2_PIX_FMT_STV0680:
-		return 0;
+		case V4L2_PIX_FMT_RGB24:
+		case V4L2_PIX_FMT_BGR24:
+		case V4L2_PIX_FMT_SPCA561:
+		case V4L2_PIX_FMT_SN9C10X:
+		case V4L2_PIX_FMT_PAC207:
+		case V4L2_PIX_FMT_MR97310A:
+		case V4L2_PIX_FMT_JL2005BCD:
+		case V4L2_PIX_FMT_SN9C2028:
+		case V4L2_PIX_FMT_SQ905C:
+		case V4L2_PIX_FMT_SBGGR8:
+		case V4L2_PIX_FMT_SGBRG8:
+		case V4L2_PIX_FMT_SGRBG8:
+		case V4L2_PIX_FMT_SRGGB8:
+		case V4L2_PIX_FMT_STV0680:
+			return false;
 	}
 	switch (dest_pix_fmt) {
-	case V4L2_PIX_FMT_RGB24:
-	case V4L2_PIX_FMT_BGR24:
-		return 0;
+		case V4L2_PIX_FMT_RGB24:
+		case V4L2_PIX_FMT_BGR24:
+			return false;
 	}
 
-	return 1;
+	return true;
 }
 
 u8 *v4lconvert_alloc_buffer(unsigned int needed, u8 **buf, unsigned int *buf_size) {
@@ -610,16 +600,14 @@ static u32 get_row_size(PixFcPixelFormat format, uint32_t width) {
 	};
 }
 
-static void refresh_pixfc(struct v4lconvert_data *data, u32 width,
-		u32 height, PixFcPixelFormat src_fmt, PixFcPixelFormat dst_fmt) {
+static void refresh_pixfc(struct v4lconvert_data *data, u32 width, u32 height, PixFcPixelFormat src_fmt, PixFcPixelFormat dst_fmt) {
 	// If the width, height, source or destination pixel format in the current
 	// struct pixfc is different from the new ones (given as args), release struct.
 	if ((data->pixfc != NULL) &&
 			(data->pixfc->width != width
 			 || data->pixfc->height != height
 			 || data->pixfc->source_fmt != src_fmt
-			 || data->pixfc->dest_fmt != dst_fmt)
-	   ) {
+			 || data->pixfc->dest_fmt != dst_fmt)) {
 		destroy_pixfc(data->pixfc);
 		data->pixfc = NULL;
 	}
@@ -1184,9 +1172,8 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 		const struct v4l2_format *src_fmt,  /* in */
 		const struct v4l2_format *dest_fmt, /* in */
 		u8 *src, unsigned int src_size, u8 *dest, unsigned int dest_size) {
-	int processing, convert = 0;
+	int convert = 0;
 	unsigned int dest_needed, temp_needed;
-	int rotate90, vflip, hflip, crop;
 	u8 *convert1_dest = dest;
 	unsigned int convert1_dest_size = dest_size;
 	u8 *convert2_src = src, *convert2_dest = dest;
@@ -1197,11 +1184,11 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 	struct v4l2_format my_src_fmt = *src_fmt;
 	struct v4l2_format my_dest_fmt = *dest_fmt;
 
-	processing = v4lprocessing_pre_processing(data->processing);
-	rotate90 = data->control_flags & V4LCONTROL_ROTATED_90_JPEG;
-	hflip = v4lcontrol_get_ctrl(data->control, V4LCONTROL_HFLIP);
-	vflip = v4lcontrol_get_ctrl(data->control, V4LCONTROL_VFLIP);
-	crop = my_dest_fmt.fmt.pix.width != my_src_fmt.fmt.pix.width ||
+	bool processing = v4lprocessing_pre_processing(data->processing);
+	bool rotate90 = data->control_flags & V4LCONTROL_ROTATED_90_JPEG;
+	int hflip = v4lcontrol_get_ctrl(data->control, V4LCONTROL_HFLIP);
+	int vflip = v4lcontrol_get_ctrl(data->control, V4LCONTROL_VFLIP);
+	int crop = my_dest_fmt.fmt.pix.width != my_src_fmt.fmt.pix.width ||
 		my_dest_fmt.fmt.pix.height != my_src_fmt.fmt.pix.height;
 
 	if (/* If no conversion/processing is needed */
@@ -1241,7 +1228,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 	}
 
 	if (dest_size < dest_needed) {
-		V4LCONVERT_ERR("destination buffer too small (%d < %d)\n", dest_size, dest_needed);
+		V4LCONVERT_ERR("Destination buffer too small (%d < %d)\n", dest_size, dest_needed);
 		errno = EFAULT;
 		return -1;
 	}
@@ -1358,22 +1345,22 @@ static void v4lconvert_get_framesizes(struct v4lconvert_data *data, u32 pixelfor
 			break;
 
 		/* We got a framesize, check we don't have the same one already */
-		int match = 0;
+		bool match = false;
 		unsigned int j;
 		for (j = 0; j < data->no_framesizes; j++) {
 			if (frmsize.type != data->framesizes[j].type)
 				continue;
 
 			switch (frmsize.type) {
-			case V4L2_FRMSIZE_TYPE_DISCRETE:
-				if (!memcmp(&frmsize.discrete, &data->framesizes[j].discrete, sizeof(frmsize.discrete)))
-					match = 1;
-				break;
-			case V4L2_FRMSIZE_TYPE_CONTINUOUS:
-			case V4L2_FRMSIZE_TYPE_STEPWISE:
-				if (!memcmp(&frmsize.stepwise, &data->framesizes[j].stepwise, sizeof(frmsize.stepwise)))
-					match = 1;
-				break;
+				case V4L2_FRMSIZE_TYPE_DISCRETE:
+					if (!memcmp(&frmsize.discrete, &data->framesizes[j].discrete, sizeof(frmsize.discrete)))
+						match = true;
+					break;
+				case V4L2_FRMSIZE_TYPE_CONTINUOUS:
+				case V4L2_FRMSIZE_TYPE_STEPWISE:
+					if (!memcmp(&frmsize.stepwise, &data->framesizes[j].stepwise, sizeof(frmsize.stepwise)))
+						match = true;
+					break;
 			}
 			if (match)
 				break;
@@ -1421,23 +1408,22 @@ int v4lconvert_enum_framesizes(struct v4lconvert_data *data, struct v4l2_frmsize
 
 	frmsize->type = data->framesizes[frmsize->index].type;
 	switch (frmsize->type) {
-	case V4L2_FRMSIZE_TYPE_DISCRETE:
-		frmsize->discrete = data->framesizes[frmsize->index].discrete;
-		/* Apply the same rounding algorithm as v4lconvert_try_format */
-		frmsize->discrete.width &= ~7u;
-		frmsize->discrete.height &= ~1u;
-		break;
-	case V4L2_FRMSIZE_TYPE_CONTINUOUS:
-	case V4L2_FRMSIZE_TYPE_STEPWISE:
-		frmsize->stepwise = data->framesizes[frmsize->index].stepwise;
-		break;
+		case V4L2_FRMSIZE_TYPE_DISCRETE:
+			frmsize->discrete = data->framesizes[frmsize->index].discrete;
+			/* Apply the same rounding algorithm as v4lconvert_try_format */
+			frmsize->discrete.width &= ~7u;
+			frmsize->discrete.height &= ~1u;
+			break;
+		case V4L2_FRMSIZE_TYPE_CONTINUOUS:
+		case V4L2_FRMSIZE_TYPE_STEPWISE:
+			frmsize->stepwise = data->framesizes[frmsize->index].stepwise;
+			break;
 	}
 
 	return 0;
 }
 
 int v4lconvert_enum_frameintervals(struct v4lconvert_data *data, struct v4l2_frmivalenum *frmival) {
-	int res;
 	struct v4l2_format src_fmt, dest_fmt;
 
 	if (!v4lconvert_supported_dst_format(frmival->pixel_format)) {
@@ -1445,7 +1431,7 @@ int v4lconvert_enum_frameintervals(struct v4lconvert_data *data, struct v4l2_frm
 			errno = EINVAL;
 			return -1;
 		}
-		res = SYS_IOCTL(data->fd, VIDIOC_ENUM_FRAMEINTERVALS, frmival);
+		int res = SYS_IOCTL(data->fd, VIDIOC_ENUM_FRAMEINTERVALS, frmival);
 		if (res)
 			V4LCONVERT_ERR("%s\n", strerror(errno));
 		return res;
@@ -1457,7 +1443,7 @@ int v4lconvert_enum_frameintervals(struct v4lconvert_data *data, struct v4l2_frm
 	dest_fmt.fmt.pix.pixelformat = frmival->pixel_format;
 	dest_fmt.fmt.pix.width = frmival->width;
 	dest_fmt.fmt.pix.height = frmival->height;
-	res = v4lconvert_try_format(data, &dest_fmt, &src_fmt);
+	int res = v4lconvert_try_format(data, &dest_fmt, &src_fmt);
 	if (res) {
 		V4LCONVERT_ERR("trying format: %s\n", strerror(errno));
 		return res;

@@ -137,7 +137,7 @@ int close_device(struct video_device *vdev) {
 
 	close(vdev->fd);
 	XFREE(vdev);
-	return 0;
+	return LIBVIDEO_ERR_SUCCESS;
 }
 
 /*
@@ -148,7 +148,7 @@ int close_device(struct video_device *vdev) {
 
 static void setup_capture_actions(struct video_device *vdev) {
 	struct capture_device *c = vdev->capture;
-	XMALLOC(c->actions, struct capture_actions *,sizeof(struct capture_actions));
+	XMALLOC(c->actions, struct capture_actions *, sizeof(struct capture_actions));
 
 	if(vdev->v4l_version == V4L1_VERSION) {
 		c->actions->set_cap_param = set_cap_param_v4l1;
@@ -189,7 +189,7 @@ struct capture_device *init_capture_device(struct video_device *vdev, unsigned i
 	
 	//create capture device
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: Initialising capture interface\n");
-	XMALLOC(vdev->capture,struct capture_device *,sizeof(struct capture_device));
+	XMALLOC(vdev->capture, struct capture_device *, sizeof(struct capture_device));
 	XMALLOC(vdev->capture->mmap, struct mmap *, sizeof(struct mmap));
 
 	//fill in cdev struct
@@ -231,8 +231,7 @@ static void print_frame_intv_cont(struct frame_intv_continuous *c) {
 }
 
 static void print_frame_intv_disc(struct frame_intv_discrete *c) {
-	int k = -1;
-	while(c[++k].numerator != 0)
+	for (unsigned int k = 0; c[k].numerator != 0; k++)
 		printf("%d/%d - ", c[k].numerator, c[k].denominator);
 	
 	printf("\n");
@@ -264,7 +263,7 @@ void print_device_info(struct video_device *v) {
 			printf("\n");
 
 			//if the frame size is a continuous one, print its details
-			if(palette->size_type==FRAME_SIZE_CONTINUOUS) {
+			if(palette->size_type == FRAME_SIZE_CONTINUOUS) {
 				printf("\t\tResolution - Min: %d x %d - Max: %d x %d - Step: %d x %d\n",
 						palette->continuous->min_width,
 						palette->continuous->min_height,
@@ -275,24 +274,24 @@ void print_device_info(struct video_device *v) {
 				);
 
 				//print frame interval details
-				if(palette->continuous->interval_type_min_res==FRAME_INTV_CONTINUOUS) {
+				if(palette->continuous->interval_type_min_res == FRAME_INTV_CONTINUOUS) {
 					printf("\t\tContinuous frame intervals for minimum resolution: ");
 					print_frame_intv_cont(palette->continuous->intv_min_res.continuous);
-				} else if(palette->continuous->interval_type_min_res==FRAME_INTV_DISCRETE) {
+				} else if(palette->continuous->interval_type_min_res == FRAME_INTV_DISCRETE) {
 					printf("\t\tDiscrete frame intervals for minimum resolution: ");
 					print_frame_intv_disc(palette->continuous->intv_min_res.discrete);
 				} else
 					printf("\t\tFrame interval enumeration not supported\n");
 
-				if(palette->continuous->interval_type_max_res==FRAME_INTV_CONTINUOUS) {
+				if(palette->continuous->interval_type_max_res == FRAME_INTV_CONTINUOUS) {
 					printf("\t\tContinuous frame intervals for maximum resolution: ");
 					print_frame_intv_cont(palette->continuous->intv_max_res.continuous);
-				} else if(palette->continuous->interval_type_max_res==FRAME_INTV_DISCRETE) {
+				} else if(palette->continuous->interval_type_max_res == FRAME_INTV_DISCRETE) {
 					printf("\t\tDiscrete frame intervals for maximum resolution: ");
 					print_frame_intv_disc(palette->continuous->intv_max_res.discrete);
 				} else
 					printf("\t\tFrame interval enumeration not supported\n");
-			} else if(palette->size_type==FRAME_SIZE_DISCRETE) {
+			} else if(palette->size_type == FRAME_SIZE_DISCRETE) {
 				//frame size type is discrete
 				//print frame size & interval info
 				for (struct frame_size_discrete* discrete = palette->discrete; discrete->width != 0; discrete++) {
@@ -317,27 +316,25 @@ void print_device_info(struct video_device *v) {
 	//print the input detail
 	printf("Inputs:\n");
 	for(unsigned int j = 0; j < i->nb_inputs; j++) {
-		printf("\tName: %s\n", i->inputs[j].name);
-		printf("\tNumber: %d\n", i->inputs[j].index);
-		printf("\tType: %d (%s)\n", i->inputs[j].type,
-				i->inputs[j].type==INPUT_TYPE_TUNER ? "Tuner" : "Camera");
+		struct video_input_info *input = &(i->inputs[j]);
+		printf("\tName: %s\n", input->name);
+		printf("\tNumber: %d\n", input->index);
+		printf("\tType: %d (%s)\n", input->type, input->type == INPUT_TYPE_TUNER ? "Tuner" : "Camera");
 		printf("\tSupported standards:\n");
 		for(unsigned int k = 0; k < i->inputs[j].nb_stds; k++)
 			printf("\t\t%d (%s)\n",i->inputs[j].supported_stds[k],
-					i->inputs[j].supported_stds[k]==WEBCAM?"Webcam":
-					i->inputs[j].supported_stds[k]==PAL?"PAL":
-					i->inputs[j].supported_stds[k]==SECAM?"SECAM":"NTSC");
-		if(i->inputs[j].tuner!=NULL) {
+					input->supported_stds[k] == WEBCAM ? "Webcam" :
+					input->supported_stds[k] == PAL ? "PAL" :
+					input->supported_stds[k] == SECAM ? "SECAM" :
+					input->supported_stds[k] == NTSC ? "NTSC" : "UNKNOWN");
+		if(input->tuner != NULL) {
 			printf("\tTuner\n");
-			printf("\t\tName: %s\n",i->inputs[j].tuner->name);
-			printf("\t\tIndex: %d\n", i->inputs[j].tuner->index);
-			printf("\t\tRange low: %lu\n", i->inputs[j].tuner->rangelow);
-			printf("\t\tRange high: %lu\n", i->inputs[j].tuner->rangehigh);
-			printf("\t\tUnit: %d (%s)\n", i->inputs[j].tuner->unit,
-					i->inputs[j].tuner->unit==KHZ_UNIT?"KHz":"MHz");
-			printf("\t\tType: %d (%s)\n", i->inputs[j].tuner->type,
-					i->inputs[j].tuner->type==RADIO_TYPE?"Radio":"TV");
-
+			printf("\t\tName: %s\n", input->tuner->name);
+			printf("\t\tIndex: %d\n", input->tuner->index);
+			printf("\t\tRange low: %lu\n", input->tuner->rangelow);
+			printf("\t\tRange high: %lu\n", input->tuner->rangehigh);
+			printf("\t\tUnit: %d (%s)\n", input->tuner->unit, i->inputs[j].tuner->unit == KHZ_UNIT ? "KHz" : "MHz");
+			printf("\t\tType: %d (%s)\n", input->tuner->type, input->tuner->type == RADIO_TYPE ? "Radio" : "TV");
 		}
 	}
 }
@@ -425,10 +422,11 @@ static struct v4l_driver_probe known_driver_probes[] = {
 };
 
 static void add_node(driver_probe **list, struct v4l_driver_probe *probe) {
-	driver_probe *t;
-	if((t=*list)) {
+	driver_probe *t = *list;
+	if(t) {
 		//create the subsequent nodes
-		while(t->next) t = t->next;
+		while(t->next)
+			t = t->next;
 		XMALLOC(t->next, driver_probe *, sizeof(driver_probe));
 		t->next->probe = probe;
 	} else {
@@ -439,9 +437,8 @@ static void add_node(driver_probe **list, struct v4l_driver_probe *probe) {
 }
 
 static void empty_list(driver_probe *list) {
-	driver_probe *t;
  	while(list) {
-		t = list->next;
+		driver_probe *t = list->next;
 		XFREE(list);
 		list = t;
  	}
@@ -451,29 +448,23 @@ static void empty_list(driver_probe *list) {
 // Control methods
 // ****************************************
 struct control_list *get_control_list(struct video_device *vdev) {
-	struct v4l2_control ctrl;
 	int v4l_count = 0, priv_ctrl_count = 0;
-	driver_probe *e = NULL;
-	struct control_list *l;
 
 	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: Listing controls\n");
 
 	XMALLOC(vdev->control, struct control_list *, sizeof(struct control_list));
-	l = vdev->control;
+	struct control_list *l = vdev->control;
 
-
-	CLEAR(ctrl);
-
-	//dry run to see how many control we have
-	if(vdev->v4l_version==V4L2_VERSION) {
+	//dry run to see how many controls we have
+	if(vdev->v4l_version == V4L2_VERSION) {
 		l->priv = v4lconvert_create(vdev->fd);
 		v4l_count = count_v4l2_controls(vdev);
-	} else if(vdev->v4l_version==V4L1_VERSION)
+	} else if(vdev->v4l_version == V4L1_VERSION)
 		//4 basic controls in V4L1
 		v4l_count = count_v4l1_controls(vdev);
 	else {
 		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR, "CTRL: Weird V4L version (%d)...\n", vdev->v4l_version);
-		l->count=0;
+		l->count = 0;
 		return l;
 	}
 
@@ -511,7 +502,7 @@ struct control_list *get_control_list(struct video_device *vdev) {
 
 	l->count = v4l_count + priv_ctrl_count;
 	if(l->count > 0) {
-		XMALLOC(l->controls, struct control *,l->count * sizeof(struct control));
+		XMALLOC(l->controls, struct control *, l->count * sizeof(struct control));
 		for(unsigned int nb = 0; nb < l->count; nb++)
 			XMALLOC( l->controls[nb].v4l2_ctrl, struct v4l2_queryctrl *, sizeof(struct v4l2_queryctrl) );
 
@@ -528,7 +519,7 @@ struct control_list *get_control_list(struct video_device *vdev) {
 		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: listing private controls (found %d)...\n", priv_ctrl_count);
 		//Get the driver probes to look for private ioctls
 		//and turn them into fake V4L2 controls
-		for(e = l->probes; e; e=e->next)
+		for(driver_probe *e = l->probes; e; e=e->next)
 		 		e->probe->list_ctrl(vdev, &l->controls[v4l_count], e->probe->priv);
 
 		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: done listing controls\n");
@@ -541,29 +532,24 @@ struct control_list *get_control_list(struct video_device *vdev) {
 }
 
 int get_control_value(struct video_device *vdev, struct v4l2_queryctrl *ctrl, void *val, unsigned int size) {
-
-	int ret = 0;
 	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: getting value for control %s\n", ctrl->name);
-
-	if(ctrl->reserved[0]==V4L2_PRIV_IOCTL) {
+	
+	if(ctrl->reserved[0] == V4L2_PRIV_IOCTL) {
 		struct v4l_driver_probe *s = &known_driver_probes[ctrl->reserved[1]];
-		ret = s->get_ctrl(vdev, ctrl, s->priv, val);
+		return s->get_ctrl(vdev, ctrl, s->priv, val);
 	} else {
-		if(vdev->v4l_version==V4L2_VERSION)
-			ret = get_control_value_v4l2(vdev, ctrl, val, size);
-		else if(vdev->v4l_version==V4L1_VERSION)
-			ret =  get_control_value_v4l1(vdev, ctrl, val);
-		else {
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR, "CTRL: Weird V4L version (%d)...\n", vdev->v4l_version);
-			ret =  LIBVIDEO_ERR_WRONG_VERSION;
-		}
+		if(vdev->v4l_version == V4L2_VERSION)
+			return get_control_value_v4l2(vdev, ctrl, val, size);
+		
+		if(vdev->v4l_version == V4L1_VERSION)
+			return get_control_value_v4l1(vdev, ctrl, val);
+		
+		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR, "CTRL: Weird V4L version (%d)...\n", vdev->v4l_version);
+		return LIBVIDEO_ERR_WRONG_VERSION;
 	}
-	return ret;
 }
 
 int set_control_value(struct video_device *vdev, struct v4l2_queryctrl *ctrl, void *value, int size) {
-
-	int ret = 0;
 	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: setting value for control %s\n", ctrl->name);
 
 	// Ensure the value is within the bounds
@@ -583,29 +569,26 @@ int set_control_value(struct video_device *vdev, struct v4l2_queryctrl *ctrl, vo
 		}
 	}
 
-	if(ctrl->reserved[0]==V4L2_PRIV_IOCTL) {
+	if(ctrl->reserved[0] == V4L2_PRIV_IOCTL) {
 		struct v4l_driver_probe *s = &known_driver_probes[ctrl->reserved[1]];
-		ret = s->set_ctrl(vdev, ctrl, value,s->priv);
+		return s->set_ctrl(vdev, ctrl, value, s->priv);
 	} else {
-		if(vdev->v4l_version==V4L2_VERSION)
-			ret = set_control_value_v4l2(vdev, ctrl, value, size);
-		else if(vdev->v4l_version==V4L1_VERSION)
-			ret = set_control_value_v4l1(vdev, ctrl, (int *)value);
-		else {
-			dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR,
-					"CTRL: Weird V4L version (%d)...\n", vdev->v4l_version);
-			ret = LIBVIDEO_ERR_WRONG_VERSION;
-		}
-
+		if(vdev->v4l_version == V4L2_VERSION)
+			return set_control_value_v4l2(vdev, ctrl, value, size);
+		
+		if(vdev->v4l_version == V4L1_VERSION)
+			return set_control_value_v4l1(vdev, ctrl, (int *)value);
+		
+		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR, "CTRL: Weird V4L version (%d)...\n", vdev->v4l_version);
+		return LIBVIDEO_ERR_WRONG_VERSION;
 	}
-	return ret;
 }
 
 void release_control_list(struct video_device *vdev) {
 	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,"CTRL: Freeing controls \n");
 	
 	//free each individual v4l2_menu and v4l2_ctrl within a struct control
-	for(unsigned int i = 0; i<vdev->control->count; i++) {
+	for(unsigned int i = 0; i < vdev->control->count; i++) {
 		XFREE(vdev->control->controls[i].v4l2_ctrl);
 		if(vdev->control->controls[i].v4l2_menu)
 			XFREE(vdev->control->controls[i].v4l2_menu);
@@ -642,14 +625,16 @@ struct tuner_actions *get_tuner_actions(struct video_device *vdev) {
 
 	XMALLOC(vdev->tuner_action, struct tuner_actions *, sizeof(struct tuner_actions *));
 
-	if(vdev->v4l_version==V4L2_VERSION) {
+	if(vdev->v4l_version == V4L2_VERSION) {
 		vdev->tuner_action->get_rssi_afc = get_rssi_afc_v4l2;
 		vdev->tuner_action->get_tuner_freq = get_tuner_freq_v4l2;
 		vdev->tuner_action->set_tuner_freq = set_tuner_freq_v4l2;
-	} else {
+	} else if (vdev->v4l_version == V4L1_VERSION) {
 		vdev->tuner_action->get_rssi_afc = get_rssi_afc_v4l1;
 		vdev->tuner_action->get_tuner_freq = get_tuner_freq_v4l1;
 		vdev->tuner_action->set_tuner_freq = set_tuner_freq_v4l1;
+	} else {
+		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR, "CTRL: Weird V4L version (%d)...\n", vdev->v4l_version);
 	}
 
 	return vdev->tuner_action;
