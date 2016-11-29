@@ -72,7 +72,7 @@ static int lookup_frame_intv(struct v4lconvert_data *conv, unsigned int fmt, uns
 	while (v4lconvert_enum_frameintervals(conv, &intv) == 0) {
 		//check its type (discrete, continuous / stepwise)
 		if(intv.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
-				if(intv_type == FRAME_INTV_UNSUPPORTED){
+				if(intv_type == FRAME_INTV_UNSUPPORTED) {
 					intv_type = FRAME_INTV_DISCRETE;
 					dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, "QRY: Found discrete frame intv:\n");
 				}
@@ -81,7 +81,7 @@ static int lookup_frame_intv(struct v4lconvert_data *conv, unsigned int fmt, uns
 
 				//increase the array size by one for the extra
 				//discrete frame interval
-				XREALLOC(d,struct frame_intv_discrete *, (intv.index + 1) * sizeof(struct frame_intv_discrete));
+				XREALLOC(d, struct frame_intv_discrete *, (intv.index + 1) * sizeof(struct frame_intv_discrete));
 
 				//fill in the values of the new element
 				d[intv.index].numerator = intv.discrete.numerator;
@@ -149,19 +149,19 @@ static int lookup_frame_intv(struct v4lconvert_data *conv, unsigned int fmt, uns
 			break;
 		}
 	}
-
+	
 	//store the appropriate result in void** arg
-	if(intv_type==FRAME_INTV_DISCRETE){
+	if(intv_type == FRAME_INTV_DISCRETE) {
 		//add a struct frame_intv_discrete with null values at the end of
 		//the list
-		XREALLOC(d, struct frame_intv_discrete *,
-				(intv.index+1)*sizeof(struct frame_intv_discrete));
+		XREALLOC(d, struct frame_intv_discrete *, (intv.index + 1) * sizeof(struct frame_intv_discrete));
 		CLEAR(d[intv.index]);
 		*p = d;
-	} else if(intv_type==FRAME_INTV_CONTINUOUS)
+	} else if(intv_type == FRAME_INTV_CONTINUOUS) {
 		*p = c;
-	else
+	} else {
 		*p = NULL;
+	}
 
 	return intv_type;
 }
@@ -378,11 +378,11 @@ static int add_supported_palette(struct video_device *vdev, struct device_info *
 				if (src_palette == -1)
 					// We had a problem looking up the palette
 					return LIBVIDEO_ERR_IOCTL;
-
-				if(v4lconvert_needs_conversion(di->convert, &src, &dst) && !has_raw_format(curr->raw_palettes, src_palette, i)){
+				
+				if(v4lconvert_needs_conversion(di->convert, &src, &dst) && !has_raw_format(curr->raw_palettes, src_palette, i)) {
 					//it is converted from another format which is not
 					//in the array yet. adds the format
-					dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: from %d (%s)\n", src_palette, libvideo_palettes[src_palette].name);
+					dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY:  - from %s (#%d)\n", libvideo_palettes[src_palette].name, src_palette);
 					add_raw_format(di->convert, s.discrete.width, s.discrete.height, curr, (unsigned) src_palette, &i);
 					if(i == -1u) {
 						PRINT_REPORT_ERROR();
@@ -425,7 +425,7 @@ static int check_palettes_v4l2(struct video_device *vdev) {
 	
 	while(v4lconvert_enum_fmt(vdev->info->convert, &fmtd) >= 0) {
 		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "{index:%u,type:%u,flags:%u,description:'%s',pixelformat:%x}\n", fmtd.index,fmtd.type,fmtd.flags,fmtd.description,fmtd.pixelformat);
-		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, "QRY: looking for palette %c%c%c%c (%#x)\n", v4l2_fourcc_chars(fmtd.pixelformat), fmtd.pixelformat);
+		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, "QRY: looking for palette %c%c%c%c (%#06x)\n", v4l2_fourcc_chars(fmtd.pixelformat), fmtd.pixelformat);
 		
 		int p = find_v4l2_palette(fmtd.pixelformat);
 		if (p != -1) {
