@@ -626,12 +626,12 @@ static void enum_image_fmt_v4l1(int fd) {
 			pic.brightness, pic.hue, pic.colour,
 			pic.contrast, pic.depth, pic.palette);
 	const int i = pic.palette;
-#define PRINT_PALETTE_SUPPORT(palette) \
+#define PRINT_PALETTE_SUPPORT(palName) \
 		do {\
 			CLEAR(pic);\
-			pic.palette = VIDEO_PALETTE_ ## palette; \
+			pic.palette = VIDEO_PALETTE_ ## palName; \
 			printf("Palette %s:%s supported (%d%s)\n", \
-				#palette, \
+				#palName, \
 				ioctl(fd, VIDIOCSPICT, &pic) < 0 ? " NOT" : "", \
 				pic.palette, \
 				pic.palette == i ? "; current setting" : ""); \
