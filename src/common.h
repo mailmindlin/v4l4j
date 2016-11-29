@@ -98,7 +98,9 @@ struct v4l4j_device {
 	int need_conv;
 };
 
-#define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x) (((x)==NULL) ? 0 : (sizeof(x)/sizeof((x)[0])))
+#endif
 
 #define JPEG_CONVERTIBLE_FORMATS \
 	{JPEG, MJPEG, YUV420, YUYV, YVYU, UYVY, RGB24, BGR24, RGB32, BGR32}
