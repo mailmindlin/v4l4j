@@ -233,6 +233,10 @@ static inline int check_inputs_v4l1(struct video_device *vd) {
 }
 
 static int list_frame_intv(struct device_info *dinfo, int fmt, int width, int height, void **p) {
+	UNUSED(dinfo);
+	UNUSED(fmt);
+	UNUSED(width);
+	UNUSED(height);
 	*p = NULL;
 	return FRAME_INTV_UNSUPPORTED;
 }
