@@ -51,7 +51,14 @@ extern "C" {
 
 struct v4lconvert_data;
 
+/**
+ * Create libv4lconvert for fd
+ */
 LIBV4L_PUBLIC struct v4lconvert_data *v4lconvert_create(int fd);
+
+/**
+ * Release libv4lconvert data
+ */
 LIBV4L_PUBLIC void v4lconvert_destroy(struct v4lconvert_data *data);
 
 /* When doing flipping / rotating / video-processing, only supported
@@ -73,11 +80,18 @@ LIBV4L_PUBLIC int v4lconvert_try_format(struct v4lconvert_data *data,
 		struct v4l2_format *dest_fmt, /* in / out */
 		struct v4l2_format *src_fmt); /* out */
 
-/* Like VIDIOC_ENUM_FMT, but the emulated formats are added at the end of the
-   list, except if flipping / processing is active for the device, then only
-   supported destination formats are listed */
-LIBV4L_PUBLIC int v4lconvert_enum_fmt(struct v4lconvert_data *data,
-		struct v4l2_fmtdesc *fmt);
+/**
+ * Enumerates the formats available (like VIDIOC_ENUM_FMT), but also adds emulated
+ * formats to the end of the list
+ * If flipping/processing is active for the device, only supported destination formats
+ * are listed.
+ * @param data
+ * 		v4lconvert data
+ * @param fmt
+ * 		Result format
+ * @return -1 on error, 0 on success.
+ */
+LIBV4L_PUBLIC int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt);
 /* Is conversion necessary or can the app use the data directly? */
 LIBV4L_PUBLIC bool v4lconvert_needs_conversion(struct v4lconvert_data *data,
 		const struct v4l2_format *src_fmt,   /* in */
@@ -90,33 +104,37 @@ LIBV4L_PUBLIC int v4lconvert_convert(struct v4lconvert_data *data,
 		const struct v4l2_format *dest_fmt, /* in */
 		unsigned char *src, unsigned int src_size, unsigned char *dest, unsigned int dest_size);
 
-/* get a string describing the last error */
+/**
+ * Get a string describing the last error
+ */
 LIBV4L_PUBLIC const char *v4lconvert_get_error_message(struct v4lconvert_data *data);
 
 /* Just like VIDIOC_ENUM_FRAMESIZE, except that the framesizes of emulated
    formats can be enumerated as well. */
-LIBV4L_PUBLIC int v4lconvert_enum_framesizes(struct v4lconvert_data *data,
-		struct v4l2_frmsizeenum *frmsize);
+LIBV4L_PUBLIC int v4lconvert_enum_framesizes(struct v4lconvert_data *data, struct v4l2_frmsizeenum *frmsize);
 
 /* Just like VIDIOC_ENUM_FRAMEINTERVALS, except that the intervals of emulated
    formats can be enumerated as well. */
-LIBV4L_PUBLIC int v4lconvert_enum_frameintervals(struct v4lconvert_data *data,
-		struct v4l2_frmivalenum *frmival);
+LIBV4L_PUBLIC int v4lconvert_enum_frameintervals(struct v4lconvert_data *data, struct v4l2_frmivalenum *frmival);
 
 /* Pass calls to query, get and set video controls to the libv4lcontrol class */
-LIBV4L_PUBLIC int v4lconvert_vidioc_queryctrl(struct v4lconvert_data *data,
-		void *arg);
-LIBV4L_PUBLIC int v4lconvert_vidioc_g_ctrl(struct v4lconvert_data *data,
-		void *arg);
-LIBV4L_PUBLIC int v4lconvert_vidioc_s_ctrl(struct v4lconvert_data *data,
-		void *arg);
+LIBV4L_PUBLIC int v4lconvert_vidioc_queryctrl(struct v4lconvert_data *data, void *arg);
+LIBV4L_PUBLIC int v4lconvert_vidioc_g_ctrl(struct v4lconvert_data *data, void *arg);
+LIBV4L_PUBLIC int v4lconvert_vidioc_s_ctrl(struct v4lconvert_data *data, void *arg);
 
-/* Is the passed in pixelformat supported as destination format? */
+/**
+ * Check whether the given pixelformat is suppored as a destination format.
+ */
 LIBV4L_PUBLIC bool v4lconvert_supported_dst_format(unsigned int pixelformat);
 
-/* Get/set the no fps libv4lconvert uses to decide if a compressed format
-   must be used as src fmt to stay within the bus bandwidth */
+/**
+ * Get the FPS that libv4lconvert uses
+ */
 LIBV4L_PUBLIC unsigned int v4lconvert_get_fps(struct v4lconvert_data *data);
+/**
+ * Set the FPS that libv4lconvert uses to decide whether a compressed format
+ * must be used as the source to stay within the bus bandwidth.
+ */
 LIBV4L_PUBLIC void v4lconvert_set_fps(struct v4lconvert_data *data, unsigned int fps);
 
 #ifdef __cplusplus
