@@ -28,7 +28,9 @@
 #include "libv4lconvert-priv.h"
 #include "libv4lsyscall-priv.h"
 
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MIN(a, b) ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })
 
 static void v4lconvert_get_framesizes(struct v4lconvert_data *data, u32 pixelformat, u32 index);
 /* Note for proper functioning of v4lconvert_enum_fmt the first entries in
