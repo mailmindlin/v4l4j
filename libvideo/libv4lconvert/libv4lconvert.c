@@ -640,535 +640,517 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data, u8 *src, unsi
 	u32 height = fmt->fmt.pix.height;
 
 	switch (src_pix_fmt) {
-	/* JPG and variants */
-	case V4L2_PIX_FMT_MJPEG:
-	case V4L2_PIX_FMT_JPEG:
-		if (data->flags & V4LCONVERT_USE_TINYJPEG) {
-			result = v4lconvert_decode_jpeg_tinyjpeg(data,
-							src, src_size, dest,
-							fmt, dest_pix_fmt, 0);
-		} else {
-			result = v4lconvert_decode_jpeg_libjpeg(data,
-							src, src_size, dest,
-							fmt, dest_pix_fmt);
-			if (result == -1 && errno == EOPNOTSUPP) {
-				/* Fall back to tinyjpeg */
-				jpeg_destroy_decompress(&data->cinfo);
-				data->cinfo_initialized = 0;
-				data->flags |= V4LCONVERT_USE_TINYJPEG;
-				result = v4lconvert_decode_jpeg_tinyjpeg(data,
-							src, src_size, dest,
-							fmt, dest_pix_fmt, 0);
+		/* JPG and variants */
+		case V4L2_PIX_FMT_MJPEG:
+		case V4L2_PIX_FMT_JPEG:
+			if (data->flags & V4LCONVERT_USE_TINYJPEG) {
+				result = v4lconvert_decode_jpeg_tinyjpeg(data, src, src_size, dest, fmt, dest_pix_fmt, 0);
+			} else {
+				result = v4lconvert_decode_jpeg_libjpeg(data, src, src_size, dest, fmt, dest_pix_fmt);
+				if (result == -1 && errno == EOPNOTSUPP) {
+					/* Fall back to tinyjpeg */
+					jpeg_destroy_decompress(&data->cinfo);
+					data->cinfo_initialized = 0;
+					data->flags |= V4LCONVERT_USE_TINYJPEG;
+					result = v4lconvert_decode_jpeg_tinyjpeg(data, src, src_size, dest, fmt, dest_pix_fmt, 0);
+				}
 			}
-		}
-		break;
-	case V4L2_PIX_FMT_PJPG:
-		result = v4lconvert_decode_jpeg_tinyjpeg(data, src, src_size,
-				dest, fmt, dest_pix_fmt,
-				TINYJPEG_FLAGS_PIXART_JPEG);
-		break;
-	case V4L2_PIX_FMT_JPGL:
-		result = v4lconvert_decode_jpgl(src, src_size, dest_pix_fmt,
-						dest, width, height);
-		break;
+			break;
+		case V4L2_PIX_FMT_PJPG:
+			result = v4lconvert_decode_jpeg_tinyjpeg(data, src, src_size, dest, fmt, dest_pix_fmt, TINYJPEG_FLAGS_PIXART_JPEG);
+			break;
+		case V4L2_PIX_FMT_JPGL:
+			result = v4lconvert_decode_jpgl(src, src_size, dest_pix_fmt, dest, width, height);
+			break;
 
-	/* Custom cam specific YUV formats */
-	case V4L2_PIX_FMT_SPCA501:
-	case V4L2_PIX_FMT_SPCA505:
-	case V4L2_PIX_FMT_SPCA508:
-	case V4L2_PIX_FMT_CIT_YYVYUY:
-	case V4L2_PIX_FMT_KONICA420:
-	case V4L2_PIX_FMT_M420:
-	case V4L2_PIX_FMT_SN9C20X_I420:
-	case V4L2_PIX_FMT_CPIA1:
-	case V4L2_PIX_FMT_OV511:
-	case V4L2_PIX_FMT_OV518: {
-		u8 *d;
-		unsigned int d_size;
-		int yvu = 0;
-
-		if (dest_pix_fmt != V4L2_PIX_FMT_YUV420 &&
-				dest_pix_fmt != V4L2_PIX_FMT_YVU420) {
-			d = v4lconvert_alloc_buffer(width * height * 3 / 2,
-					&data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
-			if (!d)
-				return v4lconvert_oom_error(data);
-			d_size = width * height * 3 / 2;
-		} else {
-			d = dest;
-			d_size = dest_size;
-		}
-
-		if (dest_pix_fmt == V4L2_PIX_FMT_YVU420)
-			yvu = 1;
-
-		switch (src_pix_fmt) {
+		/* Custom cam specific YUV formats */
 		case V4L2_PIX_FMT_SPCA501:
 			v4lconvert_spca501_to_yuv420(src, d, width, height, yvu);
 			break;
 		case V4L2_PIX_FMT_SPCA505:
-			v4lconvert_spca505_to_yuv420(src, d, width, height, yvu);
-			break;
 		case V4L2_PIX_FMT_SPCA508:
-			v4lconvert_spca508_to_yuv420(src, d, width, height, yvu);
-			break;
 		case V4L2_PIX_FMT_CIT_YYVYUY:
-			v4lconvert_cit_yyvyuy_to_yuv420(src, d, width, height, yvu);
-			break;
 		case V4L2_PIX_FMT_KONICA420:
-			v4lconvert_konica_yuv420_to_yuv420(src, d, width, height, yvu);
-			break;
 		case V4L2_PIX_FMT_M420:
-			v4lconvert_m420_to_yuv420(src, d, width, height, yvu);
-			break;
 		case V4L2_PIX_FMT_SN9C20X_I420:
-			v4lconvert_sn9c20x_to_yuv420(src, d, width, height, yvu);
-			break;
 		case V4L2_PIX_FMT_CPIA1:
-			if (v4lconvert_cpia1_to_yuv420(data, src, src_size, d, width, height, yvu)) {
-				/* Corrupt frame, better get another one */
-				errno = EAGAIN;
-				return -1;
-			}
-			break;
 		case V4L2_PIX_FMT_OV511:
-			if (v4lconvert_helper_decompress(data, LIBDIR "/" LIBSUBDIR "/ov511-decomp", src, src_size, d, d_size, width, height, yvu)) {
-				/* Corrupt frame, better get another one */
-				errno = EAGAIN;
-				return -1;
+		case V4L2_PIX_FMT_OV518: {
+			u8 *d;
+			unsigned int d_size;
+			int yvu = 0;
+
+			if (dest_pix_fmt != V4L2_PIX_FMT_YUV420 && dest_pix_fmt != V4L2_PIX_FMT_YVU420) {
+				d = v4lconvert_alloc_buffer(width * height * 3 / 2, &data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
+				if (!d)
+					return v4lconvert_oom_error(data);
+				d_size = width * height * 3 / 2;
+			} else {
+				d = dest;
+				d_size = dest_size;
+			}
+
+			if (dest_pix_fmt == V4L2_PIX_FMT_YVU420)
+				yvu = 1;
+
+			switch (src_pix_fmt) {
+				case V4L2_PIX_FMT_SPCA501:
+					v4lconvert_spca501_to_yuv420(src, d, width, height, yvu);
+					break;
+				case V4L2_PIX_FMT_SPCA505:
+					v4lconvert_spca505_to_yuv420(src, d, width, height, yvu);
+					break;
+				case V4L2_PIX_FMT_SPCA508:
+					v4lconvert_spca508_to_yuv420(src, d, width, height, yvu);
+					break;
+				case V4L2_PIX_FMT_CIT_YYVYUY:
+					v4lconvert_cit_yyvyuy_to_yuv420(src, d, width, height, yvu);
+					break;
+				case V4L2_PIX_FMT_KONICA420:
+					v4lconvert_konica_yuv420_to_yuv420(src, d, width, height, yvu);
+					break;
+				case V4L2_PIX_FMT_M420:
+					v4lconvert_m420_to_yuv420(src, d, width, height, yvu);
+					break;
+				case V4L2_PIX_FMT_SN9C20X_I420:
+					v4lconvert_sn9c20x_to_yuv420(src, d, width, height, yvu);
+					break;
+				case V4L2_PIX_FMT_CPIA1:
+					if (v4lconvert_cpia1_to_yuv420(data, src, src_size, d, width, height, yvu)) {
+						/* Corrupt frame, better get another one */
+						errno = EAGAIN;
+						return -1;
+					}
+					break;
+				case V4L2_PIX_FMT_OV511:
+					if (v4lconvert_helper_decompress(data, LIBDIR "/" LIBSUBDIR "/ov511-decomp", src, src_size, d, d_size, width, height, yvu)) {
+						/* Corrupt frame, better get another one */
+						errno = EAGAIN;
+						return -1;
+					}
+					break;
+				case V4L2_PIX_FMT_OV518:
+					if (v4lconvert_helper_decompress(data, LIBDIR "/" LIBSUBDIR "/ov518-decomp", src, src_size, d, d_size, width, height, yvu)) {
+						/* Corrupt frame, better get another one */
+						errno = EAGAIN;
+						return -1;
+					}
+					break;
+			}
+
+			switch (dest_pix_fmt) {
+				case V4L2_PIX_FMT_RGB24:
+					v4lconvert_yuv420_to_rgb24(data->convert_pixfmt_buf, dest, width, height, yvu);
+					break;
+				case V4L2_PIX_FMT_BGR24:
+					v4lconvert_yuv420_to_bgr24(data->convert_pixfmt_buf, dest, width, height, yvu);
+					break;
 			}
 			break;
-		case V4L2_PIX_FMT_OV518:
-			if (v4lconvert_helper_decompress(data, LIBDIR "/" LIBSUBDIR "/ov518-decomp", src, src_size, d, d_size, width, height, yvu)) {
-				/* Corrupt frame, better get another one */
-				errno = EAGAIN;
-				return -1;
+		}
+
+			/* Conexant cx2341x raw video macroblock format */
+		case V4L2_PIX_FMT_HM12:
+			switch (dest_pix_fmt) {
+				case V4L2_PIX_FMT_RGB24:
+					v4lconvert_hm12_to_rgb24(src, dest, width, height);
+					break;
+				case V4L2_PIX_FMT_BGR24:
+					v4lconvert_hm12_to_bgr24(src, dest, width, height);
+					break;
+				case V4L2_PIX_FMT_YUV420:
+					v4lconvert_hm12_to_yuv420(src, dest, width, height, 0);
+					break;
+				case V4L2_PIX_FMT_YVU420:
+					v4lconvert_hm12_to_yuv420(src, dest, width, height, 1);
+					break;
 			}
 			break;
-		}
 
-		switch (dest_pix_fmt) {
-		case V4L2_PIX_FMT_RGB24:
-			v4lconvert_yuv420_to_rgb24(data->convert_pixfmt_buf, dest, width, height, yvu);
-			break;
-		case V4L2_PIX_FMT_BGR24:
-			v4lconvert_yuv420_to_bgr24(data->convert_pixfmt_buf, dest, width, height, yvu);
-			break;
-		}
-		break;
-	}
-
-		/* Conexant cx2341x raw video macroblock format */
-	case V4L2_PIX_FMT_HM12:
-		switch (dest_pix_fmt) {
-		case V4L2_PIX_FMT_RGB24:
-			v4lconvert_hm12_to_rgb24(src, dest, width, height);
-			break;
-		case V4L2_PIX_FMT_BGR24:
-			v4lconvert_hm12_to_bgr24(src, dest, width, height);
-			break;
-		case V4L2_PIX_FMT_YUV420:
-			v4lconvert_hm12_to_yuv420(src, dest, width, height, 0);
-			break;
-		case V4L2_PIX_FMT_YVU420:
-			v4lconvert_hm12_to_yuv420(src, dest, width, height, 1);
-			break;
-		}
-		break;
-
-		/* compressed bayer formats */
-	case V4L2_PIX_FMT_SPCA561:
-	case V4L2_PIX_FMT_SN9C10X:
-	case V4L2_PIX_FMT_PAC207:
-	case V4L2_PIX_FMT_MR97310A:
-	case V4L2_PIX_FMT_JL2005BCD:
-	case V4L2_PIX_FMT_SN9C2028:
-	case V4L2_PIX_FMT_SQ905C:
-	case V4L2_PIX_FMT_STV0680: { /* Not compressed but needs some shuffling */
-		u8 *tmpbuf;
-		struct v4l2_format tmpfmt = *fmt;
-
-		tmpbuf = v4lconvert_alloc_buffer(width * height, &data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
-		if (!tmpbuf)
-			return v4lconvert_oom_error(data);
-
-		switch (src_pix_fmt) {
+			/* compressed bayer formats */
 		case V4L2_PIX_FMT_SPCA561:
-			v4lconvert_decode_spca561(src, tmpbuf, width, height);
-			tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SGBRG8;
-			break;
 		case V4L2_PIX_FMT_SN9C10X:
-			v4lconvert_decode_sn9c10x(src, tmpbuf, width, height);
-			tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR8;
-			break;
 		case V4L2_PIX_FMT_PAC207:
-			if (v4lconvert_decode_pac207(data, src, src_size, tmpbuf, width, height)) {
-				/* Corrupt frame, better get another one */
-				errno = EAGAIN;
-				return -1;
-			}
-			tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR8;
-			break;
 		case V4L2_PIX_FMT_MR97310A:
-			if (v4lconvert_decode_mr97310a(data, src, src_size, tmpbuf, width, height)) {
-				/* Corrupt frame, better get another one */
-				errno = EAGAIN;
-				return -1;
-			}
-			tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR8;
-			break;
 		case V4L2_PIX_FMT_JL2005BCD:
-			if (v4lconvert_decode_jl2005bcd(data, src, src_size, tmpbuf, width, height)) {
-				/* Corrupt frame, better get another one */
-				errno = EAGAIN;
-				return -1;
-			}
-			tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SRGGB8;
-			break;
 		case V4L2_PIX_FMT_SN9C2028:
-			v4lconvert_decode_sn9c2028(src, tmpbuf, width, height);
-			tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR8;
-			break;
 		case V4L2_PIX_FMT_SQ905C:
-			v4lconvert_decode_sq905c(src, tmpbuf, width, height);
-			tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SRGGB8;
-			break;
-		case V4L2_PIX_FMT_STV0680:
-			v4lconvert_decode_stv0680(src, tmpbuf, width, height);
-			tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SRGGB8;
-			break;
-		}
-		/* Do processing on the tmp buffer, because doing it on bayer data is
-		   cheaper, and bayer == rgb and our dest_fmt may be yuv */
-		tmpfmt.fmt.pix.bytesperline = width;
-		tmpfmt.fmt.pix.sizeimage = width * height;
-		v4lprocessing_processing(data->processing, tmpbuf, &tmpfmt);
-		/* Deliberate fall through to raw bayer fmt code! */
-		src_pix_fmt = tmpfmt.fmt.pix.pixelformat;
-		src = tmpbuf;
-		src_size = width * height;
-		/* fall through */
-	}
+		case V4L2_PIX_FMT_STV0680: { /* Not compressed but needs some shuffling */
+			u8 *tmpbuf;
+			struct v4l2_format tmpfmt = *fmt;
 
-		/* Raw bayer formats */
-	case V4L2_PIX_FMT_SBGGR8:
-	case V4L2_PIX_FMT_SGBRG8:
-	case V4L2_PIX_FMT_SGRBG8:
-	case V4L2_PIX_FMT_SRGGB8:
-		switch (dest_pix_fmt) {
-		case V4L2_PIX_FMT_RGB24:
-			v4lconvert_bayer_to_rgb24(src, dest, width, height, src_pix_fmt);
-			break;
-		case V4L2_PIX_FMT_BGR24:
-			v4lconvert_bayer_to_bgr24(src, dest, width, height, src_pix_fmt);
-			break;
-		case V4L2_PIX_FMT_YUV420:
-			v4lconvert_bayer_to_yuv420(src, dest, width, height, src_pix_fmt, 0);
-			break;
-		case V4L2_PIX_FMT_YVU420:
-			v4lconvert_bayer_to_yuv420(src, dest, width, height, src_pix_fmt, 1);
-			break;
-		}
-		if (src_size < (width * height)) {
-			V4LCONVERT_ERR("short raw bayer data frame\n");
-			errno = EPIPE;
-			result = -1;
-		}
-		break;
-
-	case V4L2_PIX_FMT_SE401: {
-		u8 *d = NULL;
-
-		switch (dest_pix_fmt) {
-		case V4L2_PIX_FMT_RGB24:
-			d = dest;
-			break;
-		case V4L2_PIX_FMT_BGR24:
-		case V4L2_PIX_FMT_YUV420:
-		case V4L2_PIX_FMT_YVU420:
-			d = v4lconvert_alloc_buffer(width * height * 3,
-					&data->convert_pixfmt_buf,
-					&data->convert_pixfmt_buf_size);
-			if (!d)
+			tmpbuf = v4lconvert_alloc_buffer(width * height, &data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
+			if (!tmpbuf)
 				return v4lconvert_oom_error(data);
 
-			fmt->fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
-			v4lconvert_fixup_fmt(fmt);
+			switch (src_pix_fmt) {
+				case V4L2_PIX_FMT_SPCA561:
+					v4lconvert_decode_spca561(src, tmpbuf, width, height);
+					tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SGBRG8;
+					break;
+				case V4L2_PIX_FMT_SN9C10X:
+					v4lconvert_decode_sn9c10x(src, tmpbuf, width, height);
+					tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR8;
+					break;
+				case V4L2_PIX_FMT_PAC207:
+					if (v4lconvert_decode_pac207(data, src, src_size, tmpbuf, width, height)) {
+						/* Corrupt frame, better get another one */
+						errno = EAGAIN;
+						return -1;
+					}
+					tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR8;
+					break;
+				case V4L2_PIX_FMT_MR97310A:
+					if (v4lconvert_decode_mr97310a(data, src, src_size, tmpbuf, width, height)) {
+						/* Corrupt frame, better get another one */
+						errno = EAGAIN;
+						return -1;
+					}
+					tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR8;
+					break;
+				case V4L2_PIX_FMT_JL2005BCD:
+					if (v4lconvert_decode_jl2005bcd(data, src, src_size, tmpbuf, width, height)) {
+						/* Corrupt frame, better get another one */
+						errno = EAGAIN;
+						return -1;
+					}
+					tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SRGGB8;
+					break;
+				case V4L2_PIX_FMT_SN9C2028:
+					v4lconvert_decode_sn9c2028(src, tmpbuf, width, height);
+					tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR8;
+					break;
+				case V4L2_PIX_FMT_SQ905C:
+					v4lconvert_decode_sq905c(src, tmpbuf, width, height);
+					tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SRGGB8;
+					break;
+				case V4L2_PIX_FMT_STV0680:
+					v4lconvert_decode_stv0680(src, tmpbuf, width, height);
+					tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SRGGB8;
+					break;
+			}
+			/* Do processing on the tmp buffer, because doing it on bayer data is
+			   cheaper, and bayer == rgb and our dest_fmt may be yuv */
+			tmpfmt.fmt.pix.bytesperline = width;
+			tmpfmt.fmt.pix.sizeimage = width * height;
+			v4lprocessing_processing(data->processing, tmpbuf, &tmpfmt);
+			/* Deliberate fall through to raw bayer fmt code! */
+			src_pix_fmt = tmpfmt.fmt.pix.pixelformat;
+			src = tmpbuf;
+			src_size = width * height;
+			/* fall through */
+		}
+
+			/* Raw bayer formats */
+		case V4L2_PIX_FMT_SBGGR8:
+		case V4L2_PIX_FMT_SGBRG8:
+		case V4L2_PIX_FMT_SGRBG8:
+		case V4L2_PIX_FMT_SRGGB8:
+			switch (dest_pix_fmt) {
+				case V4L2_PIX_FMT_RGB24:
+					v4lconvert_bayer_to_rgb24(src, dest, width, height, src_pix_fmt);
+					break;
+				case V4L2_PIX_FMT_BGR24:
+					v4lconvert_bayer_to_bgr24(src, dest, width, height, src_pix_fmt);
+					break;
+				case V4L2_PIX_FMT_YUV420:
+					v4lconvert_bayer_to_yuv420(src, dest, width, height, src_pix_fmt, 0);
+					break;
+				case V4L2_PIX_FMT_YVU420:
+					v4lconvert_bayer_to_yuv420(src, dest, width, height, src_pix_fmt, 1);
+					break;
+			}
+			if (src_size < (width * height)) {
+				V4LCONVERT_ERR("short raw bayer data frame\n");
+				errno = EPIPE;
+				result = -1;
+			}
+			break;
+
+		case V4L2_PIX_FMT_SE401: {
+			u8 *d = NULL;
+
+			switch (dest_pix_fmt) {
+				case V4L2_PIX_FMT_RGB24:
+					d = dest;
+					break;
+				case V4L2_PIX_FMT_BGR24:
+				case V4L2_PIX_FMT_YUV420:
+				case V4L2_PIX_FMT_YVU420:
+					d = v4lconvert_alloc_buffer(width * height * 3, &data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
+					if (!d)
+						return v4lconvert_oom_error(data);
+
+					fmt->fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
+					v4lconvert_fixup_fmt(fmt);
+					break;
+			}
+
+			result = v4lconvert_se401_to_rgb24(data, src, src_size, d, width, height);
+			switch (dest_pix_fmt) {
+				case V4L2_PIX_FMT_BGR24:
+					v4lconvert_swap_rgb(d, dest, width, height);
+					break;
+				case V4L2_PIX_FMT_YUV420:
+					v4lconvert_rgb24_to_yuv420(d, dest, fmt, 0, 0);
+					break;
+				case V4L2_PIX_FMT_YVU420:
+					v4lconvert_rgb24_to_yuv420(d, dest, fmt, 0, 1);
+					break;
+			}
 			break;
 		}
 
-		result = v4lconvert_se401_to_rgb24(data, src, src_size, d,
-						   width, height);
-		switch (dest_pix_fmt) {
+		case V4L2_PIX_FMT_GREY:
+			switch (dest_pix_fmt) {
+				case V4L2_PIX_FMT_RGB24:
+					case V4L2_PIX_FMT_BGR24:
+					v4lconvert_grey_to_rgb24(src, dest, width, height);
+					break;
+				case V4L2_PIX_FMT_YUV420:
+				case V4L2_PIX_FMT_YVU420:
+					v4lconvert_grey_to_yuv420(src, dest, fmt);
+					break;
+			}
+			if (src_size < (width * height)) {
+				V4LCONVERT_ERR("short grey data frame\n");
+				errno = EPIPE;
+				result = -1;
+			}
+			break;
+
+		case V4L2_PIX_FMT_Y10BPACK:
+			switch (dest_pix_fmt) {
+				case V4L2_PIX_FMT_RGB24:
+					case V4L2_PIX_FMT_BGR24:
+					result = v4lconvert_y10b_to_rgb24(data, src, dest, width, height);
+					break;
+				case V4L2_PIX_FMT_YUV420:
+				case V4L2_PIX_FMT_YVU420:
+					result = v4lconvert_y10b_to_yuv420(data, src, dest, width, height);
+					break;
+			}
+			if (result == 0 && src_size < (width * height * 10 / 8)) {
+				V4LCONVERT_ERR("short y10b data frame\n");
+				errno = EPIPE;
+				result = -1;
+			}
+			break;
+
+		case V4L2_PIX_FMT_RGB565:
+			switch (dest_pix_fmt) {
+				case V4L2_PIX_FMT_RGB24:
+					v4lconvert_rgb565_to_rgb24(src, dest, width, height);
+					break;
+				case V4L2_PIX_FMT_BGR24:
+					v4lconvert_rgb565_to_bgr24(src, dest, width, height);
+					break;
+				case V4L2_PIX_FMT_YUV420:
+					v4lconvert_rgb565_to_yuv420(src, dest, fmt, 0);
+					break;
+				case V4L2_PIX_FMT_YVU420:
+					v4lconvert_rgb565_to_yuv420(src, dest, fmt, 1);
+					break;
+			}
+			if (src_size < (width * height * 2)) {
+				V4LCONVERT_ERR("short rgb565 data frame\n");
+				errno = EPIPE;
+				result = -1;
+			}
+			break;
+
+		case V4L2_PIX_FMT_RGB24:
+			switch (dest_pix_fmt) {
+				case V4L2_PIX_FMT_RGB24:
+					memcpy(dest, src, width * height * 3);
+					break;
+				case V4L2_PIX_FMT_BGR24:
+					v4lconvert_swap_rgb(src, dest, width, height);
+					break;
+				case V4L2_PIX_FMT_YUV420:
+					refresh_pixfc(data, width, height, PixFcRGB24, PixFcYUV420P);
+					if (data->pixfc)
+						(*data->pixfc->convert)(data->pixfc, src, dest);
+					else
+						v4lconvert_rgb24_to_yuv420(src, dest, fmt, 0, 0);
+					break;
+				case V4L2_PIX_FMT_YVU420:
+					v4lconvert_rgb24_to_yuv420(src, dest, fmt, 0, 1);
+					break;
+			}
+			if (src_size < (width * height * 3)) {
+				V4LCONVERT_ERR("short rgb24 data frame\n");
+				errno = EPIPE;
+				result = -1;
+			}
+			break;
+
 		case V4L2_PIX_FMT_BGR24:
-			v4lconvert_swap_rgb(d, dest, width, height);
+			switch (dest_pix_fmt) {
+				case V4L2_PIX_FMT_RGB24:
+					v4lconvert_swap_rgb(src, dest, width, height);
+					break;
+				case V4L2_PIX_FMT_BGR24:
+					memcpy(dest, src, width * height * 3);
+					break;
+				case V4L2_PIX_FMT_YUV420:
+					refresh_pixfc(data, width, height, PixFcBGR24, PixFcYUV420P);
+					if (data->pixfc)
+						(*data->pixfc->convert)(data->pixfc, src, dest);
+					else
+						v4lconvert_rgb24_to_yuv420(src, dest, fmt, 1, 0);
+					break;
+				case V4L2_PIX_FMT_YVU420:
+					v4lconvert_rgb24_to_yuv420(src, dest, fmt, 1, 1);
+					break;
+			}
+			if (src_size < (width * height * 3)) {
+				V4LCONVERT_ERR("short bgr24 data frame\n");
+				errno = EPIPE;
+				result = -1;
+			}
 			break;
-		case V4L2_PIX_FMT_YUV420:
-			v4lconvert_rgb24_to_yuv420(d, dest, fmt, 0, 0);
-			break;
-		case V4L2_PIX_FMT_YVU420:
-			v4lconvert_rgb24_to_yuv420(d, dest, fmt, 0, 1);
-			break;
-		}
-		break;
-	}
 
-	case V4L2_PIX_FMT_GREY:
-		switch (dest_pix_fmt) {
-		case V4L2_PIX_FMT_RGB24:
-	        case V4L2_PIX_FMT_BGR24:
-			v4lconvert_grey_to_rgb24(src, dest, width, height);
-			break;
 		case V4L2_PIX_FMT_YUV420:
-		case V4L2_PIX_FMT_YVU420:
-			v4lconvert_grey_to_yuv420(src, dest, fmt);
+			switch (dest_pix_fmt) {
+				case V4L2_PIX_FMT_RGB24:
+					refresh_pixfc(data, width, height, PixFcYUV420P, PixFcRGB24);
+					if (data->pixfc)
+						(*data->pixfc->convert)(data->pixfc, src, dest);
+					else
+						v4lconvert_yuv420_to_rgb24(src, dest, width, height, 0);
+					break;
+				case V4L2_PIX_FMT_BGR24:
+					refresh_pixfc(data, width, height, PixFcYUV420P, PixFcBGR24);
+					if (data->pixfc)
+						(*data->pixfc->convert)(data->pixfc, src, dest);
+					else
+						v4lconvert_yuv420_to_bgr24(src, dest, width, height, 0);
+					break;
+				case V4L2_PIX_FMT_YUV420:
+					memcpy(dest, src, width * height * 3 / 2);
+					break;
+				case V4L2_PIX_FMT_YVU420:
+					v4lconvert_swap_uv(src, dest, fmt);
+					break;
+			}
+			if (src_size < (width * height * 3 / 2)) {
+				V4LCONVERT_ERR("short yuv420 data frame\n");
+				errno = EPIPE;
+				result = -1;
+			}
 			break;
-		}
-		if (src_size < (width * height)) {
-			V4LCONVERT_ERR("short grey data frame\n");
-			errno = EPIPE;
-			result = -1;
-		}
-		break;
 
-	case V4L2_PIX_FMT_Y10BPACK:
-		switch (dest_pix_fmt) {
-		case V4L2_PIX_FMT_RGB24:
-	        case V4L2_PIX_FMT_BGR24:
-			result = v4lconvert_y10b_to_rgb24(data, src, dest,
-							  width, height);
-			break;
-		case V4L2_PIX_FMT_YUV420:
 		case V4L2_PIX_FMT_YVU420:
-			result = v4lconvert_y10b_to_yuv420(data, src, dest,
-							   width, height);
+			switch (dest_pix_fmt) {
+				case V4L2_PIX_FMT_RGB24:
+					v4lconvert_yuv420_to_rgb24(src, dest, width, height, 1);
+					break;
+				case V4L2_PIX_FMT_BGR24:
+					v4lconvert_yuv420_to_bgr24(src, dest, width, height, 1);
+					break;
+				case V4L2_PIX_FMT_YUV420:
+					v4lconvert_swap_uv(src, dest, fmt);
+					break;
+				case V4L2_PIX_FMT_YVU420:
+					memcpy(dest, src, width * height * 3 / 2);
+					break;
+			}
+			if (src_size < (width * height * 3 / 2)) {
+				V4LCONVERT_ERR("short yvu420 data frame\n");
+				errno = EPIPE;
+				result = -1;
+			}
 			break;
-		}
-		if (result == 0 && src_size < (width * height * 10 / 8)) {
-			V4LCONVERT_ERR("short y10b data frame\n");
-			errno = EPIPE;
-			result = -1;
-		}
-		break;
 
-	case V4L2_PIX_FMT_RGB565:
-		switch (dest_pix_fmt) {
-		case V4L2_PIX_FMT_RGB24:
-			v4lconvert_rgb565_to_rgb24(src, dest, width, height);
+		case V4L2_PIX_FMT_YUYV:
+			switch (dest_pix_fmt) {
+				case V4L2_PIX_FMT_RGB24:
+					refresh_pixfc(data, width, height, PixFcYUYV, PixFcRGB24);
+					if (data->pixfc)
+						(*data->pixfc->convert)(data->pixfc, src, dest);
+					else
+						v4lconvert_yuyv_to_rgb24(src, dest, width, height);
+					break;
+				case V4L2_PIX_FMT_BGR24:
+					refresh_pixfc(data, width, height, PixFcYUYV, PixFcBGR24);
+					if (data->pixfc)
+						(*data->pixfc->convert)(data->pixfc, src, dest);
+					else
+						v4lconvert_yuyv_to_bgr24(src, dest, width, height);
+					break;
+				case V4L2_PIX_FMT_YUV420:
+					v4lconvert_yuyv_to_yuv420(src, dest, width, height, 0);
+					break;
+				case V4L2_PIX_FMT_YVU420:
+					v4lconvert_yuyv_to_yuv420(src, dest, width, height, 1);
+					break;
+			}
+			if (src_size < (width * height * 2)) {
+				V4LCONVERT_ERR("short yuyv data frame\n");
+				errno = EPIPE;
+				result = -1;
+			}
 			break;
-		case V4L2_PIX_FMT_BGR24:
-			v4lconvert_rgb565_to_bgr24(src, dest, width, height);
-			break;
-		case V4L2_PIX_FMT_YUV420:
-			v4lconvert_rgb565_to_yuv420(src, dest, fmt, 0);
-			break;
-		case V4L2_PIX_FMT_YVU420:
-			v4lconvert_rgb565_to_yuv420(src, dest, fmt, 1);
-			break;
-		}
-		if (src_size < (width * height * 2)) {
-			V4LCONVERT_ERR("short rgb565 data frame\n");
-			errno = EPIPE;
-			result = -1;
-		}
-		break;
 
-	case V4L2_PIX_FMT_RGB24:
-		switch (dest_pix_fmt) {
-		case V4L2_PIX_FMT_RGB24:
-			memcpy(dest, src, width * height * 3);
+		case V4L2_PIX_FMT_YVYU:
+			switch (dest_pix_fmt) {
+				case V4L2_PIX_FMT_RGB24:
+					v4lconvert_yvyu_to_rgb24(src, dest, width, height);
+					break;
+				case V4L2_PIX_FMT_BGR24:
+					v4lconvert_yvyu_to_bgr24(src, dest, width, height);
+					break;
+				case V4L2_PIX_FMT_YUV420:
+					/* Note we use yuyv_to_yuv420 not v4lconvert_yvyu_to_yuv420,
+					   with the last argument reversed to make it have as we want */
+					v4lconvert_yuyv_to_yuv420(src, dest, width, height, 1);
+					break;
+				case V4L2_PIX_FMT_YVU420:
+					v4lconvert_yuyv_to_yuv420(src, dest, width, height, 0);
+					break;
+			}
+			if (src_size < (width * height * 2)) {
+				V4LCONVERT_ERR("short yvyu data frame\n");
+				errno = EPIPE;
+				result = -1;
+			}
 			break;
-		case V4L2_PIX_FMT_BGR24:
-			v4lconvert_swap_rgb(src, dest, width, height);
-			break;
-		case V4L2_PIX_FMT_YUV420:
-			refresh_pixfc(data, width, height, PixFcRGB24, PixFcYUV420P);
-			if (data->pixfc)
-				(*data->pixfc->convert)(data->pixfc, src, dest);
-			else
-				v4lconvert_rgb24_to_yuv420(src, dest, fmt, 0, 0);
-			break;
-		case V4L2_PIX_FMT_YVU420:
-			v4lconvert_rgb24_to_yuv420(src, dest, fmt, 0, 1);
-			break;
-		}
-		if (src_size < (width * height * 3)) {
-			V4LCONVERT_ERR("short rgb24 data frame\n");
-			errno = EPIPE;
-			result = -1;
-		}
-		break;
 
-	case V4L2_PIX_FMT_BGR24:
-		switch (dest_pix_fmt) {
-		case V4L2_PIX_FMT_RGB24:
-			v4lconvert_swap_rgb(src, dest, width, height);
+		case V4L2_PIX_FMT_UYVY:
+			switch (dest_pix_fmt) {
+				case V4L2_PIX_FMT_RGB24:
+					refresh_pixfc(data, width, height, PixFcUYVY, PixFcRGB24);
+					if (data->pixfc)
+						(*data->pixfc->convert)(data->pixfc, src, dest);
+					else
+						v4lconvert_uyvy_to_rgb24(src, dest, width, height);
+					break;
+				case V4L2_PIX_FMT_BGR24:
+					refresh_pixfc(data, width, height, PixFcUYVY, PixFcBGR24);
+					if (data->pixfc)
+						(*data->pixfc->convert)(data->pixfc, src, dest);
+					else
+						v4lconvert_uyvy_to_bgr24(src, dest, width, height);
+					break;
+				case V4L2_PIX_FMT_YUV420:
+					v4lconvert_uyvy_to_yuv420(src, dest, width, height, 0);
+					break;
+				case V4L2_PIX_FMT_YVU420:
+					v4lconvert_uyvy_to_yuv420(src, dest, width, height, 1);
+					break;
+			}
+			if (src_size < (width * height * 2)) {
+				V4LCONVERT_ERR("short uyvy data frame\n");
+				errno = EPIPE;
+				result = -1;
+			}
 			break;
-		case V4L2_PIX_FMT_BGR24:
-			memcpy(dest, src, width * height * 3);
-			break;
-		case V4L2_PIX_FMT_YUV420:
-			refresh_pixfc(data, width, height, PixFcBGR24, PixFcYUV420P);
-			if (data->pixfc)
-				(*data->pixfc->convert)(data->pixfc, src, dest);
-			else
-				v4lconvert_rgb24_to_yuv420(src, dest, fmt, 1, 0);
-			break;
-		case V4L2_PIX_FMT_YVU420:
-			v4lconvert_rgb24_to_yuv420(src, dest, fmt, 1, 1);
-			break;
-		}
-		if (src_size < (width * height * 3)) {
-			V4LCONVERT_ERR("short bgr24 data frame\n");
-			errno = EPIPE;
-			result = -1;
-		}
-		break;
 
-	case V4L2_PIX_FMT_YUV420:
-		switch (dest_pix_fmt) {
-		case V4L2_PIX_FMT_RGB24:
-			refresh_pixfc(data, width, height, PixFcYUV420P, PixFcRGB24);
-			if (data->pixfc)
-				(*data->pixfc->convert)(data->pixfc, src, dest);
-			else
-				v4lconvert_yuv420_to_rgb24(src, dest, width,
-					height, 0);
-			break;
-		case V4L2_PIX_FMT_BGR24:
-			refresh_pixfc(data, width, height, PixFcYUV420P, PixFcBGR24);
-			if (data->pixfc)
-				(*data->pixfc->convert)(data->pixfc, src, dest);
-			else
-				v4lconvert_yuv420_to_bgr24(src, dest, width,
-					height, 0);
-			break;
-		case V4L2_PIX_FMT_YUV420:
-			memcpy(dest, src, width * height * 3 / 2);
-			break;
-		case V4L2_PIX_FMT_YVU420:
-			v4lconvert_swap_uv(src, dest, fmt);
-			break;
-		}
-		if (src_size < (width * height * 3 / 2)) {
-			V4LCONVERT_ERR("short yuv420 data frame\n");
-			errno = EPIPE;
-			result = -1;
-		}
-		break;
-
-	case V4L2_PIX_FMT_YVU420:
-		switch (dest_pix_fmt) {
-		case V4L2_PIX_FMT_RGB24:
-			v4lconvert_yuv420_to_rgb24(src, dest, width,
-					height, 1);
-			break;
-		case V4L2_PIX_FMT_BGR24:
-			v4lconvert_yuv420_to_bgr24(src, dest, width,
-					height, 1);
-			break;
-		case V4L2_PIX_FMT_YUV420:
-			v4lconvert_swap_uv(src, dest, fmt);
-			break;
-		case V4L2_PIX_FMT_YVU420:
-			memcpy(dest, src, width * height * 3 / 2);
-			break;
-		}
-		if (src_size < (width * height * 3 / 2)) {
-			V4LCONVERT_ERR("short yvu420 data frame\n");
-			errno = EPIPE;
-			result = -1;
-		}
-		break;
-
-	case V4L2_PIX_FMT_YUYV:
-		switch (dest_pix_fmt) {
-		case V4L2_PIX_FMT_RGB24:
-			refresh_pixfc(data, width, height, PixFcYUYV, PixFcRGB24);
-			if (data->pixfc)
-				(*data->pixfc->convert)(data->pixfc, src, dest);
-			else
-				v4lconvert_yuyv_to_rgb24(src, dest, width, height);
-			break;
-		case V4L2_PIX_FMT_BGR24:
-			refresh_pixfc(data, width, height, PixFcYUYV, PixFcBGR24);
-			if (data->pixfc)
-				(*data->pixfc->convert)(data->pixfc, src, dest);
-			else
-				v4lconvert_yuyv_to_bgr24(src, dest, width, height);
-			break;
-		case V4L2_PIX_FMT_YUV420:
-			v4lconvert_yuyv_to_yuv420(src, dest, width, height, 0);
-			break;
-		case V4L2_PIX_FMT_YVU420:
-			v4lconvert_yuyv_to_yuv420(src, dest, width, height, 1);
-			break;
-		}
-		if (src_size < (width * height * 2)) {
-			V4LCONVERT_ERR("short yuyv data frame\n");
-			errno = EPIPE;
-			result = -1;
-		}
-		break;
-
-	case V4L2_PIX_FMT_YVYU:
-		switch (dest_pix_fmt) {
-		case V4L2_PIX_FMT_RGB24:
-			v4lconvert_yvyu_to_rgb24(src, dest, width, height);
-			break;
-		case V4L2_PIX_FMT_BGR24:
-			v4lconvert_yvyu_to_bgr24(src, dest, width, height);
-			break;
-		case V4L2_PIX_FMT_YUV420:
-			/* Note we use yuyv_to_yuv420 not v4lconvert_yvyu_to_yuv420,
-			   with the last argument reversed to make it have as we want */
-			v4lconvert_yuyv_to_yuv420(src, dest, width, height, 1);
-			break;
-		case V4L2_PIX_FMT_YVU420:
-			v4lconvert_yuyv_to_yuv420(src, dest, width, height, 0);
-			break;
-		}
-		if (src_size < (width * height * 2)) {
-			V4LCONVERT_ERR("short yvyu data frame\n");
-			errno = EPIPE;
-			result = -1;
-		}
-		break;
-
-	case V4L2_PIX_FMT_UYVY:
-		switch (dest_pix_fmt) {
-		case V4L2_PIX_FMT_RGB24:
-			refresh_pixfc(data, width, height, PixFcUYVY, PixFcRGB24);
-			if (data->pixfc)
-				(*data->pixfc->convert)(data->pixfc, src, dest);
-			else
-				v4lconvert_uyvy_to_rgb24(src, dest, width, height);
-			break;
-		case V4L2_PIX_FMT_BGR24:
-			refresh_pixfc(data, width, height, PixFcUYVY, PixFcBGR24);
-			if (data->pixfc)
-				(*data->pixfc->convert)(data->pixfc, src, dest);
-			else
-				v4lconvert_uyvy_to_bgr24(src, dest, width, height);
-			break;
-		case V4L2_PIX_FMT_YUV420:
-			v4lconvert_uyvy_to_yuv420(src, dest, width, height, 0);
-			break;
-		case V4L2_PIX_FMT_YVU420:
-			v4lconvert_uyvy_to_yuv420(src, dest, width, height, 1);
-			break;
-		}
-		if (src_size < (width * height * 2)) {
-			V4LCONVERT_ERR("short uyvy data frame\n");
-			errno = EPIPE;
-			result = -1;
-		}
-		break;
-
-	default:
-		V4LCONVERT_ERR("Unknown src format in conversion\n");
-		errno = EINVAL;
-		return -1;
+		default:
+			V4LCONVERT_ERR("Unknown src format in conversion\n");
+			errno = EINVAL;
+			return -1;
 	}
 
 	fmt->fmt.pix.pixelformat = dest_pix_fmt;
