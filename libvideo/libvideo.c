@@ -119,19 +119,19 @@ int close_device(struct video_device *vdev) {
 	//TODO: try and release info, capture and controls instead of failing
 	//check that we have released the info, capture and controls stuff
 	if(vdev->info) {
-		dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_ERR, "VD: Cant close device file %s - device info data not released\n", vdev->file);
+		dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_ERR, "VD: Can't close device file %s - device info data not released\n", vdev->file);
 		return LIBVIDEO_ERR_INFO_IN_USE;
 	}
 	if(vdev->capture) {
-		dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_ERR, "VD: Cant close device file %s - capture interface not released\n", vdev->file);
+		dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_ERR, "VD: Can't close device file %s - capture interface not released\n", vdev->file);
 		return LIBVIDEO_ERR_CAPTURE_IN_USE;
 	}
 	if(vdev->control) {
-		dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_ERR, "VD: Cant close device file %s - control interface not released\n", vdev->file);
+		dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_ERR, "VD: Can't close device file %s - control interface not released\n", vdev->file);
 		return LIBVIDEO_ERR_CONTROL_IN_USE;
 	}
 	if(vdev->tuner_action) {
-		dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_ERR, "VD: Cant close device file %s - tuner action not released\n", vdev->file);
+		dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_ERR, "VD: Can't close device file %s - tuner action not released\n", vdev->file);
 		return LIBVIDEO_ERR_TUNER_IN_USE;
 	}
 

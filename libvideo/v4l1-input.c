@@ -334,9 +334,8 @@ int init_capture_v4l1(struct video_device *vdev) {
 
 	c->mmap->buffers[0].start = mmap(NULL, vm.size, PROT_READ, MAP_SHARED, vdev->fd, 0);
 
-	if(MAP_FAILED == c->mmap->buffers[0].start){
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
-				"CAP: Cant allocate mmap'ed memory\n");
+	if(MAP_FAILED == c->mmap->buffers[0].start) {
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: Can't allocate mmap'ed memory\n");
 		return LIBVIDEO_ERR_MMAP_BUF;
 	}
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
@@ -366,7 +365,7 @@ int start_capture_v4l1(struct video_device *vdev) {
 
 	if(-1 == ioctl(vdev->fd, VIDIOCMCAPTURE, &mm))	{
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
-				"CAP: Cant start the capture\n");
+				"CAP: Can't start the capture\n");
 		return LIBVIDEO_ERR_IOCTL;
 	}
 	c->mmap->tmp = 0;
@@ -391,11 +390,9 @@ void *dequeue_buffer_v4l1(struct video_device *vdev, unsigned int *len, unsigned
 	mm.height = c->height;
 	mm.format = libvideo_palettes[c->real_v4l1_palette].v4l1_palette;
 
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
-			"CAP: Starting capture of next frame (%d)\n", next_frame);
-	if(-1 == ioctl(vdev->fd, VIDIOCMCAPTURE, &mm)){
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
-				"CAP: Cant initiate the capture of next frame\n");
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2, "CAP: Starting capture of next frame (%d)\n", next_frame);
+	if(ioctl(vdev->fd, VIDIOCMCAPTURE, &mm) == -1){
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: Can't initiate the capture of next frame\n");
 		*len = 0;
 		return NULL;
 	}
