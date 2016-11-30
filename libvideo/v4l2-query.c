@@ -575,7 +575,7 @@ int query_device_v4l2(struct video_device *vdev) {
 	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: Querying V4L2 device.\n");
 	
 	struct v4l2_capability caps;
-	if (check_v4l2(vdev->fd, &caps) == -1) {
+	if (!check_v4l2(vdev->fd, &caps)) {
 		info("Error checking capabilities of V4L2 video device %s\n", vdev->file);
 		return LIBVIDEO_ERR_NOCAPS;
 	}
@@ -584,7 +584,7 @@ int query_device_v4l2(struct video_device *vdev) {
 	strncpy(vdev->info->name, (char *) caps.card, NAME_FIELD_LENGTH);
 
 	//fill input field
-	if(check_inputs_v4l2(vdev) == -1) {
+	if(check_inputs_v4l2(vdev) != LIBVIDEO_ERR_SUCCESS) {
 		info("Error checking available inputs on V4L2 video device %s\n", vdev->file);
 		return LIBVIDEO_ERR_NOCAPS;
 	}

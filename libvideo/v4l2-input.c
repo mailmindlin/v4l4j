@@ -46,21 +46,19 @@
 #define USEC_PER_SEC			1000000
 #endif
 
-int check_v4l2(int fd, struct v4l2_capability* caps) {
-	return ioctl(fd, VIDIOC_QUERYCAP, caps);
+bool check_v4l2(int fd, struct v4l2_capability* caps) {
+	return ioctl(fd, VIDIOC_QUERYCAP, caps) >= 0;
 }
 
-int check_capture_capabilities_v4l2(int fd, char *file) {
+bool check_capture_capabilities_v4l2(int fd, char *file) {
 	struct v4l2_capability cap;
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-			"CAP: Checking capture device\n");
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: Checking capture device\n");
 
 	CLEAR(cap);
 
-	if (-1 == check_v4l2(fd, &cap)) {
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
-				"CAP: Not a V4L2 device.\n");
-		return -1;
+	if (!check_v4l2(fd, &cap)) {
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: Not a V4L2 device.\n");
+		return FALSE;
 	}
 
 	if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
@@ -68,7 +66,7 @@ int check_capture_capabilities_v4l2(int fd, char *file) {
 		PRINT_REPORT_ERROR();
 		info("Listing the reported capabilities:\n");
 		list_cap_v4l2(fd);
-		return -1;
+		return FALSE;
 	}
 
 	if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
@@ -76,10 +74,10 @@ int check_capture_capabilities_v4l2(int fd, char *file) {
 		PRINT_REPORT_ERROR();
 		info("Listing the reported capabilities:\n");
 		list_cap_v4l2(fd);
-		return -1;
+		return FALSE;
 	}
 
-	return 0;
+	return TRUE;
 }
 
 static bool try_std(int fd, unsigned int standard){

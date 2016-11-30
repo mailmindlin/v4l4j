@@ -45,7 +45,7 @@ bool check_v4l1(int fd, struct video_capability *);
 
 //Check whether the device is V4L1 and has capture and mmap capabilities
 // get capabilities VIDIOCGCAP - check max height and width
-int check_capture_capabilities_v4l1(int, char *);
+bool check_capture_capabilities_v4l1(int, char *);
 
 // set the capture parameters trying the capturing in the native palette (last arg ignored)
 int set_cap_param_v4l1(struct video_device *vdev, unsigned int src_palette, unsigned int palette);

@@ -25,6 +25,7 @@
 #ifndef H_V4L2_INPUT
 #define H_V4L2_INPUT
 
+#include <stdbool.h>
 #include "libvideo.h"
 
 
@@ -36,10 +37,10 @@
  */
 
 //Check whether the supplied device file is a v4l2 device
-int check_v4l2(int fd, struct v4l2_capability *);
+bool; check_v4l2(int fd, struct v4l2_capability *);
 
 //Check whether the device is V4L2 and has capture and mmap capabilities
-int check_capture_capabilities_v4l2(int, char *);
+bool check_capture_capabilities_v4l2(int, char *);
 
 // set the capture parameters (hardcoded to require YUV420 for now
 int set_cap_param_v4l2(struct video_device *vdev, unsigned int src_palette, unsigned int dest_palette);

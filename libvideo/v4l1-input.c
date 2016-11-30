@@ -39,29 +39,26 @@ bool check_v4l1(int fd, struct video_capability *vc) {
 
 //Check whether the device is V4L1 and has capture and mmap capabilities
 // get capabilities VIDIOCGCAP - check max height and width
-int check_capture_capabilities_v4l1(int fd, char *file) {
+bool check_capture_capabilities_v4l1(int fd, char *file) {
 	struct video_capability vc;
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-			"CAP: Checking capture device\n");
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: Checking capture device\n");
 
 	CLEAR(vc);
 
-	if (check_v4l1(fd, &vc)!=0){
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
-				"CAP: Not a V4L1 device.\n");
-		return -1;
+	if (!check_v4l1(fd, &vc)){
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: Not a V4L1 device.\n");
+		return FALSE;
 	}
 
 	if (!(vc.type & VID_TYPE_CAPTURE)) {
-		info("The device %s seems to be a valid V4L1 device but without ",file);
-		info("capture capability\n.");
+		info("The device %s seems to be a valid V4L1 device but without capture capability\n",file);
 		PRINT_REPORT_ERROR();
 		info("Listing the reported capabilities:\n");
 		list_cap_v4l1(fd);
-		return -1;
+		return FALSE;
 	}
 
-	return 0;
+	return TRUE;
 }
 
 // set the capture parameters
