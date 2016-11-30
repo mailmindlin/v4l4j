@@ -322,8 +322,6 @@ static bool get_current_resolution(struct video_device *vdev, unsigned int *widt
 //checks with libv4l_convert if it is converted from another palette
 //it returns 0 if everything went fine, LIBVIDEO_ERR_IOCTL otherwise
 static int add_supported_palette(struct video_device *vdev, struct device_info *di, unsigned int fmt) {
-	struct v4l2_format dst, src;
-	
 	di->nb_palettes++;
 	XREALLOC(di->palettes, struct palette_info *, di->nb_palettes * sizeof(struct palette_info));
 
@@ -337,6 +335,7 @@ static int add_supported_palette(struct video_device *vdev, struct device_info *
 	unsigned int width = 640;
 	unsigned int height = 480;
 	get_current_resolution(vdev, &width, &height);
+	struct v4l2_format dst, src;
 	if(try_format(fmt, width, height, &dst, &src, di->convert) != 0) {
 		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_ERR, "QRY: Error checking palette %s (libv4l convert says: %s)\n",
 				libvideo_palettes[fmt].name,
@@ -423,7 +422,7 @@ static int check_palettes_v4l2(struct video_device *vdev) {
 	fmtd.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	fmtd.index = 0;
 	
-	while(v4lconvert_enum_fmt(vdev->info->convert, &fmtd) >= 0) {
+	for (fmtd.index = 0; v4lconvert_enum_fmt(vdev->info->convert, &fmtd) >= 0; fmtd.index++) {
 		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "{index:%u,type:%u,flags:%u,description:'%s',pixelformat:%x}\n", fmtd.index,fmtd.type,fmtd.flags,fmtd.description,fmtd.pixelformat);
 		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, "QRY: looking for palette %c%c%c%c (%#06x)\n", v4l2_fourcc_chars(fmtd.pixelformat), fmtd.pixelformat);
 		
@@ -437,11 +436,9 @@ static int check_palettes_v4l2(struct video_device *vdev) {
 				return LIBVIDEO_ERR_IOCTL;
 			}
 		} else {
-			info("libvideo has skipped an unsupported image format:\n");
-			info("%s (%#x)\n", fmtd.description, fmtd.pixelformat);
+			info("libvideo has skipped an unsupported image format:%s (%#x)\n", fmtd.description, fmtd.pixelformat);
 			PRINT_REPORT_ERROR();
 		}
-		fmtd.index++;
 	}
 	
 	return (signed) vdev->info->nb_palettes;
@@ -556,7 +553,7 @@ static inline int check_inputs_v4l2(struct video_device *vdev) {
 
 	}
 	
-	return 0;
+	return LIBVIDEO_ERR_SUCCESS;
 }
 
 //this function enumerates the frame intervals for a given libvideo video format
