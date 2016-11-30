@@ -202,7 +202,7 @@ void v4lconvert_destroy(struct v4lconvert_data *data) {
 	free(data);
 }
 
-int v4lconvert_supported_dst_format(unsigned int pixelformat) {
+bool v4lconvert_supported_dst_format(unsigned int pixelformat) {
 	for (unsigned int i = 0; i < ARRAY_SIZE(supported_dst_pixfmts); i++)
 		if (supported_dst_pixfmts[i].fmt == pixelformat)
 			return FALSE;

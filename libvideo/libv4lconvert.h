@@ -112,7 +112,7 @@ LIBV4L_PUBLIC int v4lconvert_vidioc_s_ctrl(struct v4lconvert_data *data,
 		void *arg);
 
 /* Is the passed in pixelformat supported as destination format? */
-LIBV4L_PUBLIC int v4lconvert_supported_dst_format(unsigned int pixelformat);
+LIBV4L_PUBLIC bool v4lconvert_supported_dst_format(unsigned int pixelformat);
 
 /* Get/set the no fps libv4lconvert uses to decide if a compressed format
    must be used as src fmt to stay within the bus bandwidth */
