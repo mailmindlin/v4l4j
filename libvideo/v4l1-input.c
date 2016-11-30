@@ -24,6 +24,7 @@
 
 #include <sys/ioctl.h>		//for ioctl
 #include <sys/mman.h>		//for mmap
+#include <stdbool.h>
 #include "videodev2.h"
 #include "videodev.h"
 #include "libvideo.h"
@@ -87,10 +88,10 @@ int set_cap_param_v4l1(struct video_device *vdev, unsigned int src_palette, unsi
 	}
 
 	//dont fail if requested width/height outside the allowed range
-	if(c->width==MAX_WIDTH || c->width > vc.maxwidth)
-		c->width=vc.maxwidth;
+	if(c->width == MAX_WIDTH || c->width > vc.maxwidth)
+		c->width = vc.maxwidth;
 
-	if(c->height==MAX_HEIGHT || c->height > vc.maxheight)
+	if(c->height == MAX_HEIGHT || c->height > vc.maxheight)
 		c->height=vc.maxheight;
 
 	if(c->width < vc.minwidth)
@@ -101,22 +102,21 @@ int set_cap_param_v4l1(struct video_device *vdev, unsigned int src_palette, unsi
 
 	//Select the input channel
 	chan.channel = c->channel;
-	switch( c->std )
-	{
-	case NTSC:
-		chan.norm = VIDEO_MODE_NTSC;
-		break;
-	case PAL:
-		chan.norm = VIDEO_MODE_PAL;
-		break;
-	case SECAM:
-		chan.norm = VIDEO_MODE_SECAM;
-		break;
-	default:
-		chan.norm = VIDEO_MODE_AUTO;
-		break;
+	switch( c->std ) {
+		case NTSC:
+			chan.norm = VIDEO_MODE_NTSC;
+			break;
+		case PAL:
+			chan.norm = VIDEO_MODE_PAL;
+			break;
+		case SECAM:
+			chan.norm = VIDEO_MODE_SECAM;
+			break;
+		default:
+			chan.norm = VIDEO_MODE_AUTO;
+			break;
 	}
-	if (-1 == ioctl( vdev->fd, VIDIOCSCHAN, &chan )) {
+	if (ioctl( vdev->fd, VIDIOCSCHAN, &chan) == -1) {
 		info("The desired input channel(%d)/standard(%d) cannot be selected\n", c->channel, c->std);
 		info("Listing the reported capabilities:\n");
 		list_cap_v4l1(vdev->fd);
@@ -124,23 +124,23 @@ int set_cap_param_v4l1(struct video_device *vdev, unsigned int src_palette, unsi
 	}
 	//check for tuner
 	chan.channel = c->channel;
-	if (-1 == ioctl( vdev->fd, VIDIOCGCHAN, &chan )) {
+	if (ioctl( vdev->fd, VIDIOCGCHAN, &chan) == -1) {
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: cannot get the current channel info\n");
 		return LIBVIDEO_ERR_CHAN_SETUP;
 	}
-	if(chan.tuners > 1){
+	if(chan.tuners > 1) {
 		//v4l1 weirdness
 		//support only 1 tuner per input
 		c->tuner_nb = -1;
-	} else if(chan.tuners == 1)
+	} else if(chan.tuners == 1) {
 		c->tuner_nb = 0;
-	else
+	} else {
 		c->tuner_nb = -1;
-
+	}
 
 
 	//query the current image format
-	if(-1 == ioctl(vdev->fd, VIDIOCGPICT, &pict)) {
+	if(ioctl(vdev->fd, VIDIOCGPICT, &pict) == -1) {
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: cannot get the current palette format\n");
 		return LIBVIDEO_ERR_IOCTL;
 	}
@@ -148,8 +148,7 @@ int set_cap_param_v4l1(struct video_device *vdev, unsigned int src_palette, unsi
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: applying image format\n");
 
 	if(palette==VIDEO_PALETTE_UNDEFINED_V4L1) {
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: palette %s not V4L1-compatible\n",
-				libvideo_palettes[palette].name);
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: palette %s not V4L1-compatible\n", libvideo_palettes[palette].name);
 		return LIBVIDEO_ERR_FORMAT;
 	}
 
@@ -164,15 +163,13 @@ int set_cap_param_v4l1(struct video_device *vdev, unsigned int src_palette, unsi
 	if(palette == YUV420) {
 		pict.palette = VIDEO_PALETTE_YUV420P;
 		pict.depth = libvideo_palettes[palette].depth;
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1, "CAP: trying palette %s (%d) - depth %d...\n",
-				"YUV420-workaround", YUV420, pict.depth);
-
-		if(0 == ioctl(vdev->fd, VIDIOCSPICT, &pict)){
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1, "CAP: trying palette YUV420-workaround (%d) - depth %d...\n", YUV420, pict.depth);
+		
+		if(ioctl(vdev->fd, VIDIOCSPICT, &pict) == 0){
 			c->palette = YUV420;
 			c->real_v4l1_palette = YUV420P;
-			c->imagesize  = c->width*c->height*pict.depth / 8;
-			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: palette %s (%d) accepted - image size: %d\n",
-				"YUV420-workaround", YUV420, c->imagesize);
+			c->imagesize = c->width * c->height * pict.depth / 8;
+			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: palette YUV420-workaround (%d) accepted - image size: %d\n", YUV420, c->imagesize);
 		} else {
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "Palette not supported\n");
 			return LIBVIDEO_ERR_FORMAT;
@@ -182,34 +179,34 @@ int set_cap_param_v4l1(struct video_device *vdev, unsigned int src_palette, unsi
 		pict.depth = libvideo_palettes[palette].depth;
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1, "CAP: trying palette %s (%d) - depth %d...\n", "YUYV-workaround", YUYV, pict.depth);
 
-		if(0 == ioctl(vdev->fd, VIDIOCSPICT, &pict)){
+		if(ioctl(vdev->fd, VIDIOCSPICT, &pict) == 0) {
 			c->palette = YUYV;
 			c->real_v4l1_palette = YUV422;
-			c->imagesize  = c->width*c->height*pict.depth / 8;
+			c->imagesize = c->width * c->height * pict.depth / 8;
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: palette %s (%d) accepted - image size: %d\n", "YUYV-workaround", YUYV, c->imagesize);
 		}  else {
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "Palette not supported\n");
 			return LIBVIDEO_ERR_FORMAT;
 		}
-	} else	if(palette == YUV411) {
+	} else if(palette == YUV411) {
 		pict.palette = VIDEO_PALETTE_YUV411P;
 		pict.depth = libvideo_palettes[palette].depth;
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1, "CAP: trying palette %s (%d) - depth %d...\n", "YUV411-workaround", YUV411, pict.depth);
 
-		if(0 == ioctl(vdev->fd, VIDIOCSPICT, &pict)){
+		if(ioctl(vdev->fd, VIDIOCSPICT, &pict) == 0) {
 			c->palette = YUV411;
 			c->real_v4l1_palette = YUV411P;
-			c->imagesize  = c->width*c->height*pict.depth / 8;
-			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: palette %s (%d) accepted - image size: %d\n", "YUYV-workaround", YUYV, c->imagesize);
+			c->imagesize = c->width * c->height * pict.depth / 8;
+			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: palette %s (%d) accepted - image size: %d\n", "YUV411-workaround", YUYV, c->imagesize);
 		} else {
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "Palette not supported\n");
 			return LIBVIDEO_ERR_FORMAT;
 		}
 	} else {
-		if(0 == ioctl(vdev->fd, VIDIOCSPICT, &pict)){
+		if(ioctl(vdev->fd, VIDIOCSPICT, &pict) == 0) {
 			c->palette = palette;
 			c->real_v4l1_palette = palette;
-			c->imagesize  = c->width*c->height*pict.depth / 8;
+			c->imagesize = c->width * c->height * pict.depth / 8;
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: palette %s (%d) accepted - image size: %d\n", libvideo_palettes[palette].name, palette, c->imagesize);
 		}  else {
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "Palette not supported\n");
@@ -317,7 +314,7 @@ int init_capture_v4l1(struct video_device *vdev) {
 
 	if(vm.frames > 2) {
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: Using only 2 buffers\n");
-	} else if (vm.frames<2) {
+	} else if (vm.frames < 2) {
 		//although it wont require much fixing...
 		//do drivers allocate only 1 buffer anyway ?
 		info("The video driver returned an unsupported number of MMAP buffers(%d).\n", vm.frames);
@@ -335,8 +332,7 @@ int init_capture_v4l1(struct video_device *vdev) {
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: Can't allocate mmap'ed memory\n");
 		return LIBVIDEO_ERR_MMAP_BUF;
 	}
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-			"CAP: mmap'ed %d bytes at %p\n", vm.size, c->mmap->buffers[0].start);
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: mmap'ed %d bytes at %p\n", vm.size, c->mmap->buffers[0].start);
 
 	c->mmap->v4l1_mmap_size = vm.size;
 	c->mmap->buffers[1].start =(void *)c->mmap->buffers[0].start + vm.offsets[1];
@@ -396,7 +392,7 @@ void *dequeue_buffer_v4l1(struct video_device *vdev, unsigned int *len, unsigned
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
 			"CAP: Waiting for frame (%d)\n", curr_frame);
-	if(-1 == ioctl(vdev->fd, VIDIOCSYNC, &curr_frame)){
+	if(ioctl(vdev->fd, VIDIOCSYNC, &curr_frame) == -1){
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
 				"CAP: Error waiting for next frame(%d)\n", curr_frame);
 		*len = 0;
@@ -428,8 +424,7 @@ void free_capture_v4l1(struct video_device *vdev) {
 
 	if (-1 == munmap(vdev->capture->mmap->buffers[0].start,
 			(size_t) vdev->capture->mmap->v4l1_mmap_size))
-			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
-					"CAP: error unmapping mmap'ed buffer\n");
+			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: error unmapping mmap'ed buffer\n");
 
 	XFREE(vdev->capture->mmap->buffers);
 }
