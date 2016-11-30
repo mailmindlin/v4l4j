@@ -108,10 +108,6 @@ struct v4lconvert_data *v4lconvert_create(int fd) {
 	unsigned int i, j;
 	struct v4lconvert_data *data = calloc(1, sizeof(struct v4lconvert_data));
 	struct v4l2_capability cap;
-	/* This keeps tracks of devices which have only formats for which apps
-	   most likely will need conversion and we can thus safely add software
-	   processing controls without a performance impact. */
-	int always_needs_conversion = 1;
 
 	if (!data) {
 		fprintf(stderr, "libv4lconvert: error: out of memory!\n");
@@ -123,6 +119,11 @@ struct v4lconvert_data *v4lconvert_create(int fd) {
 	data->fd = fd;
 	data->decompress_pid = -1;
 	data->fps = 30;
+	
+	/* This keeps tracks of devices which have only formats for which apps
+	   most likely will need conversion and we can thus safely add software
+	   processing controls without a performance impact. */
+	bool always_needs_conversion = TRUE;
 
 	/* Check supported formats */
 	for (i = 0; ; i++) {
@@ -141,9 +142,9 @@ struct v4lconvert_data *v4lconvert_create(int fd) {
 			data->supported_src_formats |= 1 << j;
 			v4lconvert_get_framesizes(data, fmt.pixelformat, j);
 			if (!supported_src_pixfmts[j].needs_conversion)
-				always_needs_conversion = 0;
+				always_needs_conversion = FALSE;
 		} else
-			always_needs_conversion = 0;
+			always_needs_conversion = FALSE;
 	}
 
 	data->no_formats = i;
@@ -154,7 +155,7 @@ struct v4lconvert_data *v4lconvert_create(int fd) {
 			data->flags |= V4LCONVERT_IS_UVC;
 
 		if ((cap.capabilities & 0xff) & ~V4L2_CAP_VIDEO_CAPTURE)
-			always_needs_conversion = 0;
+			always_needs_conversion = FALSE;
 	}
 
 	data->control = v4lcontrol_create(fd, always_needs_conversion);
