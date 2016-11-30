@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <stdint.h>
 #include "../utils.h"
+#include "../log.h"
 #include "libv4lconvert.h"
 #include "libv4lconvert-priv.h"
 #include "libv4lsyscall-priv.h"
@@ -220,7 +221,9 @@ int v4lconvert_supported_dst_fmt_only(struct v4lconvert_data *data) {
 int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt) {
 	unsigned int faked_fmts[ARRAY_SIZE(supported_dst_pixfmts)];
 
-	if (fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE || (!v4lconvert_supported_dst_fmt_only(data) && fmt->index < data->no_formats))
+	if (fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE || (!v4lconvert_supported_dst_fmt_only(data) && fmt->index < data->no_formats)) {
+		// Return a 'real' format
+		dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG, "Returning native format #%u\n", fmt->index);
 		return SYS_IOCTL(data->fd, VIDIOC_ENUM_FMT, fmt);
 	
 	unsigned int no_faked_fmts = 0;
@@ -248,6 +251,8 @@ int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt) 
 	fmt->description[4] = '\0';
 	memset(fmt->reserved, 0, sizeof(fmt->reserved));
 
+	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG, "Returning emulated format {id: %d, flags: %u, pixelformat: %#x, description:'%s'}\n"
+			fmt->id, fmt->flags, fmt->pixelformat, fmt->description);
 	return 0;
 }
 
@@ -288,14 +293,13 @@ static int v4lconvert_get_rank(struct v4lconvert_data *data, unsigned int src_in
 	unsigned int needed = src_width * src_height * data->fps * supported_src_pixfmts[src_index].bpp / 8;
 	if (data->bandwidth && needed > data->bandwidth)
 		rank += 10;
-#if 0
-	printf("ranked: %c%c%c%c for %dx%d @ %d fps, needed: %d, bandwidth: %d, rank: %d\n",
+	
+	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG2, "ranked: %c%c%c%c for %dx%d @ %d fps, needed: %d, bandwidth: %d, rank: %d\n",
 	       supported_src_pixfmts[src_index].fmt & 0xff,
 	       (supported_src_pixfmts[src_index].fmt >> 8) & 0xff,
 	       (supported_src_pixfmts[src_index].fmt >> 16) & 0xff,
 	       supported_src_pixfmts[src_index].fmt >> 24, src_width,
 	       src_height, data->fps, needed, data->bandwidth, rank);
-#endif
 	return rank;
 }
 
