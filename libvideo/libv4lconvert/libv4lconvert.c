@@ -225,29 +225,31 @@ int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt) 
 		// Return a 'real' format
 		dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG, "Returning native format #%u\n", fmt->index);
 		return SYS_IOCTL(data->fd, VIDIOC_ENUM_FMT, fmt);
+	}
 	
+	// We ran out of 'real' formats, so start choosing emulated ones.
 	unsigned int no_faked_fmts = 0;
 	for (unsigned int i = 0; i < ARRAY_SIZE(supported_dst_pixfmts); i++)
-		if (v4lconvert_supported_dst_fmt_only(data) || !(data->supported_src_formats & (1 << i))) {
-			faked_fmts[no_faked_fmts] = supported_dst_pixfmts[i].fmt;
-			no_faked_fmts++;
-		}
+		if (v4lconvert_supported_dst_fmt_only(data) || !(data->supported_src_formats & (1 << i)))
+			faked_fmts[no_faked_fmts++] = supported_dst_pixfmts[i].fmt;
 
+	// Get index into the 'faked_fmts'
 	unsigned int i = fmt->index;
 	if (!v4lconvert_supported_dst_fmt_only(data))
 		i -= data->no_formats;
-
+	
 	if (i >= no_faked_fmts) {
+		//We ran out of faked formats
 		errno = EINVAL;
 		return -1;
 	}
-
+	
 	fmt->flags = V4L2_FMT_FLAG_EMULATED;
 	fmt->pixelformat = faked_fmts[i];
-	fmt->description[0] = faked_fmts[i] & 0xff;
-	fmt->description[1] = (faked_fmts[i] >> 8) & 0xff;
+	fmt->description[0] = (faked_fmts[i] >>  0) & 0xff;
+	fmt->description[1] = (faked_fmts[i] >>  8) & 0xff;
 	fmt->description[2] = (faked_fmts[i] >> 16) & 0xff;
-	fmt->description[3] = (u8) (faked_fmts[i] >> 24);
+	fmt->description[3] = (faked_fmts[i] >> 24) & 0xff;
 	fmt->description[4] = '\0';
 	memset(fmt->reserved, 0, sizeof(fmt->reserved));
 
