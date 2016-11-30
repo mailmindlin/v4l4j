@@ -441,11 +441,23 @@ struct v4l2_pix_format {
  *	F O R M A T   E N U M E R A T I O N
  */
 struct v4l2_fmtdesc {
-	__u32		    index;             /* Format number      */
-	__u32		    type;              /* enum v4l2_buf_type */
+	/**
+	 * Format number
+	 */
+	__u32		    index;
+	/**
+	 * enum v4l2_buf_type
+	 */
+	__u32		    type;
 	__u32               flags;
-	__u8		    description[32];   /* Description string */
-	__u32		    pixelformat;       /* Format fourcc      */
+	/**
+	 * Format description string
+	 */
+	__u8		    description[32];
+	/**
+	 * Format fourcc
+	 */
+	__u32		    pixelformat;
 	__u32		    reserved[4];
 };
 
