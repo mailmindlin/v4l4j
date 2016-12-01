@@ -41,30 +41,27 @@
 //debug stuff
 #ifdef DEBUG
 
-#define LIBVIDEO_LOG_INFO 			1
-#define LIBVIDEO_LOG_DEBUG	 		2	//once / twice per call
-#define LIBVIDEO_LOG_DEBUG1 		4	//for / while loops
-#define LIBVIDEO_LOG_DEBUG2 		8	//many times per seconds
-#define LIBVIDEO_LOG_ERR 			16  //error / quirks
-#define LIBVIDEO_LOG_ALL			(LIBVIDEO_LOG_INFO | LIBVIDEO_LOG_DEBUG\
-									 | LIBVIDEO_LOG_DEBUG1 | LIBVIDEO_LOG_DEBUG2\
-									 | LIBVIDEO_LOG_ERR)
+#define LIBVIDEO_LOG_INFO 			(1 << 0)
+#define LIBVIDEO_LOG_DEBUG	 		(1 << 1)	//once / twice per call
+#define LIBVIDEO_LOG_DEBUG1 		(1 << 2)	//for / while loops
+#define LIBVIDEO_LOG_DEBUG2 		(1 << 3)	//many times per seconds
+#define LIBVIDEO_LOG_ERR 			(1 << 4)	//error / quirks
+#define LIBVIDEO_LOG_MEMORY			(1 << 5)	// Memory allocation/etc.
+#define LIBVIDEO_LOG_ALL			(LIBVIDEO_LOG_INFO | LIBVIDEO_LOG_DEBUG | LIBVIDEO_LOG_DEBUG1 | LIBVIDEO_LOG_DEBUG2 | LIBVIDEO_LOG_ERR | LIBVIDEO_LOG_MEMORY)
 
-#define LIBVIDEO_SOURCE_VIDDEV		1
-#define LIBVIDEO_SOURCE_QRY			2
-#define LIBVIDEO_SOURCE_CAP			4
-#define LIBVIDEO_SOURCE_CTRL		8
-#define LIBVIDEO_SOURCE_MALLOC		16
-#define LIBVIDEO_SOURCE_DRV_PROBE	32
-#define LIBVIDEO_SOURCE_TUNER		64
-#define LIBVIDEO_SOURCE_PROCESSING	128
-#define LIBVIDEO_SOURCE_CONTROL		256
-#define LIBVIDEO_SOURCE_CONVERT		512
-#define LIBVIDEO_SOURCE_ALL 		(LIBVIDEO_SOURCE_VIDDEV | \
-									LIBVIDEO_SOURCE_QRY  | LIBVIDEO_SOURCE_CAP |\
-							 		LIBVIDEO_SOURCE_CTRL | LIBVIDEO_SOURCE_MALLOC | \
-							 		LIBVIDEO_SOURCE_DRV_PROBE | LIBVIDEO_SOURCE_TUNER | \
-									LIBVIDEO_SOURCE_PROCESSING | LIBVIDEO_SOURCE_CONTROL | LIBVIDEO_SOURCE_CONVERT)
+#define LIBVIDEO_SOURCE_VIDDEV		(1 << 0)
+#define LIBVIDEO_SOURCE_QRY			(1 << 1)
+#define LIBVIDEO_SOURCE_CAP			(1 << 2)
+#define LIBVIDEO_SOURCE_CTRL		(1 << 3)
+#define LIBVIDEO_SOURCE_MALLOC		(1 << 4)
+#define LIBVIDEO_SOURCE_DRV_PROBE	(1 << 5)
+#define LIBVIDEO_SOURCE_TUNER		(1 << 6)
+#define LIBVIDEO_SOURCE_PROCESSING	(1 << 7)
+#define LIBVIDEO_SOURCE_CONTROL		(1 << 8)
+#define LIBVIDEO_SOURCE_CONVERT		(1 << 9)
+#define LIBVIDEO_SOURCE_ALL 		(LIBVIDEO_SOURCE_VIDDEV | LIBVIDEO_SOURCE_QRY | LIBVIDEO_SOURCE_CAP |\
+							 		LIBVIDEO_SOURCE_CTRL | LIBVIDEO_SOURCE_MALLOC | LIBVIDEO_SOURCE_DRV_PROBE | \
+									LIBVIDEO_SOURCE_TUNER | LIBVIDEO_SOURCE_PROCESSING | LIBVIDEO_SOURCE_CONTROL | LIBVIDEO_SOURCE_CONVERT)
 
 
 
@@ -91,8 +88,7 @@
 #define dprint_v4l2_control(ctrl)\
 	do { \
 		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG1, \
-				"CTRL: control id: 0x%x - name: %s - min: %d - max: %d - "\
-				"step: %d - type: %d(%s) - flags: %d (%s%s%s%s%s%s%s)\n", \
+				"CTRL: control id: 0x%x - name: %s - min: %d - max: %d - step: %d - type: %d (%s) - flags: %d (%s%s%s%s%s%s%s)\n", \
 				ctrl.v4l2_ctrl->id, (char *) &(ctrl.v4l2_ctrl->name), ctrl.v4l2_ctrl->minimum, ctrl.v4l2_ctrl->maximum,\
 				ctrl.v4l2_ctrl->step, ctrl.v4l2_ctrl->type, \
 				ctrl.v4l2_ctrl->type == V4L2_CTRL_TYPE_INTEGER ? "Integer" :  \
@@ -134,7 +130,7 @@
 #ifdef DEBUG
 #define PRINT(...) fprintf(stdout, ## __VA_ARGS__)
 #else
-#define PRINT(...) dprint(dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2, ## __VA_ARGS__)
+#define PRINT(...) dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2, ## __VA_ARGS__)
 #endif
 #define END_TIMING(str_prefix)	\
 	gettimeofday(&end, NULL);\
@@ -154,16 +150,11 @@
 	do { \
 		(var) = (type) malloc((size));\
 		if (!(var)) {\
-			fprintf(stderr,\
-				"[%s:%d %s] MEMALLOC: OUT OF MEMORY Cant allocate %lu bytes\n",\
-				__FILE__, __LINE__, __PRETTY_FUNCTION__,\
-				(long unsigned int) (size));\
+			fprintf(stderr, "[%s:%d %s] MEMALLOC: OUT OF MEMORY Cant allocate %lu bytes\n", __FILE__, __LINE__, __PRETTY_FUNCTION__, (long unsigned int) (size));\
 			fflush(stderr);\
 		} else {\
 			CLEAR_ARR((var), (size)); \
-			dprint(LIBVIDEO_SOURCE_MALLOC, LIBVIDEO_LOG_ALL,\
-				"[MEMALLOC]: allocating %lu bytes of type %s for var %s (%p)\n",\
-				(long unsigned int) (size), #type, #var, (var));\
+			dprint(LIBVIDEO_SOURCE_MALLOC, LIBVIDEO_LOG_MEMORY, "[MEMALLOC]: allocating %lu bytes of type %s for var %s (%p)\n", (long unsigned int) (size), #type, #var, (var));\
 		}\
 	} while (0)
 
@@ -172,34 +163,25 @@
 		int should_clear = var == NULL ? 1 : 0;\
 		var = (type) realloc(var, (size)); \
 		if (!var) {\
-			fprintf(stderr,\
-				"[%s:%d %s] REALLOC: OUT OF MEMORY Cant reallocate %lu bytes\n",\
-				__FILE__, __LINE__, __PRETTY_FUNCTION__,\
-				(long unsigned int)  (size));\
+			fprintf(stderr, "[%s:%d %s] REALLOC: OUT OF MEMORY Cant reallocate %lu bytes\n", __FILE__, __LINE__, __PRETTY_FUNCTION__, (long unsigned int)  (size));\
 			fflush(stderr);\
 		} else { \
 			if (should_clear) {\
 				CLEAR_ARR((var), (size)); \
-				dprint(LIBVIDEO_SOURCE_MALLOC, LIBVIDEO_LOG_ALL,\
-					"[REALLOC]: Allocating %lu bytes of type %s for var %s (%p)\n"\
-					, (long unsigned int) (size), #type, #var, (var));\
+				dprint(LIBVIDEO_SOURCE_MALLOC, LIBVIDEO_LOG_MEMORY, "[REALLOC]: Allocating %lu bytes of type %s for var %s (%p)\n", (long unsigned int) (size), #type, #var, (var));\
 			} else {\
-				dprint(LIBVIDEO_SOURCE_MALLOC, LIBVIDEO_LOG_ALL,\
-						"REALLOC: re-allocating %lu bytes of type %s for var %s"\
-						"(%p).\n", (long unsigned int) (size), #type, #var,\
-						(var));\
+				dprint(LIBVIDEO_SOURCE_MALLOC, LIBVIDEO_LOG_ALL, "REALLOC: re-allocating %lu bytes of type %s for var %s (%p).\n", (long unsigned int) (size), #type, #var, (var));\
 			} \
 		}\
 	} while (0)
 
-#define XFREE(var)\
+#define XFREE(var)	\
 	do {\
-		dprint(LIBVIDEO_SOURCE_MALLOC, LIBVIDEO_LOG_ALL,\
-			"MEMALLOC: freeing memory for var %s (%p).\n", #var, (var)); \
-		if ((var)) { free((var)); } \
-		else {\
-			dprint(LIBVIDEO_SOURCE_MALLOC, LIBVIDEO_LOG_ALL,\
-					"MEMALLOC: Trying to free a NULL pointer.\n");\
+		dprint(LIBVIDEO_SOURCE_MALLOC, LIBVIDEO_LOG_MEMORY, "MEMALLOC: freeing memory for var %s (%p).\n", #var, (var)); \
+		if ((var)) { \
+			free((var)); \
+		} else { \
+			dprint(LIBVIDEO_SOURCE_MALLOC, LIBVIDEO_LOG_ALL, "MEMALLOC: Trying to free a NULL pointer.\n");\
 		} \
 		var = NULL;\
 	} while (0)
