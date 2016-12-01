@@ -460,6 +460,61 @@ int v4lconvert_encoder_initForIMF(struct v4lconvert_encoder* encoder, u32 src_fm
 	return v4lconvert_encoder_initWithConverter(encoder, converter, width, height);
 }
 
+bool v4lconvert_encoder_series_create(struct v4lconvert_encoder_series* self, struct v4lconvert_conversion_request* request, char** errmsg) {
+	unsigned int rotation;
+	{
+		int _rotation = request->rotation % 360;
+		rotation = (unsigned) (_rotation > 0 ? _rotation : (_rotation + 360));
+	}
+	
+	bool flipHorizontal = request->flipHorizontal;
+	bool flipVertical = request->flipVertical;
+	
+	if ((request->rotation % 180) == 0 && flipHorizontal && flipVertical) {
+		request->rotation = (request->rotation + 180) % 180;
+		flipHorizontal = false;
+		flipVertical = false;
+	}
+	
+	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG, "Final rotation: %u\n", rotation);
+	
+	if (request->scaleFactor <= 0) {
+		if (errmsg)
+			*errmsg = "Scalar must be greater than 0";
+		return false;
+	}
+	u32 src_fmt, dst_fmt;
+	unsigned int src_width, dst_width, src_height, dst_height;
+	//TODO populate values
+	
+	//Compute crop/pad values
+	int bottom_offset, right_offset;
+	bool requires_rotate = (rotation == 0);
+	bool requires_scale = Math.abs(request->scaleFactor - 1) < .01;
+	bool requires_crop = !(src_width == dst_width && src_height == dst_height && bottom_offset == 0 && right_offset == 0 && request->top_offset == 0 && request->left_offset == 0);
+	bool requires_imf = src_fmt == dst_fmt;
+	
+	if (!(requires_rotate || requires_scale || requires_crop || flipHorizontal || flipVertical)) {
+		//Only IMF
+		if (requires_imf) {
+			//Identity
+			//TODO finish
+			return true;
+		}
+		//TODO finish
+		return true;
+	} else if (requires_rotate && !(requires_imf || requires_scale || requires_crop || flipHorizontal || flipVertical)) {
+		if (rotation == 90) {
+			//Special case: rotate90
+		} else if (rotate == 180) {
+			//Special case: rotate180
+		}
+		//TODO finish
+	}
+	//TODO finish
+	return false;
+}
+
 int v4lconvert_encoder_series_init(struct v4lconvert_encoder_series* self, u32 width, u32 height, u32 numConverters, u32* converterIds) {
 	if (!self || (numConverters > 0 && !converterIds))
 		return EXIT_FAILURE;
