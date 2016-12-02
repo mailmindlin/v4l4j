@@ -253,8 +253,8 @@ int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt) 
 	fmt->description[4] = '\0';
 	memset(fmt->reserved, 0, sizeof(fmt->reserved));
 
-	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG, "Returning emulated format {id: %d, flags: %u, pixelformat: %#x, description:'%s'}\n"
-			fmt->id, fmt->flags, fmt->pixelformat, fmt->description);
+	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG, "Returning emulated format {id: %d, flags: %u, pixelformat: %#x, description:'%s'}\n",
+			fmt->index, fmt->flags, fmt->pixelformat, fmt->description);
 	return 0;
 }
 
@@ -296,12 +296,8 @@ static int v4lconvert_get_rank(struct v4lconvert_data *data, unsigned int src_in
 	if (data->bandwidth && needed > data->bandwidth)
 		rank += 10;
 	
-	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG2, "ranked: %c%c%c%c for %dx%d @ %d fps, needed: %d, bandwidth: %d, rank: %d\n",
-	       supported_src_pixfmts[src_index].fmt & 0xff,
-	       (supported_src_pixfmts[src_index].fmt >> 8) & 0xff,
-	       (supported_src_pixfmts[src_index].fmt >> 16) & 0xff,
-	       supported_src_pixfmts[src_index].fmt >> 24, src_width,
-	       src_height, data->fps, needed, data->bandwidth, rank);
+	//dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG2, "ranked: %c%c%c%c for %dx%d @ %d fps, needed: %d, bandwidth: %d, rank: %d\n",
+	//		v4l2_fourcc_chars(supported_src_pixfmts[src_index].fmt), src_width, src_height, data->fps, needed, data->bandwidth, rank);
 	return rank;
 }
 
@@ -434,6 +430,7 @@ int v4lconvert_try_format(struct v4lconvert_data *data, struct v4l2_format *dest
 	unsigned int desired_height = dest_fmt->fmt.pix.height;
 	struct v4l2_format try_src, try_dest, try2_src, try2_dest;
 
+	
 	if (dest_fmt->type == V4L2_BUF_TYPE_VIDEO_CAPTURE &&
 			v4lconvert_supported_dst_fmt_only(data) &&
 			!v4lconvert_supported_dst_format(dest_fmt->fmt.pix.pixelformat))
