@@ -54,7 +54,7 @@
  * @return number of chars written to string, or the number that would have been
  * 		written if it ran out of space
  */
-size_t get_libvideo_version(char *dst, size_t len) {
+int get_libvideo_version(char *dst, size_t len) {
 	return snprintf(dst, len,"%d.%d.%d+%s", LIBVIDEO_VERSION_MAJOR, LIBVIDEO_VERSION_MINOR, LIBVIDEO_VERSION_PATCH, LIBVIDEO_VERSION_METAD);
 }
 

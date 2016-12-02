@@ -27,6 +27,7 @@
 
 #include <asm/types.h>		//for videodev2
 #include <stdbool.h>
+#include <stddef.h>
 #include "videodev2.h"
 #include "videodev.h"
 #include "libv4lconvert.h"
@@ -562,7 +563,7 @@ struct video_device {
  * caller.
  * Passing a char[10] should be enough.
  */
-size_t get_libvideo_version(char *dst, size_t len);
+int get_libvideo_version(char *dst, size_t len);
 
 /*
  *
