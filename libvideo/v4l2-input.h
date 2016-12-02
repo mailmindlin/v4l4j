@@ -37,7 +37,7 @@
  */
 
 //Check whether the supplied device file is a v4l2 device
-bool; check_v4l2(int fd, struct v4l2_capability *);
+bool check_v4l2(int fd, struct v4l2_capability *);
 
 //Check whether the device is V4L2 and has capture and mmap capabilities
 bool check_capture_capabilities_v4l2(int, char *);

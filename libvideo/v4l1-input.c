@@ -35,7 +35,7 @@
 
 
 bool check_v4l1(int fd, struct video_capability *vc) {
-	return ioctl(fd, VIDIOCGCAP, vc) != -1;
+	return ioctl(fd, VIDIOCGCAP, vc) >= 0;
 }
 
 //Check whether the device is V4L1 and has capture and mmap capabilities
@@ -48,7 +48,7 @@ bool check_capture_capabilities_v4l1(int fd, char *file) {
 
 	if (!check_v4l1(fd, &vc)){
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: Not a V4L1 device.\n");
-		return FALSE;
+		return false;
 	}
 
 	if (!(vc.type & VID_TYPE_CAPTURE)) {
@@ -56,10 +56,10 @@ bool check_capture_capabilities_v4l1(int fd, char *file) {
 		PRINT_REPORT_ERROR();
 		info("Listing the reported capabilities:\n");
 		list_cap_v4l1(fd);
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 // set the capture parameters

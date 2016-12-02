@@ -311,10 +311,10 @@ static bool get_current_resolution(struct video_device *vdev, unsigned int *widt
 	if (ioctl(vdev->fd, VIDIOC_G_FMT, &fmt) == 0) {
 		*width = fmt.fmt.pix.width;
 		*height = fmt.fmt.pix.height;
-		return TRUE;
+		return true;
 	}
 
-	return FALSE;
+	return false;
 }
 
 //this function adds the given palette fmt to the list of
@@ -450,7 +450,7 @@ static bool query_tuner(struct video_input_info *vi, int fd, unsigned int index)
 	t.index = index;
 
 	if (ioctl(fd, VIDIOC_G_TUNER, &t) != 0)
-		return FALSE;
+		return false;
 
 	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
 			"QRY: Tuner: %s - low: %u - high: %u - unit: %s\n",
@@ -471,7 +471,7 @@ static bool query_tuner(struct video_input_info *vi, int fd, unsigned int index)
 				vi->tuner->name, vi->tuner->rangelow, vi->tuner->rangehigh,
 				vi->tuner->unit);
 
-	return TRUE;
+	return true;
 }
 
 static inline void free_tuner(struct tuner_info *t) {

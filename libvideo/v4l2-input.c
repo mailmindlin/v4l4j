@@ -58,7 +58,7 @@ bool check_capture_capabilities_v4l2(int fd, char *file) {
 
 	if (!check_v4l2(fd, &cap)) {
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: Not a V4L2 device.\n");
-		return FALSE;
+		return false;
 	}
 
 	if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
@@ -66,7 +66,7 @@ bool check_capture_capabilities_v4l2(int fd, char *file) {
 		PRINT_REPORT_ERROR();
 		info("Listing the reported capabilities:\n");
 		list_cap_v4l2(fd);
-		return FALSE;
+		return false;
 	}
 
 	if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
@@ -74,10 +74,10 @@ bool check_capture_capabilities_v4l2(int fd, char *file) {
 		PRINT_REPORT_ERROR();
 		info("Listing the reported capabilities:\n");
 		list_cap_v4l2(fd);
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static bool try_std(int fd, unsigned int standard){
