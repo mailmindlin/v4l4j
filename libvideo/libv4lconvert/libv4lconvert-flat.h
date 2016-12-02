@@ -34,16 +34,6 @@ LIBV4L_PUBLIC enum v4lconvert_conversion_signature {
 	v4lconvert_conversion_signature_special
 };
 
-LIBV4L_PUBLIC union v4lconvert_conversion_fn {
-	void (*cvt_sdwh_0f) (const u8* src, u8* dst, u32 width, u32 height);
-	void (*cvt_sdwh_1f) (const u8* src, u8* dst, u32 width, u32 height, int flag1);
-	void (*cvt_sdwh_2f) (const u8* src, u8* dst, u32 width, u32 height, int flag1, int flag2);
-	void (*cvt_sd_sf_0f) (const u8* src, u8* dst, const struct v4l2_format* src_fmt);
-	void (*cvt_sd_sf_1f) (const u8* src, u8* dst, const struct v4l2_format* src_fmt, int flag1);
-	void (*cvt_sd_sf_2f) (const u8* src, u8* dst, const struct v4l2_format* src_fmt, int flag1, int flag2);
-	void* user_defined;
-};
-
 LIBV4L_PUBLIC enum v4lconvert_conversion_type {
 	/**
 	 * Unknown transformation
@@ -94,19 +84,62 @@ LIBV4L_PUBLIC enum v4lconvert_conversion_type {
 
 #define V4LCONVERT_CONVERSION_TYPE_FLAG(type) (1u << v4lconvert_conversion_type_##type)
 
-LIBV4L_PUBLIC struct v4lconvert_converter {
-	u32 id;
-	enum v4lconvert_conversion_signature signature;
-	union v4lconvert_conversion_fn target;
-	enum v4lconvert_conversion_type type;
-	u32 src_fmt;
-	u32 dst_fmt;
-	int flag1;
-	int flag2;
-	unsigned int cost;
+struct v4lconvert_converter;
+typedef struct v4lconvert_converter v4lconvert_converter_t;
+struct v4lconvert_converter_prototype_info;
+
+LIBV4L_PUBLIC struct v4lconvert_converter_prototype {
+	size_t id;
+	/**
+	 * Allocates & initializes a converter
+	 * @param info Pointer to info about this prototype
+	 * @param src_fmt Source format requested
+	 * @param dst_fmt Output format requested
+	 * @param options_len Length (in bytes) of options
+	 * @param options Additional parameters to use when converting
+	 * @param errmsg Filled with message if this method fails. Does not need to be released in any case.
+	 * @return Converter created, or NULL on error. On error, errno is set.
+	 */
+	v4lconvert_converter_t* (*init) (struct v4lconvert_converter_prototype* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options, char** errmsg);
+	int (*estimateCost) (struct v4lconvert_converter_prototype* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options);
+	union {
+		struct {
+			enum v4lconvert_conversion_signature signature;
+			union v4lconvert_conversion_fn {
+				void (*cvt_sdwh_0f) (const u8* src, u8* dst, u32 width, u32 height);
+				void (*cvt_sdwh_1f) (const u8* src, u8* dst, u32 width, u32 height, int flag1);
+				void (*cvt_sdwh_2f) (const u8* src, u8* dst, u32 width, u32 height, int flag1, int flag2);
+				void (*cvt_sd_sf_0f) (const u8* src, u8* dst, const struct v4l2_format* src_fmt);
+				void (*cvt_sd_sf_1f) (const u8* src, u8* dst, const struct v4l2_format* src_fmt, int flag1);
+				void (*cvt_sd_sf_2f) (const u8* src, u8* dst, const struct v4l2_format* src_fmt, int flag1, int flag2);
+				void* user_defined;
+			} target;
+		} imf_params;
+		u8 user_defined[sizeof(int*) * 4];
+	};
 };
 
-typedef const struct v4lconvert_converter v4lconvert_converter_t;
+typedef const struct v4lconvert_converter_prototype v4lconvert_converter_prototype_t;
+
+LIBV4L_LOCAL struct v4lconvert_prototype_meta {
+	v4lconvert_converter_prototype_t* prototype;
+	enum v4lconvert_conversion_type type;
+	/**
+	 * Source format
+	 */
+	u32 src_fmt;
+	/**
+	 * Output format
+	 */
+	u32 dst_fmt;
+	union {
+		struct {
+			int flag1;
+			int flag2;
+		} imf_params;
+		u8 user_defined[sizeof(int*) * 4];
+	} options;
+};
 
 LIBV4L_PUBLIC struct v4lconvert_buffer {
 	/**
@@ -135,35 +168,34 @@ LIBV4L_PUBLIC struct v4lconvert_buffer {
 	u8* buf2;
 };
 
-LIBV4L_PUBLIC struct v4lconvert_encoder {
+LIBV4L_PUBLIC struct v4lconvert_converter {
 	/**
 	 * 
 	 * @return number of bytes written to dst, or 0 if error
 	 * If error, errno may be set.
 	 */
-	u32 (*apply) (struct v4lconvert_encoder* self, const u8* src, u32 src_len, u8* dst, u32 dst_len);
+	size_t (*apply) (struct v4lconvert_converter* self, const u8* src, size_t src_len, u8* dst, size_t dst_len);
 	/**
 	 * Safely release memory used by encoder. Does not release the encoder itself.
 	 * DO NOT call any methods on encoder after this method has been invoked.
 	 */
-	int (*release) (struct v4lconvert_encoder* self);
-	u32 src_fmt;
-	u32 dst_fmt;
+	int (*release) (struct v4lconvert_converter* self);
+	u32 src_pixfmt;
+	u32 dst_pixfmt;
+	
+	struct v4l2_format* src_fmt;
+	struct v4l2_format* dst_fmt;
 	
 	size_t src_len;
-	unsigned int src_width;
-	unsigned int src_height;
 	/**
 	 * Estimates the minimum size the destination buffer can be.
 	 */
 	size_t dst_len;
-	unsigned int dst_width;
-	unsigned int dst_height;
 	
 	//Private members. Please don't touch.
-	v4lconvert_converter_t* converter;
+	v4lconvert_converter_prototype_t* prototype;
+	
 	union {
-		struct v4l2_format* imf_v4l2_src_fmt;
 		struct {
 			u32 row_stride;
 			int quality;
@@ -175,7 +207,13 @@ LIBV4L_PUBLIC struct v4lconvert_encoder {
 			signed int left;
 			//dst_width & dst_height are used to determine the other two sides
 		} crop_params;
-	};
+		struct {
+			int flag1;
+			int flag2;
+		} imf_params;
+		u8 user_defined[sizeof(int*) * 8];
+	} params;
+	struct control** controls;
 };
 
 LIBV4L_PUBLIC struct v4lconvert_encoder_series {
@@ -211,15 +249,16 @@ LIBV4L_PUBLIC struct v4lconvert_encoder_series {
 };
 
 LIBV4L_PUBLIC struct v4lconvert_conversion_request {
-	struct v4l2_format src_fmt;
-	signed int rotation;
+	struct v4l2_format* src_fmt;
+	struct v4l2_format* dst_fmt;
+	unsigned int rotation;
 	bool flipHorizontal;
 	bool flipVertical;
-	float scaleFactor;
+	unsigned int scaleNumerator;
+	unsigned int scaleDenominator;
 	// Values for crop/pad
 	signed int top_offset;
 	signed int left_offset;
-	struct v4l2_format dst_fmt;
 };
 
 LIBV4L_PUBLIC u32 v4lconvert_estimateBufferSize(u32 fmt, u32 width, u32 height);
