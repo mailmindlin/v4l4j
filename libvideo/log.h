@@ -128,16 +128,15 @@
 	gettimeofday(&start, NULL);
 
 #ifdef DEBUG
-#define PRINT(...) fprintf(stdout, ## __VA_ARGS__)
+	#define PRINT(...) dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2, ## __VA_ARGS__)
 #else
-#define PRINT(...) dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2, ## __VA_ARGS__)
+	#define PRINT(...) fprintf(stdout, ## __VA_ARGS__)
 #endif
 #define END_TIMING(str_prefix)	\
 	gettimeofday(&end, NULL);\
 	timersub(&end, &start, &start);\
 	PRINT(str_prefix " %llu us\n", (unsigned long long) (start.tv_sec * 1000000 + start.tv_usec));\
 	fflush(stdout);
-#undef PRINT
 
 #else
 #define START_TIMING UNUSED(0)
