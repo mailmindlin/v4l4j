@@ -83,7 +83,7 @@ struct v4l4j_device {
 	/**
 	 * The size of the last captured frame by libvideo
 	 */
-	int capture_len;
+	size_t capture_len;
 	/**
 	 * This flag is set by Java_au_edu_jcu_v4l4j_FrameGrabber_doInit, and says
 	 * whether  v4l4j (1) or libvideo (0) does the output format conversion.
