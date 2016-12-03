@@ -611,7 +611,7 @@ int start_capture_v4l2(struct video_device *vdev) {
 unsigned int convert_buffer_v4l2(struct video_device *vdev, int index, unsigned int src_len, void *dest_buffer) {
 	struct convert_data *conv = vdev->capture->convert;
 
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2, "CAP: Passing buffer %d of len %d at %p with format %#x to be stored in buffer at %p of length %d with format %#x\n",
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2, "CAP: Passing buffer #%d of len %d at %p with format %#x to be stored in buffer at %p of length %d with format %#x\n",
 			index, src_len, vdev->capture->mmap->buffers[index].start, conv->src_fmt->fmt.pix.pixelformat,
 			dest_buffer, conv->dst_fmt->fmt.pix.sizeimage, conv->dst_fmt->fmt.pix.pixelformat);
 
@@ -649,7 +649,7 @@ void *dequeue_buffer_v4l2(struct video_device *vdev, unsigned int *len, unsigned
 	if (sequence)
 		*sequence = b.sequence;
 
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2, "CAP: dequeued buffer %d length: %d - seq: %lu - time %llu\n",
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2, "CAP: dequeued buffer #%d length: %d - seq: %lu - time %llu\n",
 			*index,	*len, (unsigned long) b.sequence, cap_time);
 
 
