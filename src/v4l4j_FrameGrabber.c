@@ -538,17 +538,18 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 	if (arrayRef != NULL)
 		dprintf(LOG_V4L4J, "[V4L4J] Slow path: Can't get a direct pointer to buffer");
 
+	unsigned int output_len;
 	START_TIMING;
 	// Perform required conversion
-	if(d->vdev->capture->is_native != 1) {
+	if(!d->vdev->capture->is_native) {
 		// Check whether we can convert directly to the byte[] memory
 		if(!d->need_conv) {
 			// Only libv4l conversion is required
-			(*d->vdev->capture->actions->convert_buffer)(d->vdev, buffer_index, d->capture_len, array);
+			output_len = (*d->vdev->capture->actions->convert_buffer)(d->vdev, buffer_index, d->capture_len, array);
 		} else {
 			// both libv4l and v4l4j conversions required
 			(*d->vdev->capture->actions->convert_buffer)(d->vdev, buffer_index, d->capture_len, d->double_conversion_buffer);
-			(*d->convert)(d, d->double_conversion_buffer, array);
+			output_len = (*d->convert)(d, d->double_conversion_buffer, array);
 		}
 	} else {
 		// No libv4l conversion required. Check if v4l4j conversion is required
@@ -561,9 +562,9 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 			// ReleasePrimitiveArrayCritical() ) for a short amount of time. If you
 			// find yourself reading this comment and you have a better idea, let me know.
 			memcpy(array, frame, d->capture_len);
-			d->len = d->capture_len;
+			output_len = d->capture_len;
 		} else {
-			(*d->convert)(d, frame, array);
+			output_len = (*d->convert)(d, frame, array);
 		}
 	}
 	END_TIMING("JNI Conversion took ");
@@ -576,7 +577,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 	(*env)->SetLongField(env, this, last_captured_frame_time_usec_fID, captureTime);
 	(*env)->SetIntField(env, this, last_captured_frame_buffer_index_fID, buffer_index);
 
-	return d->len;
+	return output_len;
 }
 
 /*
