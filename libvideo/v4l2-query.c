@@ -62,7 +62,6 @@ static int lookup_frame_intv(struct v4lconvert_data *conv, unsigned int fmt, uns
 	
 	struct v4l2_frmivalenum intv;
 	CLEAR(intv);
-
 	intv.index = 0;
 	intv.pixel_format = fmt;
 	intv.width = width;
@@ -240,7 +239,7 @@ static void lookup_frame_sizes(struct v4lconvert_data *conv, unsigned int fmt, s
  * it, the matching converted palette is advertised as native if there are no
  * raw formats for it yet (if there are, this step is skipped)and -1 is returned
  */
-static int add_raw_format(struct v4lconvert_data *conv, unsigned int width, unsigned int height, struct palette_info *p, unsigned int fmt, unsigned int *size){
+static bool add_raw_format(struct v4lconvert_data *conv, unsigned int width, unsigned int height, struct palette_info *p, unsigned int fmt, unsigned int *size){
 	if(fmt != -1u) {
 		//test the given native format fmt to see if it can be used
 		//by v4lconvert. Sometimes, the native format that must be used to
@@ -261,7 +260,7 @@ static int add_raw_format(struct v4lconvert_data *conv, unsigned int width, unsi
 				p->raw_palettes = NULL;
 				lookup_frame_sizes(conv, libvideo_palettes[fmt].v4l2_palette, p);
 			}
-			return -1;
+			return false;
 		}
 		// else
 		//this raw format can be used for capture, fall through, and add it
@@ -269,7 +268,7 @@ static int add_raw_format(struct v4lconvert_data *conv, unsigned int width, unsi
 	XREALLOC(p->raw_palettes, int *, (*size + 1) * sizeof(int));
 	p->raw_palettes[*size] = (signed) fmt;
 	*size += 1;
-	return 0;
+	return true;
 }
 
 /*
@@ -293,8 +292,16 @@ static int has_raw_format(int *raw_palettes, int fmt, int size) {
 static int try_format(unsigned int index, unsigned int width, unsigned int height, struct v4l2_format *dst, struct v4l2_format *src, struct v4lconvert_data *conv) {
 	CLEAR(*dst);
 	CLEAR(*src);
+	
 	dst->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	
 	dst->fmt.pix.pixelformat = libvideo_palettes[index].v4l2_palette;
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "Mapped pfmt (%d) => (%d) %06x %06x %d %s\n", index,
+		libvideo_palettes[index].libvideo_palette,
+		libvideo_palettes[index].v4l1_palette,
+		libvideo_palettes[index].v4l2_palette,
+		libvideo_palettes[index].depth,
+		libvideo_palettes[index].name);
 	dst->fmt.pix.width = width;
 	dst->fmt.pix.height = height;
 	return v4lconvert_try_format(conv, dst, src);
@@ -342,7 +349,7 @@ static int add_supported_palette(struct video_device *vdev, struct device_info *
 
 	if(v4lconvert_needs_conversion(di->convert, &src, &dst)) {
 		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: %s is a converted palette\n", libvideo_palettes[fmt].name);
-		unsigned int i;
+		unsigned int i = 0;
 		{
 			int src_palette = find_v4l2_palette(src.fmt.pix.pixelformat);
 			if (src_palette == -1)
@@ -352,7 +359,7 @@ static int add_supported_palette(struct video_device *vdev, struct device_info *
 			//it is converted from another format
 			//adds the format returned by v4lconvert_needs_conversion
 			dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: from %d (%s)\n", src_palette, libvideo_palettes[src_palette].name);
-			if(add_raw_format(di->convert, width, height, curr, (unsigned)src_palette, &i) == -1)
+			if(!add_raw_format(di->convert, width, height, curr, (unsigned)src_palette, &i))
 			//this raw format can not be used for capture. add_raw_format advertises
 			//this converted format as a native one, and we MUST exit here.
 				return 0;
@@ -392,6 +399,7 @@ static int add_supported_palette(struct video_device *vdev, struct device_info *
 				break;
 			}
 		}
+		//End the list with -1
 		add_raw_format(di->convert, width, height, curr, -1u, &i);
 	} else {
 		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: %s is a native palette\n", libvideo_palettes[fmt].name);
