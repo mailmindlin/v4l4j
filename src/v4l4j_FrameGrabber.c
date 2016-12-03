@@ -476,7 +476,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoInput(JNI
 	LOG_FN_ENTER();
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
-	int input_num, standard;
+	unsigned int input_num, standard;
 	dev->vdev->capture->actions->get_video_input_std(dev->vdev, &input_num, &standard);
 
 	return (jint)input_num;
@@ -490,7 +490,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoStandard(
 	
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
-	int input_num, standard;
+	unsigned int input_num, standard;
 	dev->vdev->capture->actions->get_video_input_std(dev->vdev, &input_num, &standard);
 
 	return (jint) standard;
@@ -525,7 +525,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 
 	// get a pointer to the java array
 	jbyteArray arrayRef = NULL;
-	unsigned int arrayLength = NULL;
+	unsigned int arrayLength = 0;
 	void (*releaseArray)(JNIEnv* env, jbyteArray arrayRef, unsigned char* ptr);
 	unsigned char* array = getBufferPointer(env, buffer, &arrayRef, &arrayLength, &releaseArray);	
 	// check we have a valid pointer
