@@ -194,40 +194,40 @@ static int init_capture_format(struct v4l4j_device *d, int fg_out_fmt, int* src_
 		dprint(LOG_LIBVIDEO, "[V4L4J] JPEG conversion done by v4l4j\n");
 		*dest_fmt = *src_fmt;
 		*src_fmt = -1;
-		d->need_conv = 1;
+		d->need_conv = true;
 		return 0;
 
 	case OUTPUT_RGB24:
 		*dest_fmt = RGB24;
 		// leave native capture format in src_fmt
 		dprint(LOG_LIBVIDEO, "[V4L4J] RGB24 conversion done by libvideo\n");
-		d->need_conv = 0;
+		d->need_conv = false;
 		return 0;
 
 	case OUTPUT_RAW:
 		*dest_fmt = *src_fmt;
 		*src_fmt = -1;
 		dprint(LOG_LIBVIDEO, "[V4L4J] raw format - no conversion\n");
-		d->need_conv = 0;
+		d->need_conv = false;
 		return 0;
 
 	case OUTPUT_BGR24:
 		*dest_fmt = BGR24;
 		// leave native capture format in src_fmt
 		dprint(LOG_LIBVIDEO, "[V4L4J] BGR24 conversion done by libvideo\n");
-		d->need_conv = 0;
+		d->need_conv = false;
 		return 0;
 	case OUTPUT_YUV420:
 		*dest_fmt = YUV420;
 		// leave native capture format in src_fmt
 		dprint(LOG_LIBVIDEO, "[V4L4J] YUV420 conversion done by libvideo\n");
-		d->need_conv = 0;
+		d->need_conv = false;
 		return 0;
 	case OUTPUT_YVU420:
 		*dest_fmt = YVU420;
 		// leave native capture format in src_fmts
 		dprint(LOG_LIBVIDEO, "[V4L4J] YVU420 conversion done by libvideo\n");
-		d->need_conv = 0;
+		d->need_conv = false;
 		return 0;
 	default:
 		info("[V4L4J] Error: unknown output format %d\n", fg_out_fmt);
@@ -542,7 +542,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 	// Perform required conversion
 	if(d->vdev->capture->is_native != 1) {
 		// Check whether we can convert directly to the byte[] memory
-		if(d->need_conv != 1) {
+		if(!d->need_conv) {
 			// Only libv4l conversion is required
 			(*d->vdev->capture->actions->convert_buffer)(d->vdev, buffer_index, d->capture_len, array);
 		} else {
@@ -552,7 +552,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 		}
 	} else {
 		// No libv4l conversion required. Check if v4l4j conversion is required
-		if (d->need_conv != 1) {
+		if (!d->need_conv) {
 			// No v4l4j conversion required. So copy the frame to byte[] memory. This
 			// is definitely NOT an optimal solution, but I cant see any other way to do it:
 			// We could mmap the byte[] memory and used it as the buffer, but the JVM specs

@@ -95,7 +95,7 @@ struct v4l4j_device {
 	 * In practice, the only time that this will be set to 1 will be if the
 	 * output format is JPEG, which is handled in jpeg.c
 	 */
-	int need_conv;
+	bool need_conv;
 };
 
 #ifndef ARRAY_SIZE
