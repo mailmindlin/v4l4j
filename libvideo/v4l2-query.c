@@ -427,7 +427,7 @@ static int check_palettes_v4l2(struct video_device *vdev) {
 	fmtd.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	
 	for (fmtd.index = 0; v4lconvert_enum_fmt(vdev->info->convert, &fmtd) >= 0; fmtd.index++) {
-		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "{index:%u,type:%u,flags:%u,description:'%s',pixelformat:%x}\n", fmtd.index,fmtd.type,fmtd.flags,fmtd.description,fmtd.pixelformat);
+		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "{index:%u,type:%u,flags:%u (%s),description:'%s',pixelformat:%x}\n", fmtd.index,fmtd.type,fmtd.flags, (fmtd.flags & V4L2_FMT_FLAG_EMULATED) ? (fmtd.flags & V4L2_FMT_FLAG_COMPRESSED) ? "V4L2_FMT_FLAG_EMULATED | V4L2_FMT_FLAG_COMPRESSED" : "V4L2_FMT_FLAG_EMULATED" : (fmtd.flags & V4L2_FMT_FLAG_COMPRESSED) ? "V4L2_FMT_FLAG_EMULATED" : "none", fmtd.description,fmtd.pixelformat);
 		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, "QRY: looking for palette %c%c%c%c (%#06x)\n", v4l2_fourcc_chars(fmtd.pixelformat), fmtd.pixelformat);
 		
 		int p = find_v4l2_palette(fmtd.pixelformat);
