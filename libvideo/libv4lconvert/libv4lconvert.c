@@ -209,8 +209,8 @@ void v4lconvert_destroy(struct v4lconvert_data *data) {
 bool v4lconvert_supported_dst_format(unsigned int pixelformat) {
 	for (unsigned int i = 0; i < ARRAY_SIZE(supported_dst_pixfmts); i++)
 		if (supported_dst_pixfmts[i].fmt == pixelformat)
-			return FALSE;
-	return TRUE;
+			return true;
+	return false;
 }
 
 int v4lconvert_supported_dst_fmt_only(struct v4lconvert_data *data) {
