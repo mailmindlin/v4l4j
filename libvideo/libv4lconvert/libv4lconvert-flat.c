@@ -50,6 +50,23 @@ extern "C" {
 	GENERATE_CONVERTER_SD_SF_2F(id + 2, (fn), (src_fmt_0), (dst_fmt_1), 0, 1),\
 	GENERATE_CONVERTER_SD_SF_2F(id + 3, (fn), (src_fmt_1), (dst_fmt_1), 1, 1)
 
+static v4lconvert_converter_t* v4lconvert_init_imf_sdwh(v4lconvert_converter_prototype_t* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options, char** errmsg);
+static v4lconvert_converter_t* v4lconvert_init_imf_sd_sf(v4lconvert_converter_prototype_t* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options, char** errmsg);
+
+static v4lconvert_converter_prototype_t const v4lconvert_converter_prototypes[][] = {
+	[v4lconvert_conversion_type_identity] = {
+		
+	},
+	[v4lconvert_conversion_type_imf] = {
+		{
+			.id = 0,
+			.init = &v4lconvert_init_imf_sdwh,
+			.estimateCost = NULL,
+			.type = v4lconvert_conversion_type_imf,
+			.src_fmt = 
+		}
+	}
+};
 //Number of converters in array
 #define NUM_V4L_CONVERTERS 51
 //Very const
@@ -460,7 +477,42 @@ int v4lconvert_encoder_initForIMF(struct v4lconvert_encoder* encoder, u32 src_fm
 	return v4lconvert_encoder_initWithConverter(encoder, converter, width, height);
 }
 
+static unsigned int binaryGcd(unsigned int a, unsigned int b) {
+	if (a == 0)
+		return b;
+	if (b == 0)
+		return a;
+	int shift;
+	for (shift = 0; ((a | b) & 1) == 0; shift++) {
+		a >>= 1;
+		b >>= 1;
+	}
+	while ((a & 1) == 0)
+		a >>= 1;
+	do {
+		while ((b & 1) == 0)
+			b >>= 1;
+		if (a > b) {
+			unsigned int tmp = a;
+			a = b;
+			b = tmp;
+		}
+		v -= u;
+	} while (v);
+	return u << shift;
+}
+
+static v4lconvert_converter_prototype_t* lookupPrototype(v4lconvert_conversion_type type, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt) {
+	//TODO finish
+	return NULL;
+}
+
 bool v4lconvert_encoder_series_create(struct v4lconvert_encoder_series* self, struct v4lconvert_conversion_request* request, char** errmsg) {
+	#define FAIL(msg) do {\
+			if (errmsg) \
+				*errmsg = msg;\
+			return false;\
+		} while (0);
 	unsigned int rotation;
 	{
 		int _rotation = request->rotation % 360;
@@ -478,11 +530,16 @@ bool v4lconvert_encoder_series_create(struct v4lconvert_encoder_series* self, st
 	
 	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG, "Final rotation: %u\n", rotation);
 	
-	if (request->scaleFactor <= 0) {
-		if (errmsg)
-			*errmsg = "Scalar must be greater than 0";
-		return false;
+	unsigned int scaleNumerator = request->scaleNumerator;
+	unsigned int scaleDenominator = request->scaleDenominator;
+	{
+		unsigned int gcd = binaryGcd(scaleNumerator, scaleDenominator);
+		scaleNumerator /= gcd;
+		scaleDenominator /= gcd;
+		if (scaleNumerator == 0 || scaleDenominator == 0)
+			FAIL("Scalar must be nonzero");
 	}
+	
 	u32 src_fmt, dst_fmt;
 	unsigned int src_width, dst_width, src_height, dst_height;
 	//TODO populate values
@@ -490,14 +547,25 @@ bool v4lconvert_encoder_series_create(struct v4lconvert_encoder_series* self, st
 	//Compute crop/pad values
 	int bottom_offset, right_offset;
 	bool requires_rotate = (rotation == 0);
-	bool requires_scale = Math.abs(request->scaleFactor - 1) < .01;
+	bool requires_scale = scaleNumerator != scaleDenominator;
 	bool requires_crop = !(src_width == dst_width && src_height == dst_height && bottom_offset == 0 && right_offset == 0 && request->top_offset == 0 && request->left_offset == 0);
 	bool requires_imf = src_fmt == dst_fmt;
 	
+	v4lconvert_converter** converters;
+	size_t num_converters = 0;
+	
 	if (!(requires_rotate || requires_scale || requires_crop || flipHorizontal || flipVertical)) {
 		//Only IMF
-		if (requires_imf) {
+		if (!requires_imf) {
 			//Identity
+			v4lconvert_converter_prototype_t* proto = lookupPrototype(v4lconvert_conversion_type_identity, request->src_fmt, request->dst_fmt);
+			if (!proto)
+				FAIL("Unable to lookup prototype");
+			v4lconvert_converter* converter = proto->init(proto, request->src_fmt, request->dst_fmt, 0, NULL, errmsg);
+			if (!converter)
+				return false;
+			XREALLOC(converters, v4lconvert_converter**, sizeof(v4lconvert_converter*) * num_converters);
+			converters[0] = converter;
 			//TODO finish
 			return true;
 		}
@@ -513,11 +581,12 @@ bool v4lconvert_encoder_series_create(struct v4lconvert_encoder_series* self, st
 	}
 	//TODO finish
 	return false;
+	#undef FAIL
 }
 
-int v4lconvert_encoder_series_init(struct v4lconvert_encoder_series* self, u32 width, u32 height, u32 numConverters, u32* converterIds) {
+bool v4lconvert_encoder_series_init(struct v4lconvert_encoder_series* self, u32 width, u32 height, u32 numConverters, u32* converterIds) {
 	if (!self || (numConverters > 0 && !converterIds))
-		return EXIT_FAILURE;
+		return false;
 	self->convert = &v4lconvert_encoder_series_doConvert;
 	self->num_encoders = numConverters;
 	
@@ -530,16 +599,16 @@ int v4lconvert_encoder_series_init(struct v4lconvert_encoder_series* self, u32 w
 		if (!encoder || !converter || !v4lconvert_encoder_initWithConverter(encoder, converter, width, height)) {
 			//Initialization failure
 			v4lconvert_encoder_series_doRelease(self);
-			return EXIT_FAILURE;
+			return false;
 		}
 	}
 	
 	self->src_fmt = self->encoders[0]->src_fmt;
 	self->dst_fmt = self->encoders[numConverters - 1]->dst_fmt;
-	return EXIT_SUCCESS;
+	return true;
 }
 
-int v4lconvert_encoder_series_doRelease(struct v4lconvert_encoder_series* self) {
+bool v4lconvert_encoder_series_doRelease(struct v4lconvert_encoder_series* self) {
 	if (self != NULL) {
 		if (self->encoders) {
 			for (unsigned i = 0; i < self->num_encoders; i++)
@@ -548,7 +617,7 @@ int v4lconvert_encoder_series_doRelease(struct v4lconvert_encoder_series* self) 
 			self->encoders = NULL;
 		}
 	}
-	return EXIT_SUCCESS;
+	return true;
 }
 
 static u32 v4lconvert_encoder_series_doConvert(struct v4lconvert_encoder_series* self, struct v4lconvert_buffer* buffer) {

@@ -86,9 +86,10 @@ LIBV4L_PUBLIC enum v4lconvert_conversion_type {
 
 struct v4lconvert_converter;
 typedef struct v4lconvert_converter v4lconvert_converter_t;
-struct v4lconvert_converter_prototype_info;
+struct v4lconvert_converter_prototype;
+typedef const struct v4lconvert_converter_prototype v4lconvert_converter_prototype_t;
 
-LIBV4L_PUBLIC struct v4lconvert_converter_prototype {
+struct v4lconvert_converter_prototype {
 	size_t id;
 	/**
 	 * Allocates & initializes a converter
@@ -100,8 +101,17 @@ LIBV4L_PUBLIC struct v4lconvert_converter_prototype {
 	 * @param errmsg Filled with message if this method fails. Does not need to be released in any case.
 	 * @return Converter created, or NULL on error. On error, errno is set.
 	 */
-	v4lconvert_converter_t* (*init) (struct v4lconvert_converter_prototype* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options, char** errmsg);
-	int (*estimateCost) (struct v4lconvert_converter_prototype* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options);
+	v4lconvert_converter_t* (*init) (v4lconvert_converter_prototype_t* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options, char** errmsg);
+	int (*estimateCost) (v4lconvert_converter_prototype_t* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options);
+	enum v4lconvert_conversion_type type;
+	/**
+	 * Source format
+	 */
+	u32 src_fmt;
+	/**
+	 * Output format
+	 */
+	u32 dst_fmt;
 	union {
 		struct {
 			enum v4lconvert_conversion_signature signature;
@@ -117,28 +127,6 @@ LIBV4L_PUBLIC struct v4lconvert_converter_prototype {
 		} imf_params;
 		u8 user_defined[sizeof(int*) * 4];
 	};
-};
-
-typedef const struct v4lconvert_converter_prototype v4lconvert_converter_prototype_t;
-
-LIBV4L_LOCAL struct v4lconvert_prototype_meta {
-	v4lconvert_converter_prototype_t* prototype;
-	enum v4lconvert_conversion_type type;
-	/**
-	 * Source format
-	 */
-	u32 src_fmt;
-	/**
-	 * Output format
-	 */
-	u32 dst_fmt;
-	union {
-		struct {
-			int flag1;
-			int flag2;
-		} imf_params;
-		u8 user_defined[sizeof(int*) * 4];
-	} options;
 };
 
 LIBV4L_PUBLIC struct v4lconvert_buffer {
@@ -180,8 +168,6 @@ LIBV4L_PUBLIC struct v4lconvert_converter {
 	 * DO NOT call any methods on encoder after this method has been invoked.
 	 */
 	int (*release) (struct v4lconvert_converter* self);
-	u32 src_pixfmt;
-	u32 dst_pixfmt;
 	
 	struct v4l2_format* src_fmt;
 	struct v4l2_format* dst_fmt;
@@ -198,7 +184,7 @@ LIBV4L_PUBLIC struct v4lconvert_converter {
 	union {
 		struct {
 			u32 row_stride;
-			int quality;
+			unsigned int quality;
 			struct jpeg_compress_struct* cinfo;
 			struct jpeg_error_mgr* cerr;
 		} jpeg_encode_params;
