@@ -507,11 +507,10 @@ static v4lconvert_converter_prototype_t* lookupPrototype(v4lconvert_conversion_t
 	return NULL;
 }
 
-bool v4lconvert_encoder_series_create(struct v4lconvert_encoder_series* self, struct v4lconvert_conversion_request* request, char** errmsg) {
+static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter*** converters, struct v4lconvert_conversion_request* request, char** errmsg) {
 	#define FAIL(msg) do {\
 			if (errmsg) \
 				*errmsg = msg;\
-			return false;\
 		} while (0);
 	unsigned int rotation;
 	{
@@ -536,79 +535,107 @@ bool v4lconvert_encoder_series_create(struct v4lconvert_encoder_series* self, st
 		unsigned int gcd = binaryGcd(scaleNumerator, scaleDenominator);
 		scaleNumerator /= gcd;
 		scaleDenominator /= gcd;
-		if (scaleNumerator == 0 || scaleDenominator == 0)
+		if (scaleNumerator == 0 || scaleDenominator == 0) {
 			FAIL("Scalar must be nonzero");
+			return 0;
+		}
 	}
 	
 	u32 src_fmt, dst_fmt;
 	unsigned int src_width, dst_width, src_height, dst_height;
 	//TODO populate values
 	
-	//Compute crop/pad values
-	int bottom_offset, right_offset;
-	bool requires_rotate = (rotation == 0);
-	bool requires_scale = scaleNumerator != scaleDenominator;
-	bool requires_crop = !(src_width == dst_width && src_height == dst_height && bottom_offset == 0 && right_offset == 0 && request->top_offset == 0 && request->left_offset == 0);
-	bool requires_imf = src_fmt == dst_fmt;
+	//Calculate the size of the image after scaling
+	unsigned int scaled_width = src_width * scaleNumerator / scaleDenominator;
+	unsigned int scaled_height = src_height * scaleNumerator / scaleDenominator
 	
-	v4lconvert_converter** converters;
-	size_t num_converters = 0;
 	
-	if (!(requires_rotate || requires_scale || requires_crop || flipHorizontal || flipVertical)) {
-		//Only IMF
-		if (!requires_imf) {
-			//Identity
-			v4lconvert_converter_prototype_t* proto = lookupPrototype(v4lconvert_conversion_type_identity, request->src_fmt, request->dst_fmt);
-			if (!proto)
-				FAIL("Unable to lookup prototype");
-			v4lconvert_converter* converter = proto->init(proto, request->src_fmt, request->dst_fmt, 0, NULL, errmsg);
-			if (!converter)
-				return false;
-			XREALLOC(converters, v4lconvert_converter**, sizeof(v4lconvert_converter*) * num_converters);
-			converters[0] = converter;
-			//TODO finish
-			return true;
-		}
-		//TODO finish
-		return true;
-	} else if (requires_rotate && !(requires_imf || requires_scale || requires_crop || flipHorizontal || flipVertical)) {
-		if (rotation == 90) {
-			//Special case: rotate90
-		} else if (rotate == 180) {
-			//Special case: rotate180
-		}
-		//TODO finish
+	//Compute crop/pad offsets, in pixels from the edge (going in)
+	//Cropping is applied AFTER scaling.
+	signed int top_offset = request->top_offset;
+	signed int left_offset = request->left_offset;
+	signed int right_offset = dst_width - ((signed) scaled_width - left_offset);
+	signed int bottom_offset = dst_height - ((signed) scaled_height - top_offset);
+	
+	
+	//Create flags. This is to save space, b/c we won't need all of them every time
+	unsigned int shift = 0;
+	unsigned int rotate_flag = 0;
+	if (rotation != 0)
+		rotate_flag = shift++;
+	
+	unsigned int scale_flag = 0;
+	if (scaleNumerator != scaleDenominator)
+		scale_flag = shift++;
+	
+	unsigned int crop_flag = 0;
+	if (top_offset || left_offset || right_offset || bottom_offset)
+		crop_flag = shift++;
+	
+	unsigned int hflip_flag = 0;
+	if (flipHorizontal)
+		hflip_flag = shift++;
+	
+	unsigned int vflip_flag = 0;
+	if (flipVertical)
+		vflip_flag = shift++;
+	
+	//Sanity check for odd processors with small word sizes
+	if (sizeof(unsigned int) * 8 > shift) {
+		//We have too many flags to fit in a word.
+		FAIL("Word size is too small");
+		return 0;
 	}
+	
+	if (shift == 0 && src_fmt == dst_fmt) {
+		//No transformations needed. Find an identity method
+		dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG, "Finding identity transformation\n");
+		v4lconvert_converter_prototype* identityPrototype = lookupPrototype(v4lconvert_conversion_type_identity, request->src_fmt, request->dst_fmt);
+		if (!identityPrototype) {
+			FAIL("Unable to lookup identity prototype");
+			return 0;
+		}
+		v4lconvert_converter* identityConverter = identityPrototype->init(identityPrototype, request->src_fmt, request->dst_fmt, 0, NULL, errmsg);
+		if (!identityConverter)
+			//Error message passed by init()
+			return 0;
+		*converters = calloc(1, sizeof(v4lconvert_converter*));
+		if (*converters == NULL) {
+			FAIL("Error allocating memory");
+			return 0;
+		}
+		(*converters)[0] = identityConverter;
+		return 1;
+	}
+	
+	typedef struct {
+		size_t cost;
+		size_t prev;
+	} cvt_pos;
+	
+	cvt_pos* nodes = calloc(libvideo_palettes_size * (shift + 1), sizeof(cvt_pos));
+	
 	//TODO finish
-	return false;
+	
+	return 0;
 	#undef FAIL
 }
 
-bool v4lconvert_encoder_series_init(struct v4lconvert_encoder_series* self, u32 width, u32 height, u32 numConverters, u32* converterIds) {
-	if (!self || (numConverters > 0 && !converterIds))
+
+bool v4lconvert_encoder_series_create(struct v4lconvert_encoder_series* self, struct v4lconvert_conversion_request* request, char** errmsg) {
+	size_t num_converters = v4lconvert_encoder_series_computeConverters(self->converters, request, errmsg);
+	if (num_converters == 0)
 		return false;
-	self->convert = &v4lconvert_encoder_series_doConvert;
-	self->num_encoders = numConverters;
-	
-	if (!self->encoders)
-		self->encoders = calloc(numConverters, sizeof(struct v4lconvert_encoder*));
-	
-	for (unsigned int i = 0; i < numConverters; i++) {
-		struct v4lconvert_encoder* encoder = self->encoders[i] = malloc(sizeof(struct v4lconvert_encoder));
-		v4lconvert_converter_t* converter = v4lconvert_converter_getConverterById(converterIds[i]);
-		if (!encoder || !converter || !v4lconvert_encoder_initWithConverter(encoder, converter, width, height)) {
-			//Initialization failure
-			v4lconvert_encoder_series_doRelease(self);
-			return false;
-		}
-	}
-	
-	self->src_fmt = self->encoders[0]->src_fmt;
-	self->dst_fmt = self->encoders[numConverters - 1]->dst_fmt;
+	self->num_converters = num_converters;
+	self->convert = v4lconvert_encoder_series_doConvert;
+	self->release = v4lconvert_encoder_series_doRelease;
+	self->src_fmt = self->converters[0]->prototype->src_fmt;
+	self->dst_fmt = self->converters[num_converters - 1]->prototype->dst_fmt;
+	//TODO finish src_len/dst_len
 	return true;
 }
 
-bool v4lconvert_encoder_series_doRelease(struct v4lconvert_encoder_series* self) {
+static bool v4lconvert_encoder_series_doRelease(struct v4lconvert_encoder_series* self) {
 	if (self != NULL) {
 		if (self->encoders) {
 			for (unsigned i = 0; i < self->num_encoders; i++)

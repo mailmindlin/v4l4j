@@ -79,15 +79,16 @@ LIBV4L_PUBLIC enum v4lconvert_conversion_type {
 	/**
 	 * Flip image vertically
 	 */
-	v4lconvert_conversion_type_vflip
+	v4lconvert_conversion_type_vflip,
+	v4lconvert_num_conversion_types
 };
 
 #define V4LCONVERT_CONVERSION_TYPE_FLAG(type) (1u << v4lconvert_conversion_type_##type)
 
 struct v4lconvert_converter;
-typedef struct v4lconvert_converter v4lconvert_converter_t;
+typedef struct v4lconvert_converter v4lconvert_converter;
 struct v4lconvert_converter_prototype;
-typedef const struct v4lconvert_converter_prototype v4lconvert_converter_prototype_t;
+typedef const struct v4lconvert_converter_prototype v4lconvert_converter_prototype;
 
 struct v4lconvert_converter_prototype {
 	size_t id;
@@ -101,8 +102,8 @@ struct v4lconvert_converter_prototype {
 	 * @param errmsg Filled with message if this method fails. Does not need to be released in any case.
 	 * @return Converter created, or NULL on error. On error, errno is set.
 	 */
-	v4lconvert_converter_t* (*init) (v4lconvert_converter_prototype_t* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options, char** errmsg);
-	int (*estimateCost) (v4lconvert_converter_prototype_t* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options);
+	v4lconvert_converter* (*init) (v4lconvert_converter_prototype* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options, char** errmsg);
+	int (*estimateCost) (v4lconvert_converter_prototype* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options);
 	enum v4lconvert_conversion_type type;
 	/**
 	 * Source format
@@ -179,7 +180,7 @@ LIBV4L_PUBLIC struct v4lconvert_converter {
 	size_t dst_len;
 	
 	//Private members. Please don't touch.
-	v4lconvert_converter_prototype_t* prototype;
+	v4lconvert_converter_prototype* prototype;
 	
 	union {
 		struct {
@@ -226,12 +227,12 @@ LIBV4L_PUBLIC struct v4lconvert_encoder_series {
 	/**
 	 * Number of encoders in series
 	 */
-	size_t num_encoders;
+	size_t num_converters;
 	/**
 	 * Array of encoders used.
 	 * Please don't change it.
 	 */
-	struct v4lconvert_encoder** encoders;
+	struct v4lconvert_converter** converters;
 };
 
 LIBV4L_PUBLIC struct v4lconvert_conversion_request {
@@ -249,7 +250,7 @@ LIBV4L_PUBLIC struct v4lconvert_conversion_request {
 
 LIBV4L_PUBLIC u32 v4lconvert_estimateBufferSize(u32 fmt, u32 width, u32 height);
 
-LIBV4L_PUBLIC int v4lconvert_encoder_initWithConverter(struct v4lconvert_encoder* encoder, v4lconvert_converter_t* converter, u32 width, u32 height);
+LIBV4L_PUBLIC int v4lconvert_encoder_initWithConverter(struct v4lconvert_encoder* encoder, v4lconvert_converter* converter, u32 width, u32 height);
 LIBV4L_PUBLIC int v4lconvert_encoder_initForIMF(struct v4lconvert_encoder* encoder, u32 src_fmt, u32 dst_fmt, u32 width, u32 height);
 
 LIBV4L_PUBLIC bool v4lconvert_encoder_series_create(struct v4lconvert_encoder_series* self, struct v4lconvert_conversion_request* request, char** errmsg) __attribute__((nonnull (1, 2)));
@@ -267,10 +268,6 @@ LIBV4L_PUBLIC int v4lconvert_encoder_series_doRelease(struct v4lconvert_encoder_
  */
 LIBV4L_PUBLIC int v4lconvert_encoder_series_createBuffers(struct v4lconvert_encoder_series* series, u32 num_buffers, struct v4lconvert_buffer** buffers, int allocate);
 LIBV4L_PUBLIC int v4lconvert_buffer_release(struct v4lconvert_buffer* buffer);
-
-LIBV4L_PUBLIC v4lconvert_converter_t* v4lconvert_converter_getConverterById(unsigned int converterId);
-LIBV4L_PUBLIC int v4lconvert_converter_lookupConverterByConversion(u32 from, u32 to);
-LIBV4L_PUBLIC v4lconvert_converter_t* v4lconvert_converter_getConverterByConversion(u32 from, u32 to);
 
 #ifdef __cplusplus
 }
