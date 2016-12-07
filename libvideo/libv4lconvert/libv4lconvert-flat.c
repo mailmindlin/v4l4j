@@ -690,21 +690,57 @@ static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter**
 			//We found a viable path
 			break;
 		}
+		//Calculate what the format should be passing through this node
+		struct v4l2_format currentSourceFormat;
+		//TODO finish
+		
 		if (current_tier & rotate_mask) {
 			//Look for rotations
+			size_t newTierOffset = (current_tier & ~rotate_mask) * tierSize;
+			for (unsigned int i = 0; i < v4lconvert_converter_num_prototypes[v4lconvert_conversion_type_rotate], i++) {
+				v4lconvert_converter_prototype* prototype = &v4lconvert_converter_prototypes[v4lconvert_conversion_type_rotate][i];
+				if (prototype->src_fmt == current_fmt) {
+					struct v4l2_format targetFormat;
+					node* target = &nodes[newTierOffset + prototyper->dst_fmt];
+					target->cost = current->cost + prototype->estimateCost(prototype, currentSourceFormat, ...);
+					target->prev = current_idx;
+				}
+			}
 		} else {
 			//Look for flips
 			if (current_tier & hflip_mask) {
+				size_t newTierOffset = (current_tier & ~hflip_mask) * tierSize;
 				for (unsigned int i = 0; i < v4lconvert_converter_num_prototypes[v4lconvert_conversion_type_hflip], i++) {
 					v4lconvert_converter_prototype* prototype = &v4lconvert_converter_prototypes[v4lconvert_conversion_type_hflip][i];
 					if (prototype->src_fmt == current_fmt) {
-						nodes[current_tier & ~hflip_mask][prototype->dst_fmt].cost = prototype->estimateCost(...);
-						nodes[current_tier & ~hflip_mask][prototype->dst_fmt].prev = current_idx;
+						node* target = &nodes[newTierOffset + prototyper->dst_fmt];
+						target->cost = current->cost + prototype->estimateCost(prototype, ...);
+						target->prev = current_idx;
 					}
 				}
 			}
 			if (current_tier & vflip_mask) {
-				
+				size_t newTierOffset = (current_tier & ~vflip_mask) * tierSize;
+				for (unsigned int i = 0; i < v4lconvert_converter_num_prototypes[v4lconvert_conversion_type_vflip], i++) {
+					v4lconvert_converter_prototype* prototype = &v4lconvert_converter_prototypes[v4lconvert_conversion_type_vflip][i];
+					if (prototype->src_fmt == current_fmt) {
+						node* target = &nodes[newTierOffset + prototyper->dst_fmt];
+						target->cost = current->cost + prototype->estimateCost(prototype, ...);
+						target->prev = current_idx;
+					}
+				}
+			}
+			if ((current_tier & hflip_mask) && (current_tier & vflip_mask)) {
+				//180deg rotation is the same as hflip + vflip
+				size_t newTierOffset = (current_tier & ~hflip_mask & ~vflip_mask) * tierSize;
+				for (unsigned int i = 0; i < v4lconvert_converter_num_prototypes[v4lconvert_conversion_type_rotate180], i++) {
+					v4lconvert_converter_prototype* prototype = &v4lconvert_converter_prototypes[v4lconvert_conversion_type_rotate180][i];
+					if (prototype->src_fmt == current_fmt) {
+						node* target = &nodes[newTierOffset + prototyper->dst_fmt];
+						target->cost = current->cost + prototype->estimateCost(prototype, ...);
+						target->prev = current_idx;
+					}
+				}
 			}
 		}
 		if (current_tier & scale_mask) {
