@@ -519,44 +519,38 @@ static v4lconvert_converter_prototype_t* lookupPrototype(v4lconvert_conversion_t
 	//TODO finish
 	return NULL;
 }
-typedef struct {
+struct node_s;
+typedef struct node_s node;
+struct node_s {
 	/**
 	 * Total cost to get to the current node.
 	 * 0 if undefined (infinity)
 	 */
 	size_t cost;
-	/**
-	 * Index of previous node in optimal path.
-	 * 0 if 
-	 */
-	size_t prev;
-} node;
-	
-static bool growList(node*** list, size_t* offset, const size_t length, size_t* capacity, const size_t minCapacity) {
-	const size_t oldCapacity = *capacity;
-	size_t newCapacity = oldCapacity * 3 / 2 + 1;
-	if (minCapacity <= oldCapacity)
-		return true;
-	if (newCapacity < minCapacity)
-		newCapacity = minCapacity;
-	node** newList = (node**) realloc(*list, sizeof(node*) * newCapacity);
-	if (!newList)
-		return false;
-	*list = newList;
-	*capacity = newCapacity;
-	//See if we have to shuffle the list
-	if (*offset + length >= oldCapacity) {
-		//# of elements wrapped around at the start
-		size_t wrapped_length = *offset + length - oldCapacity;
-		if (newCapacity - oldCapacity > wrapped_length) {
-			memcpy(&(*list[oldCapacity]), &(*list[*offset + 1]), wrapped_length);
-			memcpy(*list, &(*list[*offset], length);
-			memcpy(&(*list[length + 1]), &(*list[*offset + 1]));
-		} else {
-			//TODO finish
-		}
-		*offset = 0;
+	u32 fmt;
+	unsigned int flags;
+	node* path_prev;
+	v4lconvert_converter_prototype* prototype;
+	node* list_next;
+};
+static void addNode(node** list, size_t cost, u32 fmt, unsigned int flags, node* path_prev, v4lconvert_converter_prototype* prototype) {
+	node* node = (node*) malloc(sizeof(node));
+	node->cost = cost;
+	node->fmt = fmt;
+	node->flags = flags;
+	node->path_prev = path_prev;
+	node->prototype = prototype;
+	node* current = *list;
+	if (!current) {
+		*list = node;
+		return;
 	}
+	node* next = realList->next;
+	while (next) {
+		current = next;
+		//TODO finish here
+	}
+	current->list_next = node;
 }
 static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter*** converters, struct v4lconvert_conversion_request* request, char** errmsg) {
 	#define FAIL(msg) do {\
@@ -611,9 +605,11 @@ static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter**
 	
 	//Create flags. This is to save space, b/c we won't need all of them every time
 	unsigned int shift = 0;
+	const unsigned int closed_mask = 1;
+	
 	unsigned int rotate_mask = 0;
 	if (rotation != 0)
-		rotate_mask = ++shift;
+		rotate_mask = 1 << ++shift;
 	
 	unsigned int scale_mask = 0;
 	if (scaleNumerator != scaleDenominator)
@@ -666,30 +662,32 @@ static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter**
 	//Size of each tier (# of nodes/tier)
 	const size_t tierSize = libvideo_palettes_size;
 	
-	node* nodes = calloc(numTiers * tierSize, sizeof(node));
+	node** nodes = calloc(numTiers, sizeof(node*));
 	
 	//Get the origin node
-	node* startNode = &(tiers[(rotate_mask | scale_mask | crop_mask | hflip_mask | vflip_mask)][src_fmt]);
+	node* startNode = malloc(sizeof(node));
 	startNode->cost = 1;
-	//Circular queue
-	size_t openSetCapacity = 16;
-	size_t openSetSize = 1;
-	size_t openSetOffset = 0;
-	node** openSet = calloc(openSetCapacity, sizeof(node*));
-	openSet[0] = startNode;
+	startNode->fmt = src_fmt;
+	startNode->flags = rotate_mask | scale_mask | crop_mask | hflip_mask | vflip_mask;
+	startNode->path_prev = NULL;
+	startNode->prototype = NULL;
+	startNode->list_prev = NULL;
+	startNode->list_next = NULL;
+	
+	node* queue = startNode;
 	
 	//Whether anything happened in this iteration
-	while (openSetSize > 0) {
+	while (queue) {
 		//Pop a node from the queue
-		node* current = openSet[((openSetOffset++) - (openSetSize--)) % openSetCapacity];
-		//Find where the node is in the array
-		size_t current_idx = (current - nodes) / sizeof(node);
-		size_t current_tier = current_idx / tierSize;
-		u32 current_fmt = current_idx % current_tier;
-		if (current == &(tiers[0][dst_fmt])) {
+		node* current = queue;
+		
+		if (current->flags & ~closed_mask == 0 && current->fmt == dst_fmt) {
 			//We found a viable path
 			break;
 		}
+		//Move the queue up
+		queue = queue->next;
+		
 		//Calculate what the format should be passing through this node
 		struct v4l2_format currentSourceFormat;
 		//TODO finish
@@ -701,7 +699,7 @@ static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter**
 				v4lconvert_converter_prototype* prototype = &v4lconvert_converter_prototypes[v4lconvert_conversion_type_rotate][i];
 				if (prototype->src_fmt == current_fmt) {
 					struct v4l2_format targetFormat;
-					node* target = &nodes[newTierOffset + prototyper->dst_fmt];
+					node* target = malloc()
 					target->cost = current->cost + prototype->estimateCost(prototype, currentSourceFormat, ...);
 					target->prev = current_idx;
 				}
