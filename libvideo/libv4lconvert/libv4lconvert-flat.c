@@ -506,7 +506,45 @@ static v4lconvert_converter_prototype_t* lookupPrototype(v4lconvert_conversion_t
 	//TODO finish
 	return NULL;
 }
-
+typedef struct {
+	/**
+	 * Total cost to get to the current node.
+	 * 0 if undefined (infinity)
+	 */
+	size_t cost;
+	/**
+	 * Index of previous node in optimal path.
+	 * 0 if 
+	 */
+	size_t prev;
+} node;
+	
+static bool growList(node*** list, size_t* offset, const size_t length, size_t* capacity, const size_t minCapacity) {
+	const size_t oldCapacity = *capacity;
+	size_t newCapacity = oldCapacity * 3 / 2 + 1;
+	if (minCapacity <= oldCapacity)
+		return true;
+	if (newCapacity < minCapacity)
+		newCapacity = minCapacity;
+	node** newList = (node**) realloc(*list, sizeof(node*) * newCapacity);
+	if (!newList)
+		return false;
+	*list = newList;
+	*capacity = newCapacity;
+	//See if we have to shuffle the list
+	if (*offset + length >= oldCapacity) {
+		//# of elements wrapped around at the start
+		size_t wrapped_length = *offset + length - oldCapacity;
+		if (newCapacity - oldCapacity > wrapped_length) {
+			memcpy(&(*list[oldCapacity]), &(*list[*offset + 1]), wrapped_length);
+			memcpy(*list, &(*list[*offset], length);
+			memcpy(&(*list[length + 1]), &(*list[*offset + 1]));
+		} else {
+			//TODO finish
+		}
+		*offset = 0;
+	}
+}
 static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter*** converters, struct v4lconvert_conversion_request* request, char** errmsg) {
 	#define FAIL(msg) do {\
 			if (errmsg) \
@@ -562,26 +600,26 @@ static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter**
 	unsigned int shift = 0;
 	unsigned int rotate_flag = 0;
 	if (rotation != 0)
-		rotate_flag = shift++;
+		rotate_flag = ++shift;
 	
 	unsigned int scale_flag = 0;
 	if (scaleNumerator != scaleDenominator)
-		scale_flag = shift++;
+		scale_flag = ++shift;
 	
 	unsigned int crop_flag = 0;
 	if (top_offset || left_offset || right_offset || bottom_offset)
-		crop_flag = shift++;
+		crop_flag = ++shift;
 	
 	unsigned int hflip_flag = 0;
 	if (flipHorizontal)
-		hflip_flag = shift++;
+		hflip_flag = ++shift;
 	
 	unsigned int vflip_flag = 0;
 	if (flipVertical)
-		vflip_flag = shift++;
+		vflip_flag = ++shift;
 	
 	//Sanity check for odd processors with small word sizes
-	if (sizeof(unsigned int) * 8 > shift) {
+	if (sizeof(unsigned int) * 8 < shift) {
 		//We have too many flags to fit in a word.
 		FAIL("Word size is too small");
 		return 0;
@@ -608,12 +646,31 @@ static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter**
 		return 1;
 	}
 	
-	typedef struct {
-		size_t cost;
-		size_t prev;
-	} cvt_pos;
+	//Let's do an A* search now
 	
-	cvt_pos* nodes = calloc(libvideo_palettes_size * (shift + 1), sizeof(cvt_pos));
+	//Number of tiers needed
+	const size_t numTiers = 1 << shift;
+	//Size of each tier (# of nodes/tier)
+	const size_t tierSize = libvideo_palettes_size;
+	
+	node* nodes = calloc(numTiers * tierSize, sizeof(node));
+	
+	//Get the origin node
+	node* startNode = tiers[tier_size * ((1 << rotate_flag) | (1 << scale_flag) | (1 << crop_flag) | (1 << hflip_flag) | (1 << vflip_flag) & ~1u)];
+	startNode->cost = 1;
+	size_t openSetCapacity = 16;
+	size_t openSetSize = 1;
+	size_t openSetOffset = 0;
+	node** openSet = calloc(openSetCapacity, sizeof(node));
+	openSet[0] = startNode;
+	
+	//Whether anything happened in this iteration
+	bool anythingHappened;
+	while (openSetSize > 0) {
+		node* current = openSet[openSetOffset++];
+		openSetSize--;
+		
+	}
 	
 	//TODO finish
 	
@@ -623,7 +680,7 @@ static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter**
 
 
 bool v4lconvert_encoder_series_create(struct v4lconvert_encoder_series* self, struct v4lconvert_conversion_request* request, char** errmsg) {
-	size_t num_converters = v4lconvert_encoder_series_computeConverters(self->converters, request, errmsg);
+	size_t num_converters = v4lconvert_encoder_series_computeConverters(&self->converters, request, errmsg);
 	if (num_converters == 0)
 		return false;
 	self->num_converters = num_converters;
