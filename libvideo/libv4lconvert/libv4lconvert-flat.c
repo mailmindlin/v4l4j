@@ -53,7 +53,7 @@ extern "C" {
 static v4lconvert_converter_t* v4lconvert_init_imf_sdwh(v4lconvert_converter_prototype_t* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options, char** errmsg);
 static v4lconvert_converter_t* v4lconvert_init_imf_sd_sf(v4lconvert_converter_prototype_t* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options, char** errmsg);
 
-static v4lconvert_converter_prototype_t const v4lconvert_converter_prototypes[][] = {
+static v4lconvert_converter_prototype const v4lconvert_converter_prototypes[][] = {
 	[v4lconvert_conversion_type_identity] = {
 		
 	},
@@ -63,10 +63,23 @@ static v4lconvert_converter_prototype_t const v4lconvert_converter_prototypes[][
 			.init = &v4lconvert_init_imf_sdwh,
 			.estimateCost = NULL,
 			.type = v4lconvert_conversion_type_imf,
-			.src_fmt = 
 		}
 	}
 };
+#define COUNT_PROTOTYPES(type) [v4lconvert_conversion_type_##type] = ARRAY_SIZE(v4lconvert_converter_prototypes[v4lconvert_conversion_type_##type])
+static const size_t v4lconvert_converter_num_prototypes[] = {
+		COUNT_PROTOTYPES(identity),
+		COUNT_PROTOTYPES(imf),
+		COUNT_PROTOTYPES(crop),
+		COUNT_PROTOTYPES(pad),
+		COUNT_PROTOTYPES(scale),
+		COUNT_PROTOTYPES(rotate),
+		COUNT_PROTOTYPES(rotate90),
+		COUNT_PROTOTYPES(rotate180),
+		COUNT_PROTOTYPES(hflip),
+		COUNT_PROTOTYPES(vflip)
+	};
+#undef COUNT_PROTOTYPES
 //Number of converters in array
 #define NUM_V4L_CONVERTERS 51
 //Very const
@@ -598,25 +611,25 @@ static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter**
 	
 	//Create flags. This is to save space, b/c we won't need all of them every time
 	unsigned int shift = 0;
-	unsigned int rotate_flag = 0;
+	unsigned int rotate_mask = 0;
 	if (rotation != 0)
-		rotate_flag = ++shift;
+		rotate_mask = ++shift;
 	
-	unsigned int scale_flag = 0;
+	unsigned int scale_mask = 0;
 	if (scaleNumerator != scaleDenominator)
-		scale_flag = ++shift;
+		scale_mask = 1 << ++shift;
 	
-	unsigned int crop_flag = 0;
+	unsigned int crop_mask = 0;
 	if (top_offset || left_offset || right_offset || bottom_offset)
-		crop_flag = ++shift;
+		crop_mask = 1 << ++shift;
 	
-	unsigned int hflip_flag = 0;
+	unsigned int hflip_mask = 0;
 	if (flipHorizontal)
-		hflip_flag = ++shift;
+		hflip_mask = 1 << ++shift;
 	
-	unsigned int vflip_flag = 0;
+	unsigned int vflip_mask = 0;
 	if (flipVertical)
-		vflip_flag = ++shift;
+		vflip_mask = 1 << ++shift;
 	
 	//Sanity check for odd processors with small word sizes
 	if (sizeof(unsigned int) * 8 < shift) {
@@ -656,19 +669,50 @@ static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter**
 	node* nodes = calloc(numTiers * tierSize, sizeof(node));
 	
 	//Get the origin node
-	node* startNode = tiers[tier_size * ((1 << rotate_flag) | (1 << scale_flag) | (1 << crop_flag) | (1 << hflip_flag) | (1 << vflip_flag) & ~1u)];
+	node* startNode = &(tiers[(rotate_mask | scale_mask | crop_mask | hflip_mask | vflip_mask)][src_fmt]);
 	startNode->cost = 1;
+	//Circular queue
 	size_t openSetCapacity = 16;
 	size_t openSetSize = 1;
 	size_t openSetOffset = 0;
-	node** openSet = calloc(openSetCapacity, sizeof(node));
+	node** openSet = calloc(openSetCapacity, sizeof(node*));
 	openSet[0] = startNode;
 	
 	//Whether anything happened in this iteration
-	bool anythingHappened;
 	while (openSetSize > 0) {
-		node* current = openSet[openSetOffset++];
-		openSetSize--;
+		//Pop a node from the queue
+		node* current = openSet[((openSetOffset++) - (openSetSize--)) % openSetCapacity];
+		//Find where the node is in the array
+		size_t current_idx = (current - nodes) / sizeof(node);
+		size_t current_tier = current_idx / tierSize;
+		u32 current_fmt = current_idx % current_tier;
+		if (current == &(tiers[0][dst_fmt])) {
+			//We found a viable path
+			break;
+		}
+		if (current_tier & rotate_mask) {
+			//Look for rotations
+		} else {
+			//Look for flips
+			if (current_tier & hflip_mask) {
+				for (unsigned int i = 0; i < v4lconvert_converter_num_prototypes[v4lconvert_conversion_type_hflip], i++) {
+					v4lconvert_converter_prototype* prototype = &v4lconvert_converter_prototypes[v4lconvert_conversion_type_hflip][i];
+					if (prototype->src_fmt == current_fmt) {
+						nodes[current_tier & ~hflip_mask][prototype->dst_fmt].cost = prototype->estimateCost(...);
+						nodes[current_tier & ~hflip_mask][prototype->dst_fmt].prev = current_idx;
+					}
+				}
+			}
+			if (current_tier & vflip_mask) {
+				
+			}
+		}
+		if (current_tier & scale_mask) {
+			
+		} else if (current_tier & crop_mask) {
+			
+		}
+		//Look for IMF conversions
 		
 	}
 	
