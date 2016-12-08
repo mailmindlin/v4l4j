@@ -578,8 +578,20 @@ static unsigned int binaryGcd(unsigned int a, unsigned int b) {
 	return u << shift;
 }
 
-static v4lconvert_converter_prototype_t* lookupPrototype(v4lconvert_conversion_type type, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt) {
-	//TODO finish
+static size_t lookupPrototype(v4lconvert_conversion_type type, u32 src_fmt) {
+	size_t min = 0;
+	size_t max = v4lconvert_converter_num_prototypes[v4lconvert_conversion_type_rotate];
+	//Binary search
+	
+	for (unsigned int i = 0; i < , i++) {
+		v4lconvert_converter_prototype* prototype = &v4lconvert_converter_prototypes[v4lconvert_conversion_type_rotate][i];
+		if (prototype->src_fmt == current_fmt) {
+			struct v4l2_format targetFormat;
+			node* target = malloc()
+			target->cost = current->cost + prototype->estimateCost(prototype, currentSourceFormat, ...);
+			target->prev = current_idx;
+		}
+	}
 	return NULL;
 }
 struct node_s;
