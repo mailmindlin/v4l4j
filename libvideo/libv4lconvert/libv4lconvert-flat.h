@@ -123,8 +123,10 @@ struct v4lconvert_converter_prototype {
 				void (*cvt_sd_sf_0f) (const u8* src, u8* dst, const struct v4l2_format* src_fmt);
 				void (*cvt_sd_sf_1f) (const u8* src, u8* dst, const struct v4l2_format* src_fmt, int flag1);
 				void (*cvt_sd_sf_2f) (const u8* src, u8* dst, const struct v4l2_format* src_fmt, int flag1, int flag2);
-				void* user_defined;
+				void* cvt_special;
 			} target;
+			int flag1;
+			int flag2;
 		} imf_params;
 		u8 user_defined[sizeof(int*) * 4];
 	};

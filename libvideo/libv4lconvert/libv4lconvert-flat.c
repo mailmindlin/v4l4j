@@ -22,33 +22,55 @@ extern "C" {
 #define UNUSED(x) (void)(x)
 #endif
 
-#define GENERATE_CONVERTER_SDWH_0F(id, fn, src_fmt, dst_fmt) {(id), v4lconvert_conversion_signature_sdwh_0f, {.cvt_sdwh_0f = (fn)}, v4lconvert_conversion_type_unknown, (src_fmt), (dst_fmt), N_A, N_A}
+#define GENERATE_CONVERTER(id, initFn, applyFn, costFn, src_fmt, dst_fmt, signature, flag1, flag2) \
+	{\
+		.id = (id),\
+		.init = (initFn),\
+		.estimateCost = (costFn),\
+		.type = v4lconvert_conversion_type_imf,\
+		.src_fmt = (src_fmt),\
+		.dst_fmt = (dst_fmt),\
+		.imf_params = {\
+			.signature = v4lconvert_conversion_signature_##signature,\
+			.target = {.cvt_##signature = (applyFn)},\
+			.flag1 = (flag1),\
+			.flag2 = (flag2),\
+		}\
+	}
 
-#define GENERATE_CONVERTER_SDWH_1F(id, fn, src_fmt, dst_fmt, flag1) {(id), v4lconvert_conversion_signature_sdwh_1f, {.cvt_sdwh_1f = (fn)}, v4lconvert_conversion_type_unknown, (src_fmt), (dst_fmt), (flag1), N_A}
+#define GENERATE_CONVERTER_SDWH_0F(id, applyFn, costFn, src_fmt, dst_fmt)\
+	GENERATE_CONVERTER((id), v4lconvert_init_imf_sdwh, (applyFn), (costFn), (src_fmt), (dst_fmt), sdwh_0f, false, false)
 
-#define GENERATE_CONVERTER_SDWH_2F(id, fn, src_fmt, dst_fmt, flag1, flag2) {(id), v4lconvert_conversion_signature_sdwh_1f, {.cvt_sdwh_1f = (fn)}, v4lconvert_conversion_type_unknown, (src_fmt), (dst_fmt), (flag1), (flag2)}
+#define GENERATE_CONVERTER_SDWH_1F(id, applyFn, costFn, src_fmt, dst_fmt, flag1)\
+	GENERATE_CONVERTER((id), v4lconvert_init_imf_sdwh, (applyFn), (costFn), (src_fmt), (dst_fmt), sdwh_1f, (flag1), false)
 
-#define GENERATE_CONVERTER_SD_SF_0F(id, fn, src_fmt, dst_fmt) {(id), v4lconvert_conversion_signature_sd_sf_0f, {.cvt_sd_sf_0f = (fn)}, v4lconvert_conversion_type_unknown, (src_fmt), (dst_fmt), N_A, N_A}
+#define GENERATE_CONVERTER_SDWH_2F(id, applyFn, costFn, src_fmt, dst_fmt, flag1, flag2)\
+	GENERATE_CONVERTER((id), v4lconvert_init_imf_sdwh, (applyFn), (costFn), (src_fmt), (dst_fmt), sdwh_2f, (flag1), (flag2))
 
-#define GENERATE_CONVERTER_SD_SF_1F(id, fn, src_fmt, dst_fmt, flag1) {(id), v4lconvert_conversion_signature_sd_sf_1f, {.cvt_sd_sf_1f = (fn)}, v4lconvert_conversion_type_unknown, (src_fmt), (dst_fmt), (flag1), N_A}
+#define GENERATE_CONVERTER_SD_SF_0F(id, applyFn, costFn, src_fmt, dst_fmt)\
+	GENERATE_CONVERTER((id), v4lconvert_init_imf_sd_sf, (applyFn), (costFn), (src_fmt), (dst_fmt), sd_sf_0f, false, false)
 
-#define GENERATE_CONVERTER_SD_SF_2F(id, fn, src_fmt, dst_fmt, flag1, flag2) {(id), v4lconvert_conversion_signature_sd_sf_2f, {.cvt_sd_sf_2f = (fn)}, v4lconvert_conversion_type_unknown, (src_fmt), (dst_fmt), (flag1), (flag2)}
+#define GENERATE_CONVERTER_SD_SF_1F(id, applyFn, costFn, src_fmt, dst_fmt, flag1)\
+	GENERATE_CONVERTER((id), v4lconvert_init_imf_sd_sf, (applyFn), (costFn), (src_fmt), (dst_fmt), sd_sf_1f, (flag1), false)
+
+#define GENERATE_CONVERTER_SD_SF_2F(id, applyFn, costFn, src_fmt, dst_fmt, flag1, flag2)\
+	GENERATE_CONVERTER((id), v4lconvert_init_imf_sd_sf, (applyFn), (costFn), (src_fmt), (dst_fmt), sd_sf_2f, (flag1), (flag2))
 
 #define GENERATE_CONVERTER_SPECIAL(id, src_fmt, dst_fmt, flag1, flag2) {(id), v4lconvert_conversion_signature_special, {.user_defined = NULL}, v4lconvert_conversion_type_unknown, (src_fmt), (dst_fmt), (flag1), (flag2)}
 
-#define GENERATE_CONVERTER_SDWH_1F_x2(id, fn, src_fmt_0, src_fmt_1, dst_fmt_0, dst_fmt_1) \
-	GENERATE_CONVERTER_SDWH_1F(id    , (fn), (src_fmt_0), (dst_fmt_0), 0),\
-	GENERATE_CONVERTER_SDWH_1F(id + 1, (fn), (src_fmt_1), (dst_fmt_1), 1)
+#define GENERATE_CONVERTER_SDWH_1F_x2(id, applyFn, costFn, src_fmt_0, src_fmt_1, dst_fmt_0, dst_fmt_1) \
+	GENERATE_CONVERTER_SDWH_1F(id    , (applyFn), (costFn), (src_fmt_0), (dst_fmt_0), false),\
+	GENERATE_CONVERTER_SDWH_1F(id + 1, (applyFn), (costFn), (src_fmt_1), (dst_fmt_1), true)
 
-#define GENERATE_CONVERTER_SD_SF_1F_x2(id, fn, src_fmt_0, src_fmt_1, dst_fmt_0, dst_fmt_1) \
-	GENERATE_CONVERTER_SD_SF_1F(id    , (fn), (src_fmt_0), (dst_fmt_0), 0),\
-	GENERATE_CONVERTER_SD_SF_1F(id + 1, (fn), (src_fmt_1), (dst_fmt_1), 1)
+#define GENERATE_CONVERTER_SD_SF_1F_x2(id, applyFn, costFn, src_fmt_0, src_fmt_1, dst_fmt_0, dst_fmt_1) \
+	GENERATE_CONVERTER_SD_SF_1F(id    , (applyFn), (costFn), (src_fmt_0), (dst_fmt_0), false),\
+	GENERATE_CONVERTER_SD_SF_1F(id + 1, (applyFn), (costFn), (src_fmt_1), (dst_fmt_1), true)
 
-#define GENERATE_CONVERTER_SD_SF_2F_x4(id, fn, src_fmt_0, src_fmt_1, dst_fmt_0, dst_fmt_1) \
-	GENERATE_CONVERTER_SD_SF_2F(id    , (fn), (src_fmt_0), (dst_fmt_0), 0, 0),\
-	GENERATE_CONVERTER_SD_SF_2F(id + 1, (fn), (src_fmt_1), (dst_fmt_0), 1, 0),\
-	GENERATE_CONVERTER_SD_SF_2F(id + 2, (fn), (src_fmt_0), (dst_fmt_1), 0, 1),\
-	GENERATE_CONVERTER_SD_SF_2F(id + 3, (fn), (src_fmt_1), (dst_fmt_1), 1, 1)
+#define GENERATE_CONVERTER_SD_SF_2F_x4(id, applyFn, costFn, src_fmt_0, src_fmt_1, dst_fmt_0, dst_fmt_1) \
+	GENERATE_CONVERTER_SD_SF_2F(id    , (applyFn), (costFn), (src_fmt_0), (dst_fmt_0), 0, 0),\
+	GENERATE_CONVERTER_SD_SF_2F(id + 1, (applyFn), (costFn), (src_fmt_1), (dst_fmt_0), 1, 0),\
+	GENERATE_CONVERTER_SD_SF_2F(id + 2, (applyFn), (costFn), (src_fmt_0), (dst_fmt_1), 0, 1),\
+	GENERATE_CONVERTER_SD_SF_2F(id + 3, (applyFn), (costFn), (src_fmt_1), (dst_fmt_1), 1, 1)
 
 static v4lconvert_converter_t* v4lconvert_init_imf_sdwh(v4lconvert_converter_prototype_t* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options, char** errmsg);
 static v4lconvert_converter_t* v4lconvert_init_imf_sd_sf(v4lconvert_converter_prototype_t* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options, char** errmsg);
@@ -58,12 +80,53 @@ static v4lconvert_converter_prototype const v4lconvert_converter_prototypes[][] 
 		
 	},
 	[v4lconvert_conversion_type_imf] = {
-		{
-			.id = 0,
-			.init = &v4lconvert_init_imf_sdwh,
-			.estimateCost = NULL,
-			.type = v4lconvert_conversion_type_imf,
-		}
+		GENERATE_CONVERTER_SD_SF_2F_x4(0, v4lconvert_rgb24_to_yuv420, NULL, RGB24, BGR24, YUV420, YVU420),
+		GENERATE_CONVERTER_SDWH_1F_x2(4, v4lconvert_yuv420_to_rgb24, NULL, YUV420, YVU420, RGB24, RGB24),
+		GENERATE_CONVERTER_SDWH_1F_x2(6, v4lconvert_yuv420_to_bgr24, YUV420, YVU420, BGR24, BGR24),
+		GENERATE_CONVERTER_SDWH_0F(8, v4lconvert_yuyv_to_rgb24, YUYV, RGB24),
+		GENERATE_CONVERTER_SDWH_0F(9, v4lconvert_yuyv_to_bgr24, YUYV, BGR24),
+		GENERATE_CONVERTER_SDWH_1F_x2(10, v4lconvert_yuyv_to_yuv420, YUYV, YUYV, YUV420, YVU420),
+		GENERATE_CONVERTER_SDWH_0F(12, v4lconvert_yvyu_to_rgb24, YUYV, RGB24),
+		GENERATE_CONVERTER_SDWH_0F(13, v4lconvert_yvyu_to_bgr24, YUYV, BGR24),
+		GENERATE_CONVERTER_SDWH_0F(14, v4lconvert_uyvy_to_rgb24, UYVY, RGB24),
+		GENERATE_CONVERTER_SDWH_0F(15, v4lconvert_uyvy_to_bgr24, UYVY, BGR24),
+		GENERATE_CONVERTER_SDWH_1F_x2(16, v4lconvert_uyvy_to_yuv420, UYVY, UYVY, YUV420, YVU420),
+		GENERATE_CONVERTER_SDWH_0F(18, v4lconvert_swap_rgb, RGB24, BGR24),
+		GENERATE_CONVERTER_SDWH_0F(19, v4lconvert_swap_rgb, BGR24, RGB24),
+		GENERATE_CONVERTER_SD_SF_0F(20, v4lconvert_swap_uv, YUV420, YVU420),//TODO figure out if this is right...
+		GENERATE_CONVERTER_SD_SF_0F(21, v4lconvert_swap_uv, YVU420, YUV420),
+		GENERATE_CONVERTER_SDWH_0F(22, v4lconvert_grey_to_rgb24, GREY, RGB24),
+		GENERATE_CONVERTER_SD_SF_0F(23, v4lconvert_grey_to_yuv420, GREY, YUV420),
+		GENERATE_CONVERTER_SDWH_0F(24, v4lconvert_rgb565_to_rgb24, RGB565, RGB24),
+		GENERATE_CONVERTER_SDWH_0F(25, v4lconvert_rgb565_to_bgr24, RGB565, BGR24),
+		GENERATE_CONVERTER_SD_SF_1F_x2(26, v4lconvert_rgb565_to_yuv420, RGB565, RGB565, YUV420, YVU420),
+		GENERATE_CONVERTER_SDWH_1F_x2(27, v4lconvert_spca501_to_yuv420, SPCA501, SPCA501, YUV420, YVU420),
+		GENERATE_CONVERTER_SDWH_1F_x2(28, v4lconvert_spca505_to_yuv420, SPCA505, SPCA505, YUV420, YVU420),
+		GENERATE_CONVERTER_SDWH_1F_x2(32, v4lconvert_spca508_to_yuv420, SPCA508, SPCA508, YUV420, YVU420),
+		GENERATE_CONVERTER_SDWH_1F_x2(34, v4lconvert_cit_yyvyuy_to_yuv420, CIT_YYVYUY, CIT_YYVYUY, YUV420, YVU420),
+		GENERATE_CONVERTER_SDWH_1F_x2(36, v4lconvert_konica_yuv420_to_yuv420, KONICA420, KONICA420, YUV420, YVU420),
+		GENERATE_CONVERTER_SDWH_1F_x2(38, v4lconvert_m420_to_yuv420, M420, M420, YUV420, YVU420),
+		GENERATE_CONVERTER_SDWH_1F_x2(40, v4lconvert_sn9c20x_to_yuv420, SN9C20X_I420, SN9C20X_I420, YUV420, YVU420),
+		GENERATE_CONVERTER_SDWH_0F(42, v4lconvert_decode_sn9c10x, SN9C10X, SBGGR8),
+		GENERATE_CONVERTER_SDWH_0F(43, v4lconvert_decode_sn9c2028, SN9C2028, SBGGR8),
+		GENERATE_CONVERTER_SDWH_0F(44, v4lconvert_decode_sq905c, SQ905C, SRGGB8),
+		GENERATE_CONVERTER_SDWH_0F(45, v4lconvert_decode_stv0680, STV0680, SRGGB8),
+		GENERATE_CONVERTER_SDWH_0F(46, v4lconvert_grey_to_rgb24, GREY, RGB24),
+		GENERATE_CONVERTER_SDWH_0F(47, v4lconvert_hm12_to_bgr24, HM12, BGR24),
+		GENERATE_CONVERTER_SDWH_1F_x2(48, v4lconvert_hm12_to_yuv420, HM12, HM12, YUV420, YVU420),
+#define GENERATE_CONVERTER_JPEG(id, costFn, src_fmt)\
+	GENERATE_CONVERTER((id), v4lconvert_init_imf_jpeg, NULL, (costFn), (src_fmt), JPEG, special, false, false)
+		//Virtual JPEG converters. Can't be used, but are placeholders because encoders can support them.
+		GENERATE_CONVERTER_JPEG(50, NULL, GREY),
+		GENERATE_CONVERTER_JPEG(51, NULL, RGB24),
+		GENERATE_CONVERTER_JPEG(52, NULL, YUV420),
+		GENERATE_CONVERTER_JPEG(53, NULL, YUYV),
+		GENERATE_CONVERTER_JPEG(54, NULL, YVYU),
+		GENERATE_CONVERTER_JPEG(55, NULL, UYVY),
+		GENERATE_CONVERTER_JPEG(56, NULL, VYUY),
+#undef GENERATE_CONVERTER_JPEG
+		//v4lconvert_y10b_to_rgb24(struct v4lconvert_data *data, const u8 *src, u8 *dest, u32 width, u32 height);
+		//v4lconvert_y10b_to_yuv420(struct v4lconvert_data *data, const u8 *src, u8 *dest, u32 width, u32 height);
 	}
 };
 #define COUNT_PROTOTYPES(type) [v4lconvert_conversion_type_##type] = ARRAY_SIZE(v4lconvert_converter_prototypes[v4lconvert_conversion_type_##type])
