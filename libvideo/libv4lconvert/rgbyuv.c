@@ -575,15 +575,15 @@ void v4lconvert_grey_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
 	}
 }
 
-void v4lconvert_grey_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt) {
+void v4lconvert_grey_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height) {
 	/* Y */
 	//TODO replace w/ memcpy?
-	for (unsigned int y = 0; y < src_fmt->fmt.pix.height; y++)
-		for (unsigned int x = 0; x < src_fmt->fmt.pix.width; x++)
+	for (unsigned int y = 0; y < height; y++)
+		for (unsigned int x = 0; x < width; x++)
 			*dest++ = *src++;
 
 	/* Clear U/V */
-	memset(dest, 0x80, src_fmt->fmt.pix.width * src_fmt->fmt.pix.height / 2);
+	memset(dest, 0x80, width * height / 2);
 }
 
 int v4lconvert_y10b_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
