@@ -202,6 +202,8 @@ test: $(LIB).$(LIB_RELEASE) $(TESTOBJ)
 clean:
 	rm -f $(OBJ) $(BIN) $(LIB) $(LIB).$(LIB_RELEASE) $(TESTOBJ) ./*.o list-caps test-capture dump-capture ./*~ version.h
 
+test-list-caps: example/list-caps.o
+	$(CC) $(HARDWARE_FLAGS) -lrt -lm -ljpeg -lvideo -flto=3 example/list-caps.o -o list-caps
 
 version.h:
 	@echo "#define LIBVIDEO_VERSION_MAJOR $(VERSION_MAJOR)" > version.h
