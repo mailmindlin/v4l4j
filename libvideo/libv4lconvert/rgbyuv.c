@@ -586,64 +586,47 @@ void v4lconvert_grey_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format
 	memset(dest, 0x80, src_fmt->fmt.pix.width * src_fmt->fmt.pix.height / 2);
 }
 
-/* Unpack buffer of (vw bit) data into padded 16bit buffer. */
-static inline void convert_packed_to_16bit(uint8_t *raw, uint16_t *unpacked, unsigned int vw, unsigned int unpacked_len) {
-	uint16_t mask = (uint16_t) ((1 << vw) - 1);
+int v4lconvert_y10b_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
 	uint32_t buffer = 0;
 	unsigned int bitsIn = 0;
-	while (unpacked_len--) {
-		while (bitsIn < vw) {
-			buffer = (buffer << 8) | *(raw++);
-			bitsIn += 8;
-		}
-		bitsIn -= vw;
-		*(unpacked++) = (uint16_t) ((buffer >> bitsIn) & mask);
-	}
-}
-
-int v4lconvert_y10b_to_rgb24(struct v4lconvert_data *data, const u8 *src, u8 *dest, u32 width, u32 height) {
-	u8 *unpacked_buffer;
-
-	unpacked_buffer = v4lconvert_alloc_buffer(width * height * 2, &data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
-	if (!unpacked_buffer)
-		return v4lconvert_oom_error(data);
-
-	convert_packed_to_16bit((uint8_t *)src, (uint16_t *)unpacked_buffer, 10, width * height);
-
-	unsigned short *tmp = (unsigned short *)unpacked_buffer;
 	for (unsigned int i = 0; i < height; i++) {
 		for (unsigned int j = 0; j < width; j++) {
-
-			/* Only 10 useful bits, so we discard the LSBs */
-			*dest++ = (u8) ((*tmp & 0x3ff) >> 2);
-			*dest++ = (u8) ((*tmp & 0x3ff) >> 2);
-			*dest++ = (u8) ((*tmp & 0x3ff) >> 2);
-
-			/* +1 means two bytes as we are dealing with (unsigned short) */
-			tmp += 1;
+			//Get some bits to put in the buffer.
+			while (bitsIn < 10) {
+				buffer = (buffer << 8) | *(src++);
+				bitsIn += 8;
+			}
+			bitsIn -= 10;
+			// Only 10 useful bits, so we discard the LSBs
+			//int mask10 = (1 << 10) - 1;
+			//uint16_t unpacked = (buffer >> bitsIn) & mask10;//Unpacked value
+			//uint8_t value = (uint8_t) ((unpacked >> 2) & 0xFF);//Discard LSB
+			uint8_t value = (uint8_t) ((buffer >> (bitsIn + 2)) & 0xFF);
+			*dest++ = value;
+			*dest++ = value;
+			*dest++ = value;
 		}
 	}
 	return 0;
 }
 
-int v4lconvert_y10b_to_yuv420(struct v4lconvert_data *data,	const u8 *src, u8 *dest, u32 width, u32 height) {
-	u8 *unpacked_buffer = v4lconvert_alloc_buffer(width * height * 2, &data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
-	if (!unpacked_buffer)
-		return v4lconvert_oom_error(data);
-
-	convert_packed_to_16bit((uint8_t *)src, (uint16_t *)unpacked_buffer, 10, width * height);
-
-	unsigned short *tmp = (unsigned short *)unpacked_buffer;
-
+int v4lconvert_y10b_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height) {
 	/* Y */
+	uint32_t buffer = 0;
+	unsigned int bitsIn = 0;
 	for (unsigned int y = 0; y < height; y++)
 		for (unsigned int x = 0; x < width; x++) {
-
-			/* Only 10 useful bits, so we discard the LSBs */
-			*dest++ = (u8) ((*tmp & 0x3ff) >> 2);
-
-			/* +1 means two bytes as we are dealing with (unsigned short) */
-			tmp += 1;
+			while (bitsIn < 10) {
+				buffer = (buffer << 8) | *(src++);
+				bitsIn += 8;
+			}
+			bitsIn -= 10;
+			// Only 10 useful bits, so we discard the LSBs
+			//int mask10 = (1 << 10) - 1;
+			//uint16_t unpacked = (buffer >> bitsIn) & mask10;//Unpacked value
+			//uint8_t value = (uint8_t) ((unpacked >> 2) & 0xFF);//Discard LSB
+			uint8_t value = (uint8_t) ((buffer >> (bitsIn + 2)) & 0xFF);
+			*dest++ = value;
 		}
 
 	/* Clear U/V */
