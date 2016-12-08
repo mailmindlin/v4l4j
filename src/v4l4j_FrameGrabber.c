@@ -37,22 +37,22 @@
 #include "rgb.h"
 
 // static variables
-static jfieldID		last_captured_frame_sequence_fID = NULL;
-static jfieldID		last_captured_frame_time_usec_fID = NULL;
-static jfieldID		last_captured_frame_buffer_index_fID = NULL;
+static jfieldID last_captured_frame_sequence_fID = NULL;
+static jfieldID last_captured_frame_time_usec_fID = NULL;
+static jfieldID last_captured_frame_buffer_index_fID = NULL;
 
 
 /*
  * Updates the width, height, standard & format fields in a framegrabber object
  */
-static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d){
+static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d) {
 	LOG_FN_ENTER();
 
 	//Updates the FrameGrabber class width, height & format fields with the
 	//values returned by V4L2
 	jclass this_class = (*e)->GetObjectClass(e, this);
 	if(this_class == NULL) {
-		info("[V4L4J] error looking up FrameGrabber class\n");
+		info("[V4L4J] Error looking up FrameGrabber class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up FrameGrabber class");
 		return;
 	}
@@ -60,7 +60,7 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 	//width
 	jfieldID widthFID = (*e)->GetFieldID(e, this_class, "width", "I");
 	if(widthFID == NULL) {
-		THROW_EXCEPTION(e, JNI_EXCP, "error looking up width field in FrameGrabber class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up width field in FrameGrabber class");
 		return;
 	}
 	(*e)->SetIntField(e, this, widthFID, d->vdev->capture->width);
@@ -68,7 +68,7 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 	//height
 	jfieldID heightFID = (*e)->GetFieldID(e, this_class, "height", "I");
 	if(heightFID == NULL) {
-		THROW_EXCEPTION(e, JNI_EXCP, "error looking up height field in FrameGrabber class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up height field in FrameGrabber class");
 		return;
 	}
 	(*e)->SetIntField(e, this, heightFID, d->vdev->capture->height);
@@ -76,7 +76,7 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 	//standard
 	jfieldID standardFID = (*e)->GetFieldID(e, this_class, "standard", "I");
 	if(standardFID == NULL) {
-		THROW_EXCEPTION(e, JNI_EXCP, "error looking up standard field in FrameGrabber class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up standard field in class FrameGrabber");
 		return;
 	}
 	(*e)->SetIntField(e, this, standardFID, d->vdev->capture->std);
@@ -91,7 +91,7 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 		}
 
 		int fmt;
-		if(d->vdev->capture->is_native == 1)
+		if(d->vdev->capture->is_native)
 			fmt = d->vdev->capture->palette;
 		else
 			fmt = d->vdev->capture->convert->src_palette;
@@ -101,7 +101,7 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 	}
 }
 
-static int get_buffer_length(struct v4l4j_device *d){
+static int get_buffer_length(struct v4l4j_device *d) {
 	LOG_FN_ENTER();
 	switch (d->output_fmt) {
 		case OUTPUT_RAW:
@@ -117,7 +117,7 @@ static int get_buffer_length(struct v4l4j_device *d){
 			//BGR24 means w * h * 3
 			dprint(LOG_V4L4J, "[V4L4J] OUTPUT: BGR24 - Using byte array of size %d\n", d->vdev->capture->width * d->vdev->capture->height * 3);
 			return d->vdev->capture->width * d->vdev->capture->height * 3;
-		case  OUTPUT_YUV420:
+		case OUTPUT_YUV420:
 			//YUV420 means w * h * 3/2
 			dprint(LOG_V4L4J, "[V4L4J] OUTPUT: YUV420 - Using byte array of size %d\n", d->vdev->capture->width * d->vdev->capture->height * 3/2);
 			return d->vdev->capture->width * d->vdev->capture->height * 3/2;
@@ -479,7 +479,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoInput(JNI
 	unsigned int input_num, standard;
 	dev->vdev->capture->actions->get_video_input_std(dev->vdev, &input_num, &standard);
 
-	return (jint)input_num;
+	return (jint) input_num;
 }
 
 /*
@@ -500,7 +500,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoStandard(
 /*
  * enqueue a buffer
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_enqueueBuffer(JNIEnv *e, jobject t, jlong object, jint buffer_index){
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_enqueueBuffer(JNIEnv *e, jobject t, jlong object, jint buffer_index) {
 	LOG_FN_ENTER();
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
@@ -527,7 +527,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 	jbyteArray arrayRef = NULL;
 	unsigned int arrayLength = 0;
 	void (*releaseArray)(JNIEnv* env, jbyteArray arrayRef, unsigned char* ptr);
-	unsigned char* array = getBufferPointer(env, buffer, &arrayRef, &arrayLength, &releaseArray);	
+	unsigned char* array = getBufferPointer(env, buffer, &arrayRef, &arrayLength, &releaseArray);
 	// check we have a valid pointer
 	if (!array) {
 		(*d->vdev->capture->actions->enqueue_buffer)(d->vdev, buffer_index);

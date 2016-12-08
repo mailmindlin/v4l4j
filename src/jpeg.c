@@ -281,7 +281,7 @@ static size_t jpeg_encode_bgr32(struct v4l4j_device *d, unsigned char *src, unsi
 				*(ptr++) = src[0];
 				src += 4;
 			}
-		jpeg_write_scanlines (cinfo, row, 1);
+		jpeg_write_scanlines(cinfo, row, 1);
 	}
 	
 	jpeg_finish_compress (cinfo);

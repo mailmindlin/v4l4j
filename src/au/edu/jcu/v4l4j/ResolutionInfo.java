@@ -157,8 +157,7 @@ public class ResolutionInfo {
 		StepwiseResolution stepwise = null;
 		ArrayList<DiscreteResolution> discrete = null;
 		try {
-			int t = doGetType(index, object);
-			switch (t) {
+			switch (doGetType(index, object)) {
 				case 1:
 					type = Type.DISCRETE;
 					discrete = new ArrayList<DiscreteResolution>();
