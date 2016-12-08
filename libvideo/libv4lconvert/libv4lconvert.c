@@ -534,6 +534,13 @@ int v4lconvert_try_format(struct v4lconvert_data *data, struct v4l2_format *dest
 
 /* Is conversion necessary ? */
 bool v4lconvert_needs_conversion(struct v4lconvert_data *data, const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt) {
+	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG1, "Prop    Source     Dest\n");
+	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG1, "width   %-11d%d\n", src_fmt->fmt.pix.width, dest_fmt->fmt.pix.width);
+	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG1, "height  %-11d%d\n", src_fmt->fmt.pix.height, dest_fmt->fmt.pix.height);
+	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG1, "pfmt    %08x   %08x\n", src_fmt->fmt.pix.pixelformat, dest_fmt->fmt.pix.pixelformat);
+	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG1, "pfmt    %c%c%c%c       %c%c%c%c\n", v4l2_fourcc_chars(src_fmt->fmt.pix.pixelformat), v4l2_fourcc_chars(dest_fmt->fmt.pix.pixelformat));
+	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG1, "conv    %s\n", v4lcontrol_needs_conversion(data->control) ? "YES" : "NO");
+	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG1, "support %s\n", v4lconvert_supported_dst_format(dest_fmt->fmt.pix.pixelformat) ? "YES" : "NO");
 	if (src_fmt->fmt.pix.width != dest_fmt->fmt.pix.width ||
 			src_fmt->fmt.pix.height != dest_fmt->fmt.pix.height ||
 			src_fmt->fmt.pix.pixelformat != dest_fmt->fmt.pix.pixelformat ||
