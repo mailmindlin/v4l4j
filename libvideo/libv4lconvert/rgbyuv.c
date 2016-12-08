@@ -194,6 +194,7 @@ void v4lconvert_yuv420_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height, 
 			int y = FIX(*ysrc++);
 			int u = *usrc++ - 128;
 			int v = *vsrc++ - 128;
+			
 			int u1 = UV2U1(u, v);
 			int rg = UV2RG(u, v);
 			int v1 = UV2V1(u, v);
@@ -502,12 +503,10 @@ void v4lconvert_rgb565_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height) 
 }
 
 void v4lconvert_rgb565_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt, int yvu) {
-	unsigned short tmp;
-	
 	/* Y */
 	for (unsigned int y = 0; y < src_fmt->fmt.pix.height; y++) {
 		for (unsigned int x = 0; x < src_fmt->fmt.pix.width; x++) {
-			tmp = *(unsigned short *)src;
+			unsigned short tmp = *(unsigned short *)src;
 			unsigned int r = 0xf8 & (tmp << 3);
 			unsigned int g = 0xfc & (tmp >> 3);
 			unsigned int b = 0xf8 & (tmp >> 8);
@@ -519,19 +518,18 @@ void v4lconvert_rgb565_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_form
 	src -= src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline;
 
 	/* U + V */
-	u8* udest;
-	u8* vdest;
+	u8* udest = dest;
+	u8* vdest = dest + src_fmt->fmt.pix.width * src_fmt->fmt.pix.height / 4;
 	if (yvu) {
-		vdest = dest;
-		udest = dest + src_fmt->fmt.pix.width * src_fmt->fmt.pix.height / 4;
-	} else {
-		udest = dest;
-		vdest = dest + src_fmt->fmt.pix.width * src_fmt->fmt.pix.height / 4;
+		//Swap buffers
+		u8* tmp = udest;
+		udest = vdest;
+		vdest = tmp;
 	}
 
 	for (unsigned int y = 0; y < src_fmt->fmt.pix.height / 2; y++) {
 		for (unsigned int x = 0; x < src_fmt->fmt.pix.width / 2; x++) {
-			tmp = *(unsigned short *)src;
+			unsigned short tmp = *(unsigned short *)src;
 			unsigned int avg_red = 0xf8 & (tmp << 3);
 			unsigned int avg_green = 0xfc & (tmp >> 3);
 			unsigned int avg_blue = 0xf8 & (tmp >> 8);
