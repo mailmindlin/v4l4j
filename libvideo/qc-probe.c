@@ -42,10 +42,33 @@ struct qc_probe_private {
 	int ok;
 };
 
+//QC ioctl requests
+static const unsigned long qc_getctrl_requests[] = {
+		[0] = VIDIOCQCGSETTLE,
+		[1] = VIDIOCQCGCOMPRESS,
+		[2] = VIDIOCQCGQUALITY,
+		[3] = VIDIOCQCGADAPTIVE,
+		[4] = VIDIOCQCGEQUALIZE
+	};
+static const unsigned long qc_setctrl_requests[] = {
+		[0] = VIDIOCQCSSETTLE,
+		[1] = VIDIOCQCSCOMPRESS,
+		[2] = VIDIOCQCSQUALITY,
+		[3] = VIDIOCQCSADAPTIVE,
+		[4] = VIDIOCQCSEQUALIZE
+	};
+static const char* const qc_ctrl_names[] = {
+		[0] = "Brightness Settle",
+		[1] = "Compression",
+		[2] = "Interpolation",
+		[3] = "Auto Brightness",
+		[4] = "Equalize image"
+	};
+#define NUM_QC_CTRLS 5
+
 
 int qc_driver_probe(struct video_device *vdev, void **data){
 	struct qc_probe_private *priv;
-	int i = -1;
 	struct qc_userlut default_ulut, our_ulut, check_ulut;
 
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "QC: probing Quickam\n");
@@ -62,16 +85,13 @@ int qc_driver_probe(struct video_device *vdev, void **data){
 	//get the default ulut
 	default_ulut.flags |= QC_USERLUT_VALUES;
 	default_ulut.flags |= QC_USERLUT_DEFAULT;
-	if(ioctl(vdev->fd, VIDIOCQCGUSERLUT, &default_ulut)!=0)
+	if(ioctl(vdev->fd, VIDIOCQCGUSERLUT, &default_ulut) != 0)
 		goto end;
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "..\n");
 
 	//create a fake ulut
-	while(++i<QC_LUT_SIZE){
-		if(i%3 == 0) our_ulut.lut[i] = 0;
-		else if(i%3 == 1) our_ulut.lut[i] = 1;
-		else our_ulut.lut[i] = 2;
-	}
+	for (unsigned int i = 0; i < QC_LUT_SIZE; i++)
+		our_ulut.lut[i] = i % 3;
 
 	//send it to QC driver
 	our_ulut.flags |= QC_USERLUT_VALUES;
@@ -83,20 +103,19 @@ int qc_driver_probe(struct video_device *vdev, void **data){
 	//read it back and check it
 	check_ulut.flags |= QC_USERLUT_VALUES;
 	check_ulut.flags |= QC_USERLUT_DEFAULT;
-	if(ioctl(vdev->fd, VIDIOCQCGUSERLUT, &check_ulut)!=0)
+	if(ioctl(vdev->fd, VIDIOCQCGUSERLUT, &check_ulut) != 0)
 		goto end;
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, ".. .. ..\n");
 
-	i=0;
-	while(++i<QC_LUT_SIZE)
-		if(check_ulut.lut[i]!=our_ulut.lut[i])
+	for (unsigned int i = 0; i < QC_LUT_SIZE)
+		if(check_ulut.lut[i] != our_ulut.lut[i])
 			goto end;
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, ".. .. .. ..\n");
 
 	//put default back
 	default_ulut.flags |= QC_USERLUT_VALUES;
 	default_ulut.flags |= QC_USERLUT_DEFAULT;
-	if(ioctl(vdev->fd, VIDIOCQCSUSERLUT, &default_ulut)!=0)
+	if(ioctl(vdev->fd, VIDIOCQCSUSERLUT, &default_ulut) != 0)
 		goto end;
 
 	//do we need more checks ?
@@ -111,91 +130,38 @@ end:
 	return -1;
 }
 
-int qc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, int *val){
-	int ret = LIBVIDEO_ERR_IOCTL;
-	switch (q->id) {
-		case 0:
-			if(ioctl(vdev->fd, VIDIOCQCGSETTLE, val)==0)
-				ret = 0;
-			break;
-		case 1:
-			if(ioctl(vdev->fd, VIDIOCQCGCOMPRESS, val)==0)
-				ret = 0;
-			break;
-		case 2:
-			if(ioctl(vdev->fd, VIDIOCQCGQUALITY, val)==0)
-				ret = 0;
-			break;
-		case 3:
-			if(ioctl(vdev->fd, VIDIOCQCGADAPTIVE, val)==0)
-				ret = 0;
-			break;
-		case 4:
-			if(ioctl(vdev->fd, VIDIOCQCGEQUALIZE, val)==0)
-				ret = 0;
-			break;
-		default:
-			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "QC: Cant identify control %d\n",q->id);
+int qc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, int *val) {
+	if (q->id >= NUM_QC_CTRLS) {
+		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "QC: Cant identify control %d\n", q->id);
+		return LIBVIDEO_ERR_IOCTL;
 	}
-	return ret;
+	if (ioct(vdev->fd, qc_getctrl_requests[q->id], val) != 0)
+		return LIBVIDEO_ERR_IOCTL;
+	return LIBVIDEO_ERR_SUCCESS;
 }
 
-int qc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val, void *d){
-	int prev = 0, ret = LIBVIDEO_ERR_IOCTL;
-	//TODO streamline
-	switch (q->id) {
-		case 0:
-			ioctl(vdev->fd, VIDIOCQCGSETTLE, &prev);
-			if(ioctl(vdev->fd, VIDIOCQCSSETTLE, val)==0)
-				ret = 0;
-			else
-				*val = prev;
-			break;
-		case 1:
-			ioctl(vdev->fd, VIDIOCQCGCOMPRESS, &prev);
-			if(ioctl(vdev->fd, VIDIOCQCSCOMPRESS, val)==0)
-				ret = 0;
-			else
-				*val = prev;
-			break;
-		case 2:
-			ioctl(vdev->fd, VIDIOCQCGQUALITY, &prev);
-			if(ioctl(vdev->fd, VIDIOCQCSQUALITY, val)==0)
-				ret = 0;
-			else
-				*val = prev;
-			break;
-		case 3:
-			ioctl(vdev->fd, VIDIOCQCGADAPTIVE, &prev);
-			if(ioctl(vdev->fd, VIDIOCQCSADAPTIVE, val)==0)
-				ret = 0;
-			else
-				*val = prev;
-			break;
-		case 4:
-			ioctl(vdev->fd, VIDIOCQCGEQUALIZE, &prev);
-			if(ioctl(vdev->fd, VIDIOCQCSEQUALIZE, val)==0)
-				ret = 0;
-			else
-				*val = prev;
-			break;
-		default:
-			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "QC: Cant identify control %d\n",q->id);
+int qc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val, void *d) {
+	if (q->id >= NUM_QC_CTRLS) {
+		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "QC: Cant identify control %d\n", q->id);
+		return LIBVIDEO_ERR_IOCTL;
 	}
-
-	return ret;
+	int prev = 0;
+	ioctl(vdev->fd, qc_getctrl_requests[q->id], &prev);
+	if (ioctl(vdev->fd, qc_setctrl_requests[q->id], val) != 0) {
+		*val = prev;
+		return LIBVIDEO_ERR_IOCTL;
+	}
+	return LIBVIDEO_ERR_SUCCESS;
 }
 
-int qc_list_ctrl(struct video_device *vdev, struct control *c, void *d){
-	unsigned int i = 0;
+int qc_list_ctrl(struct video_device *vdev, struct control *c, void *d) {
  	struct qc_probe_private *priv = (struct qc_probe_private *) d;
 	if(priv->ok == 1) {
-		const char* const ctrlNames[] = {"Brightness Settle", "Compression", "Interpolation", "Auto Brightness", "Equalise image"};
-		for (i = 0; i < 5u; i++) {
-			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "QC: Found quickcam private ioctl %s\n", ctrlNames[i]);
+		for (unsigned int i = 0; i < NUM_QC_CTRLS; i++) {
+			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "QC: Found quickcam private ioctl %s\n", qc_ctrl_names[i]);
 			c[i].v4l2_ctrl->id = i;
 			c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
-			strcpy((char *) c[i].v4l2_ctrl->name, ctrlNames[i]);
+			strcpy((char *) c[i].v4l2_ctrl->name, qc_ctrl_names[i]);
 			c[i].v4l2_ctrl->minimum = 0;
 			//TODO check if this is right
 			c[i].v4l2_ctrl->maximum = (i == 2) ? 5 : 1;
@@ -204,9 +170,9 @@ int qc_list_ctrl(struct video_device *vdev, struct control *c, void *d){
 			c[i].v4l2_ctrl->reserved[0] = V4L2_PRIV_IOCTL;
 			c[i].v4l2_ctrl->reserved[1] = QC_PROBE_INDEX;
 		}
-	} else{
+		return 5;
+	} else {
 			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "QC: QC not found\n");
 	}
-	return (signed) i;
+	return 0;
 }
-
