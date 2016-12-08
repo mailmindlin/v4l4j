@@ -150,7 +150,7 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		.flags = V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED,
 		.default_gamma = 0,
 		.dmi_system_vendor = "RM plc",
-		.dmi_system_version = "RM EXPERT 3040",
+		.dmi_system_name = "RM EXPERT 3040",
 		.dmi_board_version = NULL,
 		.dmi_system_version = NULL
 	},
@@ -163,7 +163,7 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		.flags = V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED,
 		.default_gamma = 0,
 		.dmi_system_vendor = "FUJITSU SIEMENS",
-		.dmi_system_version = "LIFEBOOK P7230",
+		.dmi_system_name = "LIFEBOOK P7230",
 		.dmi_board_version = NULL,
 		.dmi_system_version = NULL
 	},
@@ -671,7 +671,7 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 	{ /* other */
 		.vendor_id = 0x0c45,
 		.product_id = 0x6020,
-		.product_id = 0x0f,
+		.product_mask = 0x0f,
 		.dmi_board_vendor = NULL,
 		.dmi_board_name = NULL,
 		.flags = V4LCONTROL_WANTS_WB,
@@ -777,7 +777,7 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 	{
 		.vendor_id = 0x093a,
 		.product_id = 0x2460,
-		.product_id = 0x1f,
+		.product_mask = 0x1f,
 		.dmi_board_vendor = NULL,
 		.dmi_board_name = NULL,
 		.flags = V4LCONTROL_WANTS_WB,
