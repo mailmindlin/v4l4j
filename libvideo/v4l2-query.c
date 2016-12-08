@@ -30,6 +30,7 @@
 #include "v4l2-input.h"
 #include "libvideo-err.h"
 #include "log.h"
+#include "list.h"
 #include "libvideo-palettes.h"
 
 //forward declarations
@@ -58,6 +59,7 @@ static int find_v4l2_palette(unsigned int v4l2_fmt){
 static int lookup_frame_intv(struct v4lconvert_data *conv, unsigned int fmt, unsigned int width, unsigned int height, void **p){
 	int intv_type = FRAME_INTV_UNSUPPORTED;
 	struct frame_intv_discrete *d = NULL;
+	size_t discrete_capacity = 0;
 	struct frame_intv_continuous *c = NULL;
 	
 	struct v4l2_frmivalenum intv;
@@ -80,7 +82,7 @@ static int lookup_frame_intv(struct v4lconvert_data *conv, unsigned int fmt, uns
 
 				//increase the array size by one for the extra
 				//discrete frame interval
-				XREALLOC(d, struct frame_intv_discrete *, (intv.index + 1) * sizeof(struct frame_intv_discrete));
+				ARRAY_GROW(d, struct frame_intv_discrete, discrete_capacity, intv.index + 1, 1 + 5);
 
 				//fill in the values of the new element
 				d[intv.index].numerator = intv.discrete.numerator;
@@ -150,7 +152,8 @@ static int lookup_frame_intv(struct v4lconvert_data *conv, unsigned int fmt, uns
 	if(intv_type == FRAME_INTV_DISCRETE) {
 		//add a struct frame_intv_discrete with null values at the end of
 		//the list
-		XREALLOC(d, struct frame_intv_discrete *, (intv.index + 1) * sizeof(struct frame_intv_discrete));
+		if (intv.index + 1 != discrete_capacity)
+			XREALLOC(d, struct frame_intv_discrete *, (intv.index + 1) * sizeof(struct frame_intv_discrete));
 		CLEAR(d[intv.index]);
 		*p = d;
 	} else if(intv_type == FRAME_INTV_CONTINUOUS) {
