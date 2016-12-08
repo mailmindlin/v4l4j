@@ -12,23 +12,27 @@
 # LOG_LEVEL_DEBUG1          4
 # LOG_LEVEL_DEBUG2          8
 # LOG_LEVEL_ERR             16
-# LOG_LEVEL_ALL             31
-LIBVIDEO_LOG_LEVEL ?= 31
+# LOG_LEVEL_MEMORY			32
+# LOG_LEVEL_ALL             63
+LIBVIDEO_LOG_LEVEL ?= 63
 
 
 
 # change the value of LOG_SOURCE to control which parts of libvideo will
 # print debug statements
 #
-# LOG_SOURCE_VIDEO_DEVICE   1
-# LOG_SOURCE_QUERY          2
-# LOG_SOURCE_CAPTURE        4
-# LOG_SOURCE_CONTROL        8
-# LOG_SOURCE_MEMALLOC       16
-# LOG_SOURCE_CTRL_PROBE     32
-# LOG_SOURCE_TUNER          64
-# LOG_SOURCE_ALL            127
-LIBVIDEO_LOG_SOURCE ?= 127
+# LOG_SOURCE_VIDEO_DEVICE    1
+# LOG_SOURCE_QUERY           2
+# LOG_SOURCE_CAPTURE         4
+# LOG_SOURCE_CONTROL         8
+# LOG_SOURCE_MEMALLOC        16
+# LOG_SOURCE_CTRL_PROBE      32
+# LOG_SOURCE_TUNER           64
+# LIBVIDEO_SOURCE_PROCESSING 128
+# LIBVIDEO_SOURCE_CONTROL    256
+# LIBVIDEO_SOURCE_CONVERT    512
+# LOG_SOURCE_ALL             1023
+LIBVIDEO_LOG_SOURCE ?= 1023
 
 #Installation directory prefix
 PREFIX := /usr
