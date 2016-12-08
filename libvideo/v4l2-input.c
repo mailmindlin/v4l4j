@@ -273,8 +273,9 @@ static int try_image_format(struct capture_device *c, struct v4l2_format *src, s
 				palette_idx,
 				dst->fmt.pix.width,
 				dst->fmt.pix.height);
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1, "CAP: libv4lconvert said to use palette %#x %dx%d - ...\n",\
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1, "CAP: libv4lconvert said to use palette %#x (%c%c%c%c) %dx%d - ...\n",\
 				src->fmt.pix.pixelformat,
+				v4l2_fourcc_chars(src->fmt.pix.pixelformat),
 				src->fmt.pix.width,
 				src->fmt.pix.height);
 
