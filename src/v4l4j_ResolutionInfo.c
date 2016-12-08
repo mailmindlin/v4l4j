@@ -191,10 +191,10 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ResolutionInfo_doGetDiscrete(JNIEnv
 		dprint(LOG_V4L4J, "[V4L4J] creating discrete resolution %dx%d\n", resolution->width, resolution->height);
 
 		//create the frame interval object
-		dprint(LOG_V4L4J, "[V4L4J] creating frame interval object first with ptr %p and type: 0\n", resolution);
+		dprint(LOG_V4L4J, "[V4L4J] creating frame interval object (%dx%d) first with ptr %p and type: 0\n", resolution->width, resolution->height, resolution);
 		jobject intv = (*env)->NewObject(env, frame_intv_class, frame_intv_ctor, 0, (jlong) (uintptr_t) resolution);
 		if(intv == NULL) {
-			THROW_EXCEPTION(env, JNI_EXCP, "Error creating FrameInterval object");
+			THROW_EXCEPTION(env, JNI_EXCP, "Error creating FrameInterval object (%dx%d)", resolution->width, resolution->height);
 			return;
 		}
 
