@@ -911,7 +911,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data, u8 *src, unsi
 					break;
 				case V4L2_PIX_FMT_YUV420:
 				case V4L2_PIX_FMT_YVU420:
-					v4lconvert_grey_to_yuv420(src, dest, fmt);
+					v4lconvert_grey_to_yuv420(src, dest, width, height);
 					break;
 			}
 			if (src_size < (width * height)) {
@@ -924,12 +924,12 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data, u8 *src, unsi
 		case V4L2_PIX_FMT_Y10BPACK:
 			switch (dest_pix_fmt) {
 				case V4L2_PIX_FMT_RGB24:
-					case V4L2_PIX_FMT_BGR24:
-					result = v4lconvert_y10b_to_rgb24(data, src, dest, width, height);
+				case V4L2_PIX_FMT_BGR24:
+					result = v4lconvert_y10b_to_rgb24(src, dest, width, height);
 					break;
 				case V4L2_PIX_FMT_YUV420:
 				case V4L2_PIX_FMT_YVU420:
-					result = v4lconvert_y10b_to_yuv420(data, src, dest, width, height);
+					result = v4lconvert_y10b_to_yuv420(src, dest, width, height);
 					break;
 			}
 			if (result == 0 && src_size < (width * height * 10 / 8)) {
