@@ -42,8 +42,6 @@
 	((u8) ((14456 * (r) - 12105 * (g) - 2351 * (b) + 4210688) >> 15))
 
 void v4lconvert_rgb24_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt, int bgr, int yvu) {
-	u8 *udest, *vdest;
-
 	/* Y */
 	for (unsigned int y = 0; y < src_fmt->fmt.pix.height; y++) {
 		for (unsigned int x = 0; x < src_fmt->fmt.pix.width; x++) {
@@ -58,12 +56,13 @@ void v4lconvert_rgb24_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_forma
 	src -= src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline;
 
 	/* U + V */
+	u8 *udest = dest;
+	u8 *vdest = dest + src_fmt->fmt.pix.width * src_fmt->fmt.pix.height / 4;
 	if (yvu) {
-		vdest = dest;
-		udest = dest + src_fmt->fmt.pix.width * src_fmt->fmt.pix.height / 4;
-	} else {
-		udest = dest;
-		vdest = dest + src_fmt->fmt.pix.width * src_fmt->fmt.pix.height / 4;
+		//Swap udest/vdest
+		u8 *tmp = udest;
+		udest = vdest;
+		vdest = udest;
 	}
 
 	for (unsigned int y = 0; y < src_fmt->fmt.pix.height / 2; y++) {
@@ -275,8 +274,6 @@ void v4lconvert_yuyv_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
  * @param yvu whether to output in yuv420 or yvu420
  */
 void v4lconvert_yuyv_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height, int yvu) {
-	u8 *udest, *vdest;
-
 	/* copy the Y values */
 	const u8* src1 = src;
 	for (unsigned int i = 0; i < height; i++) {
@@ -290,12 +287,13 @@ void v4lconvert_yuyv_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height, i
 	/* copy the U and V values */
 	src++;				/* point to V */
 	src1 = src + width * 2;		/* next line */
+	
+	u8 *udest = dest;
+	u8 *vdest = dest + width * height / 4;
 	if (yvu) {
-		vdest = dest;
-		udest = dest + width * height / 4;
-	} else {
-		udest = dest;
-		vdest = dest + width * height / 4;
+		u8 *tmp = udest;
+		udest = vdest;
+		vdest = tmp;
 	}
 	for (unsigned int i = 0; i < height; i += 2) {
 		for (unsigned int j = 0; j < width; j += 2) {
@@ -402,11 +400,8 @@ void v4lconvert_uyvy_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
 }
 
 void v4lconvert_uyvy_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height, int yvu) {
-	const u8 *src1;
-	u8 *udest, *vdest;
-
 	/* copy the Y values */
-	src1 = src;
+	const u8 *src1 = src;
 	for (unsigned int i = 0; i < height; i++) {
 		for (unsigned int j = 0; j < width; j += 2) {
 			*dest++ = src1[1];
@@ -417,13 +412,14 @@ void v4lconvert_uyvy_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height, i
 
 	/* copy the U and V values */
 	src1 = src + width * 2;		/* next line */
+	u8 *udest = dest;
+	u8 *vdest = dest + width * height / 4;
 	if (yvu) {
-		vdest = dest;
-		udest = dest + width * height / 4;
-	} else {
-		udest = dest;
-		vdest = dest + width * height / 4;
+		u8 *tmp = udest;
+		udest = vdest;
+		vdest = udest;
 	}
+	
 	for (unsigned int i = 0; i < height; i += 2) {
 		for (unsigned int j = 0; j < width; j += 2) {
 			*udest++ = (u8) ((int) src[0] + src1[0]) / 2;	/* U */
@@ -438,9 +434,8 @@ void v4lconvert_uyvy_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height, i
 
 void v4lconvert_swap_rgb(const u8 *src, u8 *dst, u32 width, u32 height) {
 	for (unsigned int i = 0; i < (width * height); i++) {
-		u8 tmp0, tmp1;
-		tmp0 = *src++;
-		tmp1 = *src++;
+		u8 tmp0 = *src++;
+		u8 tmp1 = *src++;
 		*dst++ = *src++;
 		*dst++ = tmp1;
 		*dst++ = tmp0;
@@ -522,7 +517,7 @@ void v4lconvert_rgb565_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_form
 	u8* vdest = dest + src_fmt->fmt.pix.width * src_fmt->fmt.pix.height / 4;
 	if (yvu) {
 		//Swap buffers
-		u8* tmp = udest;
+		u8 *tmp = udest;
 		udest = vdest;
 		vdest = tmp;
 	}
