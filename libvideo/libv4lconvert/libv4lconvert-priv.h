@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <jpeglib.h>
 #include <setjmp.h>
+#include <stdbool.h>
 #include "types.h"
 #include "control/libv4lcontrol.h"
 #include "processing/libv4lprocessing.h"
@@ -52,7 +53,7 @@ struct v4lconvert_data {
 	int jerr_errno;
 	jmp_buf jerr_jmp_state;
 	struct jpeg_decompress_struct cinfo;
-	int cinfo_initialized;
+	bool cinfo_initialized;
 	struct PixFcSSE *pixfc;
 	struct v4l2_frmsizeenum framesizes[V4LCONVERT_MAX_FRAMESIZES];
 	unsigned int no_framesizes;
@@ -170,7 +171,7 @@ LIBV4LCONVERT_LOCAL void v4lconvert_decode_spca561(const u8 *src, u8 *dst, u32 w
 
 LIBV4LCONVERT_LOCAL void v4lconvert_decode_sn9c10x(const u8 *src, u8 *dst, u32 width, u32 height);
 
-LIBV4LCONVERT_LOCAL int v4lconvert_decode_pac207(struct v4lconvert_data *data, const u8 *inp, unsigned int src_size, u8 *outp, u32 width, u32 height);
+LIBV4LCONVERT_LOCAL int v4lconvert_decode_pac207(const u8 *inp, unsigned int src_size, u8 *outp, u32 width, u32 height);
 
 LIBV4LCONVERT_LOCAL int v4lconvert_decode_mr97310a(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dst, u32 width, u32 height);
 
