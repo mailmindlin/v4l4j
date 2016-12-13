@@ -778,10 +778,9 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data, u8 *src, unsi
 		case V4L2_PIX_FMT_SN9C2028:
 		case V4L2_PIX_FMT_SQ905C:
 		case V4L2_PIX_FMT_STV0680: { /* Not compressed but needs some shuffling */
-			u8 *tmpbuf;
 			struct v4l2_format tmpfmt = *fmt;
 
-			tmpbuf = v4lconvert_alloc_buffer(width * height, &data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
+			u8 *tmpbuf = v4lconvert_alloc_buffer(width * height, &data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
 			if (!tmpbuf)
 				return v4lconvert_oom_error(data);
 
@@ -795,7 +794,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data, u8 *src, unsi
 					tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR8;
 					break;
 				case V4L2_PIX_FMT_PAC207:
-					if (v4lconvert_decode_pac207(data, src, src_size, tmpbuf, width, height)) {
+					if (v4lconvert_decode_pac207(src, src_size, tmpbuf, width, height)) {
 						/* Corrupt frame, better get another one */
 						errno = EAGAIN;
 						return -1;
