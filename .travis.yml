@@ -5,6 +5,9 @@ addons:
  apt:
   packages:
    - gcc
+env:
+ global:
+  - CC=gcc
 branches:
  except:
   - svn/test-perf
@@ -19,9 +22,6 @@ branches:
   - svn/tidyup
   - master-old
 install:
- - sudo apt-get update -qq
- - gcc -v
- - gcc --help
  - make -C libvideo all -j4
  - ant jnilib-debug all-debug include-jni jar-test
  - sudo ant install
