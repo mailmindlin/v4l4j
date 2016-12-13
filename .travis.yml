@@ -15,7 +15,7 @@ branches:
   - svn/tidyup
   - master-old
 install:
- - make -C libvideo all -j4 --eval=DEBUG=1
+ - make -C libvideo all -j4
  - ant jnilib-debug all-debug include-jni jar-test
  - sudo ant install
 script:
