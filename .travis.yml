@@ -1,0 +1,22 @@
+language: java
+compiler: gcc
+jdk: oraclejdk8
+branches:
+ except:
+  - svn/test-perf
+  - svn/unstable
+  - svn/issue11
+  - svn/v4j
+  - svn/fix-delay
+  - svn/add-sse
+  - svn/switch-input
+  - svn/tags/0.9.0
+  - svn/trunk
+  - svn/tidyup
+  - master-old
+install:
+ - make -C libvideo all -j4 --eval=DEBUG=1
+ - ant jnilib-debug all-debug include-jni jar-test
+ - sudo ant install
+script:
+ - ant test-junit
