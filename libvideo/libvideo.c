@@ -64,24 +64,24 @@ int get_libvideo_version(char *dst, size_t len) {
  *
  */
 struct video_device *open_device(char *file) {
-	static int show_ver=0;
-	struct video_device *vdev;
-	int fd = -1;
-	char version[40];
-	if(show_ver==0) {
+	static bool show_ver = false;
+	if(!show_ver) {
+		char version[40];
 		get_libvideo_version(version, sizeof(version));
 		info("Using libvideo version %.*s\n", sizeof(version), version);
 		fflush(stdout);
-		show_ver=1;
+		show_ver = true;
 	}
 
 	//open device
 	dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_DEBUG, "VD: Opening device file %s.\n", file);
+	int fd = -1;
 	if ((strlen(file) == 0) || ((fd = open(file,O_RDWR )) < 0)) {
 		info("V4L: unable to open device file %s. Check the name and permissions\n", file);
 		return NULL;
 	}
-
+	
+	struct video_device *vdev;
 	XMALLOC(vdev, struct video_device *, sizeof(struct video_device));
 	vdev->fd = fd;
 
@@ -98,13 +98,13 @@ struct video_device *open_device(char *file) {
 		info("If it is a valid V4L device file & not currently used by any\n");
 		info("other applications, let the author know about this error.\n");
 		info("See the ISSUES section in the libvideo README file.\n");
-
+		
 		close_device(vdev);
 		return NULL;
 	}
-
+	
 	strncpy(vdev->file, file, FILENAME_LENGTH -1);
-
+	
 	return vdev;
 }
 
