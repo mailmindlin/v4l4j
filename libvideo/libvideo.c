@@ -623,7 +623,7 @@ void release_control_list(struct video_device *vdev) {
 struct tuner_actions *get_tuner_actions(struct video_device *vdev) {
 	dprint(LIBVIDEO_SOURCE_TUNER, LIBVIDEO_LOG_DEBUG, "TUN: Getting struct tuner actions\n");
 
-	XMALLOC(vdev->tuner_action, struct tuner_actions *, sizeof(struct tuner_actions *));
+	XMALLOC(vdev->tuner_action, struct tuner_actions *, sizeof(struct tuner_actions));
 
 	if(vdev->v4l_version == V4L2_VERSION) {
 		vdev->tuner_action->get_rssi_afc = get_rssi_afc_v4l2;
