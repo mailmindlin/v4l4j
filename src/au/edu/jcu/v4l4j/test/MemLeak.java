@@ -32,7 +32,7 @@ import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 public class MemLeak implements Runnable {
-	private boolean stop;
+	private volatile boolean stop;
 	private String dev;
 	private VideoDevice vd;
 	private int numCapturedFrames;
