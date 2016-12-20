@@ -91,7 +91,7 @@ int qc_driver_probe(struct video_device *vdev, void **data){
 
 	//create a fake ulut
 	for (unsigned int i = 0; i < QC_LUT_SIZE; i++)
-		our_ulut.lut[i] = i % 3;
+		our_ulut.lut[i] = (unsigned char) (i % 3);
 
 	//send it to QC driver
 	our_ulut.flags |= QC_USERLUT_VALUES;
@@ -107,7 +107,7 @@ int qc_driver_probe(struct video_device *vdev, void **data){
 		goto end;
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, ".. .. ..\n");
 
-	for (unsigned int i = 0; i < QC_LUT_SIZE)
+	for (unsigned int i = 0; i < QC_LUT_SIZE; i++)
 		if(check_ulut.lut[i] != our_ulut.lut[i])
 			goto end;
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, ".. .. .. ..\n");
@@ -135,7 +135,7 @@ int qc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, in
 		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "QC: Cant identify control %d\n", q->id);
 		return LIBVIDEO_ERR_IOCTL;
 	}
-	if (ioct(vdev->fd, qc_getctrl_requests[q->id], val) != 0)
+	if (ioctl(vdev->fd, qc_getctrl_requests[q->id], val) != 0)
 		return LIBVIDEO_ERR_IOCTL;
 	return LIBVIDEO_ERR_SUCCESS;
 }
