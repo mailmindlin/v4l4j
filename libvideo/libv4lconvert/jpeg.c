@@ -18,13 +18,13 @@
 
 #include <errno.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "libv4lconvert-priv.h"
 #include "jpeg_memsrcdest.h"
 
 int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data, u8 *src, unsigned int src_size, u8 *dest, struct v4l2_format *fmt, unsigned int dest_pix_fmt, int flags) {
 	int result = 0;
 	u8 *components[3];
-	unsigned int header_width, header_height;
 	u32 width  = fmt->fmt.pix.width;
 	u32 height = fmt->fmt.pix.height;
 
@@ -36,13 +36,14 @@ int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data, u8 *src, unsig
 	flags |= TINYJPEG_FLAGS_MJPEG_TABLE;
 	tinyjpeg_set_flags(data->tinyjpeg, flags);
 	if (tinyjpeg_parse_header(data->tinyjpeg, src, src_size)) {
-		V4LCONVERT_ERR("parsing JPEG header: %s",
-				tinyjpeg_get_errorstring(data->tinyjpeg));
+		V4LCONVERT_ERR("parsing JPEG header: %s", tinyjpeg_get_errorstring(data->tinyjpeg));
 		errno = EAGAIN;
 		return -1;
 	}
+	
+	unsigned int header_width, header_height;
 	tinyjpeg_get_size(data->tinyjpeg, &header_width, &header_height);
-
+	
 	if (data->control_flags & V4LCONTROL_ROTATED_90_JPEG) {
 		unsigned int tmp = width;
 		width = height;
@@ -50,9 +51,8 @@ int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data, u8 *src, unsig
 	}
 
 	if (header_width != width || header_height != height) {
-		V4LCONVERT_ERR("unexpected width / height in JPEG header"
-			       "expected: %ux%u, header: %ux%u\n",
-			       width, height, header_width, header_height);
+		V4LCONVERT_ERR("unexpected width / height in JPEG header expected: %ux%u, header: %ux%u\n",
+				width, height, header_width, header_height);
 		errno = EIO;
 		return -1;
 	}
@@ -96,8 +96,7 @@ int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data, u8 *src, unsig
 		   this by trying a number of times to get a new frame
 		   and if that fails just passing up whatever we did
 		   manage to decompress. */
-		V4LCONVERT_ERR("decompressing JPEG: %s",
-				tinyjpeg_get_errorstring(data->tinyjpeg));
+		V4LCONVERT_ERR("decompressing JPEG: %s", tinyjpeg_get_errorstring(data->tinyjpeg));
 		errno = EPIPE;
 		return -1;
 	}
@@ -119,12 +118,10 @@ static void jerr_emit_message(j_common_ptr cinfo, int msg_level) {
 		return;
 
 	cinfo->err->format_message(cinfo, buffer);
-	snprintf(data->error_msg, V4LCONVERT_ERROR_MSG_SIZE,
-		 "v4l-convert: libjpeg error: %s\n", buffer);
+	snprintf(data->error_msg, V4LCONVERT_ERROR_MSG_SIZE, "v4l-convert: libjpeg error: %s\n", buffer);
 }
 
 static void init_libjpeg_cinfo(struct v4lconvert_data *data) {
-	struct jpeg_compress_struct cinfo;
 	u8 *jpeg_header = NULL;
 	unsigned long jpeg_header_size = 0;
 
@@ -141,6 +138,7 @@ static void init_libjpeg_cinfo(struct v4lconvert_data *data) {
 	   pre-fill a jpeg_decompress_struct with default quant and huffman
 	   tables, so that libjpeg can be used to parse [m]jpg-s with
 	   incomplete headers */
+	struct jpeg_compress_struct cinfo;
 	cinfo.err = &data->jerr;
 	cinfo.client_data = data;
 	jpeg_create_compress(&cinfo);
@@ -159,7 +157,7 @@ static void init_libjpeg_cinfo(struct v4lconvert_data *data) {
 	jpeg_read_header(&data->cinfo, FALSE);
 
 	free(jpeg_header);
-	data->cinfo_initialized = 1;
+	data->cinfo_initialized = true;
 }
 
 static int decode_libjpeg_h_samp1(struct v4lconvert_data *data, u8 *ydest, u8 *udest, u8 *vdest, unsigned int v_samp) {
@@ -216,18 +214,17 @@ static int decode_libjpeg_h_samp2(struct v4lconvert_data *data, u8 *ydest, u8 *u
 	JSAMPARRAY rows[3] = { y_rows, u_rows, v_rows };
 
 	while (cinfo->output_scanline < cinfo->image_height) {
-		for (y = 0; y < 8 * v_samp; y++) {
+		for (unsigned int y = 0; y < 8 * v_samp; y++) {
 			y_rows[y] = ydest;
 			ydest += width;
 		}
-		for (y = 0; y < 8; y++) {
+		for (unsigned int y = 0; y < 8; y++) {
 			u_rows[y] = udest;
 			v_rows[y] = vdest;
 			udest += width / 2;
 			vdest += width / 2;
 		}
-		y = jpeg_read_raw_data(cinfo, rows, 8 * v_samp);
-		if (y != 8 * v_samp)
+		if (jpeg_read_raw_data(cinfo, rows, 8 * v_samp) != 8 * v_samp)
 			return -1;
 
 		/* For v_samp == 1 were going to get another set of uv values,
@@ -261,31 +258,26 @@ int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data, u8 *src, unsign
 	jpeg_mem_src(&data->cinfo, src, src_size);
 	jpeg_read_header(&data->cinfo, TRUE);
 
-	if (data->cinfo.image_width  != width ||
-	    data->cinfo.image_height != height) {
-		V4LCONVERT_ERR("unexpected width / height in JPEG header"
-			       "expected: %ux%u, header: %ux%u\n", width,
-			       height, data->cinfo.image_width,
-			       data->cinfo.image_height);
+	if (data->cinfo.image_width  != width || data->cinfo.image_height != height) {
+		V4LCONVERT_ERR("Unexpected width / height in JPEG header; expected: %ux%u, header: %ux%u\n",
+				width, height, data->cinfo.image_width, data->cinfo.image_height);
 		errno = EIO;
 		return -1;
 	}
 
 	if (data->cinfo.num_components != 3) {
-		V4LCONVERT_ERR("unexpected no components in JPEG: %d\n",
-			       data->cinfo.num_components);
+		V4LCONVERT_ERR("Unexpected # of components in JPEG: %d\n", data->cinfo.num_components);
 		errno = EIO;
 		return -1;
 	}
 
-	if (dest_pix_fmt == V4L2_PIX_FMT_RGB24 ||
-	    dest_pix_fmt == V4L2_PIX_FMT_BGR24) {
+	if (dest_pix_fmt == V4L2_PIX_FMT_RGB24 || dest_pix_fmt == V4L2_PIX_FMT_BGR24) {
 		JSAMPROW row_pointer[1];
 
-#ifdef JCS_EXTENSIONS
-		if (dest_pix_fmt == V4L2_PIX_FMT_BGR24)
-			data->cinfo.out_color_space = JCS_EXT_BGR;
-#endif
+		#ifdef JCS_EXTENSIONS
+			if (dest_pix_fmt == V4L2_PIX_FMT_BGR24)
+				data->cinfo.out_color_space = JCS_EXT_BGR;
+		#endif
 		row_pointer[0] = dest;
 		jpeg_start_decompress(&data->cinfo);
 		/* Make libjpeg errors report that we've got some data */
@@ -295,10 +287,10 @@ int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data, u8 *src, unsign
 			row_pointer[0] += 3 * width;
 		}
 		jpeg_finish_decompress(&data->cinfo);
-#ifndef JCS_EXTENSIONS
-		if (dest_pix_fmt == V4L2_PIX_FMT_BGR24)
-			v4lconvert_swap_rgb(dest, dest, width, height);
-#endif
+		#ifndef JCS_EXTENSIONS
+			if (dest_pix_fmt == V4L2_PIX_FMT_BGR24)
+				v4lconvert_swap_rgb(dest, dest, width, height);
+		#endif
 	} else {
 		unsigned int h_samp, v_samp;
 		u8 *udest, *vdest;
@@ -316,10 +308,7 @@ int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data, u8 *src, unsign
 			h_samp = 1;
 #endif
 		} else {
-			fprintf(stderr,
-				"libv4lconvert: unsupported jpeg h-sampling "
-				"factors %d:%d:%d, please report this to "
-				"hdegoede@redhat.com\n",
+			fprintf(stderr, "libv4lconvert: unsupported jpeg h-sampling factors %d:%d:%d, please report this to hdegoede@redhat.com\n",
 				data->cinfo.cur_comp_info[0]->h_samp_factor,
 				data->cinfo.cur_comp_info[1]->h_samp_factor,
 				data->cinfo.cur_comp_info[2]->h_samp_factor);
@@ -338,10 +327,7 @@ int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data, u8 *src, unsign
 		    data->cinfo.cur_comp_info[2]->v_samp_factor == 1) {
 			v_samp = 1;
 		} else {
-			fprintf(stderr,
-				"libv4lconvert: unsupported jpeg v-sampling "
-				"factors %d:%d:%d, please report this to "
-				"hdegoede@redhat.com\n",
+			fprintf(stderr, "libv4lconvert: unsupported jpeg v-sampling factors %d:%d:%d, please report this to hdegoede@redhat.com\n",
 				data->cinfo.cur_comp_info[0]->v_samp_factor,
 				data->cinfo.cur_comp_info[1]->v_samp_factor,
 				data->cinfo.cur_comp_info[2]->v_samp_factor);
@@ -351,7 +337,7 @@ int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data, u8 *src, unsign
 
 		/* We don't want any padding as that may overflow our dest */
 		if (width % (8 * h_samp) || height % (8 * v_samp)) {
-			V4LCONVERT_ERR("resolution is not a multiple of dctsize");
+			V4LCONVERT_ERR("Resolution is not a multiple of dctsize");
 			errno = EIO;
 			return -1;
 		}
