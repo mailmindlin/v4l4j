@@ -664,8 +664,6 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data, u8 *src, unsi
 
 		/* Custom cam specific YUV formats */
 		case V4L2_PIX_FMT_SPCA501:
-			v4lconvert_spca501_to_yuv420(src, d, width, height, yvu);
-			break;
 		case V4L2_PIX_FMT_SPCA505:
 		case V4L2_PIX_FMT_SPCA508:
 		case V4L2_PIX_FMT_CIT_YYVYUY:
