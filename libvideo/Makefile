@@ -140,9 +140,13 @@ endif
 
 ifeq ($(TRAVISCI),)
 	ifeq ($(CC),gcc)
-		CFLAGS += -flto -fdiagnostics-color=auto
+		CFLAGS += -flto -fdiagnostics-color=auto -std=gnu11
 		LDFLAGS += -flto=3
+	else
+		CFLAGS += -std=c11
 	endif
+else
+	CFLAGS += -std=c99
 endif
 
 LIB_NAME := video
