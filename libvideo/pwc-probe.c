@@ -104,7 +104,7 @@ int pwc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *qc, void *d, 
 			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "PWC: Error probing tilt angle\n");
 			break;
 		default:
-			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "PWC: Cant identify control %d\n",q->id);
+			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "PWC: Cant identify control %d\n", qc->id);
 			break;
 	}
 	return LIBVIDEO_ERR_IOCTL;
