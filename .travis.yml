@@ -5,6 +5,9 @@ addons:
  apt:
   packages:
    - gcc
+   - libc-bin
+   - libc-dev-bin
+   - libc6-dev
 env:
  global:
   - CC=gcc
@@ -21,6 +24,8 @@ branches:
   - svn/trunk
   - svn/tidyup
   - master-old
+before_install:
+ - sudo ldconfig
 install:
  - make -C libvideo all -j4
  - ant jnilib-debug all-debug include-jni jar-test
