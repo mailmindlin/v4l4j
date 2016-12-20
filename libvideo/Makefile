@@ -138,6 +138,12 @@ ifeq ($(shell arch),$(ARCH))
 	endif
 endif
 
+ifeq ($(TRAVISCI),)
+	ifeq ($(CC),gcc)
+		CFLAGS += -flto -fdiagnostics-color=auto
+		LDFLAGS += -flto=3
+	endif
+endif
 
 LIB_NAME := video
 LIBDIR := /usr/local/lib
@@ -150,10 +156,10 @@ OBJ := $(patsubst %.c,%.o,$(wildcard *.c) $(filter-out $(patsubst %.o,%.c,$(LIBV
 
 WARNINGS +=  -Wall -Wpointer-arith -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wunused-function
 CFLAGS += $(HARDWARE_FLAGS) $(WARNINGS) -DLIBDIR=\"$(LIBDIR)\" -DLIBSUBDIR=\"$(LIBV4LCONVERT_INSTALL_SUBDIR)\" -I.
-CFLAGS += -fPIC -fdiagnostics-color=auto -ftree-vectorize -flto -fvisibility=default
+CFLAGS += -fPIC -ftree-vectorize -fvisibility=default
 #CFLAGS += -funsafe-math-optimizations
 AFLAGS += $(HARDWARE_FLAGS) -mapcs-reentrant -k --warn --statistics
-LDFLAGS += $(HARDWARE_FLAGS) -lm -lrt -shared -ljpeg -lc -flto=3
+LDFLAGS += $(HARDWARE_FLAGS) -lm -lrt -shared -ljpeg -lc
 
 ifneq ($(DEBUG),)
 	CFLAGS += -DDEBUG -ggdb -DLIBVIDEO_LOG_LEVEL=$(LIBVIDEO_LOG_LEVEL) -DLIBVIDEO_LOG_SOURCE=$(LIBVIDEO_LOG_SOURCE)
