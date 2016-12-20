@@ -87,10 +87,10 @@ struct video_device *open_device(char *file) {
 
 	//Check v4l version (V4L2 first)
 	dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_DEBUG, "VD: Checking V4L version on device %s\n", file);
-	if(check_capture_capabilities_v4l2(fd, file)==0) {
+	if(check_capture_capabilities_v4l2(fd, file)) {
 		dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_INFO, "VD: device %s is V4L2\n", file);
 		vdev->v4l_version = V4L2_VERSION;
-	} else if(check_capture_capabilities_v4l1(fd, file)==0) {
+	} else if(check_capture_capabilities_v4l1(fd, file)) {
 		dprint(LIBVIDEO_SOURCE_VIDDEV, LIBVIDEO_LOG_INFO, "VD: device %s is V4L1\n", file);
 		vdev->v4l_version = V4L1_VERSION;
 	} else {
@@ -103,7 +103,7 @@ struct video_device *open_device(char *file) {
 		return NULL;
 	}
 
-	strncpy(vdev->file, file, FILENAME_LENGTH -1);
+	strncpy(vdev->file, file, FILENAME_LENGTH - 1);
 
 	return vdev;
 }
