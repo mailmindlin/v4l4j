@@ -87,22 +87,20 @@ typedef __u16 __le16;
 
 
 /* structure for transferring x & y coordinates */
-struct pwc_coord
-{
-	int x, y;		/* guess what */
+struct pwc_coord {
+	int x;
+	int y;		/* guess what */
 	int size;		/* size, or offset */
 };
 
 
 /* Used with VIDIOCPWCPROBE */
-struct pwc_probe
-{
+struct pwc_probe {
 	char name[32];
 	int type;
 };
 
-struct pwc_serial
-{
+struct pwc_serial {
 	char serial[30];	/* String with serial number. Contains terminating 0 */
 };
 	
@@ -179,8 +177,7 @@ struct pwc_mpt_range
 	int tilt_min, tilt_max;
 };
 
-struct pwc_mpt_status
-{
+struct pwc_mpt_status {
 	int status;
 	int time_pan;
 	int time_tilt;
@@ -191,17 +188,28 @@ struct pwc_mpt_status
    all the necessary information to initialize and use the decompressor
    routines in standalone applications.
  */   
-struct pwc_video_command
-{
+struct pwc_video_command {
 	int type;		/* camera type (645, 675, 730, etc.) */
 	int release;		/* release number */
 
         int size;		/* one of PSZ_* */
         int alternate;
-	int command_len;	/* length of USB video command */
-	unsigned char command_buf[13];	/* Actual USB video command */
+	/**
+	 * Length of USB video command
+	 */
+	int command_len;
+	/**
+	 * Actual USB video command
+	 */
+	unsigned char command_buf[13];
+	/**
+	 * >0 = compressed
+	 */
 	int bandlength;		/* >0 = compressed */
-	int frame_size;		/* Size of one (un)compressed frame */
+	/**
+	 * Size of one (un)compressed frame
+	 */
+	int frame_size;
 };
 
 /* Flags for PWCX subroutines. Not all modules honour all flags. */
