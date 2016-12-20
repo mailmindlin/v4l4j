@@ -70,8 +70,20 @@ typedef off_t __off_t;
 #undef SYS_MMAP
 #undef SYS_MUNMAP
 
-#ifndef CONFIG_SYS_WRAPPER
 
+#ifndef CONFIG_SYS_WRAPPER
+#ifndef SYS_open
+#define SYS_open sys_open
+#endif
+#ifndef SYS_ioctl
+#define SYS_ioctl sys_ioctl
+#endif
+#ifndef SYS_read
+#define SYS_read sys_read
+#endif
+#ifndef SYS_write
+#define SYS_write sys_write
+#endif
 #define SYS_OPEN(file, oflag, mode) \
 	syscall(SYS_open, (const char *)(file), (int)(oflag), (mode_t)(mode))
 #define SYS_CLOSE(fd) \
