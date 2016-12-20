@@ -314,10 +314,10 @@ static int v4lconvert_do_try_format_uvc(struct v4lconvert_data *data, struct v4l
 	unsigned int best_framesize = 0;/* Just use the first format if no small enough one */
 
 	for (unsigned int i = 0; i < data->no_framesizes; i++) {
-		if (data->framesizes[i].discrete.width <= dest_fmt->fmt.pix.width
-				&& data->framesizes[i].discrete.height <= dest_fmt->fmt.pix.height) {
-			int size_x_diff = (int) dest_fmt->fmt.pix.width - (int) data->framesizes[i].discrete.width;
-			int size_y_diff = (int) dest_fmt->fmt.pix.height - (int) data->framesizes[i].discrete.height;
+		struct v4l2_frmsizeenum* framesize = &data->framesizes[i];
+		if (framesize->discrete.width <= dest_fmt->fmt.pix.width && framesize->discrete.height <= dest_fmt->fmt.pix.height) {
+			int size_x_diff = (int) dest_fmt->fmt.pix.width - (int) framesize->discrete.width;
+			int size_y_diff = (int) dest_fmt->fmt.pix.height - (int) framesize->discrete.height;
 			unsigned int size_diff = (unsigned) (size_x_diff * size_x_diff) + (unsigned) (size_y_diff * size_y_diff);
 
 			if (size_diff < closest_fmt_size_diff) {
@@ -394,8 +394,7 @@ static int v4lconvert_do_try_format(struct v4lconvert_data *data, struct v4l2_fo
 					   try_fmt.fmt.pix.width,
 					   try_fmt.fmt.pix.height,
 					   desired_pixfmt);
-		if (size_diff < closest_fmt_size_diff ||
-		    (size_diff == closest_fmt_size_diff && rank < best_rank)) {
+		if (size_diff < closest_fmt_size_diff || (size_diff == closest_fmt_size_diff && rank < best_rank)) {
 			closest_fmt = try_fmt;
 			closest_fmt_size_diff = size_diff;
 			best_rank = rank;
@@ -1177,14 +1176,14 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 
 	bool processing = v4lprocessing_pre_processing(data->processing);
 	bool rotate90 = data->control_flags & V4LCONTROL_ROTATED_90_JPEG;
-	int hflip = v4lcontrol_get_ctrl(data->control, V4LCONTROL_HFLIP);
-	int vflip = v4lcontrol_get_ctrl(data->control, V4LCONTROL_VFLIP);
-	int crop = my_dest_fmt.fmt.pix.width != my_src_fmt.fmt.pix.width ||
+	bool hflip = v4lcontrol_get_ctrl(data->control, V4LCONTROL_HFLIP);
+	bool vflip = v4lcontrol_get_ctrl(data->control, V4LCONTROL_VFLIP);
+	bool crop = my_dest_fmt.fmt.pix.width != my_src_fmt.fmt.pix.width ||
 		my_dest_fmt.fmt.pix.height != my_src_fmt.fmt.pix.height;
 
 	if (/* If no conversion/processing is needed */
 			(src_fmt->fmt.pix.pixelformat == dest_fmt->fmt.pix.pixelformat &&
-			 !processing && !rotate90 && !hflip && !vflip && !crop) ||
+			 !(processing || rotate90 || hflip || vflip ||crop) ||
 			/* or if we should do processing/rotating/flipping but the app tries to
 			   use the native cam format, we just return an unprocessed frame copy */
 			!v4lconvert_supported_dst_format(dest_fmt->fmt.pix.pixelformat)) {
