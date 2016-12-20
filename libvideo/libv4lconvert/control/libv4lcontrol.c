@@ -1255,7 +1255,7 @@ static bool v4lcontrol_get_usb_info(struct v4lcontrol_data *data, const char *sy
 		fclose(f);
 
 		int minor;
-		if (s && sscanf(buf, "%*d:%d%c", &minor, &c) == 2 && c == '\n' && ((unsigned)minor) == st.st_rdev))
+		if (s && sscanf(buf, "%*d:%d%c", &minor, &c) == 2 && c == '\n' && ((unsigned)minor) == st.st_rdev)
 			break;
 	}
 	if (i == 256)
