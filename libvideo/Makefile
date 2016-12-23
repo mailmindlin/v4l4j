@@ -138,16 +138,6 @@ ifeq ($(shell arch),$(ARCH))
 	endif
 endif
 
-ifeq ($(TRAVISCI),)
-	ifeq ($(CC),gcc)
-		CFLAGS += -flto -fdiagnostics-color=auto -std=gnu11
-		LDFLAGS += -flto=3
-	else
-		CFLAGS += -std=c11
-	endif
-else
-	CFLAGS += -std=c99
-endif
 
 LIB_NAME := video
 LIBDIR := /usr/local/lib
@@ -159,11 +149,11 @@ LIBV4LCONVERT_HELPER_OBJS := $(patsubst %, $(LIBV4LCONVERT_DIR)/%.o, $(LIBV4LCON
 OBJ := $(patsubst %.c,%.o,$(wildcard *.c) $(filter-out $(patsubst %.o,%.c,$(LIBV4LCONVERT_HELPER_OBJS)),$(shell find $(LIBV4LCONVERT_DIR) -type f -name "*.c")))
 
 WARNINGS +=  -Wall -Wpointer-arith -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wunused-function
-CFLAGS += $(HARDWARE_FLAGS) $(WARNINGS) -DLIBDIR=\"$(LIBDIR)\" -DLIBSUBDIR=\"$(LIBV4LCONVERT_INSTALL_SUBDIR)\" -I.
-CFLAGS += -fPIC -ftree-vectorize -fvisibility=default
+CFLAGS += $(HARDWARE_FLAGS) $(WARNINGS) -DLIBDIR=\"$(LIBDIR)\" -DLIBSUBDIR=\"$(LIBV4LCONVERT_INSTALL_SUBDIR)\" -I. -std=gnu11
+CFLAGS += -fPIC -fdiagnostics-color=auto -ftree-vectorize -flto -fvisibility=default
 #CFLAGS += -funsafe-math-optimizations
 AFLAGS += $(HARDWARE_FLAGS) -mapcs-reentrant -k --warn --statistics
-LDFLAGS += $(HARDWARE_FLAGS) -lm -lrt -shared -ljpeg -lc
+LDFLAGS += $(HARDWARE_FLAGS) -lm -lrt -shared -ljpeg -lc -flto=3
 
 ifneq ($(DEBUG),)
 	CFLAGS += -DDEBUG -ggdb -DLIBVIDEO_LOG_LEVEL=$(LIBVIDEO_LOG_LEVEL) -DLIBVIDEO_LOG_SOURCE=$(LIBVIDEO_LOG_SOURCE)
