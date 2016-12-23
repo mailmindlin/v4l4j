@@ -4,7 +4,7 @@ jdk: oraclejdk8
 addons:
  apt:
   packages:
-   - gcc-4.9.4
+   - gcc-4.9
    - libc-bin
    - libc-dev-bin
    - libc6-dev
