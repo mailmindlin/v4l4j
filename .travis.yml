@@ -24,6 +24,7 @@ before_install:
  - sudo -E ldconfig
 install:
  - make -C libvideo all -j4
+ - sudo -E make -C libvideo install
  - ant jnilib-debug all-debug include-jni jar-test
  - sudo -E ant install
 script:
