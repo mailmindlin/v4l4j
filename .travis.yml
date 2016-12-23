@@ -1,16 +1,9 @@
 language: java
 compiler: gcc
 jdk: oraclejdk8
-addons:
- apt:
-  packages:
-   - gcc-4.9
-   - libc-bin
-   - libc-dev-bin
-   - libc6-dev
 env:
  global:
-  - CC=gcc-4.9.4
+  - CC=gcc-4.9
 branches:
  except:
   - svn/test-perf
@@ -25,6 +18,9 @@ branches:
   - svn/tidyup
   - master-old
 before_install:
+ - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+ - sudo apt-get update
+ - sudo apt-get install gcc-4.9 libc-bin libc-dev-bin libc6-dev
  - sudo ldconfig
 install:
  - make -C libvideo all -j4
