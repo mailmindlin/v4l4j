@@ -4,13 +4,13 @@ jdk: oraclejdk8
 addons:
  apt:
   packages:
-   - gcc
+   - gcc-4.9.4
    - libc-bin
    - libc-dev-bin
    - libc6-dev
 env:
  global:
-  - CC=gcc
+  - CC=gcc-4.9.4
 branches:
  except:
   - svn/test-perf
