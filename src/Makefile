@@ -1,7 +1,6 @@
-# If the env variable JDK_HOME is not defined,
-# use the following one (works on Ubuntu with OpenJDK).
+# If the env variable JDK_HOME is not defined, try to autodetect it (http://stackoverflow.com/a/20653441/2759984)
 ifndef JDK_HOME
-JDK_HOME := /usr/lib/jvm/jdk-8-oracle-arm32-vfp-hflt
+JDK_HOME := $(dirname $(dirname $(readlink -f $(which javac))))
 endif
 
 
