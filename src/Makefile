@@ -1,6 +1,6 @@
 # If the env variable JDK_HOME is not defined, try to autodetect it (http://stackoverflow.com/a/20653441/2759984)
 ifndef JDK_HOME
-JDK_HOME := $(dirname $(dirname $(readlink -f $(which javac))))
+JDK_HOME := $(shell dirname $(shell dirname $(shell readlink -f $(shell which javac))))
 endif
 
 
