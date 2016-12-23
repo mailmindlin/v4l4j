@@ -18,13 +18,13 @@ branches:
   - svn/tidyup
   - master-old
 before_install:
- - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
- - sudo apt-get update
- - sudo apt-get install gcc-4.9 libc-bin libc-dev-bin libc6-dev
- - sudo ldconfig
+ - sudo -E add-apt-repository -y ppa:ubuntu-toolchain-r/test
+ - sudo -E apt-get -yq update
+ - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install gcc-4.9 libc-bin libc-dev-bin libc6-dev
+ - sudo -E ldconfig
 install:
  - make -C libvideo all -j4
  - ant jnilib-debug all-debug include-jni jar-test
- - sudo ant install
+ - sudo -E ant install
 script:
  - ant test-junit
