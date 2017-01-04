@@ -42,7 +42,7 @@
  **************************************************************/
 
 /* inspired by OpenCV's Bayer decoding */
-static void v4lconvert_border_bayer_line_to_bgr24(const u8 *bayer, const u8 *adjacent_bayer, u8 *bgr, u32 width, int start_with_green, int blue_line) {
+static void v4lconvert_border_bayer_line_to_bgr24(const u8 *bayer, const u8 *adjacent_bayer, u8 *bgr, u32 width, bool start_with_green, bool blue_line) {
 	u8 t0, t1;
 
 	if (start_with_green) {
@@ -161,10 +161,9 @@ static void v4lconvert_border_bayer_line_to_bgr24(const u8 *bayer, const u8 *adj
 
 /* From libdc1394, which on turn was based on OpenCV's Bayer decoding */
 
-static void bayer_to_rgbbgr24(const u8 *bayer, u8 *bgr, u32 width, u32 height, int start_with_green, int blue_line) {
+static void bayer_to_rgbbgr24(const u8 *bayer, u8 *bgr, u32 width, u32 height, bool start_with_green, bool blue_line) {
 	/* render the first line */
-	v4lconvert_border_bayer_line_to_bgr24(bayer, bayer + width, bgr, width,
-			start_with_green, blue_line);
+	v4lconvert_border_bayer_line_to_bgr24(bayer, bayer + width, bgr, width, start_with_green, blue_line);
 	bgr += width * 3;
 
 	/* reduce height by 2 because of the special case top/bottom line */
@@ -312,7 +311,7 @@ void v4lconvert_bayer_to_bgr24(const u8 *bayer, u8 *bgr, u32 width, u32 height, 
 			|| pixfmt == V4L2_PIX_FMT_SGBRG8);
 }
 
-static void v4lconvert_border_bayer_line_to_y(const u8 *bayer, const u8 *adjacent_bayer, u8 *y, u32 width, int start_with_green, int blue_line) {
+static void v4lconvert_border_bayer_line_to_y(const u8 *bayer, const u8 *adjacent_bayer, u8 *y, u32 width, bool start_with_green, bool blue_line) {
 	int t0, t1;
 
 	if (start_with_green) {
@@ -396,17 +395,16 @@ static void v4lconvert_border_bayer_line_to_y(const u8 *bayer, const u8 *adjacen
 	}
 }
 
-void v4lconvert_bayer_to_yuv420(const u8 *bayer, u8 *yuv, u32 width, u32 height, unsigned int src_pixfmt, int yvu) {
+void v4lconvert_bayer_to_yuv420(const u8 *bayer, u8 *yuv, u32 width, u32 height, unsigned int src_pixfmt, bool yvu) {
 	int blue_line = 0, start_with_green = 0;
 	u8 *ydst = yuv;
-	u8 *udst, *vdst;
+	u8 *udst = yuv + width * height;
+	u8 *vdst = udst + width * height / 4;
 
 	if (yvu) {
-		vdst = yuv + width * height;
-		udst = vdst + width * height / 4;
-	} else {
-		udst = yuv + width * height;
-		vdst = udst + width * height / 4;
+		u8 *tmp = udst;
+		udst = vdst;
+		vdst = tmp;
 	}
 
 	/* First calculate the u and v planes 2x2 pixels at a time */
@@ -479,8 +477,7 @@ void v4lconvert_bayer_to_yuv420(const u8 *bayer, u8 *yuv, u32 width, u32 height,
 	bayer -= width * height;
 
 	/* render the first line */
-	v4lconvert_border_bayer_line_to_y(bayer, bayer + width, ydst, width,
-			start_with_green, blue_line);
+	v4lconvert_border_bayer_line_to_y(bayer, bayer + width, ydst, width, start_with_green, blue_line);
 	ydst += width;
 
 	/* reduce height by 2 because of the border */

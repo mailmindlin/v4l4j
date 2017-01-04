@@ -40,7 +40,7 @@ Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
 
 static const unsigned int stride = 720;
 
-static void v4lconvert_hm12_to_rgb(const u8 *src, u8 *dest, u32 width, u32 height, int rgb) {
+static void v4lconvert_hm12_to_rgb(const u8 *src, u8 *dest, u32 width, u32 height, bool rgb) {
 	const u8 *y_base = src;
 	const u8 *uv_base = src + stride * height;
 	const unsigned int mb_size = 256;
@@ -86,11 +86,11 @@ static void v4lconvert_hm12_to_rgb(const u8 *src, u8 *dest, u32 width, u32 heigh
 }
 
 void v4lconvert_hm12_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
-	v4lconvert_hm12_to_rgb(src, dest, width, height, 1);
+	v4lconvert_hm12_to_rgb(src, dest, width, height, true);
 }
 
 void v4lconvert_hm12_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height) {
-	v4lconvert_hm12_to_rgb(src, dest, width, height, 0);
+	v4lconvert_hm12_to_rgb(src, dest, width, height, true);
 }
 
 static inline void de_macro_uv(u8 *dstu, u8 *dstv, const u8 *src, unsigned int w, unsigned int h) {
@@ -128,7 +128,7 @@ static inline void de_macro_y(u8 *dst, const u8 *src, unsigned int w, unsigned i
 	}
 }
 
-void v4lconvert_hm12_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height, int yvu) {
+void v4lconvert_hm12_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height, bool yvu) {
 	de_macro_y(dest, src, width, height);
 	dest += width * height;
 	src += stride * height;

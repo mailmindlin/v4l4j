@@ -41,7 +41,7 @@
 #define RGB2V(r, g, b) \
 	((u8) ((14456 * (r) - 12105 * (g) - 2351 * (b) + 4210688) >> 15))
 
-void v4lconvert_rgb24_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt, int bgr, int yvu) {
+void v4lconvert_rgb24_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt, bool bgr, bool yvu) {
 	/* Y */
 	for (unsigned int y = 0; y < src_fmt->fmt.pix.height; y++) {
 		for (unsigned int x = 0; x < src_fmt->fmt.pix.width; x++) {
@@ -62,7 +62,7 @@ void v4lconvert_rgb24_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_forma
 		//Swap udest/vdest
 		u8 *tmp = udest;
 		udest = vdest;
-		vdest = udest;
+		vdest = tmp;
 	}
 
 	for (unsigned int y = 0; y < src_fmt->fmt.pix.height / 2; y++) {
@@ -134,7 +134,7 @@ void v4lconvert_rgb24_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_forma
 	#define UV2U1(u, v)		(int) (2.03211f * (float) (u) + 0.00000f * (float) (v) + 0.5f)
 #endif
 
-void v4lconvert_yuv420_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height, int yvu) {
+void v4lconvert_yuv420_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height, bool yvu) {
 	const u8 *ysrc = src;
 	const u8 *usrc = src + width * height;
 	const u8 *vsrc = usrc + (width * height) / 4;
@@ -176,7 +176,7 @@ __attribute__((inline)) void v4lconvert_cvt_yuv420_to_bgr24(const u8 *ysrc, cons
 	}
 }
 
-void v4lconvert_yuv420_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height, int yvu) {
+void v4lconvert_yuv420_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height, bool yvu) {
 	const u8 *ysrc = src;
 	const u8 *usrc, *vsrc;
 
@@ -273,7 +273,7 @@ void v4lconvert_yuyv_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
  * @param height height of frame
  * @param yvu whether to output in yuv420 or yvu420
  */
-void v4lconvert_yuyv_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height, int yvu) {
+void v4lconvert_yuyv_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height, bool yvu) {
 	/* copy the Y values */
 	const u8* src1 = src;
 	for (unsigned int i = 0; i < height; i++) {
@@ -399,7 +399,7 @@ void v4lconvert_uyvy_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height) {
 	}
 }
 
-void v4lconvert_uyvy_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height, int yvu) {
+void v4lconvert_uyvy_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height, bool yvu) {
 	/* copy the Y values */
 	const u8 *src1 = src;
 	for (unsigned int i = 0; i < height; i++) {
@@ -417,7 +417,7 @@ void v4lconvert_uyvy_to_yuv420(const u8 *src, u8 *dest, u32 width, u32 height, i
 	if (yvu) {
 		u8 *tmp = udest;
 		udest = vdest;
-		vdest = udest;
+		vdest = tmp;
 	}
 	
 	for (unsigned int i = 0; i < height; i += 2) {
@@ -497,7 +497,7 @@ void v4lconvert_rgb565_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height) 
 	}
 }
 
-void v4lconvert_rgb565_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt, int yvu) {
+void v4lconvert_rgb565_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt, bool yvu) {
 	/* Y */
 	for (unsigned int y = 0; y < src_fmt->fmt.pix.height; y++) {
 		for (unsigned int x = 0; x < src_fmt->fmt.pix.width; x++) {

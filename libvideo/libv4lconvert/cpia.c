@@ -35,10 +35,7 @@
 #define FRAME_HEADER_SIZE	64
 
 /* CPIA YUYV (sometimes sort of compressed) */
-int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dest, u32 width, u32 height, int yvu) {
-	unsigned int y;
-	u8 *udest, *vdest;
-
+int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dest, u32 width, u32 height, bool yvu) {
 	if (width > 352 || height > 288) {
 		fprintf(stderr, "FATAL ERROR CPIA1 size > 352x288, please report!\n");
 		return -1;
@@ -134,7 +131,7 @@ int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data, const u8 *src, unsi
 		   of simply ommitting certain pixels */
 		memcpy(dest, data->previous_frame, width * height * 3 / 2);
 
-		for (y = 0; y < height; y++) {
+		for (unsigned int y = 0; y < height; y++) {
 			if (src_size < 2) {
 				fprintf(stderr, "cpia1 decode error: frame height mismatch\n");
 				return -1;
