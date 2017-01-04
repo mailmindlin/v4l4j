@@ -4,19 +4,6 @@
 #include "debug.h"
 #include <x264.h>
 
-static jclass H264Picture_class = NULL;
-static jfieldID H264Picture_object_fid = NULL;
-
-static x264_picture_t* getPointer(JNIEnv* env, jobject self) {
-	if (H264Picture_class == NULL) {
-		H264Picture_class = (*env)->GetObjectClass(env, self);
-		H264Picture_object_fid = (*env)->GetFieldID(env, H264Picture_class, "object", "J");
-	}
-	
-	long ptr = (*env)->GetLongField(env, self, H264Picture_object_fid);
-	return (struct x264_picture_t*) (uintptr_t) ptr;
-}
-
 JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Picture_init(JNIEnv* env, jclass me, jint csp, jint width, jint height) {
 	LOG_FN_ENTER();
 	x264_picture_t* result;
@@ -90,8 +77,14 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Picture_putImage(J
 
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Picture_close(JNIEnv* env, jobject self) {
 	LOG_FN_ENTER();
-	x264_picture_t* picture = getPointer(env, self);
+	jclass H264Picture_class = (*env)->GetObjectClass(env, self);
+	if (H264Picture_class == NULL) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Unable to look up class H264Picture");
+		return;
+	}
+	jfieldID H264Picture_object_fid = (*env)->GetFieldID(env, H264Picture_class, "object", "J");
 	
+	x264_picture_t* picture = (x264_picture_t*) (uintptr_t) (*env)->GetLongField(env, self, H264Picture_object_fid);
 	x264_picture_clean(picture);
 	XFREE(picture);
 }
