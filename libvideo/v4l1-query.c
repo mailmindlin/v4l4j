@@ -166,7 +166,6 @@ static void free_video_inputs(struct video_input_info *vi, unsigned int nb) {
 
 static inline int check_inputs_v4l1(struct video_device *vd) {
 	struct video_capability vc;
-	struct video_channel chan;
 	CLEAR(vc);
 	struct device_info *di = vd->info;
 	di->inputs = NULL;
@@ -182,6 +181,7 @@ static inline int check_inputs_v4l1(struct video_device *vd) {
 	XMALLOC(di->inputs, struct video_input_info *, vc.channels * sizeof(struct video_input_info ));
 
 	for (unsigned int i = 0; i < vc.channels; i++) {
+		struct video_channel chan;
 		CLEAR(chan);
 		CLEAR(di->inputs[i]);
 		chan.channel = i;
@@ -251,6 +251,7 @@ int query_device_v4l1(struct video_device *vdev) {
 		info("Error checking capabilities of V4L1 video device");
 		return LIBVIDEO_ERR_NOCAPS;
 	}
+	
 	//fill name field
 	strncpy(vdev->info->name, caps.name, NAME_FIELD_LENGTH);
 	

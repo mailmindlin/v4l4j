@@ -69,21 +69,15 @@ bool check_capture_capabilities_v4l1(int fd, char *file) {
 // get window format	VIDIOCGWIN  (to double check)
 int set_cap_param_v4l1(struct video_device *vdev, unsigned int src_palette, unsigned int palette) {
 	UNUSED(src_palette);
-	struct capture_device *c = vdev->capture;
-	struct video_channel chan;
-	struct video_picture pict;
-	struct video_window win;
-	struct video_capability vc;
-
+	
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: Setting capture parameters on device %s.\n", vdev->file);
+	
+	struct capture_device *c = vdev->capture;
 
-	CLEAR(chan);
-	CLEAR(pict);
-	CLEAR(win);
+	struct video_capability vc;
 	CLEAR(vc);
-
-	if (check_v4l1(vdev->fd, &vc) != 0){
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: error getting capabilities.\n");
+	if (!check_v4l1(vdev->fd, &vc)) {
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: Error getting capabilities (not v4l1).\n");
 		return LIBVIDEO_ERR_NOCAPS;
 	}
 
@@ -92,17 +86,19 @@ int set_cap_param_v4l1(struct video_device *vdev, unsigned int src_palette, unsi
 		c->width = vc.maxwidth;
 
 	if(c->height == MAX_HEIGHT || c->height > vc.maxheight)
-		c->height=vc.maxheight;
+		c->height = vc.maxheight;
 
 	if(c->width < vc.minwidth)
-		c->width=vc.minwidth;
+		c->width = vc.minwidth;
 
 	if(c->height < vc.minheight)
-		c->height=vc.minheight;
+		c->height = vc.minheight;
 
 	//Select the input channel
+	struct video_channel chan;
+	CLEAR(chan);
 	chan.channel = c->channel;
-	switch( c->std ) {
+	switch(c->std) {
 		case NTSC:
 			chan.norm = VIDEO_MODE_NTSC;
 			break;
@@ -116,16 +112,17 @@ int set_cap_param_v4l1(struct video_device *vdev, unsigned int src_palette, unsi
 			chan.norm = VIDEO_MODE_AUTO;
 			break;
 	}
-	if (ioctl( vdev->fd, VIDIOCSCHAN, &chan) == -1) {
-		info("The desired input channel(%d)/standard(%d) cannot be selected\n", c->channel, c->std);
+	if (ioctl(vdev->fd, VIDIOCSCHAN, &chan) == -1) {
+		info("The desired input channel (%d)/standard(%d) cannot be selected.\n", c->channel, c->std);
 		info("Listing the reported capabilities:\n");
 		list_cap_v4l1(vdev->fd);
 		return LIBVIDEO_ERR_CHAN_SETUP;
 	}
-	//check for tuner
+	
+	//Check for tuner
 	chan.channel = c->channel;
-	if (ioctl( vdev->fd, VIDIOCGCHAN, &chan) == -1) {
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: cannot get the current channel info\n");
+	if (ioctl(vdev->fd, VIDIOCGCHAN, &chan) == -1) {
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: Can't get the current channel info.\n");
 		return LIBVIDEO_ERR_CHAN_SETUP;
 	}
 	if(chan.tuners > 1) {
@@ -140,21 +137,23 @@ int set_cap_param_v4l1(struct video_device *vdev, unsigned int src_palette, unsi
 
 
 	//query the current image format
+	struct video_picture pict;
+	CLEAR(pict);
 	if(ioctl(vdev->fd, VIDIOCGPICT, &pict) == -1) {
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: cannot get the current palette format\n");
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: Can't get the current palette format\n");
 		return LIBVIDEO_ERR_IOCTL;
 	}
 
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: applying image format\n");
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: Applying image format\n");
 
-	if(palette==VIDEO_PALETTE_UNDEFINED_V4L1) {
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: palette %s not V4L1-compatible\n", libvideo_palettes[palette].name);
+	if(palette == VIDEO_PALETTE_UNDEFINED_V4L1) {
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: Palette #%d (%s) isn't V4L1-compatible\n", palette, libvideo_palettes[palette].name);
 		return LIBVIDEO_ERR_FORMAT;
 	}
 
 	pict.palette = libvideo_palettes[palette].v4l1_palette;
 	pict.depth = libvideo_palettes[palette].depth;
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1, "CAP: trying palette %s (%d) - depth %d...\n",
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1, "CAP: Trying palette %s (%d) - depth %d...\n",
 			libvideo_palettes[palette].name, pict.palette, pict.depth);
 
 	/*
@@ -163,13 +162,13 @@ int set_cap_param_v4l1(struct video_device *vdev, unsigned int src_palette, unsi
 	if(palette == YUV420) {
 		pict.palette = VIDEO_PALETTE_YUV420P;
 		pict.depth = libvideo_palettes[palette].depth;
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1, "CAP: trying palette YUV420-workaround (%d) - depth %d...\n", YUV420, pict.depth);
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1, "CAP: Trying palette YUV420-workaround (%d) - depth %d...\n", YUV420, pict.depth);
 		
 		if(ioctl(vdev->fd, VIDIOCSPICT, &pict) == 0){
 			c->palette = YUV420;
 			c->real_v4l1_palette = YUV420P;
 			c->imagesize = c->width * c->height * pict.depth / 8;
-			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: palette YUV420-workaround (%d) accepted - image size: %d\n", YUV420, c->imagesize);
+			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: Palette YUV420-workaround (%d) accepted - image size: %d\n", YUV420, c->imagesize);
 		} else {
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "Palette not supported\n");
 			return LIBVIDEO_ERR_FORMAT;
@@ -205,7 +204,7 @@ int set_cap_param_v4l1(struct video_device *vdev, unsigned int src_palette, unsi
 	} else {
 		if(ioctl(vdev->fd, VIDIOCSPICT, &pict) == 0) {
 			c->palette = palette;
-			c->real_v4l1_palette = palette;
+			c->real_v4l1_palette = (int) palette;
 			c->imagesize = c->width * c->height * pict.depth / 8;
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: palette %s (%d) accepted - image size: %d\n", libvideo_palettes[palette].name, palette, c->imagesize);
 		}  else {
@@ -214,16 +213,19 @@ int set_cap_param_v4l1(struct video_device *vdev, unsigned int src_palette, unsi
 		}
 	}
 
-	c->needs_conversion=0;
+	c->needs_conversion = false;
 
-	win.x = win.y = 0;
-	win.width = c->width;
-	win.height = c->height;
-	win.chromakey = 0;
-	win.flags = 0;
-	win.clips = NULL;
-	win.clipcount = 0;
-	if(-1 == ioctl(vdev->fd, VIDIOCSWIN,&win))	{
+	struct video_window win = {
+		.x = 0,
+		.y = 0,
+		.width = c->width,
+		.height = c->height,
+		.chromakey = 0,
+		.flags = 0,
+		.clips = NULL,
+		.clipcount = 0
+	};
+	if(ioctl(vdev->fd, VIDIOCSWIN, &win) == -1) {
 		info("libvideo was unable to set the requested capture size (%dx%d).\n", c->width, c->height);
 		info("Maybe the device doesnt support this combination of width and height.\n");
 		return LIBVIDEO_ERR_DIMENSIONS;
@@ -231,20 +233,19 @@ int set_cap_param_v4l1(struct video_device *vdev, unsigned int src_palette, unsi
 
 	CLEAR(win);
 
-	if(-1 == ioctl(vdev->fd, VIDIOCGWIN, &win)){
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: cannot verify the image size\n");
+	if(ioctl(vdev->fd, VIDIOCGWIN, &win) == -1) {
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: Can't verify the image size\n");
 		return LIBVIDEO_ERR_DIMENSIONS;
 	}
 
-	if( win.width != c->width || win.height != c->height ){
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: V4L1 resized image from %dx%d to %dx%d\n",
-				c->width, c->height,win.width, win.height);
+	if(win.width != c->width || win.height != c->height){
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: V4L1 resized image from %dx%d to %dx%d\n", c->width, c->height,win.width, win.height);
 		c->width = win.width;
 		c->height = win.height;
 	}
-
+	
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: capture resolution: %dx%d\n", c->width, c->height);
-
+	
 	return 0;
 }
 
@@ -253,7 +254,7 @@ int set_frame_intv_v4l1(struct video_device *vdev, unsigned int num, unsigned in
 	UNUSED(num);
 	UNUSED(denom);
 	// TODO: implement me if anyone wants this feature
-	info("This function is not implemented.\n");
+	info("This function (set_frame_intv_v4l1) is not implemented.\n");
 	return LIBVIDEO_ERR_IOCTL;
 }
 
@@ -262,7 +263,7 @@ int get_frame_intv_v4l1(struct video_device *vdev, unsigned int *num, unsigned i
 	UNUSED(num);
 	UNUSED(denom);
 	// TODO: implement me if anyone wants this feature
-	info("This function is not implemented.\n");
+	info("This function (get_frame_intv_v4l1) is not implemented.\n");
 	return LIBVIDEO_ERR_IOCTL;
 }
 
@@ -271,7 +272,7 @@ int set_video_input_std_v4l1(struct video_device *vdev, unsigned int input_num, 
 	UNUSED(input_num);
 	UNUSED(std);
 	// TODO: implement me if anyone wants this feature
-	info("This function is not implemented.\n");
+	info("This function (set_video_input_std_v4l1) is not implemented.\n");
 	return LIBVIDEO_ERR_IOCTL;
 }
 
@@ -280,29 +281,29 @@ void get_video_input_std_v4l1(struct video_device *vdev, unsigned int *input_num
 	UNUSED(input_num);
 	UNUSED(std);
 	// TODO: implement me if anyone wants this feature
-	info("This function is not implemented.\n");
+	info("This function (get_video_input_std_v4l1) is not implemented.\n");
 }
 
 // get streaming cap details VIDIOCGMBUF, initialise streaming and
 // create mmap'ed buffers
 int init_capture_v4l1(struct video_device *vdev) {
-	struct capture_device *c = vdev->capture;
-	struct video_mbuf vm;
-	CLEAR(vm);
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: initialising capture on device %s.\n", vdev->file);
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: Initializing capture on device %s.\n", vdev->file);
 
-	if(-1 == ioctl(vdev->fd, VIDIOCGMBUF, &vm)){
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: Error getting mmap information from driver\n");
+	struct video_mbuf vm = {0};
+	if(ioctl(vdev->fd, VIDIOCGMBUF, &vm) == -1) {
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: Error getting mmap information from driver.\n");
 		return LIBVIDEO_ERR_REQ_MMAP;
 	}
 
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: driver allocated %d simultaneous buffers\n", vm.frames);
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: first offset [0] %d\n", vm.offsets[0]);
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: second offset [1] %d\n", vm.offsets[1]);
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: total size %d\n", vm.size);
-
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: Driver allocated %d simultaneous buffers\n", vm.frames);
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP:  - First offset [0]: %d\n", vm.offsets[0]);
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP:  - Second offset [1]: %d\n", vm.offsets[1]);
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP:  - Total size: %d\n", vm.size);
+	
+	
+	struct capture_device *c = vdev->capture;
 	/*
-	 * we only use two buffers, regardless of what the driver returned,
+	 * We only use two buffers, regardless of what the driver returned,
 	 * unless it said 1, in which case we abort. For info, the QC driver
 	 * returns vm.offset[0]=vm.offset[1]=0 ... gspca doesnt... because of
 	 * this, we will store vm.size in c->mmap->v4l1_mmap_size so we can
@@ -313,9 +314,9 @@ int init_capture_v4l1(struct video_device *vdev) {
 	 */
 
 	if(vm.frames > 2) {
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: Using only 2 buffers\n");
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: Using only 2 buffers (of %d)\n", vm.frames);
 	} else if (vm.frames < 2) {
-		//although it wont require much fixing...
+		//Although it wont require much fixing...
 		//do drivers allocate only 1 buffer anyway ?
 		info("The video driver returned an unsupported number of MMAP buffers(%d).\n", vm.frames);
 		PRINT_REPORT_ERROR();
@@ -335,7 +336,7 @@ int init_capture_v4l1(struct video_device *vdev) {
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: mmap'ed %d bytes at %p\n", vm.size, c->mmap->buffers[0].start);
 
 	c->mmap->v4l1_mmap_size = vm.size;
-	c->mmap->buffers[1].start =(void *)c->mmap->buffers[0].start + vm.offsets[1];
+	c->mmap->buffers[1].start =( void *)c->mmap->buffers[0].start + vm.offsets[1];
 	c->mmap->buffers[0].length = c->mmap->buffers[1].length = vm.size - 1;
 
 	c->mmap->tmp = 0;
@@ -346,55 +347,51 @@ int init_capture_v4l1(struct video_device *vdev) {
 // start the capture of first buffer VIDIOCMCAPTURE(0)
 int start_capture_v4l1(struct video_device *vdev) {
 	struct capture_device *c = vdev->capture;
-	struct video_mmap mm;
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-			"CAP: starting capture on device %s.\n", vdev->file);
-
-	CLEAR(mm);
-	mm.frame = 0;
-	mm.width = c->width;
-	mm.height = c->height;
-	mm.format = libvideo_palettes[c->real_v4l1_palette].v4l1_palette;
-
-	if(-1 == ioctl(vdev->fd, VIDIOCMCAPTURE, &mm))	{
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
-				"CAP: Can't start the capture\n");
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: starting capture on device %s.\n", vdev->file);
+	struct video_mmap mm = {
+		.frame = 0,
+		.width = c->width,
+		.height = c->height,
+		.format = libvideo_palettes[c->real_v4l1_palette].v4l1_palette
+	};
+	
+	if(ioctl(vdev->fd, VIDIOCMCAPTURE, &mm) == -1) {
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: Can't start the capture\n");
 		return LIBVIDEO_ERR_IOCTL;
 	}
+	
 	c->mmap->tmp = 0;
-
-	return 0;
+	
+	return LIBVIDEO_ERR_SUCCESS;
 }
 
 //dequeue the next buffer with available frame
 // start the capture of next buffer VIDIOCMCAPTURE(x)
 void *dequeue_buffer_v4l1(struct video_device *vdev, unsigned int *len, unsigned int *index, unsigned long long *capture_time, unsigned long long *sequence) {
+	UNUSED(index);
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2, "CAP: dequeuing buffer on device %s.\n", vdev->file);
 	struct capture_device *c = vdev->capture;
-	struct video_mmap mm;
 	int curr_frame = (int) c->mmap->tmp;
 	int next_frame = curr_frame ^ 1;
-	*len=c->imagesize;
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2, "CAP: dequeuing buffer on device %s.\n", vdev->file);
+	*len = c->imagesize;
 
+	struct video_mmap mm;
 	CLEAR(mm);
-
-	mm.frame =  next_frame;
+	mm.frame = next_frame;
 	mm.width = c->width;
 	mm.height = c->height;
 	mm.format = libvideo_palettes[c->real_v4l1_palette].v4l1_palette;
-
+	
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2, "CAP: Starting capture of next frame (%d)\n", next_frame);
-	if(ioctl(vdev->fd, VIDIOCMCAPTURE, &mm) == -1){
+	if(ioctl(vdev->fd, VIDIOCMCAPTURE, &mm) == -1) {
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: Can't initiate the capture of next frame\n");
 		*len = 0;
 		return NULL;
 	}
 
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2,
-			"CAP: Waiting for frame (%d)\n", curr_frame);
-	if(ioctl(vdev->fd, VIDIOCSYNC, &curr_frame) == -1){
-		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
-				"CAP: Error waiting for next frame(%d)\n", curr_frame);
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2, "CAP: Waiting for frame (%d)\n", curr_frame);
+	if(ioctl(vdev->fd, VIDIOCSYNC, &curr_frame) == -1) {
+		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: Error waiting for next frame (%d)\n", curr_frame);
 		*len = 0;
 		return NULL;
 	}
@@ -407,25 +404,26 @@ void *dequeue_buffer_v4l1(struct video_device *vdev, unsigned int *len, unsigned
 }
 
 //enqueue the buffer when done using the frame
-void enqueue_buffer_v4l1(struct video_device *device, unsigned int i) {}
+void enqueue_buffer_v4l1(struct video_device *device, unsigned int i) {
+	UNUSED(device);
+	UNUSED(i);
+}
 
 //counterpart of start_capture, must be called it start_capture was successful
 int stop_capture_v4l1(struct video_device *vdev) {
+	UNUSED(vdev);
 	return 0;
 }
 
 //counterpart of init_capture, must be called it init_capture was successful
 void free_capture_v4l1(struct video_device *vdev) {
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-			"CAP: freeing capture structures on device %s.\n", vdev->file);
-	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG,
-			"CAP: unmmap %d bytes at %p\n", vdev->capture->mmap->v4l1_mmap_size,
-			vdev->capture->mmap->buffers[0].start);
-
-	if (-1 == munmap(vdev->capture->mmap->buffers[0].start,
-			(size_t) vdev->capture->mmap->v4l1_mmap_size))
-			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: error unmapping mmap'ed buffer\n");
-
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: freeing capture structures on device %s.\n", vdev->file);
+	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: unmmap %d bytes at %p\n", vdev->capture->mmap->v4l1_mmap_size, vdev->capture->mmap->buffers[0].start);
+	
+	if (munmap(vdev->capture->mmap->buffers[0].start,
+			(size_t) vdev->capture->mmap->v4l1_mmap_size) == -1)
+			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: Error unmapping mmap'ed buffer\n");
+	
 	XFREE(vdev->capture->mmap->buffers);
 }
 
@@ -435,82 +433,86 @@ void free_capture_v4l1(struct video_device *vdev) {
  */
  //returns the number of controls (standard and private V4L1 controls only)
 int count_v4l1_controls(struct video_device *vdev) {
+	UNUSED(vdev);
 	//4 basic controls in V4L1
-	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: found 4 controls\n");
+	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: Found 4 controls\n");
 	return 4;
 }
 
 //Populate the control_list with fake V4L2 controls matching V4L1 video
 //controls and returns how many fake controls were created
 int create_v4l1_controls(struct video_device *vdev, struct control *controls, int max) {
+	UNUSED(vdev);
 	int count = 0;
+	if (max <= count)
+		return count;
 	
 	//list standard V4L controls
 	//brightness
-	controls[count].v4l2_ctrl->id = V4L2_CID_BRIGHTNESS;
-	controls[count].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
-	strcpy((char *)controls[count].v4l2_ctrl->name, "Brightness\0");
-	controls[count].v4l2_ctrl->minimum = 0;
-	controls[count].v4l2_ctrl->maximum = 65535;
-	controls[count].v4l2_ctrl->step = 1;
-	controls[count].v4l2_ctrl->default_value = 32768;
-	controls[count].v4l2_ctrl->flags = 0;
-	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-			"CTRL: found control(id: %d - name: %s - min: %d - max: %d - step: %d)\n",
-			controls[count].v4l2_ctrl->id,
-			(char *) &controls[count].v4l2_ctrl->name,
-			controls[count].v4l2_ctrl->minimum,
-			controls[count].v4l2_ctrl->maximum,
-			controls[count].v4l2_ctrl->step);
-	count++;
+	struct v4l2_queryctrl *brightnessControl = controls[0].v4l2_ctrl;
+	brightnessControl->id = V4L2_CID_BRIGHTNESS;
+	brightnessControl->type = V4L2_CTRL_TYPE_INTEGER;
+	strcpy((char *)brightnessControl->name, "Brightness");
+	brightnessControl->minimum = 0;
+	brightnessControl->maximum = 65535;
+	brightnessControl->step = 1;
+	brightnessControl->default_value = 32768;
+	brightnessControl->flags = 0;
+	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: found control(id: %d - name: %s - min: %d - max: %d - step: %d)\n",
+			brightnessControl->id,
+			(char *) &brightnessControl->name,
+			brightnessControl->minimum,
+			brightnessControl->maximum,
+			brightnessControl->step);
+	if (max <= ++count)
+		return count;
 
 	//hue
 	controls[count].v4l2_ctrl->id = V4L2_CID_HUE;
 	controls[count].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
-	strcpy((char *)controls[count].v4l2_ctrl->name, "Hue\0");
+	strcpy((char *)controls[count].v4l2_ctrl->name, "Hue");
 	controls[count].v4l2_ctrl->minimum = 0;
 	controls[count].v4l2_ctrl->maximum = 65535;
 	controls[count].v4l2_ctrl->step = 1;
 	controls[count].v4l2_ctrl->default_value = 32768;
 	controls[count].v4l2_ctrl->flags = 0;
-	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-			"CTRL: found control(id: %d - name: %s - min: %d -max: %d - step: %d)\n",
+	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: found control(id: %d - name: %s - min: %d -max: %d - step: %d)\n",
 			controls[count].v4l2_ctrl->id,
 			(char *) &controls[count].v4l2_ctrl->name,
 			controls[count].v4l2_ctrl->minimum,
 			controls[count].v4l2_ctrl->maximum,
 			controls[count].v4l2_ctrl->step);
-	count++;
+	if (max <= ++count)
+		return count;
 
 	//color
 	controls[count].v4l2_ctrl->id = V4L2_CID_SATURATION;
 	controls[count].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
-	strcpy((char *)controls[count].v4l2_ctrl->name, "Saturation\0");
+	strcpy((char *)controls[count].v4l2_ctrl->name, "Saturation");
 	controls[count].v4l2_ctrl->minimum = 0;
 	controls[count].v4l2_ctrl->maximum = 65535;
 	controls[count].v4l2_ctrl->step = 1;
 	controls[count].v4l2_ctrl->default_value = 32768;
 	controls[count].v4l2_ctrl->flags = 0;
-	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-			"CTRL: found control(id: %d - name: %s - min: %d -max: %d - step: %d)\n",
+	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: found control(id: %d - name: %s - min: %d -max: %d - step: %d)\n",
 			controls[count].v4l2_ctrl->id,
 			(char *) &controls[count].v4l2_ctrl->name,
 			controls[count].v4l2_ctrl->minimum,
 			controls[count].v4l2_ctrl->maximum,
 			controls[count].v4l2_ctrl->step);
-	count++;
+	if (max <= ++count)
+		return count;
 
 	//contrast
 	controls[count].v4l2_ctrl->id = V4L2_CID_CONTRAST;
 	controls[count].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
-	strcpy((char *)controls[count].v4l2_ctrl->name, "Contrast\0");
+	strcpy((char *)controls[count].v4l2_ctrl->name, "Contrast");
 	controls[count].v4l2_ctrl->minimum = 0;
 	controls[count].v4l2_ctrl->maximum = 65535;
 	controls[count].v4l2_ctrl->step = 1;
 	controls[count].v4l2_ctrl->default_value = 32768;
 	controls[count].v4l2_ctrl->flags = 0;
-	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG,
-			"CTRL: found control(id: %d - name: %s - min: %d -max: %d - step: %d)\n",
+	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: found control(id: %d - name: %s - min: %d -max: %d - step: %d)\n",
 			controls[count].v4l2_ctrl->id,
 			(char *) &controls[count].v4l2_ctrl->name,
 			controls[count].v4l2_ctrl->minimum,
@@ -523,13 +525,13 @@ int create_v4l1_controls(struct video_device *vdev, struct control *controls, in
 
 //returns the value of a control
 int get_control_value_v4l1(struct video_device *vdev, struct v4l2_queryctrl *ctrl, int *val) {
-	struct video_picture pict;
-	CLEAR(pict);
+	struct video_picture pict = {0};
 	//query the current image format
 	if(ioctl(vdev->fd, VIDIOCGPICT, &pict) == -1) {
-		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR, "CTRL: cannot get the value for control %s\n", (char *) &ctrl->name);
+		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_ERR, "CTRL: Can't get the value for control %s\n", (char *) &ctrl->name);
 		return LIBVIDEO_ERR_IOCTL;
 	}
+	
 	switch(ctrl->id) {
 		case V4L2_CID_BRIGHTNESS:
 			*val = pict.brightness;
@@ -649,8 +651,7 @@ static void query_current_image_fmt_v4l1(int fd) {
 	printf("============================================\n"
 			"Querying current image size\n");
 	
-	struct video_window win;
-	CLEAR(win);
+	struct video_window win = {0};
 	if(ioctl(fd, VIDIOCGWIN, &win) == -1) {
 		printf("Cannot get the image size\n");
 		return;
@@ -663,9 +664,8 @@ static void query_current_image_fmt_v4l1(int fd) {
 
 static void query_capture_intf_v4l1(int fd) {
 	struct video_capability vc;
-	struct video_channel chan;
 	CLEAR(vc);
-
+	
 	if (ioctl( fd, VIDIOCGCAP, &vc) == -1) {
 		printf("Failed to get capabilities.\n");
 		return;
@@ -675,7 +675,7 @@ static void query_capture_intf_v4l1(int fd) {
 	printf("============================================\n"
 			"Querying capture interfaces\n");
 	for (unsigned int i = 0; i < vc.channels; i++) {
-		CLEAR(chan);
+		struct video_channel chan = {0};
 		chan.channel=i;
 		if (ioctl(fd, VIDIOCGCHAN, &chan) == -1) {
 			printf("Failed to get input details.");

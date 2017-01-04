@@ -575,16 +575,15 @@ int init_capture_v4l2(struct video_device *vdev) {
 }
 
 int start_capture_v4l2(struct video_device *vdev) {
-	struct v4l2_buffer b;
-
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: Starting capture on device %s.\n", vdev->file);
 
 	//Enqueue all buffers
 	for(unsigned int i = 0; i < vdev->capture->mmap->buffer_nr; i++) {
-		CLEAR(b);
-		b.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		b.memory = V4L2_MEMORY_MMAP;
-		b.index = i;
+		struct v4l2_buffer b = {
+			.type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
+			.memory = V4L2_MEMORY_MMAP,
+			.index = i
+		};
 		if(ioctl(vdev->fd, VIDIOC_QBUF, &b) == -1) {
 			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: Can't enqueue initial buffers\n");
 			return LIBVIDEO_ERR_IOCTL;
