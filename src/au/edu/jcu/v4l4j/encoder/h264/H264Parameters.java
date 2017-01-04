@@ -63,10 +63,8 @@ public class H264Parameters implements Externalizable, Closeable {
 	 *            preset to initialize with
 	 * @param tune
 	 *            tune to initialize with
-	 * @return 0 on success, negative on failure (e.g. invalid preset/tune
-	 *         name).
 	 */
-	protected native int initWithPreset(int preset, int tune);
+	protected native void initWithPreset(int preset, int tune);
 	
 	/**
 	 * Innitialize the parameters with the given preset.
