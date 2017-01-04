@@ -173,7 +173,7 @@ static inline int check_inputs_v4l1(struct video_device *vd) {
 
 	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, "QRY: querying inputs\n");
 
-	if (ioctl( vd->fd, VIDIOCGCAP, &vc) != 0) {
+	if (ioctl(vd->fd, VIDIOCGCAP, &vc) != 0) {
 		info("Error checking capabilities of V4L1 video device %s\n", vd->file);
 		return LIBVIDEO_ERR_NOCAPS;
 	}
@@ -230,7 +230,7 @@ static inline int check_inputs_v4l1(struct video_device *vd) {
 		}
 	}
 	
-	return 0;
+	return LIBVIDEO_ERR_SUCCESS;
 }
 
 static int list_frame_intv(struct device_info *dinfo, unsigned int fmt, unsigned int width, unsigned int height, void **p) {
@@ -255,7 +255,7 @@ int query_device_v4l1(struct video_device *vdev) {
 	strncpy(vdev->info->name, caps.name, NAME_FIELD_LENGTH);
 	
 	//fill input field
-	if(check_inputs_v4l1(vdev) == -1) {
+	if(check_inputs_v4l1(vdev) != LIBVIDEO_ERR_SUCCESS) {
 		info("Error checking available inputs on V4L1 video device");
 		return LIBVIDEO_ERR_NOCAPS;
 	}
@@ -265,7 +265,7 @@ int query_device_v4l1(struct video_device *vdev) {
 	
 	vdev->info->list_frame_intv = list_frame_intv;
 	
-	return 0;
+	return LIBVIDEO_ERR_SUCCESS;
 }
 
 void free_video_device_v4l1(struct video_device *vd) {
