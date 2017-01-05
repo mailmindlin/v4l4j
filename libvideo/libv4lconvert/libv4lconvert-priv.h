@@ -161,7 +161,7 @@ LIBV4LCONVERT_LOCAL void v4lconvert_sn9c20x_to_yuv420(const u8 *src, u8 *dst, u3
 
 LIBV4LCONVERT_LOCAL int v4lconvert_se401_to_rgb24(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dest, u32 width, u32 height);
 
-LIBV4LCONVERT_LOCAL int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data, u8 *src, unsigned int src_size, u8 *dest, struct v4l2_format *fmt, unsigned int dest_pix_fmt, int flags);
+LIBV4LCONVERT_LOCAL int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data, u8 *src, unsigned int src_size, u8 *dest, struct v4l2_format *fmt, unsigned int dest_pix_fmt, unsigned int flags);
 
 LIBV4LCONVERT_LOCAL int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data, u8 *src, unsigned int src_size, u8 *dest, struct v4l2_format *fmt, unsigned int dest_pix_fmt);
 

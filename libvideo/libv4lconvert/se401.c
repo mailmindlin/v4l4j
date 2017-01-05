@@ -50,7 +50,7 @@ enum decode_state {
 	other_bits,
 };
 
-static inline int decode_JangGu(const uint8_t *data, unsigned int bits, unsigned int plen, unsigned int pixels, uint8_t **dest, unsigned int pitch, unsigned int *x) {
+static inline bool decode_JangGu(const uint8_t *data, unsigned int bits, unsigned int plen, unsigned int pixels, uint8_t **dest, unsigned int pitch, unsigned int *x) {
 	enum decode_state state = get_len;
 	unsigned int len = 0;
 	int value = 0;
@@ -68,7 +68,7 @@ static inline int decode_JangGu(const uint8_t *data, unsigned int bits, unsigned
 					if (!len) {
 						wr_pixel(0, dest, pitch, x);
 						if (!--pixels)
-							return 0;
+							return true;
 					} else {
 						state = sign_bit;
 						value = 0;
@@ -87,12 +87,11 @@ static inline int decode_JangGu(const uint8_t *data, unsigned int bits, unsigned
 				len--;
 				value += (signed) (bit << len);
 				if (len == 0) {
-					/* Done write pixel and get bit len of
-					   the next one */
+					/* Done write pixel and get bit len of the next one */
 					state = get_len;
 					wr_pixel(value, dest, pitch, x);
 					if (!--pixels)
-						return 0;
+						return true;
 				}
 				break;
 			}
@@ -102,7 +101,7 @@ static inline int decode_JangGu(const uint8_t *data, unsigned int bits, unsigned
 		data++;
 		plen--;
 	}
-	return -1;
+	return false;
 }
 
 int v4lconvert_se401_to_rgb24(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dest, u32 width, u32 height) {
@@ -117,11 +116,11 @@ int v4lconvert_se401_to_rgb24(struct v4lconvert_data *data, const u8 *src, unsig
 		unsigned int plen   = ((bits + 47) >> 4) << 1;
 		/* Sanity checks */
 		if (plen > 1024) {
-			V4LCONVERT_ERR("invalid se401 packet len %d", plen);
+			V4LCONVERT_ERR("Invalid se401 packet len %d", plen);
 			goto error;
 		}
 		if (in + plen > src_size) {
-			V4LCONVERT_ERR("incomplete se401 packet");
+			V4LCONVERT_ERR("Incomplete se401 packet");
 			goto error;
 		}
 		if (total_pixels + pixels > width * height) {
@@ -135,8 +134,8 @@ int v4lconvert_se401_to_rgb24(struct v4lconvert_data *data, const u8 *src, unsig
 			V4LCONVERT_ERR("invalid se401 frame info value");
 			goto error;
 		}
-		if (decode_JangGu(&src[in + 4], bits, plen, pixels * 3, &dest, width * 3, &x)) {
-			V4LCONVERT_ERR("short se401 packet");
+		if (!decode_JangGu(&src[in + 4], bits, plen, pixels * 3, &dest, width * 3, &x)) {
+			V4LCONVERT_ERR("Short se401 packet");
 			goto error;
 		}
 		total_pixels += pixels;

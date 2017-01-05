@@ -539,11 +539,10 @@ static void yuv420raw_to_yuv420p(u8 *pIn0, u8 *pOut0, u32 width, u32 height) {
 static void remove0blocks(u8 *pIn, int *inSize) {
 	long long *in = (long long *)pIn;
 	long long *out = (long long *)pIn;
-	int i, j;
-
-	for (i = 0; i < *inSize; i += 32, in += 4) {
+	
+	for (int i = 0; i < *inSize; i += 32, in += 4) {
 		int all_zero = 1;
-		for (j = 0; j < 4; j++)
+		for (int j = 0; j < 4; j++)
 			if (in[j]) {
 				all_zero = 0;
 				break;
@@ -561,19 +560,14 @@ static void remove0blocks(u8 *pIn, int *inSize) {
 }
 
 static int v4lconvert_ov511_to_yuv420(u8 *src, u8 *dest, unsigned int w, unsigned int h, unsigned int src_size) {
-	int rc = 0;
-
 	src_size -= 11; /* Remove footer */
 
 	remove0blocks(src, &src_size);
 
 	/* Compressed ? */
 	if (src[8] & 0x40)
-		rc = Decompress420HiNoMMX(src + 9, dest, w, h);
-	else
-		yuv420raw_to_yuv420p(src + 9, dest, w, h);
-
-	return rc;
+		return Decompress420HiNoMMX(src + 9, dest, w, h);
+	return 0;
 }
 
 int main(int argc, char *argv[]) {
@@ -600,8 +594,7 @@ int main(int argc, char *argv[]) {
 			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
 		if (src_size > sizeof(src_buf)) {
-			fprintf(stderr, "%s: error: src_buf too small, need: %d\n",
-					argv[0], src_size);
+			fprintf(stderr, "%s: error: src_buf too small, need: %d\n", argv[0], src_size);
 			return 2;
 		}
 
@@ -616,8 +609,7 @@ int main(int argc, char *argv[]) {
 		} else if (v4lconvert_ov511_to_yuv420(src_buf, dest_buf, width, height, src_size))
 			dest_size = (unsigned) -1;
 
-		if (v4lconvert_helper_write(STDOUT_FILENO, &dest_size, sizeof(int),
-					argv[0]))
+		if (v4lconvert_helper_write(STDOUT_FILENO, &dest_size, sizeof(int), argv[0]))
 			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
 		if (dest_size == (unsigned) -1)

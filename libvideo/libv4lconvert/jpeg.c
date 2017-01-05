@@ -22,7 +22,7 @@
 #include "libv4lconvert-priv.h"
 #include "jpeg_memsrcdest.h"
 
-int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data, u8 *src, unsigned int src_size, u8 *dest, struct v4l2_format *fmt, unsigned int dest_pix_fmt, int flags) {
+int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data, u8 *src, unsigned int src_size, u8 *dest, struct v4l2_format *fmt, unsigned int dest_pix_fmt, unsigned int flags) {
 	int result = 0;
 	u8 *components[3];
 	u32 width  = fmt->fmt.pix.width;
@@ -36,7 +36,7 @@ int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data, u8 *src, unsig
 	flags |= TINYJPEG_FLAGS_MJPEG_TABLE;
 	tinyjpeg_set_flags(data->tinyjpeg, flags);
 	if (tinyjpeg_parse_header(data->tinyjpeg, src, src_size)) {
-		V4LCONVERT_ERR("parsing JPEG header: %s", tinyjpeg_get_errorstring(data->tinyjpeg));
+		V4LCONVERT_ERR("Parsing JPEG header: %s", tinyjpeg_get_errorstring(data->tinyjpeg));
 		errno = EAGAIN;
 		return -1;
 	}
@@ -51,8 +51,7 @@ int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data, u8 *src, unsig
 	}
 
 	if (header_width != width || header_height != height) {
-		V4LCONVERT_ERR("unexpected width / height in JPEG header expected: %ux%u, header: %ux%u\n",
-				width, height, header_width, header_height);
+		V4LCONVERT_ERR("Unexpected width / height in JPEG header expected: %ux%u, header: %ux%u\n", width, height, header_width, header_height);
 		errno = EIO;
 		return -1;
 	}
