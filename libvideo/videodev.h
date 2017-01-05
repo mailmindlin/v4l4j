@@ -218,7 +218,7 @@ struct video_mbuf {
 	/**
 	 * Total memory to map
 	 */
-	int	size;
+	size_t size;
 	/**
 	 * Frames
 	 */

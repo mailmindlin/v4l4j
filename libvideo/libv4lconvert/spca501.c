@@ -20,7 +20,7 @@
 #include "libv4lconvert-priv.h"
 
 /* YUYV per line */
-void v4lconvert_spca501_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, int yvu) {
+void v4lconvert_spca501_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, bool yvu) {
 	unsigned long *lsrc = (unsigned long *)src;
 
 	for (unsigned int i = 0; i < height; i += 2) {
@@ -62,7 +62,7 @@ void v4lconvert_spca501_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height,
 }
 
 /* YYUV per line */
-void v4lconvert_spca505_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, int yvu) {
+void v4lconvert_spca505_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, bool yvu) {
 	unsigned long *lsrc = (unsigned long *)src;
 
 	for (unsigned int i = 0; i < height; i += 2) {
@@ -97,7 +97,7 @@ void v4lconvert_spca505_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height,
 }
 
 /* YUVY per line */
-void v4lconvert_spca508_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, int yvu) {
+void v4lconvert_spca508_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height, bool yvu) {
 	unsigned long *lsrc = (unsigned long *)src;
 
 	for (unsigned int i = 0; i < height; i += 2) {
@@ -140,7 +140,7 @@ void v4lconvert_spca508_to_yuv420(const u8 *src, u8 *dst, u32 width, u32 height,
 /* Note this is not a spca specific format, bit it fits in this file in that
    it is another funny yuv format */
 /* one line of Y then 1 line of VYUY */
-void v4lconvert_cit_yyvyuy_to_yuv420(const u8 *src, u8 *ydest, u32 width, u32 height, int yvu) {
+void v4lconvert_cit_yyvyuy_to_yuv420(const u8 *src, u8 *ydest, u32 width, u32 height, bool yvu) {
 	u8 *udest, *vdest;
 
 	if (yvu) {
@@ -171,7 +171,7 @@ void v4lconvert_cit_yyvyuy_to_yuv420(const u8 *src, u8 *ydest, u32 width, u32 he
    it is another funny yuv format */
 /* The konica gspca subdriver using cams send data in blocks of 256 pixels
    in YUV420 format. */
-void v4lconvert_konica_yuv420_to_yuv420(const u8 *src, u8 *ydest, u32 width, u32 height, int yvu) {
+void v4lconvert_konica_yuv420_to_yuv420(const u8 *src, u8 *ydest, u32 width, u32 height, bool yvu) {
 	u8 *udest, *vdest;
 
 	if (yvu) {
@@ -204,7 +204,7 @@ void v4lconvert_konica_yuv420_to_yuv420(const u8 *src, u8 *ydest, u32 width, u32
 /* And another not a spca specific format, but fitting in this file in that
    it is another funny yuv format */
 /* Two lines of Y then 1 line of UV */
-void v4lconvert_m420_to_yuv420(const u8 *src, u8 *ydest, u32 width, u32 height, int yvu) {
+void v4lconvert_m420_to_yuv420(const u8 *src, u8 *ydest, u32 width, u32 height, bool yvu) {
 	u8 *udest, *vdest;
 
 	if (yvu) {

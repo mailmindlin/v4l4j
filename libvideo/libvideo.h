@@ -27,6 +27,7 @@
 
 #include <asm/types.h>		//for videodev2
 #include <stdbool.h>
+#include <stddef.h>
 #include "videodev2.h"
 #include "videodev.h"
 #include "libv4lconvert.h"
@@ -523,9 +524,9 @@ struct control_list {
  */
 struct tuner_actions {
 	//returns 0 if OK, LIBVIDEO_ERR_IOCTL otherwise
-	int (*set_tuner_freq)(struct video_device *, int, unsigned int);
-	int (*get_tuner_freq)(struct video_device *, int, unsigned int *);
-	int (*get_rssi_afc)(struct video_device *, int, int *, int *);
+	int (*set_tuner_freq)(struct video_device *device, int idx, unsigned int freq) __attribute__((nonnull (1)));
+	int (*get_tuner_freq)(struct video_device *device, int idx, unsigned int *freq) __attribute__((nonnull (1)));
+	int (*get_rssi_afc)(struct video_device *device, int idx, int *rssi, int *afc) __attribute__((nonnull (1, 3, 4)));
 };
 
 /*
@@ -562,7 +563,7 @@ struct video_device {
  * caller.
  * Passing a char[10] should be enough.
  */
-size_t get_libvideo_version(char *dst, size_t len);
+int get_libvideo_version(char *dst, size_t len);
 
 /*
  *

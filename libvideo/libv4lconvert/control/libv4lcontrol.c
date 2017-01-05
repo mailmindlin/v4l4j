@@ -150,7 +150,7 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		.flags = V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED,
 		.default_gamma = 0,
 		.dmi_system_vendor = "RM plc",
-		.dmi_system_version = "RM EXPERT 3040",
+		.dmi_system_name = "RM EXPERT 3040",
 		.dmi_board_version = NULL,
 		.dmi_system_version = NULL
 	},
@@ -163,7 +163,7 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		.flags = V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED,
 		.default_gamma = 0,
 		.dmi_system_vendor = "FUJITSU SIEMENS",
-		.dmi_system_version = "LIFEBOOK P7230",
+		.dmi_system_name = "LIFEBOOK P7230",
 		.dmi_board_version = NULL,
 		.dmi_system_version = NULL
 	},
@@ -671,7 +671,7 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 	{ /* other */
 		.vendor_id = 0x0c45,
 		.product_id = 0x6020,
-		.product_id = 0x0f,
+		.product_mask = 0x0f,
 		.dmi_board_vendor = NULL,
 		.dmi_board_name = NULL,
 		.flags = V4LCONTROL_WANTS_WB,
@@ -777,7 +777,7 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 	{
 		.vendor_id = 0x093a,
 		.product_id = 0x2460,
-		.product_id = 0x1f,
+		.product_mask = 0x1f,
 		.dmi_board_vendor = NULL,
 		.dmi_board_name = NULL,
 		.flags = V4LCONTROL_WANTS_WB,
@@ -1415,7 +1415,6 @@ static void v4lcontrol_get_flags_from_db(struct v4lcontrol_data *data, const cha
  * Create v4lcontrol data.
  */
 struct v4lcontrol_data *v4lcontrol_create(int fd, bool always_needs_conversion) {
-	int init = 0;
 	char shm_name[256], pwd_buf[1024];
 	struct v4l2_capability cap;
 	struct v4l2_queryctrl ctrl;
@@ -1779,18 +1778,18 @@ bool v4lcontrol_get_ctrl(struct v4lcontrol_data *data, int ctrl) {
 	return 0;
 }
 
-int v4lcontrol_controls_changed(struct v4lcontrol_data *data) {
+bool v4lcontrol_controls_changed(struct v4lcontrol_data *data) {
 	if (!data->controls)
-		return 0;
+		return false;
 	
 	int res = memcmp(data->shm_values, data->old_values, V4LCONTROL_COUNT * sizeof(unsigned int));
 	
 	memcpy(data->old_values, data->shm_values, V4LCONTROL_COUNT * sizeof(unsigned int));
 	
-	return res;
+	return (res != 0);
 }
 
 /* See the comment about this in libv4lconvert.h */
-int v4lcontrol_needs_conversion(struct v4lcontrol_data *data) {
+bool v4lcontrol_needs_conversion(struct v4lcontrol_data *data) {
 	return data->flags || data->controls;
 }
