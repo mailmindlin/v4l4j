@@ -1,0 +1,3 @@
+[submodule "libvideo/libcollections"]
+	path = libvideo/libcollections
+	url = https://github.com/mailmindlin/libcollections.git
