@@ -102,8 +102,8 @@ struct video_device *open_device(char *file) {
 		close_device(vdev);
 		return NULL;
 	}
-	
-	strncpy(vdev->file, file, FILENAME_LENGTH -1);
+
+	strncpy(vdev->file, file, FILENAME_LENGTH - 1);
 	
 	return vdev;
 }
