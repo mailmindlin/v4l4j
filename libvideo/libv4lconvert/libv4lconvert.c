@@ -246,10 +246,10 @@ int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt) 
 	
 	fmt->flags = V4L2_FMT_FLAG_EMULATED;
 	fmt->pixelformat = faked_fmts[i];
-	fmt->description[0] = (faked_fmts[i] >>  0) & 0xff;
-	fmt->description[1] = (faked_fmts[i] >>  8) & 0xff;
-	fmt->description[2] = (faked_fmts[i] >> 16) & 0xff;
-	fmt->description[3] = (faked_fmts[i] >> 24) & 0xff;
+	fmt->description[0] = (char) ((faked_fmts[i] >>  0) & 0xff);
+	fmt->description[1] = (char) ((faked_fmts[i] >>  8) & 0xff);
+	fmt->description[2] = (char) ((faked_fmts[i] >> 16) & 0xff);
+	fmt->description[3] = (char) ((faked_fmts[i] >> 24) & 0xff);
 	fmt->description[4] = '\0';
 	memset(fmt->reserved, 0, sizeof(fmt->reserved));
 

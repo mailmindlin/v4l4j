@@ -284,7 +284,7 @@ static inline void skip_nbits(struct jdec_private* priv, unsigned int nbits_want
 	priv->reservoir &= ((1U << priv->nbits_in_reservoir) - 1);
 }
 
-#define be16_to_cpu(x) (((x)[0] << 8) | (x)[1])
+#define be16_to_cpu(x) ((unsigned int)(((x)[0] << 8) | (x)[1]))
 
 static void resync(struct jdec_private *priv);
 
@@ -1866,8 +1866,8 @@ int tinyjpeg_decode(struct jdec_private *priv, int pixfmt) {
 			error("Out of memory!\n");
 
 		unsigned int length = pixart_filter(priv, priv->stream_filtered, priv->stream, priv->stream_end - priv->stream);
-		if (length < 0)
-			return length;
+		if (length == -1u)
+			return -1;
 		priv->stream = priv->stream_filtered;
 		priv->stream_end = priv->stream + length;
 

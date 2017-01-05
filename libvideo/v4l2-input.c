@@ -648,11 +648,11 @@ void *dequeue_buffer_v4l2(struct video_device *vdev, unsigned int *len, unsigned
 void enqueue_buffer_v4l2(struct video_device *vdev, unsigned int index) {
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2, "CAP: queuing buffer %d on device %s.\n", index, vdev->file);
 	
-	struct v4l2_buffer b;
-	CLEAR(b);
-	b.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	b.memory = V4L2_MEMORY_MMAP;
-	b.index = index;
+	struct v4l2_buffer b = {
+		.type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
+		.memory = V4L2_MEMORY_MMAP,
+		.index = index
+	};
 	
 	if (ioctl(vdev->fd, VIDIOC_QBUF, &b) == -1)
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: error queuing buffer\n");
