@@ -167,7 +167,7 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_FrameInterval_doGetDiscrete(JNIE
 	while(d[++i].numerator != 0) {
 		//create DiscreteInterval object
 		jobject discrete = (*e)->NewObject(e, discrete_intv_class, ctor, d[i].numerator, d[i].denominator);
-		if(discrete == NULL){
+		if(discrete == NULL) {
 			THROW_EXCEPTION(e, JNI_EXCP, "Error creating DiscreteInterval object");
 			return NULL;
 		}

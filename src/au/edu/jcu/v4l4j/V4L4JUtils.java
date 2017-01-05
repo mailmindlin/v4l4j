@@ -65,8 +65,7 @@ public class V4L4JUtils {
 					
 					// Load the library to a temporary file
 					File libFile = null;
-					try (InputStream is = V4L4JUtils.class.getResourceAsStream(path);
-							OutputStream os = new BufferedOutputStream(new FileOutputStream(libFile))) {
+					try (InputStream is = V4L4JUtils.class.getResourceAsStream(path)) {
 						if (is == null)
 							throw new RuntimeException("Unable to find JNI library @ " + path);
 						// Create a temporary file to write the library to
@@ -75,11 +74,13 @@ public class V4L4JUtils {
 						// after it's loaded as a library, but it didn't seem to in my testing (Raspbian)
 						libFile.deleteOnExit();
 						
-						// Copy the file from inside the jar
-						byte[] buffer = new byte[BUFFER_SIZE];
-						int len;
-						while ((len = is.read(buffer)) >= 0)
-							os.write(buffer, 0, len);
+						try (OutputStream os = new BufferedOutputStream(new FileOutputStream(libFile))) {
+							// Copy the file from inside the jar
+							byte[] buffer = new byte[BUFFER_SIZE];
+							int len;
+							while ((len = is.read(buffer)) >= 0)
+								os.write(buffer, 0, len);
+						}
 					} catch (IOException e) {
 						// Delete the temporary file, as we won't be needing it anymore
 						if (libFile != null)
@@ -108,7 +109,9 @@ public class V4L4JUtils {
 		String path = lookupPath();
 		if (path != null)
 			return path;
-		return "/libv4l4j-" + computeProperty("os.name", "").toLowerCase() + "-" + computeProperty("os.arch", "").toLowerCase() + "-" + computeProperty("sun.arch.abi", "").toLowerCase() + ".so";
+		path = "/libv4l4j-" + computeProperty("os.name", "").toLowerCase() + "-" + computeProperty("os.arch", "").toLowerCase() + "-" + computeProperty("sun.arch.abi", "").toLowerCase() + ".so";
+		System.err.println("Falling back to " + path);
+		return path;
 	}
 	
 	private static final String lookupPath() {
@@ -199,5 +202,9 @@ public class V4L4JUtils {
 				return ste;
 		}
 		return null;
+	}
+	
+	public static int getPropertyAsInt(String propname, int def) {
+		return Integer.parseInt(System.getProperty(propname, "" + def));
 	}
 }

@@ -25,22 +25,24 @@
  */
 
 #include <string.h>
+#include <stdbool.h>
+#include "../log.h"
 #include "libv4lconvert-priv.h"
 
 #define CLIP(color) (u8)(((color) > 0xFF) ? 0xff : (((color) < 0) ? 0 : (color)))
 
 /* FIXME not threadsafe */
-static int decoder_initialized;
+static bool decoder_initialized = false;
 
 static struct {
-	u8 is_abs;
+	bool is_abs;
 	u8 len;
 	signed char val;
 } table[256];
 
 static void init_pixart_decoder(void) {
 	for (unsigned i = 0; i < 256; i++) {
-		u8 is_abs = 0;
+		bool is_abs = 0;
 		signed char val = 0;
 		u8 len = 0;
 		if ((i & 0xC0) == 0) {
@@ -81,7 +83,7 @@ static void init_pixart_decoder(void) {
 			len = 6;
 		} else if ((i & 0xF8) == 0xF8) {
 			/* code 11111xxxxxx */
-			is_abs = 1;
+			is_abs = true;
 			val = 0;
 			len = 5;
 		}
@@ -89,7 +91,7 @@ static void init_pixart_decoder(void) {
 		table[i].val = val;
 		table[i].len = len;
 	}
-	decoder_initialized = 1;
+	decoder_initialized = true;
 }
 
 static inline u8 getByte(const u8 *inp, unsigned int bitpos) {
@@ -102,8 +104,6 @@ static inline unsigned short getShort(const u8 *pt) {
 }
 
 static unsigned int pac_decompress_row(const u8 *inp, u8 *outp, u32 width, u8 step_size, u8 abs_bits) {
-	int val;
-
 	if (!decoder_initialized)
 		init_pixart_decoder();
 
@@ -127,7 +127,7 @@ static unsigned int pac_decompress_row(const u8 *inp, u8 *outp, u32 width, u8 st
 			*outp++ = (u8) (code & ~(0xff >> abs_bits));
 		} else {
 			/* relative to left pixel */
-			val = outp[-2] + table[code].val * step_size;
+			int val = outp[-2] + table[code].val * step_size;
 			*outp++ = CLIP(val);
 		}
 	}
@@ -136,7 +136,7 @@ static unsigned int pac_decompress_row(const u8 *inp, u8 *outp, u32 width, u8 st
 	return 2 * ((bitpos + 15) / 16);
 }
 
-int v4lconvert_decode_pac207(struct v4lconvert_data *data, const u8 *inp, unsigned int src_size, u8 *outp, u32 width, u32 height) {
+int v4lconvert_decode_pac207(const u8 *inp, unsigned int src_size, u8 *outp, u32 width, u32 height) {
 	/* we should received a whole frame with header and EOL marker
 	   in myframe->data and return a GBRG pattern in frame->tmpbuffer
 	   remove the header then copy line by line EOL is set with 0x0f 0xf0 marker
@@ -146,7 +146,7 @@ int v4lconvert_decode_pac207(struct v4lconvert_data *data, const u8 *inp, unsign
 	/* iterate over all rows */
 	for (unsigned int row = 0; row < height; row++) {
 		if ((inp + 2) > end) {
-			V4LCONVERT_ERR("incomplete pac207 frame\n");
+			dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_ERR, "Incomplete pac207 frame\n");
 			return -1;
 		}
 		unsigned short word = getShort(inp);
@@ -174,7 +174,7 @@ int v4lconvert_decode_pac207(struct v4lconvert_data *data, const u8 *inp, unsign
 			break;
 
 		default: /* corrupt frame */
-			V4LCONVERT_ERR("unknown pac207 row header: 0x%04x\n", (int)word);
+			dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_ERR, "Unknown pac207 row header: 0x%04x\n", (int) word);
 			return -1;
 		}
 		outp += width;
