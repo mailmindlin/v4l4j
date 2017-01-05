@@ -20,8 +20,9 @@ Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
 
  */
 
-#include "libv4lconvert-priv.h"
 #include <string.h>
+#include "libv4lconvert-priv.h"
+#include "rgbyuv.h"
 
 /* The HM12 format is used in the Conexant cx23415/6/8 MPEG encoder devices.
    It is a macroblock format with separate Y and UV planes, each plane
@@ -34,9 +35,6 @@ Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
    It is basically a by-product of the MPEG encoding inside the device,
    which is available for raw video as a 'bonus feature'.
  */
-
-#define CLIP(color) \
-	(u8)(((color) > 0xff) ? 0xff : (((color) < 0) ? 0 : (color)))
 
 static const unsigned int stride = 720;
 
@@ -65,16 +63,18 @@ static void v4lconvert_hm12_to_rgb(const u8 *src, u8 *dest, u32 width, u32 heigh
 				unsigned int idx = (x + (y + i) * width) * 3;
 
 				for (unsigned int j = 0; j < maxx; j++) {
-					int y = src_y[j];
-					int u = src_uv[j & ~1u];
-					int v = src_uv[j | 1];
-					int u1 = (((u - 128) << 7) + (u - 128)) >> 6;
-					int rg = (((u - 128) << 1) + (u - 128) + ((v - 128) << 2) + ((v - 128) << 1)) >> 3;
-					int v1 = (((v - 128) << 1) + (v - 128)) >> 1;
+					int y = FIX_Y(src_y[j]);
+					int u = src_uv[j & ~1u] - 128;
+					int v = src_uv[j | 1] - 128;
+					int u1 = UV2U1(u, v);
+					int rg = UV2RG(u, v);
+					int v1 = UV2V1(u, v);
 
-					dest[idx + r] = CLIP(y + v1);
-					dest[idx + 1] = CLIP(y - rg);
-					dest[idx + b] = CLIP(y + u1);
+					//TODO it might be faster to just put an if statement here for RGB/BGR,
+					//especially because branch prediction should help us out.
+					dest[idx + r] = CLIP_RGB(y + v1);
+					dest[idx + 1] = CLIP_RGB(y - rg);
+					dest[idx + b] = CLIP_RGB(y + u1);
 					idx += 3;
 				}
 				src_y += 16;

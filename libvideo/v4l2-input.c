@@ -668,7 +668,7 @@ int stop_capture_v4l2(struct video_device *vdev) {
 		return LIBVIDEO_ERR_IOCTL;
 	}
 
-	return 0;
+	return LIBVIDEO_ERR_SUCCESS;
 }
 
 void free_capture_v4l2(struct video_device *vdev) {

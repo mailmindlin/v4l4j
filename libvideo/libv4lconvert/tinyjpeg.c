@@ -40,6 +40,7 @@
 #include "tinyjpeg.h"
 #include "tinyjpeg-internal.h"
 #include "libv4lconvert-priv.h"
+#include "rgbyuv.h"
 
 enum std_markers {
 	DQT  = 0xDB, /* Define Quantization Table */
@@ -243,9 +244,7 @@ const u8 pixart_quantization[][64] = { {
 static inline void fill_nbits(struct jdec_private *priv, unsigned int nbits_wanted) {
 	while (priv->nbits_in_reservoir < nbits_wanted) {
 		if (priv->stream >= priv->stream_end) {
-			snprintf(priv->error_string, sizeof(priv->error_string),
-					"fill_nbits error: need %u more bits\n",
-					nbits_wanted - priv->nbits_in_reservoir);
+			snprintf(priv->error_string, sizeof(priv->error_string), "fill_nbits error: need %u more bits\n", nbits_wanted - priv->nbits_in_reservoir);
 			//TODO check that this still works with it being an inline method now
 			longjmp(priv->jump_state, -EIO);
 		}
@@ -507,14 +506,6 @@ static int build_default_huffman_tables(struct jdec_private *priv) {
  *
  ******************************************************************************/
 
-static inline u8 clamp(int i) {
-	if (i < 0)
-		return 0;
-	if (i > 255)
-		return 255;
-	return (u8) i;
-}
-
 
 /**
  *  YCrCb -> YUV420P (1x1)
@@ -665,10 +656,6 @@ static void YCrCB_to_YUV420P_2x2(struct jdec_private *priv) {
 }
 
 
-#define SCALEBITS       10
-#define ONE_HALF        (1UL << (SCALEBITS - 1))
-#define FIX(x)          ((int)((x) * (1UL << SCALEBITS) + 0.5))
-
 /**
  *  YCrCb -> RGB24 (1x1)
  *  .---.
@@ -686,20 +673,17 @@ static void YCrCB_to_RGB24_1x1(struct jdec_private *priv) {
 	
 	for (unsigned int i = 0; i < 8; i++) {
 		for (unsigned int j = 0; j < 8; j++) {
-			int cb = *Cb++ - 128;
-			int cr = *Cr++ - 128;
+			int y  = FIX_Y(*Y++);
+			int u = *Cb++ - 128;
+			int v = *Cr++ - 128;
 			
-			int add_r = FIX(1.40200) * cr + ONE_HALF;
-			int add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
-			int add_b = FIX(1.77200) * cb + ONE_HALF;
+			int u1 = UV2U1(u, v);
+			int rg = UV2RG(u, v);
+			int v1 = UV2V1(u, v);
 			
-			int y  = (*Y++) << SCALEBITS;
-			int r = (y + add_r) >> SCALEBITS;
-			*p++ = clamp(r);
-			int g = (y + add_g) >> SCALEBITS;
-			*p++ = clamp(g);
-			int b = (y + add_b) >> SCALEBITS;
-			*p++ = clamp(b);
+			*p++ = CLIP_RGB(y + v1);
+			*p++ = CLIP_RGB(y - rg);
+			*p++ = CLIP_RGB(y + u1);
 
 		}
 
@@ -722,20 +706,17 @@ static void YCrCB_to_BGR24_1x1(struct jdec_private *priv) {
 
 	for (unsigned int i = 0; i < 8; i++) {
 		for (unsigned int j = 0; j < 8; j++) {
-			int y  = (*Y++) << SCALEBITS;
-			int cb = *Cb++ - 128;
-			int cr = *Cr++ - 128;
-			int add_r = FIX(1.40200) * cr + ONE_HALF;
-			int add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
-			int add_b = FIX(1.77200) * cb + ONE_HALF;
+			int y = FIX_Y(*Y++);
+			int u = *Cb++ - 128;
+			int v = *Cr++ - 128;
+			
+			int u1 = UV2U1(u, v);
+			int rg = UV2RG(u, v);
+			int v1 = UV2V1(u, v);
 
-			int b = (y + add_b) >> SCALEBITS;
-			*p++ = clamp(b);
-			int g = (y + add_g) >> SCALEBITS;
-			*p++ = clamp(g);
-			int r = (y + add_r) >> SCALEBITS;
-			*p++ = clamp(r);
-
+			*p++ = CLIP_RGB(y + u1);
+			*p++ = CLIP_RGB(y - rg);
+			*p++ = CLIP_RGB(y + v1);
 		}
 		p += offset_to_next_row;
 	}
@@ -757,28 +738,22 @@ static void YCrCB_to_RGB24_2x1(struct jdec_private *priv) {
 
 	for (unsigned int i = 0; i < 8; i++) {
 		for (unsigned int j = 0; j < 8; j++) {
-			int cb = *Cb++ - 128;
-			int cr = *Cr++ - 128;
+			int u = *Cb++ - 128;
+			int v = *Cr++ - 128;
 			
-			int add_r = FIX(1.40200) * cr + ONE_HALF;
-			int add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
-			int add_b = FIX(1.77200) * cb + ONE_HALF;
+			int u1 = UV2U1(u, v);
+			int rg = UV2RG(u, v);
+			int v1 = UV2V1(u, v);
 			
-			int y  = (*Y++) << SCALEBITS;
-			int r = (y + add_r) >> SCALEBITS;
-			*p++ = clamp(r);
-			int g = (y + add_g) >> SCALEBITS;
-			*p++ = clamp(g);
-			int b = (y + add_b) >> SCALEBITS;
-			*p++ = clamp(b);
-
-			y  = (*Y++) << SCALEBITS;
-			r = (y + add_r) >> SCALEBITS;
-			*p++ = clamp(r);
-			g = (y + add_g) >> SCALEBITS;
-			*p++ = clamp(g);
-			b = (y + add_b) >> SCALEBITS;
-			*p++ = clamp(b);
+			int y = FIX_Y(*Y++);
+			*p++ = CLIP_RGB(y + v1);
+			*p++ = CLIP_RGB(y - rg);
+			*p++ = CLIP_RGB(y + u1);
+			
+			y = FIX_Y(*Y++);
+			*p++ = CLIP_RGB(y + v1);
+			*p++ = CLIP_RGB(y - rg);
+			*p++ = CLIP_RGB(y + u1);
 		}
 
 		p += offset_to_next_row;
@@ -800,28 +775,22 @@ static void YCrCB_to_BGR24_2x1(struct jdec_private *priv) {
 
 	for (unsigned int i = 0; i < 8; i++) {
 		for (unsigned int j = 0; j < 8; j++) {
-			int cb = *Cb++ - 128;
-			int cr = *Cr++ - 128;
+			int u = *Cb++ - 128;
+			int v = *Cr++ - 128;
 			
-			int add_r = FIX(1.40200) * cr + ONE_HALF;
-			int add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
-			int add_b = FIX(1.77200) * cb + ONE_HALF;
+			int u1 = UV2U1(u, v);
+			int rg = UV2RG(u, v);
+			int v1 = UV2V1(u, v);
 
-			int y  = (*Y++) << SCALEBITS;
-			int b = (y + add_b) >> SCALEBITS;
-			*p++ = clamp(b);
-			int g = (y + add_g) >> SCALEBITS;
-			*p++ = clamp(g);
-			int r = (y + add_r) >> SCALEBITS;
-			*p++ = clamp(r);
+			int y = FIX_Y(*Y++);
+			*p++ = CLIP_RGB(y + u1);
+			*p++ = CLIP_RGB(y - rg);
+			*p++ = CLIP_RGB(y + v1);
 
-			y  = (*Y++) << SCALEBITS;
-			b = (y + add_b) >> SCALEBITS;
-			*p++ = clamp(b);
-			g = (y + add_g) >> SCALEBITS;
-			*p++ = clamp(g);
-			r = (y + add_r) >> SCALEBITS;
-			*p++ = clamp(r);
+			y = FIX_Y(*Y++);
+			*p++ = CLIP_RGB(y + u1);
+			*p++ = CLIP_RGB(y - rg);
+			*p++ = CLIP_RGB(y + v1);
 		}
 
 		p += offset_to_next_row;
@@ -846,28 +815,22 @@ static void YCrCB_to_RGB24_1x2(struct jdec_private *priv) {
 
 	for (unsigned int i = 0; i < 8; i++) {
 		for (unsigned int j = 0; j < 8; j++) {
-			int cb = *Cb++ - 128;
-			int cr = *Cr++ - 128;
+			int u = *Cb++ - 128;
+			int v = *Cr++ - 128;
 			
-			int add_r = FIX(1.40200) * cr + ONE_HALF;
-			int add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
-			int add_b = FIX(1.77200) * cb + ONE_HALF;
+			int u1 = UV2U1(u, v);
+			int rg = UV2RG(u, v);
+			int v1 = UV2V1(u, v);
 			
-			int y  = (*Y++) << SCALEBITS;
-			int r = (y + add_r) >> SCALEBITS;
-			*p++ = clamp(r);
-			int g = (y + add_g) >> SCALEBITS;
-			*p++ = clamp(g);
-			int b = (y + add_b) >> SCALEBITS;
-			*p++ = clamp(b);
+			int y  = FIX_Y(*Y++);
+			*p++ = CLIP_RGB(y + v1);
+			*p++ = CLIP_RGB(y - rg);
+			*p++ = CLIP_RGB(y + u1);
 			
-			y  = (Y[8-1]) << SCALEBITS;
-			r = (y + add_r) >> SCALEBITS;
-			*p2++ = clamp(r);
-			g = (y + add_g) >> SCALEBITS;
-			*p2++ = clamp(g);
-			b = (y + add_b) >> SCALEBITS;
-			*p2++ = clamp(b);
+			y = FIX_Y(Y[8-1]);
+			*p2++ = CLIP_RGB(y + v1);
+			*p2++ = CLIP_RGB(y - rg);
+			*p2++ = CLIP_RGB(y + u1);
 		}
 		Y += 8;
 		p += offset_to_next_row;
@@ -893,28 +856,22 @@ static void YCrCB_to_BGR24_1x2(struct jdec_private *priv) {
 
 	for (unsigned int i = 0; i < 8; i++) {
 		for (unsigned int j = 0; j < 8; j++) {
-			int cb = *Cb++ - 128;
-			int cr = *Cr++ - 128;
-			int add_r = FIX(1.40200) * cr + ONE_HALF;
-			int add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
-			int add_b = FIX(1.77200) * cb + ONE_HALF;
+			int u = *Cb++ - 128;
+			int v = *Cr++ - 128;
+			
+			int u1 = UV2U1(u, v);
+			int rg = UV2RG(u, v);
+			int v1 = UV2V1(u, v);
 
-			int y  = (*Y++) << SCALEBITS;
-			int b = (y + add_b) >> SCALEBITS;
-			*p++ = clamp(b);
-			int g = (y + add_g) >> SCALEBITS;
-			*p++ = clamp(g);
-			int r = (y + add_r) >> SCALEBITS;
-			*p++ = clamp(r);
-
-			y  = (Y[8-1]) << SCALEBITS;
-			b = (y + add_b) >> SCALEBITS;
-			*p2++ = clamp(b);
-			g = (y + add_g) >> SCALEBITS;
-			*p2++ = clamp(g);
-			r = (y + add_r) >> SCALEBITS;
-			*p2++ = clamp(r);
-
+			int y  = FIX_Y(*Y++);
+			*p++ = CLIP_RGB(y + u1);
+			*p++ = CLIP_RGB(y - rg);
+			*p++ = CLIP_RGB(y + v1);
+			
+			y = FIX_Y(Y[8-1]);
+			*p2++ = CLIP_RGB(y + u1);
+			*p2++ = CLIP_RGB(y - rg);
+			*p2++ = CLIP_RGB(y + v1);
 		}
 		Y += 8;
 		p += offset_to_next_row;
@@ -941,43 +898,32 @@ static void YCrCB_to_RGB24_2x2(struct jdec_private *priv) {
 
 	for (unsigned int i = 0; i < 8; i++) {
 		for (unsigned int j = 0; j < 8; j++) {
-			int cb = *Cb++ - 128;
-			int cr = *Cr++ - 128;
-			int add_r = FIX(1.40200) * cr + ONE_HALF;
-			int add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
-			int add_b = FIX(1.77200) * cb + ONE_HALF;
+			int u = *Cb++ - 128;
+			int v = *Cr++ - 128;
+			
+			int u1 = UV2U1(u, v);
+			int rg = UV2RG(u, v);
+			int v1 = UV2V1(u, v);
 
-			int y  = (*Y++) << SCALEBITS;
-			int r = (y + add_r) >> SCALEBITS;
-			*p++ = clamp(r);
-			int g = (y + add_g) >> SCALEBITS;
-			*p++ = clamp(g);
-			int b = (y + add_b) >> SCALEBITS;
-			*p++ = clamp(b);
+			int y  = FIX_Y(*Y++);
+			*p++ = CLIP_RGB(y + v1);
+			*p++ = CLIP_RGB(y - rg);
+			*p++ = CLIP_RGB(y + u1);
 
-			y  = (*Y++) << SCALEBITS;
-			r = (y + add_r) >> SCALEBITS;
-			*p++ = clamp(r);
-			g = (y + add_g) >> SCALEBITS;
-			*p++ = clamp(g);
-			b = (y + add_b) >> SCALEBITS;
-			*p++ = clamp(b);
+			y  = FIX_Y(*Y++);
+			*p++ = CLIP_RGB(y + v1);
+			*p++ = CLIP_RGB(y - rg);
+			*p++ = CLIP_RGB(y + u1);
 
-			y  = (Y[16-2]) << SCALEBITS;
-			r = (y + add_r) >> SCALEBITS;
-			*p2++ = clamp(r);
-			g = (y + add_g) >> SCALEBITS;
-			*p2++ = clamp(g);
-			b = (y + add_b) >> SCALEBITS;
-			*p2++ = clamp(b);
-
-			y  = (Y[16-1]) << SCALEBITS;
-			r = (y + add_r) >> SCALEBITS;
-			*p2++ = clamp(r);
-			g = (y + add_g) >> SCALEBITS;
-			*p2++ = clamp(g);
-			b = (y + add_b) >> SCALEBITS;
-			*p2++ = clamp(b);
+			y  = FIX_Y(Y[16-2]);
+			*p2++ = CLIP_RGB(y + v1);
+			*p2++ = CLIP_RGB(y - rg);
+			*p2++ = CLIP_RGB(y + u1);
+			
+			y  = FIX_Y(Y[16-1]);
+			*p2++ = CLIP_RGB(y + v1);
+			*p2++ = CLIP_RGB(y - rg);
+			*p2++ = CLIP_RGB(y + u1);
 		}
 		Y  += 16;
 		p  += offset_to_next_row;
@@ -1004,53 +950,37 @@ static void YCrCB_to_BGR24_2x2(struct jdec_private *priv) {
 
 	for (unsigned i = 0; i < 8; i++) {
 		for (unsigned j = 0; j < 8; j++) {
-			int cb = *Cb++ - 128;
-			int cr = *Cr++ - 128;
+			int u = *Cb++ - 128;
+			int v = *Cr++ - 128;
 			
-			int add_r = FIX(1.40200) * cr + ONE_HALF;
-			int add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
-			int add_b = FIX(1.77200) * cb + ONE_HALF;
+			int u1 = UV2U1(u, v);
+			int rg = UV2RG(u, v);
+			int v1 = UV2V1(u, v);
 
-			int y  = (*Y++) << SCALEBITS;
-			int b = (y + add_b) >> SCALEBITS;
-			*p++ = clamp(b);
-			int g = (y + add_g) >> SCALEBITS;
-			*p++ = clamp(g);
-			int r = (y + add_r) >> SCALEBITS;
-			*p++ = clamp(r);
+			int y = FIX_Y(*Y++);
+			*p++ = CLIP_RGB(y + u1);
+			*p++ = CLIP_RGB(y - rg);
+			*p++ = CLIP_RGB(y + v1);
 
-			y  = (*Y++) << SCALEBITS;
-			b = (y + add_b) >> SCALEBITS;
-			*p++ = clamp(b);
-			g = (y + add_g) >> SCALEBITS;
-			*p++ = clamp(g);
-			r = (y + add_r) >> SCALEBITS;
-			*p++ = clamp(r);
+			y = FIX_Y(*Y++);
+			*p++ = CLIP_RGB(y + u1);
+			*p++ = CLIP_RGB(y - rg);
+			*p++ = CLIP_RGB(y + v1);
 
-			y  = (Y[16-2]) << SCALEBITS;
-			b = (y + add_b) >> SCALEBITS;
-			*p2++ = clamp(b);
-			g = (y + add_g) >> SCALEBITS;
-			*p2++ = clamp(g);
-			r = (y + add_r) >> SCALEBITS;
-			*p2++ = clamp(r);
+			y = FIX_Y(Y[16-2]);
+			*p2++ = CLIP_RGB(y + u1);
+			*p2++ = CLIP_RGB(y - rg);
+			*p2++ = CLIP_RGB(y + v1);
 
-			y  = (Y[16-1]) << SCALEBITS;
-			b = (y + add_b) >> SCALEBITS;
-			*p2++ = clamp(b);
-			g = (y + add_g) >> SCALEBITS;
-			*p2++ = clamp(g);
-			r = (y + add_r) >> SCALEBITS;
-			*p2++ = clamp(r);
+			y = FIX_Y(Y[16-1]);
+			*p2++ = CLIP_RGB(y + u1);
+			*p2++ = CLIP_RGB(y - rg);
+			*p2++ = CLIP_RGB(y + v1);
 		}
 		Y  += 16;
 		p  += offset_to_next_row;
 		p2 += offset_to_next_row;
 	}
-
-#undef SCALEBITS
-#undef ONE_HALF
-#undef FIX
 }
 
 
@@ -2158,10 +2088,6 @@ static int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt) {
 		v_buf += 7 * (priv->width / 2);
 	}
 
-#define SCALEBITS       10
-#define ONE_HALF        (1UL << (SCALEBITS - 1))
-#define FIX(x)          ((int)((x) * (1UL << SCALEBITS) + 0.5))
-
 	switch (pixfmt) {
 	case TINYJPEG_FMT_RGB24:
 		y_buf = priv->tmp_buf[cY];
@@ -2172,49 +2098,34 @@ static int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt) {
 
 		for (unsigned int y = 0; y < priv->height / 2; y++) {
 			for (unsigned int x = 0; x < priv->width / 2; x++) {
-				int l, cb, cr;
-				int add_r, add_g, add_b;
-				int r, g , b;
+				int u = *u_buf++ - 128;
+				int v = *v_buf++ - 128;
+				
+				int u1 = UV2U1(u, v);
+				int rg = UV2RG(u, v);
+				int v1 = UV2V1(u, v);
 
-				cb = *u_buf++ - 128;
-				cr = *v_buf++ - 128;
-				add_r = FIX(1.40200) * cr + ONE_HALF;
-				add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
-				add_b = FIX(1.77200) * cb + ONE_HALF;
+				int y = FIX_Y(*y_buf);
+				*p++ = CLIP_RGB(y + v1);
+				*p++ = CLIP_RGB(y - rg);
+				*p++ = CLIP_RGB(y + u1);
 
-				l  = (*y_buf) << SCALEBITS;
-				r = (l + add_r) >> SCALEBITS;
-				*p++ = clamp(r);
-				g = (l + add_g) >> SCALEBITS;
-				*p++ = clamp(g);
-				b = (l + add_b) >> SCALEBITS;
-				*p++ = clamp(b);
-
-				l  = (y_buf[priv->width]) << SCALEBITS;
-				r = (l + add_r) >> SCALEBITS;
-				*p2++ = clamp(r);
-				g = (l + add_g) >> SCALEBITS;
-				*p2++ = clamp(g);
-				b = (l + add_b) >> SCALEBITS;
-				*p2++ = clamp(b);
+				y = FIX_Y(y_buf[priv->width]);
+				*p2++ = CLIP_RGB(y + v1);
+				*p2++ = CLIP_RGB(y - rg);
+				*p2++ = CLIP_RGB(y + u1);
 
 				y_buf++;
 
-				l  = (*y_buf) << SCALEBITS;
-				r = (l + add_r) >> SCALEBITS;
-				*p++ = clamp(r);
-				g = (l + add_g) >> SCALEBITS;
-				*p++ = clamp(g);
-				b = (l + add_b) >> SCALEBITS;
-				*p++ = clamp(b);
+				y = FIX_Y(*y_buf);
+				*p++ = CLIP_RGB(y + v1);
+				*p++ = CLIP_RGB(y - rg);
+				*p++ = CLIP_RGB(y + u1);
 
-				l  = (y_buf[priv->width]) << SCALEBITS;
-				r = (l + add_r) >> SCALEBITS;
-				*p2++ = clamp(r);
-				g = (l + add_g) >> SCALEBITS;
-				*p2++ = clamp(g);
-				b = (l + add_b) >> SCALEBITS;
-				*p2++ = clamp(b);
+				y = FIX_Y(y_buf[priv->width]);
+				*p2++ = CLIP_RGB(y + v1);
+				*p2++ = CLIP_RGB(y - rg);
+				*p2++ = CLIP_RGB(y + u1);
 
 				y_buf++;
 			}
@@ -2233,45 +2144,34 @@ static int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt) {
 
 		for (unsigned int y = 0; y < priv->height / 2; y++) {
 			for (unsigned int x = 0; x < priv->width / 2; x++) {
-				int cb = *u_buf++ - 128;
-				int cr = *v_buf++ - 128;
-				int add_r = FIX(1.40200) * cr + (int) ONE_HALF;
-				int add_g = -FIX(0.34414) * cb - FIX(0.71414) * cr + (int) ONE_HALF;
-				int add_b = FIX(1.77200) * cb + (int) ONE_HALF;
+				int u = *u_buf++ - 128;
+				int v = *v_buf++ - 128;
 				
-				int l  = (*y_buf) << SCALEBITS;
-				int b = (l + add_b) >> SCALEBITS;
-				*p++ = clamp(b);
-				int g = (l + add_g) >> SCALEBITS;
-				*p++ = clamp(g);
-				int r = (l + add_r) >> SCALEBITS;
-				*p++ = clamp(r);
+				int u1 = UV2U1(u, v);
+				int rg = UV2RG(u, v);
+				int v1 = UV2V1(u, v);
 
-				l  = (y_buf[priv->width]) << SCALEBITS;
-				b = (l + add_b) >> SCALEBITS;
-				*p2++ = clamp(b);
-				g = (l + add_g) >> SCALEBITS;
-				*p2++ = clamp(g);
-				r = (l + add_r) >> SCALEBITS;
-				*p2++ = clamp(r);
+				int y = FIX_Y(*y_buf);
+				*p++ = CLIP_RGB(y + u1);
+				*p++ = CLIP_RGB(y - rg);
+				*p++ = CLIP_RGB(y + v1);
+
+				y = FIX_Y(y_buf[priv->width]);
+				*p2++ = CLIP_RGB(y + u1);
+				*p2++ = CLIP_RGB(y - rg);
+				*p2++ = CLIP_RGB(y + v1);
 
 				y_buf++;
 
-				l  = (*y_buf) << SCALEBITS;
-				b = (l + add_b) >> SCALEBITS;
-				*p++ = clamp(b);
-				g = (l + add_g) >> SCALEBITS;
-				*p++ = clamp(g);
-				r = (l + add_r) >> SCALEBITS;
-				*p++ = clamp(r);
+				y = FIX_Y(*y_buf);
+				*p++ = CLIP_RGB(y + u1);
+				*p++ = CLIP_RGB(y - rg);
+				*p++ = CLIP_RGB(y + v1);
 
-				l  = (y_buf[priv->width]) << SCALEBITS;
-				b = (l + add_b) >> SCALEBITS;
-				*p2++ = clamp(b);
-				g = (l + add_g) >> SCALEBITS;
-				*p2++ = clamp(g);
-				r = (l + add_r) >> SCALEBITS;
-				*p2++ = clamp(r);
+				y = FIX_Y(y_buf[priv->width]);
+				*p2++ = CLIP_RGB(y + u1);
+				*p2++ = CLIP_RGB(y - rg);
+				*p2++ = CLIP_RGB(y + v1);
 
 				y_buf++;
 			}
@@ -2281,10 +2181,6 @@ static int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt) {
 		}
 		break;
 	}
-
-#undef SCALEBITS
-#undef ONE_HALF
-#undef FIX
 
 	return 0;
 }

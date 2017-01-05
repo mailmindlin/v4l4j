@@ -208,7 +208,6 @@ static int decode_libjpeg_h_samp1(struct v4lconvert_data *data, u8 *ydest, u8 *u
 
 static int decode_libjpeg_h_samp2(struct v4lconvert_data *data, u8 *ydest, u8 *udest, u8 *vdest, unsigned int v_samp) {
 	struct jpeg_decompress_struct *cinfo = &data->cinfo;
-	unsigned int y;
 	u32 width = cinfo->image_width;
 	JSAMPROW y_rows[16], u_rows[8], v_rows[8];
 	JSAMPARRAY rows[3] = { y_rows, u_rows, v_rows };
