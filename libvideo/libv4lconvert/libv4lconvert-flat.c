@@ -1,5 +1,7 @@
 
 #include <stdlib.h>
+#include <collections/collections.h>
+#include <collections/queue/queue.h>
 #include "libv4lconvert-flat.h"
 #include "jpeg_memsrcdest.h"
 #include "../libvideo-palettes.h"
@@ -530,9 +532,7 @@ static size_t lookupPrototype(v4lconvert_conversion_type type, u32 src_fmt) {
 	}
 	return NULL;
 }
-struct node_s;
-typedef struct node_s node;
-struct node_s {
+typedef struct converter_node {
 	/**
 	 * Total cost to get to the current node.
 	 * 0 if undefined (infinity)
@@ -540,29 +540,34 @@ struct node_s {
 	size_t cost;
 	u32 fmt;
 	unsigned int flags;
-	node* path_prev;
+	struct converter_node* path_prev;
 	v4lconvert_converter_prototype* prototype;
-	node* list_next;
-};
-static void addNode(node** list, size_t cost, u32 fmt, unsigned int flags, node* path_prev, v4lconvert_converter_prototype* prototype) {
-	node* node = (node*) malloc(sizeof(node));
-	node->cost = cost;
-	node->fmt = fmt;
-	node->flags = flags;
-	node->path_prev = path_prev;
-	node->prototype = prototype;
-	node* current = *list;
-	if (!current) {
-		*list = node;
-		return;
-	}
-	node* next = realList->next;
-	while (next) {
-		current = next;
-		//TODO finish here
-	}
-	current->list_next = node;
+} converter_node;
+
+static int converterNodeComparator(void* a, void* b) {
+	converter_node* nodeA = (converter_node*) a;
+	converter_node* nodeB = (converter_node*) b;
+	//Lower cost has higher priority
+	return b->cost - a->cost;
 }
+
+struct void getDataFromV4L2Format(struct v4l2_format* data, u32* fmt, unsigned int width, unsigned int height) {
+	switch(data->type) {
+		case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+		case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		case V4L2_BUF_TYPE_VIDEO_OVERLAY:
+		case V4L2_BUF_TYPE_VBI_CAPTURE:
+		case V4L2_BUF_TYPE_VBI_OUTPUT:
+		case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
+		case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
+		case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
+		case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+		case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+		case V4L2_BUF_TYPE_PRIVATE:
+			//TODO finish
+	}
+}
+
 static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter*** converters, struct v4lconvert_conversion_request* request, char** errmsg) {
 	#define FAIL(msg) do {\
 			if (errmsg) \
@@ -599,7 +604,8 @@ static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter**
 	
 	u32 src_fmt, dst_fmt;
 	unsigned int src_width, dst_width, src_height, dst_height;
-	//TODO populate values
+	getDataFromV4L2Format(&request->src_fmt, &src_fmt, &src_width, &src_height);
+	getDataFromV4L2Format(&request->dst_fmt, &dst_fmt, &dst_width, &dst_height);
 	
 	//Calculate the size of the image after scaling
 	unsigned int scaled_width = src_width * scaleNumerator / scaleDenominator;
@@ -685,19 +691,19 @@ static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter**
 	startNode->list_prev = NULL;
 	startNode->list_next = NULL;
 	
-	node* queue = startNode;
+	Queue queue;
+	InitRelativePriorityQueue(queue, PairingRPQ, &converterNodeComparator);
+	queue->push(queue, (void*) startNode);
 	
 	//Whether anything happened in this iteration
-	while (queue) {
+	while (!queue->isEmpty(queue)) {
 		//Pop a node from the queue
-		node* current = queue;
+		node* current = queue->pop(queue);
 		
 		if (current->flags & ~closed_mask == 0 && current->fmt == dst_fmt) {
 			//We found a viable path
 			break;
 		}
-		//Move the queue up
-		queue = queue->next;
 		
 		//Calculate what the format should be passing through this node
 		struct v4l2_format currentSourceFormat;
@@ -795,6 +801,8 @@ static bool v4lconvert_encoder_series_doRelease(struct v4lconvert_encoder_series
 
 static u32 v4lconvert_encoder_series_doConvert(struct v4lconvert_encoder_series* self, struct v4lconvert_buffer* buffer) {
 	struct v4lconvert_encoder* encoder = self->encoders[0];
+	//We have to set up the buffers such that the data ends up being written into
+	//the dst buffer.
 	u8* bufA;
 	u8* bufB;
 	if (self->num_encoders & 1) {
@@ -805,9 +813,12 @@ static u32 v4lconvert_encoder_series_doConvert(struct v4lconvert_encoder_series*
 		bufB = buffer->buf1;
 	}
 	u32 src_len = buffer->buf0_len;
-	if ((src_len = encoder->apply(encoder, buffer->buf0, buffer->buf0, src_len)) == 0)
+	//Apply the first encoder, copying the data from buf0 to bufA
+	if ((src_len = encoder->apply(encoder, buffer->buf0, bufA, src_len)) == 0)
 		return 0;
-	for (unsigned int i = 1; i < (self->num_encoders / 2) * 2; i++) {
+	for (unsigned int i = 1; i < (self->num_encoders & ~1u); i++) {
+		//Apply a pair of encoders; this ensures that at the end of this loop,
+		//the data will be written to bufA
 		encoder = self->encoders[i];
 		if ((src_len = encoder->apply(encoder, bufA, bufB, src_len)) == 0)
 			return 0;
@@ -817,6 +828,8 @@ static u32 v4lconvert_encoder_series_doConvert(struct v4lconvert_encoder_series*
 	}
 	if (self->num_encoders & 1)
 		return src_len;
+	//Apply the last encoder (this is if there's an even number of encoders), writing to
+	//the output buffer
 	encoder = self->encoders[self->num_encoders - 1];
 	return buffer->buf1_len = encoder->apply(encoder, bufA, buffer->buf1, src_len);
 }
@@ -902,7 +915,7 @@ int v4lconvert_buffer_release(struct v4lconvert_buffer* buffer) {
 	return EXIT_SUCCESS;
 }
 
-static inline int computeEncoderPath(unsigned int* map, unsigned int* distances, u32 from, u32 to, unsigned int maxIterations) {
+static inline bool computeEncoderPath(unsigned int* map, unsigned int* distances, u32 from, u32 to, unsigned int maxIterations) {
 	distances[to] = 1;
 	// Variation of Dijkstra's Algorithm, where each distance is 1
 	// Works backwards from the 'to' format to the 'from' format
@@ -919,15 +932,15 @@ static inline int computeEncoderPath(unsigned int* map, unsigned int* distances,
 				distances[converter->src_fmt] = distanceTo + 1;
 				progress = 1;
 				if (converter->src_fmt == from)
-					return EXIT_SUCCESS;
+					return true;
 			}
 		}
 		// If no progress has been made this iteration, we can conclude that no path exists
 		if (!progress)
-			return EXIT_FAILURE;
+			return false;
 	}
 	// We took up too many iterations (the shortest path was too long)
-	return EXIT_FAILURE;
+	return false;
 }
 
 int v4lconvert_encoder_series_computeConversion(struct v4lconvert_encoder_series* self, u32 width, u32 height, u32 from, u32 to, unsigned int maxIterations) {

@@ -151,7 +151,7 @@ OBJ := $(patsubst %.c,%.o,$(wildcard *.c) $(filter-out $(patsubst %.o,%.c,$(LIBV
 
 WARNINGS +=  -Wall -Wpointer-arith -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wunused-function
 CFLAGS += $(HARDWARE_FLAGS) $(WARNINGS) -DLIBDIR=\"$(LIBDIR)\" -DLIBSUBDIR=\"$(LIBV4LCONVERT_INSTALL_SUBDIR)\" -I. -std=gnu11
-CFLAGS += -fPIC -fdiagnostics-color=auto -ftree-vectorize -flto -fvisibility=default
+CFLAGS += -fPIC -fdiagnostics-color=auto -ftree-vectorize -flto -fvisibility=default -I./libcollections/include
 #CFLAGS += -funsafe-math-optimizations
 AFLAGS += $(HARDWARE_FLAGS) -mapcs-reentrant -k --warn --statistics
 LDFLAGS += $(HARDWARE_FLAGS) -lm -lrt -shared -ljpeg -lc -flto=3
@@ -202,6 +202,7 @@ test: $(LIB).$(LIB_RELEASE) $(TESTOBJ)
 
 clean:
 	rm -f $(OBJ) $(BIN) $(LIB) $(LIB).$(LIB_RELEASE) $(TESTOBJ) ./*.o list-caps test-capture dump-capture ./*~ version.h
+	$(MAKE) -C libcollections clean
 
 test-list-caps: example/list-caps.o
 	$(CC) $(HARDWARE_FLAGS) -lrt -lm -ljpeg -lvideo -flto=3 example/list-caps.o -o list-caps
@@ -214,7 +215,9 @@ version.h:
 	@echo "#define LIBVIDEO_VERSION_STR \"$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_PATCH)+$(VERSION_METAD)\"" >> version.h
 
 $(LIBCOLLECTIONS):
-	$(MAKE) -C libcollections LINKTYPE=static
+	$(MAKE) -C libcollections LINKTYPE=static all includes
+	mv -rf libcollections/include libcollections/include/collections
+
 $(patsubst %,$(LIBV4LCONVERT_DIR)/%,$(LIBV4LCONVERT_HELPERS)): %: $(patsubst %, %.o, $(%)) 
 
 .PHONY: all install uninstall test clean
