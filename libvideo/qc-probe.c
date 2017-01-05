@@ -107,7 +107,7 @@ int qc_driver_probe(struct video_device *vdev, void **data){
 		goto end;
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, ".. .. ..\n");
 
-	for (unsigned int i = 0; i < QC_LUT_SIZE)
+	for (unsigned int i = 0; i < QC_LUT_SIZE; i++)
 		if(check_ulut.lut[i] != our_ulut.lut[i])
 			goto end;
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, ".. .. .. ..\n");

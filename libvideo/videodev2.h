@@ -663,7 +663,7 @@ struct v4l2_buffer {
 	__u32			bytesused;
 	__u32			flags;
 	__u32			field;
-	struct timeval		timestamp;
+	struct timeval	timestamp;
 	struct v4l2_timecode	timecode;
 	__u32			sequence;
 

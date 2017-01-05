@@ -17,7 +17,9 @@
  */
 
 #include "libv4lconvert-priv.h"
+#include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define MAGIC_0		0x19
 #define MAGIC_1		0x68
@@ -34,10 +36,7 @@
 #define FRAME_HEADER_SIZE	64
 
 /* CPIA YUYV (sometimes sort of compressed) */
-int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dest, u32 width, u32 height, int yvu) {
-	unsigned int y;
-	u8 *udest, *vdest;
-
+int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data, const u8 *src, unsigned int src_size, u8 *dest, u32 width, u32 height, bool yvu) {
 	if (width > 352 || height > 288) {
 		fprintf(stderr, "FATAL ERROR CPIA1 size > 352x288, please report!\n");
 		return -1;
@@ -50,13 +49,14 @@ int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data, const u8 *src, unsi
 			return -1;
 		}
 	}
-
+	
+	u8* udest = dest + width * height;
+	u8* vdest = udest + width * height / 4;
+	
 	if (yvu) {
-		vdest = dest + width * height;
-		udest = vdest + width * height / 4;
-	} else {
-		udest = dest + width * height;
-		vdest = udest + width * height / 4;
+		u8* tmp = udest;
+		udest = vdest;
+		vdest = tmp;
 	}
 
 	/* Verify header */
@@ -83,7 +83,11 @@ int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data, const u8 *src, unsi
 	src_size -= FRAME_HEADER_SIZE;
 
 	if (!compressed) {
-		for (y = 0; y < height && src_size > 2; y++) {
+		for (unsigned int y = 0; y < height; y++) {
+			if (src_size < 2) {
+				fprintf(stderr, "cpia1 decode error: frame height mismatch\n");
+				return -1;
+			}
 			unsigned int ll = (unsigned) (src[0] | (src[1] << 8));
 			src += 2;
 			src_size -= 2;
@@ -128,7 +132,11 @@ int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data, const u8 *src, unsi
 		   of simply ommitting certain pixels */
 		memcpy(dest, data->previous_frame, width * height * 3 / 2);
 
-		for (y = 0; y < height && src_size > 2; y++) {
+		for (unsigned int y = 0; y < height; y++) {
+			if (src_size < 2) {
+				fprintf(stderr, "cpia1 decode error: frame height mismatch\n");
+				return -1;
+			}
 			unsigned int ll = (unsigned) (src[0] | (src[1] << 8));
 			src += 2;
 			src_size -= 2;
@@ -184,11 +192,6 @@ int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data, const u8 *src, unsi
 			}
 			src++; /* Skip EOL */
 		}
-	}
-
-	if (y != height) {
-		fprintf(stderr, "cpia1 decode error: frame height mismatch\n");
-		return -1;
 	}
 
 	if (src_size < 4 || src[src_size - 4] != EOI || src[src_size - 3] != EOI ||

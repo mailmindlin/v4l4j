@@ -31,6 +31,7 @@
 
 #include <string.h>
 #include "libv4lconvert-priv.h"
+#include "rgbyuv.h"
 
 /**************************************************************
  *     Color conversion functions for cameras that can        *
@@ -42,9 +43,7 @@
  **************************************************************/
 
 /* inspired by OpenCV's Bayer decoding */
-static void v4lconvert_border_bayer_line_to_bgr24(const u8 *bayer, const u8 *adjacent_bayer, u8 *bgr, u32 width, int start_with_green, int blue_line) {
-	u8 t0, t1;
-
+static void v4lconvert_border_bayer_line_to_bgr24(const u8 *bayer, const u8 *adjacent_bayer, u8 *bgr, u32 width, bool start_with_green, bool blue_line) {
 	if (start_with_green) {
 		/* First pixel */
 		if (blue_line) {
@@ -57,8 +56,8 @@ static void v4lconvert_border_bayer_line_to_bgr24(const u8 *bayer, const u8 *adj
 			*bgr++ = bayer[1];
 		}
 		/* Second pixel */
-		t0 = (bayer[0] + bayer[2] + adjacent_bayer[1] + 1) / 3;
-		t1 = (adjacent_bayer[0] + adjacent_bayer[2] + 1) >> 1;
+		u8 t0 = (u8) ((bayer[0] + bayer[2] + adjacent_bayer[1] + 1) / 3);
+		u8 t1 = (u8) ((adjacent_bayer[0] + adjacent_bayer[2] + 1) >> 1);
 		if (blue_line) {
 			*bgr++ = bayer[1];
 			*bgr++ = t0;
@@ -73,7 +72,7 @@ static void v4lconvert_border_bayer_line_to_bgr24(const u8 *bayer, const u8 *adj
 		width -= 2;
 	} else {
 		/* First pixel */
-		t0 = (bayer[1] + adjacent_bayer[0] + 1) >> 1;
+		u8 t0 = (u8) ((bayer[1] + adjacent_bayer[0] + 1) >> 1);
 		if (blue_line) {
 			*bgr++ = bayer[0];
 			*bgr++ = t0;
@@ -88,15 +87,15 @@ static void v4lconvert_border_bayer_line_to_bgr24(const u8 *bayer, const u8 *adj
 
 	if (blue_line) {
 		for ( ; width > 2; width -= 2) {
-			t0 = (bayer[0] + bayer[2] + 1) >> 1;
+			u8 t0 = (u8) ((bayer[0] + bayer[2] + 1) >> 1);
 			*bgr++ = t0;
 			*bgr++ = bayer[1];
 			*bgr++ = adjacent_bayer[1];
 			bayer++;
 			adjacent_bayer++;
 
-			t0 = (bayer[0] + bayer[2] + adjacent_bayer[1] + 1) / 3;
-			t1 = (adjacent_bayer[0] + adjacent_bayer[2] + 1) >> 1;
+			t0 = (u8) ((bayer[0] + bayer[2] + adjacent_bayer[1] + 1) / 3);
+			u8 t1 = (u8) ((adjacent_bayer[0] + adjacent_bayer[2] + 1) >> 1);
 			*bgr++ = bayer[1];
 			*bgr++ = t0;
 			*bgr++ = t1;
@@ -105,15 +104,15 @@ static void v4lconvert_border_bayer_line_to_bgr24(const u8 *bayer, const u8 *adj
 		}
 	} else {
 		for ( ; width > 2; width -= 2) {
-			t0 = (bayer[0] + bayer[2] + 1) >> 1;
+			u8 t0 = (u8) ((bayer[0] + bayer[2] + 1) >> 1);
 			*bgr++ = adjacent_bayer[1];
 			*bgr++ = bayer[1];
 			*bgr++ = t0;
 			bayer++;
 			adjacent_bayer++;
 
-			t0 = (bayer[0] + bayer[2] + adjacent_bayer[1] + 1) / 3;
-			t1 = (adjacent_bayer[0] + adjacent_bayer[2] + 1) >> 1;
+			t0 = (u8) ((bayer[0] + bayer[2] + adjacent_bayer[1] + 1) / 3);
+			u8 t1 = (u8) ((adjacent_bayer[0] + adjacent_bayer[2] + 1) >> 1);
 			*bgr++ = t1;
 			*bgr++ = t0;
 			*bgr++ = bayer[1];
@@ -124,7 +123,7 @@ static void v4lconvert_border_bayer_line_to_bgr24(const u8 *bayer, const u8 *adj
 
 	if (width == 2) {
 		/* Second to last pixel */
-		t0 = (bayer[0] + bayer[2] + 1) >> 1;
+		u8 t0 = (u8) ((bayer[0] + bayer[2] + 1) >> 1);
 		if (blue_line) {
 			*bgr++ = t0;
 			*bgr++ = bayer[1];
@@ -135,7 +134,7 @@ static void v4lconvert_border_bayer_line_to_bgr24(const u8 *bayer, const u8 *adj
 			*bgr++ = t0;
 		}
 		/* Last pixel */
-		t0 = (bayer[1] + adjacent_bayer[2] + 1) >> 1;
+		t0 = (u8) ((bayer[1] + adjacent_bayer[2] + 1) >> 1);
 		if (blue_line) {
 			*bgr++ = bayer[2];
 			*bgr++ = t0;
@@ -161,24 +160,22 @@ static void v4lconvert_border_bayer_line_to_bgr24(const u8 *bayer, const u8 *adj
 
 /* From libdc1394, which on turn was based on OpenCV's Bayer decoding */
 
-static void bayer_to_rgbbgr24(const u8 *bayer, u8 *bgr, u32 width, u32 height, int start_with_green, int blue_line) {
+static void bayer_to_rgbbgr24(const u8 *bayer, u8 *bgr, u32 width, u32 height, bool start_with_green, bool blue_line) {
 	/* render the first line */
-	v4lconvert_border_bayer_line_to_bgr24(bayer, bayer + width, bgr, width,
-			start_with_green, blue_line);
+	v4lconvert_border_bayer_line_to_bgr24(bayer, bayer + width, bgr, width, start_with_green, blue_line);
 	bgr += width * 3;
 
 	/* reduce height by 2 because of the special case top/bottom line */
 	for (height -= 2; height; height--) {
-		u8 t0, t1;
 		/* (width - 2) because of the border */
 		const u8 *bayer_end = bayer + (width - 2);
 
 		if (start_with_green) {
 			/* OpenCV has a bug in the next line, which was
 			   t0 = (bayer[0] + bayer[width * 2] + 1) >> 1; */
-			t0 = (bayer[1] + bayer[width * 2 + 1] + 1) >> 1;
+			u8 t0 = (u8) ((bayer[1] + bayer[width * 2 + 1] + 1) >> 1);
 			/* Write first pixel */
-			t1 = (bayer[0] + bayer[width * 2] + bayer[width + 1] + 1) / 3;
+			u8 t1 = (u8) ((bayer[0] + bayer[width * 2] + bayer[width + 1] + 1) / 3);
 			if (blue_line) {
 				*bgr++ = t0;
 				*bgr++ = t1;
@@ -190,7 +187,7 @@ static void bayer_to_rgbbgr24(const u8 *bayer, u8 *bgr, u32 width, u32 height, i
 			}
 
 			/* Write second pixel */
-			t1 = (bayer[width] + bayer[width + 2] + 1) >> 1;
+			t1 = (u8) ((bayer[width] + bayer[width + 2] + 1) >> 1);
 			if (blue_line) {
 				*bgr++ = t0;
 				*bgr++ = bayer[width + 1];
@@ -203,7 +200,7 @@ static void bayer_to_rgbbgr24(const u8 *bayer, u8 *bgr, u32 width, u32 height, i
 			bayer++;
 		} else {
 			/* Write first pixel */
-			t0 = (bayer[0] + bayer[width * 2] + 1) >> 1;
+			u8 t0 = (u8) ((bayer[0] + bayer[width * 2] + 1) >> 1);
 			if (blue_line) {
 				*bgr++ = t0;
 				*bgr++ = bayer[width];
@@ -217,28 +214,28 @@ static void bayer_to_rgbbgr24(const u8 *bayer, u8 *bgr, u32 width, u32 height, i
 
 		if (blue_line) {
 			for (; bayer <= bayer_end - 2; bayer += 2) {
-				t0 = (bayer[0] + bayer[2] + bayer[width * 2] + bayer[width * 2 + 2] + 2) >> 2;
-				t1 = (bayer[1] + bayer[width] + bayer[width + 2] + bayer[width * 2 + 1] + 2) >> 2;
+				u8 t0 = (u8) ((bayer[0] + bayer[2] + bayer[width * 2] + bayer[width * 2 + 2] + 2) >> 2);
+				u8 t1 = (u8) ((bayer[1] + bayer[width] + bayer[width + 2] + bayer[width * 2 + 1] + 2) >> 2);
 				*bgr++ = t0;
 				*bgr++ = t1;
 				*bgr++ = bayer[width + 1];
 
-				t0 = (bayer[2] + bayer[width * 2 + 2] + 1) >> 1;
-				t1 = (bayer[width + 1] + bayer[width + 3] + 1) >> 1;
+				t0 = (u8) ((bayer[2] + bayer[width * 2 + 2] + 1) >> 1);
+				t1 = (u8) ((bayer[width + 1] + bayer[width + 3] + 1) >> 1);
 				*bgr++ = t0;
 				*bgr++ = bayer[width + 2];
 				*bgr++ = t1;
 			}
 		} else {
 			for (; bayer <= bayer_end - 2; bayer += 2) {
-				t0 = (bayer[0] + bayer[2] + bayer[width * 2] + bayer[width * 2 + 2] + 2) >> 2;
-				t1 = (bayer[1] + bayer[width] + bayer[width + 2] + bayer[width * 2 + 1] + 2) >> 2;
+				u8 t0 = (u8) ((bayer[0] + bayer[2] + bayer[width * 2] + bayer[width * 2 + 2] + 2) >> 2);
+				u8 t1 = (u8) ((bayer[1] + bayer[width] + bayer[width + 2] + bayer[width * 2 + 1] + 2) >> 2);
 				*bgr++ = bayer[width + 1];
 				*bgr++ = t1;
 				*bgr++ = t0;
 
-				t0 = (bayer[2] + bayer[width * 2 + 2] + 1) >> 1;
-				t1 = (bayer[width + 1] + bayer[width + 3] + 1) >> 1;
+				t0 = (u8) ((bayer[2] + bayer[width * 2 + 2] + 1) >> 1);
+				t1 = (u8) ((bayer[width + 1] + bayer[width + 3] + 1) >> 1);
 				*bgr++ = t1;
 				*bgr++ = bayer[width + 2];
 				*bgr++ = t0;
@@ -247,8 +244,8 @@ static void bayer_to_rgbbgr24(const u8 *bayer, u8 *bgr, u32 width, u32 height, i
 
 		if (bayer < bayer_end) {
 			/* write second to last pixel */
-			t0 = (bayer[0] + bayer[2] + bayer[width * 2] + bayer[width * 2 + 2] + 2) >> 2;
-			t1 = (bayer[1] + bayer[width] + bayer[width + 2] + bayer[width * 2 + 1] + 2) >> 2;
+			u8 t0 = (u8) ((bayer[0] + bayer[2] + bayer[width * 2] + bayer[width * 2 + 2] + 2) >> 2);
+			u8 t1 = (u8) ((bayer[1] + bayer[width] + bayer[width + 2] + bayer[width * 2 + 1] + 2) >> 2);
 			if (blue_line) {
 				*bgr++ = t0;
 				*bgr++ = t1;
@@ -259,7 +256,7 @@ static void bayer_to_rgbbgr24(const u8 *bayer, u8 *bgr, u32 width, u32 height, i
 				*bgr++ = t0;
 			}
 			/* write last pixel */
-			t0 = (bayer[2] + bayer[width * 2 + 2] + 1) >> 1;
+			t0 = (u8) ((bayer[2] + bayer[width * 2 + 2] + 1) >> 1);
 			if (blue_line) {
 				*bgr++ = t0;
 				*bgr++ = bayer[width + 2];
@@ -272,8 +269,8 @@ static void bayer_to_rgbbgr24(const u8 *bayer, u8 *bgr, u32 width, u32 height, i
 			bayer++;
 		} else {
 			/* write last pixel */
-			t0 = (bayer[0] + bayer[width * 2] + 1) >> 1;
-			t1 = (bayer[1] + bayer[width * 2 + 1] + bayer[width] + 1) / 3;
+			u8 t0 = (u8) ((bayer[0] + bayer[width * 2] + 1) >> 1);
+			u8 t1 = (u8) ((bayer[1] + bayer[width * 2 + 1] + bayer[width] + 1) / 3);
 			if (blue_line) {
 				*bgr++ = t0;
 				*bgr++ = t1;
@@ -312,60 +309,58 @@ void v4lconvert_bayer_to_bgr24(const u8 *bayer, u8 *bgr, u32 width, u32 height, 
 			|| pixfmt == V4L2_PIX_FMT_SGBRG8);
 }
 
-static void v4lconvert_border_bayer_line_to_y(const u8 *bayer, const u8 *adjacent_bayer, u8 *y, u32 width, int start_with_green, int blue_line) {
-	int t0, t1;
-
+static void v4lconvert_border_bayer_line_to_y(const u8 *bayer, const u8 *adjacent_bayer, u8 *y, u32 width, bool start_with_green, bool blue_line) {
 	if (start_with_green) {
 		/* First pixel */
 		if (blue_line) {
-			*y++ = (u8) (8453 * adjacent_bayer[0] + 16594 * bayer[0] + 3223 * bayer[1] + 524288) >> 15;
+			*y++ = RGB2Y(adjacent_bayer[0], bayer[0], bayer[1]);
 		} else {
-			*y++ = (u8) (8453 * bayer[1] + 16594 * bayer[0] + 3223 * adjacent_bayer[0] + 524288) >> 15;
+			*y++ = RGB2Y(bayer[1], bayer[0], adjacent_bayer[0]);
 		}
 		/* Second pixel */
-		t0 = bayer[0] + bayer[2] + adjacent_bayer[1];
-		t1 = adjacent_bayer[0] + adjacent_bayer[2];
+		int t0 = bayer[0] + bayer[2] + adjacent_bayer[1];
+		int t1 = adjacent_bayer[0] + adjacent_bayer[2];
 		if (blue_line)
-			*y++ = (u8) (4226 * t1 + 5531 * t0 + 3223 * bayer[1] + 524288) >> 15;
+			*y++ = (u8) ((4226 * t1 + 5531 * t0 + 3223 * bayer[1] + 524288) >> 15);
 		else
-			*y++ = (u8) (8453 * bayer[1] + 5531 * t0 + 1611 * t1 + 524288) >> 15;
+			*y++ = (u8) ((8453 * bayer[1] + 5531 * t0 + 1611 * t1 + 524288) >> 15);
 		bayer++;
 		adjacent_bayer++;
 		width -= 2;
 	} else {
 		/* First pixel */
-		t0 = bayer[1] + adjacent_bayer[0];
+		int t0 = bayer[1] + adjacent_bayer[0];
 		if (blue_line) {
-			*y++ = (u8) (8453 * adjacent_bayer[1] + 8297 * t0 + 3223 * bayer[0] + 524288) >> 15;
+			*y++ = (u8) ((8453 * adjacent_bayer[1] + 8297 * t0 + 3223 * bayer[0] + 524288) >> 15);
 		} else {
-			*y++ = (u8) (8453 * bayer[0] + 8297 * t0 + 3223 * adjacent_bayer[1] + 524288) >> 15;
+			*y++ = (u8) ((8453 * bayer[0] + 8297 * t0 + 3223 * adjacent_bayer[1] + 524288) >> 15);
 		}
 		width--;
 	}
 
 	if (blue_line) {
 		for ( ; width > 2; width -= 2) {
-			t0 = bayer[0] + bayer[2];
-			*y++ = (u8) (8453 * adjacent_bayer[1] + 16594 * bayer[1] + 1611 * t0 + 524288) >> 15;
+			int t0 = bayer[0] + bayer[2];
+			*y++ = (u8) ((8453 * adjacent_bayer[1] + 16594 * bayer[1] + 1611 * t0 + 524288) >> 15);
 			bayer++;
 			adjacent_bayer++;
 
 			t0 = bayer[0] + bayer[2] + adjacent_bayer[1];
-			t1 = adjacent_bayer[0] + adjacent_bayer[2];
-			*y++ = (u8) (4226 * t1 + 5531 * t0 + 3223 * bayer[1] + 524288) >> 15;
+			int t1 = adjacent_bayer[0] + adjacent_bayer[2];
+			*y++ = (u8) ((4226 * t1 + 5531 * t0 + 3223 * bayer[1] + 524288) >> 15);
 			bayer++;
 			adjacent_bayer++;
 		}
 	} else {
 		for ( ; width > 2; width -= 2) {
-			t0 = bayer[0] + bayer[2];
-			*y++ = (u8) (4226 * t0 + 16594 * bayer[1] + 3223 * adjacent_bayer[1] + 524288) >> 15;
+			int t0 = bayer[0] + bayer[2];
+			*y++ = (u8) ((4226 * t0 + 16594 * bayer[1] + 3223 * adjacent_bayer[1] + 524288) >> 15);
 			bayer++;
 			adjacent_bayer++;
 
 			t0 = bayer[0] + bayer[2] + adjacent_bayer[1];
-			t1 = adjacent_bayer[0] + adjacent_bayer[2];
-			*y++ = (u8) (8453 * bayer[1] + 5531 * t0 + 1611 * t1 + 524288) >> 15;
+			int t1 = adjacent_bayer[0] + adjacent_bayer[2];
+			*y++ = (u8) ((8453 * bayer[1] + 5531 * t0 + 1611 * t1 + 524288) >> 15);
 			bayer++;
 			adjacent_bayer++;
 		}
@@ -373,40 +368,40 @@ static void v4lconvert_border_bayer_line_to_y(const u8 *bayer, const u8 *adjacen
 
 	if (width == 2) {
 		/* Second to last pixel */
-		t0 = bayer[0] + bayer[2];
+		int t0 = bayer[0] + bayer[2];
 		if (blue_line) {
-			*y++ = (u8) (8453 * adjacent_bayer[1] + 16594 * bayer[1] + 1611 * t0 + 524288) >> 15;
+			*y++ = (u8) ((8453 * adjacent_bayer[1] + 16594 * bayer[1] + 1611 * t0 + 524288) >> 15);
 		} else {
-			*y++ = (u8) (4226 * t0 + 16594 * bayer[1] + 3223 * adjacent_bayer[1] + 524288) >> 15;
+			*y++ = (u8) ((4226 * t0 + 16594 * bayer[1] + 3223 * adjacent_bayer[1] + 524288) >> 15);
 		}
 		/* Last pixel */
 		t0 = bayer[1] + adjacent_bayer[2];
 		if (blue_line) {
-			*y++ = (u8) (8453 * adjacent_bayer[1] + 8297 * t0 + 3223 * bayer[2] + 524288) >> 15;
+			*y++ = (u8) ((8453 * adjacent_bayer[1] + 8297 * t0 + 3223 * bayer[2] + 524288) >> 15);
 		} else {
-			*y++ = (u8) (8453 * bayer[2] + 8297 * t0 + 3223 * adjacent_bayer[1] + 524288) >> 15;
+			*y++ = (u8) ((8453 * bayer[2] + 8297 * t0 + 3223 * adjacent_bayer[1] + 524288) >> 15);
 		}
 	} else {
 		/* Last pixel */
 		if (blue_line) {
-			*y++ = (u8) (8453 * adjacent_bayer[1] + 16594 * bayer[1] + 3223 * bayer[0] + 524288) >> 15;
+			*y++ = (u8) ((8453 * adjacent_bayer[1] + 16594 * bayer[1] + 3223 * bayer[0] + 524288) >> 15);
 		} else {
-			*y++ = (u8) (8453 * bayer[0] + 16594 * bayer[1] + 3223 * adjacent_bayer[1] + 524288) >> 15;
+			*y++ = (u8) ((8453 * bayer[0] + 16594 * bayer[1] + 3223 * adjacent_bayer[1] + 524288) >> 15);
 		}
 	}
 }
 
-void v4lconvert_bayer_to_yuv420(const u8 *bayer, u8 *yuv, u32 width, u32 height, unsigned int src_pixfmt, int yvu) {
-	int blue_line = 0, start_with_green = 0;
+void v4lconvert_bayer_to_yuv420(const u8 *bayer, u8 *yuv, u32 width, u32 height, unsigned int src_pixfmt, bool yvu) {
+	bool blue_line = false;
+	bool start_with_green = false;
 	u8 *ydst = yuv;
-	u8 *udst, *vdst;
+	u8 *udst = yuv + width * height;
+	u8 *vdst = udst + width * height / 4;
 
 	if (yvu) {
-		vdst = yuv + width * height;
-		udst = vdst + width * height / 4;
-	} else {
-		udst = yuv + width * height;
-		vdst = udst + width * height / 4;
+		u8 *tmp = udst;
+		udst = vdst;
+		vdst = tmp;
 	}
 
 	/* First calculate the u and v planes 2x2 pixels at a time */
@@ -415,11 +410,10 @@ void v4lconvert_bayer_to_yuv420(const u8 *bayer, u8 *yuv, u32 width, u32 height,
 		for (unsigned int y = 0; y < height; y += 2) {
 			for (unsigned int x = 0; x < width; x += 2) {
 				int b  = bayer[x];
-				int g  = bayer[x + 1];
-				g += bayer[x + width];
+				int g  = bayer[x + 1] + bayer[x + width];
 				int r  = bayer[x + width + 1];
-				*udst++ = (u8) (-4878 * r - 4789 * g + 14456 * b + 4210688) >> 15;
-				*vdst++ = (u8) (14456 * r - 6052 * g -  2351 * b + 4210688) >> 15;
+				*udst++ = (u8) ((-4878 * r - 4789 * g + 14456 * b + 4210688) >> 15);
+				*vdst++ = (u8) ((14456 * r - 6052 * g -  2351 * b + 4210688) >> 15);
 			}
 			bayer += 2 * width;
 		}
@@ -430,11 +424,10 @@ void v4lconvert_bayer_to_yuv420(const u8 *bayer, u8 *yuv, u32 width, u32 height,
 		for (unsigned int y = 0; y < height; y += 2) {
 			for (unsigned int x = 0; x < width; x += 2) {
 				int r  = bayer[x];
-				int g  = bayer[x + 1];
-				g += bayer[x + width];
+				int g  = bayer[x + 1] + bayer[x + width];
 				int b  = bayer[x + width + 1];
-				*udst++ = (u8) (-4878 * r - 4789 * g + 14456 * b + 4210688) >> 15;
-				*vdst++ = (u8) (14456 * r - 6052 * g -  2351 * b + 4210688) >> 15;
+				*udst++ = (u8) ((-4878 * r - 4789 * g + 14456 * b + 4210688) >> 15);
+				*vdst++ = (u8) ((14456 * r - 6052 * g -  2351 * b + 4210688) >> 15);
 			}
 			bayer += 2 * width;
 		}
@@ -443,125 +436,117 @@ void v4lconvert_bayer_to_yuv420(const u8 *bayer, u8 *yuv, u32 width, u32 height,
 	case V4L2_PIX_FMT_SGBRG8:
 		for (unsigned int y = 0; y < height; y += 2) {
 			for (unsigned int x = 0; x < width; x += 2) {
-				int b, g, r;
-
-				g  = bayer[x];
-				b  = bayer[x + 1];
-				r  = bayer[x + width];
-				g += bayer[x + width + 1];
-				*udst++ = (u8) (-4878 * r - 4789 * g + 14456 * b + 4210688) >> 15;
-				*vdst++ = (u8) (14456 * r - 6052 * g -  2351 * b + 4210688) >> 15;
+				int g  = bayer[x] + bayer[x + width + 1];
+				int b  = bayer[x + 1];
+				int r  = bayer[x + width];
+				*udst++ = (u8) ((-4878 * r - 4789 * g + 14456 * b + 4210688) >> 15);
+				*vdst++ = (u8) ((14456 * r - 6052 * g -  2351 * b + 4210688) >> 15);
 			}
 			bayer += 2 * width;
 		}
-		blue_line = 1;
-		start_with_green = 1;
+		blue_line = true;
+		start_with_green = true;
 		break;
 
 	case V4L2_PIX_FMT_SGRBG8:
 		for (unsigned int y = 0; y < height; y += 2) {
 			for (unsigned int x = 0; x < width; x += 2) {
-				int b, g, r;
-
-				g  = bayer[x];
-				r  = bayer[x + 1];
-				b  = bayer[x + width];
-				g += bayer[x + width + 1];
-				*udst++ = (u8) (-4878 * r - 4789 * g + 14456 * b + 4210688) >> 15;
-				*vdst++ = (u8) (14456 * r - 6052 * g -  2351 * b + 4210688) >> 15;
+				int g  = bayer[x] + bayer[x + width + 1];
+				int r  = bayer[x + 1];
+				int b  = bayer[x + width];
+				*udst++ = (u8) ((-4878 * r - 4789 * g + 14456 * b + 4210688) >> 15);
+				*vdst++ = (u8) ((14456 * r - 6052 * g -  2351 * b + 4210688) >> 15);
 			}
 			bayer += 2 * width;
 		}
-		start_with_green = 1;
+		start_with_green = true;
 		break;
 	}
 
 	bayer -= width * height;
 
 	/* render the first line */
-	v4lconvert_border_bayer_line_to_y(bayer, bayer + width, ydst, width,
-			start_with_green, blue_line);
+	v4lconvert_border_bayer_line_to_y(bayer, bayer + width, ydst, width, start_with_green, blue_line);
 	ydst += width;
 
 	/* reduce height by 2 because of the border */
 	for (height -= 2; height; height--) {
-		u8 t0, t1;
 		/* (width - 2) because of the border */
 		const u8 *bayer_end = bayer + (width - 2);
 
 		if (start_with_green) {
-			t0 = bayer[1] + bayer[width * 2 + 1];
+			u8 t0 = (u8) (bayer[1] + bayer[width * 2 + 1]);
 			/* Write first pixel */
-			t1 = bayer[0] + bayer[width * 2] + bayer[width + 1];
+			u8 t1 = (u8) (bayer[0] + bayer[width * 2] + bayer[width + 1]);
 			if (blue_line)
-				*ydst++ = (u8) (8453 * bayer[width] + 5516 * t1 + 1661 * t0 + 524288) >> 15;
+				*ydst++ = (u8) ((8453 * bayer[width] + 5516 * t1 + 1661 * t0 + 524288) >> 15);
 			else
-				*ydst++ = (u8) (4226 * t0 + 5516 * t1 + 3223 * bayer[width] + 524288) >> 15;
+				*ydst++ = (u8) ((4226 * t0 + 5516 * t1 + 3223 * bayer[width] + 524288) >> 15);
 
 			/* Write second pixel */
-			t1 = bayer[width] + bayer[width + 2];
+			t1 = (u8) (bayer[width] + bayer[width + 2]);
 			if (blue_line)
-				*ydst++ = (u8) (4226 * t1 + 16594 * bayer[width + 1] + 1611 * t0 + 524288) >> 15;
+				*ydst++ = (u8) ((4226 * t1 + 16594 * bayer[width + 1] + 1611 * t0 + 524288) >> 15);
 			else
-				*ydst++ = (u8) (4226 * t0 + 16594 * bayer[width + 1] + 1611 * t1 + 524288) >> 15;
+				*ydst++ = (u8) ((4226 * t0 + 16594 * bayer[width + 1] + 1611 * t1 + 524288) >> 15);
 			bayer++;
 		} else {
 			/* Write first pixel */
-			t0 = bayer[0] + bayer[width * 2];
+			u8 t0 = (u8) (bayer[0] + bayer[width * 2]);
 			if (blue_line) {
-				*ydst++ = (u8) (8453 * bayer[width + 1] + 16594 * bayer[width] + 1661 * t0 + 524288) >> 15;
+				*ydst++ = (u8) ((8453 * bayer[width + 1] + 16594 * bayer[width] + 1661 * t0 + 524288) >> 15);
 			} else {
-				*ydst++ = (u8) (4226 * t0 + 16594 * bayer[width] + 3223 * bayer[width + 1] + 524288) >> 15;
+				*ydst++ = (u8) ((4226 * t0 + 16594 * bayer[width] + 3223 * bayer[width + 1] + 524288) >> 15);
 			}
 		}
 
 		if (blue_line) {
 			for (; bayer <= bayer_end - 2; bayer += 2) {
-				t0 = bayer[0] + bayer[2] + bayer[width * 2] + bayer[width * 2 + 2];
-				t1 = bayer[1] + bayer[width] + bayer[width + 2] + bayer[width * 2 + 1];
-				*ydst++ = (8453 * bayer[width + 1] + 4148 * t1 + 806 * t0 + 524288) >> 15;
+				u8 t0 = (u8) (bayer[0] + bayer[2] + bayer[width * 2] + bayer[width * 2 + 2]);
+				u8 t1 = (u8) (bayer[1] + bayer[width] + bayer[width + 2] + bayer[width * 2 + 1]);
+				*ydst++ = (u8) ((8453 * bayer[width + 1] + 4148 * t1 + 806 * t0 + 524288) >> 15);
 
-				t0 = bayer[2] + bayer[width * 2 + 2];
-				t1 = bayer[width + 1] + bayer[width + 3];
-				*ydst++ = (4226 * t1 + 16594 * bayer[width + 2] + 1611 * t0 + 524288) >> 15;
+				t0 = (u8) (bayer[2] + bayer[width * 2 + 2]);
+				t1 = (u8) (bayer[width + 1] + bayer[width + 3]);
+				*ydst++ = (u8) ((4226 * t1 + 16594 * bayer[width + 2] + 1611 * t0 + 524288) >> 15);
 			}
 		} else {
 			for (; bayer <= bayer_end - 2; bayer += 2) {
-				t0 = bayer[0] + bayer[2] + bayer[width * 2] + bayer[width * 2 + 2];
-				t1 = bayer[1] + bayer[width] + bayer[width + 2] + bayer[width * 2 + 1];
-				*ydst++ = (2113 * t0 + 4148 * t1 + 3223 * bayer[width + 1] + 524288) >> 15;
+				u8 t0 = (u8) (bayer[0] + bayer[2] + bayer[width * 2] + bayer[width * 2 + 2]);
+				u8 t1 = (u8) (bayer[1] + bayer[width] + bayer[width + 2] + bayer[width * 2 + 1]);
+				*ydst++ = (u8) ((2113 * t0 + 4148 * t1 + 3223 * bayer[width + 1] + 524288) >> 15);
 
-				t0 = bayer[2] + bayer[width * 2 + 2];
-				t1 = bayer[width + 1] + bayer[width + 3];
-				*ydst++ = (4226 * t0 + 16594 * bayer[width + 2] + 1611 * t1 + 524288) >> 15;
+				t0 = (u8) (bayer[2] + bayer[width * 2 + 2]);
+				t1 = (u8) (bayer[width + 1] + bayer[width + 3]);
+				*ydst++ = (u8) ((4226 * t0 + 16594 * bayer[width + 2] + 1611 * t1 + 524288) >> 15);
 			}
 		}
 
 		if (bayer < bayer_end) {
 			/* Write second to last pixel */
-			t0 = bayer[0] + bayer[2] + bayer[width * 2] + bayer[width * 2 + 2];
-			t1 = bayer[1] + bayer[width] + bayer[width + 2] + bayer[width * 2 + 1];
+			u8 t0 = (u8) (bayer[0] + bayer[2] + bayer[width * 2] + bayer[width * 2 + 2]);
+			u8 t1 = (u8) (bayer[1] + bayer[width] + bayer[width + 2] + bayer[width * 2 + 1]);
 			if (blue_line)
-				*ydst++ = (8453 * bayer[width + 1] + 4148 * t1 + 806 * t0 + 524288) >> 15;
+				*ydst++ = (u8) ((8453 * bayer[width + 1] + 4148 * t1 + 806 * t0 + 524288) >> 15);
 			else
-				*ydst++ = (2113 * t0 + 4148 * t1 + 3223 * bayer[width + 1] + 524288) >> 15;
+				*ydst++ = (u8) ((2113 * t0 + 4148 * t1 + 3223 * bayer[width + 1] + 524288) >> 15);
 
 			/* write last pixel */
-			t0 = bayer[2] + bayer[width * 2 + 2];
+			t0 = (u8) (bayer[2] + bayer[width * 2 + 2]);
 			if (blue_line) {
-				*ydst++ = (8453 * bayer[width + 1] + 16594 * bayer[width + 2] + 1661 * t0 + 524288) >> 15;
+				*ydst++ = (u8) ((8453 * bayer[width + 1] + 16594 * bayer[width + 2] + 1661 * t0 + 524288) >> 15);
 			} else {
-				*ydst++ = (4226 * t0 + 16594 * bayer[width + 2] + 3223 * bayer[width + 1] + 524288) >> 15;
+				*ydst++ = (u8) ((4226 * t0 + 16594 * bayer[width + 2] + 3223 * bayer[width + 1] + 524288) >> 15);
 			}
 			bayer++;
 		} else {
 			/* write last pixel */
-			t0 = bayer[0] + bayer[width * 2];
-			t1 = bayer[1] + bayer[width * 2 + 1] + bayer[width];
+			u8 t0 = (u8) (bayer[0] + bayer[width * 2]);
+			u8 t1 = (u8) (bayer[1] + bayer[width * 2 + 1] + bayer[width]);
 			if (blue_line)
-				*ydst++ = (8453 * bayer[width + 1] + 5516 * t1 + 1661 * t0 + 524288) >> 15;
+				*ydst++ = (u8) ((8453 * bayer[width + 1] + 5516 * t1 + 1661 * t0 + 524288) >> 15);
 			else
-				*ydst++ = (4226 * t0 + 5516 * t1 + 3223 * bayer[width + 1] + 524288) >> 15;
+				*ydst++ = (u8) ((4226 * t0 + 5516 * t1 + 3223 * bayer[width + 1] + 524288) >> 15);
 		}
 
 		/* skip 2 border pixels */

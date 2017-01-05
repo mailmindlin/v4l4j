@@ -21,6 +21,7 @@
  */
 
 #include <string.h>
+#include <stdbool.h>
 #include "libv4lconvert-priv.h"
 
 static void v4lconvert_vflip_rgbbgr24(u8 *src, u8 *dest, struct v4l2_format *fmt) {
@@ -186,7 +187,7 @@ void v4lconvert_rotate90(u8 *src, u8 *dest, struct v4l2_format *fmt) {
 	v4lconvert_fixup_fmt(fmt);
 }
 
-void v4lconvert_flip(u8 *src, u8 *dest, struct v4l2_format *fmt, int hflip, int vflip) {
+void v4lconvert_flip(u8 *src, u8 *dest, struct v4l2_format *fmt, bool hflip, bool vflip) {
 	if (vflip && hflip) {
 		switch (fmt->fmt.pix.pixelformat) {
 		case V4L2_PIX_FMT_RGB24:
