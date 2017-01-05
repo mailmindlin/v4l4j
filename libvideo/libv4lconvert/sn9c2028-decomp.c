@@ -57,7 +57,7 @@
  * are NOT set to zero!
  */
 
-#define EAT_BITS(num) { bitBufCount -= num; bits_eaten += num; }
+#define EAT_BITS(num) do { bitBufCount -= num; bits_eaten += num; } while (0)
 
 /*
  * EAT_BITS consumes <num> bits (PEEK_BITS does not consume anything,
@@ -68,44 +68,37 @@
 	PEEK_BITS(10, bits);\
 	if ((bits & 0x200) == 0) {\
 		EAT_BITS(1);\
-	} \
-	else if ((bits & 0x380) == 0x280) {\
+	} else if ((bits & 0x380) == 0x280) {\
 		EAT_BITS(3);\
 		val += 3;\
 		if (val > 255)\
 			val = 255;\
-	} \
-	else if ((bits & 0x380) == 0x300) {\
+	} else if ((bits & 0x380) == 0x300) {\
 		EAT_BITS(3);\
 		val -= 3;\
 		if (val < 0)\
 			val = 0;\
-	} \
-	else if ((bits & 0x3c0) == 0x200) {\
+	} else if ((bits & 0x3c0) == 0x200) {\
 		EAT_BITS(4);\
 		val += 8;\
 		if (val > 255)\
 			val = 255;\
-	} \
-	else if ((bits & 0x3c0) == 0x240) {\
+	} else if ((bits & 0x3c0) == 0x240) {\
 		EAT_BITS(4);\
 		val -= 8;\
 		if (val < 0)\
 			val = 0;\
-	} \
-	else if ((bits & 0x3c0) == 0x3c0) {\
+	} else if ((bits & 0x3c0) == 0x3c0) {\
 		EAT_BITS(4);\
 		val -= 20;\
 		if (val < 0)\
 			val = 0;\
-	} \
-	else if ((bits & 0x3e0) == 0x380) {\
+	} else if ((bits & 0x3e0) == 0x380) {\
 		EAT_BITS(5);\
 		val += 20;\
 		if (val > 255)\
 			val = 255;\
-	} \
-	else {\
+	} else {\
 		EAT_BITS(10);\
 		val = 8 * (bits & 0x1f);\
 	} \
@@ -113,8 +106,7 @@
 
 
 #define PUT_PIXEL_PAIR {\
-	long pp;\
-	pp = (c1val << 8) + c2val;\
+	long pp = (c1val << 8) + c2val;\
 	*((unsigned short *)(dst + dst_index)) = pp;\
 	dst_index += 2;\
 }
@@ -124,7 +116,6 @@
 void v4lconvert_decode_sn9c2028(const u8 *src, u8 *dst, u32 width, u32 height) {
 	long dst_index = 0;
 	unsigned short bits;
-	short c1val, c2val;
 	unsigned long bitBuf = 0;
 	unsigned long bitBufCount = 0;
 	unsigned long bits_eaten = 0;
@@ -134,10 +125,10 @@ void v4lconvert_decode_sn9c2028(const u8 *src, u8 *dst, u32 width, u32 height) {
 	for (unsigned int y = 0; y < height; y++) {
 		PEEK_BITS(8, bits);
 		EAT_BITS(8);
-		c2val = (bits & 0xff);
+		short c2val = (bits & 0xff);
 		PEEK_BITS(8, bits);
 		EAT_BITS(8);
-		c1val = (bits & 0xff);
+		short c1val = (bits & 0xff);
 
 		PUT_PIXEL_PAIR;
 
