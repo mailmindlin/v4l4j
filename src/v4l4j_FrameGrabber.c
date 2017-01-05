@@ -37,22 +37,22 @@
 #include "rgb.h"
 
 // static variables
-static jfieldID		last_captured_frame_sequence_fID = NULL;
-static jfieldID		last_captured_frame_time_usec_fID = NULL;
-static jfieldID		last_captured_frame_buffer_index_fID = NULL;
+static jfieldID last_captured_frame_sequence_fID = NULL;
+static jfieldID last_captured_frame_time_usec_fID = NULL;
+static jfieldID last_captured_frame_buffer_index_fID = NULL;
 
 
 /*
  * Updates the width, height, standard & format fields in a framegrabber object
  */
-static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d){
+static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d) {
 	LOG_FN_ENTER();
 
 	//Updates the FrameGrabber class width, height & format fields with the
 	//values returned by V4L2
 	jclass this_class = (*e)->GetObjectClass(e, this);
 	if(this_class == NULL) {
-		info("[V4L4J] error looking up FrameGrabber class\n");
+		info("[V4L4J] Error looking up FrameGrabber class\n");
 		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up FrameGrabber class");
 		return;
 	}
@@ -60,7 +60,7 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 	//width
 	jfieldID widthFID = (*e)->GetFieldID(e, this_class, "width", "I");
 	if(widthFID == NULL) {
-		THROW_EXCEPTION(e, JNI_EXCP, "error looking up width field in FrameGrabber class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up width field in FrameGrabber class");
 		return;
 	}
 	(*e)->SetIntField(e, this, widthFID, d->vdev->capture->width);
@@ -68,7 +68,7 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 	//height
 	jfieldID heightFID = (*e)->GetFieldID(e, this_class, "height", "I");
 	if(heightFID == NULL) {
-		THROW_EXCEPTION(e, JNI_EXCP, "error looking up height field in FrameGrabber class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up height field in FrameGrabber class");
 		return;
 	}
 	(*e)->SetIntField(e, this, heightFID, d->vdev->capture->height);
@@ -76,7 +76,7 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 	//standard
 	jfieldID standardFID = (*e)->GetFieldID(e, this_class, "standard", "I");
 	if(standardFID == NULL) {
-		THROW_EXCEPTION(e, JNI_EXCP, "error looking up standard field in FrameGrabber class");
+		THROW_EXCEPTION(e, JNI_EXCP, "Error looking up standard field in class FrameGrabber");
 		return;
 	}
 	(*e)->SetIntField(e, this, standardFID, d->vdev->capture->std);
@@ -91,7 +91,7 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 		}
 
 		int fmt;
-		if(d->vdev->capture->is_native == 1)
+		if(d->vdev->capture->is_native)
 			fmt = d->vdev->capture->palette;
 		else
 			fmt = d->vdev->capture->convert->src_palette;
@@ -101,7 +101,7 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 	}
 }
 
-static int get_buffer_length(struct v4l4j_device *d){
+static int get_buffer_length(struct v4l4j_device *d) {
 	LOG_FN_ENTER();
 	switch (d->output_fmt) {
 		case OUTPUT_RAW:
@@ -117,7 +117,7 @@ static int get_buffer_length(struct v4l4j_device *d){
 			//BGR24 means w * h * 3
 			dprint(LOG_V4L4J, "[V4L4J] OUTPUT: BGR24 - Using byte array of size %d\n", d->vdev->capture->width * d->vdev->capture->height * 3);
 			return d->vdev->capture->width * d->vdev->capture->height * 3;
-		case  OUTPUT_YUV420:
+		case OUTPUT_YUV420:
 			//YUV420 means w * h * 3/2
 			dprint(LOG_V4L4J, "[V4L4J] OUTPUT: YUV420 - Using byte array of size %d\n", d->vdev->capture->width * d->vdev->capture->height * 3/2);
 			return d->vdev->capture->width * d->vdev->capture->height * 3/2;
@@ -194,40 +194,40 @@ static int init_capture_format(struct v4l4j_device *d, int fg_out_fmt, int* src_
 		dprint(LOG_LIBVIDEO, "[V4L4J] JPEG conversion done by v4l4j\n");
 		*dest_fmt = *src_fmt;
 		*src_fmt = -1;
-		d->need_conv = 1;
+		d->need_conv = true;
 		return 0;
 
 	case OUTPUT_RGB24:
 		*dest_fmt = RGB24;
 		// leave native capture format in src_fmt
 		dprint(LOG_LIBVIDEO, "[V4L4J] RGB24 conversion done by libvideo\n");
-		d->need_conv = 0;
+		d->need_conv = false;
 		return 0;
 
 	case OUTPUT_RAW:
 		*dest_fmt = *src_fmt;
 		*src_fmt = -1;
 		dprint(LOG_LIBVIDEO, "[V4L4J] raw format - no conversion\n");
-		d->need_conv = 0;
+		d->need_conv = false;
 		return 0;
 
 	case OUTPUT_BGR24:
 		*dest_fmt = BGR24;
 		// leave native capture format in src_fmt
 		dprint(LOG_LIBVIDEO, "[V4L4J] BGR24 conversion done by libvideo\n");
-		d->need_conv = 0;
+		d->need_conv = false;
 		return 0;
 	case OUTPUT_YUV420:
 		*dest_fmt = YUV420;
 		// leave native capture format in src_fmt
 		dprint(LOG_LIBVIDEO, "[V4L4J] YUV420 conversion done by libvideo\n");
-		d->need_conv = 0;
+		d->need_conv = false;
 		return 0;
 	case OUTPUT_YVU420:
 		*dest_fmt = YVU420;
 		// leave native capture format in src_fmts
 		dprint(LOG_LIBVIDEO, "[V4L4J] YVU420 conversion done by libvideo\n");
-		d->need_conv = 0;
+		d->need_conv = false;
 		return 0;
 	default:
 		info("[V4L4J] Error: unknown output format %d\n", fg_out_fmt);
@@ -476,10 +476,10 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoInput(JNI
 	LOG_FN_ENTER();
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
-	int input_num, standard;
+	unsigned int input_num, standard;
 	dev->vdev->capture->actions->get_video_input_std(dev->vdev, &input_num, &standard);
 
-	return (jint)input_num;
+	return (jint) input_num;
 }
 
 /*
@@ -490,7 +490,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoStandard(
 	
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
-	int input_num, standard;
+	unsigned int input_num, standard;
 	dev->vdev->capture->actions->get_video_input_std(dev->vdev, &input_num, &standard);
 
 	return (jint) standard;
@@ -500,7 +500,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoStandard(
 /*
  * enqueue a buffer
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_enqueueBuffer(JNIEnv *e, jobject t, jlong object, jint buffer_index){
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_enqueueBuffer(JNIEnv *e, jobject t, jlong object, jint buffer_index) {
 	LOG_FN_ENTER();
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
@@ -525,9 +525,9 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 
 	// get a pointer to the java array
 	jbyteArray arrayRef = NULL;
-	unsigned int arrayLength = NULL;
+	unsigned int arrayLength = 0;
 	void (*releaseArray)(JNIEnv* env, jbyteArray arrayRef, unsigned char* ptr);
-	unsigned char* array = getBufferPointer(env, buffer, &arrayRef, &arrayLength, &releaseArray);	
+	unsigned char* array = getBufferPointer(env, buffer, &arrayRef, &arrayLength, &releaseArray);
 	// check we have a valid pointer
 	if (!array) {
 		(*d->vdev->capture->actions->enqueue_buffer)(d->vdev, buffer_index);
@@ -538,21 +538,22 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 	if (arrayRef != NULL)
 		dprintf(LOG_V4L4J, "[V4L4J] Slow path: Can't get a direct pointer to buffer");
 
+	unsigned int output_len;
 	START_TIMING;
 	// Perform required conversion
-	if(d->vdev->capture->is_native != 1) {
+	if(!d->vdev->capture->is_native) {
 		// Check whether we can convert directly to the byte[] memory
-		if(d->need_conv != 1) {
+		if(!d->need_conv) {
 			// Only libv4l conversion is required
-			(*d->vdev->capture->actions->convert_buffer)(d->vdev, buffer_index, d->capture_len, array);
+			output_len = (*d->vdev->capture->actions->convert_buffer)(d->vdev, buffer_index, d->capture_len, array);
 		} else {
 			// both libv4l and v4l4j conversions required
 			(*d->vdev->capture->actions->convert_buffer)(d->vdev, buffer_index, d->capture_len, d->double_conversion_buffer);
-			(*d->convert)(d, d->double_conversion_buffer, array);
+			output_len = (*d->convert)(d, d->double_conversion_buffer, array);
 		}
 	} else {
 		// No libv4l conversion required. Check if v4l4j conversion is required
-		if (d->need_conv != 1) {
+		if (!d->need_conv) {
 			// No v4l4j conversion required. So copy the frame to byte[] memory. This
 			// is definitely NOT an optimal solution, but I cant see any other way to do it:
 			// We could mmap the byte[] memory and used it as the buffer, but the JVM specs
@@ -561,9 +562,9 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 			// ReleasePrimitiveArrayCritical() ) for a short amount of time. If you
 			// find yourself reading this comment and you have a better idea, let me know.
 			memcpy(array, frame, d->capture_len);
-			d->len = d->capture_len;
+			output_len = d->capture_len;
 		} else {
-			(*d->convert)(d, frame, array);
+			output_len = (*d->convert)(d, frame, array);
 		}
 	}
 	END_TIMING("JNI Conversion took ");
@@ -576,7 +577,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 	(*env)->SetLongField(env, this, last_captured_frame_time_usec_fID, captureTime);
 	(*env)->SetIntField(env, this, last_captured_frame_buffer_index_fID, buffer_index);
 
-	return d->len;
+	return output_len;
 }
 
 /*

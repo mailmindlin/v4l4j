@@ -65,7 +65,7 @@ struct v4l4j_device {
 	/**
 	 * Method for v4l4j conversion
 	 */
-	void (*convert) (struct v4l4j_device *, unsigned char *, unsigned char *);
+	size_t (*convert) (struct v4l4j_device *device, unsigned char *src, unsigned char *dst);
 	unsigned char *conversion_buffer;
 	/**
 	 * Conversion buffer used when two conversions are required
@@ -83,11 +83,7 @@ struct v4l4j_device {
 	/**
 	 * The size of the last captured frame by libvideo
 	 */
-	int capture_len;
-	/**
-	 * The size of the frame after conversion
-	 */
-	int len;
+	size_t capture_len;
 	/**
 	 * This flag is set by Java_au_edu_jcu_v4l4j_FrameGrabber_doInit, and says
 	 * whether  v4l4j (1) or libvideo (0) does the output format conversion.
@@ -95,7 +91,7 @@ struct v4l4j_device {
 	 * In practice, the only time that this will be set to 1 will be if the
 	 * output format is JPEG, which is handled in jpeg.c
 	 */
-	int need_conv;
+	bool need_conv;
 };
 
 #ifndef ARRAY_SIZE

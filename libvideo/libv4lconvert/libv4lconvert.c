@@ -209,8 +209,8 @@ void v4lconvert_destroy(struct v4lconvert_data *data) {
 bool v4lconvert_supported_dst_format(unsigned int pixelformat) {
 	for (unsigned int i = 0; i < ARRAY_SIZE(supported_dst_pixfmts); i++)
 		if (supported_dst_pixfmts[i].fmt == pixelformat)
-			return FALSE;
-	return TRUE;
+			return true;
+	return false;
 }
 
 int v4lconvert_supported_dst_fmt_only(struct v4lconvert_data *data) {
@@ -246,15 +246,15 @@ int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt) 
 	
 	fmt->flags = V4L2_FMT_FLAG_EMULATED;
 	fmt->pixelformat = faked_fmts[i];
-	fmt->description[0] = (faked_fmts[i] >>  0) & 0xff;
-	fmt->description[1] = (faked_fmts[i] >>  8) & 0xff;
-	fmt->description[2] = (faked_fmts[i] >> 16) & 0xff;
-	fmt->description[3] = (faked_fmts[i] >> 24) & 0xff;
+	fmt->description[0] = (char) ((faked_fmts[i] >>  0) & 0xff);
+	fmt->description[1] = (char) ((faked_fmts[i] >>  8) & 0xff);
+	fmt->description[2] = (char) ((faked_fmts[i] >> 16) & 0xff);
+	fmt->description[3] = (char) ((faked_fmts[i] >> 24) & 0xff);
 	fmt->description[4] = '\0';
 	memset(fmt->reserved, 0, sizeof(fmt->reserved));
 
-	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG, "Returning emulated format {id: %d, flags: %u, pixelformat: %#x, description:'%s'}\n"
-			fmt->id, fmt->flags, fmt->pixelformat, fmt->description);
+	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG, "Returning emulated format {id: %d, flags: %u, pixelformat: %#x, description:'%s'}\n",
+			fmt->index, fmt->flags, fmt->pixelformat, fmt->description);
 	return 0;
 }
 
@@ -296,12 +296,8 @@ static int v4lconvert_get_rank(struct v4lconvert_data *data, unsigned int src_in
 	if (data->bandwidth && needed > data->bandwidth)
 		rank += 10;
 	
-	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG2, "ranked: %c%c%c%c for %dx%d @ %d fps, needed: %d, bandwidth: %d, rank: %d\n",
-	       supported_src_pixfmts[src_index].fmt & 0xff,
-	       (supported_src_pixfmts[src_index].fmt >> 8) & 0xff,
-	       (supported_src_pixfmts[src_index].fmt >> 16) & 0xff,
-	       supported_src_pixfmts[src_index].fmt >> 24, src_width,
-	       src_height, data->fps, needed, data->bandwidth, rank);
+	//dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG2, "ranked: %c%c%c%c for %dx%d @ %d fps, needed: %d, bandwidth: %d, rank: %d\n",
+	//		v4l2_fourcc_chars(supported_src_pixfmts[src_index].fmt), src_width, src_height, data->fps, needed, data->bandwidth, rank);
 	return rank;
 }
 
@@ -433,6 +429,7 @@ int v4lconvert_try_format(struct v4lconvert_data *data, struct v4l2_format *dest
 	unsigned int desired_height = dest_fmt->fmt.pix.height;
 	struct v4l2_format try_src, try_dest, try2_src, try2_dest;
 
+	
 	if (dest_fmt->type == V4L2_BUF_TYPE_VIDEO_CAPTURE &&
 			v4lconvert_supported_dst_fmt_only(data) &&
 			!v4lconvert_supported_dst_format(dest_fmt->fmt.pix.pixelformat))
@@ -536,6 +533,13 @@ int v4lconvert_try_format(struct v4lconvert_data *data, struct v4l2_format *dest
 
 /* Is conversion necessary ? */
 bool v4lconvert_needs_conversion(struct v4lconvert_data *data, const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt) {
+	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG1, "Prop    Source     Dest\n");
+	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG1, "width   %-11d%d\n", src_fmt->fmt.pix.width, dest_fmt->fmt.pix.width);
+	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG1, "height  %-11d%d\n", src_fmt->fmt.pix.height, dest_fmt->fmt.pix.height);
+	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG1, "pfmt    %08x   %08x\n", src_fmt->fmt.pix.pixelformat, dest_fmt->fmt.pix.pixelformat);
+	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG1, "pfmt    %c%c%c%c       %c%c%c%c\n", v4l2_fourcc_chars(src_fmt->fmt.pix.pixelformat), v4l2_fourcc_chars(dest_fmt->fmt.pix.pixelformat));
+	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG1, "conv    %s\n", v4lcontrol_needs_conversion(data->control) ? "YES" : "NO");
+	dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG1, "support %s\n", v4lconvert_supported_dst_format(dest_fmt->fmt.pix.pixelformat) ? "YES" : "NO");
 	if (src_fmt->fmt.pix.width != dest_fmt->fmt.pix.width ||
 			src_fmt->fmt.pix.height != dest_fmt->fmt.pix.height ||
 			src_fmt->fmt.pix.pixelformat != dest_fmt->fmt.pix.pixelformat ||
@@ -773,10 +777,9 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data, u8 *src, unsi
 		case V4L2_PIX_FMT_SN9C2028:
 		case V4L2_PIX_FMT_SQ905C:
 		case V4L2_PIX_FMT_STV0680: { /* Not compressed but needs some shuffling */
-			u8 *tmpbuf;
 			struct v4l2_format tmpfmt = *fmt;
 
-			tmpbuf = v4lconvert_alloc_buffer(width * height, &data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
+			u8 *tmpbuf = v4lconvert_alloc_buffer(width * height, &data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
 			if (!tmpbuf)
 				return v4lconvert_oom_error(data);
 
@@ -790,7 +793,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data, u8 *src, unsi
 					tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR8;
 					break;
 				case V4L2_PIX_FMT_PAC207:
-					if (v4lconvert_decode_pac207(data, src, src_size, tmpbuf, width, height)) {
+					if (v4lconvert_decode_pac207(src, src_size, tmpbuf, width, height)) {
 						/* Corrupt frame, better get another one */
 						errno = EAGAIN;
 						return -1;
@@ -906,7 +909,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data, u8 *src, unsi
 					break;
 				case V4L2_PIX_FMT_YUV420:
 				case V4L2_PIX_FMT_YVU420:
-					v4lconvert_grey_to_yuv420(src, dest, fmt);
+					v4lconvert_grey_to_yuv420(src, dest, width, height);
 					break;
 			}
 			if (src_size < (width * height)) {
@@ -919,12 +922,12 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data, u8 *src, unsi
 		case V4L2_PIX_FMT_Y10BPACK:
 			switch (dest_pix_fmt) {
 				case V4L2_PIX_FMT_RGB24:
-					case V4L2_PIX_FMT_BGR24:
-					result = v4lconvert_y10b_to_rgb24(data, src, dest, width, height);
+				case V4L2_PIX_FMT_BGR24:
+					result = v4lconvert_y10b_to_rgb24(src, dest, width, height);
 					break;
 				case V4L2_PIX_FMT_YUV420:
 				case V4L2_PIX_FMT_YVU420:
-					result = v4lconvert_y10b_to_yuv420(data, src, dest, width, height);
+					result = v4lconvert_y10b_to_yuv420(src, dest, width, height);
 					break;
 			}
 			if (result == 0 && src_size < (width * height * 10 / 8)) {

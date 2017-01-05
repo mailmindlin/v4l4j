@@ -43,32 +43,32 @@ struct pwc_probe_private {
 };
 
 
-int pwc_driver_probe(struct video_device *vdev, void **data){
+int pwc_driver_probe(struct video_device *vdev, void **data) {
 	struct v4l2_capability cap;
 	struct pwc_probe p;
 	struct pwc_probe_private *priv;
 	CLEAR(cap);
-
-	int i=3;
+	
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: probing PWC ...\n");
-	if(ioctl(vdev->fd, VIDIOCPWCPROBE, &p)>=0) {
-		if (-1 == ioctl(vdev->fd, VIDIOC_QUERYCAP, &cap))
+	if(ioctl(vdev->fd, VIDIOCPWCPROBE, &p) >= 0) {
+		if (ioctl(vdev->fd, VIDIOC_QUERYCAP, &cap) == -1)
 			goto end;
 
 		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: card name: %s, ioctl returned: %s\n", cap.card, p.name);
-		if(strncmp((char *)cap.card, p.name, sizeof(cap.card))!=0)
+		if(strncmp((char *)cap.card, p.name, sizeof(cap.card)) != 0)
 			goto end;
 
 		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: found pwc driver\n");
-		XMALLOC(priv, struct pwc_probe_private *, sizeof(struct pwc_probe_private ));
+		XMALLOC(priv, struct pwc_probe_private *, sizeof(struct pwc_probe_private));
 		*data = (void *) priv;
-		if(ioctl(vdev->fd, VIDIOCPWCMPTRESET, &i)>=0) {
+		int i = 3;
+		if(ioctl(vdev->fd, VIDIOCPWCMPTRESET, &i) >= 0) {
 			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: found PTZ-capable camera (%d controls)\n", NB_PRIV_IOCTL);
-			priv->isPTZ=1;
+			priv->isPTZ = 1;
 			return NB_PRIV_IOCTL;
 		} else {
 			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: no PTZ camera found\n");
-			priv->isPTZ=0;
+			priv->isPTZ = 0;
 			return 0;
 		}
 	}
@@ -78,149 +78,141 @@ end:
 	return -1;
 }
 
-int pwc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, int *val){
+int pwc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *qc, void *d, int *val) {
 	struct pwc_mpt_angles angles;
-	int ret = LIBVIDEO_ERR_IOCTL;
-
-	if(q->id==0) {
-		//Pan/tilt reset
-		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: Invoked get on Pan/Tilt reset button \n");
-	} else if(q->id==1) {
-
-		//Pan control
-		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: Invoked get on Pan\n");
-		if(ioctl(vdev->fd, VIDIOCPWCMPTGANGLE, &angles)==0){
-			*val = angles.pan;
-			ret = 0;
-		} else
+	switch(qc->id) {
+		case 0:
+			//Pan/tilt reset
+			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: Invoked get on Pan/Tilt reset button \n");
+			break;
+		case 1:
+			//Pan control
+			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: Invoked get on Pan\n");
+			if(ioctl(vdev->fd, VIDIOCPWCMPTGANGLE, &angles) == 0) {
+				*val = angles.pan;
+				return LIBVIDEO_ERR_SUCCESS;
+			}
 			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "PWC: Error probing pan angle\n");
-
-
-	} else if(q->id==2) {
-
-		//tilt control
-		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: Invoked get on Tilt\n");
-		if(ioctl(vdev->fd, VIDIOCPWCMPTGANGLE, &angles)==0){
-			*val = angles.tilt;
-			ret = 0;
-		} else
+			break;
+		case 2:
+			//tilt control
+			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: Invoked get on Tilt\n");
+			if(ioctl(vdev->fd, VIDIOCPWCMPTGANGLE, &angles) == 0) {
+				*val = angles.tilt;
+				return LIBVIDEO_ERR_SUCCESS;
+			}
 			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "PWC: Error probing tilt angle\n");
-
-
-	} else
-		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "PWC: Cant identify control %d\n",q->id);
-
-	return ret;
-}
-
-int pwc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val, void *d){
-	struct pwc_mpt_angles angles;
-	int ret = LIBVIDEO_ERR_IOCTL, prev = 0;
-
-	if(q->id==0) {
-
-		//Pan/tilt reset
-		int i;
-		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: Invoked set on Pan/Tilt reset\n");
-		i=3;
-		if(ioctl(vdev->fd, VIDIOCPWCMPTRESET, &i)==0){
-			ret = 0;
-		} else {
-			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "PWC: Error resetting pan/tilt\n");
-		}
-		*val=0;
-	} else if(q->id==1) {
-
-		//Pan control
-		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: Invoked set on pan\n");
-
-		//finds the previous values for pan and tilt
-		if(ioctl(vdev->fd, VIDIOCPWCMPTGANGLE, &angles)!=0){
-			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "PWC: Error probing pan/tilt angle\n");
-		} else
-			prev = angles.pan;
-
-		angles.pan=*val;
-		angles.absolute=1;
-
-		if(ioctl(vdev->fd, VIDIOCPWCMPTSANGLE, &angles)==0){
-			ret = 0;
-		} else {
-			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "PWC: Error setting pan angle\n");
-			*val = prev;
-		}
-
-	} else if(q->id==2) {
-
-		//tilt control
-		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: Invoked set on tiltn\n");
-
-		//finds the previous values for pan and tilt
-		if(ioctl(vdev->fd, VIDIOCPWCMPTGANGLE, &angles)!=0){
-			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "PWC: Error probing pan/tilt angle\n");
-		} else
-			prev = angles.tilt;
-
-		angles.tilt=*val;
-		angles.absolute=1;
-
-		if(ioctl(vdev->fd, VIDIOCPWCMPTSANGLE, &angles)==0){
-			ret = 0;
-		} else {
-			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "PWC: Error setting tilt angle\n");
-			*val = prev;
-		}
-
-	} else {
-		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "PWC: Cant identify control %d\n",q->id);
+			break;
+		default:
+			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "PWC: Cant identify control %d\n", qc->id);
+			break;
 	}
-	return ret;
+	return LIBVIDEO_ERR_IOCTL;
 }
 
-int pwc_list_ctrl(struct video_device *vdev, struct control *c, void *data ){
-	int i=0;
+int pwc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *qc, int *val, void *d) {
+	struct pwc_mpt_angles angles;
+	int prev = 0;
+
+	switch(qc->id) {
+		case 0:
+			//Pan/tilt reset
+			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: Invoked set on Pan/Tilt reset\n");
+			*val = 0;
+			int i = 3;
+			if(ioctl(vdev->fd, VIDIOCPWCMPTRESET, &i) != 0) {
+				dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "PWC: Error resetting pan/tilt\n");
+				return LIBVIDEO_ERR_IOCTL;
+			}
+			break;
+		case 1:
+			//Pan control
+			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: Invoked set on pan\n");
+
+			//finds the previous values for pan and tilt
+			if(ioctl(vdev->fd, VIDIOCPWCMPTGANGLE, &angles) != 0)
+				dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "PWC: Error probing pan/tilt angle\n");
+			else
+				prev = angles.pan;
+			
+			angles.pan = *val;
+			angles.absolute = 1;
+			
+			if(ioctl(vdev->fd, VIDIOCPWCMPTSANGLE, &angles) != 0) {
+				dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "PWC: Error setting pan angle\n");
+				*val = prev;
+				return LIBVIDEO_ERR_IOCTL;
+			}
+			break;
+		case 2:
+			//tilt control
+			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: Invoked set on tiltn\n");
+
+			//finds the previous values for pan and tilt
+			if(ioctl(vdev->fd, VIDIOCPWCMPTGANGLE, &angles) != 0)
+				dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "PWC: Error probing pan/tilt angle\n");
+			else
+				prev = angles.tilt;
+
+			angles.tilt = *val;
+			angles.absolute = 1;
+
+			if(ioctl(vdev->fd, VIDIOCPWCMPTSANGLE, &angles) != 0) {
+				dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "PWC: Error setting tilt angle\n");
+				*val = prev;
+				return LIBVIDEO_ERR_IOCTL;
+			}
+			break;
+		default:
+			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "PWC: Cant identify control %d\n", qc->id);
+			return LIBVIDEO_ERR_OUT_OF_RANGE;
+	}
+	return LIBVIDEO_ERR_SUCCESS;
+}
+
+int pwc_list_ctrl(struct video_device *vdev, struct control *c, void *data) {
+	int i = 0;
 	struct pwc_probe_private *priv = (struct pwc_probe_private *) data;
-	if(priv->isPTZ==1) {
+	if(priv->isPTZ == 1) {
 
 		struct pwc_mpt_range range;
 
 		//Pan/tilt reset
 		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: Found pwc private ioctl Pan/Tilt reset\n");
-		c[i].v4l2_ctrl->id=i;
+		c[i].v4l2_ctrl->id = i;
 		c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_BUTTON;
 		strcpy((char *) c[i].v4l2_ctrl->name,"Pan/Tilt reset");
 		c[i].v4l2_ctrl->minimum = c[i].v4l2_ctrl->maximum = c[i].v4l2_ctrl->step = c[i].v4l2_ctrl->default_value = 0;
-		c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
-		c[i].v4l2_ctrl->reserved[1]=PWC_PROBE_INDEX;
+		c[i].v4l2_ctrl->reserved[0] = V4L2_PRIV_IOCTL;
+		c[i].v4l2_ctrl->reserved[1] = PWC_PROBE_INDEX;
 		i++;
 
 		//Pan/tilt control
-		if(ioctl(vdev->fd, VIDIOCPWCMPTGRANGE, &range) ==0) {
+		if(ioctl(vdev->fd, VIDIOCPWCMPTGRANGE, &range) == 0) {
 			//Pan control
 			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: Found pwc private ioctl Pan control\n");
-			c[i].v4l2_ctrl->id=i;
+			c[i].v4l2_ctrl->id = i;
 			c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
-			strcpy((char *) c[i].v4l2_ctrl->name,"Pan");
+			strcpy((char *) c[i].v4l2_ctrl->name, "Pan");
 			c[i].v4l2_ctrl->minimum = range.pan_min;
 			c[i].v4l2_ctrl->maximum = range.pan_max;
 			c[i].v4l2_ctrl->step = 1;
 			c[i].v4l2_ctrl->default_value = 0;
-			c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
-			c[i].v4l2_ctrl->reserved[1]=PWC_PROBE_INDEX;
+			c[i].v4l2_ctrl->reserved[0] = V4L2_PRIV_IOCTL;
+			c[i].v4l2_ctrl->reserved[1] = PWC_PROBE_INDEX;
 			i++;
 
 			//tilt control
 			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: Found pwc private ioctl Tilt control\n");
-			c[i].v4l2_ctrl->id=i;
+			c[i].v4l2_ctrl->id = i;
 			c[i].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
-			strcpy((char *) c[i].v4l2_ctrl->name,"Tilt");
+			strcpy((char *) c[i].v4l2_ctrl->name, "Tilt");
 			c[i].v4l2_ctrl->minimum = range.tilt_min;
 			c[i].v4l2_ctrl->maximum = range.tilt_max;
 			c[i].v4l2_ctrl->step = 1;
 			c[i].v4l2_ctrl->default_value = 0;
-			c[i].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
-			c[i].v4l2_ctrl->reserved[1]=PWC_PROBE_INDEX;
-
+			c[i].v4l2_ctrl->reserved[0] = V4L2_PRIV_IOCTL;
+			c[i].v4l2_ctrl->reserved[1] = PWC_PROBE_INDEX;
 		} else {
 			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "PWC: Error probing Pan/tilt range\n");
 		}

@@ -88,9 +88,7 @@ static inline u8 get_byte(const u8 *inp, unsigned int bitpos) {
 }
 
 int v4lconvert_decode_mr97310a(struct v4lconvert_data *data, const u8 *inp, unsigned int src_size, u8 *outp, u32 width, u32 height) {
-	int val;
-	u8 code;
-	u8 lp, tp, tlp, trp;
+	u8 tp, tlp, trp;
 	struct v4l2_control min_clockdiv = { .id = MIN_CLOCKDIV_CID };
 
 	if (!decoder_initialized)
@@ -107,7 +105,7 @@ int v4lconvert_decode_mr97310a(struct v4lconvert_data *data, const u8 *inp, unsi
 
 		/* first two pixels in first two rows are stored as raw 8-bit */
 		if (row < 2) {
-			code = get_byte(inp, bitpos);
+			u8 code = get_byte(inp, bitpos);
 			bitpos += 8;
 			*outp++ = code;
 
@@ -120,11 +118,12 @@ int v4lconvert_decode_mr97310a(struct v4lconvert_data *data, const u8 *inp, unsi
 
 		while (col < width) {
 			/* get bitcode */
-			code = get_byte(inp, bitpos);
+			u8 code = get_byte(inp, bitpos);
 			/* update bit position */
 			bitpos += table[code].len;
 
 			/* calculate pixel value */
+			int val;
 			if (table[code].is_abs) {
 				/* get 5 more bits and use them as absolute value */
 				code = get_byte(inp, bitpos);
@@ -134,7 +133,7 @@ int v4lconvert_decode_mr97310a(struct v4lconvert_data *data, const u8 *inp, unsi
 			} else {
 				/* value is relative to top or left pixel */
 				val = table[code].val;
-				lp = outp[-2];
+				u8 lp = outp[-2];
 				if (row > 1) {
 					tlp = outp[-2 * (signed) width - 2];
 					tp  = outp[-2 * (signed) width];
@@ -173,11 +172,9 @@ int v4lconvert_decode_mr97310a(struct v4lconvert_data *data, const u8 *inp, unsi
 				   compress the image enough, we may
 				   fail to do this because older
 				   drivers don't support this */
-				SYS_IOCTL(data->fd, VIDIOC_G_CTRL,
-						&min_clockdiv);
+				SYS_IOCTL(data->fd, VIDIOC_G_CTRL, &min_clockdiv);
 				min_clockdiv.value++;
-				SYS_IOCTL(data->fd, VIDIOC_S_CTRL,
-						&min_clockdiv);
+				SYS_IOCTL(data->fd, VIDIOC_S_CTRL, &min_clockdiv);
 				/* We return success here, because if we
 				   return failure for too many frames in a row
 				   libv4l2 will return an error to the
@@ -186,7 +183,7 @@ int v4lconvert_decode_mr97310a(struct v4lconvert_data *data, const u8 *inp, unsi
 				data->frames_dropped = 0;
 				return 0;
 			}
-			V4LCONVERT_ERR("incomplete mr97310a frame\n");
+			V4LCONVERT_ERR("Incomplete mr97310a frame\n");
 			return -1;
 		}
 	}

@@ -30,6 +30,7 @@
 #include "v4l2-input.h"
 #include "libvideo-err.h"
 #include "log.h"
+#include "list.h"
 #include "libvideo-palettes.h"
 
 //forward declarations
@@ -56,13 +57,13 @@ static int find_v4l2_palette(unsigned int v4l2_fmt){
 //NULL, an array of struct frame_intv_discrete or struct frame_intv_continuous.
 //It returns FRAME_INTV_UNSUPPORTED, DISCRETE or CONTINUOUS respectively.
 static int lookup_frame_intv(struct v4lconvert_data *conv, unsigned int fmt, unsigned int width, unsigned int height, void **p){
-	struct v4l2_frmivalenum intv;
 	int intv_type = FRAME_INTV_UNSUPPORTED;
 	struct frame_intv_discrete *d = NULL;
+	size_t discrete_capacity = 0;
 	struct frame_intv_continuous *c = NULL;
-
+	
+	struct v4l2_frmivalenum intv;
 	CLEAR(intv);
-
 	intv.index = 0;
 	intv.pixel_format = fmt;
 	intv.width = width;
@@ -77,11 +78,11 @@ static int lookup_frame_intv(struct v4lconvert_data *conv, unsigned int fmt, uns
 					dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, "QRY: Found discrete frame intv:\n");
 				}
 
-				dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, "QRY: %d/%d\n", intv.discrete.numerator, intv.discrete.denominator);
+				dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, "QRY:    %d/%d\n", intv.discrete.numerator, intv.discrete.denominator);
 
 				//increase the array size by one for the extra
 				//discrete frame interval
-				XREALLOC(d, struct frame_intv_discrete *, (intv.index + 1) * sizeof(struct frame_intv_discrete));
+				ARRAY_GROW(d, struct frame_intv_discrete, discrete_capacity, intv.index + 1, 1 + 5);
 
 				//fill in the values of the new element
 				d[intv.index].numerator = intv.discrete.numerator;
@@ -92,10 +93,8 @@ static int lookup_frame_intv(struct v4lconvert_data *conv, unsigned int fmt, uns
 				intv.pixel_format = fmt;
 				intv.width = width;
 				intv.height = height;
-		} else if((intv.type == V4L2_FRMIVAL_TYPE_CONTINUOUS) || 
-				(intv.type == V4L2_FRMIVAL_TYPE_STEPWISE)) {
-			dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, "QRY: Found %s frame intv:\n",
-				(intv.type==V4L2_FRMIVAL_TYPE_CONTINUOUS) ? "continuous" : "stepwise");
+		} else if((intv.type == V4L2_FRMIVAL_TYPE_CONTINUOUS) || (intv.type == V4L2_FRMIVAL_TYPE_STEPWISE)) {
+			dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, "QRY: Found %s frame intv:\n", (intv.type == V4L2_FRMIVAL_TYPE_CONTINUOUS) ? "continuous" : "stepwise");
 
 			// WORKAROUND FOR BROKEN DRIVER:
 			// reported on ML:
@@ -106,8 +105,7 @@ static int lookup_frame_intv(struct v4lconvert_data *conv, unsigned int fmt, uns
 			// for the step (1/10000000). So instead of reporting this
 			// stepwise interval, we report it as a discrete one with only
 			// a single value.
-			if( (intv.stepwise.min.numerator == intv.stepwise.max.numerator)
-			&& (intv.stepwise.min.denominator == intv.stepwise.max.denominator) ) {
+			if( (intv.stepwise.min.numerator == intv.stepwise.max.numerator) && (intv.stepwise.min.denominator == intv.stepwise.max.denominator) ) {
 
 				dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1,
 					"QRY: using workaround for broken frame interval\n"
@@ -118,7 +116,7 @@ static int lookup_frame_intv(struct v4lconvert_data *conv, unsigned int fmt, uns
 
 				//increase the array size by one for the extra
 				//discrete frame interval
-				XREALLOC(d,struct frame_intv_discrete *, (intv.index + 1) * sizeof(struct frame_intv_discrete));
+				XREALLOC(d, struct frame_intv_discrete *, (intv.index + 1) * sizeof(struct frame_intv_discrete));
 
 				//fill in the values of the new element
 				d[intv.index].numerator = intv.stepwise.min.numerator;
@@ -154,7 +152,8 @@ static int lookup_frame_intv(struct v4lconvert_data *conv, unsigned int fmt, uns
 	if(intv_type == FRAME_INTV_DISCRETE) {
 		//add a struct frame_intv_discrete with null values at the end of
 		//the list
-		XREALLOC(d, struct frame_intv_discrete *, (intv.index + 1) * sizeof(struct frame_intv_discrete));
+		if (intv.index + 1 != discrete_capacity)
+			XREALLOC(d, struct frame_intv_discrete *, (intv.index + 1) * sizeof(struct frame_intv_discrete));
 		CLEAR(d[intv.index]);
 		*p = d;
 	} else if(intv_type == FRAME_INTV_CONTINUOUS) {
@@ -243,7 +242,7 @@ static void lookup_frame_sizes(struct v4lconvert_data *conv, unsigned int fmt, s
  * it, the matching converted palette is advertised as native if there are no
  * raw formats for it yet (if there are, this step is skipped)and -1 is returned
  */
-static int add_raw_format(struct v4lconvert_data *conv, unsigned int width, unsigned int height, struct palette_info *p, unsigned int fmt, unsigned int *size){
+static bool add_raw_format(struct v4lconvert_data *conv, unsigned int width, unsigned int height, struct palette_info *p, unsigned int fmt, unsigned int *size){
 	if(fmt != -1u) {
 		//test the given native format fmt to see if it can be used
 		//by v4lconvert. Sometimes, the native format that must be used to
@@ -264,7 +263,7 @@ static int add_raw_format(struct v4lconvert_data *conv, unsigned int width, unsi
 				p->raw_palettes = NULL;
 				lookup_frame_sizes(conv, libvideo_palettes[fmt].v4l2_palette, p);
 			}
-			return -1;
+			return false;
 		}
 		// else
 		//this raw format can be used for capture, fall through, and add it
@@ -272,7 +271,7 @@ static int add_raw_format(struct v4lconvert_data *conv, unsigned int width, unsi
 	XREALLOC(p->raw_palettes, int *, (*size + 1) * sizeof(int));
 	p->raw_palettes[*size] = (signed) fmt;
 	*size += 1;
-	return 0;
+	return true;
 }
 
 /*
@@ -296,11 +295,19 @@ static int has_raw_format(int *raw_palettes, int fmt, int size) {
 static int try_format(unsigned int index, unsigned int width, unsigned int height, struct v4l2_format *dst, struct v4l2_format *src, struct v4lconvert_data *conv) {
 	CLEAR(*dst);
 	CLEAR(*src);
+	
 	dst->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	
 	dst->fmt.pix.pixelformat = libvideo_palettes[index].v4l2_palette;
+	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "Mapped pfmt (%d) => (%d) %06x %06x %d %s\n", index,
+		libvideo_palettes[index].libvideo_palette,
+		libvideo_palettes[index].v4l1_palette,
+		libvideo_palettes[index].v4l2_palette,
+		libvideo_palettes[index].depth,
+		libvideo_palettes[index].name);
 	dst->fmt.pix.width = width;
 	dst->fmt.pix.height = height;
-	return v4lconvert_try_format(conv,dst,src);
+	return v4lconvert_try_format(conv, dst, src);
 }
 
 static bool get_current_resolution(struct video_device *vdev, unsigned int *width, unsigned int *height) {
@@ -311,10 +318,10 @@ static bool get_current_resolution(struct video_device *vdev, unsigned int *widt
 	if (ioctl(vdev->fd, VIDIOC_G_FMT, &fmt) == 0) {
 		*width = fmt.fmt.pix.width;
 		*height = fmt.fmt.pix.height;
-		return TRUE;
+		return true;
 	}
 
-	return FALSE;
+	return false;
 }
 
 //this function adds the given palette fmt to the list of
@@ -345,7 +352,7 @@ static int add_supported_palette(struct video_device *vdev, struct device_info *
 
 	if(v4lconvert_needs_conversion(di->convert, &src, &dst)) {
 		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: %s is a converted palette\n", libvideo_palettes[fmt].name);
-		unsigned int i;
+		unsigned int i = 0;
 		{
 			int src_palette = find_v4l2_palette(src.fmt.pix.pixelformat);
 			if (src_palette == -1)
@@ -355,7 +362,7 @@ static int add_supported_palette(struct video_device *vdev, struct device_info *
 			//it is converted from another format
 			//adds the format returned by v4lconvert_needs_conversion
 			dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: from %d (%s)\n", src_palette, libvideo_palettes[src_palette].name);
-			if(add_raw_format(di->convert, width, height, curr, (unsigned)src_palette, &i) == -1)
+			if(!add_raw_format(di->convert, width, height, curr, (unsigned)src_palette, &i))
 			//this raw format can not be used for capture. add_raw_format advertises
 			//this converted format as a native one, and we MUST exit here.
 				return 0;
@@ -366,7 +373,7 @@ static int add_supported_palette(struct video_device *vdev, struct device_info *
 		struct v4l2_frmsizeenum s;
 		s.index = 0;
 		s.pixel_format = dst.fmt.pix.pixelformat;
-		while(v4lconvert_enum_framesizes(di->convert, &s)==0){
+		while(v4lconvert_enum_framesizes(di->convert, &s) == 0) {
 			if(s.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
 				//try with this resolution
 				//dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
@@ -381,7 +388,7 @@ static int add_supported_palette(struct video_device *vdev, struct device_info *
 				if(v4lconvert_needs_conversion(di->convert, &src, &dst) && !has_raw_format(curr->raw_palettes, src_palette, i)) {
 					//it is converted from another format which is not
 					//in the array yet. adds the format
-					dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY:  - from %s (#%d)\n", libvideo_palettes[src_palette].name, src_palette);
+					dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY:  - from %s (#%08d)\n", libvideo_palettes[src_palette].name, src_palette);
 					add_raw_format(di->convert, s.discrete.width, s.discrete.height, curr, (unsigned) src_palette, &i);
 					if(i == -1u) {
 						PRINT_REPORT_ERROR();
@@ -395,6 +402,7 @@ static int add_supported_palette(struct video_device *vdev, struct device_info *
 				break;
 			}
 		}
+		//End the list with -1
 		add_raw_format(di->convert, width, height, curr, -1u, &i);
 	} else {
 		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: %s is a native palette\n", libvideo_palettes[fmt].name);
@@ -412,18 +420,17 @@ static int add_supported_palette(struct video_device *vdev, struct device_info *
 //it returns how many supported palettes there are, or LIBVIDEO_ERR_IOCTL
 static int check_palettes_v4l2(struct video_device *vdev) {
 	vdev->info->convert = v4lconvert_create(vdev->fd);
-	struct v4l2_fmtdesc fmtd;
-	CLEAR(fmtd);
 	struct device_info *di = vdev->info;
 	di->palettes = NULL;
-
+	
 	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: Checking supported palettes.\n");
-
+	
+	struct v4l2_fmtdesc fmtd;
+	CLEAR(fmtd);
 	fmtd.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	fmtd.index = 0;
 	
 	for (fmtd.index = 0; v4lconvert_enum_fmt(vdev->info->convert, &fmtd) >= 0; fmtd.index++) {
-		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "{index:%u,type:%u,flags:%u,description:'%s',pixelformat:%x}\n", fmtd.index,fmtd.type,fmtd.flags,fmtd.description,fmtd.pixelformat);
+		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "{index:%u,type:%u,flags:%u (%s),description:'%s',pixelformat:%x}\n", fmtd.index,fmtd.type,fmtd.flags, (fmtd.flags & V4L2_FMT_FLAG_EMULATED) ? (fmtd.flags & V4L2_FMT_FLAG_COMPRESSED) ? "V4L2_FMT_FLAG_EMULATED | V4L2_FMT_FLAG_COMPRESSED" : "V4L2_FMT_FLAG_EMULATED" : (fmtd.flags & V4L2_FMT_FLAG_COMPRESSED) ? "V4L2_FMT_FLAG_EMULATED" : "none", fmtd.description,fmtd.pixelformat);
 		dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, "QRY: looking for palette %c%c%c%c (%#06x)\n", v4l2_fourcc_chars(fmtd.pixelformat), fmtd.pixelformat);
 		
 		int p = find_v4l2_palette(fmtd.pixelformat);
@@ -450,7 +457,7 @@ static bool query_tuner(struct video_input_info *vi, int fd, unsigned int index)
 	t.index = index;
 
 	if (ioctl(fd, VIDIOC_G_TUNER, &t) != 0)
-		return FALSE;
+		return false;
 
 	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG,
 			"QRY: Tuner: %s - low: %u - high: %u - unit: %s\n",
@@ -471,7 +478,7 @@ static bool query_tuner(struct video_input_info *vi, int fd, unsigned int index)
 				vi->tuner->name, vi->tuner->rangelow, vi->tuner->rangehigh,
 				vi->tuner->unit);
 
-	return TRUE;
+	return true;
 }
 
 static inline void free_tuner(struct tuner_info *t) {

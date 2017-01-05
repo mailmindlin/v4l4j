@@ -23,6 +23,7 @@
 
 #include "../libv4lsyscall-priv.h"
 #include "videodev2.h"
+#include <stdbool.h>
 #include <stdint.h>
 #define u8 uint8_t
 

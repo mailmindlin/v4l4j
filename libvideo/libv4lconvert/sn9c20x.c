@@ -66,7 +66,7 @@ static inline void do_write_v(const u8 *buf, u8 *ptr, unsigned int i, unsigned i
 	*ptr = buf[i + 160 + j];
 }
 
-void v4lconvert_sn9c20x_to_yuv420(const u8 *raw, u8 *i420, u32 width, u32 height, int yvu) {
+void v4lconvert_sn9c20x_to_yuv420(const u8 *raw, u8 *i420, u32 width, u32 height, bool yvu) {
 	unsigned int i = 0, x = 0, y = 0;
 	const u8 *buf = raw;
 	unsigned int frame_size = width * height;
