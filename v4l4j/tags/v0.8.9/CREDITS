@@ -1,0 +1,9 @@
+Thanks to all v4l4j users for spending time testing, reporting bugs and 
+successes, submitting examples and improving the code.
+
+v4l4j uses libv4l_convert to convert many exotic & chip-specific image formats
+to well-known ones, namely RGB24, BGR24, YUV420 & YVU420. libv4l_convert is part
+of the libv4l project, written by Hans de Goede (j.w.r.degoede <aT> hhs.nl). 
+libv4l can be downloaded from the Video4Linux Mercurial repository at 
+http://linuxtv.org/hg/~hgoede/libv4l/
+More information and instructions can be found at http://www.linuxtv.org/

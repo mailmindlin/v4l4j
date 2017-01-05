@@ -1,0 +1,8 @@
+[Desktop Entry]
+Categories=Video;AudioVideo;Graphics;
+Comment=Capture and control video sources
+Exec=/usr/share/java/v4l4j.jar
+GenericName=v4l4j viewer
+Icon=v4l4j-48x48
+Name=v4l4j viewer
+Type=Application

@@ -1,0 +1,311 @@
+#summary How to use v4l4j in your own application
+#labels Featured
+#sidebar v4l4jSideBar
+
+This page shows a few examples in Java on how to use v4l4j. It assumes you have successfully compiled and installed v4l4j (see GettingStarted page for detailed instructions). Here, video source refers to any video-capture device supported by the Linux kernel, and accessible through the Video4Linux API using the associated device file (usually /dev/video0). The v4l4j API has many more methods and classes than presented here. Be sure to check the Java documentation for a complete reference.
+Below, you will find information on:
+ * *JVM arguments*: the arguments you must pass to the JVM to use v4l4j.
+ * *Initialising the video device*: Creating a java object to interact with a video device.
+ * *Gathering information about the device*: finding out the number of inputs, tuners, supported image formats, supported capture resolutions and lots more.
+ * *Dealing with controls*: List the controls associated with a video device and get / set their values.
+ * *Capturing frames*: Getting a `FrameGrabber` object to capture images from the video device.
+ * *Display video in a GUI (JFrame)*: Create a graphical interface (JFrame) to display the captured video stream.
+ * *Integrate v4l4j with other frameworks*: head over to [v4l4jIntegration this page] for more examples on how to use v4l4j with other APIs and frameworks.
+You can find complete example applications in the `au.edu.jcu.v4l4j.examples` package. See [TestingV4l4j this page] for details.
+
+= JVM arguments =
+In order to use v4l4j in your own application, you must tell the JVM:
+  * where to find `v4l4j.jar`. This is usually done via the `-cp` or `-classpath` argument, and
+  * where to find the v4l4j JNI library (named `libv4l4j.so`).
+Both of the above can be done by passing the following arguments to the JVM:
+{{{
+-Djava.library.path=/usr/lib/jni -cp /usr/share/java/v4l4j.jar
+}}}
+Of course, modify the above paths if you have changed the default installation directories.
+
+= Initialising the video device =
+All interactions with a video device are done using a `VideoDevice` object. To instantiate one, you simply need its device file:
+{{{
+String dev = "/dev/video0";
+VideoDevice vd = new VideoDevice(dev);
+}}}
+The VideoDevice object allows you to:
+  * get textual information about the video device itself, such as its name, the supported image formats & resolutions, and the type of video inputs,
+  * capture frames through a `FrameGrabber` object (or one of its subclasses),
+  * control tuners the device may have, through the `TunerList` object,
+  * access video control, such as brightness, contrast, and gain, through the `ControlList` object.
+
+*Once the `VideoDevice` is no longer needed, you must release resources and free data structures by calling the `release()` method:*
+{{{
+vd.release();
+}}}
+
+= Gathering information about the device =
+The `DeviceInfo` class contains lots of information about a video device. To get the `DeviceInfo` object, use:
+{{{
+DeviceInfo di = vd.getDeviceInfo();
+}}}
+
+`DeviceInfo` objects contain:
+    * the device file,
+    * the name of the video device,
+    * a list of `InputInfo` object providing information about each video input,
+    * an `ImageFormatList` object providing information about the supported image formats.
+
+Each `InputInfo` object contains:
+    * The textual name of the input,
+    * The supported standards (`V4L4JConstants.STANDARD_PAL`, `V4L4JConstants.STANDARD_SECAM`, `V4L4JConstants.STANDARD_NTSC` or `V4L4JConstants.STANDARD_WEBCAM`)
+    * The input type (`V4L4JConstants.INPUT_TYPE_TUNER` or `V4L4JConstants.INPUT_TYPE_CAMERA`)
+    * The `TunerInfo` object associated with this input if it is connected to a tuner.
+
+`TunerInfo` objects contain:
+    * the tuner type: `V4L4JConstants.TUNER_TYPE_RADIO` or `V4L4JConstants.TUNER_TYPE_TV`,
+    * the frequency unit: `V4L4JConstants.FREQ_KHZ` or `V4L4JConstants.FREQ_MHZ`,
+    * the name of the tuner,
+    * the index of the tuner,
+    * and the lowest and highest tunable frequencies.
+
+Last, the `ImageFormatList` object details
+    * the native image formats supported by the video device,
+    * the subset of native image formats that can be encoded into more convenient formats: JPEG, RGB24, BGR24, YUV420 and YVU420,
+    * a list of supported resolutions and frame rates for each image format.
+
+
+= Dealing with controls =
+A call to `VideoDevice.getControlList()` will return a `ControlList` object. This object encapsulates (among other things) a `List<Control>` accessible through the `getList()` method. The following code loops over all controls and prints their name, range of acceptable values, and current value.
+{{{
+List<Control> controls = vd.getControlList().getList();
+for(Control c: controls)
+ System.out.println("control name: "+c.getName()+" - min: "+c.getMinValue()+" - max: "+c.getMaxValue()+" - step: "+c.getStepValue()+" - value: "+c.getValue());
+vd.releaseControlList();
+}}}
+Resetting the Pan angle on a Logitech Quickcam Sphere can be done using:
+{{{
+vd.getControlList().getControl("Pan Reset").setValue(1);
+}}}
+Here also, when the `ControlList` is no longer needed, it MUST be released by calling `releaseControlList()` on the `VideoDevice`.
+
+
+= Capturing frames =
+A `FrameGrabber` object (or one of its subclasses) gives you access to the frame capture facility. There are 6 types of frame grabbers: raw, JPEG, RGB, BGR, YUV and YVU. Raw frame grabbers will capture a frame and hand it in straight away in its native format. All other frame grabbers will capture a frame and convert its format before handing it in. Most video devices can have their image converted. v4l4j has a few conversion routines of its own, and relies on libv4l to preform camera-specific processing. You can check whether a video device supports JPEG/RGB/YUV -encoding by calling:
+{{{
+VideoDevice vd = new VideoDevice("/dev/video0");
+if(!vd.supportJPEGConversion()){ // use the other supportXXXConversion() for other formats
+  vd.release();
+  throw new Exception("The video device does not support JPEG encoding");
+}
+}}}
+Frame grabber constructors need at least 4 arguments:
+ * the desired capture resolution in pixels - width and height. Setting them to `V4L4JConstants.MAX_WIDTH` and `V4L4JConstants.MAX_HEIGHT` will request the highest supported resolution.
+ * the input channel, this depends on the hardware, webcams have only 1 input (0), capture cards can have many,
+ * the video standard (`FrameGrabber.STANDARD_WEBCAM`, `FrameGrabber.STANDARD_PAL`, `FrameGrabber.STANDARD_SECAM`, `FrameGrabber.STANDARD_NTSC`)
+
+{{{
+FrameGrabber fg;
+int width = 640, height = 480, input = 0, standard = V4L4JConstants.STANDARD_PAL;
+fg = vd.getRawFrameGrabber(width, height, input, channel);
+
+//find out what image format is used
+ImageFormat imf = fg.getImageFormat()
+
+...
+
+vd.releaseFrameGrabber();
+}}}
+
+Other frame grabbers are created with `VideoDevice.getJPEGFrameGrabber()`, `VideoDevice.getRGBFrameGrabber()`, `VideoDevice.getBGRFrameGrabber()`, 
+`VideoDevice.getYUVFrameGrabber()` and `VideoDevice.getYVUFrameGrabber()`.
+
+Regardless of the kind of frame grabber, the requested capture resolution given in the constructor is simply an indication and can be adjusted by V4L to the closest resolution supported by the video device. The actual width and height that will be used can be retrieved using:
+{{{
+int actualWidth = f.getwidth();
+int actualHeight = f.getHeight();
+}}}
+
+
+Assuming the `FrameGrabber` object `f` has been successfully initialised, to start capturing frames, you need to instantiate an object which implements the CaptureCallback interface, and pass it to the frame grabber. This object will receive frames during capture
+{{{
+//Instantiate an object that implements the CaptureCallback
+//interface which will receive captured frame
+myCallbackObject = new MyCallbackObjectclass();
+
+//pass it to the frame grabber.
+f.setCaptureCallback(myCallbackObject);
+
+//Now start the capture
+f.startCapture();
+
+//At this stage, myCallbackObject.nextFrame() will be called every time
+//a new frame is available (see next paragraph).
+
+//When appropriate, stop the capture
+f.stopCapture();
+}}}
+
+In `myCallbackObject`, when the capture is started, the following method is called every time a new frame is available :
+{{{
+public void nextFrame(VideoFrame frame) {
+   //do something useful with frame. But make sure you recycle
+   //it when dealt with, so v4l4j can re-use it later on
+   frame.recycle();
+}
+}}}
+
+When the `FrameGrabber` is no longer used, resources must be released by calling
+{{{
+vd.releaseFrameGrabber();
+}}}
+
+= Display video in a GUI (JFrame) =
+
+The following example shows you how to capture JPEG-encoded frames from your video device and display them in a JFrame object using a BufferedImage object. This class can be found along other example applications in the `au.edu.jcu.v4l4j.examples` package.
+{{{
+package v4l4jTest;
+
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
+
+import au.edu.jcu.v4l4j.FrameGrabber;
+import au.edu.jcu.v4l4j.CaptureCallback;
+import au.edu.jcu.v4l4j.V4L4JConstants;
+import au.edu.jcu.v4l4j.VideoDevice;
+import au.edu.jcu.v4l4j.VideoFrame;
+import au.edu.jcu.v4l4j.exceptions.StateException;
+import au.edu.jcu.v4l4j.exceptions.V4L4JException;
+
+/**
+ * This class demonstrates how to perform a simple push-mode capture.
+ * It starts the capture and display the video stream in a JLabel
+ * @author gilles
+ *
+ */
+public class SimpleViewer extends WindowAdapter implements CaptureCallback{
+	private static int	width = 640, height = 480, std = V4L4JConstants.STANDARD_WEBCAM, channel = 0;
+	private static String	device = "/dev/video0";
+
+	private VideoDevice	videoDevice;
+	private FrameGrabber	frameGrabber;
+
+	private JLabel 		label;
+	private JFrame 		frame;
+
+
+
+	public static void main(String args[]){
+
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				new SimpleViewer();
+			}
+		});
+	}
+
+	/**
+	 * Builds a WebcamViewer object
+	 * @throws V4L4JException if any parameter if invalid
+	 */
+	public SimpleViewer(){
+		// Initialise video device and frame grabber
+		try {
+			initFrameGrabber();
+		} catch (V4L4JException e1) {
+			System.err.println("Error setting up capture");
+			e1.printStackTrace();
+			
+			// cleanup and exit
+			cleanupCapture();
+			return;
+		}
+		
+		// create and initialise UI
+		initGUI();
+		
+		// start capture
+		try {
+			frameGrabber.startCapture();
+		} catch (V4L4JException e){
+			System.err.println("Error starting the capture");
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Initialises the FrameGrabber object
+	 * @throws V4L4JException if any parameter if invalid
+	 */
+	private void initFrameGrabber() throws V4L4JException{
+		videoDevice = new VideoDevice(device);
+		frameGrabber = videoDevice.getJPEGFrameGrabber(width, height, channel, std, 80);
+		frameGrabber.setCaptureCallback(this);
+		width = frameGrabber.getWidth();
+		height = frameGrabber.getHeight();
+		System.out.println("Starting capture at "+width+"x"+height);
+	}
+
+	/** 
+	 * Creates the UI components and initialises them
+	 */
+	private void initGUI(){
+		frame = new JFrame();
+		label = new JLabel();
+		frame.getContentPane().add(label);
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frame.addWindowListener(this);
+		frame.setVisible(true);
+		frame.setSize(width, height);       
+	}
+	
+	/**
+	 * this method stops the capture and releases the frame grabber and video device
+	 */
+	private void cleanupCapture() {
+		try {
+			frameGrabber.stopCapture();
+		} catch (StateException ex) {
+			// the frame grabber may be already stopped, so we just ignore
+			// any exception and simply continue.
+		}
+
+		// release the frame grabber and video device
+		videoDevice.releaseFrameGrabber();
+		videoDevice.release();
+	}
+
+	/**
+	 * Catch window closing event so we can free up resources before exiting
+	 * @param e
+	 */
+	public void windowClosing(WindowEvent e) {
+		cleanupCapture();
+
+		// close window
+		frame.dispose();            
+	}
+
+
+	@Override
+	public void exceptionReceived(V4L4JException e) {
+		// This method is called by v4l4j if an exception
+		// occurs while waiting for a new frame to be ready.
+		// The exception is available through e.getCause()
+		e.printStackTrace();
+	}
+
+	@Override
+	public void nextFrame(VideoFrame frame) {
+		// This method is called when a new frame is ready.
+		// Don't forget to recycle it when done dealing with the frame.
+		
+		// draw the new frame onto the JLabel
+		label.getGraphics().drawImage(frame.getBufferedImage(), 0, 0, width, height, null);
+		
+		// recycle the frame
+		frame.recycle();
+	}
+}
+}}}

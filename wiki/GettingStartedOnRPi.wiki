@@ -1,0 +1,45 @@
+#summary Installing and testing v4l4j on RPi
+#sidebar v4l4jSideBar
+
+This page explains how to setup v4l4j on Raspberry Pi.
+
+= Introduction =
+v4l4j has been successfully built and tested on two flavours of the Debian distribution for RPi: 
+ * Raspbian Wheezy, which is built  with armv6 specific instructions, vector floating point instructions and specify the ARM EABI where floating point values are to be passed in floating point registers.
+ * Wheezy beta, which unlike the previous one, does not use hardware register to pass floating point values.
+Both can be downloaded from [http://www.raspberrypi.org/downloads here].
+ 
+If you are unsure about which version you have, check the contents of `/boot/issue.txt` and look for `armhf`. If you find it, you are most likely running Raspbian.
+
+Make sure you identify which version you are running and follow the appropriate steps for it.
+
+= Building v4l4j on RPi =
+
+Install what's required to build v4l4j with :
+{{{
+sudo apt-get install openjdk-7-jdk ant libjpeg8-dev libv4l-dev
+sudo apt-get remove openjdk-6-*
+}}}
+
+Check out a copy of v4l4j:
+{{{
+svn co http://v4l4j.googlecode.com/svn/v4l4j/trunk v4l4j-trunk
+cd v4l4j-trunk
+}}}
+
+*On Raspbian Wheezy:*
+{{{
+export JDK_HOME=/usr/lib/jvm/java-7-openjdk-armhf/ 
+ant clean all
+sudo ant install
+}}}
+
+*On Wheezy beta: *
+{{{
+export JDK_HOME=/usr/lib/jvm/java-7-openjdk-armel/ 
+ant clean all
+sudo ant install
+}}}
+
+
+Next, head to the [TestingV4l4j testing page].

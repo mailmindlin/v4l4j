@@ -1,0 +1,22 @@
+#summary a step-by-step guide to downloading & installing v4l4j on various platforms. START HERE !
+#labels Featured
+#sidebar v4l4jSideBar
+
+Getting started with v4l4j is easy. The next set of pages will walk you through the steps to install and test v4l4j. After that, read about the v4l4j API and start using it !
+
+=== Install on Intel platforms ===
+You have two options:
+  * You can take the easy route and install the Debian/Ubuntu v4l4j packages in just a few commands. [DebianInstall This page] shows you how.
+  * The less-easy option: manually download the source code, build it and install it. Instructions are on [SourceInstall this page].
+
+
+=== Install on ARM platforms ===
+*v4l4j support for ARM platforms is still experimental* and currently limited to the two ARM devices I own: a [http://raspberrypi.org RaspberryPi] and a [http://beagleboard.org BeagleBoard XM]. Here again, you have two options:
+  * Build v4l4j on the target itself. Instructions for the RPi can be found [GettingStartedOnRPi here].
+  * Cross-compile v4l4j and copy it to the target. Instructions for cross-compiling for RPi and BeagleBoard XM can be found [CrossCompilingForARM here] 
+
+=== Testing ===
+Once you have successfully installed v4l4j, you can test it as explained [TestingV4l4j on this page].
+
+=== v4l4j API ===
+You can read about the main v4l4j classes are presented on [Examples this page], and have a look at the many example applications that come with v4l4j (listed [TestingV4l4j here]). The javadoc can be found [http://v4l4j.googlecode.com/svn/www/v4l4j-api/index.html here].

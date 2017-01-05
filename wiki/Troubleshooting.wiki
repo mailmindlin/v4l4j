@@ -1,0 +1,102 @@
+#summary solve common issues when using v4l4j
+#sidebar v4l4jSideBar
+
+= Introduction =
+This page details some of the common issues you may come across when using v4l4j. You will find answers to the following questions:
+
+*Compilation issues*<br>
+[#Missing_headers I get an error at compile time about `jni.h` or `jpeglib.h` not found. What do I do ?]
+
+*JNI library issues*<br>
+[#JNI_Library_issues I try to run my own Java program but the JVM complains that it cant load the JNI library `libv4l4j.so`.]
+
+*Video streaming issues*<br>
+[#lowFPS I have a `FrameGrabber` object using image format XX & I get a very low frame rate. How can I improve it ?]
+
+*JVM crash*<br>
+[#SegFault When using v4l4j, the JVM crashes. What shall I do ?]
+
+If you cannot find an answer to your question or if you need more help solving an issue, head to [ContactMailingList this page] to contact the mailing list.
+
+
+<br>
+= Compilation issues =
+
+==Missing headers==
+*Question:*
+I get an error at compile time about `jni.h` or `jpeglib.h` not found. What do I do ?
+
+*Answer:*
+v4l4j has a few dependencies that must be satisfied before you attempt compiling it. Make sure you have installed:
+  * the libjpeg package
+  * libjpeg development package
+  * a JDK 6, either from SUN or OpenJDK
+  * the ant package
+  * essential packages to build C programs (gcc, ld, make, C library header files...)
+
+If you get this error:
+{{{
+v4l4j_FrameGrabber.c: error: jni.h: No such file or directory
+}}}
+then set the `JDK_HOME` environment variable to point to the directory where you the JDK is installed. For instance 
+{{{
+set JDK_HOME="/usr/lib/jvm/java" ant clean all
+}}}
+
+If you get this error:
+{{{
+v4l4j_FrameGrabber.c: error: jpeglib.h: No such file or directory
+}}}
+you have not installed the development files on libjpeg. It is usually a matter of installing the proper package. In Ubuntu / Debian, it is called `libjpeg-dev`, on OpenSuse / Fedora Core `libjpeg-devel`, on Mandriva `libjpeg62-dev`.
+
+=Runtime issues=
+
+==JNI Library issues==
+*Question:*
+I try to run my own Java program but the JVM complains that it cant load the JNI library `libv4l4j.so`:
+{{{
+Cant load v4l4j JNI library
+Exception in thread "main" java.lang.UnsatisfiedLinkError: no v4l4j in java.library.path
+	at java.lang.ClassLoader.loadLibrary(ClassLoader.java:1682)
+	at java.lang.Runtime.loadLibrary0(Runtime.java:823)
+	at java.lang.System.loadLibrary(System.java:1030)
+        ....
+}}}
+
+*Answers*:
+  * Have you compiled and installed the JNI library (`libv4l4j.so`) ?
+Run `ant clean all && sudo ant install` in the v4l4j directory.
+
+  * Is the JNI library in the JVM library path ?
+Make sure you tell the JVM where to find the v4l4j JNI library (`libv4l4j.so`) with  `-Djava.library.path=/path/to/JNI/lib/dir`. *Note the path is the directory where `libv4l4j.so` is located, not the actual path to `libv4l4j.so`.*
+
+
+==Video streaming==
+
+==Low FPS==
+*Question:*
+I have a `FrameGrabber` object using image format XX & I get a very low frame rate. How can I improve it ?
+
+*Answer:*
+First, make sure you disable auto-exposure. This is usually done through one of the controls. You may have to load extra controls for your device using `uvcdynctrl`.
+
+Some video devices can achieve higher frame rates if you select the right image format. For instance, on my test machine, the Hauppauge HVR 1300 card produces around 9 frames per second using YUYV, but achieves 29 frames per second if I use RGB32.
+First, find out the image formats supported by your video device by running the following command in the v4l4j directory (replace /dev/video0 with your device file):
+{{{
+ant deviceInfo -Dtest.device=/dev/video0
+}}}
+Check the "Supported formats" section in the output. Each format has a name and an index.
+Second, for each supported format, run the test-fps command using (replace /dev/video0 with your device file, and replace XX with the index of the desired image format index, as per the output of the previous command):
+{{{
+ant test-fps  -Dtest.device=/dev/video0 -Dtest.inFormat=XX -DoutFormat=0
+}}}
+This command will tell you the maximum frame rate you can achieve with the given image format.
+
+==JVM crash==
+==SegFault==
+*Question:*
+When using v4l4j, the JVM crashes. What shall I do ?
+
+*Answser:*
+Most of the time, this happens because of a bug in the JNI code. [ContactMailingList Contact the mailing list] and
+submit a precise description of what you did to trigger the crash.

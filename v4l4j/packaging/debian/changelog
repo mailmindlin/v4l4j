@@ -1,0 +1,72 @@
+v4l4j (0.9.0-0ubuntu2~ppa4) lucid; urgency=low
+  * fix broken amd64 packaging
+
+ -- Gilles Gigan <gilles.gigan@gmail.com>  Fri, 30 Mar 2012 12:03:03 +1100
+
+v4l4j (0.9.0-0ubuntu1~ppa4) lucid; urgency=low
+  * new upstream release
+  * dropped pre-lucid packages
+
+ -- Gilles Gigan <gilles.gigan@gmail.com>  Wed, 28 Mar 2012 12:03:03 +1100
+
+v4l4j (0.8.10-0ubuntu1~ppa4) lucid; urgency=low
+
+  * new upstream release
+  * JPEG frame grabber fixes
+  * deprecated pull mode
+
+ -- Gilles gigan <gilles.gigan@gmail.com>  Sun, 27 Mar 2011 16:25:00 +1100
+
+v4l4j (0.8.9-0ubuntu1~ppa4) lucid; urgency=low
+
+  * Improved number of copies from v4l to java
+  * Implemented VideoFrame class, push/pull mode, sequence and capture time 
+    features
+  * Added CamServer class
+
+ -- Gilles Gigan <gilles.gigan@gmail.com>  Thu, 25 Nov 2010 19:09:37 +1100
+
+v4l4j (0.8.8-0ubuntu1~ppa4) lucid; urgency=low
+
+  * New upstream release with libv4l 0.8.1
+  * Updated packaging files for Lucid/Maverick
+  * Dropped packaging for Ubuntu releases prior to Lucid
+
+ -- Gilles Gigan <gilles.gigan@gmail.com>  Sun, 24 Oct 2010 10:37:16 +1100
+
+v4l4j (0.8.7-0ubuntu1~ppa3) jaunty; urgency=low
+
+  * New upstream release including an update to libv4l 0.6.3
+
+ -- gilles gigan <gilles.gigan@gmail.com>  Wed, 28 Oct 2009 20:04:19 +1100
+
+v4l4j (0.8.6-0ubuntu1~ppa3) jaunty; urgency=low
+
+  * new upstream release with support for setting frame rate 
+
+ -- Gilles Gigan <gilles.gigan@gmail.com>  Sat, 15 Aug 2009 16:54:26 +1000
+
+v4l4j (0.8.5-0ubuntu1~ppa1) hardy; urgency=low
+
+  * new upstream release with updated version of libv4l(0.6)
+  * Do not report native formats if they can not be used for capture
+
+ -- Gilles Gigan <gilles.gigan@gmail.com>  Thu, 16 Jul 2009 22:37:17 +1000
+
+v4l4j (0.8.4-0ubuntu1~ppa1) hardy; urgency=low
+
+  * new upstream release with updated version of libv4l(0.5.99)
+
+ -- Gilles Gigan <gilles.gigan@gmail.com>  Sat, 04 Jul 2009 16:45:27 +1000
+
+v4l4j (0.8.3-0ubuntu1~ppa3) jaunty; urgency=low
+
+  * new upstream release
+
+ -- Gilles Gigan <gilles.gigan@gmail.com>  Thu, 07 May 2009 20:00:44 +1000
+
+v4l4j (0.8.2-1) unstable; urgency=low
+
+  * Initial release (Closes: #6)
+
+ -- Gilles Gigan <gilles.gigan@gmail.com>  Mon, 27 Apr 2009 15:42:08 +1000

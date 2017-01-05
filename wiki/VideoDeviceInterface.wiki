@@ -1,0 +1,38 @@
+#summary this page presents the Video Device interface of libvideo
+#sidebar LibvideoApiSideBar
+
+= The Video Device interface =
+
+This is the main interface from which all other interfaces are obtained. The video device interface is represented by a `struct video_device` which has the following members:
+{{{
+struct video_device {
+	int fd;  //do not touch
+
+#define V4L1_VERSION	1
+#define V4L2_VERSION	2
+	int v4l_version;  //specifies the version of V4L used by the device
+
+#define FILENAME_LENGTH	99 + 1
+	char file[FILENAME_LENGTH]; //contains the full path to the device file
+	struct device_info *info;  //query interface structure
+	struct capture_device *capture;  //capture interface structure
+	struct control_list *control;  //control interface structure
+	struct tuner_actions *tuner_action; //tuner interface structure
+};
+}}}
+All members in this structure are read-only. the `info`, `capture`, `control` and `tuner_action` members point to structures representing other interfaces. These members are set to NULL, until the interface is acquired by calling the appropriate function, as detailled below.
+
+To acquire the video device interface, do the following:
+{{{
+char device[] = "/dev/video0";
+struct video_device *video_dev = open_device(device);
+//check return value and take appropriate action
+
+//when done:
+if(close_device(video_dev)!=0)
+    printf("Error: video device still in use\n");
+}}}
+
+`open_device()` initialises the video device & returns a pointer to a `struct video_device` or `NULL` if there is an error opening the device, if the given device file is not a video device, or if there is an error detecting the version of V4L.
+
+`close_device()` releases resources and frees the `struct video_device` pointer, provided that all other interfaces have been released. If not, it returns LIBVIDEO_ERR_INFO_IN_USE, LIBVIDEO_ERR_CAPTURE_IN_USE, LIBVIDEO_ERR_CONTROL_IN_USE, LIBVIDEO_ERR_TUNER_IN_USE (these are defined in `libvideo-err.h`).
