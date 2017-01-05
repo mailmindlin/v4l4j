@@ -146,7 +146,8 @@ LIBV4LCONVERT_INSTALL_SUBDIR := libv4l
 TESTOBJ := test-capture.o dump-capture.o list-caps.o
 
 LIBV4LCONVERT_HELPER_OBJS := $(patsubst %, $(LIBV4LCONVERT_DIR)/%.o, $(LIBV4LCONVERT_HELPERS)) 
-OBJ := $(patsubst %.c,%.o,$(wildcard *.c) $(filter-out $(patsubst %.o,%.c,$(LIBV4LCONVERT_HELPER_OBJS)),$(shell find $(LIBV4LCONVERT_DIR) -type f -name "*.c")))
+LIBCOLLECTIONS = libcollections/libcollections.a
+OBJ := $(patsubst %.c,%.o,$(wildcard *.c) $(filter-out $(patsubst %.o,%.c,$(LIBV4LCONVERT_HELPER_OBJS)),$(shell find $(LIBV4LCONVERT_DIR) -type f -name "*.c"))) $(LIBCOLLECTIONS)
 
 WARNINGS +=  -Wall -Wpointer-arith -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wunused-function
 CFLAGS += $(HARDWARE_FLAGS) $(WARNINGS) -DLIBDIR=\"$(LIBDIR)\" -DLIBSUBDIR=\"$(LIBV4LCONVERT_INSTALL_SUBDIR)\" -I. -std=gnu11
@@ -164,8 +165,8 @@ endif
 
 all: $(LIB).$(LIB_RELEASE)
 
-$(LIB).$(LIB_RELEASE): version.h $(OBJ)
-	$(CC) $(OBJ) -Wl,-soname,$(LIB).$(LIB_RELEASE) \
+$(LIB).$(LIB_RELEASE): $(LIBCOLLECTIONS) version.h $(OBJ)
+	$(CC) $(OBJ) -Wl,-soname,$(LIB).$(LIB_RELEASE) $(LIBCOLLECTIONS) \
 		-o $(LIB).$(LIB_RELEASE) $(LDFLAGS) \
 		$(LIBPIXFC)
 
@@ -212,6 +213,8 @@ version.h:
 	@echo "#define LIBVIDEO_VERSION_METAD \"$(VERSION_METAD)\"" >> version.h
 	@echo "#define LIBVIDEO_VERSION_STR \"$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_PATCH)+$(VERSION_METAD)\"" >> version.h
 
+$(LIBCOLLECTIONS):
+	$(MAKE) -C libcollections LINKTYPE=static
 $(patsubst %,$(LIBV4LCONVERT_DIR)/%,$(LIBV4LCONVERT_HELPERS)): %: $(patsubst %, %.o, $(%)) 
 
 .PHONY: all install uninstall test clean
