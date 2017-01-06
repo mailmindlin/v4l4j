@@ -1,4 +1,4 @@
-# change the value of LOG_LEVEL to alter the king of debug statements
+# Change the value of LOG_LEVEL to alter the king of debug statements
 # to be printed
 #
 # THE LOG SOURCE & LEVEL CAN BE CHANGED ON THE COMMAND LINE BY
@@ -146,12 +146,13 @@ LIBV4LCONVERT_INSTALL_SUBDIR := libv4l
 TESTOBJ := test-capture.o dump-capture.o list-caps.o
 
 LIBV4LCONVERT_HELPER_OBJS := $(patsubst %, $(LIBV4LCONVERT_DIR)/%.o, $(LIBV4LCONVERT_HELPERS)) 
-LIBCOLLECTIONS = libcollections/libcollections.a
+LIBCOLLECTIONS_DIR = libcollections
+LIBCOLLECTIONS = $(LIBCOLLECTIONS_DIR)/libcollections.a
 OBJ := $(patsubst %.c,%.o,$(wildcard *.c) $(filter-out $(patsubst %.o,%.c,$(LIBV4LCONVERT_HELPER_OBJS)),$(shell find $(LIBV4LCONVERT_DIR) -type f -name "*.c"))) $(LIBCOLLECTIONS)
 
 WARNINGS +=  -Wall -Wpointer-arith -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wunused-function
 CFLAGS += $(HARDWARE_FLAGS) $(WARNINGS) -DLIBDIR=\"$(LIBDIR)\" -DLIBSUBDIR=\"$(LIBV4LCONVERT_INSTALL_SUBDIR)\" -I. -std=gnu11
-CFLAGS += -fPIC -fdiagnostics-color=auto -ftree-vectorize -flto -fvisibility=default -I./libcollections/include
+CFLAGS += -fPIC -fdiagnostics-color=auto -ftree-vectorize -flto -fvisibility=default -I$(LIBCOLLECTIONS_DIR)/src
 #CFLAGS += -funsafe-math-optimizations
 AFLAGS += $(HARDWARE_FLAGS) -mapcs-reentrant -k --warn --statistics
 LDFLAGS += $(HARDWARE_FLAGS) -lm -lrt -shared -ljpeg -lc -flto=3
@@ -214,9 +215,12 @@ version.h:
 	@echo "#define LIBVIDEO_VERSION_METAD \"$(VERSION_METAD)\"" >> version.h
 	@echo "#define LIBVIDEO_VERSION_STR \"$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_PATCH)+$(VERSION_METAD)\"" >> version.h
 
-$(LIBCOLLECTIONS):
-	$(MAKE) -C libcollections LINKTYPE=static all includes
-	mv -rf libcollections/include libcollections/include/collections
+# Build libcollections
+$(LIBCOLLECTIONS_DIR)/Makefile:
+	git submodule update
+
+$(LIBCOLLECTIONS): $(LIBCOLLECTIONS_DIR)/Makefile
+	$(MAKE) -C $(LIBCOLLECTIONS_DIR) LINKTYPE=static all
 
 $(patsubst %,$(LIBV4LCONVERT_DIR)/%,$(LIBV4LCONVERT_HELPERS)): %: $(patsubst %, %.o, $(%)) 
 
