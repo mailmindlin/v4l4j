@@ -158,51 +158,40 @@ static const size_t v4lconvert_converter_num_prototypes[] = {
 	};
 #undef COUNT_PROTOTYPES
 
-static u32 v4lconvert_encoder_applyIMF_sdwh(struct v4lconvert_encoder* self, const u8* src, u8* dst, u32 src_len);
-static u32 v4lconvert_encoder_applyIMF_sd_sf(struct v4lconvert_encoder* self, const u8* src, u8* dst, u32 src_len);
-static u32 v4lconvert_encoder_encodePixelJPEG(struct v4lconvert_encoder* self, const u8* src, u8* dst, u32 src_len);
-static u32 v4lconvert_encoder_encodePlanarJPEG(struct v4lconvert_encoder* self, const u8* src, u8* dst, u32 src_len);
+static unsigned int VideoPipeline_apply(VideoPipeline* self, struct v4lconvert_buffer* buffer);
+static void VideoPipeline_releaseSelfOnly(VideoPipeline* self) __attribute__ ((nonnull (1)));
+static void VideoPipeline_releaseConvertersOnly(VideoPipeline* self) __attribute__ ((nonnull (1)));
+static void VideoPipeline_releaseSelfAndConverters(VideoPipeline* self) __attribute__ ((nonnull (1)));
 
-static int v4lconvert_encoder_releaseIMF(struct v4lconvert_encoder* self);
-static int v4lconvert_encoder_releaseJPEG(struct v4lconvert_encoder* self);
-static u32 v4lconvert_encoder_series_doConvert(struct v4lconvert_encoder_series* self, struct v4lconvert_buffer* buffer);
-static inline int computeEncoderPath(unsigned int* map, unsigned int* distances, u32 from, u32 to, unsigned int maxIterations);
+static unsigned int ImageTransformer_applyIMF(ImageTransformer* self, const u8* src, size_t src_len, u8* dst, size_t dst_len);
+static bool ImageTransformer_releaseIMF(ImageTransformer* self);
+
+static unsigned int ImageTransformer_encodePixelJPEG(ImageTransformer* self, const u8* src, u8* dst, unsigned int src_len);
+static unsigned int ImageTransformer_encodePlanarJPEG(ImageTransformer* self, const u8* src, u8* dst, unsigned int src_len);
+static bool ImageTransformer_releaseJPEG(ImageTransformer* self);
 
 
-static u32 v4lconvert_encoder_applyIMF_sdwh(struct v4lconvert_encoder* self, const u8* src, u8* dst, u32 src_len) {
+static unsigned int ImageTransformer_applyIMF(struct ImageTransformer* self, const u8* src, size_t src_len, u8* dst, size_t dst_len) {
 	UNUSED(src_len);
 	v4lconvert_converter_t* converter = self->converter;
-	const u32 width = self->src_width;
-	const u32 height = self->src_height;
 	switch (converter->signature) {
 		case v4lconvert_conversion_signature_sdwh_0f:
-			(*converter->target.cvt_sdwh_0f)(src, dst, width, height);
+			(*converter->target.cvt_sdwh_0f)(src, dst, self->src_width, self->src_height);
 			break;
 		case v4lconvert_conversion_signature_sdwh_1f:
-			(*converter->target.cvt_sdwh_1f)(src, dst, width, height, converter->flag1);
+			(*converter->target.cvt_sdwh_1f)(src, dst, self->src_width, self->src_height, converter->flag1);
 			break;
 		case v4lconvert_conversion_signature_sdwh_2f:
-			(*converter->target.cvt_sdwh_2f)(src, dst, width, height, converter->flag1, converter->flag2);
+			(*converter->target.cvt_sdwh_2f)(src, dst, self->src_width, self->src_height, converter->flag1, converter->flag2);
 			break;
-		default:
-			return 0;
-	}
-	return self->dst_len;
-}
-
-static u32 v4lconvert_encoder_applyIMF_sd_sf(struct v4lconvert_encoder* self, const u8* src, u8* dst, u32 src_len) {
-	UNUSED(src_len);
-	v4lconvert_converter_t* converter = self->converter;
-	struct v4l2_format* src_fmt = self->imf_v4l2_src_fmt;
-	switch (converter->signature) {
 		case v4lconvert_conversion_signature_sd_sf_0f:
-			converter->target.cvt_sd_sf_0f(src, dst, src_fmt);
+			converter->target.cvt_sd_sf_0f(src, dst, self->imf_v4l2_src_fmt);
 			break;
 		case v4lconvert_conversion_signature_sd_sf_1f:
-			converter->target.cvt_sd_sf_1f (src, dst, src_fmt, converter->flag1);
+			converter->target.cvt_sd_sf_1f (src, dst, self->imf_v4l2_src_fmt, converter->flag1);
 			break;
 		case v4lconvert_conversion_signature_sd_sf_2f:
-			converter->target.cvt_sd_sf_2f (src, dst, src_fmt, converter->flag1, converter->flag2);
+			converter->target.cvt_sd_sf_2f (src, dst, self->imf_v4l2_src_fmt, converter->flag1, converter->flag2);
 			break;
 		default:
 			return 0;
@@ -214,7 +203,7 @@ static u32 v4lconvert_encoder_applyIMF_sd_sf(struct v4lconvert_encoder* self, co
  * v4lconvert_encoder::apply method for encoding pixel formats to JPEG.
  * e.g, RGB or GREY
  */
-static u32 v4lconvert_encoder_encodePixelJPEG(struct v4lconvert_encoder* self, const u8* src, u8* dst, u32 src_len) {
+static size_t v4lconvert_encoder_encodePixelJPEG(struct v4lconvert_encoder* self, const u8* src, size_t src_len, u8* dst, size_t dst_len) {
 	struct jpeg_compress_struct* cinfo = self->jpeg_encode_params.cinfo;
 	if (!cinfo)
 		return 0;
@@ -252,7 +241,7 @@ static u32 v4lconvert_encoder_encodePixelJPEG(struct v4lconvert_encoder* self, c
 	return self->dst_len - cinfo->dest->free_in_buffer;
 }
 
-static u32 v4lconvert_encoder_encodePlanarJPEG(struct v4lconvert_encoder* self, const u8* src, u8* dst, u32 src_len) {
+static size_t v4lconvert_encoder_encodePlanarJPEG(struct v4lconvert_encoder* self, const u8* src, size_t src_len, u8* dst, size_t dst_len) {
 	struct jpeg_compress_struct* cinfo = self->jpeg_encode_params.cinfo;
 	if (!cinfo)
 		return 0;

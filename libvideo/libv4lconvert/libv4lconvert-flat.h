@@ -85,8 +85,8 @@ LIBV4L_PUBLIC enum v4lconvert_conversion_type {
 
 #define V4LCONVERT_CONVERSION_TYPE_FLAG(type) (1u << v4lconvert_conversion_type_##type)
 
-struct v4lconvert_converter;
-typedef struct v4lconvert_converter v4lconvert_converter;
+struct ImageTransformer;
+typedef struct ImageTransformer ImageTransformer;
 struct v4lconvert_converter_prototype;
 typedef const struct v4lconvert_converter_prototype v4lconvert_converter_prototype;
 
@@ -102,8 +102,8 @@ struct v4lconvert_converter_prototype {
 	 * @param errmsg Filled with message if this method fails. Does not need to be released in any case.
 	 * @return Converter created, or NULL on error. On error, errno is set.
 	 */
-	v4lconvert_converter* (*init) (v4lconvert_converter_prototype* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options, char** errmsg);
-	int (*estimateCost) (v4lconvert_converter_prototype* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options);
+	ImageTransformer* (*init) (v4lconvert_converter_prototype* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void** options, char** errmsg);
+	bool (*estimateCost) (v4lconvert_converter_prototype* self, unsigned int* cpuCost, float* qualityCost, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void** options);
 	enum v4lconvert_conversion_type type;
 	/**
 	 * Source format
@@ -132,7 +132,7 @@ struct v4lconvert_converter_prototype {
 	};
 };
 
-LIBV4L_PUBLIC struct v4lconvert_buffer {
+struct v4lconvert_buffer {
 	/**
 	 * If true, buffer 0 should NOT be overwritten.
 	 */
@@ -159,18 +159,18 @@ LIBV4L_PUBLIC struct v4lconvert_buffer {
 	u8* buf2;
 };
 
-LIBV4L_PUBLIC struct v4lconvert_converter {
+struct ImageTransformer {
 	/**
 	 * 
 	 * @return number of bytes written to dst, or 0 if error
 	 * If error, errno may be set.
 	 */
-	size_t (*apply) (struct v4lconvert_converter* self, const u8* src, size_t src_len, u8* dst, size_t dst_len);
+	size_t (*apply) (ImageTransformer* self, const u8* src, size_t src_len, u8* dst, size_t dst_len);
 	/**
 	 * Safely release memory used by encoder. Does not release the encoder itself.
 	 * DO NOT call any methods on encoder after this method has been invoked.
 	 */
-	int (*release) (struct v4lconvert_converter* self);
+	int (*release) (ImageTransformer* self);
 	
 	struct v4l2_format* src_fmt;
 	struct v4l2_format* dst_fmt;
@@ -205,15 +205,15 @@ LIBV4L_PUBLIC struct v4lconvert_converter {
 	struct control** controls;
 };
 
-LIBV4L_PUBLIC struct v4lconvert_encoder_series {
+typedef struct VideoPipeline {
 	/**
 	 * Method to invoke actual conversion
 	 */
-	u32 (*convert) (struct v4lconvert_encoder_series* self, struct v4lconvert_buffer* buffers);
+	u32 (*convert) (struct VideoPipeline* self, struct v4lconvert_buffer* buffers);
 	/**
 	 * Release memory owned by this struct.
 	 */
-	bool (*release) (struct v4lconvert_encoder_series* self);
+	bool (*release) (struct VideoPipeline* self);
 	/**
 	 * Source format
 	 */
@@ -229,15 +229,15 @@ LIBV4L_PUBLIC struct v4lconvert_encoder_series {
 	/**
 	 * Number of encoders in series
 	 */
-	size_t num_converters;
+	size_t numConverters;
 	/**
 	 * Array of encoders used.
 	 * Please don't change it.
 	 */
-	struct v4lconvert_converter** converters;
-};
+	ImageTransformer** converters;
+} VideoPipeline;
 
-LIBV4L_PUBLIC struct v4lconvert_conversion_request {
+struct v4lconvert_conversion_request {
 	struct v4l2_format* src_fmt;
 	struct v4l2_format* dst_fmt;
 	unsigned int rotation;
@@ -250,15 +250,27 @@ LIBV4L_PUBLIC struct v4lconvert_conversion_request {
 	signed int left_offset;
 };
 
-LIBV4L_PUBLIC u32 v4lconvert_estimateBufferSize(u32 fmt, u32 width, u32 height);
+LIBV4L_PUBLIC size_t v4lconvert_estimateBufferSize(u32 fmt, u32 width, u32 height);
 
 LIBV4L_PUBLIC int v4lconvert_encoder_initWithConverter(struct v4lconvert_encoder* encoder, v4lconvert_converter* converter, u32 width, u32 height);
 LIBV4L_PUBLIC int v4lconvert_encoder_initForIMF(struct v4lconvert_encoder* encoder, u32 src_fmt, u32 dst_fmt, u32 width, u32 height);
 
-LIBV4L_PUBLIC bool v4lconvert_encoder_series_create(struct v4lconvert_encoder_series* self, struct v4lconvert_conversion_request* request, char** errmsg) __attribute__((nonnull (1, 2)));
-LIBV4L_PUBLIC int v4lconvert_encoder_series_init(struct v4lconvert_encoder_series* self, u32 width, u32 height, u32 numConverters, u32* converterIds);
-LIBV4L_PUBLIC int v4lconvert_encoder_series_computeConversion(struct v4lconvert_encoder_series* self, u32 width, u32 height, u32 from, u32 to, unsigned int maxIterations);
-LIBV4L_PUBLIC int v4lconvert_encoder_series_doRelease(struct v4lconvert_encoder_series* self);
+/**
+ * Create a VideoPipeline that will apply the given conversion request.
+ */
+LIBV4L_PUBLIC VideoPipeline* VideoPipeline_create(struct v4lconvert_conversion_request* request, char** errmsg) __attribute__((nonnull (1)));
+/**
+ * Initialize the 
+ */
+LIBV4L_PUBLIC VideoPipeline* VideoPipeline_init(VideoPipeline* pipeline, struct v4lconvert_conversion_request* request, char** errmsg) __attribute__((nonnull (1)));
+/**
+ * Create a VideoPipeline that will apply the given transformers in order.
+ * @param pipeline
+ *      Pipeline to 
+ * @param cascadeRelease
+ *      Whether, when the VideoPipeline is released, it also will release all of its transformers
+ */
+LIBV4L_PUBLIC VideoPipeline* VideoPipeline_wrap(size_t numTransformers, ImageTransformer* transformers[], bool cascadeRelease) __attribute__ ((nonnull (1, 3)));
 
 /**
  * Allocate/compute buffers
@@ -268,7 +280,7 @@ LIBV4L_PUBLIC int v4lconvert_encoder_series_doRelease(struct v4lconvert_encoder_
  * @param allocate boolean, whether to allocate the buffers themselves or not
  * @return 1 on success, 0 on failure
  */
-LIBV4L_PUBLIC int v4lconvert_encoder_series_createBuffers(struct v4lconvert_encoder_series* series, u32 num_buffers, struct v4lconvert_buffer** buffers, int allocate);
+LIBV4L_PUBLIC int v4lconvert_encoder_series_createBuffers(struct VideoPipeline* series, size_t num_buffers, struct v4lconvert_buffer* buffers[], bool allocate);
 LIBV4L_PUBLIC int v4lconvert_buffer_release(struct v4lconvert_buffer* buffer);
 
 #ifdef __cplusplus
