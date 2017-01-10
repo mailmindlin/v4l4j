@@ -591,7 +591,7 @@ u8 *v4lconvert_alloc_buffer(unsigned int needed, u8 **buf, unsigned int *buf_siz
 }
 
 int v4lconvert_oom_error(struct v4lconvert_data *data) {
-	V4LCONVERT_ERR("could not allocate memory\n");
+	V4LCONVERT_ERR("Could not allocate memory\n");
 	errno = ENOMEM;
 	return -1;
 }
@@ -1164,8 +1164,6 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 		const struct v4l2_format *dest_fmt, /* in */
 		u8 *src, unsigned int src_size, u8 *dest, unsigned int dest_size) {
 	int convert = 0;
-	unsigned int dest_needed, temp_needed;
-	u8 *convert1_dest = dest;
 	unsigned int convert1_dest_size = dest_size;
 	u8 *convert2_src = src, *convert2_dest = dest;
 	unsigned int convert2_dest_size = dest_size;
@@ -1201,6 +1199,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 	}
 
 	/* sanity check, is the dest buffer large enough? */
+	unsigned int dest_needed, temp_needed;
 	switch (my_dest_fmt.fmt.pix.pixelformat) {
 		case V4L2_PIX_FMT_RGB24:
 		case V4L2_PIX_FMT_BGR24:
@@ -1227,12 +1226,9 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 
 	/* Sometimes we need foo -> rgb -> bar as video processing (whitebalance,
 	   etc.) can only be done on rgb data */
-	if (processing && v4lconvert_processing_needs_double_conversion(
-				my_src_fmt.fmt.pix.pixelformat,
-				my_dest_fmt.fmt.pix.pixelformat))
+	if (processing && v4lconvert_processing_needs_double_conversion(my_src_fmt.fmt.pix.pixelformat, my_dest_fmt.fmt.pix.pixelformat))
 		convert = 2;
-	else if (my_dest_fmt.fmt.pix.pixelformat !=
-			my_src_fmt.fmt.pix.pixelformat ||
+	else if (my_dest_fmt.fmt.pix.pixelformat != my_src_fmt.fmt.pix.pixelformat ||
 		 /* Special case if we do not need to do conversion, but we
 		    are not doing any other step involving copying either,
 		    force going through convert_pixfmt to copy the data from
@@ -1242,10 +1238,9 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 
 	/* convert_pixfmt (only if convert == 2) -> processing -> convert_pixfmt ->
 	   rotate -> flip -> crop, all steps are optional */
+	u8 *convert1_dest = dest;
 	if (convert == 2) {
-		convert1_dest = v4lconvert_alloc_buffer(
-				my_src_fmt.fmt.pix.width * my_src_fmt.fmt.pix.height * 3,
-				&data->convert1_buf, &data->convert1_buf_size);
+		convert1_dest = v4lconvert_alloc_buffer(my_src_fmt.fmt.pix.width * my_src_fmt.fmt.pix.height * 3, &data->convert1_buf, &data->convert1_buf_size);
 		if (!convert1_dest)
 			return v4lconvert_oom_error(data);
 
