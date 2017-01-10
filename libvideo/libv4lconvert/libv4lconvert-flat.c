@@ -564,7 +564,6 @@ bool getDataFromV4L2Format(struct v4l2_format* data, u32* fmt, unsigned int* wid
 		case V4L2_BUF_TYPE_VBI_OUTPUT:
 		case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
 		case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
-		case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
 		case V4L2_BUF_TYPE_VIDEO_OUTPUT:
 		case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
 		case V4L2_BUF_TYPE_PRIVATE:
@@ -574,9 +573,39 @@ bool getDataFromV4L2Format(struct v4l2_format* data, u32* fmt, unsigned int* wid
 	}
 }
 
-bool createV4L2Format(struct v4l2_format* data, u32 fmt, unsigned int width, unsigned int height) {
-	//TODO finish
+/**
+ * Populate a v4l2_format structure.
+ */
+static bool createV4L2Format(struct v4l2_format* data, u32 fmt, unsigned int width, unsigned int height) {
+	//Map paletteID from libvideo to v4l2
+	unsigned int v4l2Fmt = libvideo_palettes[fmt].v4l2_palette;
+	
+	switch (fmt) {
+		case RGB332:
+		case RGB444:
+		case RGB555:
+		case RGB565:
+			//Pixel format
+			data->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+			data->fmt.pix.width = width;
+			data->fmt.pix.height = height;
+			data->fmt.pix.pixelformat = v4l2Fmt;
+			return true;
+		case YUV422P:
+		case YUV411P:
+		case Y41P:
+			data->type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+			//TODO finish
+			return true;
+	}
 	return false;
+}
+
+/**
+ * Traverse the nodes backwards and build an array of transformers
+ */
+static size_t VideoPipeline_buildTransformersFromPath(node* lastNode, ImageTransformer*** transformers) {
+	
 }
 
 static size_t VideoPipeline_computeConverters(ImageTransformer*** converters, struct v4lconvert_conversion_request* request, char** errmsg) {
@@ -740,8 +769,8 @@ static size_t VideoPipeline_computeConverters(ImageTransformer*** converters, st
 		
 		if (currentTier & rotate_mask) {
 			//Look for rotations
-			unsigned int newTier = currentTier & ~rotate_mask;
-			size_t newTierOffset = newTier * tierSize;
+			const unsigned int newTier = currentTier & ~rotate_mask;
+			const size_t newTierOffset = newTier * tierSize;
 			
 			ImageTransformerPrototype* prototypes = ImageTransformerPrototype[v4lconvert_conversion_type_rotate];
 			
@@ -768,7 +797,6 @@ static size_t VideoPipeline_computeConverters(ImageTransformer*** converters, st
 				if (target == NULL) {
 					//No target existed before
 					target = malloc(sizeof(node));
-					target->flags = newTier;
 					target->fmt = prototype->dst_fmt;
 					closedSet[newTierOffset + prototype->dst_fmt] = target;
 				} else {
@@ -778,18 +806,22 @@ static size_t VideoPipeline_computeConverters(ImageTransformer*** converters, st
 				}
 				target->cpuCost = newCpuCost;
 				target->quality = newQuality;
+				target->flags = newTier;//Note that this clears the closed_mask bit
 				target->prev = current;
 				target->prototype = prototype;
 				
 				//Add to queue
-				//TODO reduce-min operation
+				//TODO decrease-key operation
 				openSet.push(&openSet, target);
 			}
 		} else {
 			//Look for flips
 			if (currentTier & hflip_mask) {
-				size_t newTierOffset = (currentTier & ~hflip_mask) * tierSize;
-				ImageTransformerPrototype* prototypes = ImageTransformerPrototype[v4lconvert_conversion_type_rotate];
+				const unsigned int newTier = currentTier & ~hflip_mask;
+				size_t newTierOffset = newTier * tierSize;
+				
+				ImageTransformerPrototype* prototypes = ImageTransformerPrototype[v4lconvert_conversion_type_hflip];
+				
 				for (unsigned int i = 0; i < v4lconvert_converter_num_prototypes[v4lconvert_conversion_type_hflip], i++) {
 					ImageTransformerPrototype* prototype = &prototypes[i];
 					if (prototype->src_fmt == current_fmt) {
