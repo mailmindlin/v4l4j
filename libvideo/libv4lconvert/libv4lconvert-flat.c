@@ -23,6 +23,7 @@ extern "C" {
 //Macro to hide unused parameter warnings
 #define UNUSED(x) (void)(x)
 #endif
+static bool estimateCostPlaceholder(ImageTransformerPrototype* self, unsigned int* cpuCost, float* qualityCost, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void** options) __attribute__ ((nonnull (1, 2, 3, 4, 5, 7)));
 
 #define GENERATE_CONVERTER(id, initFn, applyFn, costFn, src_fmt, dst_fmt, signature, flag1, flag2) \
 	{\
@@ -69,63 +70,63 @@ extern "C" {
 	GENERATE_CONVERTER_SD_SF_1F(id + 1, (applyFn), (costFn), (src_fmt_1), (dst_fmt_1), true)
 
 #define GENERATE_CONVERTER_SD_SF_2F_x4(id, applyFn, costFn, src_fmt_0, src_fmt_1, dst_fmt_0, dst_fmt_1) \
-	GENERATE_CONVERTER_SD_SF_2F(id    , (applyFn), (costFn), (src_fmt_0), (dst_fmt_0), 0, 0),\
-	GENERATE_CONVERTER_SD_SF_2F(id + 1, (applyFn), (costFn), (src_fmt_1), (dst_fmt_0), 1, 0),\
-	GENERATE_CONVERTER_SD_SF_2F(id + 2, (applyFn), (costFn), (src_fmt_0), (dst_fmt_1), 0, 1),\
-	GENERATE_CONVERTER_SD_SF_2F(id + 3, (applyFn), (costFn), (src_fmt_1), (dst_fmt_1), 1, 1)
+	GENERATE_CONVERTER_SD_SF_2F(id    , (applyFn), (costFn), (src_fmt_0), (dst_fmt_0), false, false),\
+	GENERATE_CONVERTER_SD_SF_2F(id + 1, (applyFn), (costFn), (src_fmt_1), (dst_fmt_0), true,  false),\
+	GENERATE_CONVERTER_SD_SF_2F(id + 2, (applyFn), (costFn), (src_fmt_0), (dst_fmt_1), false, true),\
+	GENERATE_CONVERTER_SD_SF_2F(id + 3, (applyFn), (costFn), (src_fmt_1), (dst_fmt_1), true,  true)
 
-static v4lconvert_converter_t* v4lconvert_init_imf_sdwh(v4lconvert_converter_prototype_t* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options, char** errmsg);
-static v4lconvert_converter_t* v4lconvert_init_imf_sd_sf(v4lconvert_converter_prototype_t* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options, char** errmsg);
+static v4lconvert_converter_t* v4lconvert_init_imf_sdwh(ImageTransformerPrototype* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options, char** errmsg);
+static v4lconvert_converter_t* v4lconvert_init_imf_sd_sf(ImageTransformerPrototype* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options, char** errmsg);
 
-static v4lconvert_converter_prototype const v4lconvert_converter_prototypes[][] = {
+static ImageTransformerPrototype const ImageTransformerPrototypes[][] = {
 	[v4lconvert_conversion_type_identity] = {
 		
 	},
 	[v4lconvert_conversion_type_imf] = {
-		GENERATE_CONVERTER_SD_SF_2F_x4(0, v4lconvert_rgb24_to_yuv420, NULL, RGB24, BGR24, YUV420, YVU420),
-		GENERATE_CONVERTER_SDWH_1F_x2(4, v4lconvert_yuv420_to_rgb24, NULL, YUV420, YVU420, RGB24, RGB24),
-		GENERATE_CONVERTER_SDWH_1F_x2(6, v4lconvert_yuv420_to_bgr24, YUV420, YVU420, BGR24, BGR24),
-		GENERATE_CONVERTER_SDWH_0F(8, v4lconvert_yuyv_to_rgb24, YUYV, RGB24),
-		GENERATE_CONVERTER_SDWH_0F(9, v4lconvert_yuyv_to_bgr24, YUYV, BGR24),
-		GENERATE_CONVERTER_SDWH_1F_x2(10, v4lconvert_yuyv_to_yuv420, YUYV, YUYV, YUV420, YVU420),
-		GENERATE_CONVERTER_SDWH_0F(12, v4lconvert_yvyu_to_rgb24, YUYV, RGB24),
-		GENERATE_CONVERTER_SDWH_0F(13, v4lconvert_yvyu_to_bgr24, YUYV, BGR24),
-		GENERATE_CONVERTER_SDWH_0F(14, v4lconvert_uyvy_to_rgb24, UYVY, RGB24),
-		GENERATE_CONVERTER_SDWH_0F(15, v4lconvert_uyvy_to_bgr24, UYVY, BGR24),
-		GENERATE_CONVERTER_SDWH_1F_x2(16, v4lconvert_uyvy_to_yuv420, UYVY, UYVY, YUV420, YVU420),
-		GENERATE_CONVERTER_SDWH_0F(18, v4lconvert_swap_rgb, RGB24, BGR24),
-		GENERATE_CONVERTER_SDWH_0F(19, v4lconvert_swap_rgb, BGR24, RGB24),
-		GENERATE_CONVERTER_SD_SF_0F(20, v4lconvert_swap_uv, YUV420, YVU420),//TODO figure out if this is right...
-		GENERATE_CONVERTER_SD_SF_0F(21, v4lconvert_swap_uv, YVU420, YUV420),
-		GENERATE_CONVERTER_SDWH_0F(22, v4lconvert_grey_to_rgb24, GREY, RGB24),
-		GENERATE_CONVERTER_SD_SF_0F(23, v4lconvert_grey_to_yuv420, GREY, YUV420),
-		GENERATE_CONVERTER_SDWH_0F(24, v4lconvert_rgb565_to_rgb24, RGB565, RGB24),
-		GENERATE_CONVERTER_SDWH_0F(25, v4lconvert_rgb565_to_bgr24, RGB565, BGR24),
-		GENERATE_CONVERTER_SD_SF_1F_x2(26, v4lconvert_rgb565_to_yuv420, RGB565, RGB565, YUV420, YVU420),
-		GENERATE_CONVERTER_SDWH_1F_x2(27, v4lconvert_spca501_to_yuv420, SPCA501, SPCA501, YUV420, YVU420),
-		GENERATE_CONVERTER_SDWH_1F_x2(28, v4lconvert_spca505_to_yuv420, SPCA505, SPCA505, YUV420, YVU420),
-		GENERATE_CONVERTER_SDWH_1F_x2(32, v4lconvert_spca508_to_yuv420, SPCA508, SPCA508, YUV420, YVU420),
-		GENERATE_CONVERTER_SDWH_1F_x2(34, v4lconvert_cit_yyvyuy_to_yuv420, CIT_YYVYUY, CIT_YYVYUY, YUV420, YVU420),
-		GENERATE_CONVERTER_SDWH_1F_x2(36, v4lconvert_konica_yuv420_to_yuv420, KONICA420, KONICA420, YUV420, YVU420),
-		GENERATE_CONVERTER_SDWH_1F_x2(38, v4lconvert_m420_to_yuv420, M420, M420, YUV420, YVU420),
-		GENERATE_CONVERTER_SDWH_1F_x2(40, v4lconvert_sn9c20x_to_yuv420, SN9C20X_I420, SN9C20X_I420, YUV420, YVU420),
-		GENERATE_CONVERTER_SDWH_0F(42, v4lconvert_decode_sn9c10x, SN9C10X, SBGGR8),
-		GENERATE_CONVERTER_SDWH_0F(43, v4lconvert_decode_sn9c2028, SN9C2028, SBGGR8),
-		GENERATE_CONVERTER_SDWH_0F(44, v4lconvert_decode_sq905c, SQ905C, SRGGB8),
-		GENERATE_CONVERTER_SDWH_0F(45, v4lconvert_decode_stv0680, STV0680, SRGGB8),
-		GENERATE_CONVERTER_SDWH_0F(46, v4lconvert_grey_to_rgb24, GREY, RGB24),
-		GENERATE_CONVERTER_SDWH_0F(47, v4lconvert_hm12_to_bgr24, HM12, BGR24),
-		GENERATE_CONVERTER_SDWH_1F_x2(48, v4lconvert_hm12_to_yuv420, HM12, HM12, YUV420, YVU420),
+		GENERATE_CONVERTER_SD_SF_2F_x4(0, v4lconvert_rgb24_to_yuv420, estimateCostPlaceholder, RGB24,  BGR24, YUV420, YVU420),
+		GENERATE_CONVERTER_SDWH_1F_x2(4,  v4lconvert_yuv420_to_rgb24, estimateCostPlaceholder, YUV420, YVU420, RGB24, RGB24),
+		GENERATE_CONVERTER_SDWH_1F_x2(6,  v4lconvert_yuv420_to_bgr24, estimateCostPlaceholder, YUV420, YVU420, BGR24, BGR24),
+		GENERATE_CONVERTER_SDWH_0F(8,     v4lconvert_yuyv_to_rgb24,   estimateCostPlaceholder, YUYV,   RGB24),
+		GENERATE_CONVERTER_SDWH_0F(9,     v4lconvert_yuyv_to_bgr24,   estimateCostPlaceholder, YUYV,   BGR24),
+		GENERATE_CONVERTER_SDWH_1F_x2(10, v4lconvert_yuyv_to_yuv420,  estimateCostPlaceholder, YUYV,   YUYV, YUV420, YVU420),
+		GENERATE_CONVERTER_SDWH_0F(12,    v4lconvert_yvyu_to_rgb24,   estimateCostPlaceholder, YUYV,   RGB24),
+		GENERATE_CONVERTER_SDWH_0F(13,    v4lconvert_yvyu_to_bgr24,   estimateCostPlaceholder, YUYV,   BGR24),
+		GENERATE_CONVERTER_SDWH_0F(14,    v4lconvert_uyvy_to_rgb24,   estimateCostPlaceholder, UYVY,   RGB24),
+		GENERATE_CONVERTER_SDWH_0F(15,    v4lconvert_uyvy_to_bgr24,   estimateCostPlaceholder, UYVY,   BGR24),
+		GENERATE_CONVERTER_SDWH_1F_x2(16, v4lconvert_uyvy_to_yuv420,  estimateCostPlaceholder, UYVY,   UYVY, YUV420, YVU420),
+		GENERATE_CONVERTER_SDWH_0F(18,    v4lconvert_swap_rgb,        estimateCostPlaceholder, RGB24,  BGR24),
+		GENERATE_CONVERTER_SDWH_0F(19,    v4lconvert_swap_rgb,        estimateCostPlaceholder, BGR24,  RGB24),
+		GENERATE_CONVERTER_SD_SF_0F(20,   v4lconvert_swap_uv,         estimateCostPlaceholder, YUV420, YVU420),//TODO figure out if this is right...
+		GENERATE_CONVERTER_SD_SF_0F(21,   v4lconvert_swap_uv,         estimateCostPlaceholder, YVU420, YUV420),
+		GENERATE_CONVERTER_SDWH_0F(22,    v4lconvert_grey_to_rgb24,   estimateCostPlaceholder, GREY,   RGB24),
+		GENERATE_CONVERTER_SD_SF_0F(23,   v4lconvert_grey_to_yuv420,  estimateCostPlaceholder, GREY,   YUV420),
+		GENERATE_CONVERTER_SDWH_0F(24,    v4lconvert_rgb565_to_rgb24, estimateCostPlaceholder, RGB565, RGB24),
+		GENERATE_CONVERTER_SDWH_0F(25,    v4lconvert_rgb565_to_bgr24, estimateCostPlaceholder, RGB565, BGR24),
+		GENERATE_CONVERTER_SD_SF_1F_x2(26,v4lconvert_rgb565_to_yuv420,       estimateCostPlaceholder, RGB565,       RGB565,       YUV420, YVU420),
+		GENERATE_CONVERTER_SDWH_1F_x2(27, v4lconvert_spca501_to_yuv420,      estimateCostPlaceholder, SPCA501,      SPCA501,      YUV420, YVU420),
+		GENERATE_CONVERTER_SDWH_1F_x2(28, v4lconvert_spca505_to_yuv420,      estimateCostPlaceholder, SPCA505,      SPCA505,      YUV420, YVU420),
+		GENERATE_CONVERTER_SDWH_1F_x2(32, v4lconvert_spca508_to_yuv420,      estimateCostPlaceholder, SPCA508,      SPCA508,      YUV420, YVU420),
+		GENERATE_CONVERTER_SDWH_1F_x2(34, v4lconvert_cit_yyvyuy_to_yuv420,   estimateCostPlaceholder, CIT_YYVYUY,   CIT_YYVYUY,   YUV420, YVU420),
+		GENERATE_CONVERTER_SDWH_1F_x2(36, v4lconvert_konica_yuv420_to_yuv420,estimateCostPlaceholder, KONICA420,    KONICA420,    YUV420, YVU420),
+		GENERATE_CONVERTER_SDWH_1F_x2(38, v4lconvert_m420_to_yuv420,         estimateCostPlaceholder, M420,         M420,         YUV420, YVU420),
+		GENERATE_CONVERTER_SDWH_1F_x2(40, v4lconvert_sn9c20x_to_yuv420,      estimateCostPlaceholder, SN9C20X_I420, SN9C20X_I420, YUV420, YVU420),
+		GENERATE_CONVERTER_SDWH_0F(42,    v4lconvert_decode_sn9c10x,  estimateCostPlaceholder, SN9C10X,  SBGGR8),
+		GENERATE_CONVERTER_SDWH_0F(43,    v4lconvert_decode_sn9c2028, estimateCostPlaceholder, SN9C2028, SBGGR8),
+		GENERATE_CONVERTER_SDWH_0F(44,    v4lconvert_decode_sq905c,   estimateCostPlaceholder, SQ905C,   SRGGB8),
+		GENERATE_CONVERTER_SDWH_0F(45,    v4lconvert_decode_stv0680,  estimateCostPlaceholder, STV0680,  SRGGB8),
+		GENERATE_CONVERTER_SDWH_0F(46,    v4lconvert_grey_to_rgb24,   estimateCostPlaceholder, GREY,     RGB24),
+		GENERATE_CONVERTER_SDWH_0F(47,    v4lconvert_hm12_to_bgr24,   estimateCostPlaceholder, HM12,     BGR24),
+		GENERATE_CONVERTER_SDWH_1F_x2(48, v4lconvert_hm12_to_yuv420,  estimateCostPlaceholder, HM12,     HM12, YUV420, YVU420),
 #define GENERATE_CONVERTER_JPEG(id, costFn, src_fmt)\
-	GENERATE_CONVERTER((id), v4lconvert_init_imf_jpeg, NULL, (costFn), (src_fmt), JPEG, special, false, false)
+	GENERATE_CONVERTER((id), v4lconvert_init_imf_jpeg, (costFn), (src_fmt), JPEG, special, false, false)
 		//Virtual JPEG converters. Can't be used, but are placeholders because encoders can support them.
-		GENERATE_CONVERTER_JPEG(50, NULL, GREY),
-		GENERATE_CONVERTER_JPEG(51, NULL, RGB24),
-		GENERATE_CONVERTER_JPEG(52, NULL, YUV420),
-		GENERATE_CONVERTER_JPEG(53, NULL, YUYV),
-		GENERATE_CONVERTER_JPEG(54, NULL, YVYU),
-		GENERATE_CONVERTER_JPEG(55, NULL, UYVY),
-		GENERATE_CONVERTER_JPEG(56, NULL, VYUY),
+		GENERATE_CONVERTER_JPEG(50,       estimateCostPlaceholder, GREY),
+		GENERATE_CONVERTER_JPEG(51,       estimateCostPlaceholder, RGB24),
+		GENERATE_CONVERTER_JPEG(52,       estimateCostPlaceholder, YUV420),
+		GENERATE_CONVERTER_JPEG(53,       estimateCostPlaceholder, YUYV),
+		GENERATE_CONVERTER_JPEG(54,       estimateCostPlaceholder, YVYU),
+		GENERATE_CONVERTER_JPEG(55,       estimateCostPlaceholder, UYVY),
+		GENERATE_CONVERTER_JPEG(56,       estimateCostPlaceholder, VYUY),
 #undef GENERATE_CONVERTER_JPEG
 		//v4lconvert_y10b_to_rgb24(struct v4lconvert_data *data, const u8 *src, u8 *dest, u32 width, u32 height);
 		//v4lconvert_y10b_to_yuv420(struct v4lconvert_data *data, const u8 *src, u8 *dest, u32 width, u32 height);
@@ -143,7 +144,7 @@ static v4lconvert_converter_prototype const v4lconvert_converter_prototypes[][] 
 		//v4lconvert_bayer_to_yuv420(const u8 *bayer, u8 *yuv, u32 width, u32 height, unsigned int src_pixfmt, int yvu);
 	}
 };
-#define COUNT_PROTOTYPES(type) [v4lconvert_conversion_type_##type] = ARRAY_SIZE(v4lconvert_converter_prototypes[v4lconvert_conversion_type_##type])
+#define COUNT_PROTOTYPES(type) [v4lconvert_conversion_type_##type] = ARRAY_SIZE(ImageTransformerPrototypes[v4lconvert_conversion_type_##type])
 static const size_t v4lconvert_converter_num_prototypes[] = {
 		COUNT_PROTOTYPES(identity),
 		COUNT_PROTOTYPES(imf),
@@ -158,20 +159,28 @@ static const size_t v4lconvert_converter_num_prototypes[] = {
 	};
 #undef COUNT_PROTOTYPES
 
-static unsigned int VideoPipeline_apply(VideoPipeline* self, struct v4lconvert_buffer* buffer);
-static void VideoPipeline_releaseSelfOnly(VideoPipeline* self) __attribute__ ((nonnull (1)));
-static void VideoPipeline_releaseConvertersOnly(VideoPipeline* self) __attribute__ ((nonnull (1)));
-static void VideoPipeline_releaseSelfAndConverters(VideoPipeline* self) __attribute__ ((nonnull (1)));
+static unsigned int VideoPipeline_apply(VideoPipeline* self, struct v4lconvert_buffer* buffer) __attribute__ ((nonnull (1, 2)));
+static bool VideoPipeline_release(VideoPipeline* self) __attribute__ ((nonnull (1)));
+//static bool VideoPipeline_releaseSelfOnly(VideoPipeline* self) __attribute__ ((nonnull (1)));
+//static bool VideoPipeline_releaseConvertersOnly(VideoPipeline* self) __attribute__ ((nonnull (1)));
+//static bool VideoPipeline_releaseSelfAndConverters(VideoPipeline* self) __attribute__ ((nonnull (1)));
 
 static unsigned int ImageTransformer_applyIMF(ImageTransformer* self, const u8* src, size_t src_len, u8* dst, size_t dst_len);
 static bool ImageTransformer_releaseIMF(ImageTransformer* self);
 
-static unsigned int ImageTransformer_encodePixelJPEG(ImageTransformer* self, const u8* src, u8* dst, unsigned int src_len);
-static unsigned int ImageTransformer_encodePlanarJPEG(ImageTransformer* self, const u8* src, u8* dst, unsigned int src_len);
+static unsigned int ImageTransformer_encodePixelJPEG(ImageTransformer* self, const u8* src, size_t src_len, u8* dst, size_t dst_len);
+static unsigned int ImageTransformer_encodePlanarJPEG(ImageTransformer* self, const u8* src, size_t src_len, u8* dst, size_t dst_len);
 static bool ImageTransformer_releaseJPEG(ImageTransformer* self);
 
 
-static unsigned int ImageTransformer_applyIMF(struct ImageTransformer* self, const u8* src, size_t src_len, u8* dst, size_t dst_len) {
+//Placeholder for estimateCost methods
+static bool estimateCostPlaceholder(ImageTransformerPrototype* self, unsigned int* cpuCost, float* qualityCost, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void** options) {
+	*cpuCost = 10;
+	*qualityCost = .5;
+	return true;
+}
+
+static unsigned int ImageTransformer_applyIMF(ImageTransformer* self, const u8* src, size_t src_len, u8* dst, size_t dst_len) {
 	UNUSED(src_len);
 	v4lconvert_converter_t* converter = self->converter;
 	switch (converter->signature) {
@@ -199,15 +208,35 @@ static unsigned int ImageTransformer_applyIMF(struct ImageTransformer* self, con
 	return self->dst_len;
 }
 
+static bool v4lconvert_encoder_releaseIMF(ImageTransformer* self) {
+	switch (self->prototype->signature) {
+		case v4lconvert_conversion_signature_sdwh_0f:
+		case v4lconvert_conversion_signature_sdwh_1f:
+		case v4lconvert_conversion_signature_sdwh_2f:
+			//Nothing to release
+			return true;
+		case v4lconvert_conversion_signature_sd_sf_0f:
+		case v4lconvert_conversion_signature_sd_sf_1f:
+		case v4lconvert_conversion_signature_sd_sf_2f:
+			if (self->imf_v4l2_src_fmt) {
+				free(self->imf_v4l2_src_fmt);
+				self->imf_v4l2_src_fmt = NULL;
+			}
+			return true;
+		default:
+			return false;
+	}
+}
+
 /**
  * v4lconvert_encoder::apply method for encoding pixel formats to JPEG.
  * e.g, RGB or GREY
  */
-static size_t v4lconvert_encoder_encodePixelJPEG(struct v4lconvert_encoder* self, const u8* src, size_t src_len, u8* dst, size_t dst_len) {
-	struct jpeg_compress_struct* cinfo = self->jpeg_encode_params.cinfo;
+static size_t v4lconvert_encoder_encodePixelJPEG(ImageTransformer* self, const u8* src, size_t src_len, u8* dst, size_t dst_len) {
+	struct jpeg_compress_struct* cinfo = self->params.jpeg_encode_params.cinfo;
 	if (!cinfo)
 		return 0;
-	jpeg_set_quality(cinfo, self->jpeg_encode_params.quality, TRUE);
+	jpeg_set_quality(cinfo, self->params.jpeg_encode_params.quality, TRUE);
 	
 	// Configure the output to write to the destination buffer
 	unsigned long dst_lencpy = (unsigned long) self->dst_len;
@@ -216,7 +245,7 @@ static size_t v4lconvert_encoder_encodePixelJPEG(struct v4lconvert_encoder* self
 	jpeg_start_compress(cinfo, TRUE);
 	
 	const JSAMPLE* row_ptr;
-	const u32 row_stride  = self->jpeg_encode_params.row_stride;
+	const u32 row_stride  = self->params.jpeg_encode_params.row_stride;
 	const u32 height = self->src_height;
 	#ifdef SANITY_CHECK
 		u32 max_scanline = src_len / row_stride;
@@ -241,12 +270,12 @@ static size_t v4lconvert_encoder_encodePixelJPEG(struct v4lconvert_encoder* self
 	return self->dst_len - cinfo->dest->free_in_buffer;
 }
 
-static size_t v4lconvert_encoder_encodePlanarJPEG(struct v4lconvert_encoder* self, const u8* src, size_t src_len, u8* dst, size_t dst_len) {
-	struct jpeg_compress_struct* cinfo = self->jpeg_encode_params.cinfo;
+static size_t v4lconvert_encoder_encodePlanarJPEG(ImageTransformer* self, const u8* src, size_t src_len, u8* dst, size_t dst_len) {
+	struct jpeg_compress_struct* cinfo = self->params.jpeg_encode_params.cinfo;
 	if (!cinfo)
 		return 0;
 	
-	jpeg_set_quality(cinfo, self->jpeg_encode_params.quality, TRUE);
+	jpeg_set_quality(cinfo, self->params.jpeg_encode_params.quality, TRUE);
 	
 	// Configure the output to write to the destination buffer
 	unsigned long dst_lencpy = (unsigned long) self->dst_len;
@@ -260,41 +289,21 @@ static size_t v4lconvert_encoder_encodePlanarJPEG(struct v4lconvert_encoder* sel
 	return 0;
 }
 
-static int v4lconvert_encoder_releaseIMF(struct v4lconvert_encoder* self) {
-	switch (self->converter->signature) {
-		case v4lconvert_conversion_signature_sdwh_0f:
-		case v4lconvert_conversion_signature_sdwh_1f:
-		case v4lconvert_conversion_signature_sdwh_2f:
-			//Nothing to release
-			return EXIT_SUCCESS;
-		case v4lconvert_conversion_signature_sd_sf_0f:
-		case v4lconvert_conversion_signature_sd_sf_1f:
-		case v4lconvert_conversion_signature_sd_sf_2f:
-			if (self->imf_v4l2_src_fmt) {
-				free(self->imf_v4l2_src_fmt);
-				self->imf_v4l2_src_fmt = NULL;
-			}
-			return EXIT_SUCCESS;
-		default:
-			return EXIT_FAILURE;
+static bool ImageTransformer_releaseJPEG(ImageTransformer* self) {
+	if (self->params.jpeg_encode_params.cinfo) {
+		jpeg_destroy_compress(self->params.jpeg_encode_params.cinfo);
+		free(self->params.jpeg_encode_params.cinfo);
+		self->params.jpeg_encode_params.cinfo = NULL;
 	}
+	if (self->params.jpeg_encode_params.cerr) {
+		free(self->params.jpeg_encode_params.cerr);
+		self->params.jpeg_encode_params.cerr = NULL;
+	}
+	return true;
 }
 
-static int v4lconvert_encoder_releaseJPEG(struct v4lconvert_encoder* self) {
-	if (self->jpeg_encode_params.cinfo) {
-		jpeg_destroy_compress(self->jpeg_encode_params.cinfo);
-		free(self->jpeg_encode_params.cinfo);
-		self->jpeg_encode_params.cinfo = NULL;
-	}
-	if (self->jpeg_encode_params.cerr) {
-		free(self->jpeg_encode_params.cerr);
-		self->jpeg_encode_params.cerr = NULL;
-	}
-	return EXIT_SUCCESS;
-}
-
-u32 v4lconvert_estimateBufferSize(u32 fmt, u32 width, u32 height) {
-	u32 pixels = width * height;
+size_t v4lconvert_estimateBufferSize(u32 fmt, unsigned int width, unsigned int height) {
+	unsigned int pixels = width * height;
 	switch (fmt) {
 		case RGB32:
 		case BGR32:
@@ -353,8 +362,6 @@ u32 v4lconvert_estimateBufferSize(u32 fmt, u32 width, u32 height) {
 }
 
 int v4lconvert_encoder_initWithConverter(struct v4lconvert_encoder* encoder, v4lconvert_converter_t* converter, u32 width, u32 height) {
-	if (!encoder || !converter)
-		return EXIT_FAILURE;
 	encoder->converter = converter;
 	encoder->src_fmt = converter->src_fmt;
 	encoder->dst_fmt = converter->dst_fmt;
@@ -377,7 +384,7 @@ int v4lconvert_encoder_initWithConverter(struct v4lconvert_encoder* encoder, v4l
 			encoder->apply = v4lconvert_encoder_applyIMF_sd_sf;
 			encoder->release = v4lconvert_encoder_releaseIMF;
 			if (!(encoder->imf_v4l2_src_fmt = malloc(sizeof(struct v4l2_format))))
-				return EXIT_FAILURE;
+				return false;
 			//TODO finish
 			switch (encoder->imf_v4l2_src_fmt->type) {
 				case V4L2_BUF_TYPE_VIDEO_CAPTURE:
@@ -393,7 +400,7 @@ int v4lconvert_encoder_initWithConverter(struct v4lconvert_encoder* encoder, v4l
 				case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
 					//Not sure how to handle these
 				default:
-					return EXIT_FAILURE;
+					return false;
 			}
 			break;
 		case v4lconvert_conversion_signature_special:
@@ -408,11 +415,11 @@ int v4lconvert_encoder_initWithConverter(struct v4lconvert_encoder* encoder, v4l
 				
 				//Create jpeg encoder
 				if (!(encoder->jpeg_encode_params.cinfo = malloc(sizeof(struct jpeg_compress_struct))))
-					return EXIT_FAILURE;
+					return false;
 				
 				if (!(encoder->jpeg_encode_params.cerr = malloc(sizeof(struct jpeg_error_mgr)))) {
 					free(encoder->jpeg_encode_params.cinfo);
-					return EXIT_FAILURE;
+					return false;
 				}
 				
 				struct jpeg_compress_struct* cinfo = encoder->jpeg_encode_params.cinfo;
@@ -455,29 +462,21 @@ int v4lconvert_encoder_initWithConverter(struct v4lconvert_encoder* encoder, v4l
 						cinfo->comp_info[1].v_samp_factor = 1;
 						cinfo->comp_info[2].h_samp_factor = 1;
 						cinfo->comp_info[2].v_samp_factor = 1;
-						return EXIT_FAILURE;
-						break;
+						return false;
 					default:
 						//TODO support more formats (esp. YUV420)
-						return EXIT_FAILURE;
+						return false;
 				}
 			} else {
-				return EXIT_FAILURE;
+				return false;
 			}
 			break;
 		default:
-			return EXIT_FAILURE;
+			return false;
 	}
 	encoder->src_len = v4lconvert_estimateBufferSize(converter->src_fmt, width, height);
 	encoder->dst_len = v4lconvert_estimateBufferSize(converter->dst_fmt, width, height);
-	return EXIT_SUCCESS;
-}
-
-int v4lconvert_encoder_initForIMF(struct v4lconvert_encoder* encoder, u32 src_fmt, u32 dst_fmt, u32 width, u32 height) {
-	v4lconvert_converter_t* converter = v4lconvert_converter_getConverterByConversion(src_fmt, dst_fmt);
-	if (!converter)
-		return EXIT_FAILURE;
-	return v4lconvert_encoder_initWithConverter(encoder, converter, width, height);
+	return true;
 }
 
 static unsigned int binaryGcd(unsigned int a, unsigned int b) {
@@ -505,59 +504,82 @@ static unsigned int binaryGcd(unsigned int a, unsigned int b) {
 	return u << shift;
 }
 
-static size_t lookupPrototype(v4lconvert_conversion_type type, u32 src_fmt) {
-	size_t min = 0;
-	size_t max = v4lconvert_converter_num_prototypes[v4lconvert_conversion_type_rotate];
-	//Binary search
-	
-	for (unsigned int i = 0; i < , i++) {
-		v4lconvert_converter_prototype* prototype = &v4lconvert_converter_prototypes[v4lconvert_conversion_type_rotate][i];
-		if (prototype->src_fmt == current_fmt) {
-			struct v4l2_format targetFormat;
-			node* target = malloc()
-			target->cost = current->cost + prototype->estimateCost(prototype, currentSourceFormat, ...);
-			target->prev = current_idx;
-		}
+static ImageTransformerPrototype* lookupPrototype(v4lconvert_conversion_type type, u32 src_fmt) {
+	const size_t max = v4lconvert_converter_num_prototypes[type];
+	ImageTransformerPrototype* prototypes = ImageTransformerPrototypes[type];
+	//Linear search
+	for (unsigned int i = 0; i < max, i++) {
+		ImageTransformerPrototype* prototype = &prototypes[i];
+		if (prototype->src_fmt == current_fmt)
+			return prototype;
 	}
 	return NULL;
 }
+
 typedef struct converter_node {
 	/**
 	 * Total cost to get to the current node.
 	 * 0 if undefined (infinity)
 	 */
-	size_t cost;
+	size_t cpuCost;
+	float quality;
 	u32 fmt;
 	unsigned int flags;
-	struct converter_node* path_prev;
-	v4lconvert_converter_prototype* prototype;
+	struct converter_node* prev;
+	ImageTransformerPrototype* prototype;
 } converter_node;
+
+#define QUALITY_CPU_FACTOR 10000
 
 static int converterNodeComparator(void* a, void* b) {
 	converter_node* nodeA = (converter_node*) a;
 	converter_node* nodeB = (converter_node*) b;
 	//Lower cost has higher priority
-	return b->cost - a->cost;
+	return (b->cost + (1 - b->quality) * QUALITY_CPU_FACTOR) - (a->cost + (1 - a->quality) * QUALITY_CPU_FACTOR);
 }
 
-struct void getDataFromV4L2Format(struct v4l2_format* data, u32* fmt, unsigned int width, unsigned int height) {
+bool getDataFromV4L2Format(struct v4l2_format* data, u32* fmt, unsigned int* width, unsigned int* height) {
 	switch(data->type) {
 		case V4L2_BUF_TYPE_VIDEO_CAPTURE:
 		case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+			*fmt = data->fmt.pix.pixelformat;
+			*width = data->fmt.pix.width;
+			*height = data->fmt.pix.height;
+			return true;
 		case V4L2_BUF_TYPE_VIDEO_OVERLAY:
+			//TODO get format
+			*width = data->fmt.win.w.width;
+			*height = data->fmt.win.w.height;
+			return true;
+		case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+			*fmt = data->fmt.pix_mp.pixelformat;
+			*width = data->fmt.pix_mp.width;
+			*height = data->fmt.pix_mp.height;
+			return true;
+		//Not sure how to deal with these
 		case V4L2_BUF_TYPE_VBI_CAPTURE:
 		case V4L2_BUF_TYPE_VBI_OUTPUT:
 		case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
+		//Undefined behavior of below
+		case V4L2_BUF_TYPE_VBI_OUTPUT:
 		case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
 		case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
 		case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+		case V4L2_BUF_TYPE_VIDEO_OUTPUT:
 		case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
 		case V4L2_BUF_TYPE_PRIVATE:
 			//TODO finish
+		default:
+			return false;
 	}
 }
 
-static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter*** converters, struct v4lconvert_conversion_request* request, char** errmsg) {
+bool createV4L2Format(struct v4l2_format* data, u32 fmt, unsigned int width, unsigned int height) {
+	//TODO finish
+	return false;
+}
+
+static size_t VideoPipeline_computeConverters(ImageTransformer*** converters, struct v4lconvert_conversion_request* request, char** errmsg) {
 	#define FAIL(msg) do {\
 			if (errmsg) \
 				*errmsg = msg;\
@@ -582,19 +604,24 @@ static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter**
 	unsigned int scaleNumerator = request->scaleNumerator;
 	unsigned int scaleDenominator = request->scaleDenominator;
 	{
+		//Reduce scale numerator/denominator
 		unsigned int gcd = binaryGcd(scaleNumerator, scaleDenominator);
 		scaleNumerator /= gcd;
 		scaleDenominator /= gcd;
 		if (scaleNumerator == 0 || scaleDenominator == 0) {
 			FAIL("Scalar must be nonzero");
+			errno = EINVAL;
 			return 0;
 		}
 	}
 	
 	u32 src_fmt, dst_fmt;
 	unsigned int src_width, dst_width, src_height, dst_height;
-	getDataFromV4L2Format(&request->src_fmt, &src_fmt, &src_width, &src_height);
-	getDataFromV4L2Format(&request->dst_fmt, &dst_fmt, &dst_width, &dst_height);
+	if (!getDataFromV4L2Format(&request->src_fmt, &src_fmt, &src_width, &src_height) || !getDataFromV4L2Format(&request->dst_fmt, &dst_fmt, &dst_width, &dst_height)) {
+		FAIL("Unable to understand format");
+		errno = EINVAL;
+		return 0;
+	}
 	
 	//Calculate the size of the image after scaling
 	unsigned int scaled_width = src_width * scaleNumerator / scaleDenominator;
@@ -609,7 +636,7 @@ static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter**
 	signed int bottom_offset = dst_height - ((signed) scaled_height - top_offset);
 	
 	
-	//Create flags. This is to save space, b/c we won't need all of them every time
+	//Create flags. This is to save space (memory), b/c we won't need all of them every time
 	unsigned int shift = 0;
 	const unsigned int closed_mask = 1;
 	
@@ -643,7 +670,7 @@ static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter**
 	if (shift == 0 && src_fmt == dst_fmt) {
 		//No transformations needed. Find an identity method
 		dprint(LIBVIDEO_SOURCE_CONVERT, LIBVIDEO_LOG_DEBUG, "Finding identity transformation\n");
-		v4lconvert_converter_prototype* identityPrototype = lookupPrototype(v4lconvert_conversion_type_identity, request->src_fmt, request->dst_fmt);
+		ImageTransformerPrototype* identityPrototype = lookupPrototype(v4lconvert_conversion_type_identity, request->src_fmt, request->dst_fmt);
 		if (!identityPrototype) {
 			FAIL("Unable to lookup identity prototype");
 			return 0;
@@ -668,54 +695,103 @@ static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter**
 	//Size of each tier (# of nodes/tier)
 	const size_t tierSize = libvideo_palettes_size;
 	
-	node** nodes = calloc(numTiers, sizeof(node*));
+	node** closedSet = calloc(numTiers * tierSize, sizeof(node*));
 	
 	//Get the origin node
 	node* startNode = malloc(sizeof(node));
 	startNode->cost = 1;
 	startNode->fmt = src_fmt;
 	startNode->flags = rotate_mask | scale_mask | crop_mask | hflip_mask | vflip_mask;
-	startNode->path_prev = NULL;
 	startNode->prototype = NULL;
-	startNode->list_prev = NULL;
-	startNode->list_next = NULL;
+	closedSet[startNode->flags * tierSize + src_fmt] = startNode;
 	
-	Queue queue;
-	InitRelativePriorityQueue(queue, PairingRPQ, &converterNodeComparator);
-	queue->push(queue, (void*) startNode);
+	Queue openSet;
+	InitRelativePriorityQueue(&openSet, PairingRPQ, &converterNodeComparator);
+	openSet.push(&openSet, (void*) startNode);
 	
 	//Whether anything happened in this iteration
-	while (!queue->isEmpty(queue)) {
+	while (!openSet.isEmpty(&openSet)) {
 		//Pop a node from the queue
-		node* current = queue->pop(queue);
+		node* current = openSet.pop(&openSet);
 		
-		if (current->flags & ~closed_mask == 0 && current->fmt == dst_fmt) {
-			//We found a viable path
+		unsigned int currentTier = current->flags & ~closed_mask;
+		if (currentTier == 0 && current->fmt == dst_fmt) {
+			//We found a viable (good) path
 			break;
 		}
 		
 		//Calculate what the format should be passing through this node
-		struct v4l2_format currentSourceFormat;
-		//TODO finish
+		struct v4l2_format currentSourceFormat = request->src_fmt;
 		
-		if (current_tier & rotate_mask) {
+		unsigned int currentSourceWidth, currentSourceHeight;
+		if (currentTier & scale_mask) {
+			//The image hasn't been scaled or cropped (yet), but will be
+			currentSourceWidth = src_width;
+			currentSourceHeight = src_height;
+		} else if (currentTier & crop_mask) {
+			//We can assume that the image has been scaled so far
+			currentSourceWidth = scaled_width;
+			currentSourceHeight = scaled_height;
+		} else {
+			currentSourceWidth = dst_width;
+			currentSourceHeight = dst_height;
+		}
+		createV4L2Format(&currentSourceFormat, current->fmt, currentSourceWidth, currentSourceHeight);
+		
+		if (currentTier & rotate_mask) {
 			//Look for rotations
-			size_t newTierOffset = (current_tier & ~rotate_mask) * tierSize;
+			unsigned int newTier = currentTier & ~rotate_mask;
+			size_t newTierOffset = newTier * tierSize;
+			
+			ImageTransformerPrototype* prototypes = ImageTransformerPrototype[v4lconvert_conversion_type_rotate];
+			
 			for (unsigned int i = 0; i < v4lconvert_converter_num_prototypes[v4lconvert_conversion_type_rotate], i++) {
-				v4lconvert_converter_prototype* prototype = &v4lconvert_converter_prototypes[v4lconvert_conversion_type_rotate][i];
-				if (prototype->src_fmt == current_fmt) {
-					struct v4l2_format targetFormat;
-					node* target = malloc()
-					target->cost = current->cost + prototype->estimateCost(prototype, currentSourceFormat, ...);
-					target->prev = current_idx;
+				ImageTransformerPrototype* prototype = &prototypes[i];
+				if (prototype->src_fmt != current_fmt)
+					continue;
+				
+				//Create destination format
+				struct v4l2_format targetFormat = currentSourceFormat;
+				createV4L2Format(&targetFormat, prototype->dst_fmt, currentSourceWidth, currentSourceHeight);
+				
+				//Lookup cost of conversion
+				unsigned int cpuCost;
+				float quality;
+				if (!prototype->estimateCost(prototype, currentSourceFormat, cpuCost, quality, currentSourceFormat, targetFormat, 1, &rotation))
+					continue;
+				const unsigned int newCpuCost = current->cpuCost + cpuCost;
+				const float newQuality = current->quality * quality;
+				
+				//Find/create node
+				
+				node* target = closedSet[newTierOffset + prototype->dst_fmt];
+				if (target == NULL) {
+					//No target existed before
+					target = malloc(sizeof(node));
+					target->flags = newTier;
+					target->fmt = prototype->dst_fmt;
+					closedSet[newTierOffset + prototype->dst_fmt] = target;
+				} else {
+					if (target->cpuCost + (1 - target->quality) * QUALITY_CPU_FACTOR < newCpuCost + (1 - newQuality) * QUALITY_CPU_FACTOR)
+						//The current path to that node was more efficient
+						continue;
 				}
+				target->cpuCost = newCpuCost;
+				target->quality = newQuality;
+				target->prev = current;
+				target->prototype = prototype;
+				
+				//Add to queue
+				//TODO reduce-min operation
+				openSet.push(&openSet, target);
 			}
 		} else {
 			//Look for flips
-			if (current_tier & hflip_mask) {
-				size_t newTierOffset = (current_tier & ~hflip_mask) * tierSize;
+			if (currentTier & hflip_mask) {
+				size_t newTierOffset = (currentTier & ~hflip_mask) * tierSize;
+				ImageTransformerPrototype* prototypes = ImageTransformerPrototype[v4lconvert_conversion_type_rotate];
 				for (unsigned int i = 0; i < v4lconvert_converter_num_prototypes[v4lconvert_conversion_type_hflip], i++) {
-					v4lconvert_converter_prototype* prototype = &v4lconvert_converter_prototypes[v4lconvert_conversion_type_hflip][i];
+					ImageTransformerPrototype* prototype = &prototypes[i];
 					if (prototype->src_fmt == current_fmt) {
 						node* target = &nodes[newTierOffset + prototyper->dst_fmt];
 						target->cost = current->cost + prototype->estimateCost(prototype, ...);
@@ -723,10 +799,11 @@ static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter**
 					}
 				}
 			}
-			if (current_tier & vflip_mask) {
-				size_t newTierOffset = (current_tier & ~vflip_mask) * tierSize;
+			if (currentTier & vflip_mask) {
+				size_t newTierOffset = (currentTier & ~vflip_mask) * tierSize;
+				ImageTransformerPrototype* prototypes = ImageTransformerPrototype[v4lconvert_conversion_type_rotate];
 				for (unsigned int i = 0; i < v4lconvert_converter_num_prototypes[v4lconvert_conversion_type_vflip], i++) {
-					v4lconvert_converter_prototype* prototype = &v4lconvert_converter_prototypes[v4lconvert_conversion_type_vflip][i];
+					ImageTransformerPrototype* prototype = &prototypes[i];
 					if (prototype->src_fmt == current_fmt) {
 						node* target = &nodes[newTierOffset + prototyper->dst_fmt];
 						target->cost = current->cost + prototype->estimateCost(prototype, ...);
@@ -734,22 +811,23 @@ static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter**
 					}
 				}
 			}
-			if ((current_tier & hflip_mask) && (current_tier & vflip_mask)) {
+			/*
+			if ((currentTier & hflip_mask) && (currentTier & vflip_mask)) {
 				//180deg rotation is the same as hflip + vflip
-				size_t newTierOffset = (current_tier & ~hflip_mask & ~vflip_mask) * tierSize;
+				size_t newTierOffset = (currentTier & ~hflip_mask & ~vflip_mask) * tierSize;
 				for (unsigned int i = 0; i < v4lconvert_converter_num_prototypes[v4lconvert_conversion_type_rotate180], i++) {
-					v4lconvert_converter_prototype* prototype = &v4lconvert_converter_prototypes[v4lconvert_conversion_type_rotate180][i];
+					ImageTransformerPrototype* prototype = &ImageTransformerPrototypes[v4lconvert_conversion_type_rotate180][i];
 					if (prototype->src_fmt == current_fmt) {
 						node* target = &nodes[newTierOffset + prototyper->dst_fmt];
 						target->cost = current->cost + prototype->estimateCost(prototype, ...);
 						target->prev = current_idx;
 					}
 				}
-			}
+			}*/
 		}
-		if (current_tier & scale_mask) {
+		if (currentTier & scale_mask) {
 			
-		} else if (current_tier & crop_mask) {
+		} else if (currentTier & crop_mask) {
 			
 		}
 		//Look for IMF conversions
@@ -763,24 +841,26 @@ static size_t v4lconvert_encoder_series_computeConverters(v4lconvert_converter**
 }
 
 
-bool v4lconvert_encoder_series_create(struct v4lconvert_encoder_series* self, struct v4lconvert_conversion_request* request, char** errmsg) {
+bool VideoPipeline_create(VideoPipeline* self, struct v4lconvert_conversion_request* request, char** errmsg) {
 	size_t num_converters = v4lconvert_encoder_series_computeConverters(&self->converters, request, errmsg);
 	if (num_converters == 0)
 		return false;
 	self->num_converters = num_converters;
-	self->convert = v4lconvert_encoder_series_doConvert;
-	self->release = v4lconvert_encoder_series_doRelease;
+	self->convert = &VideoPipeline_apply;
+	self->release = &VideoPipeline_doRelease;
 	self->src_fmt = self->converters[0]->prototype->src_fmt;
 	self->dst_fmt = self->converters[num_converters - 1]->prototype->dst_fmt;
 	//TODO finish src_len/dst_len
 	return true;
 }
 
-static bool v4lconvert_encoder_series_doRelease(struct v4lconvert_encoder_series* self) {
+static bool VideoPipeline_doRelease(VideoPipeline* self) {
 	if (self != NULL) {
 		if (self->encoders) {
-			for (unsigned i = 0; i < self->num_encoders; i++)
+			for (unsigned i = 0; i < self->num_encoders; i++) {
+				self->encoders[i]->release(self->encoders[i]);
 				free(self->encoders[i]);
+			}
 			free(self->encoders);
 			self->encoders = NULL;
 		}
@@ -788,8 +868,8 @@ static bool v4lconvert_encoder_series_doRelease(struct v4lconvert_encoder_series
 	return true;
 }
 
-static u32 v4lconvert_encoder_series_doConvert(struct v4lconvert_encoder_series* self, struct v4lconvert_buffer* buffer) {
-	struct v4lconvert_encoder* encoder = self->encoders[0];
+static size_t VideoPipeline_apply(VideoPipeline* self, struct v4lconvert_buffer* buffer) {
+	ImageTransformer* encoder = self->encoders[0];
 	//We have to set up the buffers such that the data ends up being written into
 	//the dst buffer.
 	u8* bufA;
@@ -823,7 +903,7 @@ static u32 v4lconvert_encoder_series_doConvert(struct v4lconvert_encoder_series*
 	return buffer->buf1_len = encoder->apply(encoder, bufA, buffer->buf1, src_len);
 }
 
-int v4lconvert_encoder_series_createBuffers(struct v4lconvert_encoder_series* series, u32 num_buffers, struct v4lconvert_buffer** buffers, int allocate) {
+bool VideoPipeline_createBuffers(VideoPipeline* series, u32 num_buffers, struct v4lconvert_buffer** buffers, bool allocate) {
 	u32 bufA_len = 0;
 	u32 bufB_len = 0;
 	for (unsigned int i = 0; i < (series->num_encoders / 2) * 2; i += 2) {
@@ -848,7 +928,7 @@ int v4lconvert_encoder_series_createBuffers(struct v4lconvert_encoder_series* se
 			if (allocate)
 				buffers[i] = buffer = malloc(sizeof(struct v4lconvert_buffer));
 			else
-				return EXIT_FAILURE;
+				return false;
 		}
 		
 		buffer->buf0_len = 0;
@@ -879,14 +959,14 @@ int v4lconvert_encoder_series_createBuffers(struct v4lconvert_encoder_series* se
 					buffer->buf1 = NULL;
 					buffer->buf2 = NULL;
 				}
-				return EXIT_FAILURE;
+				return false;
 			}
 		}
 	}
-	return EXIT_SUCCESS;
+	return true;
 }
 
-int v4lconvert_buffer_release(struct v4lconvert_buffer* buffer) {
+bool v4lconvert_buffer_release(struct v4lconvert_buffer* buffer) {
 	free(buffer->buf0);
 	buffer->buf0 = NULL;
 	buffer->buf0_len = 0;
@@ -901,7 +981,7 @@ int v4lconvert_buffer_release(struct v4lconvert_buffer* buffer) {
 	buffer->buf2 = NULL;
 	buffer->buf2_cap = 0;
 	
-	return EXIT_SUCCESS;
+	return true;
 }
 
 static inline bool computeEncoderPath(unsigned int* map, unsigned int* distances, u32 from, u32 to, unsigned int maxIterations) {
@@ -966,40 +1046,6 @@ int v4lconvert_encoder_series_computeConversion(struct v4lconvert_encoder_series
 	int result = v4lconvert_encoder_series_init(self, width, height, distance, route);
 	free(route);
 	return result;
-}
-
-v4lconvert_converter_t* v4lconvert_converter_getConverterById(unsigned int converterId) {
-	if (converterId > NUM_V4L_CONVERTERS)
-		return NULL;
-	return &(v4lconvert_converters[converterId]);
-}
-
-/**
- * 
- */
-int v4lconvert_converter_lookupConverterByConversion(u32 from, u32 to) {
-	v4lconvert_converter_t* converter;
-	
-	//TODO use better lookup algorithm than O(n)
-	for (int i = 0; i < NUM_V4L_CONVERTERS; i++) {
-		converter = &(v4lconvert_converters[i]);
-		if ((converter->src_fmt == from) && (converter->dst_fmt == to))
-			return i;
-	}
-	return -1;
-}
-/**
- * Find a converter that does the conversion that you want
- * @return the converter requested, or NULL
- */
-v4lconvert_converter_t* v4lconvert_converter_getConverterByConversion(u32 from, u32 to) {
-	//TODO use better lookup algorithm than O(n)
-	for (int i = 0; i < NUM_V4L_CONVERTERS; i++) {
-		v4lconvert_converter_t* converter = &(v4lconvert_converters[i]);
-		if ((converter->src_fmt == from) && (converter->dst_fmt == to))
-			return converter;
-	}
-	return NULL;
 }
 
 #ifdef __cplusplus

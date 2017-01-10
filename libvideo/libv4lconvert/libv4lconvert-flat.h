@@ -87,10 +87,10 @@ LIBV4L_PUBLIC enum v4lconvert_conversion_type {
 
 struct ImageTransformer;
 typedef struct ImageTransformer ImageTransformer;
-struct v4lconvert_converter_prototype;
-typedef const struct v4lconvert_converter_prototype v4lconvert_converter_prototype;
+struct ImageTransformerPrototype;
+typedef const struct ImageTransformerPrototype ImageTransformerPrototype;
 
-struct v4lconvert_converter_prototype {
+struct ImageTransformerPrototype {
 	size_t id;
 	/**
 	 * Allocates & initializes a converter
@@ -102,8 +102,8 @@ struct v4lconvert_converter_prototype {
 	 * @param errmsg Filled with message if this method fails. Does not need to be released in any case.
 	 * @return Converter created, or NULL on error. On error, errno is set.
 	 */
-	ImageTransformer* (*init) (v4lconvert_converter_prototype* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void** options, char** errmsg);
-	bool (*estimateCost) (v4lconvert_converter_prototype* self, unsigned int* cpuCost, float* qualityCost, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void** options);
+	ImageTransformer* (*init) (ImageTransformerPrototype* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void** options, char** errmsg);
+	bool (*estimateCost) (ImageTransformerPrototype* self, unsigned int* cpuCost, float* qualityCost, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, ...);
 	enum v4lconvert_conversion_type type;
 	/**
 	 * Source format
@@ -170,10 +170,10 @@ struct ImageTransformer {
 	 * Safely release memory used by encoder. Does not release the encoder itself.
 	 * DO NOT call any methods on encoder after this method has been invoked.
 	 */
-	int (*release) (ImageTransformer* self);
+	bool (*release) (ImageTransformer* self);
 	
-	struct v4l2_format* src_fmt;
-	struct v4l2_format* dst_fmt;
+	u32 src_fmt;
+	u32 dst_fmt;
 	
 	size_t src_len;
 	/**
@@ -250,10 +250,9 @@ struct v4lconvert_conversion_request {
 	signed int left_offset;
 };
 
-LIBV4L_PUBLIC size_t v4lconvert_estimateBufferSize(u32 fmt, u32 width, u32 height);
+LIBV4L_PUBLIC size_t v4lconvert_estimateBufferSize(u32 fmt, unsigned int width, unsigned int height);
 
-LIBV4L_PUBLIC int v4lconvert_encoder_initWithConverter(struct v4lconvert_encoder* encoder, v4lconvert_converter* converter, u32 width, u32 height);
-LIBV4L_PUBLIC int v4lconvert_encoder_initForIMF(struct v4lconvert_encoder* encoder, u32 src_fmt, u32 dst_fmt, u32 width, u32 height);
+LIBV4L_PUBLIC bool ImageTransformer_initForIMF(ImageTransformer* transformer, u32 src_fmt, u32 dst_fmt, unsigned int width, unsigned int height);
 
 /**
  * Create a VideoPipeline that will apply the given conversion request.
