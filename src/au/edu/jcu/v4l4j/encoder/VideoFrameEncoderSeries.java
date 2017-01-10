@@ -42,7 +42,7 @@ public class VideoFrameEncoderSeries implements VideoFrameTransformer {
 	 * @throws JNIException
 	 *             if there was a problem with allocation or something
 	 */
-	private static native long doInit(int from, int to, int width, int height) throws JNIException;
+	private static native long doInit(int fromFmt, int toFmt, int srcWidth, int srcHeight, int dstWidth, int dstHeight, int rotation, boolean flipHorizontal, boolean flipVertical, int scaleNumerator, int scaleDenominator, int topOffset, int leftOffset) throws JNIException;
 	
 	/**
 	 * Apply series to buffer
@@ -89,7 +89,7 @@ public class VideoFrameEncoderSeries implements VideoFrameTransformer {
 	}
 	
 	protected VideoFrameEncoderSeries(int width, int height, ImagePalette from, ImagePalette to) {
-		this.object = doInit(from.getIndex(), to.getIndex(), width, height);
+		//this.object = doInit(from.getIndex(), to.getIndex(), width, height);
 		
 		long[] converters = VideoFrameEncoderSeries.getEncoderPointers(this.object);
 		this.encoders = new VideoFrameTransformer[converters.length];

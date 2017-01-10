@@ -22,8 +22,6 @@ public interface VideoFrameTransformer extends AutoCloseable {
 	
 	int apply(ByteBuffer src, ByteBuffer dst) throws BufferUnderflowException, BufferOverflowException, IllegalArgumentException;
 	
-	int getConverterId();
-	
 	ImagePalette getSourceFormat();
 	
 	int getSourceWidth();
@@ -49,4 +47,6 @@ public interface VideoFrameTransformer extends AutoCloseable {
 	 * Close encoder & release
 	 */
 	void close() throws Exception;
+
+	int getPrototypeId();
 }

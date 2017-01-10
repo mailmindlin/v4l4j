@@ -4,7 +4,7 @@ import au.edu.jcu.v4l4j.ImagePalette;
 import au.edu.jcu.v4l4j.V4L4JConstants;
 import au.edu.jcu.v4l4j.exceptions.JNIException;
 
-public class JPEGEncoder extends ImageFormatConverter {
+public class JPEGEncoder extends ImageTransformer {
 	
 	public static JPEGEncoder from(int width, int height, ImagePalette from) {
 		return new JPEGEncoder(width, height, from);
@@ -15,7 +15,7 @@ public class JPEGEncoder extends ImageFormatConverter {
 	}
 	
 	protected JPEGEncoder(int width, int height, ImagePalette from) {
-		super(ImageFormatConverter.lookupConverterByConversion(from, ImagePalette.JPEG), width, height);
+		super(ImageTransformer.lookupConverterByConversion(from, ImagePalette.JPEG), width, height);
 	}
 	
 	/**
