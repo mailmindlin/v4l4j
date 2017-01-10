@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 import au.edu.jcu.v4l4j.ImagePalette;
 import au.edu.jcu.v4l4j.V4L4JUtils;
 
-public class ImageFormatConverter implements VideoFrameConverter {
+public class ImageTransformer implements VideoFrameConverter {
 	
 	static {
 		V4L4JUtils.loadLibrary();
@@ -20,7 +20,7 @@ public class ImageFormatConverter implements VideoFrameConverter {
 	/**
 	 * ID of converter used
 	 */
-	protected final int converterId;
+	protected final int prototypeId;
 	/**
 	 * Input frame format
 	 */
@@ -55,17 +55,6 @@ public class ImageFormatConverter implements VideoFrameConverter {
 	protected final int estimatedDstLen;
 	
 	/**
-	 * Lookup a <code>v4lconvert_converter_t</code>'s id for a given transformation
-	 * @param srcFmt
-	 * @param dstFmt
-	 * @return
-	 */
-	protected static native int lookupConverterByConversion(int srcFmt, int dstFmt);
-	protected static int lookupConverterByConversion(ImagePalette src, ImagePalette dst) {
-		return lookupConverterByConversion(src.getIndex(), dst.getIndex());
-	}
-	protected static native long initWithConverter(int converterId, int width, int height);
-	/**
 	 * Returns an array of properties that can be accessed on the native struct. The array will contain the following values:
 	 * <ol start=0>
 	 * <li>Converter ID</li>
@@ -83,10 +72,10 @@ public class ImageFormatConverter implements VideoFrameConverter {
 	 */
 	private static native int[] getData(long ptr);
 	
-	protected ImageFormatConverter(long ptr) {
+	protected ImageTransformer(long ptr) {
 		this.object = ptr;
 		int[] data = getData(ptr);
-		this.converterId = data[0];
+		this.prototypeId = data[0];
 		this.inFormat = ImagePalette.lookup(data[1]);
 		this.outFormat = ImagePalette.lookup(data[2]);
 		this.estimatedSrcLen = data[3];
@@ -98,30 +87,9 @@ public class ImageFormatConverter implements VideoFrameConverter {
 		this.outHeight = data[8];
 	}
 	
-	/**
-	 * Create an ImageFormatConverter wrapping the given converter's id
-	 * @param converterId
-	 * @param width
-	 * @param height
-	 */
-	public ImageFormatConverter(int converterId, int width, int height) {
-		this(initWithConverter(converterId, width, height));
-	}
-	
-	/**
-	 * Create an ImageFormatConverter for a given transformation.
-	 * @param src
-	 * @param dst
-	 * @param width
-	 * @param height
-	 */
-	public ImageFormatConverter(ImagePalette src, ImagePalette dst, int width, int height) {
-		this(lookupConverterByConversion(src, dst), width, height);
-	}
-
 	@Override
-	public int getConverterId() {
-		return this.converterId;
+	public int getPrototypeId() {
+		return this.prototypeId;
 	}
 
 	@Override
