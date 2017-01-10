@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 20016 mailmindlin
+* Copyright (C) 2016 mailmindlin
 *
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
