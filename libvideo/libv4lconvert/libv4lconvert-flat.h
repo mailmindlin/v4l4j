@@ -102,7 +102,7 @@ struct ImageTransformerPrototype {
 	 * @param errmsg Filled with message if this method fails. Does not need to be released in any case.
 	 * @return Converter created, or NULL on error. On error, errno is set.
 	 */
-	ImageTransformer* (*init) (ImageTransformerPrototype* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void** options, char** errmsg);
+	ImageTransformer* (*init) (ImageTransformerPrototype* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, char** errmsg, size_t options_len, ...);
 	bool (*estimateCost) (ImageTransformerPrototype* self, unsigned int* cpuCost, float* qualityCost, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, ...);
 	enum v4lconvert_conversion_type type;
 	/**
