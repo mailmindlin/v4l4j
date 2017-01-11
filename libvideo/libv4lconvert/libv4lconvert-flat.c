@@ -1,4 +1,4 @@
-
+#include <errno.h>
 #include <stdlib.h>
 #include <collections/collections.h>
 #include <collections/queue/queue.h>
@@ -601,14 +601,58 @@ static bool createV4L2Format(struct v4l2_format* data, u32 fmt, unsigned int wid
 	return false;
 }
 
+static size_t countNodesInPath(node* last) {
+	size_t len = 1;
+	node* tmp = last;
+	while ((tmp = tmp->prev) != NULL)
+		len++;
+	return len;
+}
+
 /**
  * Traverse the nodes backwards and build an array of transformers
  */
-static size_t VideoPipeline_buildTransformersFromPath(node* lastNode, ImageTransformer*** transformers) {
+static size_t VideoPipeline_buildTransformersFromPath(node* lastNode, ImageTransformer*** transformers, v4lconvert_conversion_request* request, unsigned int srcWidth, unsigned int srcHeight, unsigned int scaledWidth, unsigned int scaledHeight, unsigned int dstWidth, unsigned int dstHeight, char** errmsg) {
+	//Count # of nodes in path
+	size_t pathLength = countNodesInPath(lastNode);
 	
+	ImageTransformer** result = (ImageTransformer**) calloc(pathLength, sizeof(ImageTransformer*));
+	if (result == NULL) {
+		errno = ENOMEM;
+		return 0;
+	}
+	
+	node* current = lastNode;
+	do {
+		ImageTransformerPrototype* proto = current->prototype;
+		ImageTransformer* transformer;
+		switch (proto->type) {
+			case v4lconvert_conversion_type_rotate:
+				transformer = proto->init(proto, srcFmt, dstFmt, errmsg, 1, request->rotation);
+				break;
+			case v4lconvert_conversion_type_scale:
+				transformer = proto->init(proto, srcFmt, dstFmt, errmsg, 2, request->scaleNumerator, request->scaleDenominator);
+				break;
+			case v4lconvert_conversion_type_hflip:
+			case v4lconvert_conversion_type_vflip:
+			case v4lconvert_conversion_type_identity:
+			case v4lconvert_conversion_type_imf:
+				transformer = proto->init(proto, srcFmt, dstFmt, errmsg, 0);
+				break;
+			default:
+				//Unknown type
+		}
+		if (transformer == NULL) {
+			//TODO cleanup
+			return 0;
+		}
+	} while ((current = current->prev) != NULL);
+	
+	*transformers = result;
+	return pathLength;
 }
 
-static size_t VideoPipeline_computeConverters(ImageTransformer*** converters, struct v4lconvert_conversion_request* request, char** errmsg) {
+static size_t VideoPipeline_computeConverters(ImageTransformer*** transformers, struct v4lconvert_conversion_request* request, char** errmsg) {
 	#define FAIL(msg) do {\
 			if (errmsg) \
 				*errmsg = msg;\
@@ -704,13 +748,14 @@ static size_t VideoPipeline_computeConverters(ImageTransformer*** converters, st
 			FAIL("Unable to lookup identity prototype");
 			return 0;
 		}
-		v4lconvert_converter* identityConverter = identityPrototype->init(identityPrototype, request->src_fmt, request->dst_fmt, 0, NULL, errmsg);
-		if (!identityConverter)
+		ImageTransformer* identityConverter = identityPrototype->init(identityPrototype, request->src_fmt, request->dst_fmt, errmsg, 0);
+		if (identityConverter == NULL)
 			//Error message passed by init()
 			return 0;
-		*converters = calloc(1, sizeof(v4lconvert_converter*));
+		*converters = calloc(1, sizeof(ImageTransformer**));
 		if (*converters == NULL) {
 			FAIL("Error allocating memory");
+			errno = ENOMEM;
 			return 0;
 		}
 		(*converters)[0] = identityConverter;
@@ -746,7 +791,10 @@ static size_t VideoPipeline_computeConverters(ImageTransformer*** converters, st
 		unsigned int currentTier = current->flags & ~closed_mask;
 		if (currentTier == 0 && current->fmt == dst_fmt) {
 			//We found a viable (good) path
-			break;
+			
+			
+			*transformers = result;
+			return pathLength;
 		}
 		
 		//Calculate what the format should be passing through this node
@@ -786,7 +834,7 @@ static size_t VideoPipeline_computeConverters(ImageTransformer*** converters, st
 				//Lookup cost of conversion
 				unsigned int cpuCost;
 				float quality;
-				if (!prototype->estimateCost(prototype, currentSourceFormat, cpuCost, quality, currentSourceFormat, targetFormat, 1, &rotation))
+				if (!prototype->estimateCost(prototype, currentSourceFormat, cpuCost, quality, currentSourceFormat, targetFormat, 1, rotation))
 					continue;
 				const unsigned int newCpuCost = current->cpuCost + cpuCost;
 				const float newQuality = current->quality * quality;
