@@ -641,6 +641,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data, u8 *src, unsi
 	unsigned int src_pix_fmt = fmt->fmt.pix.pixelformat;
 	u32 width  = fmt->fmt.pix.width;
 	u32 height = fmt->fmt.pix.height;
+	u32 bytesperline = fmt->fmt.pix.bytesperline;
 
 	switch (src_pix_fmt) {
 		/* JPG and variants */
@@ -892,10 +893,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data, u8 *src, unsi
 					v4lconvert_swap_rgb(d, dest, width, height);
 					break;
 				case V4L2_PIX_FMT_YUV420:
-					v4lconvert_rgb24_to_yuv420(d, dest, fmt, 0, 0);
+					v4lconvert_rgb24_to_yuv420(d, dest, width, height, bytesperline, false, false);
 					break;
 				case V4L2_PIX_FMT_YVU420:
-					v4lconvert_rgb24_to_yuv420(d, dest, fmt, 0, 1);
+					v4lconvert_rgb24_to_yuv420(d, dest, width, height, bytesperline, false, true);
 					break;
 			}
 			break;
@@ -946,10 +947,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data, u8 *src, unsi
 					v4lconvert_rgb565_to_bgr24(src, dest, width, height);
 					break;
 				case V4L2_PIX_FMT_YUV420:
-					v4lconvert_rgb565_to_yuv420(src, dest, fmt, 0);
+					v4lconvert_rgb565_to_yuv420(src, dest, width, height, bytesperline, false);
 					break;
 				case V4L2_PIX_FMT_YVU420:
-					v4lconvert_rgb565_to_yuv420(src, dest, fmt, 1);
+					v4lconvert_rgb565_to_yuv420(src, dest, width, height, bytesperline, true);
 					break;
 			}
 			if (src_size < (width * height * 2)) {
@@ -972,10 +973,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data, u8 *src, unsi
 					if (data->pixfc)
 						(*data->pixfc->convert)(data->pixfc, src, dest);
 					else
-						v4lconvert_rgb24_to_yuv420(src, dest, fmt, 0, 0);
+						v4lconvert_rgb24_to_yuv420(src, dest, width, height, bytesperline, false, false);
 					break;
 				case V4L2_PIX_FMT_YVU420:
-					v4lconvert_rgb24_to_yuv420(src, dest, fmt, 0, 1);
+					v4lconvert_rgb24_to_yuv420(src, dest, width, height, bytesperline, false, true);
 					break;
 			}
 			if (src_size < (width * height * 3)) {
@@ -998,10 +999,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data, u8 *src, unsi
 					if (data->pixfc)
 						(*data->pixfc->convert)(data->pixfc, src, dest);
 					else
-						v4lconvert_rgb24_to_yuv420(src, dest, fmt, 1, 0);
+						v4lconvert_rgb24_to_yuv420(src, dest, width, height, bytesperline, false, true);
 					break;
 				case V4L2_PIX_FMT_YVU420:
-					v4lconvert_rgb24_to_yuv420(src, dest, fmt, 1, 1);
+					v4lconvert_rgb24_to_yuv420(src, dest, width, height, bytesperline, false, true);
 					break;
 			}
 			if (src_size < (width * height * 3)) {
@@ -1031,7 +1032,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data, u8 *src, unsi
 					memcpy(dest, src, width * height * 3 / 2);
 					break;
 				case V4L2_PIX_FMT_YVU420:
-					v4lconvert_swap_uv(src, dest, fmt);
+					v4lconvert_swap_uv(src, dest, width, height, bytesperline);
 					break;
 			}
 			if (src_size < (width * height * 3 / 2)) {
@@ -1044,13 +1045,13 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data, u8 *src, unsi
 		case V4L2_PIX_FMT_YVU420:
 			switch (dest_pix_fmt) {
 				case V4L2_PIX_FMT_RGB24:
-					v4lconvert_yuv420_to_rgb24(src, dest, width, height, 1);
+					v4lconvert_yuv420_to_rgb24(src, dest, width, height, true);
 					break;
 				case V4L2_PIX_FMT_BGR24:
-					v4lconvert_yuv420_to_bgr24(src, dest, width, height, 1);
+					v4lconvert_yuv420_to_bgr24(src, dest, width, height, true);
 					break;
 				case V4L2_PIX_FMT_YUV420:
-					v4lconvert_swap_uv(src, dest, fmt);
+					v4lconvert_swap_uv(src, dest, width, height, bytesperline);
 					break;
 				case V4L2_PIX_FMT_YVU420:
 					memcpy(dest, src, width * height * 3 / 2);

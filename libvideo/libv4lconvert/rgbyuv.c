@@ -33,23 +33,23 @@
 #pragma message "NEON sez nope!"
 #endif
 
-void v4lconvert_rgb24_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt, bool bgr, bool yvu) {
+void v4lconvert_rgb24_to_yuv420(const u8 *src, u8 *dest, unsigned int width, unsigned int height, unsigned int bytesperline, bool bgr, bool yvu) {
 	/* Y */
-	for (unsigned int y = 0; y < src_fmt->fmt.pix.height; y++) {
-		for (unsigned int x = 0; x < src_fmt->fmt.pix.width; x++) {
+	for (unsigned int y = 0; y < height; y++) {
+		for (unsigned int x = 0; x < width; x++) {
 			if (bgr)
 				*dest++ = RGB2Y(src[2], src[1], src[0]);
 			else
 				*dest++ = RGB2Y(src[0], src[1], src[2]);
 			src += 3;
 		}
-		src += src_fmt->fmt.pix.bytesperline - 3 * src_fmt->fmt.pix.width;
+		src += bytesperline - 3 * width;
 	}
-	src -= src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline;
+	src -= height * bytesperline;
 
 	/* U + V */
 	u8 *udest = dest;
-	u8 *vdest = dest + src_fmt->fmt.pix.width * src_fmt->fmt.pix.height / 4;
+	u8 *vdest = dest + width * height / 4;
 	if (yvu) {
 		//Swap udest/vdest
 		u8 *tmp = udest;
@@ -57,11 +57,11 @@ void v4lconvert_rgb24_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_forma
 		vdest = tmp;
 	}
 
-	for (unsigned int y = 0; y < src_fmt->fmt.pix.height / 2; y++) {
+	for (unsigned int y = 0; y < height / 2; y++) {
 		//Pointer to line below the current one
 		//TODO preserve pointer accross iterations
-		const u8* nextLine = src + src_fmt->fmt.pix.bytesperline;
-		for (unsigned int x = 0; x < src_fmt->fmt.pix.width / 2; x++) {
+		const u8* nextLine = src + bytesperline;
+		for (unsigned int x = 0; x < width / 2; x++) {
 			int avg_red = *src++ + *nextLine++;
 			int avg_green = *src++ + *nextLine++;
 			int avg_blue = *src++ + *nextLine++;
@@ -81,7 +81,7 @@ void v4lconvert_rgb24_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_forma
 			*udest++ = RGB2U(avg_red, avg_green, avg_blue);
 			*vdest++ = RGB2V(avg_red, avg_green, avg_blue);
 		}
-		src += 2 * src_fmt->fmt.pix.bytesperline - 3 * src_fmt->fmt.pix.width;
+		src += 2 * bytesperline - 3 * width;
 	}
 }
 
@@ -393,28 +393,28 @@ void v4lconvert_swap_rgb(const u8 *src, u8 *dst, u32 width, u32 height) {
 	}
 }
 
-void v4lconvert_swap_uv(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt) {
+void v4lconvert_swap_uv(const u8 *src, u8 *dest, unsigned int width, unsigned int height, unsigned int bytesperline) {
 	/* Copy Y */
-	for (unsigned int y = 0; y < src_fmt->fmt.pix.height; y++) {
-		memcpy(dest, src, src_fmt->fmt.pix.width);
-		dest += src_fmt->fmt.pix.width;
-		src += src_fmt->fmt.pix.bytesperline;
+	for (unsigned int y = 0; y < height; y++) {
+		memcpy(dest, src, width);
+		dest += width;
+		src += bytesperline;
 	}
 
 	/* Copy component 2 */
-	src += src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline / 4;
-	for (unsigned int y = 0; y < src_fmt->fmt.pix.height / 2; y++) {
-		memcpy(dest, src, src_fmt->fmt.pix.width / 2);
-		dest += src_fmt->fmt.pix.width / 2;
-		src += src_fmt->fmt.pix.bytesperline / 2;
+	src += height * bytesperline / 4;
+	for (unsigned int y = 0; y < height / 2; y++) {
+		memcpy(dest, src, width / 2);
+		dest += width / 2;
+		src += bytesperline / 2;
 	}
 
 	/* Copy component 1 */
-	src -= src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline / 2;
-	for (unsigned int y = 0; y < src_fmt->fmt.pix.height / 2; y++) {
-		memcpy(dest, src, src_fmt->fmt.pix.width / 2);
-		dest += src_fmt->fmt.pix.width / 2;
-		src += src_fmt->fmt.pix.bytesperline / 2;
+	src -= height * bytesperline / 2;
+	for (unsigned int y = 0; y < height / 2; y++) {
+		memcpy(dest, src, width / 2);
+		dest += width / 2;
+		src += bytesperline / 2;
 	}
 }
 
@@ -448,10 +448,10 @@ void v4lconvert_rgb565_to_bgr24(const u8 *src, u8 *dest, u32 width, u32 height) 
 	}
 }
 
-void v4lconvert_rgb565_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_format *src_fmt, bool yvu) {
+void v4lconvert_rgb565_to_yuv420(const u8 *src, u8 *dest, unsigned int width, unsigned int height, unsigned int bytesperline, bool yvu) {
 	/* Y */
-	for (unsigned int y = 0; y < src_fmt->fmt.pix.height; y++) {
-		for (unsigned int x = 0; x < src_fmt->fmt.pix.width; x++) {
+	for (unsigned int y = 0; y < height; y++) {
+		for (unsigned int x = 0; x < width; x++) {
 			unsigned short tmp = *(unsigned short *)src;
 			unsigned int r = 0xf8 & (tmp << 3);
 			unsigned int g = 0xfc & (tmp >> 3);
@@ -459,13 +459,13 @@ void v4lconvert_rgb565_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_form
 			*dest++ = (u8) RGB2Y(r, g, b);
 			src += 2;
 		}
-		src += src_fmt->fmt.pix.bytesperline - 2 * src_fmt->fmt.pix.width;
+		src += bytesperline - 2 * width;
 	}
-	src -= src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline;
+	src -= height * bytesperline;
 
 	/* U + V */
 	u8* udest = dest;
-	u8* vdest = dest + src_fmt->fmt.pix.width * src_fmt->fmt.pix.height / 4;
+	u8* vdest = dest + width * height / 4;
 	if (yvu) {
 		//Swap buffers
 		u8 *tmp = udest;
@@ -473,8 +473,8 @@ void v4lconvert_rgb565_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_form
 		vdest = tmp;
 	}
 
-	for (unsigned int y = 0; y < src_fmt->fmt.pix.height / 2; y++) {
-		for (unsigned int x = 0; x < src_fmt->fmt.pix.width / 2; x++) {
+	for (unsigned int y = 0; y < height / 2; y++) {
+		for (unsigned int x = 0; x < width / 2; x++) {
 			unsigned short tmp = *(unsigned short *)src;
 			unsigned int avg_red = 0xf8 & (tmp << 3);
 			unsigned int avg_green = 0xfc & (tmp >> 3);
@@ -485,12 +485,12 @@ void v4lconvert_rgb565_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_form
 			avg_green += 0xfc & (tmp >> 3);
 			avg_blue += 0xf8 & (tmp >> 8);
 
-			tmp = *(((unsigned short *)src) + src_fmt->fmt.pix.bytesperline);
+			tmp = *(((unsigned short *)src) + bytesperline);
 			avg_red += 0xf8 & (tmp << 3);
 			avg_green += 0xfc & (tmp >> 3);
 			avg_blue += 0xf8 & (tmp >> 8);
 
-			tmp = *(((unsigned short *)src) + src_fmt->fmt.pix.bytesperline + 1);
+			tmp = *(((unsigned short *)src) + bytesperline + 1);
 			avg_red += 0xf8 & (tmp << 3);
 			avg_green += 0xfc & (tmp >> 3);
 			avg_blue += 0xf8 & (tmp >> 8);
@@ -504,7 +504,7 @@ void v4lconvert_rgb565_to_yuv420(const u8 *src, u8 *dest, const struct v4l2_form
 			*vdest++ = (u8) RGB2V(avg_red, avg_green, avg_blue);
 			src += 4;
 		}
-		src += 2 * src_fmt->fmt.pix.bytesperline - 2 * src_fmt->fmt.pix.width;
+		src += 2 * bytesperline - 2 * width;
 	}
 }
 
