@@ -25,24 +25,22 @@ static bool estimateCostPlaceholder(ImageTransformerPrototype* self, unsigned in
 	}
 
 #define GENERATE_CONVERTER_SDWH(id, applyFn, costFn, src_fmt, dst_fmt)\
-	GENERATE_CONVERTER((id), v4lconvert_init_imf_sdwh, (applyFn), (costFn), (src_fmt), (dst_fmt), sdwh, false, false)
+	GENERATE_CONVERTER((id), ImageTransformer_imf_init, (applyFn), (costFn), (src_fmt), (dst_fmt), sdwh, false, false)
 
 #define GENERATE_CONVERTER_SDWH_F(id, applyFn, costFn, src_fmt, dst_fmt, flag1)\
-	GENERATE_CONVERTER((id), v4lconvert_init_imf_sdwh, (applyFn), (costFn), (src_fmt), (dst_fmt), sdwh_f, (flag1), false)
+	GENERATE_CONVERTER((id), ImageTransformer_imf_init, (applyFn), (costFn), (src_fmt), (dst_fmt), sdwh_f, (flag1), false)
 
 #define GENERATE_CONVERTER_SDWH_FF(id, applyFn, costFn, src_fmt, dst_fmt, flag1, flag2)\
-	GENERATE_CONVERTER((id), v4lconvert_init_imf_sdwh, (applyFn), (costFn), (src_fmt), (dst_fmt), sdwh_ff, (flag1), (flag2))
+	GENERATE_CONVERTER((id), ImageTransformer_imf_init, (applyFn), (costFn), (src_fmt), (dst_fmt), sdwh_ff, (flag1), (flag2))
 
 #define GENERATE_CONVERTER_SDWH_B(id, applyFn, costFn, src_fmt, dst_fmt, flag1, flag2)\
-	GENERATE_CONVERTER((id), v4lconvert_init_imf_sdwh, (applyFn), (costFn), (src_fmt), (dst_fmt), sdwh_b, false, false)
+	GENERATE_CONVERTER((id), ImageTransformer_imf_init, (applyFn), (costFn), (src_fmt), (dst_fmt), sdwh_b, false, false)
 
 #define GENERATE_CONVERTER_SDWH_BF(id, applyFn, costFn, src_fmt, dst_fmt, flag1, flag2)\
-	GENERATE_CONVERTER((id), v4lconvert_init_imf_sdwh, (applyFn), (costFn), (src_fmt), (dst_fmt), sdwh_bf, (flag1), false)
+	GENERATE_CONVERTER((id), ImageTransformer_imf_init, (applyFn), (costFn), (src_fmt), (dst_fmt), sdwh_bf, (flag1), false)
 
 #define GENERATE_CONVERTER_SDWH_BFF(id, applyFn, costFn, src_fmt, dst_fmt, flag1, flag2)\
-	GENERATE_CONVERTER((id), v4lconvert_init_imf_sdwh, (applyFn), (costFn), (src_fmt), (dst_fmt), sdwh_bff, (flag1), false)
-
-#define GENERATE_CONVERTER_SPECIAL(id, src_fmt, dst_fmt, flag1, flag2) {(id), v4lconvert_conversion_signature_special, {.user_defined = NULL}, v4lconvert_conversion_type_unknown, (src_fmt), (dst_fmt), (flag1), (flag2)}
+	GENERATE_CONVERTER((id), ImageTransformer_imf_init, (applyFn), (costFn), (src_fmt), (dst_fmt), sdwh_bff, (flag1), false)
 
 #define GENERATE_CONVERTER_SDWH_F_x2(id, applyFn, costFn, src_fmt_0, src_fmt_1, dst_fmt_0, dst_fmt_1) \
 	GENERATE_CONVERTER_SDWH_F(id    , (applyFn), (costFn), (src_fmt_0), (dst_fmt_0), false),\
@@ -96,13 +94,13 @@ ImageTransformerPrototype const ImageTransformerPrototypes[][] = {
 #define GENERATE_CONVERTER_JPEG(id, costFn, src_fmt)\
 	GENERATE_CONVERTER((id), v4lconvert_init_imf_jpeg, (costFn), (src_fmt), JPEG, special, false, false)
 		//Virtual JPEG converters. Can't be used, but are placeholders because encoders can support them.
-		GENERATE_CONVERTER_JPEG(50,       estimateCostPlaceholder, GREY),
-		GENERATE_CONVERTER_JPEG(51,       estimateCostPlaceholder, RGB24),
-		GENERATE_CONVERTER_JPEG(52,       estimateCostPlaceholder, YUV420),
-		GENERATE_CONVERTER_JPEG(53,       estimateCostPlaceholder, YUYV),
-		GENERATE_CONVERTER_JPEG(54,       estimateCostPlaceholder, YVYU),
-		GENERATE_CONVERTER_JPEG(55,       estimateCostPlaceholder, UYVY),
-		GENERATE_CONVERTER_JPEG(56,       estimateCostPlaceholder, VYUY),
+		GENERATE_CONVERTER_JPEG(50,    estimateCostPlaceholder, GREY),
+		GENERATE_CONVERTER_JPEG(51,    estimateCostPlaceholder, RGB24),
+		GENERATE_CONVERTER_JPEG(52,    estimateCostPlaceholder, YUV420),
+		GENERATE_CONVERTER_JPEG(53,    estimateCostPlaceholder, YUYV),
+		GENERATE_CONVERTER_JPEG(54,    estimateCostPlaceholder, YVYU),
+		GENERATE_CONVERTER_JPEG(55,    estimateCostPlaceholder, UYVY),
+		GENERATE_CONVERTER_JPEG(56,    estimateCostPlaceholder, VYUY),
 #undef GENERATE_CONVERTER_JPEG
 		//v4lconvert_y10b_to_rgb24(struct v4lconvert_data *data, const u8 *src, u8 *dest, u32 width, u32 height);
 		//v4lconvert_y10b_to_yuv420(struct v4lconvert_data *data, const u8 *src, u8 *dest, u32 width, u32 height);

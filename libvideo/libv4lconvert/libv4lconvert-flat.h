@@ -241,7 +241,7 @@ typedef struct VideoPipeline {
 	ImageTransformer** converters;
 } VideoPipeline;
 
-struct v4lconvert_conversion_request {
+typedef struct VideoPipelineRequest {
 	struct v4l2_format* src_fmt;
 	struct v4l2_format* dst_fmt;
 	unsigned int rotation;
@@ -252,20 +252,22 @@ struct v4lconvert_conversion_request {
 	// Values for crop/pad
 	signed int top_offset;
 	signed int left_offset;
-};
+} VideoPipelineRequest;
 
 LIBV4L_PUBLIC size_t v4lconvert_estimateBufferSize(u32 fmt, unsigned int width, unsigned int height);
 
-LIBV4L_PUBLIC bool ImageTransformer_initForIMF(ImageTransformer* transformer, u32 src_fmt, u32 dst_fmt, unsigned int width, unsigned int height);
+/**
+ * Initialize static data
+ */
+LIBV4L_PUBLIC void VideoPipeline_init();
+
+LIBV4L_PUBLIC void VideoPipeline_deinit();
 
 /**
  * Create a VideoPipeline that will apply the given conversion request.
  */
-LIBV4L_PUBLIC VideoPipeline* VideoPipeline_create(struct v4lconvert_conversion_request* request, char** errmsg) __attribute__((nonnull (1)));
-/**
- * Initialize the 
- */
-LIBV4L_PUBLIC VideoPipeline* VideoPipeline_init(VideoPipeline* pipeline, struct v4lconvert_conversion_request* request, char** errmsg) __attribute__((nonnull (1)));
+LIBV4L_PUBLIC VideoPipeline* VideoPipeline_open(VideoPipelineRequest* request, char** errmsg) __attribute__((nonnull (1)));
+
 /**
  * Create a VideoPipeline that will apply the given transformers in order.
  * @param pipeline
@@ -281,10 +283,10 @@ LIBV4L_PUBLIC VideoPipeline* VideoPipeline_wrap(size_t numTransformers, ImageTra
  * @param num_buffers number of buffers to create (length of buffers array)
  * @param buffers Array of buffers to create
  * @param allocate boolean, whether to allocate the buffers themselves or not
- * @return 1 on success, 0 on failure
+ * @return success
  */
-LIBV4L_PUBLIC int v4lconvert_encoder_series_createBuffers(struct VideoPipeline* series, size_t num_buffers, struct v4lconvert_buffer* buffers[], bool allocate);
-LIBV4L_PUBLIC int v4lconvert_buffer_release(struct v4lconvert_buffer* buffer);
+LIBV4L_PUBLIC bool VideoPipeline_createBuffers(VideoPipeline* pipeline, size_t numBuffers, struct v4lconvert_buffer* buffers[], bool allocate);
+LIBV4L_PUBLIC bool v4lconvert_buffer_release(struct v4lconvert_buffer* buffer);
 
 #ifdef __cplusplus
 }

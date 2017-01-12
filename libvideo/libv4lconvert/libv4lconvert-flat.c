@@ -23,7 +23,10 @@ extern "C" {
 //Macro to hide unused parameter warnings
 #define UNUSED(x) (void)(x)
 #endif
-static bool estimateCostPlaceholder(ImageTransformerPrototype* self, unsigned int* cpuCost, float* qualityCost, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void** options) __attribute__ ((nonnull (1, 2, 3, 4, 5, 7)));
+
+VideoPipeline* VideoPipeline_open(VideoPipelineRequest* request, char** errmsg) {
+	
+}
 
 static unsigned int VideoPipeline_apply(VideoPipeline* self, struct v4lconvert_buffer* buffer) __attribute__ ((nonnull (1, 2)));
 static bool VideoPipeline_release(VideoPipeline* self) __attribute__ ((nonnull (1)));
@@ -230,7 +233,7 @@ static size_t countNodesInPath(node* last) {
 /**
  * Traverse the nodes backwards and build an array of transformers
  */
-static size_t VideoPipeline_buildTransformersFromPath(node* lastNode, ImageTransformer*** transformers, v4lconvert_conversion_request* request, unsigned int srcWidth, unsigned int srcHeight, unsigned int scaledWidth, unsigned int scaledHeight, unsigned int dstWidth, unsigned int dstHeight, char** errmsg) {
+static size_t VideoPipeline_buildTransformersFromPath(node* lastNode, ImageTransformer*** transformers, VideoPipelineRequest* request, unsigned int srcWidth, unsigned int srcHeight, unsigned int scaledWidth, unsigned int scaledHeight, unsigned int dstWidth, unsigned int dstHeight, char** errmsg) {
 	//Count # of nodes in path
 	size_t pathLength = countNodesInPath(lastNode);
 	
@@ -240,37 +243,42 @@ static size_t VideoPipeline_buildTransformersFromPath(node* lastNode, ImageTrans
 		return 0;
 	}
 	
+	ImageTransformer** transformer = &result[pathLength - 1];
+	
 	node* current = lastNode;
+	struct v4l2_format currentDstFormat = *request->dst_fmt, currentSrcFormat;
 	do {
 		ImageTransformerPrototype* proto = current->prototype;
-		ImageTransformer* transformer;
 		switch (proto->type) {
 			case v4lconvert_conversion_type_rotate:
-				transformer = proto->init(proto, srcFmt, dstFmt, errmsg, 1, request->rotation);
+				*transformer = proto->init(proto, srcFmt, dstFmt, errmsg, 1, request->rotation);
 				break;
 			case v4lconvert_conversion_type_scale:
-				transformer = proto->init(proto, srcFmt, dstFmt, errmsg, 2, request->scaleNumerator, request->scaleDenominator);
+				*transformer = proto->init(proto, srcFmt, dstFmt, errmsg, 2, request->scaleNumerator, request->scaleDenominator);
 				break;
 			case v4lconvert_conversion_type_hflip:
 			case v4lconvert_conversion_type_vflip:
 			case v4lconvert_conversion_type_identity:
 			case v4lconvert_conversion_type_imf:
-				transformer = proto->init(proto, srcFmt, dstFmt, errmsg, 0);
+				*transformer = proto->init(proto, srcFmt, dstFmt, errmsg, 0);
 				break;
 			default:
 				//Unknown type
 		}
-		if (transformer == NULL) {
+		if (*transformer == NULL) {
 			//TODO cleanup
 			return 0;
 		}
+		//Move back by one in the array
+		transformer--;
+		currentDstFormat = currentSrcFormat;
 	} while ((current = current->prev) != NULL);
 	
 	*transformers = result;
 	return pathLength;
 }
 
-static size_t VideoPipeline_computeConverters(ImageTransformer*** transformers, struct v4lconvert_conversion_request* request, char** errmsg) {
+static size_t VideoPipeline_computeConverters(ImageTransformer*** transformers, VideoPipelineRequest* request, char** errmsg) {
 	#define FAIL(msg) do {\
 			if (errmsg) \
 				*errmsg = msg;\
@@ -538,20 +546,6 @@ static size_t VideoPipeline_computeConverters(ImageTransformer*** transformers, 
 	#undef FAIL
 }
 
-
-bool VideoPipeline_create(VideoPipeline* self, struct v4lconvert_conversion_request* request, char** errmsg) {
-	size_t num_converters = v4lconvert_encoder_series_computeConverters(&self->converters, request, errmsg);
-	if (num_converters == 0)
-		return false;
-	self->num_converters = num_converters;
-	self->convert = &VideoPipeline_apply;
-	self->release = &VideoPipeline_doRelease;
-	self->src_fmt = self->converters[0]->prototype->src_fmt;
-	self->dst_fmt = self->converters[num_converters - 1]->prototype->dst_fmt;
-	//TODO finish src_len/dst_len
-	return true;
-}
-
 static bool VideoPipeline_doRelease(VideoPipeline* self) {
 	if (self != NULL) {
 		if (self->encoders) {
@@ -601,7 +595,20 @@ static size_t VideoPipeline_apply(VideoPipeline* self, struct v4lconvert_buffer*
 	return buffer->buf1_len = encoder->apply(encoder, bufA, buffer->buf1, src_len);
 }
 
-bool VideoPipeline_createBuffers(VideoPipeline* series, u32 num_buffers, struct v4lconvert_buffer** buffers, bool allocate) {
+bool VideoPipeline_open(VideoPipeline* self, VideoPipelineRequest* request, char** errmsg) {
+	size_t numConverters = VideoPipeline_computeConverters(&self->converters, request, errmsg);
+	if (numConverters == 0)
+		return false;
+	self->num_converters = numConverters;
+	self->convert = &VideoPipeline_apply;
+	self->release = &VideoPipeline_doRelease;
+	self->src_fmt = self->converters[0]->prototype->src_fmt;
+	self->dst_fmt = self->converters[numConverters - 1]->prototype->dst_fmt;
+	//TODO finish src_len/dst_len
+	return true;
+}
+
+bool VideoPipeline_createBuffers(VideoPipeline* pipeline, size_t numBuffers, struct v4lconvert_buffer* buffers[], bool allocate) {
 	u32 bufA_len = 0;
 	u32 bufB_len = 0;
 	for (unsigned int i = 0; i < (series->num_encoders / 2) * 2; i += 2) {
@@ -620,7 +627,7 @@ bool VideoPipeline_createBuffers(VideoPipeline* series, u32 num_buffers, struct 
 		bufB_len = tmp;
 	}
 	
-	for (unsigned i = 0; i < num_buffers; i++) {
+	for (unsigned i = 0; i < numBuffers; i++) {
 		struct v4lconvert_buffer* buffer = buffers[i];
 		if (!buffer) {
 			if (allocate)
@@ -644,7 +651,7 @@ bool VideoPipeline_createBuffers(VideoPipeline* series, u32 num_buffers, struct 
 				buffer->buf1 = NULL;
 				buffer->buf2 = NULL;
 				//Zero out the remaining buffers
-				for (unsigned j = i + 1; j < num_buffers; j++) {
+				for (unsigned j = i + 1; j < numBuffers; j++) {
 					buffer = buffers[j];
 					if (!buffer)
 						continue;
