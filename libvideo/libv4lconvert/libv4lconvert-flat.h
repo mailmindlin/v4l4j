@@ -25,12 +25,12 @@ LIBV4L_PUBLIC enum v4lconvert_conversion_signature {
 	/**
 	 * For signature <code>void convert(const u8* src, u8* dst, u32 width, u32 height);</code>
 	 */
-	v4lconvert_conversion_signature_sdwh_0f,
-	v4lconvert_conversion_signature_sdwh_1f,
-	v4lconvert_conversion_signature_sdwh_2f,
-	v4lconvert_conversion_signature_sd_sf_0f,
-	v4lconvert_conversion_signature_sd_sf_1f,
-	v4lconvert_conversion_signature_sd_sf_2f,
+	v4lconvert_conversion_signature_sdwh_f,
+	v4lconvert_conversion_signature_sdwh_f,
+	v4lconvert_conversion_signature_sdwh_ff,
+	v4lconvert_conversion_signature_sdwh_b,
+	v4lconvert_conversion_signature_sdwh_bf,
+	v4lconvert_conversion_signature_sdwh_bff,
 	v4lconvert_conversion_signature_special
 };
 
@@ -117,16 +117,16 @@ struct ImageTransformerPrototype {
 		struct {
 			enum v4lconvert_conversion_signature signature;
 			union v4lconvert_conversion_fn {
-				void (*cvt_sdwh_0f) (const u8* src, u8* dst, u32 width, u32 height);
-				void (*cvt_sdwh_1f) (const u8* src, u8* dst, u32 width, u32 height, int flag1);
-				void (*cvt_sdwh_2f) (const u8* src, u8* dst, u32 width, u32 height, int flag1, int flag2);
-				void (*cvt_sd_sf_0f) (const u8* src, u8* dst, const struct v4l2_format* src_fmt);
-				void (*cvt_sd_sf_1f) (const u8* src, u8* dst, const struct v4l2_format* src_fmt, int flag1);
-				void (*cvt_sd_sf_2f) (const u8* src, u8* dst, const struct v4l2_format* src_fmt, int flag1, int flag2);
+				void (*cvt_sdwh)     (const u8* src, u8* dst, u32 width, u32 height);
+				void (*cvt_sdwh_f)   (const u8* src, u8* dst, u32 width, u32 height, bool flag1);
+				void (*cvt_sdwh_ff)  (const u8* src, u8* dst, u32 width, u32 height, bool flag1, bool flag2);
+				void (*cvt_sdwh_b)   (const u8* src, u8* dst, u32 width, u32 height, unsigned int bytesPerLine);
+				void (*cvt_sdwh_bf)  (const u8* src, u8* dst, u32 width, u32 height, unsigned int bytesPerLine, bool flag1);
+				void (*cvt_sdwh_bff) (const u8* src, u8* dst, u32 width, u32 height, unsigned int bytesPerLine, bool flag1, bool flag2);
 				void* cvt_special;
 			} target;
-			int flag1;
-			int flag2;
+			bool flag1;
+			bool flag2;
 		} imf_params;
 		u8 user_defined[sizeof(int*) * 4];
 	};
@@ -173,7 +173,12 @@ struct ImageTransformer {
 	bool (*release) (ImageTransformer* self);
 	
 	u32 src_fmt;
+	unsigned int src_width;
+	unsigned int src_height;
+	
 	u32 dst_fmt;
+	unsigned int dst_width;
+	unsigned int dst_height;
 	
 	size_t src_len;
 	/**
@@ -182,7 +187,7 @@ struct ImageTransformer {
 	size_t dst_len;
 	
 	//Private members. Please don't touch.
-	v4lconvert_converter_prototype* prototype;
+	ImageTransformerPrototype* prototype;
 	
 	union {
 		struct {
@@ -197,8 +202,7 @@ struct ImageTransformer {
 			//dst_width & dst_height are used to determine the other two sides
 		} crop_params;
 		struct {
-			int flag1;
-			int flag2;
+			unsigned int bytesPerLine;
 		} imf_params;
 		u8 user_defined[sizeof(int*) * 8];
 	} params;
