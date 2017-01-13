@@ -1,10 +1,23 @@
 #include <stdbool.h>
+#include <IL/OMX_Core.h>
+#include <IL/OMX_Component.h>
+#include <IL/OMX_Video.h>
 
-void* bcm_host;
-void (*bcm_host_init) ();
-void (*bcm_host_deinit) ();
-bool hasBcmHost = false;
-bool bcmActive = false;
+static void* bcm_host;
+static void (*_bcm_host_init) ();
+static void (*_bcm_host_deinit) ();
+static bool hasBcmHost = false;
+static bool bcmActive = false;
+
+static void* omxIL;
+static bool hasOMXIL = false;
+static bool omxILActive = false;
+static OMX_ERRORTYPE (*_OMX_Init) ();
+static OMX_ERRORTYPE (*_OMX_Deinit) ();
+static OMX_ERRORTYPE (*_OMX_ComponentNameEnum) (OMX_OUT OMX_STRING cComponentName, OMX_IN OMX_U32 nNameLength, OMX_IN OMX_U32 nIndex);
+static OMX_ERRORTYPE (*_OMX_GetHandle) (OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN  OMX_STRING cComponentName, OMX_IN OMX_PTR pAppData, OMX_IN OMX_CALLBACKTYPE* pCallBacks);
+static OMX_ERRORTYPE (*_OMX_FreeHandle) (OMX_IN OMX_HANDLETYPE hComponent);
+
 static const char *path_prefix[] = {
 	"",
 	"/opt/vc/lib/",
@@ -21,6 +34,40 @@ static const char *lib_ext[] = {
 	"dll",
 	NULL,
 };
+
+//OMX error descriptions
+static char* getOMXErrorDescription(OMX_ERRORTYPE err) {
+	switch(err) {
+		case OMX_ErrorNone:
+			return "no error";
+		case OMX_ErrorInsufficientResources:
+			return "insufficient resources";
+		case OMX_ErrorInvalidComponentName:
+			return "invalid component name";
+		case OMX_ErrorComponentNotFound:
+			return "component not found";
+		case OMX_ErrorInvalidComponent:
+			return "invalid component";
+		case OMX_ErrorBadParameter:
+			return "bad parameter";
+		case OMX_ErrorUnderflow:
+			return "underflow";
+		case OMX_ErrorOverflow:
+			return "overflow";
+		case OMX_ErrorBadPortIndex:
+			return "bad port index";
+		case OMX_ErrorIncorrectStateOperation:
+			return "invalid state while trying to perform command";
+		case OMX_ErrorIncorrectStateTransition:
+			return "unallowed state transition";
+		case OMX_ErrorBadPortIndex:
+			return "bad port index, i.e. incorrect port";
+		case OMX_ErrorHardware:
+			return "hardware error";
+		default:
+			return "(unknown)";
+	}
+}
 
 //From lunixbochs' glshim/src/gl/loader.c
 static void *open_lib(const char *name) {
@@ -40,34 +87,85 @@ static void *open_lib(const char *name) {
 	return lib;
 }
 
+/**
+ * Call once.
+ */
 void libv4lconvert_omx_init() {
 	static bool initialized = false;
-	if (initialized)
-		return;
-	initialized = true;
-	bcm_host = open_lib("libbcm_host");
-	
-	if (bcm_host == NULL) {
+	#define LOOKUP_FN(lib, sym) \
+		if (!((_##sym) = dlsym(lib, (#sym)))) {\
+			printf("Error looking up symbol: " #sym "\n");\
+			break;\
+		}
+	if (!initialized) {
+		bcm_host = open_lib("libbcm_host");
 		hasBcmHost = false;
-		return;
+		if (bcm_host != NULL) {
+			do {
+				LOOKUP_FN(bcm_host, bcm_host_init)
+				LOOKUP_FN(bcm_host, bcm_host_deinit)
+				hasBcmHost = true;
+			} while (0);
+			
+			if (!hasBcmHost)
+				dlclose(bcm_host);
+		}
+		
+		omxIL = open_lib("libopenmaxil");
+		hasOMXIL = false;
+		if (omxIL != NULL) {
+			do {
+				LOOKUP_FN(omxIL, OMX_Init);
+				LOOKUP_FN(omxIL, OMX_Deinit);
+				LOOKUP_FN(omxIL, OMX_ComponentNameEnum);
+				LOOKUP_FN(omxIL, OMX_GetHandle);
+				LOOKUP_FN(omxIL, OMX_FreeHandle);
+				hasOMXIL = true;
+			} while (0);
+			if (!hasOMXIL)
+				dlclose(omxIL);
+		}
+		initialized = true;
+	}
+	if (hasBcmHost && !bcmActive) {
+		_bcm_host_init();
+		bcmActive = true;
 	}
 	
-	bcm_host_init = dlsym(bcm_host, "bcm_host_init");
-	bcm_host_deinit = dlsym(bcm_host, "bcm_host_deinit");
-	
-	if (!(bcm_host_init && bcm_host_deinit)) {
-		hasBcmHost = false;
-		return;
+	if (hasOMXIL && !omxILActive) {
+		OMX_ERRORTYPE r = _OMX_Init();
+		if (r != OMX_ErrorNone) {
+			printf("Error initializing OMX: %#08x %s\n", r, getOMXErrorDescription(r));
+		} else {
+			omxILActive = true;
+		}
 	}
-	hasBcmHost = true;
-	bcm_host_init();
-	bcmActive = true;
 }
 
 void libv4lconvert_omx_deinit() {
-	if (hasBcmHost) {
+	if (hasBcmHost && bcmActive) {
 		bcm_host_deinit();
-		hasBcmHost = false;
 		bcmActive = false;
+	}
+	if (hasBcmHost) {
+		bcm_host_init = NULL;
+		bcm_host_deinit = NULL;
+		if (dlclose(bcm_host) != 0)
+			fprintf(stderr, "Error closing bcm_host: %s\n", dlerror());
+		bcm_host = NULL;
+		hasBcmHost = false;
+	}
+	
+	if (hasOMXIL && omxILActive) {
+		_OMX_Deinit();
+		omxILActive = false;
+	}
+	
+	if (hasOMXIL) {
+		//TODO maybe null out the symbol pointers
+		if (dlclose(omxIL) != 0)
+			fprintf(stderr, "Error closing openMAX: %s\n", dlerror());
+		omxIL = NULL;
+		hasOMXIL = false;
 	}
 }
