@@ -157,7 +157,6 @@ public class Tuner {
 
 	private void checkRelease() {
 		if (released)
-			throw new StateException("The frame grabber associated with this "
-					+ "tuner has been already released and the tuner must not be " + "used anymore");
+			throw new StateException("The frame grabber associated with this tuner has been already released and the tuner must not be used anymore");
 	}
 }

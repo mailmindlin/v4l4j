@@ -13,7 +13,7 @@ import au.edu.jcu.v4l4j.exceptions.JNIException;
  * 
  * @author mailmindlin
  */
-public class VideoFrameEncoderSeries implements VideoFrameTransformer {
+public class VideoPipeline implements VideoFrameTransformer {
 	
 	static {
 		V4L4JUtils.loadLibrary();
@@ -21,7 +21,7 @@ public class VideoFrameEncoderSeries implements VideoFrameTransformer {
 	
 	protected VideoFrameTransformer[] encoders;
 	/**
-	 * A pointer to the native <code>struct v4lconvert_encoder_series</code> in
+	 * A pointer to the native <code>VideoPipeline</code> in
 	 * memory.
 	 */
 	protected long object;
@@ -61,7 +61,7 @@ public class VideoFrameEncoderSeries implements VideoFrameTransformer {
 	 */
 	private static native long[] getEncoderPointers(long seriesObject) throws JNIException;
 	
-	public VideoFrameEncoderSeries(VideoFrameTransformer...encoders) {
+	public VideoPipeline(VideoFrameTransformer...encoders) {
 		if (encoders == null || encoders.length < 1)
 			throw new NullPointerException();
 		//validate encoders
@@ -82,16 +82,16 @@ public class VideoFrameEncoderSeries implements VideoFrameTransformer {
 			lastHeight = encoder.getDestinationHeight();
 			lastFmt = encoder.getDestinationFormat();
 		}
-		this.object = VideoFrameEncoderSeries.initWithEncoders(ptrs);
+		this.object = VideoPipeline.initWithEncoders(ptrs);
 		//Copy the array, so changes to the argument array don't affect the state of the series
 		this.encoders = new VideoFrameTransformer[encoders.length];
 		System.arraycopy(encoders, 0, this.encoders, 0, encoders.length);
 	}
 	
-	protected VideoFrameEncoderSeries(int width, int height, ImagePalette from, ImagePalette to) {
+	protected VideoPipeline(int width, int height, ImagePalette from, ImagePalette to) {
 		//this.object = doInit(from.getIndex(), to.getIndex(), width, height);
 		
-		long[] converters = VideoFrameEncoderSeries.getEncoderPointers(this.object);
+		long[] converters = VideoPipeline.getEncoderPointers(this.object);
 		this.encoders = new VideoFrameTransformer[converters.length];
 		for (int i = 0; i < converters.length; i++)
 			this.encoders[i] = VideoFrameConverter.wrap(converters[i]);
@@ -166,7 +166,7 @@ public class VideoFrameEncoderSeries implements VideoFrameTransformer {
 	
 	@Override
 	public int apply(V4lconvertBuffer buf) {
-		return VideoFrameEncoderSeries.doApply(this.object, buf.getPointer());
+		return VideoPipeline.doApply(this.object, buf.getPointer());
 	}
 	
 	public V4lconvertBuffer createBuffer() {
@@ -184,5 +184,14 @@ public class VideoFrameEncoderSeries implements VideoFrameTransformer {
 	public long getPointer() {
 		//No available v4lconvert_converter pointer (maybe will change in the future)
 		return 0;
+	}
+	@Override
+	public int getPrototypeId() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+	
+	public static class VideoPipelineBuilder {
+		
 	}
 }
