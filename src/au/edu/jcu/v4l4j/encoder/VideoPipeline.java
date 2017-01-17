@@ -101,11 +101,6 @@ public class VideoPipeline implements VideoFrameTransformer {
 	@Override
 	public native void close() throws Exception;
 	
-	@Override
-	public int getConverterId() {
-		return -1;
-	}
-	
 	/**
 	 * Get length of chain of converters
 	 * @return length
@@ -185,13 +180,26 @@ public class VideoPipeline implements VideoFrameTransformer {
 		//No available v4lconvert_converter pointer (maybe will change in the future)
 		return 0;
 	}
+	
 	@Override
 	public int getPrototypeId() {
 		// TODO Auto-generated method stub
-		return 0;
+		return -1;
 	}
 	
 	public static class VideoPipelineBuilder {
+		private int rotation = 0;
+		public VideoPipelineBuilder addSource() {
+			return this;
+		}
 		
+		public VideoPipelineBuilder setRotation(int rotation) {
+			this.rotation = rotation;
+			return this;
+		}
+		
+		public VideoPipelineBuilder setOutput() {
+			return this;
+		}
 	}
 }
