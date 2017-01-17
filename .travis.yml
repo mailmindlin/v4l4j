@@ -1,9 +1,9 @@
+# This file is a bit more complicated that I would otherwise like, because
+# it has to be set up for both Java and C
+os: linux
 language: java
-compiler: gcc
 jdk: oraclejdk8
-env:
- global:
-  - CC=gcc-4.9
+# Ignore legacy branches
 branches:
  except:
   - svn/test-perf
@@ -17,11 +17,21 @@ branches:
   - svn/trunk
   - svn/tidyup
   - master-old
-before_install:
- - sudo -E add-apt-repository -y ppa:ubuntu-toolchain-r/test
- - sudo -E apt-get -yq update
- - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install gcc-4.9 libc-bin libc-dev-bin libc6-dev
- - sudo -E ldconfig
+# We use some C11 (with extensions), but TravisCI only has GCC 4.6.3 installed (ATM)
+# Thanks to genbattle.bitbucket.org/blog/2016/01/17/c++-travis-ci, stackoverflow.com/a/32127147/2759984
+compiler: gcc
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-4.9
+      - libc-bin
+      - libc-dev-bin
+      - libc6-dev
+env:
+ global:
+  - CC=gcc-4.9
 install:
  - make -C libvideo all -j4
  - sudo -E make -C libvideo install
