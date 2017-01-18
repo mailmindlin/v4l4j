@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <collections/list/list.h>
 #include <IL/OMX_Core.h>
 #include <IL/OMX_Component.h>
 #include <IL/OMX_Video.h>
@@ -34,6 +35,12 @@ static const char *lib_ext[] = {
 	"dll",
 	NULL,
 };
+
+struct libv4lconvert_omxAppdata {
+	
+};
+
+static List* omxPrototypes;
 
 //OMX error descriptions
 static char* getOMXErrorDescription(OMX_ERRORTYPE err) {
@@ -87,6 +94,57 @@ static void *open_lib(const char *name) {
 	return lib;
 }
 
+static bool omx_tryRegisterPrototypes() {
+	char componentName[128];
+	unsigned int componentIndex = 0;
+	while (_OMX_ComponentNameEnum(&componentName, sizeof(componentName), componentIndex) == OMX_ErrorNone) {
+		OMX_HANDLETYPE* component;
+		struct libv4lconvert_omxAppdata* appData = malloc(sizeof(struct libv4lconvert_omxAppdata));
+		if (appData == NULL) {
+			printf("OMX: Error allocating appdata (ENOMEM)\n");
+			return false;
+		}
+		OMX_ERRORTYPE r = _OMX_GetHandle(component, componentName, appData, NULL);
+		if (r != OMX_ErrorNone) {
+			printf("OMX: Error gettting handle for component #%d (%s): %s\n", componentIndex, componentName, getOMXErrorDescription(r));
+			//This is recoverable from
+			continue;
+		}
+		OMX_PORT_PARAM_TYPE videoPorts;
+		OMX_INIT_STRUCTURE(videoPorts);
+		omxPrototypes.add(&omxPrototypes, appData);
+	}
+}
+
+static bool omx_tryInitialize() {
+	OMX_ERRORTYPE r = _OMX_Init();
+	if (r != OMX_ErrorNone) {
+		printf("OMX: Error initializing OMX: %#08x %s\n", r, getOMXErrorDescription(r));
+		return false;
+	}
+	//Register prototypes
+	if (!ArrayList_create(&omxPrototypes)) {
+		_OMX_Deinit();
+		printf("OMX: Error initializing list\n");
+		return false;
+	}
+	if (!omx_tryRegisterPrototypes()) {
+		printf("OMX: Error registerring prototypes\n");
+		//Deregister any prototypes
+		Iterator* crPrototypes = omxPrototypes.iterator(&omxPrototypes);
+		if (crPrototypes) {
+			while (crPrototypes->hasNext(crPrototypes)) {
+				ImageTransformerPrototype* prototype = crPrototypes->next(crPrototypes);
+				//TODO deregister
+				free(prototype);
+			}
+			crPrototypes->release(crPrototypes);
+		}
+		omxPrototypes.release(&omxPrototypes);
+		return false;
+	}
+	return true;
+}
 /**
  * Call once.
  */
@@ -132,14 +190,8 @@ void libv4lconvert_omx_init() {
 		bcmActive = true;
 	}
 	
-	if (hasOMXIL && !omxILActive) {
-		OMX_ERRORTYPE r = _OMX_Init();
-		if (r != OMX_ErrorNone) {
-			printf("Error initializing OMX: %#08x %s\n", r, getOMXErrorDescription(r));
-		} else {
-			omxILActive = true;
-		}
-	}
+	if (hasOMXIL && !omxILActive)
+		omxILActive = omx_tryInitialize();
 }
 
 void libv4lconvert_omx_deinit() {
