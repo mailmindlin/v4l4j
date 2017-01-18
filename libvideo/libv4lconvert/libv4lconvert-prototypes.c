@@ -1,5 +1,8 @@
 #include "libv4lconvert-flat.h"
 #include "libv4lconvert-wrappers.h"
+#include "libv4lconvert-prototypes.h"
+#include <collections/iterator/iterator.h>
+#include <collections/list/list.h>
 
 //Placeholder for estimateCost methods
 static bool estimateCostPlaceholder(ImageTransformerPrototype* self, unsigned int* cpuCost, float* qualityCost, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void** options) {
@@ -132,3 +135,20 @@ const size_t v4lconvert_converter_num_prototypes[] = {
 		COUNT_PROTOTYPES(vflip)
 	};
 #undef COUNT_PROTOTYPES
+
+static List imageTransformerRegistry = {0};
+
+unsigned int ImageTransformerPrototype_register(ImageTransformerPrototype* prototype) {
+	enum v4lconvert_conversion_type type = prototype->type;
+	if (type >= v4lconvert_num_conversion_types) {
+		errno = EINVAL;
+		return -1u;
+	}
+	if (imageTransformerRegistry.type == 0)
+		ArrayList_create(&imageTransformerRegistry);
+	return imageTransformerRegistry.add(&imageTransformerRegistry, prototype);
+}
+
+ImageTransformerPrototype* ImageTransformerPrototype_lookupById(unsigned int id) {
+	return NULL;
+}
