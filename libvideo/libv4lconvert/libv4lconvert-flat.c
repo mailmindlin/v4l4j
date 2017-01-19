@@ -28,6 +28,10 @@ VideoPipeline* VideoPipeline_open(VideoPipelineRequest* request, char** errmsg) 
 	
 }
 
+void VideoPipeline_init() {
+	v4lconvert_omx_init();
+}
+
 static unsigned int VideoPipeline_apply(VideoPipeline* self, struct v4lconvert_buffer* buffer) __attribute__ ((nonnull (1, 2)));
 static bool VideoPipeline_release(VideoPipeline* self) __attribute__ ((nonnull (1)));
 //static bool VideoPipeline_releaseSelfOnly(VideoPipeline* self) __attribute__ ((nonnull (1)));

@@ -160,12 +160,20 @@ enum {
 	SRGGB10,
 	SGRBG10DPCM8,
 	SBGGR16,
-
+		
 	// Compressed formats
 	MJPEG,
 	JPEG,
 	DV,
 	MPEG,
+	H264,
+	AVC,
+	H263,
+	MPEG1,
+	MPEG2,
+	MPEG4,
+	WMV,
+	RV,
 
 	// Vendor-specific formats
 	CPIA1,
@@ -190,6 +198,7 @@ enum {
 	TM6000,
 	CIT_YYVYUY,
 	KONICA420,
+	
 	NB_SUPPORTED_PALETTES,
 	/* Dont use the following three, use YUV420, YUYV or YUV411P instead !! */\
 	YUV420P,
