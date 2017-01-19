@@ -3,6 +3,17 @@
 #include <IL/OMX_Core.h>
 #include <IL/OMX_Component.h>
 #include <IL/OMX_Video.h>
+#include "libvideo-priv.h"
+
+// Dunno where this is originally stolen from... got it from https://github.com/tjormola/rpi-openmax-demos/blob/master/rpi-encode-yuv.c
+#define OMX_INIT_STRUCTURE(a) \
+    memset(&(a), 0, sizeof(a)); \
+    (a).nSize = sizeof(a); \
+    (a).nVersion.nVersion = OMX_VERSION; \
+    (a).nVersion.s.nVersionMajor = OMX_VERSION_MAJOR; \
+    (a).nVersion.s.nVersionMinor = OMX_VERSION_MINOR; \
+    (a).nVersion.s.nRevision = OMX_VERSION_REVISION; \
+    (a).nVersion.s.nStep = OMX_VERSION_STEP
 
 static void* bcm_host;
 static void (*_bcm_host_init) ();
@@ -49,6 +60,8 @@ static char* getOMXErrorDescription(OMX_ERRORTYPE err) {
 			return "no error";
 		case OMX_ErrorInsufficientResources:
 			return "insufficient resources";
+		case OMX_ErrorUndefined:
+			return "unknown";
 		case OMX_ErrorInvalidComponentName:
 			return "invalid component name";
 		case OMX_ErrorComponentNotFound:
@@ -57,10 +70,16 @@ static char* getOMXErrorDescription(OMX_ERRORTYPE err) {
 			return "invalid component";
 		case OMX_ErrorBadParameter:
 			return "bad parameter";
+		case OMX_ErrorNotImplemented:
+			return "not implemented";
 		case OMX_ErrorUnderflow:
 			return "underflow";
 		case OMX_ErrorOverflow:
 			return "overflow";
+		case OMX_ErrorHardware:
+			return "hardware error";
+		case OMX_ErrorInvalidState:
+			return "invalid state";
 		case OMX_ErrorBadPortIndex:
 			return "bad port index";
 		case OMX_ErrorIncorrectStateOperation:
@@ -69,8 +88,6 @@ static char* getOMXErrorDescription(OMX_ERRORTYPE err) {
 			return "unallowed state transition";
 		case OMX_ErrorBadPortIndex:
 			return "bad port index, i.e. incorrect port";
-		case OMX_ErrorHardware:
-			return "hardware error";
 		default:
 			return "(unknown)";
 	}
@@ -97,22 +114,60 @@ static void *open_lib(const char *name) {
 static bool omx_tryRegisterPrototypes() {
 	char componentName[128];
 	unsigned int componentIndex = 0;
-	while (_OMX_ComponentNameEnum(&componentName, sizeof(componentName), componentIndex) == OMX_ErrorNone) {
-		OMX_HANDLETYPE* component;
+	
+	//Declare this so it's only initialized once
+	OMX_PORT_PARAM_TYPE videoPorts;
+	OMX_INIT_STRUCTURE(videoPorts);
+	
+	OMX_PARAM_PORTDEFINITIONTYPE portDef;
+	OMX_INIT_STRUCTURE(portDef);
+	
+	for (unsigned int componentIndex = 0; _OMX_ComponentNameEnum(&componentName, sizeof(componentName), componentIndex) == OMX_ErrorNone; componentIndex++) {
+		OMX_HANDLETYPE component;
 		struct libv4lconvert_omxAppdata* appData = malloc(sizeof(struct libv4lconvert_omxAppdata));
 		if (appData == NULL) {
 			printf("OMX: Error allocating appdata (ENOMEM)\n");
 			return false;
 		}
-		OMX_ERRORTYPE r = _OMX_GetHandle(component, componentName, appData, NULL);
+		OMX_ERRORTYPE r = _OMX_GetHandle(&component, componentName, appData, NULL);
 		if (r != OMX_ErrorNone) {
 			printf("OMX: Error gettting handle for component #%d (%s): %s\n", componentIndex, componentName, getOMXErrorDescription(r));
-			//This is recoverable from
+			free(appData);
+			//This is recoverable from for the next component
 			continue;
 		}
-		OMX_PORT_PARAM_TYPE videoPorts;
-		OMX_INIT_STRUCTURE(videoPorts);
-		omxPrototypes.add(&omxPrototypes, appData);
+		
+		if ((r = component->GetParameter(component, OMX_IndexParamVideoInit, &videoPorts)) == OMX_ErrorNone && videoPorts.nPorts > 0) {
+			//We only care about video devices ATM
+			printf("OMX: Found %d ports starting at %d for component %s\n", videoPorts.nPorts, videoPorts.nStartPortNumber, componentName);
+			//Look at the ports
+			for (unsigned int portIndex = videoPorts.nStartPortNumber; portIndex < videoPorts.nStartPortNumber + videoPorts.nPorts; portIndex++) {
+				if ((r = component->GetParameter(component, OMX_IndexParamPortDefinition, &portDef)) != OMX_ErrorNone) {
+					printf("OMX: Error getting definition for port %u on %s: %s\n", portIndex, componentName, getOMXErrorDescription(r));
+					//TODO is this recoverable?
+					continue;
+				}
+				printf("\tOMX: Port %d is %s %s.\n",
+					portIndex,
+					(portDef->eDir == OMX_DirInput ? "input" : "output"),
+					(portDef->bEnabled == OMX_TRUE ? "enabled" : "disabled"));
+			}
+			omxPrototypes.add(&omxPrototypes, appData);
+			//We successfully registered the component as a prototype
+			continue;
+		}
+		//Bad port (either we couldn't query it, or it had no video ports)
+		if (r != OMX_ErrorNone) {
+			printf("OMX: Error querying ports for component %s: %s\n", componentName, getOMXErrorDescription(r));
+		} else {
+			printf("OMX: No video ports available for component %s\n", componentName);
+		}
+		
+		free(appData);
+		if ((r = _OMX_FreeHandle(component)) != OMX_ErrorNone) {
+			//We can't really do anything
+			printf("OMX: Error freeing component handle %s: %s\n", componentName, getOMXErrorDescription(r));
+		}
 	}
 }
 
@@ -148,7 +203,7 @@ static bool omx_tryInitialize() {
 /**
  * Call once.
  */
-void libv4lconvert_omx_init() {
+void v4lconvert_omx_init() {
 	static bool initialized = false;
 	#define LOOKUP_FN(lib, sym) \
 		if (!((_##sym) = dlsym(lib, (#sym)))) {\
@@ -194,7 +249,7 @@ void libv4lconvert_omx_init() {
 		omxILActive = omx_tryInitialize();
 }
 
-void libv4lconvert_omx_deinit() {
+void v4lconvert_omx_deinit() {
 	if (hasBcmHost && bcmActive) {
 		bcm_host_deinit();
 		bcmActive = false;
