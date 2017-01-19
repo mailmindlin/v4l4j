@@ -70,7 +70,7 @@ static unsigned int check_palettes_v4l1(struct video_device *vdev) {
 
 	dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG, "QRY: Checking supported palettes.\n");
 	for(unsigned int palette = 0; palette < libvideo_palettes_size - 3; palette++) {
-		if(libvideo_palettes[palette].v4l1_palette != VIDEO_PALETTE_UNDEFINED_V4L1) {
+		if(libvideo_palettes[palette].v4l1_palette != VIDEO_PALETTE_UNDEFINED_V4L) {
 			dprint(LIBVIDEO_SOURCE_QRY, LIBVIDEO_LOG_DEBUG1, "QRY: trying %s\n", libvideo_palettes[palette].name);
 			CLEAR(pic);
 			pic.palette = (u16) libvideo_palettes[palette].v4l1_palette;

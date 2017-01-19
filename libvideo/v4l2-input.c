@@ -189,7 +189,7 @@ static int set_std(struct capture_device *c, int fd){
 	return 0;
 }
 
-static int set_input(struct capture_device *c, int fd){
+static int set_input(struct capture_device *c, int fd) {
 	struct v4l2_input vi;
 	//Linux UVC doesn't like to be ioctl'ed (VIDIOC_S_INPUT)
 	//so we only execute them if std!="webcam"
@@ -204,9 +204,7 @@ static int set_input(struct capture_device *c, int fd){
 		}
 		vi.index = c->channel;
 		if (ioctl(fd, VIDIOC_ENUMINPUT, &vi) == -1) {
-			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR,
-					"CAP: Failed to get details of input %d, errno(%d)\n",
-					c->channel, errno);
+			dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: Failed to get details of input %d, errno(%d)\n", c->channel, errno);
 			return -1;
 		}
 		if(vi.type == V4L2_INPUT_TYPE_TUNER)

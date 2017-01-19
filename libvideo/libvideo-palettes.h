@@ -22,8 +22,8 @@
 *
 */
 
-#ifndef H_PALETTES
-#define H_PALETTES
+#ifndef LIBVODEO_PALETTES_H
+#define LIBVODEO_PALETTES_H
 
 #include "videodev2.h"
 #include "types.h"
@@ -31,7 +31,7 @@
 /**
  * Struct containing information about a libvideo palette
  */
-struct libvideo_palette {
+typedef struct ImagePalette {
 	/**
 	 * Palette ID
 	 * -1 if undefined
@@ -47,13 +47,20 @@ struct libvideo_palette {
 	 * Human-readable-ish palette name
 	 */
 	char name[15];
-};
+} ImagePalette;
 
-#define VIDEO_PALETTE_UNDEFINED_V4L1	-1u
-#define COMPRESSED_FORMAT_DEPTH			-1
+#define VIDEO_PALETTE_UNDEFINED_V4L	 -1u
+#define COMPRESSED_FORMAT_DEPTH      -1
 
-extern const struct libvideo_palette libvideo_palettes[];
+extern const ImagePalette libvideo_palettes[];
 extern const unsigned int libvideo_palettes_size;
 
+/**
+ * 
+ */
+LIBVIDEO_PUBLIC const ImagePalette* libvideo_mapV4L1Palette(u32 v4l1_palette);
+LIBVIDEO_PUBLIC const ImagePalette* libvideo_mapV4L2Palette(u32 v4l2_palette);
+LIBVIDEO_PUBLIC const ImagePalette* libvideo_getPaletteById(unsigned int id);
 
-#endif //H_PALETTES
+
+#endif //LIBVODEO_PALETTES_H

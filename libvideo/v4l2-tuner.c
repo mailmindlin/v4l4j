@@ -31,7 +31,7 @@ static void fix_quirky_values(struct video_device *vdev, unsigned int idx, unsig
 	struct v4l2_tuner t;
 	CLEAR(t);
 	t.index = idx;
-	if (ioctl (vdev->fd, VIDIOC_G_TUNER, &t) != 0)
+	if (ioctl(vdev->fd, VIDIOC_G_TUNER, &t) != 0)
 		return;
 	if(*f < t.rangelow) {
 		dprint(LIBVIDEO_SOURCE_TUNER, LIBVIDEO_LOG_DEBUG, "TUN: QUIRKS: Tuner frequency %u for tuner %d on device %s BELOW min %u\n", *f, idx, vdev->file, t.rangelow);
