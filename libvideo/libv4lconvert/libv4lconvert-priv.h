@@ -101,6 +101,12 @@ LIBV4LCONVERT_LOCAL u8 *v4lconvert_alloc_buffer(unsigned int needed, u8 **buf, u
 
 LIBV4LCONVERT_LOCAL int v4lconvert_oom_error(struct v4lconvert_data *data);
 
+//OMX functions
+LIBV4LCONVERT_LOCAL void v4lconvert_omx_init();
+
+LIBV4LCONVERT_LOCAL void v4lconvert_omx_deinit();
+
+//Conversion functions
 LIBV4LCONVERT_LOCAL void v4lconvert_rgb24_to_yuv420(const u8 *src, u8 *dest, unsigned int width, unsigned int height, unsigned int bytesperline, bool bgr, bool yvu);
 
 LIBV4LCONVERT_LOCAL void v4lconvert_yuv420_to_rgb24(const u8 *src, u8 *dst, u32 width, u32 height, bool yvu);

@@ -34,54 +34,60 @@ LIBV4L_PUBLIC enum v4lconvert_conversion_signature {
 	v4lconvert_conversion_signature_special
 };
 
-LIBV4L_PUBLIC enum v4lconvert_conversion_type {
+typedef enum {
 	/**
 	 * Unknown transformation
 	 */
-	v4lconvert_conversion_type_unknown = 0,
+	ImageTransformationType_undefined = 0,
+	ImageTransformationType_any,
 	/**
-	 * Identity conversion, such as memcpy
+	 * Identity one-to-many split
 	 */
-	v4lconvert_conversion_type_identity,
+	ImageTransformationType_split,
+	/**
+	 * Combine multiple streams to one
+	 */
+	ImageTransformationType_mix,
 	/**
 	 * Image format conversion
 	 */
-	v4lconvert_conversion_type_imf,
+	ImageTransformationType_convert,
 	/**
 	 * Image crop
 	 */
-	v4lconvert_conversion_type_crop,
+	ImageTransformationType_crop,
 	/**
 	 * Pad border around image
 	 */
-	v4lconvert_conversion_type_pad,
+	ImageTransformationType_pad,
 	/**
 	 * Scale image
 	 */
-	v4lconvert_conversion_type_scale,
+	ImageTransformationType_scale,
 	/**
 	 * Rotate image
 	 */
-	v4lconvert_conversion_type_rotate,
+	ImageTransformationType_rotate,
 	/**
 	 * Rotate image 90deg clockwise
 	 */
-	v4lconvert_conversion_type_rotate90,
+	ImageTransformationType_rotate90,
 	/**
 	 * Rotate image 180deg
 	 * Same as hflip + vflip
 	 */
-	v4lconvert_conversion_type_rotate180,
+	ImageTransformationType_rotate180,
 	/**
-	 * Flip image horizontally
+	 * Flip image horizontally (about the y-axis on a graph)
 	 */
-	v4lconvert_conversion_type_hflip,
+	ImageTransformationType_hflip,
 	/**
-	 * Flip image vertically
+	 * Flip image vertically (about the x-axis on a graph)
 	 */
-	v4lconvert_conversion_type_vflip,
-	v4lconvert_num_conversion_types
-};
+	ImageTransformationType_vflip,
+	ImageTransformationType_schedule,
+	ImageTransformationType_numTypes;
+} ImageTransformationType;
 
 #define V4LCONVERT_CONVERSION_TYPE_FLAG(type) (1u << v4lconvert_conversion_type_##type)
 
@@ -90,6 +96,9 @@ typedef struct ImageTransformer ImageTransformer;
 struct ImageTransformerPrototype;
 typedef const struct ImageTransformerPrototype ImageTransformerPrototype;
 
+/**
+ * An ImageTransformerPrototype specifies an ImageTransformer that *could* be created, and creates it.
+ */
 struct ImageTransformerPrototype {
 	size_t id;
 	/**
@@ -102,9 +111,16 @@ struct ImageTransformerPrototype {
 	 * @param errmsg Filled with message if this method fails. Does not need to be released in any case.
 	 * @return Converter created, or NULL on error. On error, errno is set.
 	 */
-	ImageTransformer* (*init) (ImageTransformerPrototype* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, char** errmsg, size_t options_len, ...);
-	bool (*estimateCost) (ImageTransformerPrototype* self, unsigned int* cpuCost, float* qualityCost, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, ...);
+	ImageTransformer* (*init) (ImageTransformerPrototype* self, ImageFormat* src_fmt, ImageFormat* dst_fmt, char** errmsg, size_t options_len, ...);
+	bool (*estimateCost) (ImageTransformerPrototype* self, unsigned int* cpuCost, float* qualityCost, ImageFormat* src_fmt, ImageFormat* dst_fmt, size_t options_len, ...);
+	/**
+	 * Conversion type offered by this prototype
+	 */
 	enum v4lconvert_conversion_type type;
+	/**
+	 * Whether this transformer can be used multiple times
+	 */
+	bool isReusable;
 	/**
 	 * Source format
 	 */
@@ -172,6 +188,11 @@ struct ImageTransformer {
 	 */
 	bool (*release) (ImageTransformer* self);
 	
+	bool (*getParameter) (ImageTransformer* self, unsigned int paramIndex, void*  paramData);
+	
+	bool (*setParameter) (ImageTransformer* self, unsigned int paramIndex, void** paramData);
+	
+	
 	u32 src_fmt;
 	unsigned int src_width;
 	unsigned int src_height;
@@ -210,6 +231,9 @@ struct ImageTransformer {
 };
 
 typedef struct VideoPipeline {
+	bool (*start) (struct VideoPipeline* self);
+	bool (*pause) (struct VideoPipeline* self);
+	bool (*stop) (struct VideoPipeline* self);
 	/**
 	 * Method to invoke actual conversion
 	 */
