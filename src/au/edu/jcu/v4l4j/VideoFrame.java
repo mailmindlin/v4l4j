@@ -120,7 +120,7 @@ public interface VideoFrame {
 		ByteBuffer buffer = getBuffer();
 		if (buffer.hasArray())
 			return buffer.array();
-		byte[] result = new byte[buffer.capacity()];
+		byte[] result = new byte[buffer.remaining()];
 		buffer.get(result);
 		return result;
 	}
