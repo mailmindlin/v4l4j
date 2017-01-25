@@ -1,30 +1,80 @@
 package au.edu.jcu.v4l4j.api.stream;
 
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public interface ContentStream extends AutoCloseable {
 	
-	Object getProperty(String property);
-	Object setProperty(String property, Object value);
+	Object getProperty(String key);
 	
-	ContentStream checkAvailableBytesToRead(int bytesRequested, Consumer<ContentStream> callback);
-	ContentStream checkAvailableBytesToWrite(int bytesRequested, Consumer<ContentStream> callback);
+	Object setProperty(String key, Object value);
 	
-	int getCurrentPosition();
-	ContentStream setPosition(ContentStreamOrigin origin, int offset);
+	default Set<String> getPropertyNames() {
+		return Collections.emptySet();
+	}
 	
-	ByteBuffer getReadBuffer(int size, boolean forbidCopy);
+	ContentStream onBytesAvailableToRead(int bytesRequested, Consumer<ContentStream> callback);
+	
+	ContentStream onBytesAvailalbeToWrite(int bytesRequested, Consumer<ContentStream> callback);
+	
+	ContentStream onEOS(Consumer<ContentStream> callback);
+	
+	ContentStream onDisconnect(Consumer<ContentStream> callback);
+	
+	ContentStream seekTo(Origin origin, long offset);
+	
+	long getCurrentPosition(Origin origin);
+	
+	ByteBuffer getReadBuffer(int length, boolean forbidCopy);
+	
 	void releaseReadBuffer(ByteBuffer buffer);
-	InputStream asInputStream();
 	
-	ByteBuffer getWriteBuffer(int size, boolean forbidCopy);
-	void releaseWriteBuffer(ByteBuffer buffer);
-	OutputStream asOutputStream();
+	ContentStream write(ByteBuffer buffer);
 	
-	void registerCallback(ContentStreamCallback callback);
+	ContentStreamProvider getProvider();
 	
-	ContentStreamAccessType getAccess();
+	AccessType getAccessType();
+	
+	@Override
+	void close();
+	
+	public enum AccessType {
+		/**
+		 * Read only access
+		 */
+		READ,
+		/**
+		 * Write only access
+		 */
+		WRITE,
+		/**
+		 * Read and write access
+		 */
+		READ_WRITE;
+	}
+	
+	public static enum Origin {
+		/**
+		 * Origin is the first byte of the stream
+		 */
+		START,
+		/**
+		 * Origin is the beginning of the available content
+		 */
+		FIRST,
+		/**
+		 * Origin is the current position in the content
+		 */
+		CURRENT,
+		/**
+		 * Origin is the end of the available content
+		 */
+		LAST,
+		/**
+		 * Origin is the end of the stream
+		 */
+		END;
+	}
 }
