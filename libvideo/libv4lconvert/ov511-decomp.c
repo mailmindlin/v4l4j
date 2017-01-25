@@ -16,6 +16,7 @@
 
 #include <string.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include "helper-funcs.h"
 
 /******************************************************************************
@@ -541,21 +542,21 @@ static void remove0blocks(u8 *pIn, int *inSize) {
 	long long *out = (long long *)pIn;
 	
 	for (int i = 0; i < *inSize; i += 32, in += 4) {
-		int all_zero = 1;
-		for (int j = 0; j < 4; j++)
+		bool all_zero = true;
+		for (unsigned int j = 0; j < 4; j++)
 			if (in[j]) {
-				all_zero = 0;
+				all_zero = false;
 				break;
 			}
-
+		
 		/* Skip 32 byte blocks of all 0 */
 		if (all_zero)
 			continue;
-
-		for (j = 0; j < 4; j++)
+		
+		for (unsigned int j = 0; j < 4; j++)
 			*out++ = in[j];
 	}
-
+	
 	*inSize -= (in - out) * 8;
 }
 
