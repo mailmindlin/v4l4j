@@ -1,9 +1,24 @@
 package au.edu.jcu.v4l4j.api.component;
 
+import java.util.Set;
+
+import au.edu.jcu.v4l4j.api.StreamType;
+
 public interface ComponentPort {
 	int getIndex();
+	
+	StreamType getPortType();
+	
 	Component getComponent();
+	
+	Set<String> getProperties();
+	
+	Object getProperty(String key);
+	
+	Object setProperty(String key, Object value);
+	
 	boolean isInput();
+	
 	boolean isOutput();
 	/**
 	 * Whether this port is enabled
