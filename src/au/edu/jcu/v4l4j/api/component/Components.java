@@ -15,18 +15,28 @@ public class Components {
 		Iterator<ComponentProvider> providers = getProviders();
 		while (providers.hasNext()) {
 			ComponentProvider provider = providers.next();
-			if (provider.supports(name))
-				return provider.get(name);
+			try {
+				Component c = provider.get(name);
+				if (c != null)
+					return c;
+			} catch (Exception e) {
+				//Swallow
+			}
 		}
 		return null;
 	}
 	
-	public static Component getForPath(Path path) {
+	public static Component getForPath(Path path, String name) {
 		Iterator<ComponentProvider> providers = getProviders();
 		while (providers.hasNext()) {
 			ComponentProvider provider = providers.next();
-			if (provider.supports(path))
-				return provider.get(path);
+			try {
+				Component c = provider.get(path, name);
+				if (c != null)
+					return c;
+			} catch (Exception e) {
+				//Swallow
+			}
 		}
 		return null;
 	}
