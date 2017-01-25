@@ -136,6 +136,20 @@ const ImagePalette libvideo_palettes[] = {
 		16,
 		"Y16"
 	},
+	{
+		Y24,
+		VIDEO_PALETTE_UNDEFINED_V4L,
+		VIDEO_PALETTE_UNDEFINED_V4L,
+		24,
+		"Y24"
+	},
+	{
+		Y32,
+		VIDEO_PALETTE_UNDEFINED_V4L,
+		VIDEO_PALETTE_UNDEFINED_V4L,
+		32,
+		"Y32"
+	}
 
 	// PAL8 format
 	{

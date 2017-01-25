@@ -119,6 +119,8 @@ enum {
 	Y6,
 	Y10,
 	Y16,
+	Y24,
+	Y32,
 
 	// palette formats
 	PAL8,				// 256b palette (see stackoverflow.com/a/25019042/2759984)

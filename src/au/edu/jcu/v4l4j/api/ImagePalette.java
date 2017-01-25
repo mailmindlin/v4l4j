@@ -275,6 +275,9 @@ public enum ImagePalette {
 	SGBRG10(10),
 	SGRBG10(10),
 	SRGGB10(10),
+	/**
+	 * SGRBG10_DPCM8 bayer image format
+	 */
 	SGRBG10DPCM8(8),
 	SBGGR16(16),
 
