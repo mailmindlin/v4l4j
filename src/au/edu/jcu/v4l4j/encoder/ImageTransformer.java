@@ -4,7 +4,7 @@ import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
-import au.edu.jcu.v4l4j.ImagePalette;
+import au.edu.jcu.v4l4j.api.ImagePalette;
 import au.edu.jcu.v4l4j.V4L4JUtils;
 
 public class ImageTransformer implements VideoFrameConverter {

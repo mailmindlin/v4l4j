@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import au.edu.jcu.v4l4j.api.ImagePalette;
+
 /**
  * ImageFormatList objects group together a list of native {@link ImageFormat}s
  * capture resolutions and frame intervals supported by a {@link VideoDevice}. A
@@ -125,37 +127,38 @@ public class ImageFormatList {
 	private void sortLists() {
 		// sort RGBformats
 		// if native RGB24 is supported, put it first
-		moveToFirstIfNative(RGBformats, V4L4JConstants.IMF_RGB24);
+		moveToFirstIfNative(RGBformats, ImagePalette.RGB24.getIndex());
 
 		// sort BGRformats
 		// if native BGR24 is supported, put it first
-		moveToFirstIfNative(BGRformats, V4L4JConstants.IMF_BGR24);
+		moveToFirstIfNative(BGRformats, ImagePalette.BGR24.getIndex());
 
 		// sort YUV420formats
 		// if native YUV420 is supported, put it first
-		moveToFirstIfNative(YUV420formats, V4L4JConstants.IMF_YUV420);
+		moveToFirstIfNative(YUV420formats, ImagePalette.YUV420.getIndex());
 
 		// sort YVU420formats
 		// if native YVU420 is supported, put it first
-		moveToFirstIfNative(YVU420formats, V4L4JConstants.IMF_YVU420);
+		moveToFirstIfNative(YVU420formats, ImagePalette.YVU420.getIndex());
 
 		// sort JPEGformats
 		// put native formats first and libvideo converted ones next
 		moveNativeFirst(JPEGformats);
 		// if native RGB32 is supported, put it first
-		moveToFirstIfNative(JPEGformats, V4L4JConstants.IMF_RGB32);
+		//TODO should this be RGB24?
+		moveToFirstIfNative(JPEGformats, ImagePalette.RGB32.getIndex());
 		// if native RGB24 is supported, put it first
-		moveToFirstIfNative(JPEGformats, V4L4JConstants.IMF_RGB24);
+		moveToFirstIfNative(JPEGformats, ImagePalette.BGR24.getIndex());
 		// if native UYVY is supported, put it first
-		moveToFirstIfNative(JPEGformats, V4L4JConstants.IMF_UYVY);
+		moveToFirstIfNative(JPEGformats, ImagePalette.UYVY.getIndex());
 		// if native YUYV is supported, put it first
-		moveToFirstIfNative(JPEGformats, V4L4JConstants.IMF_YUYV);
+		moveToFirstIfNative(JPEGformats, ImagePalette.YUYV.getIndex());
 		// if native YUV420P is supported, put it first
-		moveToFirstIfNative(JPEGformats, V4L4JConstants.IMF_YUV420);
+		moveToFirstIfNative(JPEGformats, ImagePalette.YUV420.getIndex());
 		// if native MJPEG is supported, put it first
-		moveToFirstIfNative(JPEGformats, V4L4JConstants.IMF_MJPEG);
+		moveToFirstIfNative(JPEGformats, ImagePalette.MJPEG.getIndex());
 		// if native JPEG is supported, put it first
-		moveToFirstIfNative(JPEGformats, V4L4JConstants.IMF_JPEG);
+		moveToFirstIfNative(JPEGformats, ImagePalette.JPEG.getIndex());
 	}
 
 	/**

@@ -24,6 +24,8 @@
 
 package au.edu.jcu.v4l4j;
 
+import au.edu.jcu.v4l4j.api.ImagePalette;
+
 /**
  * Objects of this class represent an image format (YUV, RGB, GREY, BGR, ...)
  * and its supported capture resolutions and frame intervals.
