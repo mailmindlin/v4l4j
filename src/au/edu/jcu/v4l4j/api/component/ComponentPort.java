@@ -1,7 +1,9 @@
 package au.edu.jcu.v4l4j.api.component;
 
+import java.nio.ByteBuffer;
 import java.util.Set;
 
+import au.edu.jcu.v4l4j.api.FrameBuffer;
 import au.edu.jcu.v4l4j.api.StreamType;
 
 public interface ComponentPort {
@@ -54,4 +56,12 @@ public interface ComponentPort {
 	int bufferSize();
 	
 	String getMIMEType();
+	
+	FrameBuffer useBuffer(ByteBuffer buffer);
+	
+	FrameBuffer allocateBuffer(int length);
+	
+	void empty(FrameBuffer buffer);
+	
+	void fill(FrameBuffer buffer);
 }
