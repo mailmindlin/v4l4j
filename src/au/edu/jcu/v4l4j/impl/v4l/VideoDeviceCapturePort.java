@@ -1,7 +1,9 @@
 package au.edu.jcu.v4l4j.impl.v4l;
 
+import java.nio.ByteBuffer;
 import java.util.Set;
 
+import au.edu.jcu.v4l4j.api.FrameBuffer;
 import au.edu.jcu.v4l4j.api.StreamType;
 import au.edu.jcu.v4l4j.api.VideoCompressionType;
 import au.edu.jcu.v4l4j.api.component.port.VideoPort;
@@ -126,6 +128,30 @@ public class VideoDeviceCapturePort implements VideoPort {
 	public Object setProperty(String key, Object value) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public FrameBuffer useBuffer(ByteBuffer buffer) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public FrameBuffer allocateBuffer(int length) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void empty(FrameBuffer buffer) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void fill(FrameBuffer buffer) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
