@@ -55,6 +55,11 @@ public class VideoDevice implements Component {
 	 */
 	private static native void doRelease(long o) throws JNIException;
 	
+	/**
+	 * FrameGrabber for this device. Created on state transition to IDLE
+	 */
+	protected FrameGrabber frameGrabber;
+	
 	public VideoDevice(V4LComponentProvider provider, Path path) {
 		this.provider = provider;
 		this.path = path;
@@ -110,21 +115,38 @@ public class VideoDevice implements Component {
 			return ComponentState.IDLE;
 		}
 	}
+	
+	/**
+	 * Attempt transition from IDLE to PAUSED
+	 */
+	protected ComponentState attemtFGInit() {
+		synchronized (this) {
+			if (this.frameGrabber != null)//Shouldn't happen
+				throw new IllegalStateException("FrameGrabber already initialized");
+			this.frameGrabber = new FrameGrabber(this);
+		}
+		return ComponentState.PAUSED;
+	}
 
 	/**
-	 * Attempt transition from IDLE to EXECUTING
+	 * Attempt transition from PAUSED to EXECUTING
+	 * For IDLE to EXECUTING, call #attemptFGInit() first.
 	 */
 	protected ComponentState attemptStart() {
-		//TODO finish
-		throw new UnsupportedOperationException("Not yet implemented");
+		synchronized (this) {
+			this.frameGrabber.start();
+		}
+		return ComponentState.EXECUTING;
 	}
 	
 	/**
 	 * Attempt transition from EXECUTING to IDLE
 	 */
 	protected ComponentState attemptStop() {
-		//TODO finish
-		throw new UnsupportedOperationException("Not yet implemented");
+		synchronized (this) {
+			this.frameGrabber.stop();
+		}
+		return ComponentState.IDLE;
 	}
 
 	@Override
@@ -144,16 +166,34 @@ public class VideoDevice implements Component {
 						;
 					break;
 				case IDLE:
-					if (newState == ComponentState.EXECUTING)
-						return attemptStart();
+					switch (newState) {
+						case PAUSED:
+							return attemptFGInit();
+						case EXECUTING:
+							return attemptStart();
+						case LOADED:
+							return attemptDeinit();
+					}
 					break;
 				case EXECUTING:
-					if (newState == ComponentState.IDLE)
-						return attemptStop();
+					switch (newState) {
+						case IDLE:
+							return attemptStop();
+						case PAUSED:
+							return attemptPause();
+					}
+					break;
+				case PAUSED:
+					switch (newState) {
+						case IDLE:
+							return attemptStop();
+						case EXECUTING:
+							return atemptResume();
+					}
+					break;
 			}
 		}
-		// TODO Auto-generated method stub
-		return null;
+		throw new IllegalArgumentException("Invalid state transition " + oldState + " => " + newState);
 	}
 
 	@Override
