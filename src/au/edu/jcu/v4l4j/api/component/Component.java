@@ -25,8 +25,9 @@ public interface Component {
 	 * Attempt to set the component's state
 	 * @param state
 	 * @return the state of the component after this call
+	 * @throws Exception on failure to complete transition.
 	 */
-	ComponentState setState(ComponentState state);
+	ComponentState setState(ComponentState state) throws Exception;
 	
 	/**
 	 * Enumerate all the ports on this component
