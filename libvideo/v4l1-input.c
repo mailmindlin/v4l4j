@@ -151,8 +151,8 @@ int set_cap_param_v4l1(struct video_device *vdev, unsigned int src_palette, unsi
 		return LIBVIDEO_ERR_FORMAT;
 	}
 
-	pict.palette = libvideo_palettes[palette].v4l1_palette;
-	pict.depth = libvideo_palettes[palette].depth;
+	pict.palette = (u16) libvideo_palettes[palette].v4l1_palette;
+	pict.depth = (u16) libvideo_palettes[palette].depth;
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1, "CAP: Trying palette %s (%d) - depth %d...\n",
 			libvideo_palettes[palette].name, pict.palette, pict.depth);
 
@@ -175,7 +175,7 @@ int set_cap_param_v4l1(struct video_device *vdev, unsigned int src_palette, unsi
 		}
 	} else if(palette == YUYV) {
 		pict.palette = VIDEO_PALETTE_YUV422;
-		pict.depth = libvideo_palettes[palette].depth;
+		pict.depth = (u16) libvideo_palettes[palette].depth;
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1, "CAP: trying palette %s (%d) - depth %d...\n", "YUYV-workaround", YUYV, pict.depth);
 
 		if(ioctl(vdev->fd, VIDIOCSPICT, &pict) == 0) {
@@ -189,7 +189,7 @@ int set_cap_param_v4l1(struct video_device *vdev, unsigned int src_palette, unsi
 		}
 	} else if(palette == YUV411) {
 		pict.palette = VIDEO_PALETTE_YUV411P;
-		pict.depth = libvideo_palettes[palette].depth;
+		pict.depth = (u16) libvideo_palettes[palette].depth;
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG1, "CAP: trying palette %s (%d) - depth %d...\n", "YUV411-workaround", YUV411, pict.depth);
 
 		if(ioctl(vdev->fd, VIDIOCSPICT, &pict) == 0) {
@@ -432,7 +432,7 @@ void free_capture_v4l1(struct video_device *vdev) {
  * Control related functions
  */
  //returns the number of controls (standard and private V4L1 controls only)
-int count_v4l1_controls(struct video_device *vdev) {
+unsigned int count_v4l1_controls(struct video_device *vdev) {
 	UNUSED(vdev);
 	//4 basic controls in V4L1
 	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: Found 4 controls\n");

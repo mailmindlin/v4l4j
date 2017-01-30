@@ -754,7 +754,7 @@ static inline int has_id(node *list, unsigned int id) {
  	return 0;
  }
  //returns the number of controls (standard and private V4L2 controls only)
-int count_v4l2_controls(struct video_device *vdev) {
+unsigned int count_v4l2_controls(struct video_device *vdev) {
 	struct v4l2_queryctrl qctrl;
 	node *list=NULL;
 	int count = 0;

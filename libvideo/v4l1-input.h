@@ -117,7 +117,7 @@ void free_capture_device1(struct video_device *device);
 /**
  * Returns the number of controls (standard and private V4L1 controls only)
  */
-int count_v4l1_controls(struct video_device *device);
+unsigned int count_v4l1_controls(struct video_device *device);
 
 /**
  * Populate the control_list with fake V4L2 controls matching V4L1 video

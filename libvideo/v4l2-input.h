@@ -100,7 +100,7 @@ void free_capture_device2(struct video_device *);
  * Control related functions
  */
  //returns the number of controls (standard and private V4L2 controls only)
-int count_v4l2_controls(struct video_device *);
+unsigned int count_v4l2_controls(struct video_device *);
 //Populate the control_list with reported V4L2 controls
 //and returns how many controls were created
 int create_v4l2_controls(struct video_device *, struct control *, int);
