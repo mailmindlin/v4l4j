@@ -34,6 +34,7 @@ public class AtomicState {
 	
 	private volatile int users = 0;
 	private volatile int currentState = 0;
+	private volatile boolean allowNonExclusiveLock = true;
 	
 	public AtomicState(State initialValue) {
 		this.currentState = initialValue == null ? -1 : initialValue.ordinal();
