@@ -136,7 +136,7 @@ int qc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, in
 		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "QC: Cant identify control %d\n", q->id);
 		return LIBVIDEO_ERR_IOCTL;
 	}
-	if (ioct(vdev->fd, qc_getctrl_requests[q->id], val) != 0)
+	if (ioctl(vdev->fd, qc_getctrl_requests[q->id], val) != 0)
 		return LIBVIDEO_ERR_IOCTL;
 	return LIBVIDEO_ERR_SUCCESS;
 }
