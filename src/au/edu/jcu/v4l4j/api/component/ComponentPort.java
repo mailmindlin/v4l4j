@@ -13,7 +13,7 @@ public interface ComponentPort {
 	
 	Component getComponent();
 	
-	Set<String> getProperties();
+	Set<String> getPropertyNames();
 	
 	Object getProperty(String key);
 	

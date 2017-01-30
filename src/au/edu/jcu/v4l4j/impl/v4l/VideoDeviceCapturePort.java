@@ -81,6 +81,7 @@ public class VideoDeviceCapturePort implements VideoPort {
 
 	@Override
 	public boolean isOutput() {
+		//This port must be an output
 		return true;
 	}
 
@@ -114,7 +115,7 @@ public class VideoDeviceCapturePort implements VideoPort {
 	}
 
 	@Override
-	public Set<String> getProperties() {
+	public Set<String> getPropertyNames() {
 		// TODO Auto-generated method stub
 		return null;
 	}
