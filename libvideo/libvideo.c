@@ -448,7 +448,7 @@ static void empty_list(driver_probe *list) {
 // Control methods
 // ****************************************
 struct control_list *get_control_list(struct video_device *vdev) {
-	int v4l_count = 0, priv_ctrl_count = 0;
+	unsigned int v4l_count = 0, priv_ctrl_count = 0;
 
 	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: Listing controls\n");
 
@@ -485,20 +485,18 @@ struct control_list *get_control_list(struct video_device *vdev) {
 	 * class like the camera control class added to 2.6.25))
 	 */
 	//go through all probes
-	unsigned int probe_id = 0;
-	while ( known_driver_probes[probe_id].probe != NULL ) {
+	for (unsigned int probe_id = 0; known_driver_probes[probe_id].probe != NULL; probe_id++) {
 		int nb = known_driver_probes[probe_id].probe(vdev, &known_driver_probes[probe_id].priv);
 		if (nb != -1) {
 			//if the probe is successful, add the nb of private controls
 			//detected to the grand total
-			priv_ctrl_count += nb;
+			priv_ctrl_count += (unsigned) nb;
 			add_node(&l->probes, &known_driver_probes[probe_id]);
 		}
-		probe_id++;
 	}
 
 
-	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: Got %d v4l controls and %d driver probe controls \n", v4l_count, priv_ctrl_count);
+	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: Got %u v4l controls and %u driver probe controls \n", v4l_count, priv_ctrl_count);
 
 	l->count = v4l_count + priv_ctrl_count;
 	if(l->count > 0) {
