@@ -1,6 +1,12 @@
 package au.edu.jcu.v4l4j.impl.v4l;
 
-public class FrameGrabber {
+import java.nio.ByteBuffer;
+import java.util.concurrent.ThreadFactory;
+
+import au.edu.jcu.v4l4j.api.Rational;
+import au.edu.jcu.v4l4j.exceptions.JNIException;
+
+public class FrameGrabber implements Runnable {
 	/**
 	 * Initializes framegrabber
 	 * @param pointer
@@ -9,6 +15,7 @@ public class FrameGrabber {
 	 *     Width 
 	 */
 	private static native int doInit(long pointer, int width, int height, int channel, int std, int numBuffers) throws JNIException;
+	
 	/**
 	 * Start capture on framegrabber
 	 * (Wrapper for <code>start_capture</code>)
@@ -30,12 +37,15 @@ public class FrameGrabber {
 	private static native int doGetVideoStandard(long pointer);
 	private static native int doEnqueueBuffer(long pointer, int index);
 	private static native int doFillBuffer(long pointer, ByteBuffer buffer);
+	
 	protected final VideoDevice device;
 	protected long object;
+	protected ThreadFactory threadFactory;
 	protected Thread thread;
+	
 	protected FrameGrabber(VideoDevice device) {
 		this.device = device;
-		this.object = device.object;
+		this.object = device.pointer;
 	}
 	
 	public void init() {
@@ -52,5 +62,12 @@ public class FrameGrabber {
 	
 	public void release() {
 	
+	}
+
+	@Override
+	public void run() {
+		while (!Thread.interrupted()) {
+			
+		}
 	}
 }

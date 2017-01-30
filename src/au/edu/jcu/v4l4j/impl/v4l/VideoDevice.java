@@ -3,7 +3,9 @@ package au.edu.jcu.v4l4j.impl.v4l;
 import java.io.FileNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import au.edu.jcu.v4l4j.api.component.Component;
@@ -25,8 +27,11 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  */
 public class VideoDevice implements Component {
 	protected final V4LComponentProvider provider;
+	protected final String name;
 	protected final Path path;
-	protected final VideoDeviceCapturePort capturePort = new VideoDeviceCapturePort(this, 1);
+	protected final VideoDeviceCapturePort previewPort = new VideoDeviceCapturePort(this, 1);
+	protected final VideoDeviceCapturePort capturePort = new VideoDeviceCapturePort(this, 2);
+	protected final Set<VideoPort> videoPorts = new HashSet<>(Arrays.asList(previewPort, capturePort));
 	protected ComponentState state;
 	protected long pointer;
 	
@@ -60,15 +65,16 @@ public class VideoDevice implements Component {
 	 */
 	protected FrameGrabber frameGrabber;
 	
-	public VideoDevice(V4LComponentProvider provider, Path path) {
+	public VideoDevice(V4LComponentProvider provider, Path path, String name) {
 		this.provider = provider;
 		this.path = path;
 		this.state = ComponentState.LOADED;
+		this.name = name;
 	}
 	
 	@Override
 	public String getName() {
-		return V4LComponentProvider.PREFIX + ".camera";
+		return this.name;
 	}
 
 	@Override
@@ -81,9 +87,9 @@ public class VideoDevice implements Component {
 		return this.state;
 	}
 	
-	protected void doSetState(ComponentState state) {
+	protected ComponentState doSetState(ComponentState state) {
 		synchronized (this) {
-			this.state = state;
+			return this.state = state;
 		}
 	}
 	
@@ -111,21 +117,20 @@ public class VideoDevice implements Component {
 			String path = this.path.toString();
 			this.pointer = doInit(path);
 			//TODO support transition to WAIT_FOR_RESOURCES on failure
-			this.doSetState(ComponentState.IDLE);
-			return ComponentState.IDLE;
+			return this.doSetState(ComponentState.IDLE);
 		}
 	}
 	
 	/**
 	 * Attempt transition from IDLE to PAUSED
 	 */
-	protected ComponentState attemtFGInit() {
+	protected ComponentState attemptFGInit() {
 		synchronized (this) {
 			if (this.frameGrabber != null)//Shouldn't happen
 				throw new IllegalStateException("FrameGrabber already initialized");
 			this.frameGrabber = new FrameGrabber(this);
+			return this.doSetState(ComponentState.PAUSED);
 		}
-		return ComponentState.PAUSED;
 	}
 
 	/**
@@ -135,20 +140,36 @@ public class VideoDevice implements Component {
 	protected ComponentState attemptStart() {
 		synchronized (this) {
 			this.frameGrabber.start();
+			return this.doSetState(ComponentState.EXECUTING);
 		}
-		return ComponentState.EXECUTING;
 	}
 	
 	/**
-	 * Attempt transition from EXECUTING to IDLE
+	 * Attempt transition from EXECUTING to PAUSED
 	 */
-	protected ComponentState attemptStop() {
+	protected ComponentState attemptPause() {
 		synchronized (this) {
 			this.frameGrabber.stop();
+			return this.doSetState(ComponentState.PAUSED);
 		}
-		return ComponentState.IDLE;
 	}
-
+	
+	protected ComponentState attemptFGDeinit() {
+		synchronized (this) {
+			this.frameGrabber.release();
+			this.frameGrabber = null;
+			return this.doSetState(ComponentState.IDLE);
+		}
+	}
+	
+	protected ComponentState attemptDeinit() {
+		synchronized (this) {
+			doRelease(this.pointer);
+			return this.doSetState(ComponentState.LOADED);
+		}
+	}
+	
+	
 	@Override
 	public ComponentState setState(ComponentState newState) throws FileNotFoundException {
 		if (newState == null)
@@ -178,7 +199,9 @@ public class VideoDevice implements Component {
 				case EXECUTING:
 					switch (newState) {
 						case IDLE:
-							return attemptStop();
+							if (attemptPause() != ComponentState.PAUSED)
+								return getState();
+							return attemptFGDeinit();
 						case PAUSED:
 							return attemptPause();
 					}
@@ -186,14 +209,14 @@ public class VideoDevice implements Component {
 				case PAUSED:
 					switch (newState) {
 						case IDLE:
-							return attemptStop();
+							return attemptFGDeinit();
 						case EXECUTING:
-							return atemptResume();
+							return attemptStart();
 					}
 					break;
 			}
+			throw new IllegalArgumentException("Invalid state transition " + oldState + " => " + newState);
 		}
-		throw new IllegalArgumentException("Invalid state transition " + oldState + " => " + newState);
 	}
 
 	@Override
@@ -227,7 +250,12 @@ public class VideoDevice implements Component {
 
 	@Override
 	public ComponentPort getPort(int index) {
-		// TODO Auto-generated method stub
+		switch (index) {
+			case 1:
+				return this.previewPort;
+			case 2:
+				return this.capturePort;
+		}
 		return null;
 	}
 
