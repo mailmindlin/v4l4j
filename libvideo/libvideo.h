@@ -73,7 +73,7 @@ struct mmap {
 	 *  - latest dequeued buffer (V4L2)
 	 *  - last requested frame (V4L1)
 	 */
-	void * tmp;
+	void *tmp;
 	/**
 	 * Used by v4l1 only, to store the overall mmap size
 	 */
@@ -524,9 +524,9 @@ struct control_list {
  */
 struct tuner_actions {
 	//returns 0 if OK, LIBVIDEO_ERR_IOCTL otherwise
-	int (*set_tuner_freq)(struct video_device *device, int idx, unsigned int freq) __attribute__((nonnull (1)));
-	int (*get_tuner_freq)(struct video_device *device, int idx, unsigned int *freq) __attribute__((nonnull (1)));
-	int (*get_rssi_afc)(struct video_device *device, int idx, int *rssi, int *afc) __attribute__((nonnull (1, 3, 4)));
+	int (*set_tuner_freq)(struct video_device *device, int idx, unsigned int freq) __attribute__ ((nonnull (1)));
+	int (*get_tuner_freq)(struct video_device *device, int idx, unsigned int *freq)__attribute__ ((nonnull (1)));
+	int (*get_rssi_afc)(struct video_device *device, int idx, int *rssi, int *afc) __attribute__ ((nonnull (1, 3, 4)));
 };
 
 /*
@@ -573,8 +573,8 @@ int get_libvideo_version(char *dst, size_t len);
 /**
  * Creates a video_device (must call close_device() when done)
  */
-struct video_device *open_device(char *);
-int close_device(struct video_device *);
+struct video_device *open_device(char *name) __attribute__ ((nonnull (1)));
+int close_device(struct video_device *vdev)  __attribute__ ((nonnull (1)));
 
 /*
  *
@@ -589,7 +589,7 @@ int close_device(struct video_device *);
  * and whether capture and streaming are supported. Then creates the V4L
  * control list.
  */
-struct capture_device *init_capture_device(struct video_device *vdev, unsigned int width, unsigned int height, unsigned int channel, unsigned int standard, unsigned int nb_buf);
+struct capture_device *init_capture_device(struct video_device *vdev, unsigned int width, unsigned int height, unsigned int channel, unsigned int standard, unsigned int nb_buf) __attribute__ ((nonnull (1)));
 
 
 /*
@@ -614,7 +614,7 @@ struct capture_actions {
 	 * LIBVIDEO_ERR_CROP (error applying cropping parameters)
 	 * or LIBVIDEO_ERR_NOCAPS (error checking capabilities)
 	 */
-	int (*set_cap_param)(struct video_device *device, unsigned int src_palette, unsigned int dest_palette);
+	int (*set_cap_param)(struct video_device *device, unsigned int src_palette, unsigned int dest_palette) __attribute__ ((nonnull (1)));
 
 	/**
 	 * Set the frame interval for capture, i.e., the number of seconds in between
@@ -628,7 +628,7 @@ struct capture_actions {
 	 * everything went fine. The driver may adjust the given values to the closest
 	 * supported ones, which can be check with get_frame_interval()
 	 */
-	int (*set_frame_interval)(struct video_device *, unsigned int numerator, unsigned int denominator);
+	int (*set_frame_interval)(struct video_device *device, unsigned int numerator, unsigned int denominator) __attribute__ ((nonnull (1)));
 	/**
 	 * Get the current frame interval for capture, i.e., the number of seconds in
 	 * between each captured frame.
@@ -639,26 +639,26 @@ struct capture_actions {
 	 * device which do not support setting frame intervals or 0 if everything went
 	 * fine.
 	 */
-	int (*get_frame_interval)(struct video_device *, unsigned int *numerator, unsigned int *denominator);
+	int (*get_frame_interval)(struct video_device *device, unsigned int *numerator, unsigned int *denominator) __attribute__ ((nonnull (1,2,3)));
 	/**
 	 * Change the current video input and standard during capture
 	 */
-	int (*set_video_input_std)(struct video_device*, unsigned int input_num, unsigned int std);
+	int (*set_video_input_std)(struct video_device *device, unsigned int input_num, unsigned int std) __attribute__ ((nonnull (1)));
 	/**
 	 * Get the current video input and standard during capture
 	 */
-	void (*get_video_input_std)(struct video_device*, unsigned int* input_num, unsigned int* std);
+	void (*get_video_input_std)(struct video_device *device, unsigned int* input_num, unsigned int* std) __attribute__ ((nonnull (1,2,3)));
 	/**
 	 * Initialize streaming, request creation of mmap'ed buffers
 	 * returns 0 if ok, LIBVIDEO_ERR_REQ_MMAP if error negotiating mmap params,
 	 * LIBVIDEO_ERR_INVALID_BUF_NB if the number of requested buffers is incorrect
 	 */
-	int (*init_capture)(struct video_device *);
+	int (*init_capture)(struct video_device *device) __attribute__ ((nonnull (1)));
 	/**
 	 * Tell V4L to start the capture
 	 * @return 0 if OK, else LIBVIDEO_ERR_IOCTL
 	 */
-	int (*start_capture)(struct video_device *);
+	int (*start_capture)(struct video_device *device) __attribute__ ((nonnull (1)));
 
 /*
  * capture methods
@@ -678,16 +678,16 @@ struct capture_actions {
 	 * @param sequence
 	 * 		argument receives the capture frame sequence number (for v4l2 devices only)
 	 */
-	void* (*dequeue_buffer)(struct video_device *device, unsigned int *length, unsigned int *index, unsigned long long *capture_time, unsigned long long *sequence);
+	void* (*dequeue_buffer)(struct video_device *device, unsigned int *length, unsigned int *index, unsigned long long *capture_time, unsigned long long *sequence) __attribute__ ((nonnull (1,2,3,4,5)));
 	/**
 	 * Convert the previously dequed dequeued buffer at the given index. Call me
 	 * only if the conversion is needed (if the requested format is not native)
 	 */
-	unsigned int (*convert_buffer)(struct video_device *vdev, int index, unsigned int src_len, void *dest_buffer);
+	unsigned int (*convert_buffer)(struct video_device *vdev, int index, unsigned int src_len, void *dest_buffer) __attribute__ ((nonnull (1,4)));
 	/**
 	 * Enqueue the buffer (given its index) when done using the frame
 	 */
-	void (*enqueue_buffer)(struct video_device *device, unsigned int);
+	void (*enqueue_buffer)(struct video_device *device, unsigned int index) __attribute__ ((nonnull (1)));
 
 
 /*
@@ -701,11 +701,11 @@ struct capture_actions {
 	 * Counterpart of start_capture, must be called it start_capture was successful
 	 * returns 0 if ok, LIBVIDEO_ERR_IOCTL otherwise
 	 */
-	int (*stop_capture)(struct video_device *device);
+	int (*stop_capture)(struct video_device *device) __attribute__ ((nonnull (1)));
 	/**
 	 * Counterpart of init_capture, must be called it init_capture was successful
 	 */
-	void (*free_capture)(struct video_device *device);
+	void (*free_capture)(struct video_device *device) __attribute__ ((nonnull (1)));
 
 /*
  * Dump to stdout methods
@@ -724,7 +724,7 @@ struct capture_actions {
  * Counterpart of init_capture_device, must be called if init_capture_device was
  * successful
  */
-void free_capture_device(struct video_device *);
+void free_capture_device(struct video_device *device) __attribute__ ((nonnull (1)));
 
 
 
@@ -735,9 +735,9 @@ void free_capture_device(struct video_device *);
  *
  */
 //returns NULL if unable to get device info
-struct device_info * get_device_info(struct video_device *);
-void print_device_info(struct video_device *);
-void release_device_info(struct video_device *);
+struct device_info * get_device_info(struct video_device *) __attribute__ ((nonnull (1)));
+void print_device_info(struct video_device *) __attribute__ ((nonnull (1)));
+void release_device_info(struct video_device *) __attribute__ ((nonnull (1)));
 
 /*
  *
