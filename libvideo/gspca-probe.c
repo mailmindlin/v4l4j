@@ -142,6 +142,7 @@ end:
 }
 
 int gspca_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, int *val){
+	UNUSED(d);
 	int ret = 0;
 	struct video_param p;
 	if(ioctl(vdev->fd, SPCAGVIDIOPARAM, &p)<0) {
@@ -168,7 +169,8 @@ int gspca_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d,
 	return ret;
 }
 
-int gspca_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val, void *d){
+int gspca_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val, void *d) {
+	UNUSED(d);
 	struct video_param p;
 	switch (q->id) {
 		case 0:
@@ -201,9 +203,10 @@ int gspca_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val
 }
 
 int gspca_list_ctrl(struct video_device *vdev, struct control *c, void *d){
-	unsigned int i=0;
+	UNUSED(vdev);
+	unsigned int i = 0;
 	struct gspca_probe_private *priv = (struct gspca_probe_private *) d;
-	if(priv->ok==1) {
+	if(priv->ok) {
 
 		//
 		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "GSPCA: Found gspca private ioctl Auto-Brightness\n");
