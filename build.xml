@@ -179,8 +179,8 @@
 		</javac>
 		<javac srcdir="${project.src}" destdir="${project.classes}" deprecation="on" source="${source}" debug="on">
 			<classpath refid="build.classpath"/>
-			<include name="**/test/*.java" />
-			<exclude name="**/package-info.java" />
+			<include name="**/test/*.java"/>
+			<exclude name="**/package-info.java"/>
 		</javac>
 	</target>
 	

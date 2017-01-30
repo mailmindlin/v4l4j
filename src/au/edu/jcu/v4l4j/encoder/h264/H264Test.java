@@ -7,7 +7,6 @@ import org.junit.Test;
 import au.edu.jcu.v4l4j.ImageFormat;
 import au.edu.jcu.v4l4j.ImagePalette;
 import au.edu.jcu.v4l4j.VideoDevice;
-import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 public class H264Test {
 

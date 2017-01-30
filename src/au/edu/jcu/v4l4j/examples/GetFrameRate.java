@@ -24,9 +24,10 @@
 
 package au.edu.jcu.v4l4j.examples;
 
-import au.edu.jcu.v4l4j.FrameGrabber;
-import au.edu.jcu.v4l4j.ImageFormatList;
 import au.edu.jcu.v4l4j.CaptureCallback;
+import au.edu.jcu.v4l4j.FrameGrabber;
+import au.edu.jcu.v4l4j.ImageFormat;
+import au.edu.jcu.v4l4j.ImageFormatList;
 import au.edu.jcu.v4l4j.V4L4JConstants;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.VideoFrame;

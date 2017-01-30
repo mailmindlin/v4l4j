@@ -1,8 +1,6 @@
 package au.edu.jcu.v4l4j.encoder;
 
 import au.edu.jcu.v4l4j.ImagePalette;
-import au.edu.jcu.v4l4j.V4L4JConstants;
-import au.edu.jcu.v4l4j.exceptions.JNIException;
 
 public class JPEGEncoder extends ImageFormatConverter {
 	

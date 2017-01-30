@@ -26,7 +26,6 @@ package au.edu.jcu.v4l4j.examples.videoViewer;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Vector;
 
 import javax.swing.JOptionPane;
 
