@@ -111,6 +111,7 @@ int pwc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *qc, void *d, 
 }
 
 int pwc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *qc, int *val, void *d) {
+	UNUSED(d);
 	struct pwc_mpt_angles angles;
 	int prev = 0;
 
@@ -171,12 +172,9 @@ int pwc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *qc, int *val,
 }
 
 int pwc_list_ctrl(struct video_device *vdev, struct control *c, void *data) {
-	int i = 0;
+	unsigned int i = 0;
 	struct pwc_probe_private *priv = (struct pwc_probe_private *) data;
 	if(priv->isPTZ == 1) {
-
-		struct pwc_mpt_range range;
-
 		//Pan/tilt reset
 		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: Found pwc private ioctl Pan/Tilt reset\n");
 		c[i].v4l2_ctrl->id = i;
@@ -188,6 +186,7 @@ int pwc_list_ctrl(struct video_device *vdev, struct control *c, void *data) {
 		i++;
 
 		//Pan/tilt control
+		struct pwc_mpt_range range;
 		if(ioctl(vdev->fd, VIDIOCPWCMPTGRANGE, &range) == 0) {
 			//Pan control
 			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: Found pwc private ioctl Pan control\n");
@@ -219,6 +218,6 @@ int pwc_list_ctrl(struct video_device *vdev, struct control *c, void *data) {
 	} else{
 			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "PWC: PTZ not supported\n");
 	}
-	return i;
+	return (signed) i;
 }
 
