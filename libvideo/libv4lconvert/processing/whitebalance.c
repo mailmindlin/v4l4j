@@ -40,7 +40,7 @@ static int whitebalance_active(struct v4lprocessing_data *data) {
 }
 
 static int whitebalance_calculate_lookup_tables_generic(struct v4lprocessing_data *data, unsigned int green_avg, unsigned int comp1_avg, unsigned int comp2_avg) {
-	const int threshold = 64;
+	const unsigned int threshold = 64;
 	const unsigned int max_step = 128;
 
 	/* Clip averages (restricts maximum white balance correction) */
@@ -58,7 +58,7 @@ static int whitebalance_calculate_lookup_tables_generic(struct v4lprocessing_dat
 		   we do not get a sudden change in colors */
 		int throttling = 0;
 
-		if (abs((signed)data->green_avg - (signed)green_avg) > max_step) {
+		if ((unsigned)abs((signed)data->green_avg - (signed)green_avg) > max_step) {
 			if (data->green_avg < green_avg)
 				data->green_avg += max_step;
 			else
@@ -67,7 +67,7 @@ static int whitebalance_calculate_lookup_tables_generic(struct v4lprocessing_dat
 		} else
 			data->green_avg = green_avg;
 
-		if (abs((signed)data->comp1_avg - (signed)comp1_avg) > max_step) {
+		if ((unsigned)abs((signed)data->comp1_avg - (signed)comp1_avg) > max_step) {
 			if (data->comp1_avg < comp1_avg)
 				data->comp1_avg += max_step;
 			else
@@ -76,7 +76,7 @@ static int whitebalance_calculate_lookup_tables_generic(struct v4lprocessing_dat
 		} else
 			data->comp1_avg = comp1_avg;
 
-		if (abs((signed)data->comp2_avg - (signed)comp2_avg) > max_step) {
+		if ((unsigned)abs((signed)data->comp2_avg - (signed)comp2_avg) > max_step) {
 			if (data->comp2_avg < comp2_avg)
 				data->comp2_avg += max_step;
 			else
@@ -96,9 +96,9 @@ static int whitebalance_calculate_lookup_tables_generic(struct v4lprocessing_dat
 			data->lookup_table_update_counter = V4L2PROCESSING_UPDATE_RATE;
 	}
 
-	if (abs((signed)data->green_avg - (signed)data->comp1_avg) < threshold &&
-			abs((signed)data->green_avg - (signed)data->comp2_avg) < threshold &&
-			abs((signed)data->comp1_avg - (signed)data->comp2_avg) < threshold)
+	if ((unsigned)abs((signed)data->green_avg - (signed)data->comp1_avg) < threshold &&
+			(unsigned)abs((signed)data->green_avg - (signed)data->comp2_avg) < threshold &&
+			(unsigned)abs((signed)data->comp1_avg - (signed)data->comp2_avg) < threshold)
 		return 0;
 
 	unsigned int avg_avg = (data->green_avg + data->comp1_avg + data->comp2_avg) / 3;
