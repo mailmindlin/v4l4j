@@ -25,8 +25,8 @@ package au.edu.jcu.v4l4j.test;
 
 import java.io.IOException;
 
-import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.CaptureCallback;
+import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
