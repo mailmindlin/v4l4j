@@ -41,11 +41,21 @@ public class OMXComponentProvider implements ComponentProvider {
 	private static native Set<String> getComponentsByRole(Set<String> result, String role, int maxCount);
 	
 	private transient ArrayList<String> discoveredComponents = null;
+	
+	protected boolean isValidPath(Path path) {
+		if (path == null)
+			return false;
+		try {
+			return Files.isSameFile(path, Paths.get("/"));
+		} catch (IOException e) {
+			return false;
+		}
+	}
 
 	@Override
 	public Component get(Path path, String name) {
 		//We only support the root path
-		if (path == null || !Files.isSameFile(path, Paths.get("/")))
+		if (!isValidPath(path))
 			throw new IllegalArgumentException("Invalid path: " + path);
 		return new OMXComponent(this, name);
 	}
@@ -57,7 +67,7 @@ public class OMXComponentProvider implements ComponentProvider {
 
 	@Override
 	public Set<String> availableNames(Path path, ComponentRole role) {
-		if (path == null || !Files.isSameFile(path, Paths.get("/")))
+		if (!isValidPath(path))
 			return Collections.emptySet();
 		if (discoveredComponents == null)
 			discoveredComponents = new ArrayList<>();
