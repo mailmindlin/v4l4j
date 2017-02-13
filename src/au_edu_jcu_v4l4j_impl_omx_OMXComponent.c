@@ -78,7 +78,7 @@ static inline void deinitAppData(JNIEnv* env, OMXComponentAppData* appData) {
  * Method:    getComponentHandle
  * Signature: (Ljava/lang/String;)J
  */
-JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider_getComponentHandle(JNIEnv *env, jobject self, jstring componentNameStr) {
+JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getComponentHandle(JNIEnv *env, jobject self, jstring componentNameStr) {
 	LOG_FN_ENTER();
 	
 	//Get string into native memory
@@ -107,6 +107,63 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider_getC
 	}
 	
 	return (jlong) (uintptr_t) appData;
+}
+
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getPortOffsets(JNIEnv *env, jclass me, jlong pointer, jintArray resultArr) {
+	LOG_FN_ENTER();
+	
+	jint* result = (*env)->GetIntArrayElements(env, resultArr, NULL);
+	if (result == NULL) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Could not access result array elements");
+		return;
+	}
+	
+	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
+	
+	OMX_PORT_PARAM_TYPE ports;
+	OMX_INIT_STRUCTURE(ports);
+	
+	OMX_INDEXTYPE types[] = {
+		OMX_IndexParamAudioInit,
+		OMX_IndexParamVideoInit,
+		OMX_IndexParamImageInit,
+		OMX_IndexParamOtherInit
+	};
+	
+	for (unsigned int i = 0; i < 4; i++) {
+		if (OMX_GetParameter(*appData->component, types[i], &ports) == OMX_ErrorNone) {
+			result[i * 2] = ports.nStartPortNumber;
+			result[i * 2 + 1] = ports.nPorts;
+		}
+	}
+	
+	(*env)->ReleaseIntArrayElements(env, resultArr, result, JNI_COMMIT);
+}
+
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getComponentState(JNIEnv *env, jclass me, jlong pointer) {
+	LOG_FN_ENTER();
+	
+	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
+	
+	OMX_STATETYPE state;
+	OMX_RESULTTYPE r = appData->component->GetState(appData->component, state);
+	if (r != OMX_ErrorNone) {
+		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error when querying state: %08x", r);
+		return -1;
+	}
+	return (jint) state;
+}
+
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_setComponentState(JNIEnv *env, jclass me, jlong pointer, jint state) {
+	LOG_FN_ENTER();
+	
+	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
+	
+	OMX_RESULTTYPE r = appData->component->SendCommand(appData->component, OMX_CommandStateSet, (OMX_STATETYPE) state, NULL);
+	if (r != OMX_ErrorNone) {
+		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error when setting state: %08x", r);
+		return;
+	}
 }
 
 #ifdef __cplusplus
