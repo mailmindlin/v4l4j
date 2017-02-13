@@ -8,5 +8,6 @@ public enum ControlType {
 	MENU,
 	STRING,
 	LONG,
-	BITMASK;
+	BITMASK,
+	COMPOSITE;
 }
