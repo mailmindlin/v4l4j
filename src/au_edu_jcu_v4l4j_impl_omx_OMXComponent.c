@@ -166,6 +166,56 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_setComponentS
 	}
 }
 
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_enablePort(JNIEnv *env, jclass me, jlong pointer, jint index, jboolean enabled) {
+	LOG_FN_ENTER();
+	
+	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
+	
+	
+	OMX_RESULTTYPE r = appData->component->SendCommand(appData->component, enabled ? OMX_CommandPortEnable : OMX_CommandPortDisable, index, NULL);
+	if (r != OMX_ErrorNone) {
+		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error when %s port %d: %08x", enabled ? "enabling" : "disabling", index, r);
+		return;
+	}
+}
+
+JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doAllocateBuffer(JNIEnv *env, jclass me, jlong pointer, jint portIndex, jint size) {
+	LOG_FN_ENTER();
+	
+	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
+	
+	//Look these up early, so we don't have much to clean up if they fail
+	jclass framebufferClass = (*env)->FindClass(env, "au/edu/jcu/v4l4j/impl/omx/OMXFrameBuffer");
+	if (framebufferClass == NULL) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Error looking up class OMXFrameBuffer");
+		return NULL;
+	}
+	
+	jmethodID framebufferCtor = (*env)->GetMethodID(e, framebufferClass, "<init>", "(JLjava/nio/ByteBuffer;)V");
+	if (framebufferCtor == NULL) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Error looking up constructor OMXFrameBuffer(long, ByteBuffer)");
+		return NULL;
+	}
+	
+	OMX_BUFFERHEADERTYPE* buffer;
+	//Actually allocate the buffer
+	OMX_RESULTTYPE r = appData->component->AllocateBuffer(appData->component, &buffer, portIndex, NULL, size);
+	if (r != OMX_ErrorNone) {
+		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error when %s port %d: %08x", enabled ? "enabling" : "disabling", index, r);
+		return NULL;
+	}
+	
+	if (buffer->nAllocLen != size) {
+		THROW_EXCEPTION(env, GENERIC_EXCP, "Buffer allocated does not match size (expected %u; actual %u)", size, buffer->nAllocLen);
+		return NULL;
+	}
+	
+	jobject buffer = (*env)->NewDirectByteBuffer(env, NULL, size);
+	//Wrap with FrameBuffer
+	jobject framebuffer = (*env)->NewObject(env, framebufferClass, framebufferCtor, NULL, buffer);
+	return framebuffer;
+}
+
 #ifdef __cplusplus
 }
 #endif

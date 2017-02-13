@@ -1,5 +1,6 @@
 package au.edu.jcu.v4l4j.impl.omx;
 
+import java.util.List;
 import java.util.Set;
 
 import au.edu.jcu.v4l4j.api.component.Component;
@@ -16,6 +17,8 @@ public class OMXComponent implements Component {
 	private static native void getPortOffsets(long pointer, int[] result);
 	private static native int getComponentState(long pointer);
 	private static native void setComponentState(long pointer, int state);
+	private static native void enablePort(long pointer, int portIndex, boolean enabled);
+	private static native OMXFrameBuffer doAllocateBuffer(long pointer, int portIndex, int bufferSize);
 	
 	private final String name;
 	private final long pointer;
@@ -30,6 +33,8 @@ public class OMXComponent implements Component {
 	protected int otherPortMinIdx;
 	protected int numOtherPorts;
 	
+	protected List<AudioPort> audioPorts;
+	
 	protected OMXComponent(OMXComponentProvider provider, String name) {
 		this.provider = provider;
 		this.name = name;
@@ -37,6 +42,17 @@ public class OMXComponent implements Component {
 	}
 	
 	private final native long getComponentHandle(String name);
+	
+
+	
+	protected void setPortEnabled(int portIndex, boolean enabled) {
+		OMXComponent.enablePort(this.pointer, portIndex, enabled);
+	}
+	
+	protected OMXFrameBuffer allocateBufferOnPort(int portIndex, int bufferSize) {
+		return OMXComponent.doAllocateBuffer(this.pointer, portIndex, bufferSize);
+	}
+
 	
 	@Override
 	public String getName() {
@@ -97,7 +113,7 @@ public class OMXComponent implements Component {
 		setComponentState(this.pointer, stateI);
 		return getState();
 	}
-
+	
 	@Override
 	public Set<ComponentPort> getPorts() {
 		// TODO Auto-generated method stub
