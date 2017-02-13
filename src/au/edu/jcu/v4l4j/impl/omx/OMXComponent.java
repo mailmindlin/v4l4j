@@ -54,7 +54,7 @@ public class OMXComponent implements Component {
 		System.out.println("State: " + Integer.toHexString(state));
 		switch (state) {
 			case 0:
-				return ComponentState.UNLOADED;
+				return ComponentState.INVALID;
 			case 1:
 				return ComponentState.LOADED;
 			case 2:
@@ -73,6 +73,7 @@ public class OMXComponent implements Component {
 	public ComponentState setState(ComponentState state) throws Exception {
 		int stateI = 0;
 		switch (state) {
+			case INVALID:
 			case UNLOADED:
 				stateI = 0;//Actually STATE_INVALID
 				break;
