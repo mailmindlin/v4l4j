@@ -31,7 +31,7 @@ public class V4LComponentProvider implements ComponentProvider {
 			throw new IllegalArgumentException("Invalid path: " + path);
 		if (!name.equals(PREFIX + "camera"))
 			throw new IllegalArgumentException("Invalid name: " + name);
-		return new VideoDevice(this, path);
+		return new VideoDevice(this, path, name);
 	}
 
 	@Override
