@@ -28,7 +28,7 @@ public class OMXComponentProvider implements ComponentProvider {
 	 *     Component index to start at
 	 * @return index of last valid component. If no valid components are found, startIndex - 1 will be returned
 	 */
-	private static final int enumComponents(List<String> names, int startIndex);
+	private static native int enumComponents(List<String> names, int startIndex);
 	
 	/**
 	 * Return a set of component names that satisfy the given role (wrapper for <code>OMX_OMX_GetComponentsOfRole</code>).
@@ -38,7 +38,7 @@ public class OMXComponentProvider implements ComponentProvider {
 	 *     Maximum number of roles to request (for memory safety; set to -1 for infinity)
 	 * @return Set of component names for the given role
 	 */
-	private static final Set<String> getComponentsByRole(String role, int maxCount);
+	private static native Set<String> getComponentsByRole(Set<String> result, String role, int maxCount);
 	
 	private transient ArrayList<String> discoveredComponents = null;
 

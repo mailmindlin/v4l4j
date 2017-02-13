@@ -30,7 +30,14 @@ public class FrameGrabber implements Runnable {
 	 *     Pointer to capture_device
 	 */
 	private static native void doStopCapture(long pointer) throws JNIException;
+	/**
+	 * Get the current set frame interval for the FrameGrabber.
+	 * Rational may not be reduced
+	 */
 	private static native Rational doGetFrameInterval(long pointer);
+	/**
+	 * Set frame interval
+	 */
 	private static native void doSetFrameInterval(long pointer, int numerator, int denominator);
 	private static native void doSetVideoInputAndStandard(long pointer, int input, int standard);
 	private static native int doGetVideoInput(long pointer);
