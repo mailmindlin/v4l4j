@@ -1,20 +1,20 @@
 package au.edu.jcu.v4l4j.impl;
 
-public class IntegerPropertyControl implements IntegerControl {
+import au.edu.jcu.v4l4j.api.control.Control;
+import au.edu.jcu.v4l4j.api.control.ControlType;
+import au.edu.jcu.v4l4j.api.control.IntegerControl;
+
+public class IntegerPropertyControl extends AbstractPropertyControl implements IntegerControl {
 	protected int value;
-	protected final int min;
-	protected final int max;
-	protected final String name;
-	public IntegerPropertyControl(int value, int min, int max, String name) {
+	protected int min;
+	protected int max;
+	protected int step;
+	public IntegerPropertyControl(Control parent, String ext, int value, int min, int max, int step) {
+		super(parent, ext);
 		this.value = value;
 		this.min = min;
 		this.max = max;
-		this.name = name;
-	}
-	
-	@Override
-	public String getName() {
-		return this.name;
+		this.step = step;
 	}
 	
 	@Override
@@ -24,9 +24,9 @@ public class IntegerPropertyControl implements IntegerControl {
 	
 	@Override
 	public int setIntValue(int value) throws IllegalArgumentException {
-		if (value < this.getIntMinimum() || value > this.getIntMaximum() || (value - this.getIntMinimum()) & this.getIntStep() != 0)
+		if (value < this.getIntMinimum() || value > this.getIntMaximum() || (value - this.getIntMinimum()) % this.getIntStep() != 0)
 			throw new IllegalArgumentException("Invalid value " + value);
-		this.value = value;
+		return this.value = value;
 	}
 	
 	@Override
@@ -47,5 +47,10 @@ public class IntegerPropertyControl implements IntegerControl {
 	@Override
 	public int getIntDefault() {
 		return this.value;
+	}
+
+	@Override
+	public ControlType getType() {
+		return ControlType.SLIDER;
 	}
 }
