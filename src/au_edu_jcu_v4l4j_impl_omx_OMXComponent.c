@@ -14,12 +14,25 @@
 #include "jniutils.h"
 
 #include <IL/OMX_Core.h>
+#include <IL/OMX_Component.h>
+#include <IL/OMX_Video.h>
+#include <IL/OMX_Broadcom.h>
 
 #ifndef _Included_au_edu_jcu_v4l4j_impl_omx_OMXComponent
 #define _Included_au_edu_jcu_v4l4j_impl_omx_OMXComponent
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+// Stole from github.com/tjormola/rpi-openmax-demos
+#define OMX_INIT_STRUCTURE(a) \
+    memset(&(a), 0, sizeof(a)); \
+    (a).nSize = sizeof(a); \
+    (a).nVersion.nVersion = OMX_VERSION; \
+    (a).nVersion.s.nVersionMajor = OMX_VERSION_MAJOR; \
+    (a).nVersion.s.nVersionMinor = OMX_VERSION_MINOR; \
+    (a).nVersion.s.nRevision = OMX_VERSION_REVISION; \
+    (a).nVersion.s.nStep = OMX_VERSION_STEP
 
 typedef struct {
 	OMX_HANDLETYPE component;
@@ -30,23 +43,63 @@ typedef struct {
 //Event handlers for OMX
 static OMX_ERRORTYPE event_handler(OMX_HANDLETYPE hComponent, OMX_PTR pAppData, OMX_EVENTTYPE event, OMX_U32 data1, OMX_U32 data2, OMX_PTR eventData) {
 	OMXComponentAppData* appData = (OMXComponentAppData*) pAppData;
-	
+	#ifdef DEBUG
+		char* eventName = "[unknown]";
+		switch (event) {
+			case OMX_EventCmdComplete:
+				eventName = "CmdComplete";
+				break;
+			case OMX_EventError:
+				eventName = "Error";
+				break;
+			case OMX_EventMark:
+				eventName = "Mark";
+				break;
+			case OMX_EventPortSettingsChanged:
+				eventName = "PortSettingsChanged";
+				break;
+			case OMX_EventBufferFlag:
+				eventName = "BufferFlag";
+				break;
+			case OMX_EventResourcesAcquired:
+				eventName = "ResourcesAcquired";
+				break;
+			case OMX_EventComponentResumed:
+				eventName = "ComponentResumed";
+				break;
+			case OMX_EventDynamicResourcesAvailable:
+				eventName = "DynamicResourcesAvailable";
+				break;
+			case OMX_EventPortFormatDetected:
+				eventName = "PortFormatDetected";
+				break;
+			case OMX_EventParamOrConfigChanged:
+				eventName = "ParamOrConfigChanged";
+				break;
+		}
+		dprint(LOG_V4L4J, "OMX event %#08x %s: hComponent: %#08x; data1: %#08x; data2: %#08x\n", event, eventName, hComponent, data1, data2);
+	#endif
+	return OMX_ErrorNone;
 }
 
 
 static OMX_ERRORTYPE empty_buffer_done_handler(OMX_HANDLETYPE hComponent, OMX_PTR pAppData, OMX_BUFFERHEADERTYPE* pBuffer) {
 	OMXComponentAppData* appData = (OMXComponentAppData*) pAppData;
+	dprint(LOG_V4L4J, "OMX empty buffer done: hComponent: %#08x; buffer: %#08x\n", hComponent, pBuffer);
+	return OMX_ErrorNone;
 }
 
 static OMX_ERRORTYPE fill_buffer_done_handler(OMX_HANDLETYPE hComponent, OMX_PTR pAppData, OMX_BUFFERHEADERTYPE* pBuffer) {
 	OMXComponentAppData* appData = (OMXComponentAppData*) pAppData;
+	dprint(LOG_V4L4J, "OMX fill buffer done: hComponent: %#08x; buffer: %#08x\n", hComponent, pBuffer);
+	return OMX_ErrorNone;
 }
 
 static inline OMXComponentAppData* initAppData(JNIEnv *env, jobject self) {
 	OMXComponentAppData* appData;
 	XMALLOC(appData, OMXComponentAppData*, sizeof(OMXComponentAppData));
 	if (appData == NULL) {
-		//TODO throw exception
+		THROW_EXCEPTION(env, JNI_EXCP, "Failed to allocate OMX app data");
 		return NULL;
 	}
 	
@@ -54,7 +107,7 @@ static inline OMXComponentAppData* initAppData(JNIEnv *env, jobject self) {
 	//return to Java code
 	jobject globalSelf = (*env)->NewGlobalRef(env, self);
 	if (globalSelf == NULL) {
-		//TODO throw exception
+		THROW_EXCEPTION(env, JNI_EXCP, "Failed to get global pointer to self");
 		XFREE(appData);
 		return NULL;
 	}
@@ -82,7 +135,7 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getComponent
 	LOG_FN_ENTER();
 	
 	//Get string into native memory
-	const jchar* componentName = (*env)->GetStringChars(env, componentNameStr);
+	const jchar* componentName = (*env)->GetStringChars(env, componentNameStr, NULL);
 	if (componentName == NULL) {
 		//TODO throw exception
 		return -1;
@@ -96,12 +149,12 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getComponent
 		return -1;
 	}
 	
-	OMX_RESULTTYPE res = OMX_GetHandle(&appData->component, componentName, appData, &appData->callbacks);
+	OMX_ERRORTYPE res = OMX_GetHandle(&appData->component, componentName, appData, &appData->callbacks);
 	
 	(*env)->ReleaseStringChars(env, componentNameStr, componentName);
 	
 	if (res != OMX_ErrorNone) {
-		deinitAppData(appData);
+		deinitAppData(env, appData);
 		//TODO throw exception
 		return -1;
 	}
@@ -131,7 +184,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getPortOffset
 	};
 	
 	for (unsigned int i = 0; i < 4; i++) {
-		if (OMX_GetParameter(*appData->component, types[i], &ports) == OMX_ErrorNone) {
+		if (OMX_GetParameter(appData->component, types[i], &ports) == OMX_ErrorNone) {
 			result[i * 2] = ports.nStartPortNumber;
 			result[i * 2 + 1] = ports.nPorts;
 		}
@@ -146,7 +199,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getComponentS
 	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
 	
 	OMX_STATETYPE state;
-	OMX_RESULTTYPE r = appData->component->GetState(appData->component, state);
+	OMX_ERRORTYPE r = OMX_GetState(appData->component, state);
 	if (r != OMX_ErrorNone) {
 		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error when querying state: %08x", r);
 		return -1;
@@ -159,7 +212,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_setComponentS
 	
 	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
 	
-	OMX_RESULTTYPE r = appData->component->SendCommand(appData->component, OMX_CommandStateSet, (OMX_STATETYPE) state, NULL);
+	OMX_ERRORTYPE r = OMX_SendCommand(appData->component, OMX_CommandStateSet, (OMX_STATETYPE) state, NULL);
 	if (r != OMX_ErrorNone) {
 		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error when setting state: %08x", r);
 		return;
@@ -172,7 +225,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_enablePort(JN
 	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
 	
 	
-	OMX_RESULTTYPE r = appData->component->SendCommand(appData->component, enabled ? OMX_CommandPortEnable : OMX_CommandPortDisable, index, NULL);
+	OMX_ERRORTYPE r = OMX_SendCommand(appData->component, enabled ? OMX_CommandPortEnable : OMX_CommandPortDisable, index, NULL);
 	if (r != OMX_ErrorNone) {
 		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error when %s port %d: %08x", enabled ? "enabling" : "disabling", index, r);
 		return;
@@ -191,7 +244,7 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doAllocate
 		return NULL;
 	}
 	
-	jmethodID framebufferCtor = (*env)->GetMethodID(e, framebufferClass, "<init>", "(JLjava/nio/ByteBuffer;)V");
+	jmethodID framebufferCtor = (*env)->GetMethodID(env, framebufferClass, "<init>", "(JLjava/nio/ByteBuffer;)V");
 	if (framebufferCtor == NULL) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Error looking up constructor OMXFrameBuffer(long, ByteBuffer)");
 		return NULL;
@@ -199,9 +252,9 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doAllocate
 	
 	OMX_BUFFERHEADERTYPE* buffer;
 	//Actually allocate the buffer
-	OMX_RESULTTYPE r = appData->component->AllocateBuffer(appData->component, &buffer, portIndex, NULL, size);
+	OMX_ERRORTYPE r = OMX_AllocateBuffer(appData->component, &buffer, portIndex, NULL, size);
 	if (r != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error when %s port %d: %08x", enabled ? "enabling" : "disabling", index, r);
+		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error allocating buffer on port %d: %#08x", portIndex, r);
 		return NULL;
 	}
 	
@@ -210,11 +263,40 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doAllocate
 		return NULL;
 	}
 	
-	jobject buffer = (*env)->NewDirectByteBuffer(env, NULL, size);
+	jobject bbuffer = (*env)->NewDirectByteBuffer(env, buffer, size);
 	//Wrap with FrameBuffer
-	jobject framebuffer = (*env)->NewObject(env, framebufferClass, framebufferCtor, NULL, buffer);
+	jobject framebuffer = (*env)->NewObject(env, framebufferClass, framebufferCtor, buffer, bbuffer);
 	return framebuffer;
 }
+
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doEmptyThisBuffer(JNIEnv *env, jclass me, jlong pointer, jlong bufferPointer) {
+	LOG_FN_ENTER();
+	
+	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
+	
+	OMX_BUFFERHEADERTYPE* buffer = (OMX_BUFFERHEADERTYPE*) (uintptr_t) bufferPointer;
+	
+	OMX_ERRORTYPE r = OMX_EmptyThisBuffer(appData->component, buffer);
+	if (r != OMX_ErrorNone) {
+		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error emptying buffer: %#08x", r);
+		return;
+	}
+}
+
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doFillThisBuffer(JNIEnv *env, jclass me, jlong pointer, jlong bufferPointer) {
+	LOG_FN_ENTER();
+	
+	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
+	
+	OMX_BUFFERHEADERTYPE* buffer = (OMX_BUFFERHEADERTYPE*) (uintptr_t) bufferPointer;
+	
+	OMX_ERRORTYPE r = OMX_FillThisBuffer(appData->component, buffer);
+	if (r != OMX_ErrorNone) {
+		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error emptying buffer: %#08x", r);
+		return;
+	}
+}
+
 
 #ifdef __cplusplus
 }

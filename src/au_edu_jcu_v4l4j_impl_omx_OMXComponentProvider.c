@@ -34,8 +34,9 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider_enumC
 		return -1;//Exception already thrown
 	
 	unsigned int index = startIndex < 0 ? 0 : (unsigned) startIndex;
+	OMX_ERRORTYPE res;
 	char componentName[128];//TODO should we allocate this on the heap?
-	for (OMX_ERRORTYPE res; (res = OMX_ComponentNameEnum(componentName, sizeof(componentName), index)) == OMX_ErrorNone; index++) {
+	for (; (res = OMX_ComponentNameEnum(componentName, sizeof(componentName), index)) == OMX_ErrorNone; index++) {
 		//Wrap the name in a java string and add it to the list
 		jstring componentNameStr = (*env)->NewStringUTF(env, componentName);
 		(*env)->CallBooleanMethod(env, list, listAddMethod, componentNameStr);
@@ -54,7 +55,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider_enumC
 JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider_getComponentsByRole(JNIEnv *env, jclass me, jobject result, jstring role, jint maxLen) {
 	LOG_FN_ENTER();
 	
-	jmethodID setAddMethod = lookupAddMethod(result);
+	jmethodID setAddMethod = lookupAddMethod(env, result);
 	if (setAddMethod == NULL)
 		return NULL;//Exception already thrown
 	
