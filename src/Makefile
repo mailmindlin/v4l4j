@@ -41,16 +41,16 @@ OBJ := jpeg.o jniutils.o \
 	v4l4j_FrameGrabber.o v4l4j_ImageFormatList.o \
 	v4l4j_DeviceInfo.o v4l4j_VideoDevice.o v4l4j_Control.o v4l4j_Tuner.o \
 	v4l4j_ResolutionInfo.o v4l4j_FrameInterval.o \
-	au_edu_jcu_v4l4j_encoder_V4lconvertBuffer.o au_edu_jcu_v4l4j_encoder_ImageFormatConverter.o
+	au_edu_jcu_v4l4j_impl_omx_OMXComponent.o au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider.o
 	
 #  v4l4j_H264Parameters.o v4l4j_H264Picture.o v4l4j_H264Encoder.o
 
 
 INCLUDES := -I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ \
-  -I$(LIBVIDEO_PATH) -I$(LIBVIDEO_PATH)/pixfc-sse -I. -I/usr/local/include
+  -I$(LIBVIDEO_PATH) -I$(LIBVIDEO_PATH)/pixfc-sse -I. -I/usr/local/include -I/opt/vc/include
 CFLAGS += $(INCLUDES) $(DBG) $(OPTIMISATION) -fPIC -fno-stack-protector -std=gnu11 -pthread -ftree-vectorize -fPIC -mcpu=native -mfpu=neon-vfpv4 -mfloat-abi=hard -fpredictive-commoning -fdiagnostics-color=auto -flto
 
-LDFLAGS += -shared -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME) -L/usr/local/lib -z noexecstack -flto=3 -mcpu=native -mfpu=neon-vfpv4 -mfloat-abi=hard
+LDFLAGS += -shared -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME) -L/usr/local/lib -z noexecstack -flto=3 -mcpu=native -mfpu=neon-vfpv4 -mfloat-abi=hard -lopenmaxil
 
 all: $(LIB)
 
