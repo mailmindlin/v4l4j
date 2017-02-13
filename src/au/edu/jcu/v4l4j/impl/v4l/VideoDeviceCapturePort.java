@@ -7,6 +7,8 @@ import au.edu.jcu.v4l4j.api.FrameBuffer;
 import au.edu.jcu.v4l4j.api.StreamType;
 import au.edu.jcu.v4l4j.api.VideoCompressionType;
 import au.edu.jcu.v4l4j.api.component.port.VideoPort;
+import au.edu.jcu.v4l4j.api.control.Control;
+import au.edu.jcu.v4l4j.api.control.ControlType;
 
 public class VideoDeviceCapturePort implements VideoPort {
 	protected final int id;
@@ -115,23 +117,6 @@ public class VideoDeviceCapturePort implements VideoPort {
 	}
 
 	@Override
-	public Set<String> getPropertyNames() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Object getProperty(String key) {
-		return null;
-	}
-
-	@Override
-	public Object setProperty(String key, Object value) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public FrameBuffer useBuffer(ByteBuffer buffer) {
 		// TODO Auto-generated method stub
 		return null;
@@ -151,6 +136,42 @@ public class VideoDeviceCapturePort implements VideoPort {
 
 	@Override
 	public void fill(FrameBuffer buffer) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public Set<Control> getChildren() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Control getChildByName(String name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ControlType getType() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void push() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void pull() {
 		// TODO Auto-generated method stub
 		
 	}

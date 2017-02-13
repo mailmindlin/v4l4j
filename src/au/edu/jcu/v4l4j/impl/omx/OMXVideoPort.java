@@ -7,6 +7,8 @@ import au.edu.jcu.v4l4j.api.FrameBuffer;
 import au.edu.jcu.v4l4j.api.StreamType;
 import au.edu.jcu.v4l4j.api.VideoCompressionType;
 import au.edu.jcu.v4l4j.api.component.port.VideoPort;
+import au.edu.jcu.v4l4j.api.control.Control;
+import au.edu.jcu.v4l4j.api.control.ControlType;
 
 public class OMXVideoPort extends OMXComponentPort implements VideoPort {
 
@@ -21,12 +23,41 @@ public class OMXVideoPort extends OMXComponentPort implements VideoPort {
 
 	@Override
 	public String getMIMEType() {
+		return "video/???";
+	}
+
+	@Override
+	public Set<Control> getChildren() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public void fill(FrameBuffer buffer) {
+	public Control getChildByName(String name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ControlType getType() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void push() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void pull() {
 		// TODO Auto-generated method stub
 		
 	}
@@ -60,5 +91,4 @@ public class OMXVideoPort extends OMXComponentPort implements VideoPort {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
 }

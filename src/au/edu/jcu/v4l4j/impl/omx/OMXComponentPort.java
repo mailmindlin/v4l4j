@@ -1,5 +1,7 @@
 package au.edu.jcu.v4l4j.impl.omx;
 
+import java.nio.ByteBuffer;
+
 import au.edu.jcu.v4l4j.api.FrameBuffer;
 import au.edu.jcu.v4l4j.api.component.Component;
 import au.edu.jcu.v4l4j.api.component.ComponentPort;
@@ -25,7 +27,7 @@ public abstract class OMXComponentPort implements ComponentPort {
 	}
 
 	@Override
-	public Component getComponent() {
+	public OMXComponent getComponent() {
 		return this.component;
 	}
 	
@@ -46,7 +48,7 @@ public abstract class OMXComponentPort implements ComponentPort {
 
 	@Override
 	public boolean setEnabled(boolean aflag) {
-		this.component.setPortEnabled(this.getIndex(), aflag);
+		this.getComponent().setPortEnabled(this.getIndex(), aflag);
 		return this.enabled = aflag;
 	}
 
@@ -56,9 +58,40 @@ public abstract class OMXComponentPort implements ComponentPort {
 	}
 
 	@Override
-	public FrameBuffer allocateBuffer(int length) {
-		FrameBuffer result = this.component.allocateBufferOnPort(this.getIndex(), length);
+	public OMXFrameBuffer allocateBuffer(int length) {
+		OMXFrameBuffer result = this.getComponent().allocateBufferOnPort(this.getIndex(), length);
 		this.bufferCountActual++;
 		return result;
+	}
+
+	@Override
+	public int minimumBuffers() {
+		return this.bufferCountMin;
+	}
+
+	@Override
+	public int actualBuffers() {
+		return this.bufferCountActual;
+	}
+
+	@Override
+	public int bufferSize() {
+		return this.bufferSize;
+	}
+
+	@Override
+	public FrameBuffer useBuffer(ByteBuffer buffer) {
+		this.getComponent().useBufferOnPort(this.getIndex(), buffer);
+		return null;
+	}
+
+	@Override
+	public void empty(FrameBuffer buffer) {
+		this.getComponent().emptyThisBuffer((OMXFrameBuffer) buffer);
+	}
+
+	@Override
+	public void fill(FrameBuffer buffer) {
+		this.getComponent().fillThisBuffer((OMXFrameBuffer) buffer);
 	}
 }
