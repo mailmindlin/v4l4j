@@ -43,6 +43,8 @@ typedef struct {
 //Event handlers for OMX
 static OMX_ERRORTYPE event_handler(OMX_HANDLETYPE hComponent, OMX_PTR pAppData, OMX_EVENTTYPE event, OMX_U32 data1, OMX_U32 data2, OMX_PTR eventData) {
 	OMXComponentAppData* appData = (OMXComponentAppData*) pAppData;
+	(void)appData;
+	
 	#ifdef DEBUG
 		char* eventName = "[unknown]";
 		switch (event) {
@@ -85,12 +87,15 @@ static OMX_ERRORTYPE event_handler(OMX_HANDLETYPE hComponent, OMX_PTR pAppData, 
 
 static OMX_ERRORTYPE empty_buffer_done_handler(OMX_HANDLETYPE hComponent, OMX_PTR pAppData, OMX_BUFFERHEADERTYPE* pBuffer) {
 	OMXComponentAppData* appData = (OMXComponentAppData*) pAppData;
+	(void)appData;
+	
 	dprint(LOG_V4L4J, "OMX empty buffer done: hComponent: %#08x; buffer: %#08x\n", hComponent, pBuffer);
 	return OMX_ErrorNone;
 }
 
 static OMX_ERRORTYPE fill_buffer_done_handler(OMX_HANDLETYPE hComponent, OMX_PTR pAppData, OMX_BUFFERHEADERTYPE* pBuffer) {
 	OMXComponentAppData* appData = (OMXComponentAppData*) pAppData;
+	(void)appData;
 	dprint(LOG_V4L4J, "OMX fill buffer done: hComponent: %#08x; buffer: %#08x\n", hComponent, pBuffer);
 	return OMX_ErrorNone;
 }
@@ -199,7 +204,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getComponentS
 	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
 	
 	OMX_STATETYPE state;
-	OMX_ERRORTYPE r = OMX_GetState(appData->component, state);
+	OMX_ERRORTYPE r = OMX_GetState(appData->component, &state);
 	if (r != OMX_ErrorNone) {
 		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error when querying state: %08x", r);
 		return -1;
