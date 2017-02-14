@@ -47,7 +47,7 @@ public class OMXComponentProvider implements ComponentProvider {
 	
 	protected boolean isValidPath(Path path) {
 		if (path == null)
-			return false;
+			return true;
 		try {
 			return Files.isSameFile(path, Paths.get("/"));
 		} catch (IOException e) {
