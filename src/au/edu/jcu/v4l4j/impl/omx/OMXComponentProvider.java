@@ -78,4 +78,8 @@ public class OMXComponentProvider implements ComponentProvider {
 		return new HashSet<>(discoveredComponents);
 	}
 
+	@Override
+	public void close() throws IOException {
+	}
+
 }

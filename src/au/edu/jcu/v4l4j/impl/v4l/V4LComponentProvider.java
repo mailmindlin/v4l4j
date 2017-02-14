@@ -51,4 +51,10 @@ public class V4LComponentProvider implements ComponentProvider {
 		return names;
 	}
 
+	@Override
+	public void close() throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

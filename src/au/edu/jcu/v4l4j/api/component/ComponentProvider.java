@@ -2,11 +2,10 @@ package au.edu.jcu.v4l4j.api.component;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Set;
 
-public interface ComponentProvider {
+public interface ComponentProvider extends AutoCloseable {
 	default Component get(String name) {
 		return get(null, name);
 	}
