@@ -146,7 +146,7 @@ int set_cap_param_v4l1(struct video_device *vdev, unsigned int src_palette, unsi
 
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: Applying image format\n");
 
-	if(palette == VIDEO_PALETTE_UNDEFINED_V4L1) {
+	if(palette == VIDEO_PALETTE_UNDEFINED_V4L) {
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_ERR, "CAP: Palette #%d (%s) isn't V4L1-compatible\n", palette, libvideo_palettes[palette].name);
 		return LIBVIDEO_ERR_FORMAT;
 	}

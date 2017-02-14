@@ -149,7 +149,7 @@ const ImagePalette libvideo_palettes[] = {
 		VIDEO_PALETTE_UNDEFINED_V4L,
 		32,
 		"Y32"
-	}
+	},
 
 	// PAL8 format
 	{
@@ -429,7 +429,7 @@ const ImagePalette libvideo_palettes[] = {
 	},
 	{
 		AVC,
-		VIDEO_PALETTE_UNDEFINED_V4L
+		VIDEO_PALETTE_UNDEFINED_V4L,
 		V4L2_PIX_FMT_H264_NO_SC,
 		COMPRESSED_FORMAT_DEPTH,
 		"H.264 without start codes"
