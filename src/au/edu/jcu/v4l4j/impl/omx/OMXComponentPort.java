@@ -1,12 +1,16 @@
 package au.edu.jcu.v4l4j.impl.omx;
 
 import java.nio.ByteBuffer;
+import java.util.Set;
 
 import au.edu.jcu.v4l4j.api.FrameBuffer;
+import au.edu.jcu.v4l4j.api.StreamType;
 import au.edu.jcu.v4l4j.api.component.Component;
 import au.edu.jcu.v4l4j.api.component.ComponentPort;
+import au.edu.jcu.v4l4j.api.control.Control;
+import au.edu.jcu.v4l4j.api.control.ControlType;
 
-public abstract class OMXComponentPort implements ComponentPort {
+public class OMXComponentPort implements ComponentPort {
 	protected final int id;
 	protected final OMXComponent component;
 	protected boolean input;
@@ -93,5 +97,46 @@ public abstract class OMXComponentPort implements ComponentPort {
 	@Override
 	public void fill(FrameBuffer buffer) {
 		this.getComponent().fillThisBuffer((OMXFrameBuffer) buffer);
+	}
+
+	@Override
+	public Set<Control> getChildren() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Control getChildByName(String name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void push() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void pull() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public StreamType getPortType() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getMIMEType() {
+		return "?/?";
 	}
 }

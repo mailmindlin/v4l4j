@@ -1,23 +1,12 @@
 package au.edu.jcu.v4l4j.impl.omx;
 
-import au.edu.jcu.v4l4j.api.StreamType;
-import au.edu.jcu.v4l4j.api.VideoCompressionType;
-import au.edu.jcu.v4l4j.api.component.port.VideoPort;
+import au.edu.jcu.v4l4j.api.ImageCodingType;
+import au.edu.jcu.v4l4j.api.component.port.ImagePort;
 
-public class OMXVideoPort extends OMXComponentPort implements VideoPort {
+public class OMXImagePort extends OMXComponentPort implements ImagePort {
 
-	protected OMXVideoPort(OMXComponent component, int id) {
+	protected OMXImagePort(OMXComponent component, int id) {
 		super(component, id);
-	}
-
-	@Override
-	public StreamType getPortType() {
-		return StreamType.VIDEO;
-	}
-
-	@Override
-	public String getMIMEType() {
-		return "video/???";
 	}
 
 	@Override
@@ -45,8 +34,9 @@ public class OMXVideoPort extends OMXComponentPort implements VideoPort {
 	}
 
 	@Override
-	public VideoCompressionType getCompression() {
+	public ImageCodingType getCodingType() {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 }
