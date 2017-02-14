@@ -50,7 +50,10 @@ INCLUDES := -I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ \
   -I$(LIBVIDEO_PATH) -I$(LIBVIDEO_PATH)/pixfc-sse -I. -I/usr/local/include -I/opt/vc/include
 CFLAGS += $(INCLUDES) $(DBG) $(OPTIMISATION) -fPIC -fno-stack-protector -std=gnu11 -pthread -ftree-vectorize -fPIC -mcpu=native -mfpu=neon-vfpv4 -mfloat-abi=hard -fpredictive-commoning -fdiagnostics-color=auto -flto
 
-LDFLAGS += -shared -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME) -L/usr/local/lib -z noexecstack -flto=3 -mcpu=native -mfpu=neon-vfpv4 -mfloat-abi=hard -lopenmaxil
+# Because VC
+CFLAGS += -DOMX_SKIP64BIT
+
+LDFLAGS += -shared -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME) -L/usr/local/lib -z noexecstack -flto=3 -mcpu=native -mfpu=neon-vfpv4 -mfloat-abi=hard -L/opt/vc/lib -lopenmaxil
 
 all: $(LIB)
 

@@ -43,7 +43,14 @@ public class OMXComponentProvider implements ComponentProvider {
 	 */
 	private static native Set<String> getComponentsByRole(Set<String> result, String role, int maxCount);
 	
+	private static native void init();
+	private static native void deinit();
+	
 	private transient ArrayList<String> discoveredComponents = null;
+	
+	public OMXComponentProvider() {
+		init();
+	}
 	
 	protected boolean isValidPath(Path path) {
 		if (path == null)
@@ -80,6 +87,7 @@ public class OMXComponentProvider implements ComponentProvider {
 
 	@Override
 	public void close() throws IOException {
+		deinit();
 	}
 
 }

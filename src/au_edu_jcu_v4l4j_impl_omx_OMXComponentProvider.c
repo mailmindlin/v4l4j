@@ -21,6 +21,29 @@
 extern "C" {
 #endif
 
+#include "omx.c"
+
+/*
+ * Class:     au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider
+ * Method:    enumComponents
+ * Signature: (Ljava/lang/List;I)I
+ */
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider_init(JNIEnv *env, jclass me) {
+	LOG_FN_ENTER();
+	v4lconvert_omx_init();
+}
+
+/*
+ * Class:     au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider
+ * Method:    enumComponents
+ * Signature: (Ljava/lang/List;I)I
+ */
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider_deinit(JNIEnv *env, jclass me) {
+	LOG_FN_ENTER();
+	v4lconvert_omx_deinit();
+}
+
+
 /*
  * Class:     au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider
  * Method:    enumComponents
@@ -37,6 +60,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider_enumC
 	OMX_ERRORTYPE res;
 	char componentName[128];//TODO should we allocate this on the heap?
 	for (; (res = OMX_ComponentNameEnum(componentName, sizeof(componentName), index)) == OMX_ErrorNone; index++) {
+		dprint(LOG_V4L4J, "OMX: Found component #%-3u| %s\n", index, componentName);
 		//Wrap the name in a java string and add it to the list
 		jstring componentNameStr = (*env)->NewStringUTF(env, componentName);
 		(*env)->CallBooleanMethod(env, list, listAddMethod, componentNameStr);
@@ -45,8 +69,11 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider_enumC
 	
 	//We *should* exit the loop with OMX_ErrorNoMore if we were successful
 	if (res != OMX_ErrorNoMore) {
+		dprint(LOG_V4L4J, "OMX: ERR %#08x\n", res);
 		//TODO throw exception
 	}
+	
+	dprint(LOG_V4L4J, "OMX: Discovered %u components\n", index);
 	
 	return (jint) index;
 }
