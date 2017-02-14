@@ -287,9 +287,9 @@ JNIEXPORT jstring JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getPortInf
 			result[++i] = (int) portdef.video.nFrameHeight;
 			result[++i] = (int) portdef.video.nStride;
 			result[++i] = (int) portdef.video.nSliceHeight;
-			result[++i] = (int) portdef.video.eCompressionFormat;
 			result[++i] = (int) portdef.video.eColorFormat;
 			//Video port only values
+			result[++i] = (int) portdef.video.eCompressionFormat;
 			result[++i] = (int) portdef.video.nBitrate;
 			result[++i] = (int) portdef.video.xFramerate;
 			//i == 18
@@ -301,8 +301,9 @@ JNIEXPORT jstring JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getPortInf
 			result[++i] = (int) portdef.image.nFrameHeight;
 			result[++i] = (int) portdef.image.nStride;
 			result[++i] = (int) portdef.image.nSliceHeight;
-			result[++i] = (int) portdef.image.eCompressionFormat;
 			result[++i] = (int) portdef.image.eColorFormat;
+			//Image port only values
+			result[++i] = (int) portdef.image.eCompressionFormat;
 			//i == 16
 			break;
 		case OMX_PortDomainOther:
