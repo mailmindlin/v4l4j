@@ -1,6 +1,10 @@
 package au.edu.jcu.v4l4j.impl.omx;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -38,6 +42,9 @@ public class OMXComponent implements Component {
 	protected int numOtherPorts;
 	
 	protected List<AudioPort> audioPorts;
+	protected List<VideoPort> videoPorts;
+	protected List<ImagePort> imagePorts;
+	protected List<ComponentPort> otherPorts;
 	
 	protected OMXComponent(OMXComponentProvider provider, String name) {
 		this.provider = provider;
@@ -69,6 +76,52 @@ public class OMXComponent implements Component {
 	
 	protected void fillThisBuffer(OMXFrameBuffer buffer) {
 		OMXComponent.doFillThisBuffer(this.pointer, buffer.pointer);
+	}
+	
+	protected void doInitPorts() {
+		int[] idx = new int[8];
+		OMXComponent.getPortOffsets(this.pointer, idx);
+		this.audioPortMinIdx = idx[0];
+		this.numAudioPorts = idx[1];
+		if (this.numAudioPorts == 0)
+			this.audioPorts = Collections.emptyList();
+		else {
+			this.audioPorts = new ArrayList<>(this.numAudioPorts);
+			for (int i = 0; i < this.numAudioPorts; i++)
+				this.audioPorts.add(new OMXAudioPort(this, this.audioPortMinIdx + i));
+		}
+		
+		this.videoPortMinIdx = idx[2];
+		this.numVideoPorts = idx[3];
+		if (this.numVideoPorts == 0)
+			this.videoPorts = Collections.emptyList();
+		else {
+			this.videoPorts = new ArrayList<>(this.numVideoPorts);
+			for (int i = 0; i < this.numVideoPorts; i++)
+				this.videoPorts.add(new OMXVideoPort(this, this.videoPortMinIdx + i));
+		}
+		
+		this.imagePortMinIdx = idx[4];
+		this.numImagePorts = idx[5];
+		if (this.numImagePorts == 0)
+			this.imagePorts = Collections.emptyList();
+		else {
+			this.imagePorts = new ArrayList<>(this.numImagePorts);
+			for (int i = 0; i < this.numVideoPorts; i++)
+				this.imagePorts.add(new OMXImagePort(this, this.videoPortMinIdx + i));
+		}
+		
+		this.otherPortMinIdx = idx[6];
+		this.numOtherPorts = idx[7];
+		if (this.numOtherPorts == 0)
+			this.otherPorts = Collections.emptyList();
+		else {
+			this.otherPorts = new ArrayList<>(this.numOtherPorts);
+			for (int i = 0; i < this.numVideoPorts; i++)
+				this.otherPorts.add(new OMXComponentPort(this, this.otherPortMinIdx + i));
+		}
+		
+		System.out.println(Arrays.toString(idx));
 	}
 
 	
@@ -134,31 +187,40 @@ public class OMXComponent implements Component {
 	
 	@Override
 	public Set<ComponentPort> getPorts() {
-		// TODO Auto-generated method stub
-		return null;
+		HashSet<ComponentPort> result = new HashSet<>();
+		result.addAll(this.getAudioPorts());
+		result.addAll(this.getVideoPorts());
+		result.addAll(this.getImagePorts());
+		result.addAll(this.getOtherPorts());
+		return result;
 	}
 
 	@Override
 	public Set<AudioPort> getAudioPorts() {
-		return this.getAudioPorts();
+		if (this.audioPorts == null)
+			this.doInitPorts();
+		return new HashSet<>(this.audioPorts);
 	}
 
 	@Override
 	public Set<ImagePort> getImagePorts() {
-		// TODO Auto-generated method stub
-		return null;
+		if (this.imagePorts == null)
+			this.doInitPorts();
+		return new HashSet<>(this.imagePorts);
 	}
 
 	@Override
 	public Set<VideoPort> getVideoPorts() {
-		// TODO Auto-generated method stub
-		return null;
+		if (this.videoPorts == null)
+			this.doInitPorts();
+		return new HashSet<>(this.videoPorts);
 	}
 
 	@Override
 	public Set<ComponentPort> getOtherPorts() {
-		// TODO Auto-generated method stub
-		return null;
+		if (this.otherPorts == null)
+			this.doInitPorts();
+		return new HashSet<>(this.otherPorts);
 	}
 
 	@Override
