@@ -140,27 +140,28 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getComponent
 	LOG_FN_ENTER();
 	
 	//Get string into native memory
-	const jchar* componentName = (*env)->GetStringChars(env, componentNameStr, NULL);
+	const jchar* componentName = (*env)->GetStringUTFChars(env, componentNameStr, NULL);
 	if (componentName == NULL) {
-		//TODO throw exception
+		THROW_EXCEPTION(env, NULL_EXCP, "Error getting string chars");
 		return -1;
 	}
+	dprint(LOG_V4L4J, "Getting handle for component '%s'\n", componentName);
 	
 	//Set up appData (context used for all the callbacks)
 	OMXComponentAppData* appData = initAppData(env, self);
 	if (appData == NULL) {
 		(*env)->ReleaseStringChars(env, componentNameStr, componentName);
-		//TODO throw exception
+		THROW_EXCEPTION(env, JNI_EXCP, "Error allocating appdata");
 		return -1;
 	}
 	
-	OMX_ERRORTYPE res = OMX_GetHandle(&appData->component, componentName, appData, &appData->callbacks);
+	OMX_ERRORTYPE res = OMX_GetHandle(&(appData->component), (char*) componentName, appData, &appData->callbacks);
 	
-	(*env)->ReleaseStringChars(env, componentNameStr, componentName);
+	(*env)->ReleaseStringUTFChars(env, componentNameStr, componentName);
 	
 	if (res != OMX_ErrorNone) {
+		THROW_EXCEPTION(env, JNI_EXCP, "OMX Failure: %#08x", res);
 		deinitAppData(env, appData);
-		//TODO throw exception
 		return -1;
 	}
 	
