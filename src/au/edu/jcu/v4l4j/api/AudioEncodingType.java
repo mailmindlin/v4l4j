@@ -29,5 +29,12 @@ public enum AudioEncodingType {
 	WMA,
 	RA,
 	MIDI,
+	FLAC,
+	DPP,
+	DTS,
+	WMAPRO,
+	ATRAC3,
+	ATRACX,
+	ATRACAAL
 	;
 }

@@ -11,14 +11,7 @@ public class OMXAudioPort extends OMXComponentPort implements AudioPort {
 		if (info[0] < 12)
 			throw new IllegalArgumentException("Not enough info (expected 12; actual " + info[0] + ")");
 		
-		AudioEncodingType[] types = AudioEncodingType.values();
-		int encodingTypeIdx = info[11];
-		if (encodingTypeIdx > types.length || encodingTypeIdx < 0) {
-			System.err.format("Unsupported audio encoding type: %#08x\n", encodingTypeIdx);
-			this.encoding = null;
-			return;
-		}
-		this.encoding = types[encodingTypeIdx];
+		this.encoding = OMXConstants.mapAudioEncodingType(info[11]);
 	}
 
 	@Override

@@ -342,6 +342,44 @@ JNIEXPORT jstring JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getPortInf
 	return mimeTypeStr;
 }
 
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getPortFormats(JNIEnv *env, jclass me, jlong pointer, jint portIndex, jobject resultList) {
+	LOG_FN_ENTER();
+	
+	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
+	
+	jmethodID listAddMethod = lookupAddMethod(env, list);
+	if (listAddMethod == NULL)
+		return;//Exception already thrown
+	
+	//Look these up early, so we don't have much to clean up if they fail
+	jclass resultTypeClass = (*env)->FindClass(env, "au/edu/jcu/v4l4j/impl/omx/OMXVideoFormatOption");
+	if (resultTypeClass == NULL) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Error looking up class OMXVideoFormatOption");
+		return;
+	}
+	
+	jmethodID resultTypeCtor = (*env)->GetMethodID(env, resultTypeClass, "<init>", "(III)V");
+	if (resultTypeCtor == NULL) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Error looking up constructor OMXVideoFormatOption(int, int, int)");
+		return;
+	}
+	
+	OMX_VIDEO_PARAM_PORTFORMATTYPE portFormat;
+	OMX_INIT_STRUCTURE(portFormat);
+	portFormat.nPortIndex = portIndex;
+	portFormat.nIndex = 0;
+	
+	OMX_ERRORTYPE res;
+	while ((res = OMX_GetParameter(appData->component, OMX_IndexParamVideoPortFormat, &portFormat)) == OMX_ErrorNone) {
+		OMX_VIDEO_CODINGTYPE compression = portFormat.eCompressionFormat;
+		OMX_COLOR_FORMATTYPE format = portFormat.eColorFormat;
+		unsigned int frameRate = portFormat.xFramerate;
+		dprint(LOG_V4L4J, "OMX: Found format %d compression %d framerate %d\n", compression, format, frameRate);
+		
+		
+	}
+}
+
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_enablePort(JNIEnv *env, jclass me, jlong pointer, jint index, jboolean enabled) {
 	LOG_FN_ENTER();
 	
