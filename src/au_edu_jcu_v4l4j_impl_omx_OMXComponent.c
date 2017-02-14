@@ -220,9 +220,125 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_setComponentS
 	
 	OMX_ERRORTYPE r = OMX_SendCommand(appData->component, OMX_CommandStateSet, (OMX_STATETYPE) state, NULL);
 	if (r != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error when setting state: %08x", r);
+		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error when setting state: %#08x", r);
 		return;
 	}
+}
+
+JNIEXPORT jstring JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getPortInfo(JNIEnv *env, jclass me, jlong pointer, jint portIndex, jintArray resultArr) {
+	LOG_FN_ENTER();
+	
+	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
+	
+	//Initialize the query
+	OMX_PARAM_PORTDEFINITIONTYPE portdef;
+	OMX_INIT_STRUCTURE(portdef);
+	portdef.nPortIndex = portIndex;
+	
+	//Query the port
+	OMX_ERRORTYPE res = OMX_GetParameter(appData->component, OMX_IndexParamPortDefinition, &portdef);
+	if (res != OMX_ErrorNone) {
+		//TODO replace with custom OMX exception
+		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX: Error when getting definition for port %d: %#08x", portIndex, res);
+		return NULL;
+	}
+	
+	//Sanity check that the port that we asked for is, in fact, the port that we asked for
+	if (portdef.nPortIndex != portIndex) {
+		THROW_EXCEPTION(env, INVALID_VAL_EXCP, "OMX: Port index changed from %d to %d", portIndex, portdef.nPortIndex);
+		return NULL;
+	}
+	
+	/*
+	 * Because JNI calls are relatively slow, this method puts all the values into an int array
+	 * that was passed from Java, reducing an upwards of 19 JNI calls + OMX queries (if every parameter
+	 * had its own getter method) to just one, at the cost of some readibility.
+	 */
+	int result[19];
+	int i = 0;//Entry #0 is going to be set at the end
+	
+	//Entries 1-9 are common for all port types
+	result[++i] = portdef.eDir == OMX_DirInput ? 1 : 0;
+	result[++i] = (int) portdef.nBufferCountActual;
+	result[++i] = (int) portdef.nBufferCountMin;
+	result[++i] = (int) portdef.nBufferSize;
+	result[++i] = portdef.bEnabled != OMX_FALSE ? 1 : 0;
+	result[++i] = portdef.bPopulated != OMX_FALSE ? 1 : 0;
+	result[++i] = (int) portdef.eDomain;
+	result[++i] = portdef.bBuffersContiguous != OMX_FALSE ? 1 : 0;
+	result[++i] = (int) portdef.nBufferAlignment;
+	//i == 9
+	
+	char* mimeType = NULL;//Pointer to mime string, if exists. Will be wrapped later.
+	
+	//Get port-type-specific parameters
+	switch (portdef.eDomain) {
+		case OMX_PortDomainAudio:
+			mimeType = portdef.audio.cMIMEType;
+			result[++i] = portdef.audio.bFlagErrorConcealment != OMX_FALSE ? 1 : 0;
+			result[++i] = (int) portdef.audio.eEncoding;
+			//i == 11
+			break;
+		case OMX_PortDomainVideo:
+			mimeType = portdef.video.cMIMEType;
+			result[++i] = portdef.video.bFlagErrorConcealment != OMX_FALSE ? 1 : 0;
+			//These parameters are the same as for an image port
+			result[++i] = (int) portdef.video.nFrameWidth;
+			result[++i] = (int) portdef.video.nFrameHeight;
+			result[++i] = (int) portdef.video.nStride;
+			result[++i] = (int) portdef.video.nSliceHeight;
+			result[++i] = (int) portdef.video.eCompressionFormat;
+			result[++i] = (int) portdef.video.eColorFormat;
+			//Video port only values
+			result[++i] = (int) portdef.video.nBitrate;
+			result[++i] = (int) portdef.video.xFramerate;
+			//i == 18
+			break;
+		case OMX_PortDomainImage:
+			mimeType = portdef.image.cMIMEType;
+			result[++i] = portdef.image.bFlagErrorConcealment != OMX_FALSE ? 1 : 0;
+			result[++i] = (int) portdef.image.nFrameWidth;
+			result[++i] = (int) portdef.image.nFrameHeight;
+			result[++i] = (int) portdef.image.nStride;
+			result[++i] = (int) portdef.image.nSliceHeight;
+			result[++i] = (int) portdef.image.eCompressionFormat;
+			result[++i] = (int) portdef.image.eColorFormat;
+			//i == 16
+			break;
+		case OMX_PortDomainOther:
+			result[++i] = (int) portdef.other.eFormat;
+			//i == 10
+			break;
+		default:
+			
+	}
+	
+	//Store the length in the first cell
+	const int resultLen = i + 1;
+	result[0] = resultLen;
+	
+	//Store data into result array
+	
+	//Check that the passed array is big enough
+	const int resultActualLen = (*env)->GetArrayLength(env, resultArr);
+	if (resultActualLen < resultLen) {
+		THROW_EXCEPTION(env, ARG_EXCP, "Array length too short (expect %d; actual %d)", resultLen, resultActualLen);
+		return NULL;
+	}
+	
+	//Put our values into the array
+	(*env)->SetIntArrayRegion(env, resultArr, 0, i + 1, result);
+	
+	//Return the MIME type (if available)
+	jstring mimeTypeStr = NULL;
+	if (mimeType != NULL) {
+		if ((mimeTypeStr = (*env)->NewStringUTF(env, mimeTypeStr)) == NULL) {
+			THROW_EXCEPTION(env, JNI_EXCP, "Could not wrap MIME string (%s)", mimeType);
+			return NULL;
+		}
+	}
+	
+	return mimeTypeStr;
 }
 
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_enablePort(JNIEnv *env, jclass me, jlong pointer, jint index, jboolean enabled) {
