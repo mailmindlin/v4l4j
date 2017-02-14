@@ -1183,7 +1183,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 
 	if (/* If no conversion/processing is needed */
 			(src_fmt->fmt.pix.pixelformat == dest_fmt->fmt.pix.pixelformat &&
-			 !(processing || rotate90 || hflip || vflip ||crop) ||
+			 !(processing || rotate90 || hflip || vflip ||crop)) ||
 			/* or if we should do processing/rotating/flipping but the app tries to
 			   use the native cam format, we just return an unprocessed frame copy */
 			!v4lconvert_supported_dst_format(dest_fmt->fmt.pix.pixelformat)) {
