@@ -13,7 +13,11 @@ public class OMXImagePort extends OMXComponentPort implements ImagePort {
 	
 	protected OMXImagePort(OMXComponent component, int id, String mime, int[] info) {
 		super(component, id, mime, info);
-		
+	}
+	
+	@Override
+	protected void pullInfo(int[] info) {
+		super.pullInfo(info);
 		if (info[0] < 17)
 			throw new IllegalArgumentException("Not enough info (expected 17; actual " + info[0] + ")");
 		

@@ -2,7 +2,6 @@ package au.edu.jcu.v4l4j.impl.omx;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -57,6 +56,8 @@ public class OMXComponent implements Component {
 	 */
 	private static native String getPortInfo(long pointer, int portIndex, int[] result);
 	
+	private static native void setPortInfo(long pointer, int portIndex, int[] values);
+	
 	private static native void enablePort(long pointer, int portIndex, boolean enabled);
 	
 	private static native OMXFrameBuffer doAllocateBuffer(long pointer, int portIndex, int bufferSize);
@@ -66,6 +67,12 @@ public class OMXComponent implements Component {
 	private static native void doEmptyThisBuffer(long pointer, long bufferPtr);
 	
 	private static native void doFillThisBuffer(long pointer, long bufferPtr);
+	
+	private static native int getPortFormats(long pointer, int portIndex, List<OMXVideoFormatOption> options);
+	
+	private static native void doGetConfig(long pointer, int configIndex, ByteBuffer data);
+	
+	private static native void doSetConfig(long pointer, int configIndex, ByteBuffer data);
 	
 	private final String name;
 	private final long pointer;
@@ -116,6 +123,18 @@ public class OMXComponent implements Component {
 	
 	protected void fillThisBuffer(OMXFrameBuffer buffer) {
 		OMXComponent.doFillThisBuffer(this.pointer, buffer.pointer);
+	}
+	
+	protected String getPortData(int portIndex, int[] info) {
+		return OMXComponent.getPortInfo(this.pointer, portIndex, info);
+	}
+	
+	protected void setPortData(int portIndex, int[] info) {
+		
+	}
+	
+	public long getPointer() {
+		return this.pointer;
 	}
 	
 	protected void doInitPorts() {
@@ -176,8 +195,6 @@ public class OMXComponent implements Component {
 				this.otherPorts.add(new OMXComponentPort(this, portIndex, mime, portInfo));
 			}
 		}
-		
-		System.out.println(Arrays.toString(idx));
 	}
 	
 	@Override
@@ -280,8 +297,9 @@ public class OMXComponent implements Component {
 	
 	@Override
 	public ComponentPort getPort(int index) {
-		// TODO Auto-generated method stub
-		return null;
+		return getPorts().stream()
+				.filter(port->(port.getIndex() == index))
+				.findAny().orElse(null);
 	}
 	
 	@Override
