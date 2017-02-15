@@ -14,9 +14,5 @@ public interface Control extends AutoCloseable {
 	 */
 	void pull();
 	
-	void increase();
-	
-	void decrease();
-	
 	void close();
 }
