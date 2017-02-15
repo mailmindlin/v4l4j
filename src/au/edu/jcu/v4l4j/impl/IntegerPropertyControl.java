@@ -53,4 +53,19 @@ public class IntegerPropertyControl extends AbstractPropertyControl implements I
 	public ControlType getType() {
 		return ControlType.SLIDER;
 	}
+
+	@Override
+	public void increase() {
+		setIntValue(this.getIntValue() + this.getIntStep());
+	}
+
+	@Override
+	public void decrease() {
+		setIntValue(this.getIntValue() - this.getIntStep());
+	}
+
+	@Override
+	public void close() {
+		
+	}
 }

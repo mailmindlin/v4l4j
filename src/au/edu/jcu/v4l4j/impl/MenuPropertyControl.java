@@ -6,7 +6,7 @@ import au.edu.jcu.v4l4j.api.control.Control;
 import au.edu.jcu.v4l4j.api.control.ControlType;
 import au.edu.jcu.v4l4j.api.control.MenuControl;
 
-public class MenuPropertyControl extends AbstractPropertyControl implements MenuControl {
+public class MenuPropertyControl extends AbstractPropertyControl implements MenuControl<String> {
 	protected final List<String> labels;
 	protected int value;
 	
@@ -21,14 +21,29 @@ public class MenuPropertyControl extends AbstractPropertyControl implements Menu
 	}
 
 	@Override
-	public List<String> getLabels() {
+	public List<String> getOptions() {
 		return this.labels;
 	}
 
 	@Override
-	public String setValue(String value) {
+	public void setValue(String value) {
 		this.value = labels.indexOf(value);
-		return value;
 	}
-	
+
+	@Override
+	public void increase() {
+		if (value < labels.size() - 1)
+			value++;
+	}
+
+	@Override
+	public void decrease() {
+		if (value > 0)
+			value--;
+	}
+
+	@Override
+	public void close() {
+		
+	}
 }

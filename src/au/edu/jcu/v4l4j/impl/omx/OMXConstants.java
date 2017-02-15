@@ -58,7 +58,7 @@ public class OMXConstants {
 	public static final int VIDEO_ENCODING_RV = 6;
 	public static final int VIDEO_ENCODING_AVC = 7;
 	public static final int VIDEO_ENCODING_MJPEG = 8;
-			
+	
 	static AudioEncodingType mapAudioEncodingType(int idx) {
 		switch (idx) {
 			case AUDIO_ENCODING_UNUSED:

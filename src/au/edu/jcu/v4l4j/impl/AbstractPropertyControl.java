@@ -16,9 +16,7 @@ public abstract class AbstractPropertyControl implements Control {
 	public String getName() {
 		return name;
 	}
-
-
-
+	
 	@Override
 	public void push() {
 		if (this.parent != null)

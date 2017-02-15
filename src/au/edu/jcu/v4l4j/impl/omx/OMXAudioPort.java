@@ -8,6 +8,13 @@ public class OMXAudioPort extends OMXComponentPort implements AudioPort {
 	
 	protected OMXAudioPort(OMXComponent component, int id, String mime, int[] info) {
 		super(component, id, mime, info);
+		
+	}
+	
+	@Override
+	protected void pullInfo(int[] info) {
+		super.pullInfo(info);
+		
 		if (info[0] < 12)
 			throw new IllegalArgumentException("Not enough info (expected 12; actual " + info[0] + ")");
 		

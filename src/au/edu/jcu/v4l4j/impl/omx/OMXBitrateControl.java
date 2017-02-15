@@ -29,5 +29,18 @@ public class OMXBitrateControl extends AbstractCompositeControl {
 		// TODO Auto-generated method stub
 		
 	}
+
+	@Override
+	public void increase() {
+	}
+
+	@Override
+	public void decrease() {
+	}
+
+	@Override
+	public void close() {
+		
+	}
 	
 }
