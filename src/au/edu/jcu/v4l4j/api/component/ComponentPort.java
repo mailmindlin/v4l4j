@@ -1,12 +1,13 @@
 package au.edu.jcu.v4l4j.api.component;
 
 import java.nio.ByteBuffer;
+import java.util.Set;
 
 import au.edu.jcu.v4l4j.api.FrameBuffer;
 import au.edu.jcu.v4l4j.api.StreamType;
-import au.edu.jcu.v4l4j.api.control.CompositeControl;
+import au.edu.jcu.v4l4j.api.control.Control;
 
-public interface ComponentPort extends CompositeControl {
+public interface ComponentPort {
 	int getIndex();
 	
 	StreamType getPortType();
@@ -58,4 +59,8 @@ public interface ComponentPort extends CompositeControl {
 	void empty(FrameBuffer buffer);
 	
 	void fill(FrameBuffer buffer);
+	
+	Set<String> getControlNames();
+	
+	Control getControlByName(String name);
 }

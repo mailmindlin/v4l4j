@@ -1,6 +1,7 @@
 package au.edu.jcu.v4l4j.impl.omx;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Set;
 
 import au.edu.jcu.v4l4j.api.FrameBuffer;
@@ -19,6 +20,7 @@ public class OMXComponentPort implements ComponentPort {
 	protected int bufferSize;
 	protected boolean enabled;
 	protected boolean populated;
+	protected final HashMap<String, Control> controls = new HashMap<>();
 	
 	protected OMXComponentPort(OMXComponent component, int id, String mime, StreamType type) {
 		this.component = component;
@@ -32,14 +34,6 @@ public class OMXComponentPort implements ComponentPort {
 		this.id = id;
 		this.mime = mime;
 		
-		if (info[0] < 9)
-			throw new IllegalArgumentException("Minimum info length is 9");
-		this.input = info[1] != 0;
-		this.bufferCountActual = info[2];
-		this.bufferCountMin = info[3];
-		this.bufferSize = info[4];
-		this.enabled = info[5] != 0;
-		this.populated = info[6] != 0;
 		switch (info[7]) {
 			case 0:
 				this.type = StreamType.AUDIO;
@@ -72,7 +66,8 @@ public class OMXComponentPort implements ComponentPort {
 				//Is some proprietary thing
 				this.type = StreamType.UNKNOWN;
 		}
-		//We don't use the other stuff ATM
+
+		this.pullInfo(info);
 	}
 
 	@Override
@@ -149,33 +144,31 @@ public class OMXComponentPort implements ComponentPort {
 		this.getComponent().fillThisBuffer((OMXFrameBuffer) buffer);
 	}
 
-	@Override
-	public Set<Control> getChildren() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Control getChildByName(String name) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public String getName() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public void push() {
-		// TODO Auto-generated method stub
-		
+		int[] info = new int[20];
+		this.pushInfo(info);
+		this.getComponent().setPortData(this.getIndex(), info);
 	}
 
-	@Override
 	public void pull() {
-		// TODO Auto-generated method stub
+		int[] info = new int[20];
+		this.getComponent().getPortData(this.getIndex(), info);
+		this.pullInfo(info);
+	}
+	
+	protected void pullInfo(int[] info) {
+		if (info[0] < 9)
+			throw new IllegalArgumentException("Not enough info (expected >=9; actual " + info[0] + ")");
+		this.input = info[1] != 0;
+		this.bufferCountActual = info[2];
+		this.bufferCountMin = info[3];
+		this.bufferSize = info[4];
+		this.enabled = info[5] != 0;
+		this.populated = info[6] != 0;
+		//We don't use the other stuff ATM
+	}
+	
+	protected void pushInfo(int[] out) {
 		
 	}
 
@@ -187,5 +180,15 @@ public class OMXComponentPort implements ComponentPort {
 	@Override
 	public String getMIMEType() {
 		return this.mime;
+	}
+
+	@Override
+	public Set<String> getControlNames() {
+		return this.controls.keySet();
+	}
+
+	@Override
+	public Control getControlByName(String name) {
+		return this.controls.get(name);
 	}
 }

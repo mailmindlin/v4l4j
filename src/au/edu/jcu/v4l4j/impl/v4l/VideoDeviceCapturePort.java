@@ -141,39 +141,15 @@ public class VideoDeviceCapturePort implements VideoPort {
 	}
 
 	@Override
-	public Set<Control> getChildren() {
+	public Set<String> getControlNames() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Control getChildByName(String name) {
+	public Control getControlByName(String name) {
 		// TODO Auto-generated method stub
 		return null;
-	}
-
-	@Override
-	public ControlType getType() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public String getName() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void push() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void pull() {
-		// TODO Auto-generated method stub
-		
 	}
 
 }
