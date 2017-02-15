@@ -41,7 +41,8 @@ OBJ := jpeg.o jniutils.o \
 	v4l4j_FrameGrabber.o v4l4j_ImageFormatList.o \
 	v4l4j_DeviceInfo.o v4l4j_VideoDevice.o v4l4j_Control.o v4l4j_Tuner.o \
 	v4l4j_ResolutionInfo.o v4l4j_FrameInterval.o \
-	au_edu_jcu_v4l4j_impl_omx_OMXComponent.o au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider.o
+	au_edu_jcu_v4l4j_impl_omx_OMXComponent.o au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider.o \
+	au_edu_jcu_v4l4j_impl_jni_MemoryUtils.o
 	
 #  v4l4j_H264Parameters.o v4l4j_H264Picture.o v4l4j_H264Encoder.o
 
