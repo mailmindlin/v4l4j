@@ -4,8 +4,7 @@ public enum PrimitiveStructFieldType implements StructFieldType {
 	/**
 	 * bool type
 	 */
-	BOOL ((buffer, params) -> {
-			Object value = params.apply("");
+	BOOL ((buffer, value) -> {
 			boolean bValue;
 			if (value == null)
 				bValue = false;
@@ -15,40 +14,37 @@ public enum PrimitiveStructFieldType implements StructFieldType {
 				bValue = Boolean.valueOf(value.toString());
 			buffer.put((byte) (bValue ? 0xFF : 0x00));
 		},
-		(buffer, params) -> params.accept("", buffer.get() != 0)),
+		(buffer, params) -> (buffer.get() != 0)),
 	INT8(
-			(buffer, params) -> buffer.put(((Number)params.apply("")).byteValue()),
-			(buffer, params) -> params.accept("", buffer.get())),
+			(buffer, value) -> buffer.put(((Number)value).byteValue()),
+			(buffer, context) -> ((Number) buffer.get())),
 	INT16(
-			(buffer, params) -> buffer.putShort(((Number)params.apply("")).shortValue()),
-			(buffer, params) -> params.accept("", buffer.getShort())),
+			(buffer, value) -> buffer.putShort(((Number)value).shortValue()),
+			(buffer, context) -> buffer.getShort()),
 	INT32(
-			(buffer, params) -> buffer.putInt(((Number)params.apply("")).intValue()),
-			(buffer, params) -> params.accept("", buffer.getInt())),
+			(buffer, value) -> buffer.putInt(((Number)value).intValue()),
+			(buffer, context) -> buffer.getInt()),
 	INT64(
-			(buffer, params) -> buffer.putLong(((Number)params.apply("")).longValue()),
-			(buffer, params) -> params.accept("", buffer.getLong())),
+			(buffer, value) -> buffer.putLong(((Number)value).longValue()),
+			(buffer, context) -> buffer.getLong()),
 	FLOAT32(
-			(buffer, params) -> buffer.putFloat(((Number)params.apply("")).floatValue()),
-			(buffer, params) -> params.accept("", buffer.getFloat())),
+			(buffer, value) -> buffer.putFloat(((Number)value).floatValue()),
+			(buffer, context) -> buffer.getFloat()),
 	FLOAT64(
-			(buffer, params) -> buffer.putDouble(((Number)params.apply("")).doubleValue()),
-			(buffer, params) -> params.accept("", buffer.getDouble())),
+			(buffer, value) -> buffer.putDouble(((Number)value).doubleValue()),
+			(buffer, context) -> buffer.getDouble()),
 	RAW_POINTER(
-			(buffer, params) -> {
-				long value = ((Number)params.apply("")).longValue();
+			(buffer, value) -> {
 				if (PrimitiveStructFieldType.values()[7].getSize() == 4)
-					buffer.putInt((int)value);
+					buffer.putInt(((Number)value).intValue());
 				else
-					buffer.putLong(value);
+					buffer.putLong(((Number)value).longValue());
 			},
-			(buffer, params) -> {
-				long value;
+			(buffer, context) -> {
 				if (PrimitiveStructFieldType.values()[7].getSize() == 4)
-					value = buffer.getInt();
+					return (long) buffer.getInt();
 				else
-					value = buffer.getLong();
-				params.accept("", value);
+					return buffer.getLong();
 			}),
 	;
 	private final int alignment;

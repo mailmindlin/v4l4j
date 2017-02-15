@@ -1,8 +1,6 @@
 package au.edu.jcu.v4l4j.impl.jni;
 
 import java.nio.ByteBuffer;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 public interface StructFieldType {
 
@@ -14,14 +12,14 @@ public interface StructFieldType {
 	
 	@FunctionalInterface
 	public static interface Writer {
-		void write(ByteBuffer buffer, Function<String, Object> params);
+		void write(ByteBuffer buffer, Object params);
 	}
 	
 	Writer writer();
 	
 	@FunctionalInterface
 	public static interface Reader {
-		void read(ByteBuffer buffer, BiConsumer<String, Object> params);
+		Object read(ByteBuffer buffer, StructReadingContext context);
 	}
 	
 	Reader reader();

@@ -7,8 +7,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 import au.edu.jcu.v4l4j.impl.jni.StructField.PointerStructField;
 
@@ -83,7 +81,9 @@ public class StructPrototype implements StructFieldType {
 		}
 	}*/
 
-	protected void read(ByteBuffer buffer, BiConsumer<String, Object> params) {
+	protected Map<String, Object> read(ByteBuffer buffer, StructReadingContext parentContext) {
+		Map<String, Object> value = new HashMap<>();
+		StructReadingContext context = new StructReadingContext(parentContext, this, value);
 		for (int i = 0; i < this.fields.length; i++) {
 			StructField field = this.fields[i];
 
@@ -93,11 +93,13 @@ public class StructPrototype implements StructFieldType {
 				dup.limit(dup.position() + field.getSize());
 			dup.order(buffer.order());
 			
-			field.getType().reader().read(dup, (k, v) -> params.accept(rewrite(field.getName(), k), v));
+			value.put(field.getName(), field.getType().reader().read(dup, context));
 		}
+		return value;
 	}
 
-	protected void write(ByteBuffer buffer, Function<String, Object> params) {
+	protected void write(ByteBuffer buffer, Object value) {
+		Map<String, Object> params = (Map<String, Object>)value;
 		for (int i = 0; i < this.fields.length; i++) {
 			StructField field = this.fields[i];
 
@@ -107,7 +109,7 @@ public class StructPrototype implements StructFieldType {
 				dup.limit(dup.position() + field.getSize());
 			dup.order(buffer.order());
 
-			field.getType().writer().write(dup, k->params.apply(rewrite(field.getName(), k)));
+			field.getType().writer().write(dup, params.get(field.getName()));
 		}
 	}
 
@@ -131,9 +133,7 @@ public class StructPrototype implements StructFieldType {
 	}
 	
 	public Map<String, Object> read(ByteBuffer buffer) {
-		Map<String, Object> result = new HashMap<>();
-		this.read(buffer, result::put);
-		return result;
+		return this.read(buffer, null);
 	}
 
 	@Override
@@ -218,19 +218,7 @@ public class StructPrototype implements StructFieldType {
 		}
 
 		public void writeTo(ByteBuffer buffer) {
-			StructPrototype.this.write(buffer, values::get);
-		}
-	}
-
-	protected class StructReadingContext {
-		protected final StructReadingContext parent;
-		protected final StructPrototype self;
-		protected final Map<String, Object> values;
-
-		protected StructReadingContext(StructReadingContext parent, Map<String, Object> map) {
-			this.parent = parent;
-			this.self = StructPrototype.this;
-			this.values = map;
+			StructPrototype.this.write(buffer, values);
 		}
 	}
 }
