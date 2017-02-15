@@ -46,7 +46,7 @@ static OMX_ERRORTYPE event_handler(OMX_HANDLETYPE hComponent, OMX_PTR pAppData, 
 	(void)appData;
 	
 	#ifdef DEBUG
-		char* eventName = "[unknown]";
+		char* eventName;
 		switch (event) {
 			case OMX_EventCmdComplete:
 				eventName = "CmdComplete";
@@ -78,8 +78,10 @@ static OMX_ERRORTYPE event_handler(OMX_HANDLETYPE hComponent, OMX_PTR pAppData, 
 			case OMX_EventParamOrConfigChanged:
 				eventName = "ParamOrConfigChanged";
 				break;
+			default:
+				eventName = "[unknown]";
 		}
-		dprint(LOG_V4L4J, "OMX event %#08x %s: hComponent: %#08x; data1: %#08x; data2: %#08x\n", event, eventName, hComponent, data1, data2);
+		dprint(LOG_V4L4J, "OMX event %#08x %s: hComponent: %#08x; data1: %#08x; data2: %#08x\n", event, eventName, (uintptr_t) hComponent, data1, data2);
 	#endif
 	return OMX_ErrorNone;
 }
@@ -89,14 +91,14 @@ static OMX_ERRORTYPE empty_buffer_done_handler(OMX_HANDLETYPE hComponent, OMX_PT
 	OMXComponentAppData* appData = (OMXComponentAppData*) pAppData;
 	(void)appData;
 	
-	dprint(LOG_V4L4J, "OMX empty buffer done: hComponent: %#08x; buffer: %#08x\n", hComponent, pBuffer);
+	dprint(LOG_V4L4J, "OMX empty buffer done: hComponent: %#08x; buffer: %#08x\n", (uintptr_t) hComponent, (uintptr_t) pBuffer);
 	return OMX_ErrorNone;
 }
 
 static OMX_ERRORTYPE fill_buffer_done_handler(OMX_HANDLETYPE hComponent, OMX_PTR pAppData, OMX_BUFFERHEADERTYPE* pBuffer) {
 	OMXComponentAppData* appData = (OMXComponentAppData*) pAppData;
 	(void)appData;
-	dprint(LOG_V4L4J, "OMX fill buffer done: hComponent: %#08x; buffer: %#08x\n", hComponent, pBuffer);
+	dprint(LOG_V4L4J, "OMX fill buffer done: hComponent: %#08x; buffer: %#08x\n", (uintptr_t) hComponent, (uintptr_t) pBuffer);
 	return OMX_ErrorNone;
 }
 
@@ -131,6 +133,16 @@ static inline void deinitAppData(JNIEnv* env, OMXComponentAppData* appData) {
 	XFREE(appData);
 }
 
+static void printBytes(char* bytes, int len) {
+	char* hexChars = "0123456789ABCDEF";
+	while (len--) {
+		char c = *bytes++;
+		char a = hexChars[c >> 4];
+		char b = hexChars[c & 0x0F];
+		dprint(LOG_V4L4J, "%c%c\n", a, b);
+	}
+}
+
 /*
  * Class:     au_edu_jcu_v4l4j_impl_omx_OMXComponent
  * Method:    getComponentHandle
@@ -140,7 +152,7 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getComponent
 	LOG_FN_ENTER();
 	
 	//Get string into native memory
-	const jchar* componentName = (*env)->GetStringUTFChars(env, componentNameStr, NULL);
+	const char* componentName = (*env)->GetStringUTFChars(env, componentNameStr, NULL);
 	if (componentName == NULL) {
 		THROW_EXCEPTION(env, NULL_EXCP, "Error getting string chars");
 		return -1;
@@ -150,7 +162,7 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getComponent
 	//Set up appData (context used for all the callbacks)
 	OMXComponentAppData* appData = initAppData(env, self);
 	if (appData == NULL) {
-		(*env)->ReleaseStringChars(env, componentNameStr, componentName);
+		(*env)->ReleaseStringUTFChars(env, componentNameStr, componentName);
 		THROW_EXCEPTION(env, JNI_EXCP, "Error allocating appdata");
 		return -1;
 	}
@@ -158,6 +170,9 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getComponent
 	OMX_ERRORTYPE res = OMX_GetHandle(&(appData->component), (char*) componentName, appData, &appData->callbacks);
 	
 	(*env)->ReleaseStringUTFChars(env, componentNameStr, componentName);
+	
+	dprint(LOG_V4L4J, "Struct length: %d; value %#08x\n", ((OMX_COMPONENTTYPE*)appData->component)->nSize, (uintptr_t)appData->component);
+	printBytes((char*) appData, sizeof(OMXComponentAppData));
 	
 	if (res != OMX_ErrorNone) {
 		THROW_EXCEPTION(env, JNI_EXCP, "OMX Failure: %#08x", res);
@@ -234,8 +249,12 @@ JNIEXPORT jstring JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getPortInf
 	OMX_PARAM_PORTDEFINITIONTYPE portdef;
 	OMX_INIT_STRUCTURE(portdef);
 	portdef.nPortIndex = portIndex;
+	char mimeType[128];//MIME type pointer (we have to allocate the memory)
+	memset(mimeType, 0x00, sizeof(mimeType));
+	portdef.format.audio.cMIMEType = mimeType;
 	
 	//Query the port
+	dprint(LOG_V4L4J, "Querying definition of port %d\n", portIndex);
 	OMX_ERRORTYPE res = OMX_GetParameter(appData->component, OMX_IndexParamPortDefinition, &portdef);
 	if (res != OMX_ErrorNone) {
 		//TODO replace with custom OMX exception
@@ -269,50 +288,50 @@ JNIEXPORT jstring JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getPortInf
 	result[++i] = (int) portdef.nBufferAlignment;
 	//i == 9
 	
-	char* mimeType = NULL;//Pointer to mime string, if exists. Will be wrapped later.
-	
 	//Get port-type-specific parameters
 	switch (portdef.eDomain) {
 		case OMX_PortDomainAudio:
-			mimeType = portdef.audio.cMIMEType;
-			result[++i] = portdef.audio.bFlagErrorConcealment != OMX_FALSE ? 1 : 0;
-			result[++i] = (int) portdef.audio.eEncoding;
+			//mimeType = portdef.format.audio.cMIMEType;
+			result[++i] = portdef.format.audio.bFlagErrorConcealment != OMX_FALSE ? 1 : 0;
+			result[++i] = (int) portdef.format.audio.eEncoding;
 			//i == 11
 			break;
 		case OMX_PortDomainVideo:
-			mimeType = portdef.video.cMIMEType;
-			result[++i] = portdef.video.bFlagErrorConcealment != OMX_FALSE ? 1 : 0;
+			//mimeType = portdef.format.video.cMIMEType;
+			result[++i] = portdef.format.video.bFlagErrorConcealment != OMX_FALSE ? 1 : 0;
 			//These parameters are the same as for an image port
-			result[++i] = (int) portdef.video.nFrameWidth;
-			result[++i] = (int) portdef.video.nFrameHeight;
-			result[++i] = (int) portdef.video.nStride;
-			result[++i] = (int) portdef.video.nSliceHeight;
-			result[++i] = (int) portdef.video.eColorFormat;
+			result[++i] = (int) portdef.format.video.nFrameWidth;
+			result[++i] = (int) portdef.format.video.nFrameHeight;
+			result[++i] = (int) portdef.format.video.nStride;
+			result[++i] = (int) portdef.format.video.nSliceHeight;
+			result[++i] = (int) portdef.format.video.eColorFormat;
 			//Video port only values
-			result[++i] = (int) portdef.video.eCompressionFormat;
-			result[++i] = (int) portdef.video.nBitrate;
-			result[++i] = (int) portdef.video.xFramerate;
+			result[++i] = (int) portdef.format.video.eCompressionFormat;
+			result[++i] = (int) portdef.format.video.nBitrate;
+			result[++i] = (int) portdef.format.video.xFramerate;
 			//i == 18
 			break;
 		case OMX_PortDomainImage:
-			mimeType = portdef.image.cMIMEType;
-			result[++i] = portdef.image.bFlagErrorConcealment != OMX_FALSE ? 1 : 0;
-			result[++i] = (int) portdef.image.nFrameWidth;
-			result[++i] = (int) portdef.image.nFrameHeight;
-			result[++i] = (int) portdef.image.nStride;
-			result[++i] = (int) portdef.image.nSliceHeight;
-			result[++i] = (int) portdef.image.eColorFormat;
+			//mimeType = portdef.format.image.cMIMEType;
+			result[++i] = portdef.format.image.bFlagErrorConcealment != OMX_FALSE ? 1 : 0;
+			result[++i] = (int) portdef.format.image.nFrameWidth;
+			result[++i] = (int) portdef.format.image.nFrameHeight;
+			result[++i] = (int) portdef.format.image.nStride;
+			result[++i] = (int) portdef.format.image.nSliceHeight;
+			result[++i] = (int) portdef.format.image.eColorFormat;
 			//Image port only values
-			result[++i] = (int) portdef.image.eCompressionFormat;
+			result[++i] = (int) portdef.format.image.eCompressionFormat;
 			//i == 16
 			break;
 		case OMX_PortDomainOther:
-			result[++i] = (int) portdef.other.eFormat;
+			result[++i] = (int) portdef.format.other.eFormat;
 			//i == 10
 			break;
 		default:
-			
+			break;
 	}
+	
+	dprint(LOG_V4L4J, "Port MIME: '%s'\n", mimeType);
 	
 	//Store the length in the first cell
 	const int resultLen = i + 1;
@@ -332,8 +351,8 @@ JNIEXPORT jstring JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getPortInf
 	
 	//Return the MIME type (if available)
 	jstring mimeTypeStr = NULL;
-	if (mimeType != NULL) {
-		if ((mimeTypeStr = (*env)->NewStringUTF(env, mimeTypeStr)) == NULL) {
+	if (mimeType[0] != '\0') {
+		if ((mimeTypeStr = (*env)->NewStringUTF(env, mimeType)) == NULL) {
 			THROW_EXCEPTION(env, JNI_EXCP, "Could not wrap MIME string (%s)", mimeType);
 			return NULL;
 		}
@@ -347,7 +366,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getPortFormat
 	
 	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
 	
-	jmethodID listAddMethod = lookupAddMethod(env, list);
+	jmethodID listAddMethod = lookupAddMethod(env, resultList);
 	if (listAddMethod == NULL)
 		return;//Exception already thrown
 	
