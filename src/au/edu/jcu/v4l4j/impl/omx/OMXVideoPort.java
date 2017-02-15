@@ -14,7 +14,11 @@ public class OMXVideoPort extends OMXComponentPort implements VideoPort {
 
 	protected OMXVideoPort(OMXComponent component, int id, String mime, int[] info) {
 		super(component, id, mime, info);
-		
+	}
+	
+	@Override
+	protected void pullInfo(int[] info) {
+		super.pullInfo(info);
 		if (info[0] < 19)
 			throw new IllegalArgumentException("Not enough info (expected 19; actual " + info[0] + ")");
 		
