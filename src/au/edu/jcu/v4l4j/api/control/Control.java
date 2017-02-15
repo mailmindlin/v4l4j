@@ -1,6 +1,6 @@
 package au.edu.jcu.v4l4j.api.control;
 
-public interface Control {
+public interface Control extends AutoCloseable {
 	ControlType getType();
 	String getName();
 	/**
@@ -13,4 +13,10 @@ public interface Control {
 	 * Operates on sub-controls.
 	 */
 	void pull();
+	
+	void increase();
+	
+	void decrease();
+	
+	void close();
 }
