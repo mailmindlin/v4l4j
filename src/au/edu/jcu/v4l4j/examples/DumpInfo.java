@@ -60,6 +60,7 @@ public class DumpInfo {
 	 *            the device file for which we need information
 	 * @throws V4L4JException
 	 *             if there is an error getting the device information
+	 * @throws InterruptedException 
 	 */
 	public DumpInfo(String deviceFile) throws V4L4JException {
 		this.videoDevice = new VideoDevice(deviceFile);
@@ -72,29 +73,33 @@ public class DumpInfo {
 	/**
 	 * This method prints the contents of the {@link DeviceInfo} object member
 	 * 'deviceInfo'
+	 * @throws InterruptedException 
 	 */
 	private void dumpInfo() {
 
+		System.out.flush();
 		System.out.println("Camera name:  " + deviceInfo.getName());
 		System.out.println("Device file: " + deviceInfo.getDeviceFile());
 		System.out.println("Supported formats:");
-		System.out.println("\t- Native Formats (" + deviceInfo.getFormatList().getNativeFormats().size() + "): ");
-		for (ImageFormat f : deviceInfo.getFormatList().getNativeFormats())
-			System.out.println("\t" + f.toNiceString());
-		
 		ImageFormatList formats = deviceInfo.getFormatList();
+		
+		List<ImageFormat> nativeFormats = formats.getNativeFormats();
+		System.out.flush();
+		System.out.println("\t- Native Formats (" + nativeFormats.size() + "): ");
+		for (ImageFormat f : nativeFormats)
+			dumpFormatInfo(f);
+		
 		System.out.println("\tFormats that can be RGB24-converted (" + formats.getRGBEncodableFormats().size() + ") :");
 		if (videoDevice.supportRGBConversion())
 			for (ImageFormat f : deviceInfo.getFormatList().getRGBEncodableFormats())
 				dumpFormatInfo(f);
-
+		
 		System.out.println("\tFormats that can be BGR24-converted (" + formats.getBGREncodableFormats().size() + ") :");
 		if (videoDevice.supportBGRConversion())
 			for (ImageFormat f : deviceInfo.getFormatList().getBGREncodableFormats())
 				dumpFormatInfo(f);
 
-		System.out.println(
-				"\tFormats that can be YUV420-converted (" + formats.getYUVEncodableFormats().size() + ") :");
+		System.out.println("\tFormats that can be YUV420-converted (" + formats.getYUVEncodableFormats().size() + ") :");
 		if (videoDevice.supportYUVConversion())
 			for (ImageFormat f : deviceInfo.getFormatList().getYUVEncodableFormats())
 				dumpFormatInfo(f);
@@ -193,39 +198,43 @@ public class DumpInfo {
 		}
 	}
 	private void dumpFormatInfo(ImageFormat format) {
-		System.out.println("\t\t" + format.toString());
+		StringBuffer sb = new StringBuffer();
+		sb.append("\t\t").append(format.toString()).append('\n');
 		
 		ResolutionInfo resolutions = format.getResolutionInfo();
-		System.out.println("\t\t\tType: " + resolutions.getType());
+		sb.append("\t\t\tType: ").append(resolutions.getType()).append('\n');
 		if (resolutions.getType() == ResolutionInfo.Type.DISCRETE) {
 			for (DiscreteResolution resolution : resolutions.getDiscreteResolutions()) {
-				System.out.println("\t\t\t" + resolution.getWidth() + "x" + resolution.getHeight());
-				dumpFrameIntervalInfo(resolution.getFrameInterval());
+				sb.append("\t\t\t").append(resolution.getWidth()).append('x').append(resolution.getHeight()).append('\n');
+				dumpFrameIntervalInfo(resolution.getFrameInterval(), sb);
 			}
 		} else if (resolutions.getType() == ResolutionInfo.Type.STEPWISE) {
 			StepwiseResolution resolution = resolutions.getStepwiseResolution();
-			System.out.println("\t\t\tFrom " + resolution.getMinWidth() + "x" + resolution.getMinHeight());
-			dumpFrameIntervalInfo(resolution.getMinResFrameInterval());
-			System.out.println("\t\t\tStep " + resolution.getWidthStep() + "x" + resolution.getHeightStep());
-			System.out.println("\t\t\tTo   " + resolution.getMaxWidth() + "x" + resolution.getMaxHeight());
-			dumpFrameIntervalInfo(resolution.getMaxResFrameInterval());
+			sb.append("\t\t\tFrom ").append(resolution.getMinWidth()).append('x').append(resolution.getMinHeight()).append('\n');
+			dumpFrameIntervalInfo(resolution.getMinResFrameInterval(), sb);
+			sb.append("\t\t\tStep ").append(resolution.getWidthStep()).append('x').append(resolution.getHeightStep()).append('\n');
+			sb.append("\t\t\tTo   ").append(resolution.getMaxWidth()).append('x').append(resolution.getMaxHeight()).append('\n');
+			dumpFrameIntervalInfo(resolution.getMaxResFrameInterval(), sb);
 		} else {
-			System.out.println("\t\t\tUnknown resolution type: " + resolutions.getType());
+			sb.append("\t\t\tUnknown resolution type: ").append(resolutions.getType()).append('\n');
 		}
+		System.out.println(sb.toString());
 	}
-	private void dumpFrameIntervalInfo(FrameInterval intervals) {
+	
+	private void dumpFrameIntervalInfo(FrameInterval intervals, StringBuffer sb) {
 		if (intervals.getType() == FrameInterval.Type.DISCRETE) {
 			for (DiscreteInterval interval : intervals.getDiscreteIntervals())
-				System.out.println("\t\t\t\t" + getIntervalPrettyString(interval));
+				sb.append("\t\t\t\t").append(getIntervalPrettyString(interval)).append('\n');
 		} else if (intervals.getType() == FrameInterval.Type.STEPWISE) {
 			StepwiseInterval interval = intervals.getStepwiseInterval();
-			System.out.println("\t\t\t\tFrom " + getIntervalPrettyString(interval.getMinInterval()));
-			System.out.println("\t\t\t\tStep " + getIntervalPrettyString(interval.getStepInterval()));
-			System.out.println("\t\t\t\tTo   " + getIntervalPrettyString(interval.getMaxInterval()));
+			sb.append("\t\t\t\tFrom ").append(getIntervalPrettyString(interval.getMinInterval())).append('\n');
+			sb.append("\t\t\t\tStep ").append(getIntervalPrettyString(interval.getStepInterval())).append('\n');
+			sb.append("\t\t\t\tTo   ").append(getIntervalPrettyString(interval.getMaxInterval())).append('\n');
 		} else {
-			System.out.println("\t\t\t\tUnknown interval type " + intervals.getType());
+			sb.append("\t\t\t\tUnknown interval type ").append(intervals.getType()).append('\n');
 		}
 	}
+	
 	private String getIntervalPrettyString(DiscreteInterval interval) {
 		double fps = .1 * Math.round(10.0 * interval.getDenominator() / interval.getNumerator());
 		return interval.getNumerator() + "/" + interval.getDenominator() + " (" + fps + " FPS)";
