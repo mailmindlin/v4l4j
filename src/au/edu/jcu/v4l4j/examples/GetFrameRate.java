@@ -124,8 +124,9 @@ public class GetFrameRate implements CaptureCallback {
 			System.out.println("Invalid format / no capture format " + "specified, let v4l4j find a suitable one");
 			fg = vd.getRGBFrameGrabber(width, height, channel, std);
 		} else {
-			System.out.println("Trying input format " + imfList.getRGBEncodableFormat(inFmt).getName());
-			fg = vd.getRGBFrameGrabber(width, height, channel, std, imfList.getRGBEncodableFormat(inFmt));
+			ImageFormat fallback = imfList.getRGBEncodableFormat(inFmt);
+			System.out.println("Trying input format " + fallback.getName());
+			fg = vd.getRGBFrameGrabber(width, height, channel, std, fallback);
 		}
 		System.out.println("Output image format: RGB");
 	}
