@@ -1,6 +1,6 @@
 package au.edu.jcu.v4l4j.api.control;
 
-public interface IntegerControl extends Control {
+public interface IntegerControl extends Control<Integer> {
 	int getIntValue();
 	int setIntValue(int value);
 	int getIntMinimum();
