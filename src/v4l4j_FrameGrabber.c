@@ -83,7 +83,7 @@ static void update_width_height(JNIEnv *e, jobject this, struct v4l4j_device *d)
 
 
 	//format
-	if(d->output_fmt != OUTPUT_RAW){
+	if(d->output_fmt != OUTPUT_RAW) {
 		jfieldID formatFID = (*e)->GetFieldID(e, this_class, "format", "I");
 		if(formatFID == NULL) {
 			THROW_EXCEPTION(e, JNI_EXCP, "Error looking up format field in FrameGrabber class");

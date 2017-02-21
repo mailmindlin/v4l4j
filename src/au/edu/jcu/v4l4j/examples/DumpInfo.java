@@ -99,14 +99,12 @@ public class DumpInfo {
 			for (ImageFormat f : deviceInfo.getFormatList().getYUVEncodableFormats())
 				dumpFormatInfo(f);
 
-		System.out.println(
-				"\tFormats that can be YVU420-converted (" + formats.getYVUEncodableFormats().size() + ") :");
+		System.out.println("\tFormats that can be YVU420-converted (" + formats.getYVUEncodableFormats().size() + ") :");
 		if (videoDevice.supportYVUConversion())
 			for (ImageFormat f : deviceInfo.getFormatList().getYVUEncodableFormats())
 				dumpFormatInfo(f);
 
-		System.out
-				.println("\tFormats that can be JPEG-encoded (" + formats.getJPEGEncodableFormats().size() + ") :");
+		System.out.println("\tFormats that can be JPEG-encoded (" + formats.getJPEGEncodableFormats().size() + ") :");
 		if (videoDevice.supportJPEGConversion())
 			for (ImageFormat f : deviceInfo.getFormatList().getJPEGEncodableFormats())
 				dumpFormatInfo(f);
@@ -147,7 +145,7 @@ public class DumpInfo {
 				}
 			}
 		}
-
+		
 		List<Control> ctrls = videoDevice.getControlList().getList();
 		for (Control c : ctrls) {
 			if (c.getType() == V4L4JConstants.CTRL_TYPE_STRING) {
