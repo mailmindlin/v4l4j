@@ -49,4 +49,42 @@ public class Rational extends Number {
 			return Long.MIN_VALUE;
 		return (long) d;
 	}
+	
+	public Rational reduced() {
+		//Slightly modified binary GCD algorithm
+		int num = this.numerator;
+		int den = this.denominator;
+		
+		if (num == 0)
+			return new Rational(0, 1);
+		
+		//Remove all all divisors that are 2 from both
+		while (((num | den) & 1) == 0) {
+			num >>= 1;
+			den >>= 1;
+		}
+		
+		//Find the GCD of the remaining numbers
+		int u = num;
+		int v = den;
+		
+		while ((u & 1) == 0)
+			u >>= 1;
+			
+		do {
+			while ((v & 1) == 0)
+				v >>= 1;
+			
+			if (u > v) {
+				int tmp = u;
+				u = v;
+				v = tmp;
+			}
+			
+			v -= u;
+		} while (v != 0);
+		
+		//'u' is the GCD
+		return new Rational(num / u, den / u);
+	}
 }
