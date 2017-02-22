@@ -58,7 +58,7 @@ public class ArrayStructFieldType implements StructFieldType {
 	}
 	
 	@Override
-	public List<Object> read(ByteBuffer buffer, StructReadingContext parentContext) {
+	public Object read(ByteBuffer buffer, StructReadingContext parentContext) {
 		List<Object> values = new ArrayList<>();
 		StructReadingContext context = parentContext.child(this, values);
 		for (int i = 0; i < this.length; i++)
