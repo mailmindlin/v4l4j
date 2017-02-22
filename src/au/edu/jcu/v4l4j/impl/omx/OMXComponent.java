@@ -70,9 +70,23 @@ public class OMXComponent implements Component {
 	
 	private static native int getPortFormats(long pointer, int portIndex, List<OMXVideoFormatOption> options);
 	
-	private static native void doGetConfig(long pointer, int configIndex, ByteBuffer data);
-	
-	private static native void doSetConfig(long pointer, int configIndex, ByteBuffer data);
+	/**
+	 * Access OMX config/parameter.
+	 * Wraps macros OMX_
+	 * 
+	 * @param pointer
+	 *            Pointer to native data
+	 * @param isConfig
+	 *            True if the index to lookup is a config. Else parameter
+	 * @param read
+	 *            Whether to get the value of the config/parameter. Else set the
+	 *            value.
+	 * @param configIndex
+	 *            Index of config/parameter to get/set
+	 * @param data
+	 *            Data to get/set
+	 */
+	private static native void doAccessConfig(long pointer, boolean isConfig, boolean read, int configIndex, ByteBuffer data);
 	
 	private final String name;
 	private final long pointer;
@@ -127,6 +141,10 @@ public class OMXComponent implements Component {
 	
 	protected String getPortData(int portIndex, int[] info) {
 		return OMXComponent.getPortInfo(this.pointer, portIndex, info);
+	}
+	
+	protected void accessConfig(boolean isConfig, boolean read, int configIdx, ByteBuffer data) {
+		OMXComponent.doAccessConfig(this.pointer, isConfig, read, configIdx, data);
 	}
 	
 	protected void setPortData(int portIndex, int[] info) {

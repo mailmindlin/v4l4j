@@ -477,6 +477,62 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doFillThisBuf
 	}
 }
 
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doAccessConfig(JNIEnv* env, jclass me, jlong pointer, jboolean isConfig, jboolean read, jint configIdx, jobject data) {
+	LOG_FN_ENTER();
+	
+	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
+	OMX_COMPONENTTYPE* component = appData->component;
+	
+	jbyteArray arrayRef = NULL;
+	unsigned int arrayLength = 0;
+	unsigned int arrayOffset = 0;
+	void (*releaseArray)(JNIEnv* env, jbyteArray arrayRef, unsigned char* ptr);
+	unsigned char* buf = getBufferPointer(env, data, &arrayRef, &arrayOffset, &arrayLength, &releaseArray);
+	
+	//Check that we have a valid reference to buf
+	if (!buf) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Error getting pointer to buffer");
+		return;
+	}
+	
+	dprint(LOG_V4L4J, "OMX: %s %s %#08x\n",
+		read ? "Reading" : "Writing",
+		isConfig ? "config" : "parameter",
+		configIdx);
+	
+	//Get pointer to actual data structure
+	//arrayOffset can be nonzero for a few reasons, including alignment, so
+	//deal with that.
+	void* dataStruct = (void*) (&buf[arrayOffset]);
+	
+	//Actually query stuff here
+	OMX_ERRORTYPE res;
+	if (isConfig) {
+		if (read)
+			res = component->GetConfig(component, configIdx, dataStruct);
+		else
+			res = component->SetConfig(component, configIdx, dataStruct);
+	} else {
+		if (read)
+			res = component->GetParameter(component, configIdx, dataStruct);
+		else
+			res = component->SetParameter(component, configIdx, dataStruct);
+	}
+	
+	//Release native memory
+	releaseArray(env, arrayRef, buf);
+	
+	//Handle errors, if any
+	if (res != OMX_ErrorNone) {
+		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error %s %s %#08x: %#08x",
+			read ? "reading" : "writing",
+			isConfig ? "config" : "parameter",
+			configIdx,
+			res);
+		return;
+	}
+}
+
 
 #ifdef __cplusplus
 }
