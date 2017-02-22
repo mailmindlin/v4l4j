@@ -199,22 +199,22 @@ public class StructPrototype implements StructFieldType {
 		}
 
 		public StructPrototypeBuilder addPointer(String name) {
-			this.fields.add(new PointerStructField(false, null, name));
+			this.fields.add(new PointerStructField(false, null, name, -1));
 			return this;
 		}
 
 		public StructPrototypeBuilder addStruct(StructPrototype struct, String name) {
-			this.fields.add(new StructField(struct, name));
+			this.fields.add(new StructField(struct, name, -1));
 			return this;
 		}
 
 		public StructPrototypeBuilder addFarStruct(StructPrototype struct, String name) {
-			this.fields.add(new PointerStructField(true, struct, name));
+			this.fields.add(new PointerStructField(true, struct, name, -1));
 			return this;
 		}
 
 		public StructPrototypeBuilder add(PrimitiveStructFieldType type, String name) {
-			this.fields.add(new StructField(type, name));
+			this.fields.add(new StructField(type, name, -1));
 			return this;
 		}
 
