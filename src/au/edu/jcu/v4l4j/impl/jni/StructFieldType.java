@@ -13,6 +13,4 @@ public interface StructFieldType {
 	void write(ByteBuffer buffer, Object params);
 	
 	Object read(ByteBuffer buffer, StructReadingContext context);
-	
-	Reader reader();
 }
