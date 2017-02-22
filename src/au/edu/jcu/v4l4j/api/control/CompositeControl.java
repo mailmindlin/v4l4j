@@ -3,6 +3,7 @@ package au.edu.jcu.v4l4j.api.control;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -57,7 +58,7 @@ public interface CompositeControl extends Control<Map<String, Object>> {
 		@Override
 		CompositeControlUpdater<T, R> update(Function<T, T> mappingFunction);
 		
-		<E> CompositeControlUpdater<T, R> update(String name, Function<E, E> mappingFunction);
+		<E> CompositeControlUpdater<T, R> update(String name, BiFunction<String, E, E> mappingFunction);
 		
 		@Override
 		default CompositeControlUpdater<T, R> increase() {
