@@ -1,11 +1,8 @@
 package au.edu.jcu.v4l4j.impl.omx;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -16,7 +13,7 @@ import java.util.function.Supplier;
 import au.edu.jcu.v4l4j.api.control.CompositeControl;
 import au.edu.jcu.v4l4j.api.control.Control;
 import au.edu.jcu.v4l4j.api.control.ControlType;
-import au.edu.jcu.v4l4j.impl.jni.MemoryUtils;
+import au.edu.jcu.v4l4j.impl.jni.StructField;
 import au.edu.jcu.v4l4j.impl.jni.StructMap;
 import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
 
@@ -38,8 +35,8 @@ public class OMXQueryControl implements CompositeControl {
 		this.rootName = rootName;
 		this.queryId = queryId;
 		this.struct = struct;
-		for (StructField field : struct.getFields()) {
-			
+		for (StructField field : struct.fields()) {
+			//TODO generate child controls
 		}
 	}
 	
@@ -87,7 +84,25 @@ public class OMXQueryControl implements CompositeControl {
 		return new OMXQueryControlAccessor<>(null, null, null);
 	}
 	
-	protected class OMXChildQueryControl {
+	protected abstract class OMXChildQueryControl<T> implements Control<T> {
+
+		@Override
+		public String getName() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public void close() {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public ControlAccessor<T, Void> access() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 		
 	}
 	
@@ -134,11 +149,12 @@ public class OMXQueryControl implements CompositeControl {
 				this.parent.doCall(state);
 		}
 
+		@SuppressWarnings("unchecked")
 		@Override
 		public R call() throws Exception {
 			try (OMXQueryControlAccessorState state = new OMXQueryControlAccessorState()) {
 				doCall(state);
-				return state.result;
+				return (R) state.result;
 			}
 		}
 		
@@ -161,6 +177,7 @@ public class OMXQueryControl implements CompositeControl {
 		}
 
 		@Override
+		@SuppressWarnings("unchecked")
 		public <E> OMXQueryControlGetter<R> read(String name, Consumer<E> handler) {
 			return read(map->handler.accept((E)map.get(name)));
 		}
@@ -224,7 +241,7 @@ public class OMXQueryControl implements CompositeControl {
 
 		@Override
 		public OMXQueryControlGetter<R> setAndGet() {
-			return new OMXQueryControlAccessor<>(doGetChildParent(), timeout, state->{
+			return new OMXQueryControlGetter<>(doGetChildParent(), timeout, state->{
 				OMXComponent component = OMXQueryControl.this.component;
 				int queryId = OMXQueryControl.this.queryId;
 				ByteBuffer buffer = state.valueMap.getBuffer();
