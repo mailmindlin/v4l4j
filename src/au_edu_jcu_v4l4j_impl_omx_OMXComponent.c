@@ -35,6 +35,11 @@ extern "C" {
     (a).nVersion.s.nStep = OMX_VERSION_STEP
 
 typedef struct {
+	OMX_U32 nSize;
+	OMX_VERSIONTYPE nVersion;
+} OMXStructureHeader;
+
+typedef struct {
 	OMX_HANDLETYPE component;
 	OMX_CALLBACKTYPE callbacks;
 	jobject self;
@@ -504,6 +509,17 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doAccessConfi
 	//arrayOffset can be nonzero for a few reasons, including alignment, so
 	//deal with that.
 	void* dataStruct = (void*) (&buf[arrayOffset]);
+	
+	{
+		//Fill out OMX query header
+		OMXStructureHeader* queryHeader = (OMXStructureHeader*) dataStruct;
+		queryHeader->nSize = arrayLength - arrayOffset;
+		queryHeader->nVersion.nVersion = OMX_VERSION;
+		queryHeader->nVersion.s.nVersionMajor = OMX_VERSION_MAJOR;
+		queryHeader->nVersion.s.nVersionMinor = OMX_VERSION_MINOR;
+		queryHeader->nVersion.s.nRevision = OMX_VERSION_REVISION;
+		queryHeader->nVersion.s.nStep = OMX_VERSION_STEP;
+	}
 	
 	//Actually query stuff here
 	OMX_ERRORTYPE res;
