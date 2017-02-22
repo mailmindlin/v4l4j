@@ -11,7 +11,6 @@ import java.util.Map;
 import au.edu.jcu.v4l4j.impl.jni.StructField.PointerStructField;
 
 public class StructPrototype implements StructFieldType {
-	public static final int WORD_SIZE = 4;
 	protected final StructField[] fields;
 	protected final Map<String, StructField> fieldMap;
 	protected final int[] byteOffsets;
@@ -80,6 +79,15 @@ public class StructPrototype implements StructFieldType {
 			}
 		}
 	}*/
+	
+	protected ByteBuffer dupBuffer(ByteBuffer buf, int offset, int length) {
+		ByteBuffer dup = buf.duplicate();
+		dup.position(buf.position() + offset);
+		if (length > -1)
+			dup.limit(dup.position() + length);
+		dup.order(buf.order());
+		return dup;
+	}
 
 	protected Map<String, Object> read(ByteBuffer buffer, StructReadingContext parentContext) {
 		Map<String, Object> value = new HashMap<>();
@@ -87,11 +95,7 @@ public class StructPrototype implements StructFieldType {
 		for (int i = 0; i < this.fields.length; i++) {
 			StructField field = this.fields[i];
 
-			ByteBuffer dup = buffer.duplicate();
-			dup.position(buffer.position() + this.byteOffsets[i]);
-			if (!field.getType().expands())
-				dup.limit(dup.position() + field.getSize());
-			dup.order(buffer.order());
+			ByteBuffer dup = dupBuffer(buffer, this.byteOffsets[i], field.getType().expands() ? field.getSize() : -1);
 			
 			value.put(field.getName(), field.getType().reader().read(dup, context));
 		}
@@ -103,12 +107,8 @@ public class StructPrototype implements StructFieldType {
 		for (int i = 0; i < this.fields.length; i++) {
 			StructField field = this.fields[i];
 
-			ByteBuffer dup = buffer.duplicate();
-			dup.position(buffer.position() + this.byteOffsets[i]);
-			if (!field.getType().expands())
-				dup.limit(dup.position() + field.getSize());
-			dup.order(buffer.order());
-
+			ByteBuffer dup = dupBuffer(buffer, this.byteOffsets[i], field.getType().expands() ? field.getSize() : -1);
+			
 			field.getType().writer().write(dup, params.get(field.getName()));
 		}
 	}
