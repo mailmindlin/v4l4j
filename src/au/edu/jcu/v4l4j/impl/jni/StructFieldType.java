@@ -10,17 +10,9 @@ public interface StructFieldType {
 	
 	boolean expands();
 	
-	@FunctionalInterface
-	public static interface Writer {
-		void write(ByteBuffer buffer, Object params);
-	}
+	void write(ByteBuffer buffer, Object params);
 	
-	Writer writer();
-	
-	@FunctionalInterface
-	public static interface Reader {
-		Object read(ByteBuffer buffer, StructReadingContext context);
-	}
+	Object read(ByteBuffer buffer, StructReadingContext context);
 	
 	Reader reader();
 }

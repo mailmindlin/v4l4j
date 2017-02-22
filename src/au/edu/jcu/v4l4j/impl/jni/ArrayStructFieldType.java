@@ -30,14 +30,17 @@ public class ArrayStructFieldType implements StructFieldType {
 		return false;
 	}
 	
+	@Override
 	public void write(ByteBuffer buffer, Object value) {
 		//TODO handle primitive arrays
 		Object[] values = (Object[]) value;
-		Writer w = this.baseType.writer();
-		for (int i = 0; i < this.length; i++)
-			w.write(buffer, values[i]);
+		for (int i = 0; i < this.length; i++) {
+			Object value = values[i];
+			ByteBuffer dup = 
+		}
 	}
 	
+	@Override
 	public List<Object> read(ByteBuffer buffer, StructReadingContext parentContext) {
 		List<Object> values = new ArrayList<>();
 		StructReadingContext context = parentContext.child(this, values);
@@ -46,17 +49,4 @@ public class ArrayStructFieldType implements StructFieldType {
 			values.add(r.read(buffer, context));
 		return values;
 	}
-
-	@Override
-	public Writer writer() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Reader reader() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
 }

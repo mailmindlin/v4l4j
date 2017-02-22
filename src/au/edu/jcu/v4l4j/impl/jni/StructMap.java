@@ -6,12 +6,23 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Class to wrap and manipulate actual memory with the given struct prototype.
+ */
 public class StructMap implements Map<String, Object>, AutoCloseable {
 	protected final StructPrototype struct;
 	protected final long pointer;
 	protected final ByteBuffer buffer;
+	/**
+	 * Arrays reachable by pointer
+	 */
+	protected final Map<String, NativeArray> farArrays = new HashMap<>();
+	/**
+	 * Structs reachable by pointer
+	 */
 	protected final Map<String, StructMap> farStructs = new HashMap<>();
 	protected final Map<String, Long> farPointers = new HashMap<>();
+	protected final Set<Long> unmanagedRefs = new HashSet<>();
 	
 	public StructMap(StructPrototype struct) {
 		this(struct, MemoryUtils.alloc(struct.getSize()), struct.getSize());
@@ -79,20 +90,18 @@ public class StructMap implements Map<String, Object>, AutoCloseable {
 
 	@Override
 	public Object remove(Object key) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void putAll(Map<? extends String, ? extends Object> m) {
-		// TODO Auto-generated method stub
-		
+		for (Entry<? extends String, ? extends Object> e : m.entrySet())
+			this.put(e.getKey(), e.getValue());
 	}
 
 	@Override
 	public void clear() {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

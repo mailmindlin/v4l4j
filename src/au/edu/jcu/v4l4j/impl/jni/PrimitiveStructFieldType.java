@@ -49,10 +49,10 @@ public enum PrimitiveStructFieldType implements StructFieldType {
 	;
 	private final int alignment;
 	private final int size;
-	private final StructFieldType.Writer writer;
-	private final StructFieldType.Reader reader;
+	private final BiConsumer<ByteBuffer, Object> writer;
+	private final BiFunction<ByteBuffer, StructReadingContext, Object> reader;
 	
-	PrimitiveStructFieldType(StructFieldType.Writer writer, StructFieldType.Reader reader) {
+	PrimitiveStructFieldType(BiConsumer<ByteBuffer, Object> writer, BiFunction<ByteBuffer, StructReadingContext, Object> reader) {
 		this.writer = writer;
 		this.reader = reader;
 		this.alignment = MemoryUtils.getAlignment(this.ordinal());
@@ -73,14 +73,14 @@ public enum PrimitiveStructFieldType implements StructFieldType {
 	public boolean expands() {
 		return false;
 	}
-
+	
 	@Override
-	public Writer writer() {
-		return writer;
+	public void write(ByteBuffer buffer, Object params) {
+		writer.accept(buffer, params);
 	}
-
+	
 	@Override
-	public Reader reader() {
-		return reader;
+	public Object read(ByteBuffer buffer, StructReadingContext context) {
+		return reader.apply(buffer, context);
 	}
 }
