@@ -112,6 +112,20 @@ public class StructPrototype implements StructFieldType {
 			field.getType().writer().write(dup, params.get(field.getName()));
 		}
 	}
+	
+	public Object readField(ByteBuffer buffer, String fieldName) {
+		StructField field = this.fieldMap.get(fieldName);
+		if (field == null)
+			throw new IllegalArgumentException("Unknown field '" + fieldName + "'");
+		
+		int index = 0;
+		for (index = 0; this.fields[index] != field; index++)
+			;
+		
+		ByteBuffer dup = dupBuffer(buffer, this.byteOffsets[index], field.getType().expands() ? field.getSize() : -1);
+		
+		return field.getType().reader().read(dup, null);
+	}
 
 	public StructBuilder make() {
 		return new StructBuilder();
