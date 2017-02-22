@@ -16,6 +16,11 @@ public final class MemoryUtils {
 	private static native ByteBuffer doWrap(long pointer, long length);
 	
 	public static native long unwrap(ByteBuffer buffer);
+	
+	public static native long alloc(int alignment, long length);
+	public static native long realloc(long pointer, long length);
+	public static native void free(long pointer);
+	
 	public static ByteBuffer wrap(long pointer, long length) {
 		ByteBuffer result = doWrap(pointer, length);
 		result.order(ByteOrder.nativeOrder());

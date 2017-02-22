@@ -8,6 +8,7 @@
 #include <jni.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>//aligned_alloc, free
 
 #include "common.h"
 #include "debug.h"
@@ -52,6 +53,7 @@ struct PointerAlignmentStruct {
 	uint8_t padding;
 	void* test;
 };
+
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_impl_jni_MemoryUtils_getAlignment(JNIEnv *env, jclass me, jint type) {
 	LOG_FN_ENTER();
 	
@@ -121,6 +123,24 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_jni_MemoryUtils_doWrap(JNIE
 	LOG_FN_ENTER();
 	
 	return (*env)->NewDirectByteBuffer(env, (void*) (uintptr_t) pointer, length);
+}
+
+JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_impl_jni_MemoryUtils_alloc(JNIEnv *env, jclass me, jint alignment, jlong length) {
+	LOG_FN_ENTER();
+	
+	void* result = aligned_alloc(alignment, length);
+	
+	if (!result) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Unable to allocate %d bytes of memory with %d alignment", length, alignment);
+		return -1;
+	}
+	
+	return (jlong) (uintptr_t) result;
+}
+
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_jni_MemoryUtils_free(JNIEnv *env, jclass me, jlong pointer) {
+	LOG_FN_ENTER();
+	free((void*) (uintptr_t) pointer);
 }
 
 #ifdef __cplusplus
