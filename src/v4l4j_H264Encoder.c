@@ -95,7 +95,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_h264_H264Encoder_doEncode(J
 	jbyteArray arrayRef;
 	unsigned int output_len;
 	void (*output_release)(JNIEnv* env, jbyteArray arrayRef, unsigned char* ptr);
-	u8* output_buffer = getBufferPointer(env, output, &arrayRef, &output_len, &output_release);
+	u8* output_buffer = getBufferPointer(env, output, &arrayRef, NULL, &output_len, &output_release);
 	if (!output_buffer) {
 		THROW_EXCEPTION(env, ARG_EXCP, "Could not get pointer to buffer");
 		return -1;

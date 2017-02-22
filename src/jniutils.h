@@ -12,5 +12,5 @@ int getBufferPosition(JNIEnv *env, jobject buffer) __attribute__ ((pure, visibil
 void setBufferPosition(JNIEnv *env, jobject buffer, int position) __attribute__((visibility ("hidden")));
 void setBufferLimit(JNIEnv *env, jobject buffer, int limit) __attribute__((visibility ("hidden")));
 int getBufferLimit(JNIEnv *env, jobject limit) __attribute__ ((pure, visibility ("hidden")));
-unsigned char* getBufferPointer(JNIEnv *env, jobject buffer, jbyteArray* arrayRef, unsigned int* len, void (**release)(JNIEnv* env, jbyteArray arrayRef, unsigned char* ptr)) __attribute__((visibility ("hidden")));
+unsigned char* getBufferPointer(JNIEnv *env, jobject buffer, jbyteArray* arrayRef, unsigned int* off, unsigned int* len, void (**release)(JNIEnv* env, jbyteArray arrayRef, unsigned char* ptr)) __attribute__((visibility ("hidden")));
 #endif

@@ -527,7 +527,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 	jbyteArray arrayRef = NULL;
 	unsigned int arrayLength = 0;
 	void (*releaseArray)(JNIEnv* env, jbyteArray arrayRef, unsigned char* ptr);
-	unsigned char* array = getBufferPointer(env, buffer, &arrayRef, &arrayLength, &releaseArray);
+	unsigned char* array = getBufferPointer(env, buffer, &arrayRef, NULL, &arrayLength, &releaseArray);
 	// check we have a valid pointer
 	if (!array) {
 		(*d->vdev->capture->actions->enqueue_buffer)(d->vdev, buffer_index);

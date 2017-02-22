@@ -53,11 +53,13 @@ static void __doReleaseArray(JNIEnv* env, jbyteArray arrayRef, unsigned char* pt
  * @param arrayRef If not null, will be set to NULL if a direct pointer can be recieved, else the array that is backing the returned pointer
  * @param len If not null, will be set to the length of the returned pointer, in bytes.
  */
-inline unsigned char* getBufferPointer(JNIEnv *env, jobject buffer, jbyteArray* arrayRef, unsigned int* len, void (**release)(JNIEnv* env, jbyteArray arrayRef, unsigned char* ptr)) {
+inline unsigned char* getBufferPointer(JNIEnv *env, jobject buffer, jbyteArray* arrayRef, unsigned int* off, unsigned int* len, void (**release)(JNIEnv* env, jbyteArray arrayRef, unsigned char* ptr)) {
 	unsigned char* result = (*env)->GetDirectBufferAddress(env, buffer);
 	if (result) {
 		if (arrayRef)
 			*arrayRef = NULL;
+		if (off)
+			*off = (unsigned) getBufferPosition(env, buffer);
 		if (len)
 			*len = (*env)->GetDirectBufferCapacity(env, buffer);
 		if (release)
@@ -103,6 +105,8 @@ inline unsigned char* getBufferPointer(JNIEnv *env, jobject buffer, jbyteArray* 
 		THROW_EXCEPTION(env, JNI_EXCP, "Unable to get elements from array");
 		return NULL;
 	}
+	if (off)
+		*off = getBufferPosition(env, buffer);
 	if (len)
 		*len = (*env)->GetArrayLength(env, array);
 	if (arrayRef)
