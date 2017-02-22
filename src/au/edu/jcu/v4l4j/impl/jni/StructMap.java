@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class StructMap implements Map<String, Object>, AutoCloseable {
+public class StructMap implements Map<String, Object>, AutoCloseable, NativeWrapper {
 	protected final StructPrototype struct;
 	protected final long pointer;
 	protected final ByteBuffer buffer;
@@ -184,7 +184,18 @@ public class StructMap implements Map<String, Object>, AutoCloseable {
 		
 	}
 	
-	public ByteBuffer getBuffer() {
+	@Override
+	public StructPrototype type() {
+		return this.struct;
+	}
+	
+	@Override
+	public long pointer() {
+		return this.pointer;
+	}
+	
+	@Override
+	public ByteBuffer buffer() {
 		return this.buffer;
 	}
 }
