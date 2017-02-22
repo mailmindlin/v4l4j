@@ -23,7 +23,9 @@ public interface Control<T> extends AutoCloseable {
 	
 	void close();
 	
-	ControlGetter<T, T> get();
+	default ControlGetter<T, T> get() {
+		return access().get();
+	}
 	
 	ControlAccessor<T, Void> access();
 	
