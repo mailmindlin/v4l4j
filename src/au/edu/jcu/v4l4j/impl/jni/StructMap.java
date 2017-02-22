@@ -13,20 +13,16 @@ public class StructMap implements Map<String, Object>, AutoCloseable {
 	protected final long pointer;
 	protected final ByteBuffer buffer;
 	/**
-	 * Map for structs that are far (accessible through a pointer), but we didn't allocate
-	 */
-	protected final Map<String, WeakReference<StructMap>> farStructRefs = new HashMap<>();
-	/**
 	 * Lookup for far structs (accessible through a pointer) that we allocated and linked
 	 */
-	protected final Map<String, StructMap> farStructs = new HashMap<>();
-	protected final Map<String, WeakReference<NativeArray>> farArrayRefs = new HashMap<>();
-	protected final Map<String, NativeArray> farArrays = new HashMap<>();
+	protected final Map<String, StructMap> structs = new HashMap<>();
+	protected final Map<String, NativeArray> arrays = new HashMap<>();
+	protected final Map<String, NativeUnion> unions = new HashMap<>();
 	/**
-	 * Map for 
+	 * Set of names that have been wrapped by Java, and could
+	 * be broken by an external write
 	 */
-	protected final Map<String, Long> farPointers = new HashMap<>();
-	
+	protected final Set<String> wrappedNames = new HashSet<>();
 	/**
 	 * Set of objects that we have to release when closing
 	 */
@@ -75,45 +71,73 @@ public class StructMap implements Map<String, Object>, AutoCloseable {
 
 	@Override
 	public Object get(Object _key) {
-		String key = _key.toString();
-		int dotIdx = key.indexOf(".", 1);
-		int bracketIdx = key.indexOf("[", 1);
-		int derefIdx = key.indexOf("->", 1);
-		
-		int baseEndIdx = key.length();
-		//Find nonnegative minimum value
-		if (dotIdx > -1)
-			baseEndIdx = dotIdx;
-		if (bracketIdx > -1 && bracketIdx < baseEndIdx)
-			baseEndIdx = bracketIdx;
-		if (derefIdx > -1 && derefIdx < baseEndIdx)
-			baseEndIdx = derefIdx;
-		
-		String baseKey = key.substring(0, baseEndIdx);
-		
-		if (baseKey.startsWith("->")) {
-			//Dereferenced access 
-			baseKey = baseKey.substring(2);
-			if (this.farStructRefs.containsKey(baseKey)) {
-				StructMap far = this.farStructRefs.compute(baseKey, (_k, oldRef) -> {
-					//Re-create far reference object if deleted
-					StructMap old = oldRef == null ? null : oldRef.get();
-					if (old != null)
-						return oldRef;
-					//We have to get a new wrapper
-					StructField localField = this.struct.getField(baseKey);
-					//TODO finish
-					StructMap newMap = null;
-					return null;
-				}).get();
-				far.get(key.substring(baseEndIdx));
+		return this.struct.readField(this.buffer, _key.toString());
+	}
+	
+	public NativeUnion getUnion(String name) {
+		return this.unions.computeIfAbsent(name, key -> {
+			StructField field = this.struct.getField(key);
+			StructFieldType type = field.getType();
+			if (type instanceof UnionPrototype) {
+				//Near fixed-size array
+				ByteBuffer dup = MemoryUtils.sliceBuffer(this.buffer, field.getOffset(), field.getSize());
+				return new NativeUnion((UnionPrototype) type, dup);
+			} else if (type instanceof PointerStructFieldType) {
+				throw new IllegalStateException("Far pointer is not wrapped/allocated; you may want to call allocateFar/wrapFar");
+			} else {
+				throw new IllegalArgumentException("Field " + key + " is not an union or pointer (is " + type + ")");
 			}
-		}
+		});
+	}
+	
+	public NativeArray getArray(String name) {
+		return this.arrays.computeIfAbsent(name, key -> {
+			StructField field = this.struct.getField(key);
+			StructFieldType type = field.getType();
+			if (type instanceof ArrayStructFieldType) {
+				//Near fixed-size array
+				ByteBuffer dup = MemoryUtils.sliceBuffer(this.buffer, field.getOffset(), field.getSize());
+				return new NativeArray((ArrayStructFieldType) type, dup);
+			} else if (type instanceof PointerStructFieldType) {
+				throw new IllegalStateException("Far pointer is not wrapped/allocated; you may want to call allocateFar/wrapFar");
+			} else {
+				throw new IllegalArgumentException("Field " + key + " is not an array or pointer(is " + type + ")");
+			}
+		});
+	}
+	
+	/**
+	 * Allocate a native memory structure on the end of a pointer
+	 * @param name
+	 */
+	public void allocateFar(String name) {
+		StructField field = this.struct.getField(name);
+		StructFieldType type = field.getType();
 		
-		if (this.farStructRefs.containsKey(baseKey) || this.farStructs.containsKey(baseKey)) {
-			StructMap far = 
-		}
-		return null;
+	}
+	
+	/**
+	 * Wrap a native memory structure on the end of a pointer
+	 * @param name
+	 */
+	public void wrapFar(String name) {
+		
+	}
+	
+	public StructMap getStruct(String name) {
+		return this.structs.computeIfAbsent(name, key->{
+			StructField field = this.struct.getField(key);
+			StructFieldType type = field.getType();
+			if (type instanceof StructPrototype) {
+				//Near fixed-size array
+				ByteBuffer dup = MemoryUtils.sliceBuffer(this.buffer, field.getOffset(), field.getSize());
+				return new StructMap((StructPrototype) type, dup);
+			} else if (type instanceof PointerStructFieldType) {
+				throw new IllegalStateException("Far pointer is not wrapped/allocated; you may want to call allocateFar/wrapFar");
+			} else {
+				throw new IllegalArgumentException("Field " + key + " is not a struct or pointer (is " + type + ")");
+			}
+		});
 	}
 
 	@Override
