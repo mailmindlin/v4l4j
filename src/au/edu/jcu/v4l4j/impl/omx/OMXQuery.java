@@ -24,8 +24,8 @@ public class OMXQuery extends StructPrototype {
 	
 	protected static StructField[] injectHeader(StructField...fields) {
 		StructField[] result = new StructField[fields.length + 2];
-		result[0] = new StructField(PrimitiveStructFieldType.INT32, "nSize");
-		result[1] = new StructField(VERSION_TYPE, "nVersion");
+		result[0] = new StructField(PrimitiveStructFieldType.INT32, "nSize", -1);
+		result[1] = new StructField(VERSION_TYPE, "nVersion", -1);
 		System.arraycopy(fields, 0, result, 2, fields.length);
 		return result;
 	}
@@ -46,13 +46,13 @@ public class OMXQuery extends StructPrototype {
 		this.bindings = new HashMap<>();
 	}
 	
-	protected OMXQuery(StructField[] fields, Map<String, StructField> fieldMap, int[] byteOffsets, Map<String, Object> bindings) {
-		super(fields, fieldMap, byteOffsets);
+	protected OMXQuery(StructField[] fields, Map<String, StructField> fieldMap, Map<String, Object> bindings) {
+		super(fields, fieldMap);
 		this.bindings = bindings;
 	}
 	
 	public OMXQuery duplicate() {
-		return new OMXQuery(this.fields, this.fieldMap, this.byteOffsets, new HashMap<>(bindings));
+		return new OMXQuery(this.fields, this.fieldMap, new HashMap<>(bindings));
 	}
 	
 	public OMXQuery bind(String key, Object value) {

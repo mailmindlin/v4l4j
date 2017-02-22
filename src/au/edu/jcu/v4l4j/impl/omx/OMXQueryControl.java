@@ -107,11 +107,17 @@ public class OMXQueryControl implements CompositeControl {
 	}
 	
 	public class OMXQueryControlAccessor<R> implements CompositeControlAccessor<Map<String, Object>, R> {
+		protected final boolean isParentOwner;
 		protected final OMXQueryControlAccessor<?> parent;
 		protected final Duration timeout;
 		protected final Consumer<OMXQueryControlAccessorState> reader;
 		
 		protected OMXQueryControlAccessor(OMXQueryControlAccessor<?> parent, Duration timeout, Consumer<OMXQueryControlAccessorState> reader) {
+			this(false, parent, timeout, reader);
+		}
+		
+		protected OMXQueryControlAccessor(boolean isParentOwner, OMXQueryControlAccessor<?> parent, Duration timeout, Consumer<OMXQueryControlAccessorState> reader) {
+			this.isParentOwner = isParentOwner;
 			this.parent = parent;
 			this.timeout = timeout;
 			this.reader = reader;
@@ -125,7 +131,7 @@ public class OMXQueryControl implements CompositeControl {
 
 		@Override
 		public OMXQueryControlGetter<Map<String, Object>> get() {
-			return new OMXQueryControlGetter<>(doGetChildParent(), this.timeout, state->OMXQueryControl.this.component.accessConfig(false, true, OMXQueryControl.this.queryId, state.valueMap.getBuffer()));
+			return new OMXQueryControlGetter<>(doGetChildParent(), this.timeout, state->OMXQueryControl.this.component.accessConfig(false, true, OMXQueryControl.this.queryId, state.valueMap.buffer()));
 		}
 		
 		/**
@@ -134,14 +140,13 @@ public class OMXQueryControl implements CompositeControl {
 		 * @return
 		 */
 		protected OMXQueryControlAccessor<?> doGetChildParent() {
-			if (this.reader == null)
+			if (this.reader == null && !this.isParentOwner)
 				return this.parent;
 			return this;
 		}
 		
 		/**
 		 * Method that actually does stuff when invoked.
-		 * @return Pointer to native memory, or 0 if none is allocated
 		 * @throws Exception
 		 */
 		protected void doCall(OMXQueryControlAccessorState state) throws Exception {
@@ -156,6 +161,11 @@ public class OMXQueryControl implements CompositeControl {
 				doCall(state);
 				return (R) state.result;
 			}
+		}
+
+		@Override
+		public R and() {
+			throw new IllegalStateException();
 		}
 		
 	}
@@ -236,7 +246,7 @@ public class OMXQueryControl implements CompositeControl {
 
 		@Override
 		public OMXQueryControlAccessor<R> set() {
-			return new OMXQueryControlAccessor<>(doGetChildParent(), timeout, state->OMXQueryControl.this.component.accessConfig(false, false, OMXQueryControl.this.queryId, state.valueMap.getBuffer()));
+			return new OMXQueryControlAccessor<>(doGetChildParent(), timeout, state->OMXQueryControl.this.component.accessConfig(false, false, OMXQueryControl.this.queryId, state.valueMap.buffer()));
 		}
 
 		@Override
@@ -244,7 +254,7 @@ public class OMXQueryControl implements CompositeControl {
 			return new OMXQueryControlGetter<>(doGetChildParent(), timeout, state->{
 				OMXComponent component = OMXQueryControl.this.component;
 				int queryId = OMXQueryControl.this.queryId;
-				ByteBuffer buffer = state.valueMap.getBuffer();
+				ByteBuffer buffer = state.valueMap.buffer();
 				component.accessConfig(false, false, queryId, buffer);//set
 				component.accessConfig(false, true, queryId, buffer);//get
 			});
