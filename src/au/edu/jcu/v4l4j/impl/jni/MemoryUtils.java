@@ -5,7 +5,7 @@ import java.nio.ByteOrder;
 
 import au.edu.jcu.v4l4j.V4L4JUtils;
 
-public class MemoryUtils {
+public final class MemoryUtils {
 
 	static {
 		V4L4JUtils.loadLibrary();
@@ -24,5 +24,15 @@ public class MemoryUtils {
 	
 	public static long align(int alignment, long pointer) {
 		return (pointer + alignment - 1) & ~(alignment - 1L);
+	}
+	
+
+	public static ByteBuffer sliceBuffer(ByteBuffer buf, int offset, int length) {
+		ByteBuffer dup = buf.duplicate();
+		dup.position(buf.position() + offset);
+		if (length > -1)
+			dup.limit(dup.position() + length);
+		dup.order(buf.order());
+		return dup;
 	}
 }

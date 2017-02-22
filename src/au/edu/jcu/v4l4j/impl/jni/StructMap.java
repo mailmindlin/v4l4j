@@ -1,28 +1,36 @@
 package au.edu.jcu.v4l4j.impl.jni;
 
+import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Class to wrap and manipulate actual memory with the given struct prototype.
- */
 public class StructMap implements Map<String, Object>, AutoCloseable {
 	protected final StructPrototype struct;
 	protected final long pointer;
 	protected final ByteBuffer buffer;
 	/**
-	 * Arrays reachable by pointer
+	 * Map for structs that are far (accessible through a pointer), but we didn't allocate
 	 */
-	protected final Map<String, NativeArray> farArrays = new HashMap<>();
+	protected final Map<String, WeakReference<StructMap>> farStructRefs = new HashMap<>();
 	/**
-	 * Structs reachable by pointer
+	 * Lookup for far structs (accessible through a pointer) that we allocated and linked
 	 */
 	protected final Map<String, StructMap> farStructs = new HashMap<>();
+	protected final Map<String, WeakReference<NativeArray>> farArrayRefs = new HashMap<>();
+	protected final Map<String, NativeArray> farArrays = new HashMap<>();
+	/**
+	 * Map for 
+	 */
 	protected final Map<String, Long> farPointers = new HashMap<>();
-	protected final Set<Long> unmanagedRefs = new HashSet<>();
+	
+	/**
+	 * Set of objects that we have to release when closing
+	 */
+	protected final Set<AutoCloseable> managedRefs = new HashSet<>();
 	
 	public StructMap(StructPrototype struct) {
 		this(struct, MemoryUtils.alloc(struct.getSize()), struct.getSize());
@@ -68,16 +76,42 @@ public class StructMap implements Map<String, Object>, AutoCloseable {
 	@Override
 	public Object get(Object _key) {
 		String key = _key.toString();
-		int dotIdx = key.indexOf(".");
-		int bracketIdx = key.indexOf("[");
+		int dotIdx = key.indexOf(".", 1);
+		int bracketIdx = key.indexOf("[", 1);
+		int derefIdx = key.indexOf("->", 1);
 		
-		if (dotIdx == -1 && bracketIdx == -1) {
-			//Flat value
-			return this.struct.readField(buffer, key);
-		} else if (dotIdx > -1 || bracketIdx > -1) {
-			//Has some complexity to it
-			String key0 = key.substring(0, Math.min(dotIdx, bracketIdx));
-			
+		int baseEndIdx = key.length();
+		//Find nonnegative minimum value
+		if (dotIdx > -1)
+			baseEndIdx = dotIdx;
+		if (bracketIdx > -1 && bracketIdx < baseEndIdx)
+			baseEndIdx = bracketIdx;
+		if (derefIdx > -1 && derefIdx < baseEndIdx)
+			baseEndIdx = derefIdx;
+		
+		String baseKey = key.substring(0, baseEndIdx);
+		
+		if (baseKey.startsWith("->")) {
+			//Dereferenced access 
+			baseKey = baseKey.substring(2);
+			if (this.farStructRefs.containsKey(baseKey)) {
+				StructMap far = this.farStructRefs.compute(baseKey, (_k, oldRef) -> {
+					//Re-create far reference object if deleted
+					StructMap old = oldRef == null ? null : oldRef.get();
+					if (old != null)
+						return oldRef;
+					//We have to get a new wrapper
+					StructField localField = this.struct.getField(baseKey);
+					//TODO finish
+					StructMap newMap = null;
+					return null;
+				}).get();
+				far.get(key.substring(baseEndIdx));
+			}
+		}
+		
+		if (this.farStructRefs.containsKey(baseKey) || this.farStructs.containsKey(baseKey)) {
+			StructMap far = 
 		}
 		return null;
 	}
@@ -112,8 +146,7 @@ public class StructMap implements Map<String, Object>, AutoCloseable {
 
 	@Override
 	public Collection<Object> values() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
