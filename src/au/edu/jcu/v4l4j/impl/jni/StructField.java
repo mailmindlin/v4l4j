@@ -26,6 +26,14 @@ public class StructField {
 	public int getAlignment() {
 		return type.getAlignment();
 	}
+	
+	public int getOffset() {
+		return this.offset;
+	}
+	
+	public StructField withOffset(int offset) {
+		return new StructField(this.type, this.name, offset);
+	}
 
 	@Override
 	public String toString() {
@@ -40,6 +48,11 @@ public class StructField {
 			super(PrimitiveStructFieldType.RAW_POINTER, name, offset);
 			this.dereference = dereference;
 			this.remote = remote;
+		}
+		
+		@Override
+		public PointerStructField withOffset(int offset) {
+			return new PointerStructField(this.dereference, this.remote, this.name, offset);
 		}
 
 	}
