@@ -6,14 +6,21 @@ public enum ControlType {
 	 */
 	BUTTON,
 	/**
-	 * A range slider
+	 * A range slider. Accepts a range of values between a defined minimum and maximum, with
+	 * a specified minimum step.
 	 */
 	SLIDER,
+	/**
+	 * A switch that has two discrete values: 0 and 1
+	 */
 	SWITCH,
 	DISCRETE,
 	MENU,
 	STRING,
 	LONG,
 	BITMASK,
+	/**
+	 * A control that has no inherent value, yet contains sub-controls that can be accessed
+	 */
 	COMPOSITE;
 }
