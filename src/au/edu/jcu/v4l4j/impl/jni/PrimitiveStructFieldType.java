@@ -1,5 +1,9 @@
 package au.edu.jcu.v4l4j.impl.jni;
 
+import java.nio.ByteBuffer;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+
 public enum PrimitiveStructFieldType implements StructFieldType {
 	/**
 	 * bool type

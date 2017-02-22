@@ -24,19 +24,36 @@ public class ArrayStructFieldType implements StructFieldType {
 		//We can be reasonably sure that there isn't padding between the elements
 		return baseType.getSize() * length;
 	}
+	
+	public int getLength() {
+		return this.length;
+	}
 
 	@Override
 	public boolean expands() {
 		return false;
 	}
 	
+	public void writeElement(ByteBuffer buffer, int index, Object element) {
+		final int size = this.baseType.getSize();
+		ByteBuffer dup = MemoryUtils.sliceBuffer(buffer, size * index, size);
+		this.baseType.write(dup, element);
+	}
+	
+	public Object readElement(ByteBuffer buffer, int index) {
+		final int size = this.baseType.getSize();
+		ByteBuffer dup = MemoryUtils.sliceBuffer(buffer, size * index, size);
+		return this.baseType.read(dup, null);
+	}
+	
 	@Override
 	public void write(ByteBuffer buffer, Object value) {
 		//TODO handle primitive arrays
 		Object[] values = (Object[]) value;
+		final int size = this.baseType.getSize();
 		for (int i = 0; i < this.length; i++) {
-			Object value = values[i];
-			ByteBuffer dup = 
+			ByteBuffer dup = MemoryUtils.sliceBuffer(buffer, size * i, size);
+			this.baseType.write(dup, values[i]);
 		}
 	}
 	
@@ -44,9 +61,9 @@ public class ArrayStructFieldType implements StructFieldType {
 	public List<Object> read(ByteBuffer buffer, StructReadingContext parentContext) {
 		List<Object> values = new ArrayList<>();
 		StructReadingContext context = parentContext.child(this, values);
-		Reader r = this.baseType.reader();
 		for (int i = 0; i < this.length; i++)
-			values.add(r.read(buffer, context));
+			values.add(this.baseType.read(buffer, context));
 		return values;
 	}
+
 }
