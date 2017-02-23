@@ -7,8 +7,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import au.edu.jcu.v4l4j.impl.jni.StructField.PointerStructField;
+import java.util.function.IntFunction;
+import java.util.function.ToIntFunction;
 
 public class StructPrototype implements StructFieldType {
 	protected final StructField[] fields;
@@ -206,6 +206,21 @@ public class StructPrototype implements StructFieldType {
 
 		public StructPrototypeBuilder addStruct(StructPrototype struct, String name) {
 			add(struct, name);
+			return this;
+		}
+		
+		public StructPrototypeBuilder addString(int length, String name) {
+			add(new StringStructFieldType(length), name);
+			return this;
+		}
+		
+		public <E extends Enum<E>> StructPrototypeBuilder addEnum(Class<E> enumClass, String name) {
+			add(new EnumStructFieldType<>(enumClass), name);
+			return this;
+		}
+		
+		public <E extends Enum<E>> StructPrototypeBuilder addEnum(IntFunction<E> mapper, ToIntFunction<E> unmapper, String name) {
+			add(new EnumStructFieldType<>(mapper, unmapper), name);
 			return this;
 		}
 
