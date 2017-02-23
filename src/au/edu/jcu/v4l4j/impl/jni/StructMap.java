@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.stream.Collectors;
 
 public class StructMap implements Map<String, Object>, AutoCloseable, NativeWrapper {
 	protected final StructPrototype struct;
@@ -92,8 +93,8 @@ public class StructMap implements Map<String, Object>, AutoCloseable, NativeWrap
 			StructFieldType type = field.getType();
 			if (type instanceof UnionPrototype) {
 				//Wrap local field
-				ByteBuffer dup = MemoryUtils.sliceBuffer(this.buffer, field.getOffset(), field.getSize());
-				return new NativeUnion((UnionPrototype) type, dup);
+				ByteBuffer dup = MemoryUtils.sliceBuffer(this.buffer(), field.getOffset(), field.getSize());
+				return new NativeUnion((UnionPrototype) type, this.pointer() + field.getOffset(), dup, false);
 			} else if (type instanceof PointerStructFieldType) {
 				throw new IllegalStateException("Far pointer is not wrapped/allocated; you may want to call allocateFar/wrapFar");
 			} else {
@@ -125,7 +126,7 @@ public class StructMap implements Map<String, Object>, AutoCloseable, NativeWrap
 			if (type instanceof StructPrototype) {
 				//Wrap local field
 				ByteBuffer dup = MemoryUtils.sliceBuffer(this.buffer, field.getOffset(), field.getSize());
-				return new StructMap((StructPrototype) type, dup);
+				return new StructMap((StructPrototype) type, this.pointer() + field.getOffset(), dup, false);
 			} else if (type instanceof PointerStructFieldType) {
 				throw new IllegalStateException("Far pointer is not wrapped/allocated; you may want to call allocateFar/wrapFar");
 			} else {
@@ -152,15 +153,15 @@ public class StructMap implements Map<String, Object>, AutoCloseable, NativeWrap
 				final ByteBuffer farBuffer = MemoryUtils.wrap(farPointer, farType.getSize());
 				
 				if (farType instanceof ArrayStructFieldType) {
-					NativeArray array = new NativeArray((ArrayStructFieldType)farType, farBuffer);
+					NativeArray array = new NativeArray((ArrayStructFieldType)farType, farPointer, farBuffer, false);
 					manager = array;
 					this.arrays.put(name, array);
 				} else if (farType instanceof StructPrototype) {
-					StructMap struct = new StructMap((StructPrototype)farType, farBuffer);
+					StructMap struct = new StructMap((StructPrototype)farType, farPointer, farBuffer, false);
 					manager = struct;
 					this.structs.put(name, struct);
 				} else if (farType instanceof UnionPrototype) {
-					NativeUnion union = new NativeUnion((UnionPrototype)farType, farBuffer);
+					NativeUnion union = new NativeUnion((UnionPrototype)farType, farPointer, farBuffer, false);
 					manager = union;
 					this.unions.put(name, union);
 				} else {
@@ -199,17 +200,18 @@ public class StructMap implements Map<String, Object>, AutoCloseable, NativeWrap
 			//Register this name for updates
 			this.wrappedNames.add(name);
 			StructFieldType farType = ((PointerStructFieldType) type).getFarType();
-			long farPointer = MemoryUtils.align(farType.getAlignment(), farType.getSize());
+			//Read pointer
+			long farPointer = ((Number)this.struct.readField(this.buffer, name)).longValue();
 			ByteBuffer farBuffer = MemoryUtils.wrap(farPointer, farType.getSize());
 			
 			if (farType instanceof ArrayStructFieldType) {
-				NativeArray array = new NativeArray((ArrayStructFieldType)farType, farBuffer);
+				NativeArray array = new NativeArray((ArrayStructFieldType)farType, farPointer, farBuffer, false);
 				this.arrays.put(name, array);
 			} else if (farType instanceof StructPrototype) {
-				StructMap struct = new StructMap((StructPrototype)farType, farBuffer);
+				StructMap struct = new StructMap((StructPrototype)farType, farPointer, farBuffer, false);
 				this.structs.put(name, struct);
 			} else if (farType instanceof UnionPrototype) {
-				NativeUnion union = new NativeUnion((UnionPrototype)farType, farBuffer);
+				NativeUnion union = new NativeUnion((UnionPrototype)farType, farPointer, farBuffer, false);
 				this.unions.put(name, union);
 			} else {
 				
@@ -234,7 +236,7 @@ public class StructMap implements Map<String, Object>, AutoCloseable, NativeWrap
 					UnionPrototype prototype = union.type();
 					ByteBuffer oldBuffer = union.buffer();
 					union.close();
-					this.unions.put(name, new NativeUnion(prototype, MemoryUtils.wrap(pointer, oldBuffer.capacity())));
+					this.unions.put(name, new NativeUnion(prototype, pointer, MemoryUtils.wrap(pointer, oldBuffer.capacity()), false));
 				}
 			} else if (this.structs.containsKey(name)) {
 				StructMap struct = this.structs.get(name);
@@ -277,8 +279,9 @@ public class StructMap implements Map<String, Object>, AutoCloseable, NativeWrap
 
 	@Override
 	public Set<String> keySet() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.type().fields().stream()
+				.map(StructField::getName)
+				.collect(Collectors.toSet());
 	}
 
 	@Override
