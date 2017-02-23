@@ -13,8 +13,8 @@ import java.util.function.Supplier;
 import au.edu.jcu.v4l4j.api.control.CompositeControl;
 import au.edu.jcu.v4l4j.api.control.Control;
 import au.edu.jcu.v4l4j.api.control.ControlType;
+import au.edu.jcu.v4l4j.impl.jni.NativeStruct;
 import au.edu.jcu.v4l4j.impl.jni.StructField;
-import au.edu.jcu.v4l4j.impl.jni.StructMap;
 import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
 
 /**
@@ -163,7 +163,7 @@ public class OMXQueryControl implements CompositeControl {
 			}
 		}
 
-		@Override
+//		@Override
 		public R and() {
 			throw new IllegalStateException();
 		}
@@ -262,7 +262,7 @@ public class OMXQueryControl implements CompositeControl {
 		
 	}
 	protected static class OMXQueryControlAccessorState implements AutoCloseable {
-		StructMap valueMap;
+		NativeStruct valueMap;
 		Set<ByteBuffer> unmanagedRefs = new HashSet<>();
 		Object result = null;
 		@Override
