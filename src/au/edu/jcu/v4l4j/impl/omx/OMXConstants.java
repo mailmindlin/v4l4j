@@ -529,6 +529,7 @@ public class OMXConstants {
 	public static final int INDEX_ParamBrcmSupportsSlices				= 0x7F000104;	/**< reference: OMX_CONFIG_PORT_BOOLEANTYPE */
 	
 	static AudioEncodingType mapAudioEncodingType(int idx) {
+	public static AudioEncodingType mapAudioEncodingType(int idx) {
 		switch (idx) {
 			case AUDIO_ENCODING_UNUSED:
 				return AudioEncodingType.UNUSED;
@@ -591,7 +592,7 @@ public class OMXConstants {
 		}
 	}
 	
-	static int unmapAudioEncodingType(AudioEncodingType encoding) {
+	public static int unmapAudioEncodingType(AudioEncodingType encoding) {
 		switch (encoding) {
 			case UNUSED:
 				return AUDIO_ENCODING_UNUSED;
@@ -668,7 +669,7 @@ public class OMXConstants {
 		}
 	}
 	
-	static ImagePalette mapVideoEncodingType(int idx) {
+	public static ImagePalette mapVideoEncodingType(int idx) {
 		switch (idx) {
 			case VIDEO_ENCODING_UNUSED:
 				return null;
@@ -692,7 +693,7 @@ public class OMXConstants {
 		}
 	}
 		
-	static int unmapVideoEncodingType(ImagePalette palette) {
+	public static int unmapVideoEncodingType(ImagePalette palette) {
 		if (palette == null)//Can't put it in the switch
 			return VIDEO_ENCODING_UNUSED;
 		switch (palette) {
@@ -715,12 +716,12 @@ public class OMXConstants {
 		}
 	}
 	
-	static Rational decodeQ16(int q16) {
+	public static Rational decodeQ16(int q16) {
 		//TODO finish
 		return null;
 	}
 	
-	static int encodeQ16(Rational r) {
+	public static int encodeQ16(Rational r) {
 		//TODO finish
 		return -1;
 	}
