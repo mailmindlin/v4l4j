@@ -6,6 +6,8 @@ import java.util.List;
 import au.edu.jcu.v4l4j.api.AudioEncodingType;
 import au.edu.jcu.v4l4j.api.ImagePalette;
 import au.edu.jcu.v4l4j.api.Rational;
+import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
+import au.edu.jcu.v4l4j.impl.jni.UnionPrototype;
 
 public class OMXConstants {
 	public static final List<String> BITRATE_CONTROLS = Arrays.asList("disable", "variable", "constant", "variableSkipFrames", "constantSkipFrames");
@@ -528,7 +530,43 @@ public class OMXConstants {
 	public static final int INDEX_ParamBrcmJpegRestartInterval			= 0x7F000103;	/**< reference: OMX_PARAM_U32TYPE */
 	public static final int INDEX_ParamBrcmSupportsSlices				= 0x7F000104;	/**< reference: OMX_CONFIG_PORT_BOOLEANTYPE */
 	
-	static AudioEncodingType mapAudioEncodingType(int idx) {
+	public static final StructPrototype VERSION_TYPE = StructPrototype.builder()
+			.addInt8("nVersionMajor")
+			.addInt8("nVersionMinor")
+			.addInt8("nRevision")
+			.addInt8("nStep")
+			.build();
+	
+	public static final StructPrototype VIDEO_PORTDEFTYPE = StructPrototype.builder()
+			.addPointer("pNativeRender")
+			.addInt32("nFrameWidth")
+			.addInt32("nFrameHeight")
+			.addInt32("nStride")
+			.addInt32("nSliceHeight")
+			.addInt32("nBitrate")
+			.addInt32("xFramerate")
+			.addBoolean("bFlagErrorConcealment")
+			.addInt32("eCompressionFormat")
+			.addInt32("eColorFormat")
+			.addPointer("pNativeWindow")
+			.build();
+	public static final StructPrototype PARAM_PORTDEFINITIONTYPE = StructPrototype.builder()
+			.addInt32("nSize")
+			.addStruct(VERSION_TYPE, "nVersion")
+			.addInt32("nPortIndex")
+			.addInt32("eDir")
+			.addInt32("nBufferCountActual")
+			.addInt32("nBufferCountMin")
+			.addInt32("nBufferSize")
+			.addBoolean("bEnabled")
+			.addBoolean("bPopulated")
+			.addInt32("eDomain")
+			.add(UnionPrototype.builder()
+					.addStruct(VIDEO_PORTDEFTYPE, "video")
+					.build(), "format")
+			.addBoolean("bBuffersContiguous")
+			.addInt32("nBufferAlignment")
+			.build();
 	public static AudioEncodingType mapAudioEncodingType(int idx) {
 		switch (idx) {
 			case AUDIO_ENCODING_UNUSED:
