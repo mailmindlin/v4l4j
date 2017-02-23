@@ -1,8 +1,10 @@
 package au.edu.jcu.v4l4j.impl.jni;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
-public NativePointer<T> implements AutoCloseable {
+public class NativePointer<T> implements AutoCloseable {
 	protected final long address;
 	protected final StructFieldType type;
 	protected ByteBuffer buffer;
@@ -20,8 +22,9 @@ public NativePointer<T> implements AutoCloseable {
 			managedRefs.add(this);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public T get() {
-		return this.type().read(this.buffer(), null);
+		return (T) this.type().read(this.buffer(), null);
 	}
 	
 	public void set(T value) {
@@ -35,7 +38,8 @@ public NativePointer<T> implements AutoCloseable {
 		long farAddr = ((Number)type.read(buffer, null)).longValue();
 		if (farAddr == 0)
 			return null;
-		return new NativePointer(((PointerStructFieldType)type).getFarType(), farAddr, MemoryUtils.wrap(farAddr), false);
+		StructFieldType farType = ((PointerStructFieldType)type).getFarType();
+		return new NativePointer<U>(farType, farAddr, MemoryUtils.wrap(farAddr, farType.getSize()), false);
 	}
 	
 	public StructFieldType type() {
@@ -62,6 +66,6 @@ public NativePointer<T> implements AutoCloseable {
 				e.printStackTrace();
 			}
 		}
-		this.nativeRefs.clear();
+		this.managedRefs.clear();
 	}
 }
