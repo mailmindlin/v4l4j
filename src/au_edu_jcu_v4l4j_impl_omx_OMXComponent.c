@@ -430,7 +430,7 @@ JNIEXPORT jstring JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getPortInf
 			break;
 	}
 	
-	dprint(LOG_V4L4J, "Port MIME: '%s'\n", mimeType);
+	//dprint(LOG_V4L4J, "Port MIME: '%s'\n", mimeType);
 	
 	//Store the length in the first cell
 	const int resultLen = i + 1;

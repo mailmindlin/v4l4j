@@ -25,22 +25,27 @@ struct BoolAlignmentStruct {
 	uint8_t padding;
 	bool test;
 };
+
 struct CharAlignmentStruct {
 	uint8_t padding;
 	uint8_t test;
 };
+
 struct ShortAlignmentStruct {
 	uint8_t padding;
 	uint16_t test;
 };
+
 struct IntAlignmentStruct {
 	uint8_t padding;
 	uint32_t test;
 };
+
 struct LongAlignmentStruct {
 	uint8_t padding;
 	uint64_t test;
 };
+
 struct FloatAlignmentStruct {
 	uint8_t padding;
 	float test;
