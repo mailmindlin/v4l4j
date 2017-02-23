@@ -1,10 +1,14 @@
 package au.edu.jcu.v4l4j.impl.jni;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class NativeWrapper<K, T> extends NativePointer<T> {
-	protected final Map<K, Pointer<?>> localWrappers = new HashMap<>();
-	protected final Map<K, Pointer<?>> remoteWrappers = new HashMap<>();
+	protected final Map<K, NativePointer<?>> localWrappers = new HashMap<>();
+	protected final Map<K, NativePointer<?>> remoteWrappers = new HashMap<>();
 	
 	/**
 	 * Set of names that have been wrapped by Java, and could
@@ -26,20 +30,21 @@ public abstract class NativeWrapper<K, T> extends NativePointer<T> {
 		super(type, address, buffer, freeOnClose);
 	}
 	
-	private <U, V extends NativePointer<U>> V doWrapPointer(StructFieldType type, long addr, ByteBuffer buffer, boolean freeOnClose) {
+	@SuppressWarnings("unchecked")
+	protected <U, V extends NativePointer<U>> V doWrapPointer(StructFieldType type, long childAddress, ByteBuffer childBuffer, boolean freeOnClose) {
 		if (type instanceof StructPrototype)
-			return new NativeStruct((StructPrototype) type, childAddress, childBuffer, freeOnClose);
+			return (V) new NativeStruct((StructPrototype) type, childAddress, childBuffer, freeOnClose);
 		else if (type instanceof UnionPrototype)
-			return new NativeUnion((UnionPrototype) type, childAddress, childBuffer, freeOnClose);
+			return (V) new NativeUnion<U>((UnionPrototype) type, childAddress, childBuffer, freeOnClose);
 		else if (type instanceof ArrayStructFieldType)
-			return new NativeArray((ArrayStructFieldType) type, childAddress, childBuffer, freeOnClose);
+			return (V) new NativeArray((ArrayStructFieldType) type, childAddress, childBuffer, freeOnClose);
 		else
-			return new NativePointer(type, childAddress, childBuffer, false);
+			return (V) new NativePointer<U>(type, childAddress, childBuffer, false);
 	}
 	
-	protected <U, V extends NativePointer<U>> V doWrapChild(StructFieldType type, int offset, int size) {
+	protected <U, V extends NativePointer<U>> V doWrapLocalChild(StructFieldType type, int offset, int size) {
 		long childAddress = this.address() + offset;
-		ByteBuffer childBuffer = MemoryUtils.sliceBuffer(this.buffer(), offfset, size);
+		ByteBuffer childBuffer = MemoryUtils.sliceBuffer(this.buffer(), offset, size);
 		return doWrapPointer(type, childAddress, childBuffer, false);
 	}
 	
@@ -49,14 +54,19 @@ public abstract class NativeWrapper<K, T> extends NativePointer<T> {
 		try {
 			childAddress = MemoryUtils.alloc(alignment, size);
 			ByteBuffer childBuffer = MemoryUtils.wrap(childAddress, size);
-			result = (V) doWrapPointer(type, childAddress, childBuffer, true);
-			if (!this.managedRefs.add(v))
-				//TODO throw something
+			result = doWrapPointer(type, childAddress, childBuffer, true);
+			if (!this.managedRefs.add(result))
+				throw new RuntimeException("Could not add managed ref to list");
 		} catch (Throwable t) {
 			//Yes, I know that this is pretty unsafe, but we have to make sure that
 			//if we failed to add to managedRefs, we at least free the memory
-			if (childAddress != 0)
-				MemoryUtils.free(childAddress);
+			try {
+				if (childAddress != 0)
+					MemoryUtils.free(childAddress);
+			} catch (Exception e) {
+				t.addSuppressed(e);
+			}
+			//Rethrow t
 			throw t;
 		}
 		return result;
@@ -64,17 +74,13 @@ public abstract class NativeWrapper<K, T> extends NativePointer<T> {
 	
 	public abstract <U, V extends NativePointer<U>> V getChild(K key);
 	
-	public abstract <U, V extends NativePointer<U>> V getChildRemote(K key);
-	
-	public NativeUnion getUnion(K key) {
-		return (NativeUnion) getChild(key);
+	@SuppressWarnings("unchecked")
+	public <U, V extends NativePointer<U>> V getChildRemote(K key) {
+		return (V) this.remoteWrappers.get(key);
 	}
 	
-	public NativeArray getArray(K key) {
-		return (NativeArray) getChild(key);
-	}
+	public abstract void wrapChildRemote(K key);
 	
-	public NativeStruct getStruct(K key) {
-		return (NativeStruct) getChild(key);
-	}
+	public abstract void allocChildRemote(K key);
+	
 }
