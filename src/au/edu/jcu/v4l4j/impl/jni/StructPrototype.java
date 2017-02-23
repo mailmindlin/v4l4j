@@ -193,27 +193,27 @@ public class StructPrototype implements StructFieldType {
 			add(PrimitiveStructFieldType.FLOAT64, name);
 			return this;
 		}
+		
+		public StructPrototypeBuilder addPointer(StructFieldType farType, String name) {
+			add(new PointerStructFieldType(farType), name);
+			return this;
+		}
 
 		public StructPrototypeBuilder addPointer(String name) {
-			this.fields.add(new PointerStructField(false, null, name, -1));
+			add(PrimitiveStructFieldType.RAW_POINTER, name);
 			return this;
 		}
 
 		public StructPrototypeBuilder addStruct(StructPrototype struct, String name) {
-			this.fields.add(new StructField(struct, name, -1));
+			add(struct, name);
 			return this;
 		}
 
-		public StructPrototypeBuilder addFarStruct(StructPrototype struct, String name) {
-			this.fields.add(new PointerStructField(true, struct, name, -1));
-			return this;
-		}
-
-		public StructPrototypeBuilder add(PrimitiveStructFieldType type, String name) {
+		public StructPrototypeBuilder add(StructFieldType type, String name) {
 			this.fields.add(new StructField(type, name, -1));
 			return this;
 		}
-
+		
 		public StructPrototype build() {
 			return new StructPrototype(this.fields);
 		}
