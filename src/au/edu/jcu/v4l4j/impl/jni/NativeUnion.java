@@ -6,25 +6,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class NativeUnion implements AutoCloseable, NativeWrapper, Map<String, Object> {
-	protected final UnionPrototype union;
-	protected final long pointer;
-	protected final ByteBuffer buffer;
-	protected final Map<String, NativeWrapper> wrappers = new HashMap<>();
+public class NativeUnion<T> extends NativeWrapper<String, T> implements Map<String, Object> {
 	
 	public NativeUnion(UnionPrototype union, ByteBuffer buffer) {
 		this(union, MemoryUtils.unwrap(buffer), buffer, false);
 	}
 	
 	protected NativeUnion(UnionPrototype union, long pointer, ByteBuffer buffer, boolean releaseOnClose) {
-		this.union = union;
-		this.pointer = pointer;
-		this.buffer = buffer;
-	}
-	
-	@Override
-	public long pointer() {
-		return this.pointer;
+		super(union, pointer, buffer, releaseOnClose);
 	}
 	
 	@Override
@@ -50,7 +39,6 @@ public class NativeUnion implements AutoCloseable, NativeWrapper, Map<String, Ob
 
 	@Override
 	public boolean isEmpty() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
@@ -62,8 +50,17 @@ public class NativeUnion implements AutoCloseable, NativeWrapper, Map<String, Ob
 
 	@Override
 	public boolean containsValue(Object value) {
-		// TODO Auto-generated method stub
-		return false;
+		throw new UnsupportedOperationException();
+	}
+	
+	@Override
+	public <U, V extends NativePointer<U>> V getChild(String name) {
+		return (V) this.wrappers.computeIfAbsent(name, key->{
+			StructField option = type().getOption(key);
+			if (option == null)
+				return null;
+			return doWrapChild(option.getType(), option.getOffset(), option.getSize());
+		});
 	}
 
 	@Override
@@ -71,37 +68,16 @@ public class NativeUnion implements AutoCloseable, NativeWrapper, Map<String, Ob
 		return this.type().readField(this.buffer(), key.toString());
 	}
 	
-	public StructMap getStruct(String name) {
-		return (StructMap) this.wrappers.computeIfAbsent(name, key->{
-			StructField field = this.type().getOption(key);
-			return new StructMap((StructPrototype) field.getType(), this.pointer(), this.buffer(), false);
-		});
-	}
-	
-	public NativeArray getArray(String name) {
-		return (NativeArray) this.wrappers.computeIfAbsent(name, key->{
-			StructField field = this.type().getOption(key);
-			return new NativeArray((ArrayStructFieldType) field.getType(), this.pointer(), this.buffer(), false);
-		});
-	}
-	
-	public NativeUnion getUnion(String name) {
-		return (NativeUnion) this.wrappers.computeIfAbsent(name, key->{
-			StructField field = this.type().getOption(key);
-			return new NativeUnion((UnionPrototype) field.getType(), this.pointer(), this.buffer(), false);
-		});
-	}
-
 	@Override
 	public Object put(String key, Object value) {
+		Object old = this.get(key);
 		this.type().writeField(this.buffer(), key, value);
-		return get(key);
+		return old;
 	}
 
 	@Override
 	public Object remove(Object key) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -124,12 +100,11 @@ public class NativeUnion implements AutoCloseable, NativeWrapper, Map<String, Ob
 
 	@Override
 	public Collection<Object> values() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Set<java.util.Map.Entry<String, Object>> entrySet() {
+	public Set<Entry<String, Object>> entrySet() {
 		// TODO Auto-generated method stub
 		return null;
 	}
