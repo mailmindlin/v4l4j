@@ -8,6 +8,11 @@ import java.nio.charset.CoderResult;
 import java.nio.charset.StandardCharsets;
 
 public class StringStructFieldType extends ArrayStructFieldType {
+	
+	/**
+	 * String of size 128. Shows up often.
+	 */
+	public static final StringStructFieldType ML_128 = new StringStructFieldType(128);
 
 	public StringStructFieldType(int maxLength) {
 		super(PrimitiveStructFieldType.INT8, maxLength);
