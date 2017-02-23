@@ -45,6 +45,100 @@ typedef struct {
 	jobject self;
 } OMXComponentAppData;
 
+//OMX error descriptions
+static char* getOMXErrorDescription(OMX_ERRORTYPE err) {
+	switch(err) {
+		case OMX_ErrorNone:
+			return "no error";
+		case OMX_ErrorInsufficientResources:
+			return "insufficient resources";
+		case OMX_ErrorUndefined:
+			return "unknown";
+		case OMX_ErrorInvalidComponentName:
+			return "invalid component name";
+		case OMX_ErrorComponentNotFound:
+			return "component not found";
+		case OMX_ErrorInvalidComponent:
+			return "invalid component";
+		case OMX_ErrorBadParameter:
+			return "bad parameter";
+		case OMX_ErrorNotImplemented:
+			return "not implemented";
+		case OMX_ErrorUnderflow:
+			return "underflow";
+		case OMX_ErrorOverflow:
+			return "overflow";
+		case OMX_ErrorHardware:
+			return "hardware error";
+		case OMX_ErrorInvalidState:
+			return "invalid state";
+		case OMX_ErrorStreamCorrupt:
+			return "stream corrupt";
+		case OMX_ErrorPortsNotCompatible:
+			return "ports not compatible";
+		case OMX_ErrorResourcesLost:
+			return "resources lost";
+		case OMX_ErrorNoMore:
+			return "no more";
+		case OMX_ErrorVersionMismatch:
+			return "version mismatch";
+		case OMX_ErrorNotReady:
+			return "not ready";
+		case OMX_ErrorTimeout:
+			return "timeout";
+		case OMX_ErrorSameState:
+			return "same state";
+		case OMX_ErrorResourcesPreempted:
+			return "resources preempted";
+		case OMX_ErrorPortUnresponsiveDuringAllocation:
+			return "port unresponsive during allocation";
+		case OMX_ErrorPortUnresponsiveDuringDeallocation:
+			return "port unresponsive during deallocation";
+		case OMX_ErrorPortUnresponsiveDuringStop:
+			return "port unresponsive during stop";
+		case OMX_ErrorIncorrectStateTransition:
+			return "unallowed state transition";
+		case OMX_ErrorIncorrectStateOperation:
+			return "invalid state while trying to perform command";
+		case OMX_ErrorUnsupportedSetting:
+			return "unsupported setting";
+		case OMX_ErrorUnsupportedIndex:
+			return "unsupported index";
+		case OMX_ErrorBadPortIndex:
+			return "bad port index";
+		case OMX_ErrorPortUnpopulated:
+			return "port unpopulated";
+		case OMX_ErrorComponentSuspended:
+			return "component suspended";
+		case OMX_ErrorDynamicResourcesUnavailable:
+			return "dynamic resources unavailable";
+		case OMX_ErrorMbErrorsInFrame:
+			return "macroblock errors in frame";
+		case OMX_ErrorFormatNotDetected:
+			return "format not detectd";
+		case OMX_ErrorContentPipeOpenFailed:
+			return "content pipe open failed";
+		case OMX_ErrorContentPipeCreationFailed:
+			return "content pipe creation failed";
+		case OMX_ErrorSeperateTablesUsed:
+			return "seperate tabled used";
+		case OMX_ErrorTunnelingUnsupported:
+			return "tunneling unsupported";
+		case OMX_ErrorDiskFull:
+			return "disk full";
+		case OMX_ErrorMaxFileSize:
+			return "max file size";
+		case OMX_ErrorDrmUnauthorised:
+			return "DRM unauthorized";
+		case OMX_ErrorDrmExpired:
+			return "DRM expired";
+		case OMX_ErrorDrmGeneral:
+			return "DRM general";
+		default:
+			return "(unknown)";
+	}
+}
+
 //Event handlers for OMX
 static OMX_ERRORTYPE event_handler(OMX_HANDLETYPE hComponent, OMX_PTR pAppData, OMX_EVENTTYPE event, OMX_U32 data1, OMX_U32 data2, OMX_PTR eventData) {
 	OMXComponentAppData* appData = (OMXComponentAppData*) pAppData;
@@ -180,7 +274,7 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getComponent
 	printBytes((char*) appData, sizeof(OMXComponentAppData));
 	
 	if (res != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, JNI_EXCP, "OMX Failure: %#08x", res);
+		THROW_EXCEPTION(env, JNI_EXCP, "OMX Failure: %#08x %s", res, getOMXErrorDescription(res));
 		deinitAppData(env, appData);
 		return -1;
 	}
@@ -227,7 +321,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getComponentS
 	OMX_STATETYPE state;
 	OMX_ERRORTYPE r = OMX_GetState(appData->component, &state);
 	if (r != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error when querying state: %08x", r);
+		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error when querying state: %08x %s", r, getOMXErrorDescription(r));
 		return -1;
 	}
 	return (jint) state;
@@ -240,7 +334,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_setComponentS
 	
 	OMX_ERRORTYPE r = OMX_SendCommand(appData->component, OMX_CommandStateSet, (OMX_STATETYPE) state, NULL);
 	if (r != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error when setting state: %#08x", r);
+		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error when setting state: %#08x %s", r, getOMXErrorDescription(r));
 		return;
 	}
 }
@@ -263,7 +357,7 @@ JNIEXPORT jstring JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getPortInf
 	OMX_ERRORTYPE res = OMX_GetParameter(appData->component, OMX_IndexParamPortDefinition, &portdef);
 	if (res != OMX_ErrorNone) {
 		//TODO replace with custom OMX exception
-		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX: Error when getting definition for port %d: %#08x", portIndex, res);
+		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX: Error when getting definition for port %d: %#08x %s", portIndex, res, getOMXErrorDescription(res));
 		return NULL;
 	}
 	
@@ -412,7 +506,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_enablePort(JN
 	
 	OMX_ERRORTYPE r = OMX_SendCommand(appData->component, enabled ? OMX_CommandPortEnable : OMX_CommandPortDisable, index, NULL);
 	if (r != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error when %s port %d: %08x", enabled ? "enabling" : "disabling", index, r);
+		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error when %s port %d: %08x %s", enabled ? "enabling" : "disabling", index, r, getOMXErrorDescription(r));
 		return;
 	}
 }
@@ -439,7 +533,7 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doAllocate
 	//Actually allocate the buffer
 	OMX_ERRORTYPE r = OMX_AllocateBuffer(appData->component, &buffer, portIndex, NULL, size);
 	if (r != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error allocating buffer on port %d: %#08x", portIndex, r);
+		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error allocating buffer on port %d: %#08x %s", portIndex, r, getOMXErrorDescription(r));
 		return NULL;
 	}
 	
@@ -463,7 +557,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doEmptyThisBu
 	
 	OMX_ERRORTYPE r = OMX_EmptyThisBuffer(appData->component, buffer);
 	if (r != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error emptying buffer: %#08x", r);
+		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error emptying buffer: %#08x %s", r, getOMXErrorDescription(r));
 		return;
 	}
 }
@@ -477,7 +571,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doFillThisBuf
 	
 	OMX_ERRORTYPE r = OMX_FillThisBuffer(appData->component, buffer);
 	if (r != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error emptying buffer: %#08x", r);
+		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error emptying buffer: %#08x %s", r, getOMXErrorDescription(r));
 		return;
 	}
 }
@@ -500,10 +594,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doAccessConfi
 		return;
 	}
 	
-	dprint(LOG_V4L4J, "OMX: %s %s %#08x\n",
-		read ? "Reading" : "Writing",
-		isConfig ? "config" : "parameter",
-		configIdx);
+	dprint(LOG_V4L4J, "OMX: %s %s %#010x\n", read ? "Reading" : "Writing", isConfig ? "config" : "parameter", configIdx);
 	
 	//Get pointer to actual data structure
 	//arrayOffset can be nonzero for a few reasons, including alignment, so
@@ -540,11 +631,12 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doAccessConfi
 	
 	//Handle errors, if any
 	if (res != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error %s %s %#08x: %#08x",
+		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error %s %s %#08x: %#08x %s",
 			read ? "reading" : "writing",
 			isConfig ? "config" : "parameter",
 			configIdx,
-			res);
+			res,
+			getOMXErrorDescription(res));
 		return;
 	}
 }
