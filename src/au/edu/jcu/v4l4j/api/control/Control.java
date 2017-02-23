@@ -23,46 +23,83 @@ public interface Control<T> extends AutoCloseable {
 	
 	void close();
 	
-	default ControlGetter<T, T> get() {
+	default ControlAccessor<T, Void> get() {
 		return access().get();
 	}
 	
 	ControlAccessor<T, Void> access();
 	
-	public static interface ControlAccessor<T, R> extends Callable<R> {
-		ControlAccessor<T, R> setTimeout(Duration timeout);
+	public static interface ControlAccessor<P extends ControlAccessor, T, R> extends Callable<R> {
+		ControlAccessor<P, T, R> setTimeout(Duration timeout);
 		
-		ControlGetter<T, T> get();
+		/**
+		 * Perform a 'get' operation, loading the value of this accessor
+		 * from the component.
+		 * The return of {@link call()} will be set to the return of this method.
+		 * @return self
+		 */
+		ControlAccessor<P, T, T> get();
 		
+		/**
+		 * Read the current in-memory value into a handler.
+		 * The actual read action will occur when the access operation happens.
+		 * Note that this reads the latest accessed value, not necessarily the
+		 * current state of the control.
+		 */
+		ControlAccessor<P, T, R> read(Consumer<T> handler);
+		
+		/**
+		 * Set the value. Note that this does NOT update the control
+		 * until set() is called.
+		 */
+		ControlAccessor<P, T, R> write(T value);
+		
+		/**
+		 * Set the value. Note that this  does NOT update the control
+		 * until set() is called.
+		 */
+		ControlAccessor<P, T, R> write(Supplier<T> supplier);
+		
+		/**
+		 * Atomic value update.
+		 */
+		ControlAccessor<P, T, R> update(Function<T, T> mappingFunction);
+		
+		/**
+		 * Attempt to increase value. If this is not possible to implement,
+		 * this method should not have any other side-effects.
+		 * @see decrease();
+		 */
+		ControlAccessor<P, T, R> increase();
+		
+		/**
+		 * Attempt to decrease value. If this is not possible to implement,
+		 * this method should not have any other side-effects.
+		 * @see increase();
+		 */
+		ControlAccessor<P, T, R> decrease();
+		
+		/**
+		 * Actually writes the value of the control
+		 */
+		ControlAccessor<P, T, R> set();
+		
+		/**
+		 * Equivalent to {@code accessor.set().get()}.
+		 * On some implementations, this may be a faster operation.
+		 */
+		ControlAccessor<P, T, R> setAndGet();
+		
+		/**
+		 * Return to the parent control, if available.
+		 * @throw IllegalStateException if this is the highest control level
+		 */
+		P and();
+		
+		/**
+		 * Execute action, and return result
+		 */
 		@Override
 		R call() throws Exception;
-	}
-	
-	public static interface ControlGetter<T, R> extends ControlAccessor<T, R> {
-		
-		@Override
-		ControlGetter<T, R> setTimeout(Duration timeout);
-		
-		ControlGetter<T, R> read(Consumer<T> handler);
-		
-		ControlUpdater<T, R> write(T value);
-		
-		ControlUpdater<T, R> write(Supplier<T> supplier);
-		
-		ControlUpdater<T, R> update(Function<T, T> mappingFunction);
-		
-		ControlUpdater<T, R> increase();
-		
-		ControlUpdater<T, R> decrease();
-	}
-	
-	public static interface ControlUpdater<T, R> extends ControlGetter<T, R> {
-		
-		@Override
-		ControlUpdater<T, R> setTimeout(Duration timeout);
-		
-		ControlAccessor<T, R> set();
-		
-		ControlGetter<T, R> setAndGet();
 	}
 }

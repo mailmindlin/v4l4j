@@ -24,63 +24,40 @@ public interface CompositeControl extends Control<Map<String, Object>> {
 		return ControlType.COMPOSITE;
 	}
 	
-	public static interface CompositeControlAccessor<T, R> extends ControlAccessor<T, R> {
+	public static interface CompositeControlAccessor<P, T, R> extends ControlAccessor<P, T, R> {
 		@Override
-		CompositeControlAccessor<T, R> setTimeout(Duration timeout);
+		CompositeControlAccessor<P, T, R> setTimeout(Duration timeout);
 		
 		@Override
-		CompositeControlGetter<T, T> get();
+		CompositeControlAccessor<P, T, T> get();
+		
+		@Override
+		CompositeControlAccessor<P, T, R> read(Consumer<T> handler);
+		
+		@Override
+		CompositeControlAccessor<P, T, R> write(T value);
+		
+		@Override
+		CompositeControlAccessor<P, T, R> write(Supplier<T> supplier);
+		
+		@Override
+		CompositeControlAccessor<P, T, R> update(Function<T, T> mappingFunction);
+		
+		@Override
+		CompositeControlAccessor<P, T, R> increase();
+		
+		@Override
+		CompositeControlAccessor<P, T, R> decrease();
+		
+		@Override
+		CompositeControlAccessor<P, T, R> set();
+		
+		@Override
+		CompositeControlAccessor<P, T, R> setAndGet();
+		
+		<Ct, C extends ControlAccessor<CompositeControlAccessor<P, T, R>, Ct, R>> C withChild(String name);
 		
 		@Override
 		R call() throws Exception;
-	}
-	
-	public static interface CompositeControlGetter<T, R> extends ControlGetter<T, R>, CompositeControlAccessor<T, R> {
-		
-		@Override
-		CompositeControlGetter<T, R> setTimeout(Duration timeout);
-		
-		@Override
-		CompositeControlGetter<T, R> read(Consumer<T> handler);
-		
-		<E> CompositeControlGetter<T, R> read(String name, Consumer<E> handler);
-		
-		@Override
-		CompositeControlUpdater<T, R> write(T value);
-		
-		@Override
-		CompositeControlUpdater<T, R> write(Supplier<T> supplier);
-		
-		<E> CompositeControlUpdater<T, R> write(String name, Supplier<E> supplier);
-		
-		<E> CompositeControlUpdater<T, R> write(String name, E value);
-		
-		@Override
-		CompositeControlUpdater<T, R> update(Function<T, T> mappingFunction);
-		
-		<E> CompositeControlUpdater<T, R> update(String name, BiFunction<String, E, E> mappingFunction);
-		
-		@Override
-		default CompositeControlUpdater<T, R> increase() {
-			throw new UnsupportedOperationException();
-		}
-		
-		@Override
-		default CompositeControlUpdater<T, R> decrease() {
-			throw new UnsupportedOperationException();
-		}
-		
-	}
-	
-	public static interface CompositeControlUpdater<T, R> extends ControlUpdater<T, R>, CompositeControlGetter<T, R> {
-		
-		@Override
-		CompositeControlUpdater<T, R> setTimeout(Duration timeout);
-		
-		@Override
-		CompositeControlAccessor<T, R> set();
-		
-		@Override
-		CompositeControlGetter<T, R> setAndGet();
 	}
 }
