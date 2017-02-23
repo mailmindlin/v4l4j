@@ -2,7 +2,6 @@ package au.edu.jcu.v4l4j.impl.jni;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -18,13 +17,7 @@ public class NativeUnion<T> extends NativeWrapper<String, T> implements Map<Stri
 	
 	@Override
 	public UnionPrototype type() {
-		return this.union;
-	}
-
-	@Override
-	public void close() throws Exception {
-		// TODO Auto-generated method stub
-		
+		return (UnionPrototype) this.type;
 	}
 
 	@Override
@@ -49,17 +42,13 @@ public class NativeUnion<T> extends NativeWrapper<String, T> implements Map<Stri
 	}
 
 	@Override
-	public boolean containsValue(Object value) {
-		throw new UnsupportedOperationException();
-	}
-	
-	@Override
+	@SuppressWarnings("unchecked")
 	public <U, V extends NativePointer<U>> V getChild(String name) {
-		return (V) this.wrappers.computeIfAbsent(name, key->{
+		return (V) this.localWrappers.computeIfAbsent(name, key->{
 			StructField option = type().getOption(key);
 			if (option == null)
 				return null;
-			return doWrapChild(option.getType(), option.getOffset(), option.getSize());
+			return doWrapLocalChild(option.getType(), option.getOffset(), option.getSize());
 		});
 	}
 
@@ -74,10 +63,69 @@ public class NativeUnion<T> extends NativeWrapper<String, T> implements Map<Stri
 		this.type().writeField(this.buffer(), key, value);
 		return old;
 	}
+	
+	@Override
+	public void wrapChildRemote(String name) {
+		StructField field = this.type().getOption(name);
+		StructFieldType type = field.getType();
+		if (!(type instanceof PointerStructFieldType))
+			throw new IllegalArgumentException("Field '" + name + "' is not a pointer");
+		
+		//Register this name for updates
+		this.wrappedNames.add(name);
+		final StructFieldType farType = ((PointerStructFieldType) type).getFarType();
+
+		//Read pointer
+		final long farPointer = ((Number)this.get(name)).longValue();
+		
+		this.remoteWrappers.compute(name, (key, oldValue) -> {
+			if (oldValue != null) {
+				//Check if the old pointer is still valid
+				if (oldValue.address() == farPointer)
+					return oldValue;
+				//Release the old pointer
+				try {
+					oldValue.close();
+					this.managedRefs.remove(oldValue);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			
+			ByteBuffer farBuffer = MemoryUtils.wrap(farPointer, farType.getSize());
+			return doWrapPointer(farType, farPointer, farBuffer, false);
+		});
+	}
 
 	@Override
-	public Object remove(Object key) {
-		throw new UnsupportedOperationException();
+	public void allocChildRemote(String name) {
+		final StructField field = this.type().getOption(name);
+		if (field == null)
+			throw new IllegalArgumentException("No such field called '" + name + "'");
+		
+		StructFieldType type = field.getType();
+		
+		if (type instanceof PointerStructFieldType) {
+			final StructFieldType farType = ((PointerStructFieldType) type).getFarType();
+			
+			this.remoteWrappers.compute(name, (key, oldVal) -> {
+				if (oldVal != null) {
+					try {
+						oldVal.close();
+						this.managedRefs.remove(oldVal);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+				
+				NativePointer<?> newVal = doAllocChild(farType, farType.getAlignment(), farType.getSize());
+				
+				//Update local pointer
+				this.put(key, newVal.address());
+				
+				return newVal;
+			});
+		}
 	}
 
 	@Override
@@ -87,15 +135,25 @@ public class NativeUnion<T> extends NativeWrapper<String, T> implements Map<Stri
 	}
 
 	@Override
+	public Set<String> keySet() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
 	public void clear() {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public Set<String> keySet() {
-		// TODO Auto-generated method stub
-		return null;
+	public Object remove(Object key) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean containsValue(Object value) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -105,7 +163,6 @@ public class NativeUnion<T> extends NativeWrapper<String, T> implements Map<Stri
 
 	@Override
 	public Set<Entry<String, Object>> entrySet() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 }

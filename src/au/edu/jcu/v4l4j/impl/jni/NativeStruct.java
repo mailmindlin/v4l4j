@@ -2,11 +2,8 @@ package au.edu.jcu.v4l4j.impl.jni;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 import java.util.stream.Collectors;
 
 public class NativeStruct extends NativeWrapper<String, Map<String, Object>> implements Map<String, Object> {
@@ -40,30 +37,27 @@ public class NativeStruct extends NativeWrapper<String, Map<String, Object>> imp
 	public boolean containsKey(Object key) {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	@Override
+	@SuppressWarnings("unchecked")
 	public <U, V extends NativePointer<U>> V getChild(String name) {
 		return (V) this.localWrappers.computeIfAbsent(name, key->{
 			StructField field = type().getField(key);
 			if (field == null)
 				return null;
-			return doWrapChild(field.getType(), field.getOffset(), field.getSize());
+			return doWrapLocalChild(field.getType(), field.getOffset(), field.getSize());
 		});
 	}
-	
-	@Override
-	public <U, V extends NativePointer<U>> V getChildRemote(String name) {
-		return (V) this.remoteWrappers.get(name);
-	}
-	
+
 	/**
 	 * Allocate a native memory structure on the end of a pointer
 	 * @param name
 	 */
-	public void allocateRemote(String name) {
-		final StructField field = this.struct.getField(name);
+	@Override
+	public void allocChildRemote(String name) {
+		final StructField field = this.type().getField(name);
 		if (field == null)
-			throw new IllegalArgumentException("No such field by name " + name);
+			throw new IllegalArgumentException("No such field called '" + name + "'");
 		
 		StructFieldType type = field.getType();
 		
@@ -74,12 +68,16 @@ public class NativeStruct extends NativeWrapper<String, Map<String, Object>> imp
 				if (oldVal != null) {
 					try {
 						oldVal.close();
+						this.managedRefs.remove(oldVal);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
 				}
 				
-				Pointer<?> newVal = doAllocChild(farType, farType.getAlignment(), farType.getSize());
+				NativePointer<?> newVal = doAllocChild(farType, farType.getAlignment(), farType.getSize());
+				
+				//Update local pointer
+				this.put(key, newVal.address());
 				
 				return newVal;
 			});
@@ -90,77 +88,53 @@ public class NativeStruct extends NativeWrapper<String, Map<String, Object>> imp
 	 * Wrap a native memory structure on the end of a pointer
 	 * @param name
 	 */
-	public void wrapFar(String name) {
-		StructField field = this.struct.getField(name);
+	@Override
+	public void wrapChildRemote(String name) {
+		StructField field = this.type().getField(name);
 		StructFieldType type = field.getType();
-		if (type instanceof PointerStructFieldType) {
-			//Register this name for updates
-			this.wrappedNames.add(name);
-			StructFieldType farType = ((PointerStructFieldType) type).getFarType();
-			//Read pointer
-			long farPointer = ((Number)this.struct.readField(this.buffer, name)).longValue();
-			ByteBuffer farBuffer = MemoryUtils.wrap(farPointer, farType.getSize());
-			
-			if (farType instanceof ArrayStructFieldType) {
-				NativeArray array = new NativeArray((ArrayStructFieldType)farType, farPointer, farBuffer, false);
-				this.arrays.put(name, array);
-			} else if (farType instanceof StructPrototype) {
-				NativeStruct struct = new NativeStruct((StructPrototype)farType, farPointer, farBuffer, false);
-				this.structs.put(name, struct);
-			} else if (farType instanceof UnionPrototype) {
-				NativeUnion union = new NativeUnion((UnionPrototype)farType, farPointer, farBuffer, false);
-				this.unions.put(name, union);
-			} else {
-				
+		if (!(type instanceof PointerStructFieldType))
+			throw new IllegalArgumentException("Field '" + name + "' is not a pointer");
+		
+		//Register this name for updates
+		this.wrappedNames.add(name);
+		final StructFieldType farType = ((PointerStructFieldType) type).getFarType();
+
+		//Read pointer
+		final long farPointer = ((Number)this.get(name)).longValue();
+		
+		this.remoteWrappers.compute(name, (key, oldValue) -> {
+			if (oldValue != null) {
+				//Check if the old pointer is still valid
+				if (oldValue.address() == farPointer)
+					return oldValue;
+				//Release the old pointer
+				try {
+					oldValue.close();
+					this.managedRefs.remove(oldValue);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
-		}
+			
+			ByteBuffer farBuffer = MemoryUtils.wrap(farPointer, farType.getSize());
+			return doWrapPointer(farType, farPointer, farBuffer, false);
+		});
 	}
 
 	@Override
 	public Object get(Object _key) {
-		return this.struct.readField(this.buffer, _key.toString());
+		return this.type().readField(this.buffer, _key.toString());
 	}
 
 	@Override
 	public Object put(String key, Object value) {
 		Object old = get(key);
-		this.struct.writeField(this.buffer, key, value);
+		this.type().writeField(this.buffer, key, value);
 		return old;
 	}
 	
 	public void refresh() throws Exception {
-		for (String name : this.wrappedNames) {
-			long pointer = ((Number) this.struct.readField(this.buffer, name)).longValue();
-			
-			if (this.unions.containsKey(name)) {
-				NativeUnion union = this.unions.get(name);
-				if (pointer != union.address()) {
-					UnionPrototype prototype = union.type();
-					ByteBuffer oldBuffer = union.buffer();
-					union.close();
-					this.unions.put(name, new NativeUnion(prototype, pointer, MemoryUtils.wrap(pointer, oldBuffer.capacity()), false));
-				}
-			} else if (this.structs.containsKey(name)) {
-				NativeStruct struct = this.structs.get(name);
-				if (pointer != struct.address()) {
-					StructPrototype prototype = struct.type();
-					ByteBuffer oldBuffer = struct.buffer();
-					struct.close();
-					this.structs.put(name, new NativeStruct(prototype, pointer, oldBuffer.capacity(), false));
-				}
-			} else if (this.arrays.containsKey(name)) {
-				NativeArray array = this.arrays.get(name);
-				if (pointer != array.address()) {
-					ArrayStructFieldType prototype = array.type();
-					ByteBuffer oldBuffer = array.buffer();
-					array.close();
-					this.arrays.put(name, new NativeArray(prototype, pointer, oldBuffer.capacity(), false));
-				}
-			} else {
-				//TODO fix for wrapped pointers
-				System.err.println("Unable to refresh wrapped field '" + name + "'");
-			}
-		}
+		this.wrappedNames.forEach(this::wrapChildRemote);
 	}
 
 	@Override
@@ -178,7 +152,7 @@ public class NativeStruct extends NativeWrapper<String, Map<String, Object>> imp
 	
 	@Override
 	public StructPrototype type() {
-		return this.struct;
+		return (StructPrototype) this.type;
 	}
 
 	@Override
