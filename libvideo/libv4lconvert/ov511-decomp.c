@@ -15,6 +15,7 @@
  */
 
 #include <string.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include "helper-funcs.h"
 
@@ -23,22 +24,15 @@
  ******************************************************************************/
 
 static void DecompressYHI(u8 *pIn,
-		u8 *pOut,
-		int           *iIn,	/* in/out */
-		int           *iOut,	/* in/out */
-		const int      w,
-		const int      YUVFlag) {
-	short ZigZag[64];
+		u8                  *pOut,
+		unsigned int        *iIn,	/* in/out */
+		unsigned int        *iOut,	/* in/out */
+		const unsigned int  w,
+		const bool          YUVFlag) {
 	int temp[64];
-	int Zcnt_Flag = 0;
-	int Num8_Flag = 0;
-	int in_pos = *iIn;
-	int out_pos = *iOut;
+	unsigned int in_pos = *iIn;
+	unsigned int out_pos = *iOut;
 	int tmp, tmp1, tmp2, tmp3;
-	u8 header, ZTable[64];
-	short tmpl, tmph, half_byte, idx, count;
-	unsigned long ZigZag_length = 0, ZT_length, i, j;
-	short DeZigZag[64];
 
 	const short a = 11584;
 	const short b = 16068;
@@ -48,24 +42,21 @@ static void DecompressYHI(u8 *pIn,
 	const short f =  6270;
 	const short g =  3196;
 
-	int out_idx;
-
 	/* Take off every 'Zig' */
-	for (i = 0; i < 64; i++)
+	short ZigZag[64];
+	for (unsigned int i = 0; i < 64; i++)
 		ZigZag[i] = 0;
 
 	/*****************************
 	 * Read in the Y header byte *
 	 *****************************/
 
-	header = pIn[in_pos];
-	in_pos++;
+	u8 header = pIn[in_pos++];
 
-	ZigZag_length = header & 0x3f;
-	ZigZag_length = ZigZag_length + 1;
+	unsigned long ZigZag_length = ((unsigned long) (header & 0x3f)) + 1;
 
-	Num8_Flag = header & 0x40;
-	Zcnt_Flag = header & 0x80;
+	int Num8_Flag = header & 0x40;
+	int Zcnt_Flag = header & 0x80;
 
 	/*************************
 	 * Read in the Y content *
@@ -74,75 +65,64 @@ static void DecompressYHI(u8 *pIn,
 	if (Zcnt_Flag == 0) {    /* Without Zero Table read contents directly */
 		/* Read in ZigZag[0] */
 		ZigZag[0] = pIn[in_pos++];
-		tmpl = pIn[in_pos++];
-		tmph = tmpl << 8;
-		ZigZag[0] = ZigZag[0] | tmph;
-		ZigZag[0] = ZigZag[0] << 4;
+		short tmpl = pIn[in_pos++];
+		ZigZag[0] = (short) (ZigZag[0] | (tmpl << 8));
+		ZigZag[0] = (short) (ZigZag[0] << 4);
 		ZigZag[0] = ZigZag[0] >> 4;
 
 		if (Num8_Flag) { /* 8 Bits */
-			for (i = 1; i < ZigZag_length; i++) {
+			for (unsigned int i = 1; i < ZigZag_length; i++)
 				ZigZag[i] = pIn[in_pos++];
-				ZigZag[i] = ZigZag[i] << 8;
-				ZigZag[i] = ZigZag[i] >> 8;
-			}
+			
 		} else {   /* 12 bits and has no Zero Table */
-			idx = 1;
-			half_byte = 0;
-			for (i = 1; i < ZigZag_length; i++) {
-				if (half_byte == 0) {
+			bool half_byte = false;
+			for (unsigned int i = 1; i < ZigZag_length; i++) {
+				if (half_byte == false) {
 					ZigZag[i] = pIn[in_pos++];
 					tmpl = pIn[in_pos++];
-					tmph = tmpl << 8;
-					tmph = tmph & 0x0f00;
-					ZigZag[i] = ZigZag[i] | tmph;
-					ZigZag[i] = ZigZag[i] << 4;
+					ZigZag[i] = (short) (ZigZag[i] | ((tmpl << 8) & 0x0f00));
+					ZigZag[i] = (short) (ZigZag[i] << 4);
 					ZigZag[i] = ZigZag[i] >> 4;
-					half_byte = 1;
+					half_byte = true;
 				} else {
-					ZigZag[i] = pIn[in_pos++];
-					ZigZag[i] = ZigZag[i] << 8;
-					tmpl = tmpl & 0x00f0;
-					ZigZag[i] = ZigZag[i] | tmpl;
-					ZigZag[i] = ZigZag[i] >> 4;
-					half_byte = 0;
+					ZigZag[i] = (short) (pIn[in_pos++] << 8);
+					tmpl &= 0x00f0;
+					ZigZag[i] = (ZigZag[i] | tmpl) >> 4;
+					half_byte = false;
 				}
 			}
 		}
 	} else {  /* Has Zero Table */
 		/* Calculate Z-Table length */
-		ZT_length = ZigZag_length / 8;
+		u8 ZTable[64];
+		unsigned long ZT_length = ZigZag_length / 8;
 		tmp = ZigZag_length % 8;
 
 		if (tmp > 0)
 			ZT_length = ZT_length + 1;
 
 		/* Read in Zero Table */
-		for (j = 0; j < ZT_length; j++)
+		for (unsigned int j = 0; j < ZT_length; j++)
 			ZTable[j] = pIn[in_pos++];
 
 		/* Read in ZigZag[0] */
 		ZigZag[0] = pIn[in_pos++];
-		tmpl = pIn[in_pos++];
-		tmph = tmpl << 8;
-		ZigZag[0] = ZigZag[0] | tmph;
-		ZigZag[0] = ZigZag[0] << 4;
-		ZigZag[0] = ZigZag[0] >> 4;
+		short tmpl = pIn[in_pos++];
+		ZigZag[0] = (short) (ZigZag[0] | (tmpl << 8));
+		ZigZag[0] = (short) (ZigZag[0] << 4);
+		ZigZag[0] >>= 4;
 
 		/* Decode ZigZag */
-		idx = 0;
-		ZTable[idx] = ZTable[idx] << 1;
-		count = 7;
+		short idx = 0;
+		ZTable[idx] = (u8) (ZTable[idx] << 1);
+		short count = 7;
 
 		if (Num8_Flag) {	/* 8 Bits and has zero table */
-			for (i = 1; i < ZigZag_length; i++) {
-				if ((ZTable[idx] & 0x80)) {
-					ZigZag[i] = pIn[in_pos++];
-					ZigZag[i] = ZigZag[i] << 8;
-					ZigZag[i] = ZigZag[i] >> 8;
-				}
+			for (unsigned int i = 1; i < ZigZag_length; i++) {
+				if ((ZTable[idx] & 0x80))
+					ZigZag[i] = (short) pIn[in_pos++];
 
-				ZTable[idx] = ZTable[idx]<<1;
+				ZTable[idx] = (u8) (ZTable[idx] << 1);
 				count--;
 				if (count == 0)	{
 					count = 8;
@@ -150,29 +130,25 @@ static void DecompressYHI(u8 *pIn,
 				}
 			}
 		} else {	/* 12 bits and has Zero Table */
-			half_byte = 0;
-			for (i = 1; i < ZigZag_length; i++) {
+			bool half_byte = 0;
+			for (unsigned int i = 1; i < ZigZag_length; i++) {
 				if (ZTable[idx] & 0x80) {
 					if (half_byte == 0) {
 						ZigZag[i] = pIn[in_pos++];
 						tmpl = pIn[in_pos++];
-						tmph = tmpl << 8;
-						tmph = tmph & 0x0f00;
-						ZigZag[i] = ZigZag[i] | tmph;
-						ZigZag[i] = ZigZag[i] << 4;
+						ZigZag[i] = (short) (ZigZag[i] | ((tmpl << 8) & 0x0F00));
+						ZigZag[i] = (short) (ZigZag[i] << 4);
 						ZigZag[i] = ZigZag[i] >> 4;
 						half_byte = 1;
 					} else {
-						ZigZag[i] = pIn[in_pos++];
-						ZigZag[i] = ZigZag[i] << 8;
-						tmpl = tmpl & 0x00f0;
-						ZigZag[i] = ZigZag[i] | tmpl;
-						ZigZag[i] = ZigZag[i] >> 4;
+						ZigZag[i] = (short) (pIn[in_pos++] << 8);
+						tmpl &= 0x00F0;
+						ZigZag[i] = (ZigZag[i] | tmpl) >> 4;
 						half_byte = 0;
 					}
 				}
 
-				ZTable[idx] = ZTable[idx] << 1;
+				ZTable[idx] = (u8) (ZTable[idx] << 1);
 				count--;
 				if (count == 0)	{
 					count = 8;
@@ -185,50 +161,51 @@ static void DecompressYHI(u8 *pIn,
 	/*************
 	 * De-ZigZag *
 	 *************/
-
-	for (j = 0; j < 64; j++)
+	
+	short DeZigZag[64];
+	for (unsigned int j = 0; j < 64; j++)
 		DeZigZag[j] = 0;
 
 	if (YUVFlag == 1) {
-		DeZigZag[0] = ZigZag[0];
-		DeZigZag[1] = ZigZag[1] << 1;
-		DeZigZag[2] = ZigZag[5] << 1;
-		DeZigZag[3] = ZigZag[6] << 2;
+		DeZigZag[0]  = (short) (ZigZag[0]);
+		DeZigZag[1]  = (short) (ZigZag[1]  << 1);
+		DeZigZag[2]  = (short) (ZigZag[5]  << 1);
+		DeZigZag[3]  = (short) (ZigZag[6]  << 2);
 
-		DeZigZag[8] = ZigZag[2] << 1;
-		DeZigZag[9] = ZigZag[4] << 1;
-		DeZigZag[10] = ZigZag[7] << 1;
-		DeZigZag[11] = ZigZag[13] << 2;
+		DeZigZag[8]  = (short) (ZigZag[2]  << 1);
+		DeZigZag[9]  = (short) (ZigZag[4]  << 1);
+		DeZigZag[10] = (short) (ZigZag[7]  << 1);
+		DeZigZag[11] = (short) (ZigZag[13] << 2);
 
-		DeZigZag[16] = ZigZag[3] << 1;
-		DeZigZag[17] = ZigZag[8] << 1;
-		DeZigZag[18] = ZigZag[12] << 2;
-		DeZigZag[19] = ZigZag[17] << 2;
+		DeZigZag[16] = (short) (ZigZag[3]  << 1);
+		DeZigZag[17] = (short) (ZigZag[8]  << 1);
+		DeZigZag[18] = (short) (ZigZag[12] << 2);
+		DeZigZag[19] = (short) (ZigZag[17] << 2);
 
-		DeZigZag[24] = ZigZag[9] << 2;
-		DeZigZag[25] = ZigZag[11] << 2;
-		DeZigZag[26] = ZigZag[18] << 2;
-		DeZigZag[27] = ZigZag[24] << 3;
+		DeZigZag[24] = (short) (ZigZag[9]  << 2);
+		DeZigZag[25] = (short) (ZigZag[11] << 2);
+		DeZigZag[26] = (short) (ZigZag[18] << 2);
+		DeZigZag[27] = (short) (ZigZag[24] << 3);
 	} else {
-		DeZigZag[0] = ZigZag[0];
-		DeZigZag[1] = ZigZag[1] << 2;
-		DeZigZag[2] = ZigZag[5] << 2;
-		DeZigZag[3] = ZigZag[6] << 3;
+		DeZigZag[0]  = (short) (ZigZag[0]);
+		DeZigZag[1]  = (short) (ZigZag[1]  << 2);
+		DeZigZag[2]  = (short) (ZigZag[5]  << 2);
+		DeZigZag[3]  = (short) (ZigZag[6]  << 3);
 
-		DeZigZag[8] = ZigZag[2] << 2;
-		DeZigZag[9] = ZigZag[4] << 2;
-		DeZigZag[10] = ZigZag[7] << 2;
-		DeZigZag[11] = ZigZag[13] << 4;
+		DeZigZag[8]  = (short) (ZigZag[2]  << 2);
+		DeZigZag[9]  = (short) (ZigZag[4]  << 2);
+		DeZigZag[10] = (short) (ZigZag[7]  << 2);
+		DeZigZag[11] = (short) (ZigZag[13] << 4);
 
-		DeZigZag[16] = ZigZag[3] << 2;
-		DeZigZag[17] = ZigZag[8] << 2;
-		DeZigZag[18] = ZigZag[12] << 3;
-		DeZigZag[19] = ZigZag[17] << 4;
+		DeZigZag[16] = (short) (ZigZag[3]  << 2);
+		DeZigZag[17] = (short) (ZigZag[8]  << 2);
+		DeZigZag[18] = (short) (ZigZag[12] << 3);
+		DeZigZag[19] = (short) (ZigZag[17] << 4);
 
-		DeZigZag[24] = ZigZag[9] << 3;
-		DeZigZag[25] = ZigZag[11] << 4;
-		DeZigZag[26] = ZigZag[18] << 4;
-		DeZigZag[27] = ZigZag[24] << 4;
+		DeZigZag[24] = (short) (ZigZag[9]  << 3);
+		DeZigZag[25] = (short) (ZigZag[11] << 4);
+		DeZigZag[26] = (short) (ZigZag[18] << 4);
+		DeZigZag[27] = (short) (ZigZag[24] << 4);
 	}
 
 	/*****************
@@ -351,7 +328,7 @@ static void DecompressYHI(u8 *pIn,
 		IDCT_2D_FAST(a, g, -c, e, in);	STORE_FAST_2(3, 4);	\
 	} while (0)
 
-	out_idx = out_pos;
+	unsigned int out_idx = out_pos;
 
 	IDCT_2D_ROW(0);		out_idx += w;
 	IDCT_2D_ROW(8);		out_idx += w;
@@ -366,15 +343,15 @@ static void DecompressYHI(u8 *pIn,
 	*iOut = out_pos + 8;
 }
 
-#define DECOMP_Y() DecompressYHI(pIn, pY, &iIn, &iY, w, 1)
-#define DECOMP_U() DecompressYHI(pIn, pU, &iIn, &iU, w / 2, 2)
-#define DECOMP_V() DecompressYHI(pIn, pV, &iIn, &iV, w / 2, 2)
+#define DECOMP_Y() DecompressYHI(pIn, pY, &iIn, &iY, w, true)
+#define DECOMP_U() DecompressYHI(pIn, pU, &iIn, &iU, w / 2, false)
+#define DECOMP_V() DecompressYHI(pIn, pV, &iIn, &iV, w / 2, false)
 
 #if 0
 static inline int Decompress400HiNoMMX(u8 *pIn, u8 *pOut, const unsigned int w, const unsigned int h, const int inSize) {
 	u8 *pY = pOut;
 
-	int iIn = 0;
+	unsigned int iIn = 0;
 	for (unsigned int y = 0; y < h; y += 8) {
 		int iY = w * y;
 
@@ -386,11 +363,11 @@ static inline int Decompress400HiNoMMX(u8 *pIn, u8 *pOut, const unsigned int w, 
 }
 #endif
 
-static inline int Decompress420HiNoMMX(u8 *pIn, u8 *pOut, const unsigned int w, const unsigned int h) {
+static inline bool Decompress420HiNoMMX(u8 *pIn, u8 *pOut, const unsigned int w, const unsigned int h) {
 	u8 *pY = pOut;
 	u8 *pU = pY + w * h;
 	u8 *pV = pU + w * h / 4;
-	int iIn = 0, iY = 0, iU = 0, iV = 0;
+	unsigned int iIn = 0, iY = 0, iU = 0, iV = 0;
 	unsigned int xY = 0, xUV = 0;
 	const unsigned int nBlocks = (w * h) / (32 * 8);
 	for (unsigned int count = 0; count < nBlocks; count++) {
@@ -416,18 +393,18 @@ static inline int Decompress420HiNoMMX(u8 *pIn, u8 *pOut, const unsigned int w, 
 		}
 	}
 
-	return 0;
+	return true;
 }
 
 /* Copies a 64-byte segment at pIn to an 8x8 block at pOut. The width of the
- * image at pOut is specified by w.
+ * image at pOut is specified by `width`.
  */
-static inline void make_8x8(u8 *pIn, u8 *pOut, unsigned int w) {
+static inline void make_8x8(u8 *pIn, u8 *pOut, unsigned int width) {
 	for (unsigned int y = 0; y < 8; y++) {
 		u8* pOut1 = pOut;
 		for (unsigned x = 0; x < 8; x++)
 			*pOut1++ = *pIn++;
-		pOut += w;
+		pOut += width;
 	}
 }
 
@@ -443,7 +420,6 @@ static inline void make_8x8(u8 *pIn, u8 *pOut, unsigned int w) {
  *
  */
 static void yuv400raw_to_yuv400p(struct ov511_frame *frame, u8 *pIn0, u8 *pOut0) {
-
 	/* Copy Y */
 	u8* pIn = pIn0;
 	u8* pOutLine = pOut0;
@@ -491,21 +467,20 @@ static void yuv400raw_to_yuv400p(struct ov511_frame *frame, u8 *pIn0, u8 *pOut0)
  * these data are scrambled.
  */
 
+#if 0
 /* Converts from raw, uncompressed segments at pIn0 to a YUV420P frame at pOut0.
  *
  * FIXME: Currently only handles width and height that are multiples of 16
  */
-static void yuv420raw_to_yuv420p(u8 *pIn0, u8 *pOut0, u32 width, u32 height) {
-	int k;
-	u8 *pIn, *pOut, *pOutLine;
+static void yuv420raw_to_yuv420p(u8 *pIn0, u8 *pOut0, unsigned int width, unsigned int height) {
 	const unsigned int a = width * height;
 	const unsigned int w = width / 2;
 
 	/* Copy U and V */
-	pIn = pIn0;
-	pOutLine = pOut0 + a;
+	u8 *pIn = pIn0;
+	u8 *pOutLine = pOut0 + a;
 	for (unsigned int y = 0; y + 1 < height; y += 16) {
-		pOut = pOutLine;
+		u8 *pOut = pOutLine;
 		for (unsigned int x = 0; x + 1< width; x += 16) {
 			make_8x8(pIn, pOut, w);
 			make_8x8(pIn + 64, pOut + a / 4, w);
@@ -518,9 +493,9 @@ static void yuv420raw_to_yuv420p(u8 *pIn0, u8 *pOut0, u32 width, u32 height) {
 	/* Copy Y */
 	pIn = pIn0 + 128;
 	pOutLine = pOut0;
-	k = 0;
+	int k = 0;
 	for (unsigned int y = 0; y + 1 < height; y += 8) {
-		pOut = pOutLine;
+		u8 *pOut = pOutLine;
 		for (unsigned int x = 0; x + 1 < width; x += 8) {
 			make_8x8(pIn, pOut, width);
 			pIn += 64;
@@ -533,33 +508,33 @@ static void yuv420raw_to_yuv420p(u8 *pIn0, u8 *pOut0, u32 width, u32 height) {
 		pOutLine += 8 * width;
 	}
 }
-
+#endif
 
 /* Remove all 0 blocks from input */
-static void remove0blocks(u8 *pIn, int *inSize) {
+static void remove0blocks(u8 *pIn, unsigned int *inSize) {
 	long long *in = (long long *)pIn;
 	long long *out = (long long *)pIn;
 	
-	for (int i = 0; i < *inSize; i += 32, in += 4) {
-		int all_zero = 1;
-		for (int j = 0; j < 4; j++)
+	for (unsigned int i = 0; i < *inSize; i += 32, in += 4) {
+		bool all_zero = true;
+		for (unsigned int j = 0; j < 4; j++)
 			if (in[j]) {
-				all_zero = 0;
+				all_zero = false;
 				break;
 			}
-
+		
 		/* Skip 32 byte blocks of all 0 */
 		if (all_zero)
 			continue;
-
-		for (j = 0; j < 4; j++)
+		
+		for (unsigned int j = 0; j < 4; j++)
 			*out++ = in[j];
 	}
 
 	*inSize -= (in - out) * 8;
 }
 
-static int v4lconvert_ov511_to_yuv420(u8 *src, u8 *dest, unsigned int w, unsigned int h, unsigned int src_size) {
+static bool v4lconvert_ov511_to_yuv420(u8 *src, u8 *dest, unsigned int w, unsigned int h, unsigned int src_size) {
 	src_size -= 11; /* Remove footer */
 
 	remove0blocks(src, &src_size);
@@ -567,7 +542,7 @@ static int v4lconvert_ov511_to_yuv420(u8 *src, u8 *dest, unsigned int w, unsigne
 	/* Compressed ? */
 	if (src[8] & 0x40)
 		return Decompress420HiNoMMX(src + 9, dest, w, h);
-	return 0;
+	return true;
 }
 
 int main(int argc, char *argv[]) {
@@ -581,16 +556,16 @@ int main(int argc, char *argv[]) {
 	}
 
 	while (1) {
-		if (v4lconvert_helper_read(STDIN_FILENO, &width, sizeof(int), argv[0]))
+		if (!v4lconvert_helper_read(STDIN_FILENO, &width, sizeof(int), argv[0]))
 			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
-		if (v4lconvert_helper_read(STDIN_FILENO, &height, sizeof(int), argv[0]))
+		if (!v4lconvert_helper_read(STDIN_FILENO, &height, sizeof(int), argv[0]))
 			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
-		if (v4lconvert_helper_read(STDIN_FILENO, &yvu, sizeof(int), argv[0]))
+		if (!v4lconvert_helper_read(STDIN_FILENO, &yvu, sizeof(int), argv[0]))
 			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
-		if (v4lconvert_helper_read(STDIN_FILENO, &src_size, sizeof(int), argv[0]))
+		if (!v4lconvert_helper_read(STDIN_FILENO, &src_size, sizeof(int), argv[0]))
 			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
 		if (src_size > sizeof(src_buf)) {
@@ -598,7 +573,7 @@ int main(int argc, char *argv[]) {
 			return 2;
 		}
 
-		if (v4lconvert_helper_read(STDIN_FILENO, src_buf, src_size, argv[0]))
+		if (!v4lconvert_helper_read(STDIN_FILENO, src_buf, src_size, argv[0]))
 			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
 
@@ -606,16 +581,16 @@ int main(int argc, char *argv[]) {
 		if (dest_size > sizeof(dest_buf)) {
 			fprintf(stderr, "%s: error: dest_buf too small, need: %d\n", argv[0], dest_size);
 			dest_size = (unsigned) -1;
-		} else if (v4lconvert_ov511_to_yuv420(src_buf, dest_buf, width, height, src_size))
+		} else if (!v4lconvert_ov511_to_yuv420(src_buf, dest_buf, width, height, src_size))
 			dest_size = (unsigned) -1;
 
-		if (v4lconvert_helper_write(STDOUT_FILENO, &dest_size, sizeof(int), argv[0]))
+		if (!v4lconvert_helper_write(STDOUT_FILENO, &dest_size, sizeof(int), argv[0]))
 			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
 		if (dest_size == (unsigned) -1)
 			continue;
 
-		if (v4lconvert_helper_write(STDOUT_FILENO, dest_buf, dest_size, argv[0]))
+		if (!v4lconvert_helper_write(STDOUT_FILENO, dest_buf, dest_size, argv[0]))
 			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 	}
 }

@@ -1071,7 +1071,7 @@ static void DCT_8x4(int *coeff, u8 *out) {
  * independent of the palette (YUV422, YUV420, YUV400, GBR422...). cinfo->bytes
  * determines the positin in the input buffer.
  */
-static int decompress8x4(u8	*pOut, u8 *pIn, int *lastDC, bool uvFlag, struct comp_info *cinfo) {
+static bool decompress8x4(u8	*pOut, u8 *pIn, int *lastDC, bool uvFlag, struct comp_info *cinfo) {
 	int coeffs[32];
 	u8 *qt = cinfo->qt;
 
@@ -1120,7 +1120,7 @@ static int decompress8x4(u8	*pOut, u8 *pIn, int *lastDC, bool uvFlag, struct com
 	/* Do the inverse DCT transform */
 	DCT_8x4(coeffs, pOut);
 
-	return 0;	/* Always returns 0 */
+	return true;	/* Always returns true */
 }
 
 static inline void copyBlock(u8 *src, u8 *dest, unsigned int destInc) {
@@ -1173,7 +1173,7 @@ decompress400NoMMXOV518(u8	 *pIn,
 }
 #endif
 
-static inline int decompress420NoMMXOV518(u8 *pIn, u8 *pOut, u8 *pTmp,
+static inline bool decompress420NoMMXOV518(u8 *pIn, u8 *pOut, u8 *pTmp,
 		const unsigned int w, const unsigned int h, const unsigned int numpix,
 		struct comp_info *cinfo, bool yvu) {
 	int lastYDC = 0;
@@ -1233,27 +1233,27 @@ static inline int decompress420NoMMXOV518(u8 *pIn, u8 *pOut, u8 *pTmp,
 
 	/* Did we decode too much? */
 	if (cinfo->bytes > cinfo->rawLen + 897)
-		return 1;
+		return false;
 
 	/* Did we decode enough? */
 	if (cinfo->bytes >= cinfo->rawLen - (897 + 64))
-		return 0;
+		return true;
 	else
-		return 1;
+		return false;
 }
 
 /* Get quantization tables from input
  * Returns: <0 if error, or >=0 otherwise */
-static int get_qt_dynamic(u8 *pIn, struct comp_info *cinfo) {
+static bool get_qt_dynamic(u8 *pIn, struct comp_info *cinfo) {
 	unsigned int rawLen = cinfo->rawLen;
 	
 	/* Make sure input is actually big enough to hold trailer */
 	if (rawLen < 72)
-		return -1;
+		return false;
 
 	cinfo->qt = pIn + rawLen - 64;
 
-	return 0;
+	return true;
 }
 
 /* Remove all 0 blocks from input */
@@ -1275,7 +1275,7 @@ static void remove0blocks(u8 *pIn, unsigned int *inSize) {
  * Output format is planar YUV400
  * Returns uncompressed data length if success, or zero if error
  */
-static int Decompress400(u8 *pIn, u8 *pOut, unsigned int w, unsigned int h, unsigned int inSize) {
+static unsigned int Decompress400(u8 *pIn, u8 *pOut, unsigned int w, unsigned int h, unsigned int inSize) {
 	struct comp_info cinfo;
 	int numpix = w * h;
 	u8 pTmp[32];
@@ -1286,7 +1286,7 @@ static int Decompress400(u8 *pIn, u8 *pOut, unsigned int w, unsigned int h, unsi
 	cinfo.bits = 0;
 	cinfo.rawLen = inSize;
 
-	if (get_qt_dynamic(pIn, &cinfo) < 0)
+	if (!get_qt_dynamic(pIn, &cinfo))
 		return 0;
 
 	/* Decompress, skipping the 8-byte SOF header */
@@ -1314,11 +1314,11 @@ static int v4lconvert_ov518_to_yuv420(u8 *src, u8 *dst, unsigned int w, unsigned
 	cinfo.bits = 0;
 	cinfo.rawLen = inSize;
 
-	if (get_qt_dynamic(src, &cinfo) < 0)
+	if (!get_qt_dynamic(src, &cinfo))
 		return -1;
 
 	/* Decompress, skipping the 8-byte SOF header */
-	if (decompress420NoMMXOV518(src + 8, dst, pTmp, w, h, numpix, &cinfo, yvu))
+	if (!decompress420NoMMXOV518(src + 8, dst, pTmp, w, h, numpix, &cinfo, yvu))
 		return -1;
 
 	return 0;
@@ -1335,16 +1335,16 @@ int main(int argc, char *argv[]) {
 	}
 
 	while (1) {
-		if (v4lconvert_helper_read(STDIN_FILENO, &width, sizeof(int), argv[0]))
+		if (!v4lconvert_helper_read(STDIN_FILENO, &width, sizeof(int), argv[0]))
 			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
-		if (v4lconvert_helper_read(STDIN_FILENO, &height, sizeof(int), argv[0]))
+		if (!v4lconvert_helper_read(STDIN_FILENO, &height, sizeof(int), argv[0]))
 			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
-		if (v4lconvert_helper_read(STDIN_FILENO, &yvu, sizeof(int), argv[0]))
+		if (!v4lconvert_helper_read(STDIN_FILENO, &yvu, sizeof(int), argv[0]))
 			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
-		if (v4lconvert_helper_read(STDIN_FILENO, &src_size, sizeof(int), argv[0]))
+		if (!v4lconvert_helper_read(STDIN_FILENO, &src_size, sizeof(int), argv[0]))
 			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
 		if (src_size > sizeof(src_buf)) {
@@ -1353,7 +1353,7 @@ int main(int argc, char *argv[]) {
 			return 2;
 		}
 
-		if (v4lconvert_helper_read(STDIN_FILENO, src_buf, src_size, argv[0]))
+		if (!v4lconvert_helper_read(STDIN_FILENO, src_buf, src_size, argv[0]))
 			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
 
@@ -1364,13 +1364,13 @@ int main(int argc, char *argv[]) {
 		} else if (v4lconvert_ov518_to_yuv420(src_buf, dest_buf, width, height, (bool) yvu, src_size))
 			dest_size = (unsigned) -1;
 
-		if (v4lconvert_helper_write(STDOUT_FILENO, &dest_size, sizeof(int), argv[0]))
+		if (!v4lconvert_helper_write(STDOUT_FILENO, &dest_size, sizeof(int), argv[0]))
 			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
 		if (dest_size == (unsigned) -1)
 			continue;
 
-		if (v4lconvert_helper_write(STDOUT_FILENO, dest_buf, dest_size, argv[0]))
+		if (!v4lconvert_helper_write(STDOUT_FILENO, dest_buf, dest_size, argv[0]))
 			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 	}
 }

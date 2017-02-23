@@ -29,9 +29,10 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <stdbool.h>
 #include "../types.h"
 
-static int v4lconvert_helper_write(int fd, const void *b, size_t count, char *progname) {
+static bool v4lconvert_helper_write(int fd, const void *b, size_t count, char *progname) {
 	const u8 *buf = b;
 	size_t written = 0;
 
@@ -45,15 +46,15 @@ static int v4lconvert_helper_write(int fd, const void *b, size_t count, char *pr
 				exit(0);
 
 			fprintf(stderr, "%s: error writing: %s\n", progname, strerror(errno));
-			return -1;
+			return false;
 		}
 		written += (unsigned) ret;
 	}
 		
-	return 0;
+	return true;
 }
 
-static int v4lconvert_helper_read(int fd, void *b, size_t count, char *progname) {
+static bool v4lconvert_helper_read(int fd, void *b, size_t count, char *progname) {
 	u8 *buf = b;
 	size_t r = 0;
 
@@ -64,7 +65,7 @@ static int v4lconvert_helper_read(int fd, void *b, size_t count, char *progname)
 				continue;
 
 			fprintf(stderr, "%s: error reading: %s\n", progname, strerror(errno));
-			return -1;
+			return false;
 		}
 		if (ret == 0) /* EOF */
 			exit(0);
@@ -72,5 +73,5 @@ static int v4lconvert_helper_read(int fd, void *b, size_t count, char *progname)
 		r += (unsigned) ret;
 	}
 
-	return 0;
+	return true;
 }
