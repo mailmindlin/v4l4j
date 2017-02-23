@@ -8,14 +8,11 @@ import au.edu.jcu.v4l4j.impl.jni.PrimitiveStructFieldType;
 import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
 
 public class OMXQuery extends StructPrototype {
-	protected static final StructPrototype VERSION_TYPE = StructPrototype.builder()
-			.addStruct(StructPrototype.builder()
-					.addInt8("nVersionMajor")
-					.addInt8("nVersionMinor")
-					.addInt8("nRevision")
-					.addInt8("nStep")
-					.build(), "s")
-			.addInt32("nVersion")
+	public static final StructPrototype VERSION_TYPE = StructPrototype.builder()
+			.addInt8("nVersionMajor")
+			.addInt8("nVersionMinor")
+			.addInt8("nRevision")
+			.addInt8("nStep")
 			.build();
 	
 	public static final StructPrototype CONFIG_BOOL = OMXQuery.builder()
