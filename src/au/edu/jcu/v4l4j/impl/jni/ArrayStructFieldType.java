@@ -65,5 +65,9 @@ public class ArrayStructFieldType implements StructFieldType {
 			values.add(this.baseType.read(buffer, context));
 		return values;
 	}
+	
+	public StructFieldType getBaseType() {
+		return this.baseType;
+	}
 
 }
