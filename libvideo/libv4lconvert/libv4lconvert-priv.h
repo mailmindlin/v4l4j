@@ -133,7 +133,7 @@ LIBV4LCONVERT_LOCAL void v4lconvert_uyvy_to_yuv420(const u8 *src, u8 *dst, u32 w
 
 LIBV4LCONVERT_LOCAL void v4lconvert_swap_rgb(const u8 *src, u8 *dst, u32 width, u32 height);
 
-LIBV4LCONVERT_LOCAL void v4lconvert_swap_uv(const u8 *src, u8 *dst, const struct v4l2_format *src_fmt);
+LIBV4LCONVERT_LOCAL void v4lconvert_swap_uv(const u8 *src, u8 *dst, unsigned int width, unsigned int height, unsigned int bytesperline);
 
 LIBV4LCONVERT_LOCAL void v4lconvert_grey_to_rgb24(const u8 *src, u8 *dest, u32 width, u32 height);
 
