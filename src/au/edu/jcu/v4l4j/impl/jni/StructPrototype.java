@@ -39,7 +39,7 @@ public class StructPrototype implements StructFieldType {
 	}
 
 	protected StructPrototype(StructField[] fields, Map<String, StructField> fieldMap) {
-		this.fields = fields;
+		this.fields = calculateOffsets(fields);
 		this.fieldMap = fieldMap;
 	}
 
@@ -47,7 +47,7 @@ public class StructPrototype implements StructFieldType {
 		this.fields = calculateOffsets(fields);
 
 		this.fieldMap = new HashMap<>();
-		for (StructField field : fields)
+		for (StructField field : this.fields)
 			this.fieldMap.put(field.getName(), field);
 	}
 
