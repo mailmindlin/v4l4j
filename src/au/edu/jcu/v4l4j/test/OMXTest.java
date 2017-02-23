@@ -16,6 +16,7 @@ import au.edu.jcu.v4l4j.impl.omx.OMXComponent;
 import au.edu.jcu.v4l4j.impl.omx.OMXComponentProvider;
 import au.edu.jcu.v4l4j.impl.omx.OMXConstants;
 import au.edu.jcu.v4l4j.impl.omx.OMXQuery;
+import au.edu.jcu.v4l4j.impl.omx.OMXVideoPort;
 
 public class OMXTest {
 	public static void main(String...fred) throws Exception {
@@ -45,22 +46,34 @@ public class OMXTest {
 			System.out.println("\t=>Dir: \t" + (port.isInput() ? "INPUT" : "OUTPUT"));
 			System.out.println("\t=>Enbl:\t" + (port.isEnabled() ? "ENABLED" : "DISABLED"));
 		}
-		
-		testQueryPortdef(encoder);
-		
+
 		VideoPort inputPort = (VideoPort) encoder.getPort(200);
 		VideoPort outputPort = (VideoPort) encoder.getPort(201);
 		
 		inputPort.setEnabled(false);
 		outputPort.setEnabled(false);
 		
+		testQueryPortdef(encoder);
+		
 		System.out.println("Transitioned to state " + encoder.setState(ComponentState.IDLE));
 		
-		inputPort.setEnabled(true);
-		outputPort.setEnabled(true);
+		((OMXVideoPort)inputPort).pull();
+		((OMXVideoPort)outputPort).pull();
 		
-		FrameBuffer inBuffer = inputPort.allocateBuffer(inputPort.bufferSize());
+		inputPort.setEnabled(true);
+		Thread.sleep(200);
+		((OMXVideoPort)inputPort).pull();
+		System.out.println(inputPort.isEnabled());
+		outputPort.setEnabled(true);
+		Thread.sleep(200);
+		((OMXVideoPort)outputPort).pull();
+		System.out.println(outputPort.isEnabled());
+		
+
 		FrameBuffer outBuffer = outputPort.allocateBuffer(outputPort.bufferSize());
+		Thread.sleep(200);
+		FrameBuffer inBuffer = inputPort.allocateBuffer(inputPort.bufferSize());
+		Thread.sleep(200);
 		inBuffer.toString();
 		outBuffer.toString();
 	}
@@ -121,25 +134,35 @@ public class OMXTest {
 		final int FRAMERATE = 25;
 		final int BITRATE = 10000000;
 		try (StructMap query = new StructMap(OMXConstants.PARAM_PORTDEFINITIONTYPE)) {
+			
 			query.put("nPortIndex", 200);
 			component.accessConfig(false, true, OMXConstants.INDEX_ParamPortDefinition, query.buffer());
 			for (String key : query.keySet())
 				System.out.println("\t=>" + key + ":" + query.get(key));
 			StructMap videoDef = query.getUnion("format").getStruct("video");
+			System.out.println("=>eCompressionFormat:0x" + Long.toHexString(((Number)videoDef.get("eCompressionFormat")).intValue()));
 			videoDef.put("nFrameWidth", FRAME_WIDTH);
 			videoDef.put("nFrameHeight", FRAME_HEIGHT);
 			videoDef.put("xFramerate", FRAMERATE << 16);
 			//videoDef.put("nBitrate", BITRATE);
-			videoDef.put("nStride", MemoryUtils.align(16, FRAME_WIDTH));
+			//videoDef.put("nStride", MemoryUtils.align(16, FRAME_WIDTH));
 			videoDef.put("eColorFormat", 20);
+			videoDef.put("eCompressionFormat", 0);
 			for (String key : query.keySet())
 				System.out.println("\t->" + key + ":" + query.get(key));
 			component.accessConfig(false, false, OMXConstants.INDEX_ParamPortDefinition, query.buffer());
+			
+			
 			System.out.println("Setting port 201");
-			component.accessConfig(false, true, OMXConstants.INDEX_ParamPortDefinition, query.buffer());
 			query.put("nPortIndex", 201);
+			component.accessConfig(false, true, OMXConstants.INDEX_ParamPortDefinition, query.buffer());
+			for (String key : query.keySet())
+				System.out.println("\t@>" + key + ":" + query.get(key));
+			videoDef.put("nFrameWidth", FRAME_WIDTH);
+			videoDef.put("nFrameHeight", FRAME_HEIGHT);
+			videoDef.put("xFramerate", FRAMERATE << 16);
 			videoDef.put("eColorFormat", 0);
-			videoDef.put("eCompressionFormat", OMXConstants.unmapVideoEncodingType(ImagePalette.AVC));
+			//videoDef.put("eCompressionFormat", OMXConstants.unmapVideoEncodingType(ImagePalette.AVC));
 			videoDef.put("nBitrate", BITRATE);
 			component.accessConfig(false, false, OMXConstants.INDEX_ParamPortDefinition, query.buffer());
 		}
