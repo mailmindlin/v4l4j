@@ -6,6 +6,7 @@ import java.util.List;
 import au.edu.jcu.v4l4j.api.AudioEncodingType;
 import au.edu.jcu.v4l4j.api.ImagePalette;
 import au.edu.jcu.v4l4j.api.Rational;
+import au.edu.jcu.v4l4j.impl.jni.StringStructFieldType;
 import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
 import au.edu.jcu.v4l4j.impl.jni.UnionPrototype;
 
@@ -49,6 +50,18 @@ public class OMXConstants {
 	public static final int AUDIO_ENCODING_ATRAC3   = 0x7F000005;
 	public static final int AUDIO_ENCODING_ATRACX   = 0x7F000006;
 	public static final int AUDIO_ENCODING_ATRACAAL = 0x7F000007;
+	
+	//Image encoding types
+	public static final int IMAGE_ENCODING_UNUSED = 0;
+	public static final int IMAGE_ENCODING_AUTO_DETECT = 1;
+	public static final int IMAGE_ENCODING_JPEG = 2;
+	public static final int IMAGE_ENCODING_JPEG2K = 3;
+	public static final int IMAGE_ENCODING_EXIF = 4;
+	public static final int IMAGE_ENCODING_TIFF = 5;
+	public static final int IMAGE_ENCODING_GIF = 6;
+	public static final int IMAGE_ENCODING_PNG = 7;
+	public static final int IMAGE_ENCODING_LZW = 8;
+	public static final int IMAGE_ENCODING_BMP = 9;
 	
 	//Video encoding types
 	public static final int VIDEO_ENCODING_UNUSED = 0;
@@ -538,6 +551,8 @@ public class OMXConstants {
 			.build();
 	
 	public static final StructPrototype VIDEO_PORTDEFTYPE = StructPrototype.builder()
+//			.addPointer(StringStructFieldType.ML_128, "cMIMEType")
+//			.addPointer("cMIMEType")
 			.addPointer("pNativeRender")
 			.addInt32("nFrameWidth")
 			.addInt32("nFrameHeight")
@@ -547,9 +562,37 @@ public class OMXConstants {
 			.addInt32("xFramerate")
 			.addBoolean("bFlagErrorConcealment")
 			.addInt32("eCompressionFormat")
+//			.addEnum(OMXConstants::mapVideoEncodingType, OMXConstants::unmapVideoEncodingType, "eCompressionFormat")
 			.addInt32("eColorFormat")
 			.addPointer("pNativeWindow")
 			.build();
+	
+	public static final StructPrototype AUDIO_PORTDEFTYPE = StructPrototype.builder()
+//			.addPointer(StringStructFieldType.ML_128, "cMIMEType")
+			.addPointer("cMIMEType")
+			.addPointer("pNativeRender")
+			.addBoolean("bFlagErrorConcealment")
+			.addEnum(OMXConstants::mapAudioEncodingType, OMXConstants::unmapAudioEncodingType, "eEncoding")
+			.build();
+	
+	public static final StructPrototype IMAGE_PORTDEFTYPE = StructPrototype.builder()
+//			.addPointer(StringStructFieldType.ML_128, "cMIMEType")
+			.addPointer("cMIMEType")
+			.addPointer("pNativeRender")
+			.addInt32("nFrameWidth")
+			.addInt32("nFrameHeight")
+			.addInt32("nStride")
+			.addInt32("nSliceHeight")
+			.addBoolean("bFlagErrorConcealment")
+			.addEnum(OMXConstants::mapVideoEncodingType, OMXConstants::unmapVideoEncodingType, "eCompressionFormat")
+			.addInt32("eColorFormat")
+			.addPointer("pNativeWindow")
+			.build();
+	
+	public static final StructPrototype OTHER_PORTDEFTYPE = StructPrototype.builder()
+			.addInt32("eFormat")
+			.build();
+	
 	public static final StructPrototype PARAM_PORTDEFINITIONTYPE = StructPrototype.builder()
 			.addInt32("nSize")
 			.addStruct(VERSION_TYPE, "nVersion")
@@ -562,11 +605,15 @@ public class OMXConstants {
 			.addBoolean("bPopulated")
 			.addInt32("eDomain")
 			.add(UnionPrototype.builder()
+					.addStruct(AUDIO_PORTDEFTYPE, "audio")
 					.addStruct(VIDEO_PORTDEFTYPE, "video")
+					.addStruct(IMAGE_PORTDEFTYPE, "image")
+					.addStruct(OTHER_PORTDEFTYPE, "other")
 					.build(), "format")
 			.addBoolean("bBuffersContiguous")
 			.addInt32("nBufferAlignment")
 			.build();
+	
 	public static AudioEncodingType mapAudioEncodingType(int idx) {
 		switch (idx) {
 			case AUDIO_ENCODING_UNUSED:
