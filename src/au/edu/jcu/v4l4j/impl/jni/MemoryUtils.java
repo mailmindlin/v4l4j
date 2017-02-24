@@ -18,6 +18,7 @@ public final class MemoryUtils {
 	public static native long unwrap(ByteBuffer buffer);
 	
 	public static native long alloc(int alignment, long length);
+	public static native long memset(long pointer, long length, int value);
 	public static native long realloc(long pointer, long length);
 	public static native void free(long pointer);
 	

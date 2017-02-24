@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>//aligned_alloc, free
+#include <string.h>//memset
 
 #include "common.h"
 #include "debug.h"
@@ -136,7 +137,7 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_impl_jni_MemoryUtils_alloc(JNIEnv 
 	void* result = aligned_alloc(alignment, length);
 	
 	if (!result) {
-		THROW_EXCEPTION(env, JNI_EXCP, "Unable to allocate %d bytes of memory with %d alignment", length, alignment);
+		THROW_EXCEPTION(env, JNI_EXCP, "Unable to allocate %lu bytes of memory with %u alignment", length, alignment);
 		return -1;
 	}
 	
@@ -146,6 +147,11 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_impl_jni_MemoryUtils_alloc(JNIEnv 
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_jni_MemoryUtils_free(JNIEnv *env, jclass me, jlong pointer) {
 	LOG_FN_ENTER();
 	free((void*) (uintptr_t) pointer);
+}
+
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_jni_MemoryUtils_memset(JNIEnv *env, jclass me, jlong pointer, jlong length, jint value) {
+	LOG_FN_ENTER();
+	memset((void*) (uintptr_t) pointer, value, length);
 }
 
 #ifdef __cplusplus
