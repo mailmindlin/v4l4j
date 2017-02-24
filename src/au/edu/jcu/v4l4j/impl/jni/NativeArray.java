@@ -216,11 +216,6 @@ public class NativeArray extends NativeWrapper<Integer, List<Object>> implements
 	}
 	
 	@Override
-	public void clear() {
-		throw new UnsupportedOperationException();
-	}
-	
-	@Override
 	public boolean remove(Object arg0) {
 		throw new UnsupportedOperationException();
 	}

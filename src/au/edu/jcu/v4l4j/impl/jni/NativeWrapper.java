@@ -79,6 +79,18 @@ public abstract class NativeWrapper<K, T> extends NativePointer<T> {
 		return (V) this.remoteWrappers.get(key);
 	}
 	
+	public <U> NativeUnion<U> getUnion(K key) {
+		return getChild(key);
+	}
+	
+	public NativeStruct getStruct(K key) {
+		return getChild(key);
+	}
+	
+	public NativeArray getArray(K key) {
+		return getChild(key);
+	}
+	
 	public abstract void wrapChildRemote(K key);
 	
 	public abstract void allocChildRemote(K key);

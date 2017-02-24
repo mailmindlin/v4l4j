@@ -141,12 +141,6 @@ public class NativeUnion<T> extends NativeWrapper<String, T> implements Map<Stri
 	}
 
 	@Override
-	public void clear() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
 	public Object remove(Object key) {
 		throw new UnsupportedOperationException();
 	}

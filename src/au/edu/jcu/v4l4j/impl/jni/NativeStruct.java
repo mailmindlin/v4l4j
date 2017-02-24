@@ -171,11 +171,6 @@ public class NativeStruct extends NativeWrapper<String, Map<String, Object>> imp
 	}
 
 	@Override
-	public void clear() {
-		throw new UnsupportedOperationException();
-	}
-	
-	@Override
 	public int size() {
 		//I really don't want to implement this now
 		throw new UnsupportedOperationException("I'm lazy");

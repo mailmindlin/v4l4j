@@ -31,6 +31,10 @@ public class NativePointer<T> implements AutoCloseable {
 		this.type().write(this.buffer(), value);
 	}
 	
+	public void clear() {
+		MemoryUtils.memset(this.address(), this.buffer().remaining(), 0x00);
+	}
+	
 	public <U> NativePointer<U> dereference() {
 		StructFieldType type = this.type();
 		if (!(type instanceof PointerStructFieldType))
