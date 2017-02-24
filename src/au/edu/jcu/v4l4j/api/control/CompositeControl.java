@@ -14,10 +14,10 @@ public interface CompositeControl extends Control<Map<String, Object>> {
 	Control<?> getChildByName(String name);
 	
 	@Override
-	CompositeControlGetter<Map<String, Object>, Map<String, Object>> get();
+	CompositeControlAccessor<Void, Map<String, Object>, Map<String, Object>> get();
 	
 	@Override
-	CompositeControlAccessor<Map<String, Object>, Void> access();
+	CompositeControlAccessor<Void, Map<String, Object>, Void> access();
 	
 	@Override
 	default ControlType getType() {
@@ -34,14 +34,22 @@ public interface CompositeControl extends Control<Map<String, Object>> {
 		@Override
 		CompositeControlAccessor<P, T, R> read(Consumer<T> handler);
 		
+		<E> CompositeControlAccessor<P, T, R> read(String name, Consumer<E> handler);
+		
 		@Override
 		CompositeControlAccessor<P, T, R> write(T value);
 		
 		@Override
 		CompositeControlAccessor<P, T, R> write(Supplier<T> supplier);
 		
+		<E> CompositeControlAccessor<P, T, R> write(String name, E value);
+		
+		<E> CompositeControlAccessor<P, T, R> write(String name, Supplier<E> supplier);
+		
 		@Override
 		CompositeControlAccessor<P, T, R> update(Function<T, T> mappingFunction);
+		
+		<E> CompositeControlAccessor<P, T, R> update(String name, BiFunction<String, E, E> mappingFunction);
 		
 		@Override
 		CompositeControlAccessor<P, T, R> increase();
