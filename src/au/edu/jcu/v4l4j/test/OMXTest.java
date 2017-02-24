@@ -4,13 +4,11 @@ import java.nio.file.Paths;
 import java.util.Set;
 
 import au.edu.jcu.v4l4j.api.FrameBuffer;
-import au.edu.jcu.v4l4j.api.ImagePalette;
 import au.edu.jcu.v4l4j.api.component.ComponentPort;
 import au.edu.jcu.v4l4j.api.component.ComponentState;
 import au.edu.jcu.v4l4j.api.component.port.VideoPort;
-import au.edu.jcu.v4l4j.impl.jni.MemoryUtils;
+import au.edu.jcu.v4l4j.impl.jni.NativeStruct;
 import au.edu.jcu.v4l4j.impl.jni.PrimitiveStructFieldType;
-import au.edu.jcu.v4l4j.impl.jni.StructMap;
 import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
 import au.edu.jcu.v4l4j.impl.omx.OMXComponent;
 import au.edu.jcu.v4l4j.impl.omx.OMXComponentProvider;
@@ -91,12 +89,12 @@ public class OMXTest {
 				.addPointer("callbacks")
 				.build();
 		
-		StructMap data = new StructMap(adProto, pointer, 16);
+		NativeStruct data = new NativeStruct(adProto, pointer, 16);
 		System.out.println("Component pointer: " + Long.toHexString(((Number)data.get("component")).longValue()));
-		data.wrapFar("component");
-		StructMap component = data.getStruct("component");
+		data.wrapChildRemote("component");
+		NativeStruct component = data.getStruct("component");
 		System.out.println("component struct size: " + ((Number)component.get("nSize")).intValue());
-		StructMap componentVsn = component.getStruct("version");
+		NativeStruct componentVsn = component.getStruct("version");
 		System.out.println("Version major " + componentVsn.get("nVersionMajor"));
 		System.out.println("Version minor " + componentVsn.get("nVersionMinor"));
 		System.out.println("Version revis " + componentVsn.get("nRevision"));
@@ -115,10 +113,10 @@ public class OMXTest {
 			.addInt32("length")
 			.addInt32("startPortNumber")
 			.build();
-		try (StructMap query = new StructMap(portQueryProto)) {
+		try (NativeStruct query = new NativeStruct(portQueryProto)) {
 			component.accessConfig(false, true, OMXConstants.INDEX_ParamVideoInit, query.buffer());
 			System.out.println("Struct size: " + query.get("size"));
-			StructMap componentVsn = query.getStruct("version");
+			NativeStruct componentVsn = query.getStruct("version");
 			System.out.println("Version major " + componentVsn.get("nVersionMajor"));
 			System.out.println("Version minor " + componentVsn.get("nVersionMinor"));
 			System.out.println("Version revis " + componentVsn.get("nRevision"));
@@ -133,14 +131,14 @@ public class OMXTest {
 		final int FRAME_HEIGHT = 1080/4;
 		final int FRAMERATE = 25;
 		final int BITRATE = 10000000;
-		try (StructMap query = new StructMap(OMXConstants.PARAM_PORTDEFINITIONTYPE)) {
-			
+		try (NativeStruct query = new NativeStruct(OMXConstants.PARAM_PORTDEFINITIONTYPE)) {
+			query.clear();
 			query.put("nPortIndex", 200);
+			NativeStruct videoDef = query.getUnion("format").getStruct("video");
+//			videoDef.put("cMIMEType", 0);
 			component.accessConfig(false, true, OMXConstants.INDEX_ParamPortDefinition, query.buffer());
 			for (String key : query.keySet())
 				System.out.println("\t=>" + key + ":" + query.get(key));
-			StructMap videoDef = query.getUnion("format").getStruct("video");
-			System.out.println("=>eCompressionFormat:0x" + Long.toHexString(((Number)videoDef.get("eCompressionFormat")).intValue()));
 			videoDef.put("nFrameWidth", FRAME_WIDTH);
 			videoDef.put("nFrameHeight", FRAME_HEIGHT);
 			videoDef.put("xFramerate", FRAMERATE << 16);
@@ -162,9 +160,26 @@ public class OMXTest {
 			videoDef.put("nFrameHeight", FRAME_HEIGHT);
 			videoDef.put("xFramerate", FRAMERATE << 16);
 			videoDef.put("eColorFormat", 0);
-			//videoDef.put("eCompressionFormat", OMXConstants.unmapVideoEncodingType(ImagePalette.AVC));
+			videoDef.put("eCompressionFormat", OMXConstants.VIDEO_ENCODING_AVC);
 			videoDef.put("nBitrate", BITRATE);
 			component.accessConfig(false, false, OMXConstants.INDEX_ParamPortDefinition, query.buffer());
+		}
+		
+		try (NativeStruct bitrateQuery = new NativeStruct(OMXConstants.PARAM_BITRATETYPE)) {
+			bitrateQuery.clear();
+			bitrateQuery.put("nPortIndex", 201);
+			bitrateQuery.put("eControlType", 1);
+			bitrateQuery.put("nBitrate", BITRATE);
+			component.accessConfig(false, false, OMXConstants.INDEX_ParamVideoBitrate, bitrateQuery.buffer());
+		}
+		try (NativeStruct formatQuery = new NativeStruct(OMXConstants.PARAM_PORTFORMATTYPE)) {
+			formatQuery.clear();
+			formatQuery.put("nPortIndex", 201);
+			formatQuery.put("eCompressionFormat", OMXConstants.VIDEO_ENCODING_AVC);
+			formatQuery.put("nIndex", 0);
+			formatQuery.put("eColorFormat", 0);
+			formatQuery.put("xFramerate", 0);
+			component.accessConfig(false, false, OMXConstants.INDEX_ParamVideoPortFormat, formatQuery.buffer());
 		}
 	}
 }
