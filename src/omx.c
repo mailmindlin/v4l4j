@@ -127,8 +127,8 @@ void v4lconvert_omx_init() {
 		hasBcmHost = false;
 		if (bcm_host != NULL) {
 			do {
-				LOOKUP_FN(bcm_host, bcm_host_init)
-				LOOKUP_FN(bcm_host, bcm_host_deinit)
+				LOOKUP_FN(bcm_host, bcm_host_init);
+				LOOKUP_FN(bcm_host, bcm_host_deinit);
 				hasBcmHost = true;
 			} while (0);
 			
