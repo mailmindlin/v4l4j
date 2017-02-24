@@ -1236,7 +1236,6 @@ static void v4lcontrol_get_dmi_string(const char *sysfs_prefix, const char *stri
 }
 
 static bool v4lcontrol_get_usb_info(struct v4lcontrol_data *data, const char *sysfs_prefix, unsigned short *vendor_id, unsigned short *product_id, int *speed) {
-	int minor;
 	struct stat st;
 	char sysfs_name[512];
 	char c, *s, buf[32];
@@ -1255,7 +1254,8 @@ static bool v4lcontrol_get_usb_info(struct v4lcontrol_data *data, const char *sy
 		s = fgets(buf, sizeof(buf), f);
 		fclose(f);
 
-		if (s && sscanf(buf, "%*d:%d%c", &minor, &c) == 2 && c == '\n' && minor == (signed) minor(st.st_rdev))
+		int minor;
+		if (s && sscanf(buf, "%*d:%d%c", &minor, &c) == 2 && c == '\n' && ((unsigned)minor) == st.st_rdev)
 			break;
 	}
 	if (i == 256)

@@ -1,0 +1,41 @@
+# This file is a bit more complicated that I would otherwise like, because
+# it has to be set up for both Java and C
+os: linux
+language: java
+jdk: oraclejdk8
+# Ignore legacy branches
+branches:
+ except:
+  - svn/test-perf
+  - svn/unstable
+  - svn/issue11
+  - svn/v4j
+  - svn/fix-delay
+  - svn/add-sse
+  - svn/switch-input
+  - svn/tags/0.9.0
+  - svn/trunk
+  - svn/tidyup
+  - master-old
+# We use some C11 (with extensions), but TravisCI only has GCC 4.6.3 installed (ATM)
+# Thanks to genbattle.bitbucket.org/blog/2016/01/17/c++-travis-ci, stackoverflow.com/a/32127147/2759984
+compiler: gcc
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-4.9
+      - libc-bin
+      - libc-dev-bin
+      - libc6-dev
+env:
+ global:
+  - CC=gcc-4.9
+install:
+ - make -C libvideo all -j4
+ - sudo -E make -C libvideo install
+ - ant jnilib-debug all-debug include-jni jar-test
+ - sudo -E ant install
+script:
+ - ant test-junit
