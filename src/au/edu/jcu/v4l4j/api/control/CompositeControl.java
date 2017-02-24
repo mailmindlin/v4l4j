@@ -37,12 +37,16 @@ public interface CompositeControl extends Control<Map<String, Object>> {
 		<E> CompositeControlAccessor<P, T, R> read(String name, Consumer<E> handler);
 		
 		@Override
-		CompositeControlAccessor<P, T, R> write(T value);
+		default CompositeControlAccessor<P, T, R> write(T value) {
+			return write(()->value);
+		}
 		
 		@Override
 		CompositeControlAccessor<P, T, R> write(Supplier<T> supplier);
 		
-		<E> CompositeControlAccessor<P, T, R> write(String name, E value);
+		default <E> CompositeControlAccessor<P, T, R> write(String name, E value) {
+			return write(name, ()->value);
+		}
 		
 		<E> CompositeControlAccessor<P, T, R> write(String name, Supplier<E> supplier);
 		
@@ -61,7 +65,9 @@ public interface CompositeControl extends Control<Map<String, Object>> {
 		CompositeControlAccessor<P, T, R> set();
 		
 		@Override
-		CompositeControlAccessor<P, T, R> setAndGet();
+		default CompositeControlAccessor<P, T, T> setAndGet() {
+			return set().get();
+		}
 		
 		<Ct, C extends ControlAccessor<CompositeControlAccessor<P, T, R>, Ct, R>> C withChild(String name);
 		

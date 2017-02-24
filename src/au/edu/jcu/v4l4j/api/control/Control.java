@@ -54,7 +54,9 @@ public interface Control<T> extends AutoCloseable {
 		 * until set() is called.
 		 * @return self
 		 */
-		ControlAccessor<P, T, R> write(T value);
+		default ControlAccessor<P, T, R> write(T value) {
+			return write(()->value);
+		}
 		
 		/**
 		 * Set the value. Note that this  does NOT update the control
@@ -96,7 +98,9 @@ public interface Control<T> extends AutoCloseable {
 		 * On some implementations, this may be a faster operation.
 		 * @return self
 		 */
-		ControlAccessor<P, T, R> setAndGet();
+		default ControlAccessor<P, T, T> setAndGet() {
+			return set().get();
+		}
 		
 		/**
 		 * Return to the parent control, if available.

@@ -84,7 +84,7 @@ public class OMXQueryControl implements CompositeControl {
 	}
 	
 	@Override
-	public OMXQueryControlAccessor<Void, Map<String, Object>, Void> access() {
+	public AbstractOMXQueryControlAccessor<Void, Map<String, Object>, Void> access() {
 		//TODO finish
 		return null;//new OMXQueryControlAccessor<Void, Map<String, Object>, Void>(null, null, null);
 	}
@@ -110,23 +110,23 @@ public class OMXQueryControl implements CompositeControl {
 	 * @param <T>
 	 * @param <R>
 	 */
-	public abstract class OMXQueryControlAccessor<P, T, R> implements CompositeControlAccessor<P, T, R> {
+	public abstract class AbstractOMXQueryControlAccessor<P, T, R> implements CompositeControlAccessor<P, T, R> {
 		protected final boolean isParentOwner;
 		protected final String name;
-		protected final OMXQueryControlAccessor<?, ?, ?> parent;
+		protected final AbstractOMXQueryControlAccessor<?, ?, ?> parent;
 		protected final Duration timeout;
 		protected final Consumer<OMXQueryControlAccessorState> mutator;
 		
-		OMXQueryControlAccessor(String name, OMXQueryControlAccessor<?, ?, ?> parent, Duration timeout) {
+		AbstractOMXQueryControlAccessor(String name, AbstractOMXQueryControlAccessor<?, ?, ?> parent, Duration timeout) {
 			this(name, parent, timeout, null);
 		}
 		
-		protected OMXQueryControlAccessor(String name, OMXQueryControlAccessor<?, ?, ?> parent, Duration timeout,
+		protected AbstractOMXQueryControlAccessor(String name, AbstractOMXQueryControlAccessor<?, ?, ?> parent, Duration timeout,
 				Consumer<OMXQueryControlAccessorState> mutator) {
 			this(false, name, parent, timeout, mutator);
 		}
 		
-		protected OMXQueryControlAccessor(boolean isParentOwner, String name, OMXQueryControlAccessor<?, ?, ?> parent,
+		protected AbstractOMXQueryControlAccessor(boolean isParentOwner, String name, AbstractOMXQueryControlAccessor<?, ?, ?> parent,
 				Duration timeout, Consumer<OMXQueryControlAccessorState> mutator) {
 			this.isParentOwner = isParentOwner;
 			this.name = name;
@@ -136,7 +136,7 @@ public class OMXQueryControl implements CompositeControl {
 		}
 		
 		@Override
-		public OMXQueryControlAccessor<P, T, R> setTimeout(Duration timeout) {
+		public AbstractOMXQueryControlAccessor<P, T, R> setTimeout(Duration timeout) {
 			// We can pass our parent ref to the child because we have the same
 			// state
 			return chained(timeout, null);
@@ -144,45 +144,44 @@ public class OMXQueryControl implements CompositeControl {
 		
 		@Override
 		@SuppressWarnings("unchecked")
-		public OMXQueryControlAccessor<P, T, T> get() {
+		public AbstractOMXQueryControlAccessor<P, T, T> get() {
 			// Kajigger the casting chain, because casting is hard.
 			// Note that this should be correct
-			return (OMXQueryControlAccessor<P, T, T>) (Object) thenApply(state -> OMXQueryControl.this.component
+			return (AbstractOMXQueryControlAccessor<P, T, T>) (Object) thenApply(state -> OMXQueryControl.this.component
 					.accessConfig(false, true, OMXQueryControl.this.queryId, state.valueMap.buffer()));
 		}
 		
 		@Override
 		@SuppressWarnings("unchecked")
-		public OMXQueryControlAccessor<P, T, R> read(Consumer<T> handler) {
+		public AbstractOMXQueryControlAccessor<P, T, R> read(Consumer<T> handler) {
 			return this.thenApply(state -> handler.accept((T) state.localPointer.peek().get()));
 		}
 		
 		@Override
-		@SuppressWarnings("unchecked")
-		public abstract <E> OMXQueryControlAccessor<P, T, R> read(String name, Consumer<E> handler);
+		public abstract <E> AbstractOMXQueryControlAccessor<P, T, R> read(String name, Consumer<E> handler);
 		
 		@Override
-		public OMXQueryControlAccessor<P, T, R> write(T value) {
+		public AbstractOMXQueryControlAccessor<P, T, R> write(T value) {
 			return this.write(() -> value);
 		}
 		
 		@Override
-		public <E> OMXQueryControlAccessor<P, T, R> write(String name, E value) {
+		public <E> AbstractOMXQueryControlAccessor<P, T, R> write(String name, E value) {
 			return write(name, () -> value);
 		}
 		
 		@Override
-		public abstract <E> OMXQueryControlAccessor<P, T, R> write(String name, Supplier<E> supplier);
+		public abstract <E> AbstractOMXQueryControlAccessor<P, T, R> write(String name, Supplier<E> supplier);
 		
 
 		@Override
 		@SuppressWarnings("unchecked")
-		public OMXQueryControlAccessor<P, T, R> write(Supplier<T> supplier) {
+		public AbstractOMXQueryControlAccessor<P, T, R> write(Supplier<T> supplier) {
 			return this.thenApply(state->((NativePointer<T>)state.localPointer.peek()).set(supplier.get()));
 		}
 		
 		@Override
-		public OMXQueryControlAccessor<P, T, R> update(Function<T, T> mappingFunction) {
+		public AbstractOMXQueryControlAccessor<P, T, R> update(Function<T, T> mappingFunction) {
 			// I'm thinking some kind of copy-mark changed-merge scheme, if I
 			// ever get around to it...
 			throw new UnsupportedOperationException("This one is hard to implement");
@@ -190,30 +189,30 @@ public class OMXQueryControl implements CompositeControl {
 		
 		@Override
 		@SuppressWarnings("unchecked")
-		public <E extends Object> OMXQueryControlAccessor<P, T, R> update(String name,
+		public <E extends Object> AbstractOMXQueryControlAccessor<P, T, R> update(String name,
 				BiFunction<String, E, E> mappingFunction) {
 			return thenApply(
 					state -> state.valueMap.compute(name, (BiFunction<String, Object, Object>) mappingFunction));
 		}
 		
 		@Override
-		public OMXQueryControlAccessor<P, T, R> set() {
+		public AbstractOMXQueryControlAccessor<P, T, R> set() {
 			return thenApply(state -> OMXQueryControl.this.component.accessConfig(false, false,
 					OMXQueryControl.this.queryId, state.valueMap.buffer()));
 		}
 		
 		@Override
-		public OMXQueryControlAccessor<P, T, R> increase() {
+		public AbstractOMXQueryControlAccessor<P, T, R> increase() {
 			return this;
 		}
 		
 		@Override
-		public OMXQueryControlAccessor<P, T, R> decrease() {
+		public AbstractOMXQueryControlAccessor<P, T, R> decrease() {
 			return this;
 		}
 		
 		@Override
-		public OMXQueryControlAccessor<P, T, R> setAndGet() {
+		public AbstractOMXQueryControlAccessor<P, T, R> setAndGet() {
 			return thenApply(state -> {
 				OMXComponent component = OMXQueryControl.this.component;
 				int queryId = OMXQueryControl.this.queryId;
@@ -227,13 +226,13 @@ public class OMXQueryControl implements CompositeControl {
 		@SuppressWarnings("unchecked")
 		public P and() {
 			// Traverse backwards, finding owner
-			OMXQueryControlAccessor<?, ?, ?> root = this;
+			AbstractOMXQueryControlAccessor<?, ?, ?> root = this;
 			while (!root.isParentOwner) {
 				if (root.parent == null)
 					throw new IllegalStateException("No owner exists for this accessor");
 				root = root.parent;
 			}
-			OMXQueryControlAccessor<?, ?, ?> owner = root.parent;
+			AbstractOMXQueryControlAccessor<?, ?, ?> owner = root.parent;
 			// Add the call chain of the child methods up to the root
 			// to the owner, and return
 			return (P) owner.thenApply(this::doCall);
@@ -245,7 +244,7 @@ public class OMXQueryControl implements CompositeControl {
 		 * 
 		 * @return
 		 */
-		protected OMXQueryControlAccessor<?, ?, ?> doGetChildParent() {
+		protected AbstractOMXQueryControlAccessor<?, ?, ?> doGetChildParent() {
 			if (this.mutator == null)
 				return this.parent;
 			return this;
@@ -254,18 +253,18 @@ public class OMXQueryControl implements CompositeControl {
 		/**
 		 * Push mutator action onto stack
 		 */
-		protected OMXQueryControlAccessor<P, T, R> thenApply(Consumer<OMXQueryControlAccessorState> mutator) {
+		protected AbstractOMXQueryControlAccessor<P, T, R> thenApply(Consumer<OMXQueryControlAccessorState> mutator) {
 			return chained(timeout, mutator);
 		}
 		
-		protected OMXQueryControlAccessor<P, T, R> chained(Duration timeout,
+		protected AbstractOMXQueryControlAccessor<P, T, R> chained(Duration timeout,
 				Consumer<OMXQueryControlAccessorState> mutator) {
-			OMXQueryControlAccessor<?, ?, ?> parent = doGetChildParent();
+			AbstractOMXQueryControlAccessor<?, ?, ?> parent = doGetChildParent();
 			return chained(this.isParentOwner && parent != this, this.name, parent, timeout, mutator);
 		}
 		
-		protected abstract OMXQueryControlAccessor<P, T, R> chained(boolean isParentOwner, String name,
-				OMXQueryControlAccessor<?, ?, ?> parent, Duration timeout,
+		protected abstract AbstractOMXQueryControlAccessor<P, T, R> chained(boolean isParentOwner, String name,
+				AbstractOMXQueryControlAccessor<?, ?, ?> parent, Duration timeout,
 				Consumer<OMXQueryControlAccessorState> mutator);
 		
 		/**
@@ -294,10 +293,10 @@ public class OMXQueryControl implements CompositeControl {
 		}
 	}
 	
-	protected class OMXCompositeControlAccessor<P, T, R> extends OMXQueryControlAccessor<P, T, R> {
+	protected class OMXQueryControlBaseAccessor<P, T, R> extends AbstractOMXQueryControlAccessor<P, T, R> {
 		
-		protected OMXCompositeControlAccessor(boolean isParentOwner, String name,
-				OMXQueryControlAccessor<?, ?, ?> parent, Duration timeout,
+		protected OMXQueryControlBaseAccessor(boolean isParentOwner, String name,
+				AbstractOMXQueryControlAccessor<?, ?, ?> parent, Duration timeout,
 				Consumer<OMXQueryControlAccessorState> mutator) {
 			super(isParentOwner, name, parent, timeout, mutator);
 		}
@@ -309,29 +308,39 @@ public class OMXQueryControl implements CompositeControl {
 		}
 		
 		@Override
-		protected OMXQueryControlAccessor<P, T, R> chained(boolean isParentOwner, String name, OMXQueryControlAccessor<?, ?, ?> parent, Duration timeout, Consumer<OMXQueryControlAccessorState> mutator) {
-			return new OMXCompositeControlAccessor<>(isParentOwner, name, parent, timeout, mutator);
+		protected AbstractOMXQueryControlAccessor<P, T, R> chained(boolean isParentOwner, String name, AbstractOMXQueryControlAccessor<?, ?, ?> parent, Duration timeout, Consumer<OMXQueryControlAccessorState> mutator) {
+			return new OMXQueryControlBaseAccessor<>(isParentOwner, name, parent, timeout, mutator);
 		}
 		
 		@Override
 		@SuppressWarnings("unchecked")
-		public <E> OMXQueryControlAccessor<P, T, R> read(String name, Consumer<E> handler) {
+		public <E> AbstractOMXQueryControlAccessor<P, T, R> read(String name, Consumer<E> handler) {
 			return this.thenApply(state -> handler.accept((E) ((NativeStruct) state.localPointer.peek()).get(name)));
 		}
 		
 		@Override
-		public <E> OMXQueryControlAccessor<P, T, R> write(String name, Supplier<E> supplier) {
-			return null;
+		public <E> AbstractOMXQueryControlAccessor<P, T, R> write(String name, Supplier<E> supplier) {
+			return this.thenApply(state -> {
+				
+			});
 		}
 		
 	}
 	
 	protected static class OMXQueryControlAccessorState implements AutoCloseable {
 		NativeStruct valueMap;
-		Set<ByteBuffer> unmanagedRefs = new HashSet<>();
 		Object result = null;
 		Stack<NativePointer<?>> localPointer = new Stack<>();
 		
+		public <T> T setResult(T value) {
+			this.result = value;
+			return value;
+		}
+		
+		@SuppressWarnings("unchecked")
+		public <T> T getResult() {
+			return (T) this.result;
+		}
 		@Override
 		public void close() throws Exception {
 			valueMap.close();
