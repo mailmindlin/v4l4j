@@ -270,10 +270,6 @@ struct capture_device {
 	 */
 	signed int tuner_nb;
 	/**
-	 * See definition below
-	 */
-	struct capture_actions *actions;
-	/**
 	 * True if the selected image format is native, or if the selected format is not
 	 * native, but is still reported as a native format because libv4lconvert cannot
 	 * handle capture in the actual native format. Else false.
@@ -297,6 +293,126 @@ struct capture_device {
 	 * Used only when V4L2, only valid when is_native is false
 	 */
 	struct convert_data* convert;
+	/*
+	 * Init methods
+	 */
+	/**
+	 * Set the capture parameters
+	 * TODO update doc
+	 * int * point to an array of image formats (palettes) to try
+	 * (see bottom of libvideo.h for a list of supported palettes)
+	 * the last argument (int) tells how many formats there are in
+	 * the previous argument, arg2 can be set to NULL and arg3 to 0 to
+	 * try the default order (again, see libvideo.h)
+	 * returns: LIBVIDEO_ERR_FORMAT (no supplied format could be used),
+	 * LIBVIDEO_ERR_STD (the supplied standard could not be used),
+	 * LIBVIDEO_ERR_CHANNEL (the supplied channel is invalid)
+	 * LIBVIDEO_ERR_CROP (error applying cropping parameters)
+	 * or LIBVIDEO_ERR_NOCAPS (error checking capabilities)
+	 */
+	int (*setCaptureParameters)(VideoDevice* device, unsigned int src_palette, unsigned int dest_palette);
+
+	/**
+	 * Set the frame interval for capture, i.e., the number of seconds in between
+	 * each captured frame.
+	 * This function is available only for V4L2 devices whose driver supports this
+	 * feature. It cannot be called during capture.
+	 * 
+	 * This function returns LIBVIDEO_ERR_IOCTL on v4l1 devices and on v4l2
+	 * device which do not support setting frame intervals. It returns
+	 * LIBVIDEO_ERR_FORMAT if the given parameters are incorrect, or 0 if
+	 * everything went fine. The driver may adjust the given values to the closest
+	 * supported ones, which can be check with get_frame_interval()
+	 */
+	int (*setFrameInterval)(VideoDevice* device, unsigned int numerator, unsigned int denominator);
+	/**
+	 * Get the current frame interval for capture, i.e., the number of seconds in
+	 * between each captured frame.
+	 * This function is available only for V4L2 devices whose driver supports this
+	 * feature. It cannot be called during capture.
+	 * 
+	 * This function returns LIBVIDEO_ERR_IOCTL on v4l1 devices and on v4l2
+	 * device which do not support setting frame intervals or 0 if everything went
+	 * fine.
+	 */
+	int (*getFrameInterval)(VideoDevice* device, unsigned int *numerator, unsigned int *denominator);
+	/**
+	 * Change the current video input and standard during capture
+	 */
+	int (*setVideoInputStd)(VideoDevice* device, unsigned int input_num, unsigned int std);
+	/**
+	 * Get the current video input and standard during capture
+	 */
+	void (*getVideoInputStd)(VideoDevice* device, unsigned int* input_num, unsigned int* std);
+	/**
+	 * Initialize streaming, request creation of mmap'ed buffers
+	 * returns 0 if ok, LIBVIDEO_ERR_REQ_MMAP if error negotiating mmap params,
+	 * LIBVIDEO_ERR_INVALID_BUF_NB if the number of requested buffers is incorrect
+	 */
+	int (*initCapture)(VideoDevice* device);
+	/**
+	 * Tell V4L to start the capture
+	 * @return 0 if OK, else LIBVIDEO_ERR_IOCTL
+	 */
+	int (*startCapture)(VideoDevice* device);
+
+	/*
+	 * capture methods
+	 * these methods can be called if calls to ALL the init methods
+	 * (above) were successful
+	 */
+
+	/**
+	 * Dequeue the next buffer with available frame, or NULL if there is an error
+	 * @param device
+	 * @param length
+	 * 		recieves the frame length
+	 * @param index
+	 * 		receives the index of the buffer which contains the returned frame
+	 * @param capture_time
+	 * 		receives the capture time in microseconds (for v4l2 devices only)
+	 * @param sequence
+	 * 		argument receives the capture frame sequence number (for v4l2 devices only)
+	 */
+	void* (*dequeue_buffer)(struct video_device *device, unsigned int *length, unsigned int *index, unsigned long long *capture_time, unsigned long long *sequence);
+	/**
+	 * Convert the previously dequed dequeued buffer at the given index. Call me
+	 * only if the conversion is needed (if the requested format is not native)
+	 */
+	unsigned int (*convert_buffer)(struct video_device *vdev, int index, unsigned int src_len, void *dest_buffer);
+	/**
+	 * Enqueue the buffer (given its index) when done using the frame
+	 */
+	void (*enqueue_buffer)(struct video_device *device, unsigned int);
+	
+	/*
+	 * Freeing resources
+	 * these methods free resources created by matching init methods. Note that
+	 * set_cap_param doesnt have a counterpart since it only sets values and doesnt
+	 * create additional resources.
+	 */
+
+	/**
+	 * Counterpart of start_capture, must be called it start_capture was successful
+	 * returns 0 if ok, LIBVIDEO_ERR_IOCTL otherwise
+	 */
+	int (*stopCapture)(struct video_device *device);
+	/**
+	 * Counterpart of init_capture, must be called it init_capture was successful
+	 */
+	void (*freeCapture)(struct video_device *device);
+
+	/*
+	 * Dump to stdout methods
+	 * Must be called after init_capture_device and before free_capture_device
+	 */
+	/**
+	 * Lists all supported image formats
+	 * prints capabilities
+	 * print max width max height for v4l1
+	 * and current settings for v4l2
+	 */
+	void (*list_cap)(int);
 };
 
 
@@ -490,7 +606,8 @@ struct control {
 	unsigned int count_menu;
 };
 
-struct video_device;
+struct VideoDevice;
+typedef struct VideoDevice VideoDevice;
 
 struct v4l_driver_probe {
 	int (*probe)    (struct video_device *device, void **);
@@ -533,12 +650,12 @@ struct control_list {
  *  T U N E R   I N T E R F A C E
  *
  */
-struct tuner_actions {
+typedef struct TunerActions {
 	//returns 0 if OK, LIBVIDEO_ERR_IOCTL otherwise
-	int (*set_tuner_freq)(struct video_device *device, unsigned int idx, unsigned int freq) __attribute__((nonnull (1)));
-	int (*get_tuner_freq)(struct video_device *device, unsigned int idx, unsigned int *freq) __attribute__((nonnull (1)));
-	int (*get_rssi_afc)(struct video_device *device, unsigned int idx, int *rssi, int *afc) __attribute__((nonnull (1, 3, 4)));
-};
+	int (*setTunerFrequency)(struct video_device *device, unsigned int idx, unsigned int freq) __attribute__((nonnull (1)));
+	int (*getTunerFrequency)(struct video_device *device, unsigned int idx, unsigned int *freq) __attribute__((nonnull (1)));
+	int (*getRssiAfc)(struct video_device *device, unsigned int idx, int *rssi, int *afc) __attribute__((nonnull (1, 3, 4)));
+} TunerActions;
 
 /*
  *
@@ -547,7 +664,7 @@ struct tuner_actions {
  */
 #define FILENAME_LENGTH				99 + 1
 
-struct video_device {
+struct VideoDevice {
 	int fd;
 
 #define V4L1_VERSION				1
@@ -558,6 +675,20 @@ struct video_device {
 	struct capture_device *capture;
 	struct control_list *control;
 	struct tuner_actions *tuner_action;
+	/**
+	 * init_capture_device creates and initialises a struct capture_device,
+	 * opens the device file, checks what version of v4l the device supports,
+	 * and whether capture and streaming are supported. Then creates the V4L
+	 * control list.
+	 */
+	struct capture_device* (*initCaptureDevice)(VideoDevice* vdev, unsigned int width, unsigned int height, unsigned int channel, unsigned int standard, unsigned int nb_buf);
+	
+	//QUERY INTERFACE
+	//returns NULL if unable to get device info
+	struct device_info* (*getDeviceInfo) (VideoDevice* vdev);
+	void (*printDeviceInfo)(VideoDevice* vdev);
+	void (*releaseDeviceInfo)(VideoDevice* vdev);
+	
 };
 
 
@@ -584,152 +715,14 @@ int get_libvideo_version(char *dst, size_t len);
 /**
  * Creates a video_device (must call close_device() when done)
  */
-struct video_device *open_device(char *);
-int close_device(struct video_device *);
+VideoDevice* open_device(char *file);
+int close_device(VideoDevice* device);
 
 /*
  *
  * CAPTURE INTERFACE
  *
  */
-
-
-/**
- * init_capture_device creates and initialises a struct capture_device,
- * opens the device file, checks what version of v4l the device supports,
- * and whether capture and streaming are supported. Then creates the V4L
- * control list.
- */
-struct capture_device *init_capture_device(struct video_device *vdev, unsigned int width, unsigned int height, unsigned int channel, unsigned int standard, unsigned int nb_buf);
-
-
-/*
- * functions pointed to by the members of this structure should be used
- * by the calling application, to capture frame from the video device.
- */
-struct capture_actions {
-/*
- * Init methods
- */
-	/**
-	 * Set the capture parameters
-	 * TODO update doc
-	 * int * point to an array of image formats (palettes) to try
-	 * (see bottom of libvideo.h for a list of supported palettes)
-	 * the last argument (int) tells how many formats there are in
-	 * the previous argument, arg2 can be set to NULL and arg3 to 0 to
-	 * try the default order (again, see libvideo.h)
-	 * returns: LIBVIDEO_ERR_FORMAT (no supplied format could be used),
-	 * LIBVIDEO_ERR_STD (the supplied standard could not be used),
-	 * LIBVIDEO_ERR_CHANNEL (the supplied channel is invalid)
-	 * LIBVIDEO_ERR_CROP (error applying cropping parameters)
-	 * or LIBVIDEO_ERR_NOCAPS (error checking capabilities)
-	 */
-	int (*set_cap_param)(struct video_device *device, unsigned int src_palette, unsigned int dest_palette);
-
-	/**
-	 * Set the frame interval for capture, i.e., the number of seconds in between
-	 * each captured frame.
-	 * This function is available only for V4L2 devices whose driver supports this
-	 * feature. It cannot be called during capture.
-	 * 
-	 * This function returns LIBVIDEO_ERR_IOCTL on v4l1 devices and on v4l2
-	 * device which do not support setting frame intervals. It returns
-	 * LIBVIDEO_ERR_FORMAT if the given parameters are incorrect, or 0 if
-	 * everything went fine. The driver may adjust the given values to the closest
-	 * supported ones, which can be check with get_frame_interval()
-	 */
-	int (*set_frame_interval)(struct video_device *, unsigned int numerator, unsigned int denominator);
-	/**
-	 * Get the current frame interval for capture, i.e., the number of seconds in
-	 * between each captured frame.
-	 * This function is available only for V4L2 devices whose driver supports this
-	 * feature. It cannot be called during capture.
-	 * 
-	 * This function returns LIBVIDEO_ERR_IOCTL on v4l1 devices and on v4l2
-	 * device which do not support setting frame intervals or 0 if everything went
-	 * fine.
-	 */
-	int (*get_frame_interval)(struct video_device *, unsigned int *numerator, unsigned int *denominator);
-	/**
-	 * Change the current video input and standard during capture
-	 */
-	int (*set_video_input_std)(struct video_device*, unsigned int input_num, unsigned int std);
-	/**
-	 * Get the current video input and standard during capture
-	 */
-	void (*get_video_input_std)(struct video_device*, unsigned int* input_num, unsigned int* std);
-	/**
-	 * Initialize streaming, request creation of mmap'ed buffers
-	 * returns 0 if ok, LIBVIDEO_ERR_REQ_MMAP if error negotiating mmap params,
-	 * LIBVIDEO_ERR_INVALID_BUF_NB if the number of requested buffers is incorrect
-	 */
-	int (*init_capture)(struct video_device *);
-	/**
-	 * Tell V4L to start the capture
-	 * @return 0 if OK, else LIBVIDEO_ERR_IOCTL
-	 */
-	int (*start_capture)(struct video_device *);
-
-/*
- * capture methods
- * these methods can be called if calls to ALL the init methods
- * (above) were successful
- */
-
-	/**
-	 * Dequeue the next buffer with available frame, or NULL if there is an error
-	 * @param device
-	 * @param length
-	 * 		recieves the frame length
-	 * @param index
-	 * 		receives the index of the buffer which contains the returned frame
-	 * @param capture_time
-	 * 		receives the capture time in microseconds (for v4l2 devices only)
-	 * @param sequence
-	 * 		argument receives the capture frame sequence number (for v4l2 devices only)
-	 */
-	void* (*dequeue_buffer)(struct video_device *device, unsigned int *length, unsigned int *index, unsigned long long *capture_time, unsigned long long *sequence);
-	/**
-	 * Convert the previously dequed dequeued buffer at the given index. Call me
-	 * only if the conversion is needed (if the requested format is not native)
-	 */
-	unsigned int (*convert_buffer)(struct video_device *vdev, int index, unsigned int src_len, void *dest_buffer);
-	/**
-	 * Enqueue the buffer (given its index) when done using the frame
-	 */
-	void (*enqueue_buffer)(struct video_device *device, unsigned int);
-
-
-/*
- * Freeing resources
- * these methods free resources created by matching init methods. Note that
- * set_cap_param doesnt have a counterpart since it only sets values and doesnt
- * create additional resources.
- */
-
-	/**
-	 * Counterpart of start_capture, must be called it start_capture was successful
-	 * returns 0 if ok, LIBVIDEO_ERR_IOCTL otherwise
-	 */
-	int (*stop_capture)(struct video_device *device);
-	/**
-	 * Counterpart of init_capture, must be called it init_capture was successful
-	 */
-	void (*free_capture)(struct video_device *device);
-
-/*
- * Dump to stdout methods
- * Must be called after init_capture_device and before free_capture_device
- */
-	/**
-	 * Lists all supported image formats
-	 * prints capabilities
-	 * print max width max height for v4l1
-	 * and current settings for v4l2
-	 */
-	void (*list_cap)(int);
-};
 
 /**
  * Counterpart of init_capture_device, must be called if init_capture_device was
@@ -745,7 +738,6 @@ void free_capture_device(struct video_device *);
  *
  *
  */
-//returns NULL if unable to get device info
 struct device_info * get_device_info(struct video_device *);
 void print_device_info(struct video_device *);
 void release_device_info(struct video_device *);

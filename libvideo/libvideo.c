@@ -148,36 +148,35 @@ int close_device(struct video_device *vdev) {
 
 static void setup_capture_actions(struct video_device *vdev) {
 	struct capture_device *c = vdev->capture;
-	XMALLOC(c->actions, struct capture_actions *, sizeof(struct capture_actions));
 
 	if(vdev->v4l_version == V4L1_VERSION) {
-		c->actions->set_cap_param = set_cap_param_v4l1;
-		c->actions->init_capture = init_capture_v4l1;
-		c->actions->set_frame_interval = set_frame_intv_v4l1;
-		c->actions->get_frame_interval = get_frame_intv_v4l1;
-		c->actions->set_video_input_std = set_video_input_std_v4l1;
-		c->actions->get_video_input_std = get_video_input_std_v4l1;
-		c->actions->start_capture = start_capture_v4l1;
-		c->actions->dequeue_buffer = dequeue_buffer_v4l1;
-		c->actions->convert_buffer = NULL;
-		c->actions->enqueue_buffer = enqueue_buffer_v4l1;
-		c->actions->stop_capture = stop_capture_v4l1;
-		c->actions->free_capture = free_capture_v4l1;
-		c->actions->list_cap = list_cap_v4l1;
+		c->setCaptureParameters = set_cap_param_v4l1;
+		c->initCapture = init_capture_v4l1;
+		c->setFrameInterval = set_frame_intv_v4l1;
+		c->getFrameInterval = get_frame_intv_v4l1;
+		c->setVideoInputStd = set_video_input_std_v4l1;
+		c->getVideoInputStd = get_video_input_std_v4l1;
+		c->startCapture = start_capture_v4l1;
+		c->dequeue_buffer = dequeue_buffer_v4l1;
+		c->convert_buffer = NULL;
+		c->enqueue_buffer = enqueue_buffer_v4l1;
+		c->stopCapture = stop_capture_v4l1;
+		c->freeCapture = free_capture_v4l1;
+		c->list_cap = list_cap_v4l1;
 	} else {
-		c->actions->set_cap_param = set_cap_param_v4l2;
-		c->actions->init_capture = init_capture_v4l2;
-		c->actions->set_frame_interval = set_frame_intv_v4l2;
-		c->actions->get_frame_interval = get_frame_intv_v4l2;
-		c->actions->set_video_input_std = set_video_input_std_v4l2;
-		c->actions->get_video_input_std = get_video_input_std_v4l2;
-		c->actions->start_capture = start_capture_v4l2;
-		c->actions->dequeue_buffer = dequeue_buffer_v4l2;
-		c->actions->convert_buffer = convert_buffer_v4l2;
-		c->actions->enqueue_buffer = enqueue_buffer_v4l2;
-		c->actions->stop_capture = stop_capture_v4l2;
-		c->actions->free_capture = free_capture_v4l2;
-		c->actions->list_cap = list_cap_v4l2;
+		c->setCaptureParameters = set_cap_param_v4l2;
+		c->initCapture = init_capture_v4l2;
+		c->setFrameInterval = set_frame_intv_v4l2;
+		c->getFrameInterval = get_frame_intv_v4l2;
+		c->setVideoInputStd = set_video_input_std_v4l2;
+		c->getVideoInputStd = get_video_input_std_v4l2;
+		c->startCapture = start_capture_v4l2;
+		c->dequeue_buffer = dequeue_buffer_v4l2;
+		c->convert_buffer = convert_buffer_v4l2;
+		c->enqueue_buffer = enqueue_buffer_v4l2;
+		c->stopCapture = stop_capture_v4l2;
+		c->freeCapture = free_capture_v4l2;
+		c->list_cap = list_cap_v4l2;
 	}
 }
 
