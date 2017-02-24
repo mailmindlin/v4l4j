@@ -6,10 +6,10 @@ import java.util.List;
 import au.edu.jcu.v4l4j.api.AudioEncodingType;
 import au.edu.jcu.v4l4j.api.ImagePalette;
 import au.edu.jcu.v4l4j.api.Rational;
-import au.edu.jcu.v4l4j.impl.jni.StringStructFieldType;
 import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
 import au.edu.jcu.v4l4j.impl.jni.UnionPrototype;
 
+@SuppressWarnings("javadoc")
 public class OMXConstants {
 	public static final List<String> BITRATE_CONTROLS = Arrays.asList("disable", "variable", "constant", "variableSkipFrames", "constantSkipFrames");
 	
@@ -612,6 +612,24 @@ public class OMXConstants {
 					.build(), "format")
 			.addBoolean("bBuffersContiguous")
 			.addInt32("nBufferAlignment")
+			.build();
+	
+	public static final StructPrototype PARAM_BITRATETYPE = StructPrototype.builder()
+			.addInt32("nSize")
+			.addStruct(VERSION_TYPE, "nVersion")
+			.addInt32("nPortIndex")
+			.addInt32("eControlRate")
+			.addInt32("nTargetBitrate")
+			.build();
+	
+	public static final StructPrototype PARAM_PORTFORMATTYPE = StructPrototype.builder()
+			.addInt32("nSize")
+			.addStruct(VERSION_TYPE, "nVersion")
+			.addInt32("nPortIndex")
+			.addInt32("nIndex")
+			.addInt32("eCompressionFormat")
+			.addInt32("eColorFormat")
+			.addInt32("xFramerate")
 			.build();
 	
 	public static AudioEncodingType mapAudioEncodingType(int idx) {
