@@ -137,16 +137,22 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_impl_jni_MemoryUtils_alloc(JNIEnv 
 	void* result = aligned_alloc(alignment, length);
 	
 	if (!result) {
-		THROW_EXCEPTION(env, JNI_EXCP, "Unable to allocate %lu bytes of memory with %u alignment", length, alignment);
+		THROW_EXCEPTION(env, JNI_EXCP, "Unable to allocate %lu bytes of memory with %u alignment", (unsigned long) length, alignment);
 		return -1;
 	}
+	
+	dprint(LOG_MEMALLOC, "[MEMALLOC]: allocated %lu bytes of type void* aligned %u (%p).\n", (long unsigned int)length, (unsigned int) alignment, result);
 	
 	return (jlong) (uintptr_t) result;
 }
 
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_jni_MemoryUtils_free(JNIEnv *env, jclass me, jlong pointer) {
 	LOG_FN_ENTER();
-	free((void*) (uintptr_t) pointer);
+	
+	void* ptr = (void*) (uintptr_t) pointer;
+	dprint(LOG_MEMALLOC, "[MEMALLOC]: freeing memory @ (%p).\n", ptr);
+	
+	free(ptr);
 }
 
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_jni_MemoryUtils_memset(JNIEnv *env, jclass me, jlong pointer, jlong length, jint value) {
