@@ -37,31 +37,45 @@ public interface Control<T> extends AutoCloseable {
 	ControlAccessor<Void, T, Void> access();
 	
 	public static interface ControlAccessor<P, T, R> extends Callable<R> {
+		
+		/**
+		 * Get the control that this is accessing
+		 * @return accessed control
+		 */
+		Control<T> getControl();
+		
+		/**
+		 * Set the timeout
+		 * @param timeout
+		 * @return self
+		 */
 		ControlAccessor<P, T, R> setTimeout(Duration timeout);
 		
 		/**
-		 * Perform a 'get' operation, loading the value of this accessor
-		 * from the component.
-		 * The return of {@link #call()} will be set to the return of this method.
-		 * @return self
-		 */
-		ControlAccessor<P, T, T> get();
-		
-		/**
-		 * Read the current in-memory value into a handler.
+		 * Read the current in-memory value into the result value.
 		 * The actual read action will occur when the access operation happens.
 		 * Note that this reads the latest accessed value, not necessarily the
 		 * current state of the control.
 		 * @return self
 		 */
-		ControlAccessor<P, T, R> read(Consumer<T> handler);
+		ControlAccessor<P, T, T> get();
+		
+		/**
+		 * Read the current in-memory value into the handler.
+		 */
+		ControlAccessor<P, T, R> get(Consumer<T> handler);
+		
+		/**
+		 * Merge the current in-memory value with the current result value
+		 */
+		<E> ControlAccessor<P, T, E> get(BiFunction<T, R, E> merger);
 		
 		/**
 		 * Set the value. Note that this does NOT update the control
 		 * until set() is called.
 		 * @return self
 		 */
-		default ControlAccessor<P, T, R> write(T value) {
+		default ControlAccessor<P, T, R> set(T value) {
 			return write(()->value);
 		}
 		
@@ -70,7 +84,7 @@ public interface Control<T> extends AutoCloseable {
 		 * until set() is called.
 		 * @return self
 		 */
-		ControlAccessor<P, T, R> write(Supplier<T> supplier);
+		ControlAccessor<P, T, R> set(Supplier<T> supplier);
 		
 		/**
 		 * Atomic value update.
@@ -78,13 +92,10 @@ public interface Control<T> extends AutoCloseable {
 		 */
 		ControlAccessor<P, T, R> update(Function<T, T> mappingFunction);
 		
-		default ControlAccessor<P, T, R> updateDiscrete(BiFunction<T, Set<DiscreteOption<T>>, T> mappingFunction) {
-			return update(x->mappingFunction.apply(x, null));
-		}
-		
-		default ControlAccessor<P, T, R> updateContinuous(BiFunction<T, ContinuousRange<T>, T> mappingFunction) {
-			return update(x->mappingFunction.apply(x, null));
-		}
+		/**
+		 * Atomic value update, with access to the control backing this accessor.
+		 */
+		ControlAccessor<P, T, R> update(BiFunction<? extends Control<T>, T, T> mappingFunction);
 		
 		/**
 		 * Attempt to increase value. If this is not possible to implement,
@@ -102,24 +113,35 @@ public interface Control<T> extends AutoCloseable {
 		 */
 		ControlAccessor<P, T, R> decrease();
 		
+		
+		/**
+		 * Perform a 'read' operation, loading the value of this accessor
+		 * from the component.
+		 * The return of {@link #call()} will be set to the return of this method.
+		 * @return self
+		 */
+		ControlAccessor<P, T, R> read();
+		
 		/**
 		 * Actually writes the value of the control
 		 * @return self
 		 */
-		ControlAccessor<P, T, R> set();
+		ControlAccessor<P, T, R> write();
 		
 		/**
 		 * Equivalent to {@code accessor.set().get()}.
 		 * On some implementations, this may be a faster operation.
 		 * @return self
 		 */
-		default ControlAccessor<P, T, T> setAndGet() {
-			return set().get();
+		default ControlAccessor<P, T, R> writeAndRead() {
+			return write().read();
 		}
 		
 		default <Ct, C extends ControlAccessor<CompositeControlAccessor<P, T, R>, Ct, R>> C withChild(String name) {
 			throw new UnsupportedOperationException("Control has no children");
 		}
+		
+		<C extends ControlAccessor<ControlAccessor<P, T, R>, T, R> C thenIf(Predicate<ControlAccessor<P, T, R>> condition);
 		
 		/**
 		 * Return to the parent control, if available.
