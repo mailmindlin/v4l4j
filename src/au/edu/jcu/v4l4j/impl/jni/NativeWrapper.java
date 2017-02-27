@@ -32,6 +32,7 @@ public abstract class NativeWrapper<K, T> extends NativePointer<T> {
 	
 	@SuppressWarnings("unchecked")
 	protected <U, V extends NativePointer<U>> V doWrapPointer(StructFieldType type, long childAddress, ByteBuffer childBuffer, boolean freeOnClose) {
+		System.out.println("Wrapping pointer of type " + type);
 		if (type instanceof StructPrototype)
 			return (V) new NativeStruct((StructPrototype) type, childAddress, childBuffer, freeOnClose);
 		else if (type instanceof UnionPrototype)
@@ -80,14 +81,23 @@ public abstract class NativeWrapper<K, T> extends NativePointer<T> {
 	}
 	
 	public <U> NativeUnion<U> getUnion(K key) {
+		NativeUnion<U> result = getChildRemote(key);
+		if (result != null)
+			return result;
 		return getChild(key);
 	}
 	
 	public NativeStruct getStruct(K key) {
+		NativeStruct result = getChildRemote(key);
+		if (result != null)
+			return result;
 		return getChild(key);
 	}
 	
 	public NativeArray getArray(K key) {
+		NativeArray result = getChildRemote(key);
+		if (result != null)
+			return result;
 		return getChild(key);
 	}
 	
