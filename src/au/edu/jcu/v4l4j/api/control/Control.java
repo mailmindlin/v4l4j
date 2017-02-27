@@ -1,17 +1,12 @@
 package au.edu.jcu.v4l4j.api.control;
 
 import java.time.Duration;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
-
-import au.edu.jcu.v4l4j.api.control.CompositeControl.CompositeControlAccessor;
-import au.edu.jcu.v4l4j.api.control.ContinuousControl.ContinuousRange;
-import au.edu.jcu.v4l4j.api.control.Control.ControlAccessor;
-import au.edu.jcu.v4l4j.api.control.DiscreteControl.DiscreteOption;
 
 public interface Control<T> extends AutoCloseable {
 	/**
@@ -27,6 +22,10 @@ public interface Control<T> extends AutoCloseable {
 	 * @return this control's name
 	 */
 	String getName();
+	
+	boolean isDiscrete();
+	
+	boolean isContinuous();
 	
 	void close();
 	
@@ -62,40 +61,65 @@ public interface Control<T> extends AutoCloseable {
 		
 		/**
 		 * Read the current in-memory value into the handler.
+		 * @param handler 
+		 * @return self
 		 */
 		ControlAccessor<P, T, R> get(Consumer<T> handler);
 		
 		/**
 		 * Merge the current in-memory value with the current result value
+		 * @param merger 
+		 * @return self
 		 */
 		<E> ControlAccessor<P, T, E> get(BiFunction<T, R, E> merger);
+		
+		default <E> ControlAccessor<P, T, R> get(String name, Consumer<E> handler) {
+			throw new UnsupportedOperationException();
+		}
 		
 		/**
 		 * Set the value. Note that this does NOT update the control
 		 * until set() is called.
+		 * @param value 
 		 * @return self
 		 */
 		default ControlAccessor<P, T, R> set(T value) {
-			return write(()->value);
+			return set(()->value);
 		}
 		
 		/**
 		 * Set the value. Note that this  does NOT update the control
 		 * until set() is called.
+		 * @param supplier 
 		 * @return self
 		 */
 		ControlAccessor<P, T, R> set(Supplier<T> supplier);
 		
+		default <E> ControlAccessor<P, T, R> set(String name, E value) {
+			return set(name, ()->value);
+		}
+		
+		default <E> ControlAccessor<P, T, R> set(String name, Supplier<E> supplier) {
+			throw new UnsupportedOperationException();
+		}
+		
 		/**
 		 * Atomic value update.
+		 * @param mappingFunction 
 		 * @return self
 		 */
 		ControlAccessor<P, T, R> update(Function<T, T> mappingFunction);
 		
 		/**
 		 * Atomic value update, with access to the control backing this accessor.
+		 * @param mappingFunction 
+		 * @return self
 		 */
-		ControlAccessor<P, T, R> update(BiFunction<? extends Control<T>, T, T> mappingFunction);
+		ControlAccessor<P, T, R> update(BiFunction<Control<T>, T, T> mappingFunction);
+		
+		default <E> ControlAccessor<P, T, R> update(String name, BiFunction<String, E, E> mappingFunction) {
+			throw new UnsupportedOperationException();
+		}
 		
 		/**
 		 * Attempt to increase value. If this is not possible to implement,
@@ -137,11 +161,11 @@ public interface Control<T> extends AutoCloseable {
 			return write().read();
 		}
 		
-		default <Ct, C extends ControlAccessor<CompositeControlAccessor<P, T, R>, Ct, R>> C withChild(String name) {
+		default <Ct, C extends ControlAccessor<ControlAccessor<P, T, R>, Ct, R>> C withChild(String name) {
 			throw new UnsupportedOperationException("Control has no children");
 		}
 		
-		<C extends ControlAccessor<ControlAccessor<P, T, R>, T, R> C thenIf(Predicate<ControlAccessor<P, T, R>> condition);
+		<C extends ControlAccessor<ControlAccessor<P, T, R>, T, R>> C thenIf(Predicate<ControlAccessor<P, T, R>> condition);
 		
 		/**
 		 * Return to the parent control, if available.
