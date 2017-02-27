@@ -1,10 +1,17 @@
 package au.edu.jcu.v4l4j.api.control;
 
 import java.time.Duration;
+import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
+import au.edu.jcu.v4l4j.api.control.CompositeControl.CompositeControlAccessor;
+import au.edu.jcu.v4l4j.api.control.ContinuousControl.ContinuousRange;
+import au.edu.jcu.v4l4j.api.control.Control.ControlAccessor;
+import au.edu.jcu.v4l4j.api.control.DiscreteControl.DiscreteOption;
 
 public interface Control<T> extends AutoCloseable {
 	/**
@@ -71,6 +78,14 @@ public interface Control<T> extends AutoCloseable {
 		 */
 		ControlAccessor<P, T, R> update(Function<T, T> mappingFunction);
 		
+		default ControlAccessor<P, T, R> updateDiscrete(BiFunction<T, Set<DiscreteOption<T>>, T> mappingFunction) {
+			return update(x->mappingFunction.apply(x, null));
+		}
+		
+		default ControlAccessor<P, T, R> updateContinuous(BiFunction<T, ContinuousRange<T>, T> mappingFunction) {
+			return update(x->mappingFunction.apply(x, null));
+		}
+		
 		/**
 		 * Attempt to increase value. If this is not possible to implement,
 		 * this method should not have any other side-effects.
@@ -100,6 +115,10 @@ public interface Control<T> extends AutoCloseable {
 		 */
 		default ControlAccessor<P, T, T> setAndGet() {
 			return set().get();
+		}
+		
+		default <Ct, C extends ControlAccessor<CompositeControlAccessor<P, T, R>, Ct, R>> C withChild(String name) {
+			throw new UnsupportedOperationException("Control has no children");
 		}
 		
 		/**

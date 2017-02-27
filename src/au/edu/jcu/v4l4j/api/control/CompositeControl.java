@@ -69,8 +69,6 @@ public interface CompositeControl extends Control<Map<String, Object>> {
 			return set().get();
 		}
 		
-		<Ct, C extends ControlAccessor<CompositeControlAccessor<P, T, R>, Ct, R>> C withChild(String name);
-		
 		@Override
 		R call() throws Exception;
 	}

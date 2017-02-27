@@ -16,7 +16,6 @@ public enum ControlType {
 	SWITCH,
 	DISCRETE,
 	CONTINUOUS,
-	MENU,
 	STRING,
 	LONG,
 	BITMASK,
