@@ -37,7 +37,7 @@ public class StructField {
 
 	@Override
 	public String toString() {
-		return "StructField{name=" + getName() + ";type=" + getType() + ";size=" + getSize() + "}";
+		return "StructField{name=" + getName() + ";type=" + getType() +";alignment=" + getAlignment() + ";size=" + getSize() + "}";
 	}
 
 	public static class PointerStructField extends StructField {

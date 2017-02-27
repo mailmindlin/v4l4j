@@ -246,4 +246,15 @@ public class StructPrototype implements StructFieldType {
 			StructPrototype.this.write(buffer, values);
 		}
 	}
+	
+	@Override
+	public String toString() {
+		return new StringBuilder()
+				.append("StructPrototype{")
+				.append("size=").append(getSize())
+				.append(",alignment=").append(getAlignment())
+				.append(",expands=").append(expands())
+				.append(",fields=").append(this.fieldMap)
+				.append("})").toString();
+	}
 }

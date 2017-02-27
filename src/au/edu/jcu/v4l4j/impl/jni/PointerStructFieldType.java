@@ -13,12 +13,12 @@ public class PointerStructFieldType implements StructFieldType {
 	public int getAlignment() {
 		return PrimitiveStructFieldType.RAW_POINTER.getAlignment();
 	}
-
+	
 	@Override
 	public int getSize() {
 		return PrimitiveStructFieldType.RAW_POINTER.getSize();
 	}
-
+	
 	@Override
 	public boolean expands() {
 		return false;
@@ -32,10 +32,15 @@ public class PointerStructFieldType implements StructFieldType {
 	public void write(ByteBuffer buffer, Object params) {
 		PrimitiveStructFieldType.RAW_POINTER.write(buffer, params);
 	}
-
+	
 	@Override
 	public Object read(ByteBuffer buffer, StructReadingContext context) {
 		return PrimitiveStructFieldType.RAW_POINTER.read(buffer, context);
 	}
 	
+	@Override
+	public String toString() {
+		return "PointerType{farType=" + getFarType() + ",alignment=" + getAlignment() + ",size=" + getSize()
+				+ ",expands=" + expands() + "}";
+	}
 }
