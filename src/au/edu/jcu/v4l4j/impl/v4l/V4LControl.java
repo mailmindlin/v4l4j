@@ -58,7 +58,7 @@ public abstract class V4LControl<V> implements Control<V> {
 		
 		public <T> T setResult(T value) {
 			this.result = value;
-			return this.setValue(value);
+			return value;
 		}
 		
 		@SuppressWarnings("unchecked")
@@ -79,17 +79,27 @@ public abstract class V4LControl<V> implements Control<V> {
 		}
 		
 		@Override
-		public ControlAccessor<P, T, R> setTimeout(Duration timeout) {
+		public V4LControlAccessor<P, T, R> setTimeout(Duration timeout) {
 			return chained(this.mutator == null ? this.parent : this, timeout, null);
 		}
 		
 		@Override
-		public ControlAccessor<P, T, R> read(Consumer<T> handler) {
+		public V4LControlAccessor<P, T, T> get() {
+			return andThen(state->state.setResult(state.getValue()));
+		}
+		
+		@Override
+		public V4LControlAccessor<P, T, R> get(Consumer<T> handler) {
 			return andThen(state->handler.accept(state.getValue()));
 		}
 		
 		@Override
-		public ControlAccessor<P, T, R> write(Supplier<T> supplier) {
+		public V4LControlAccessor<P, T, R> set(T value) {
+			return andThen(state->state.setValue(value));
+		}
+		
+		@Override
+		public ControlAccessor<P, T, R> set(Supplier<T> supplier) {
 			return andThen(state->state.setValue(supplier.get()));
 		}
 		
@@ -97,6 +107,9 @@ public abstract class V4LControl<V> implements Control<V> {
 		public ControlAccessor<P, T, R> update(Function<T, T> mappingFunction) {
 			return andThen(state->state.setValue(mappingFunction.apply(state.getValue())));
 		}
+		
+		@Override
+		public abstract V4LControlAccessor<P, T, R> update(BiFunction<? extends Control<T>, T, T> mappingFunction);
 		
 		@Override
 		public ControlAccessor<P, T, R> increase() {
@@ -162,14 +175,19 @@ public abstract class V4LControl<V> implements Control<V> {
 					Consumer<V4LControlAccessorState> mutator) {
 				return new V4LStringControlAccessor<>(parent, timeout, mutator);
 			}
-
+			
 			@Override
-			public ControlAccessor<P, String, String> get() {
-				return andThen(state->state.setResult(V4LControl.doGetValueString(V4LStringControl.this.device.pointer, V4LStringControl.this.ctrlId)));
+			public  V4LControlAccessor<P, String, R> update(BiFunction<? extends Control<String>, String, String> mappingFunction) {
+				return andThen(state->state.setValue(mappingFunction.apply(state.getValue(), V4LControl.this)));
 			}
 
 			@Override
-			public ControlAccessor<P, String, R> set() {
+			public ControlAccessor<P, String, R> read() {
+				return andThen(state->state.setValue(V4LControl.doGetValueString(V4LStringControl.this.device.pointer, V4LStringControl.this.ctrlId)));
+			}
+
+			@Override
+			public ControlAccessor<P, String, R> write() {
 				return andThen(state->V4LControl.doSetValueString(V4LStringControl.this.device.pointer, V4LStringControl.this.ctrlId, state.getValue()));
 			}
 			
