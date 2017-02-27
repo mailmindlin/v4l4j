@@ -68,12 +68,11 @@ public class OMXTest {
 		System.out.println(outputPort.isEnabled());
 		
 
+		FrameBuffer inBuffer = inputPort.allocateBuffer(inputPort.bufferSize());
 		FrameBuffer outBuffer = outputPort.allocateBuffer(outputPort.bufferSize());
 		Thread.sleep(200);
-		FrameBuffer inBuffer = inputPort.allocateBuffer(inputPort.bufferSize());
-		Thread.sleep(200);
-		inBuffer.toString();
-		outBuffer.toString();
+		
+		
 	}
 	
 	public static void testAccess(long pointer) {
@@ -135,7 +134,6 @@ public class OMXTest {
 			query.clear();
 			query.put("nPortIndex", 200);
 			NativeStruct videoDef = query.getUnion("format").getStruct("video");
-//			videoDef.put("cMIMEType", 0);
 			component.accessConfig(false, true, OMXConstants.INDEX_ParamPortDefinition, query.buffer());
 			for (String key : query.keySet())
 				System.out.println("\t=>" + key + ":" + query.get(key));
@@ -168,8 +166,8 @@ public class OMXTest {
 		try (NativeStruct bitrateQuery = new NativeStruct(OMXConstants.PARAM_BITRATETYPE)) {
 			bitrateQuery.clear();
 			bitrateQuery.put("nPortIndex", 201);
-			bitrateQuery.put("eControlType", 1);
-			bitrateQuery.put("nBitrate", BITRATE);
+			bitrateQuery.put("eControlRate", 1);
+			bitrateQuery.put("nTargetBitrate", BITRATE);
 			component.accessConfig(false, false, OMXConstants.INDEX_ParamVideoBitrate, bitrateQuery.buffer());
 		}
 		try (NativeStruct formatQuery = new NativeStruct(OMXConstants.PARAM_PORTFORMATTYPE)) {
