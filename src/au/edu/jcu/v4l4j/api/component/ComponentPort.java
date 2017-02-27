@@ -2,6 +2,7 @@ package au.edu.jcu.v4l4j.api.component;
 
 import java.nio.ByteBuffer;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import au.edu.jcu.v4l4j.api.FrameBuffer;
 import au.edu.jcu.v4l4j.api.StreamType;
@@ -60,7 +61,11 @@ public interface ComponentPort {
 	
 	void fill(FrameBuffer buffer);
 	
+	void onBufferEmpty(Consumer<FrameBuffer> handler);
+	
+	void onBufferFill(Consumer<FrameBuffer> handler);
+	
 	Set<String> getControlNames();
 	
-	Control getControlByName(String name);
+	<U, V extends Control<U>> V getControlByName(String name);
 }

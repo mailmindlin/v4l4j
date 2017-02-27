@@ -3,6 +3,7 @@ package au.edu.jcu.v4l4j.impl.omx;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import au.edu.jcu.v4l4j.api.FrameBuffer;
 import au.edu.jcu.v4l4j.api.StreamType;
@@ -20,7 +21,7 @@ public class OMXComponentPort implements ComponentPort {
 	protected int bufferSize;
 	protected boolean enabled;
 	protected boolean populated;
-	protected final HashMap<String, Control> controls = new HashMap<>();
+	protected final HashMap<String, Control<?>> controls = new HashMap<>();
 	
 	protected OMXComponentPort(OMXComponent component, int id, String mime, StreamType type) {
 		this.component = component;
@@ -45,7 +46,7 @@ public class OMXComponentPort implements ComponentPort {
 				this.type = StreamType.IMAGE;
 				break;
 			case 3:
-				//Other type; let's try to guess from the otherDomain field
+				// Other type; let's try to guess from the otherDomain field
 				if (info[0] < 10)
 					throw new IllegalArgumentException("'Other' type ports need at least 10 fields");
 				switch (info[10]) {
@@ -55,26 +56,26 @@ public class OMXComponentPort implements ComponentPort {
 					case 3:
 						this.type = StreamType.BINARY;
 						break;
-					case 1://Power management
-					case 2://Stats
+					case 1:// Power management
+					case 2:// Stats
 					default:
 						this.type = StreamType.UNKNOWN;
 						break;
 				}
 				break;
 			default:
-				//Is some proprietary thing
+				// Is some proprietary thing
 				this.type = StreamType.UNKNOWN;
 		}
-
+		
 		this.pullInfo(info);
 	}
-
+	
 	@Override
 	public int getIndex() {
 		return this.id;
 	}
-
+	
 	@Override
 	public OMXComponent getComponent() {
 		return this.component;
@@ -84,72 +85,72 @@ public class OMXComponentPort implements ComponentPort {
 	public boolean isInput() {
 		return this.input;
 	}
-
+	
 	@Override
 	public boolean isOutput() {
 		return !isInput();
 	}
-
+	
 	@Override
 	public boolean isEnabled() {
 		return this.enabled;
 	}
-
+	
 	@Override
 	public boolean setEnabled(boolean aflag) {
 		this.getComponent().setPortEnabled(this.getIndex(), aflag);
 		return this.enabled = aflag;
 	}
-
+	
 	@Override
 	public boolean isPopulated() {
 		return this.populated;
 	}
-
+	
 	@Override
 	public OMXFrameBuffer allocateBuffer(int length) {
 		OMXFrameBuffer result = this.getComponent().allocateBufferOnPort(this.getIndex(), length);
 		this.bufferCountActual++;
 		return result;
 	}
-
+	
 	@Override
 	public int minimumBuffers() {
 		return this.bufferCountMin;
 	}
-
+	
 	@Override
 	public int actualBuffers() {
 		return this.bufferCountActual;
 	}
-
+	
 	@Override
 	public int bufferSize() {
 		return this.bufferSize;
 	}
-
+	
 	@Override
 	public FrameBuffer useBuffer(ByteBuffer buffer) {
 		this.getComponent().useBufferOnPort(this.getIndex(), buffer);
 		return null;
 	}
-
+	
 	@Override
 	public void empty(FrameBuffer buffer) {
 		this.getComponent().emptyThisBuffer((OMXFrameBuffer) buffer);
 	}
-
+	
 	@Override
 	public void fill(FrameBuffer buffer) {
 		this.getComponent().fillThisBuffer((OMXFrameBuffer) buffer);
 	}
-
+	
 	public void push() {
 		int[] info = new int[20];
 		this.pushInfo(info);
 		this.getComponent().setPortData(this.getIndex(), info);
 	}
-
+	
 	public void pull() {
 		int[] info = new int[20];
 		this.getComponent().getPortData(this.getIndex(), info);
@@ -165,30 +166,43 @@ public class OMXComponentPort implements ComponentPort {
 		this.bufferSize = info[4];
 		this.enabled = info[5] != 0;
 		this.populated = info[6] != 0;
-		//We don't use the other stuff ATM
+		// We don't use the other stuff ATM
 	}
 	
 	protected void pushInfo(int[] out) {
 		
 	}
-
+	
 	@Override
 	public StreamType getPortType() {
 		return this.type;
 	}
-
+	
 	@Override
 	public String getMIMEType() {
 		return this.mime;
 	}
-
+	
 	@Override
 	public Set<String> getControlNames() {
 		return this.controls.keySet();
 	}
-
+	
 	@Override
-	public Control getControlByName(String name) {
-		return this.controls.get(name);
+	@SuppressWarnings("unchecked")
+	public <U, V extends Control<U>> V getControlByName(String name) {
+		return (V) this.controls.get(name);
+	}
+	
+	@Override
+	public void onBufferEmpty(Consumer<FrameBuffer> handler) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+	}
+	
+	@Override
+	public void onBufferFill(Consumer<FrameBuffer> handler) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
 	}
 }
