@@ -4,10 +4,18 @@ import java.nio.ByteBuffer;
 
 public interface FrameBuffer {
 	ByteBuffer asByteBuffer();
+	
 	long getTimestamp();
-	int getCapacity();
+	
+	default int getCapacity() {
+		return asByteBuffer().capacity();
+	}
+	
 	int getFilled();
+	
 	int getOffset();
+	
 	int getInputPort();
+	
 	int getOutputPort();
 }
