@@ -21,7 +21,7 @@ public class OMXComponentPort implements ComponentPort {
 	protected int bufferSize;
 	protected boolean enabled;
 	protected boolean populated;
-	protected final HashMap<String, Control<?>> controls = new HashMap<>();
+	protected final HashMap<String, AbstractOMXQueryControl<?>> controls = new HashMap<>();
 	
 	protected OMXComponentPort(OMXComponent component, int id, String mime, StreamType type) {
 		this.component = component;
@@ -69,6 +69,9 @@ public class OMXComponentPort implements ComponentPort {
 		}
 		
 		this.pullInfo(info);
+	}
+	
+	protected void initControls() {
 	}
 	
 	@Override

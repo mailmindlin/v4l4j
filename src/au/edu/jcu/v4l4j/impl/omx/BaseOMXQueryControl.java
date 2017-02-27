@@ -76,7 +76,6 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 		return new OMXQueryControlBaseAccessor<Void, Void>(false, this.name, null, null, null);
 	}
 	
-
 	@Override
 	protected <P, R> AbstractOMXQueryControlAccessor<P, Map<String, Object>, R> access(AbstractOMXQueryControlAccessor<P, ?, R> parent) {
 		throw new UnsupportedOperationException("Control is base");
@@ -87,6 +86,10 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 		
 		public OMXQueryControlBuilder(StructPrototype struct) {
 			this.struct = struct;
+		}
+		
+		public OMXQueryControlBuilder add(String ctrlName) {
+			return this;
 		}
 		
 		public BaseOMXQueryControl build(OMXComponent component, String rootName, int queryId) {
