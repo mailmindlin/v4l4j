@@ -1,23 +1,23 @@
 package au.edu.jcu.v4l4j.impl.omx;
 
 import java.time.Duration;
-import java.util.Stack;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import au.edu.jcu.v4l4j.api.control.CompositeControl.CompositeControlAccessor;
 import au.edu.jcu.v4l4j.api.control.Control;
 import au.edu.jcu.v4l4j.impl.jni.NativePointer;
 import au.edu.jcu.v4l4j.impl.jni.NativeStruct;
+import au.edu.jcu.v4l4j.impl.jni.NativeWrapper;
 
 public abstract class AbstractOMXQueryControl<T> implements Control<T> {
 	protected final OMXComponent component;
 	protected final AbstractOMXQueryControl<?> parent;
 	protected final String name;
 	
-	protected AbstractOMXQueryControl(OMXComponent componet, AbstractOMXQueryControl<?> parent, String name) {
+	protected AbstractOMXQueryControl(OMXComponent component, AbstractOMXQueryControl<?> parent, String name) {
 		this.component = component;
 		this.parent = parent;
 		this.name = name;
@@ -41,15 +41,14 @@ public abstract class AbstractOMXQueryControl<T> implements Control<T> {
 	
 	protected abstract <P, R> AbstractOMXQueryControlAccessor<P, T, R> access(AbstractOMXQueryControlAccessor<P, ?, R> parentAccessor);
 	
-	public static abstract class AbstractOMXQueryControlAccessor<P, T, R> implements CompositeControlAccessor<P, T, R> {
+	public static abstract class AbstractOMXQueryControlAccessor<P, T, R> implements ControlAccessor<P, T, R> {
 		protected final boolean isParentOwner;
 		protected final String name;
 		protected final AbstractOMXQueryControlAccessor<?, ?, ?> parent;
 		protected final Duration timeout;
 		protected final Consumer<OMXQueryControlAccessorState> mutator;
 		
-		protected AbstractOMXQueryControlAccessor(String name, AbstractOMXQueryControlAccessor<?, ?, ?> parent,
-				Duration timeout) {
+		protected AbstractOMXQueryControlAccessor(String name, AbstractOMXQueryControlAccessor<?, ?, ?> parent, Duration timeout) {
 			this(name, parent, timeout, null);
 		}
 		
@@ -86,7 +85,7 @@ public abstract class AbstractOMXQueryControl<T> implements Control<T> {
 		}
 		
 		@Override
-		public AbstractOMXQueryControlAccessor<P, T, R> get(BiFunction<T, R, E> merger) {
+		public <E> AbstractOMXQueryControlAccessor<P, T, E> get(BiFunction<T, R, E> merger) {
 			return thenApply(state -> state.setResult(merger.apply(state.getValue(), state.getResult())));
 		}
 		
@@ -106,7 +105,9 @@ public abstract class AbstractOMXQueryControl<T> implements Control<T> {
 		}
 		
 		@Override
-		public abstract <E> AbstractOMXQueryControlAccessor<P, T, R> set(String name, Supplier<E> supplier);
+		public <E> AbstractOMXQueryControlAccessor<P, T, R> set(String name, Supplier<E> supplier) {
+			throw new UnsupportedOperationException();
+		}
 		
 		@Override
 		public AbstractOMXQueryControlAccessor<P, T, R> update(Function<T, T> mappingFunction) {
@@ -115,9 +116,13 @@ public abstract class AbstractOMXQueryControl<T> implements Control<T> {
 		
 		@Override
 		@SuppressWarnings("unchecked")
-		public <E extends Object> AbstractOMXQueryControlAccessor<P, T, R> update(String name, BiFunction<String, E, E> mappingFunction) {
-			return thenApply(
-					state -> state.basePointer.compute(name, (BiFunction<String, Object, Object>) mappingFunction));
+		public <E> AbstractOMXQueryControlAccessor<P, T, R> update(String name, BiFunction<String, E, E> mappingFunction) {
+			return thenApply(state -> state.basePointer.compute(name, (BiFunction<String, Object, Object>) mappingFunction));
+		}
+		
+		@Override
+		public ControlAccessor<P, T, R> update(BiFunction<Control<T>, T, T> mappingFunction) {
+			return thenApply(state -> state.setValue(mappingFunction.apply(getControl(), state.getValue())));
 		}
 		
 		@Override
@@ -141,12 +146,24 @@ public abstract class AbstractOMXQueryControl<T> implements Control<T> {
 		}
 		
 		@Override
-		public abstract AbstractOMXQueryControlAccessor<P, T, T> writeAndRead();
-		
+		public AbstractOMXQueryControlAccessor<P, T, R> writeAndRead() {
+			return thenApply(state -> {
+				state.localPointer.set(state.getValue());
+				state.setValue(state.localPointer.get());
+			});
+		}
+
+		@Override
+		public <C extends ControlAccessor<ControlAccessor<P, T, R>, T, R>> C thenIf(Predicate<ControlAccessor<P, T, R>> condition) {
+			//TODO This is going to be hard to implement. Imma do it eventually, but just not right now
+			throw new UnsupportedOperationException();
+		}
+
 		protected OMXQueryControlAccessorState enterFromParent(OMXQueryControlAccessorState parentState) {
 			OMXQueryControlAccessorState result = new OMXQueryControlAccessorState();
 			result.basePointer = parentState.basePointer;
 			result.result = parentState.result;
+			return result;
 		}
 		
 		protected void exitToParent(OMXQueryControlAccessorState parentState, OMXQueryControlAccessorState childState) {
@@ -234,11 +251,21 @@ public abstract class AbstractOMXQueryControl<T> implements Control<T> {
 			return (P) localPointer;
 		}
 		
+		@SuppressWarnings("unchecked")
+		public <K, P extends NativePointer<?>> P childPointer(K key) {
+			NativeWrapper<K, P> wrapper = localPointer();
+			P result = (P) wrapper.getChildRemote(key);
+			if (result != null)
+				return result;
+			return (P) wrapper.getChild(key);
+		}
+		
 		public <T> T setValue(T value) {
 			this.value = value;
 			return value;
 		}
 		
+		@SuppressWarnings("unchecked")
 		public <T> T getValue() {
 			return (T) this.value;
 		}
