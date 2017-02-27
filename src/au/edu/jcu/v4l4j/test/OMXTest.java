@@ -180,4 +180,8 @@ public class OMXTest {
 			component.accessConfig(false, false, OMXConstants.INDEX_ParamVideoPortFormat, formatQuery.buffer());
 		}
 	}
+	
+	public static void testApi(OMXComponentPort port) {
+		Control<?> portdefControl = port.getControl("portdef");
+	}
 }
