@@ -212,7 +212,7 @@ public class OMXQueryControl implements CompositeControl {
 		}
 		
 		@Override
-		public AbstractOMXQueryControlAccessor<P, T, R> setAndGet() {
+		public AbstractOMXQueryControlAccessor<P, T, T> setAndGet() {
 			return thenApply(state -> {
 				OMXComponent component = OMXQueryControl.this.component;
 				int queryId = OMXQueryControl.this.queryId;
@@ -253,17 +253,17 @@ public class OMXQueryControl implements CompositeControl {
 		/**
 		 * Push mutator action onto stack
 		 */
-		protected AbstractOMXQueryControlAccessor<P, T, R> thenApply(Consumer<OMXQueryControlAccessorState> mutator) {
+		protected <X, Z> AbstractOMXQueryControlAccessor<X, T, Z> thenApply(Consumer<OMXQueryControlAccessorState> mutator) {
 			return chained(timeout, mutator);
 		}
 		
-		protected AbstractOMXQueryControlAccessor<P, T, R> chained(Duration timeout,
+		protected <X, Z> AbstractOMXQueryControlAccessor<X, T, Z> chained(Duration timeout,
 				Consumer<OMXQueryControlAccessorState> mutator) {
 			AbstractOMXQueryControlAccessor<?, ?, ?> parent = doGetChildParent();
 			return chained(this.isParentOwner && parent != this, this.name, parent, timeout, mutator);
 		}
 		
-		protected abstract AbstractOMXQueryControlAccessor<P, T, R> chained(boolean isParentOwner, String name,
+		protected abstract <X, Z> AbstractOMXQueryControlAccessor<X, T, Z> chained(boolean isParentOwner, String name,
 				AbstractOMXQueryControlAccessor<?, ?, ?> parent, Duration timeout,
 				Consumer<OMXQueryControlAccessorState> mutator);
 		
@@ -308,7 +308,7 @@ public class OMXQueryControl implements CompositeControl {
 		}
 		
 		@Override
-		protected AbstractOMXQueryControlAccessor<P, T, R> chained(boolean isParentOwner, String name, AbstractOMXQueryControlAccessor<?, ?, ?> parent, Duration timeout, Consumer<OMXQueryControlAccessorState> mutator) {
+		protected <X, Z> AbstractOMXQueryControlAccessor<X, T, Z> chained(boolean isParentOwner, String name, AbstractOMXQueryControlAccessor<?, ?, ?> parent, Duration timeout, Consumer<OMXQueryControlAccessorState> mutator) {
 			return new OMXQueryControlBaseAccessor<>(isParentOwner, name, parent, timeout, mutator);
 		}
 		
