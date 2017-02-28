@@ -42,6 +42,7 @@ public class OMXConstants {
 	public static final int AUDIO_ENCODING_WMA = 25;
 	public static final int AUDIO_ENCODING_RA = 26;
 	public static final int AUDIO_ENCODING_MIDI = 27;
+	
 	//Extensions
 	public static final int AUDIO_ENCODING_FLAC     = 0x7F000001;
 	public static final int AUDIO_ENCODING_DPP      = 0x7F000002;

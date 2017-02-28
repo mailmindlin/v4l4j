@@ -32,8 +32,7 @@ public class VideoDeviceCapturePort implements VideoPort {
 
 	@Override
 	public boolean setEnabled(boolean enabled) {
-		// TODO Auto-generated method stub
-		return false;
+		return this.enabled = enabled;
 	}
 
 	@Override
