@@ -325,4 +325,54 @@ public class OMXComponent implements Component {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	private void printExceptionFromHandler(String handlerName, Exception e, int portIdx) {
+		String threadName = Thread.currentThread().getName();
+		//Rewrite stack trace
+		StackTraceElement[] oldTrace = e.getStackTrace();
+		StackTraceElement[] newTrace = new StackTraceElement[oldTrace.length + 1];
+		System.arraycopy(oldTrace, 0, newTrace, 0, oldTrace.length);
+		newTrace[newTrace.length - 1] = new StackTraceElement(getClass().getName(), handlerName, this.toString(), portIdx);
+		e.setStackTrace(newTrace);
+		//Print to stderr
+		System.err.println("Exception in thread \"" + threadName + "\":");
+		e.printStackTrace();
+	}
+	
+	/**
+	 * Called by JNI code from OMX event handlers.
+	 */
+	private void onBufferDone(long bufferId, boolean emptied, int ticks, long timestamp, int offset, int filled, int flags) {
+		OMXFrameBuffer buffer = this.queuedBuffers.get(bufferId);
+		if (buffer == null) {
+			System.err.println("Could not find buffer in buffer " + (emptied ? "empty" : "fill") + " handler: 0x" + Long.toHexString(bufferId));
+			//TODO handle
+			return;
+		}
+		buffers.remove(bufferId);
+		//Update fields in buffer
+		buffer.prepare(ticks, timestamp, offset, filled, flags);
+		
+		Consumer<FrameBuffer> handler;
+		if (this.ports == null)
+			this.doInitPorts();
+		OMXComponentPort port = this.ports.get(emptied ? buffer.getInputPort() : buffer.getOutputPort());
+		synchronized (this) {
+			if (emptied)
+				handler = port.onBufferEmptied;
+			else
+				handler = port.onBufferFilled;
+		}
+		if (handler == null) {
+			//We can't throw an exception from here
+			System.err.println("No handler for event BUFFER " + (emptied ? "EMPTY" : "FILL") + " on " + this);
+			return;
+		}
+		
+		try {
+			handler.accept(buffer);
+		} catch (Exception e) {
+			printExceptionFromHandler(emptied ? "OMX_BUFFER_EMPTY_HANDLER" : "OMX_BUFFER_FILL_HANDLER", e, port.getIndex());
+		}
+	}
 }

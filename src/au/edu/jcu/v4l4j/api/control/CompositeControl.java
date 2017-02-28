@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Set;
 
 public interface CompositeControl extends Control<Map<String, Object>> {
-	Set<Control<?>> getChildren();
+	Set<? extends Control<?>> getChildren();
 	
 	Control<?> getChildByName(String name);
 	

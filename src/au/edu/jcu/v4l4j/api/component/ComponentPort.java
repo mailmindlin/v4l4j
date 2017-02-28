@@ -1,5 +1,6 @@
 package au.edu.jcu.v4l4j.api.component;
 
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -47,7 +48,7 @@ public interface ComponentPort {
 	 * Enable/disable this port.
 	 * Note that this method may block.
 	 * @param aflag
-	 * @return
+	 * @return enabled
 	 */
 	boolean setEnabled(boolean aflag);
 	
@@ -71,7 +72,7 @@ public interface ComponentPort {
 	int actualBuffers();
 	
 	/**
-	 * Minumum size of buffers used for this port
+	 * Minimum size of buffers used for this port
 	 * @return
 	 */
 	int bufferSize();
@@ -87,7 +88,7 @@ public interface ComponentPort {
 	 * Register a pre-allocated ByteBuffer with this component.
 	 * @param buffer
 	 *     Allocated ByteBuffer to use as a FrameBuffer with this component
-	 * @returns
+	 * @return
 	 *     FrameBuffer wrapping passed ByteBuffer
 	 * @throws IllegalArgumentException
 	 *     If the passed buffer cannot be used (e.g., this port requires

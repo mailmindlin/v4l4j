@@ -1,6 +1,6 @@
 package au.edu.jcu.v4l4j.api.component.port;
 
-import au.edu.jcu.v4l4j.api.ImageCodingType;
+import au.edu.jcu.v4l4j.api.ImagePalette;
 import au.edu.jcu.v4l4j.api.component.ComponentPort;
 
 /**
@@ -35,7 +35,7 @@ public interface IVPort extends ComponentPort {
 	int getSliceHeight();
 	
 	/**
-	 * Uncompressed 
+	 * Uncompressed color format
 	 */
 	ImagePalette getColorFormat();
 }

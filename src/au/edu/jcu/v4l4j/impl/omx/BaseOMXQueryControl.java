@@ -21,7 +21,7 @@ import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
  * @author mailmindlin
  */
 public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Object>> implements CompositeControl {
-	protected final Set<Control<?>> children = new HashSet<>();
+	protected final Set<AbstractOMXQueryControl<?>> children = new HashSet<>();
 	protected transient Map<String, AbstractOMXQueryControl<?>> childMap;
 	protected final boolean isConfig = false;
 	protected final int queryId;
@@ -48,7 +48,7 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 	}
 	
 	@Override
-	public Set<Control<?>> getChildren() {
+	public Set<? extends Control<?>> getChildren() {
 		return this.children;
 	}
 	
