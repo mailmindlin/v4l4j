@@ -1,5 +1,6 @@
 package au.edu.jcu.v4l4j.impl.omx;
 
+import au.edu.jcu.v4l4j.api.ImagePalette;
 import au.edu.jcu.v4l4j.api.StreamType;
 import au.edu.jcu.v4l4j.api.VideoCompressionType;
 import au.edu.jcu.v4l4j.api.component.port.VideoPort;
@@ -64,5 +65,11 @@ public class OMXVideoPort extends OMXComponentPort implements VideoPort {
 		if (compression < 0 || compression > compressionTypes.length)
 			return VideoCompressionType.UNUSED;
 		return compressionTypes[compression];
+	}
+
+	@Override
+	public ImagePalette getColorFormat() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

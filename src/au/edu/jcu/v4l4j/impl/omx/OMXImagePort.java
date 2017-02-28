@@ -1,6 +1,7 @@
 package au.edu.jcu.v4l4j.impl.omx;
 
 import au.edu.jcu.v4l4j.api.ImageCodingType;
+import au.edu.jcu.v4l4j.api.ImagePalette;
 import au.edu.jcu.v4l4j.api.component.port.ImagePort;
 
 public class OMXImagePort extends OMXComponentPort implements ImagePort {
@@ -10,6 +11,7 @@ public class OMXImagePort extends OMXComponentPort implements ImagePort {
 	protected int stride;
 	protected int sliceHeight;
 	protected int compression;
+	protected int format;
 	
 	protected OMXImagePort(OMXComponent component, int id, String mime, int[] info) {
 		super(component, id, mime, info);
@@ -54,6 +56,12 @@ public class OMXImagePort extends OMXComponentPort implements ImagePort {
 	@Override
 	public ImageCodingType getCodingType() {
 		return ImageCodingType.values()[this.compression];
+	}
+
+	@Override
+	public ImagePalette getColorFormat() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
