@@ -4,12 +4,18 @@ import java.nio.file.Paths;
 import java.util.Set;
 
 import au.edu.jcu.v4l4j.api.FrameBuffer;
+import au.edu.jcu.v4l4j.api.ImagePalette;
+import au.edu.jcu.v4l4j.api.VideoCompressionType;
 import au.edu.jcu.v4l4j.api.component.ComponentPort;
 import au.edu.jcu.v4l4j.api.component.ComponentState;
 import au.edu.jcu.v4l4j.api.component.port.VideoPort;
+import au.edu.jcu.v4l4j.api.control.Control;
 import au.edu.jcu.v4l4j.impl.jni.NativeStruct;
 import au.edu.jcu.v4l4j.impl.jni.PrimitiveStructFieldType;
 import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
+import au.edu.jcu.v4l4j.impl.omx.BaseOMXQueryControl;
+import au.edu.jcu.v4l4j.impl.omx.EnumChildOMXQueryControl;
+import au.edu.jcu.v4l4j.impl.omx.NumberOMXQueryControl;
 import au.edu.jcu.v4l4j.impl.omx.OMXComponent;
 import au.edu.jcu.v4l4j.impl.omx.OMXComponentProvider;
 import au.edu.jcu.v4l4j.impl.omx.OMXConstants;
@@ -181,7 +187,15 @@ public class OMXTest {
 		}
 	}
 	
-	public static void testApi(OMXComponentPort port) {
-		Control<?> portdefControl = port.getControl("portdef");
+	@SuppressWarnings("unchecked")
+	public static void testApi(ComponentPort port) {
+		BaseOMXQueryControl formatControl = new BaseOMXQueryControl((OMXComponent) port.getComponent(), "format", OMXConstants.INDEX_ParamVideoPortFormat, OMXConstants.PARAM_PORTFORMATTYPE);
+		Set<Control<?>> children = ((Set<Control<?>>)formatControl.getChildren());
+		children.add(new NumberOMXQueryControl(formatControl, "nPortIndex"));
+		children.add(new NumberOMXQueryControl(formatControl, "nIndex"));
+		children.add(new NumberOMXQueryControl(formatControl, "xFramerate"));
+		children.add(new EnumChildOMXQueryControl<VideoCompressionType>(formatControl, "compression", VideoCompressionType.class, "eCompressionFormat"));
+		children.add(new EnumChildOMXQueryControl<ImagePalette>(formatControl, "color", ImagePalette.class, "eColorFormat"));
+		formatControl.access();
 	}
 }
