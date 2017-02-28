@@ -24,6 +24,7 @@ public class OMXComponentPort implements ComponentPort {
 	protected final HashMap<String, AbstractOMXQueryControl<?>> controls = new HashMap<>();
 	protected Consumer<FrameBuffer> onBufferFilled;
 	protected Consumer<FrameBuffer> onBufferEmptied;
+	protected HashMap<Long, OMXFrameBuffer> buffers = new ConcurrentHashMap<>();
 	
 	protected OMXComponentPort(OMXComponent component, int id, String mime, StreamType type) {
 		this.component = component;
@@ -142,11 +143,13 @@ public class OMXComponentPort implements ComponentPort {
 	
 	@Override
 	public void empty(FrameBuffer buffer) {
+		this.buffers.put(buffer.pointer, buffer);
 		this.getComponent().emptyThisBuffer((OMXFrameBuffer) buffer);
 	}
 	
 	@Override
 	public void fill(FrameBuffer buffer) {
+		this.buffers.put(buffer.pointer, buffer);
 		this.getComponent().fillThisBuffer((OMXFrameBuffer) buffer);
 	}
 	
@@ -212,5 +215,48 @@ public class OMXComponentPort implements ComponentPort {
 			this.onBufferFilled = handler;
 		}
 	}
-
+	
+	private void printExceptionFromHandler(String handlerName, Exception e) {
+		String threadName = Thread.currentThread().getName();
+		//Rewrite stack trace
+		StackTraceElement[] oldTrace = e.getStackTrace();
+		StackTraceElement[] newTrace = new StackTraceElement[oldTrace.length + 1];
+		System.arrayCopy(oldTrace, 0, newTrace, 0, oldTrace.length);
+		newTrace[newTrace.length - 1] = new StackTraceElement(getClass().getName(), handlerName, getComponent().toString(), getIndex());
+		e.setStackTrace(newTrace);
+		//Print to stderr
+		System.err.println("Exception in thread \"" + threadName + "\":");
+		e.printStackTrace();
+	}
+	
+	/**
+	 * Called by JNI handler
+	 */
+	protected void onBufferDone(long bufferId, boolean emptied, int ticks, long timestamp, int offset, int filled, int flags) {
+		Consumer<FrameBuffer> handler;
+		synchronized (this) {
+			if (emptied)
+				handler = this.onBufferEmptied;
+			else
+				handler = this.onBufferFilled;
+		}
+		if (handler == null) {
+			System.err.println("No handler for event BUFFER " + (emptied ? "EMPTY" : "FILL") + " on " + this);
+			return;
+		}
+		
+		OMXFrameBuffer buffer = this.buffers.get(bufferId);
+		if (buffer == null) {
+			//TODO handle
+			return;
+		}
+		buffers.remove(bufferId);
+		//Update fields in buffer
+		buffer.prepare(ticks, timestamp, offset, filled, flags);
+		try {
+			handler.accept(buffer);
+		} catch (Exception e) {
+			printExceptionFromHandler(emptied ? "OMX_BUFFER_EMPTY_HANDLER" : "OMX_BUFFER_FILL_HANDLER", e);
+		}
+	}
 }
