@@ -66,4 +66,9 @@ public class OMXFrameBuffer implements FrameBuffer {
 		return 0;
 	}
 	
+	@Override
+	public int hashCode() {
+		return (int) ((this.pointer >> 32) & this.pointer) & 0xFFFFFFFF;
+	}
+	
 }

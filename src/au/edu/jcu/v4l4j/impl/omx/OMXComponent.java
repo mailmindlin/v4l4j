@@ -2,11 +2,14 @@ package au.edu.jcu.v4l4j.impl.omx;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
+import au.edu.jcu.v4l4j.api.FrameBuffer;
 import au.edu.jcu.v4l4j.api.component.Component;
 import au.edu.jcu.v4l4j.api.component.ComponentPort;
 import au.edu.jcu.v4l4j.api.component.ComponentProvider;
@@ -101,10 +104,10 @@ public class OMXComponent implements Component {
 	protected int otherPortMinIdx;
 	protected int numOtherPorts;
 	
-	protected List<AudioPort> audioPorts;
-	protected List<VideoPort> videoPorts;
-	protected List<ImagePort> imagePorts;
-	protected List<ComponentPort> otherPorts;
+	protected List<OMXComponentPort> ports;
+	
+	protected Set<OMXFrameBuffer> buffers = new HashSet<>();
+	protected Map<Long, OMXFrameBuffer> queuedBuffers = new ConcurrentHashMap<>();
 	
 	protected OMXComponent(OMXComponentProvider provider, String name) {
 		this.provider = provider;
@@ -119,7 +122,9 @@ public class OMXComponent implements Component {
 	}
 	
 	protected OMXFrameBuffer allocateBufferOnPort(int portIndex, int bufferSize) {
-		return OMXComponent.doAllocateBuffer(this.pointer, portIndex, bufferSize);
+		OMXFrameBuffer result = OMXComponent.doAllocateBuffer(this.pointer, portIndex, bufferSize);
+		this.buffers.add(result);
+		return result;
 	}
 	
 	protected OMXFrameBuffer useBufferOnPort(int portIndex, ByteBuffer buffer) {
@@ -128,14 +133,18 @@ public class OMXComponent implements Component {
 			// functionality
 			// when NULL is passed, but not ATM
 			throw new IllegalArgumentException("Only direct buffers can be used");
-		return OMXComponent.doUseBuffer(this.pointer, portIndex, buffer);
+		OMXFrameBuffer result = OMXComponent.doUseBuffer(this.pointer, portIndex, buffer);
+		this.buffers.add(result);
+		return result;
 	}
 	
 	protected void emptyThisBuffer(OMXFrameBuffer buffer) {
+		this.queuedBuffers.put(buffer.pointer, buffer);
 		OMXComponent.doEmptyThisBuffer(this.pointer, buffer.pointer);
 	}
 	
 	protected void fillThisBuffer(OMXFrameBuffer buffer) {
+		this.queuedBuffers.put(buffer.pointer, buffer);
 		OMXComponent.doFillThisBuffer(this.pointer, buffer.pointer);
 	}
 	
@@ -143,7 +152,7 @@ public class OMXComponent implements Component {
 		return OMXComponent.getPortInfo(this.pointer, portIndex, info);
 	}
 	
-	protected void accessConfig(boolean isConfig, boolean read, int configIdx, ByteBuffer data) {
+	public void accessConfig(boolean isConfig, boolean read, int configIdx, ByteBuffer data) {
 		OMXComponent.doAccessConfig(this.pointer, isConfig, read, configIdx, data);
 	}
 	
@@ -156,62 +165,59 @@ public class OMXComponent implements Component {
 	}
 	
 	protected void doInitPorts() {
-		int[] idx = new int[8];
-		OMXComponent.getPortOffsets(this.pointer, idx);
-		this.audioPortMinIdx = idx[0];
-		this.numAudioPorts = idx[1];
-		if (this.numAudioPorts == 0)
-			this.audioPorts = Collections.emptyList();
-		else {
-			this.audioPorts = new ArrayList<>(this.numAudioPorts);
-			int[] portInfo = new int[20];
-			for (int i = 0; i < this.numAudioPorts; i++) {
-				int portIndex = this.audioPortMinIdx + i;
-				String mime = OMXComponent.getPortInfo(this.pointer, portIndex, portInfo);
-				this.audioPorts.add(new OMXAudioPort(this, portIndex, mime, portInfo));
+		synchronized (this) {
+			if (this.ports != null)
+				return;
+			
+			this.ports = new ArrayList<>();
+			int[] idx = new int[8];
+			OMXComponent.getPortOffsets(this.pointer, idx);
+			
+			this.audioPortMinIdx = idx[0];
+			this.numAudioPorts = idx[1];
+			if (this.numAudioPorts > 0) {
+				int[] portInfo = new int[20];
+				for (int i = 0; i < this.numAudioPorts; i++) {
+					int portIndex = this.audioPortMinIdx + i;
+					String mime = OMXComponent.getPortInfo(this.pointer, portIndex, portInfo);
+					this.ports.add(portIndex, new OMXAudioPort(this, portIndex, mime, portInfo));
+				}
 			}
-		}
-		
-		this.videoPortMinIdx = idx[2];
-		this.numVideoPorts = idx[3];
-		if (this.numVideoPorts == 0)
-			this.videoPorts = Collections.emptyList();
-		else {
-			this.videoPorts = new ArrayList<>(this.numVideoPorts);
-			int[] portInfo = new int[20];
-			for (int i = 0; i < this.numVideoPorts; i++) {
-				int portIndex = this.videoPortMinIdx + i;
-				String mime = OMXComponent.getPortInfo(this.pointer, portIndex, portInfo);
-				this.videoPorts.add(new OMXVideoPort(this, portIndex, mime, portInfo));
+			
+			this.videoPortMinIdx = idx[2];
+			this.numVideoPorts = idx[3];
+			if (this.numVideoPorts > 0) {
+				int[] portInfo = new int[20];
+				for (int i = 0; i < this.numVideoPorts; i++) {
+					int portIndex = this.videoPortMinIdx + i;
+					String mime = OMXComponent.getPortInfo(this.pointer, portIndex, portInfo);
+					this.ports.add(new OMXVideoPort(this, portIndex, mime, portInfo));
+				}
 			}
-		}
-		
-		this.imagePortMinIdx = idx[4];
-		this.numImagePorts = idx[5];
-		if (this.numImagePorts == 0)
-			this.imagePorts = Collections.emptyList();
-		else {
-			this.imagePorts = new ArrayList<>(this.numImagePorts);
-			int[] portInfo = new int[20];
-			for (int i = 0; i < this.numImagePorts; i++) {
-				int portIndex = this.imagePortMinIdx + i;
-				String mime = OMXComponent.getPortInfo(this.pointer, portIndex, portInfo);
-				this.imagePorts.add(new OMXImagePort(this, portIndex, mime, portInfo));
+			
+			this.imagePortMinIdx = idx[4];
+			this.numImagePorts = idx[5];
+			if (this.numImagePorts > 0) {
+				int[] portInfo = new int[20];
+				for (int i = 0; i < this.numImagePorts; i++) {
+					int portIndex = this.imagePortMinIdx + i;
+					String mime = OMXComponent.getPortInfo(this.pointer, portIndex, portInfo);
+					this.ports.add(new OMXImagePort(this, portIndex, mime, portInfo));
+				}
 			}
-		}
-		
-		this.otherPortMinIdx = idx[6];
-		this.numOtherPorts = idx[7];
-		if (this.numOtherPorts == 0)
-			this.otherPorts = Collections.emptyList();
-		else {
-			this.otherPorts = new ArrayList<>(this.numOtherPorts);
-			int[] portInfo = new int[20];
-			for (int i = 0; i < this.numOtherPorts; i++) {
-				int portIndex = this.otherPortMinIdx + i;
-				String mime = OMXComponent.getPortInfo(this.pointer, portIndex, portInfo);
-				this.otherPorts.add(new OMXComponentPort(this, portIndex, mime, portInfo));
+			
+			this.otherPortMinIdx = idx[6];
+			this.numOtherPorts = idx[7];
+			if (this.numOtherPorts > 0) {
+				int[] portInfo = new int[20];
+				for (int i = 0; i < this.numOtherPorts; i++) {
+					int portIndex = this.otherPortMinIdx + i;
+					String mime = OMXComponent.getPortInfo(this.pointer, portIndex, portInfo);
+					this.ports.add(new OMXComponentPort(this, portIndex, mime, portInfo));
+				}
 			}
+			
+			((ArrayList<OMXComponentPort>)this.ports).trimToSize();
 		}
 	}
 	
@@ -272,6 +278,7 @@ public class OMXComponent implements Component {
 			
 		}
 		setComponentState(this.pointer, stateI);
+		//TODO block for callback
 		return getState();
 	}
 	
@@ -286,31 +293,35 @@ public class OMXComponent implements Component {
 	}
 	
 	@Override
+	@SuppressWarnings("unchecked")
 	public Set<AudioPort> getAudioPorts() {
-		if (this.audioPorts == null)
+		if (this.ports == null)
 			this.doInitPorts();
-		return new HashSet<>(this.audioPorts);
+		return new HashSet<>((List<AudioPort>)(List<?>)this.ports.subList(this.audioPortMinIdx, this.audioPortMinIdx + this.numAudioPorts));
 	}
 	
 	@Override
+	@SuppressWarnings("unchecked")
 	public Set<ImagePort> getImagePorts() {
-		if (this.imagePorts == null)
+		if (this.ports == null)
 			this.doInitPorts();
-		return new HashSet<>(this.imagePorts);
+		return new HashSet<>((List<ImagePort>)(List<?>)this.ports.subList(this.imagePortMinIdx, this.imagePortMinIdx + this.numImagePorts));
 	}
 	
 	@Override
+	@SuppressWarnings("unchecked")
 	public Set<VideoPort> getVideoPorts() {
-		if (this.videoPorts == null)
+		if (this.ports == null)
 			this.doInitPorts();
-		return new HashSet<>(this.videoPorts);
+		return new HashSet<>((List<VideoPort>)(List<?>)this.ports.subList(this.videoPortMinIdx, this.videoPortMinIdx + this.numVideoPorts));
 	}
 	
 	@Override
+	@SuppressWarnings("unchecked")
 	public Set<ComponentPort> getOtherPorts() {
-		if (this.otherPorts == null)
+		if (this.ports == null)
 			this.doInitPorts();
-		return new HashSet<>(this.otherPorts);
+		return new HashSet<>((List<ComponentPort>)(List<?>)this.ports.subList(this.otherPortMinIdx, this.otherPortMinIdx + this.numOtherPorts));
 	}
 	
 	@Override
