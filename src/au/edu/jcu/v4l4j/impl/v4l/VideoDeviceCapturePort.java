@@ -2,8 +2,10 @@ package au.edu.jcu.v4l4j.impl.v4l;
 
 import java.nio.ByteBuffer;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import au.edu.jcu.v4l4j.api.FrameBuffer;
+import au.edu.jcu.v4l4j.api.ImagePalette;
 import au.edu.jcu.v4l4j.api.StreamType;
 import au.edu.jcu.v4l4j.api.VideoCompressionType;
 import au.edu.jcu.v4l4j.api.component.port.VideoPort;
@@ -146,9 +148,27 @@ public class VideoDeviceCapturePort implements VideoPort {
 	}
 
 	@Override
-	public Control getControlByName(String name) {
+	public Control<?> getControlByName(String name) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public ImagePalette getColorFormat() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void onBufferEmpty(Consumer<FrameBuffer> handler) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onBufferFill(Consumer<FrameBuffer> handler) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
