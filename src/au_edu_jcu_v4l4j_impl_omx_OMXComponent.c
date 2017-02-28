@@ -42,6 +42,7 @@ typedef struct {
 typedef struct {
 	OMX_HANDLETYPE component;
 	OMX_CALLBACKTYPE callbacks;
+	JavaVM *vm;
 	jobject self;
 } OMXComponentAppData;
 
@@ -185,20 +186,107 @@ static OMX_ERRORTYPE event_handler(OMX_HANDLETYPE hComponent, OMX_PTR pAppData, 
 	return OMX_ErrorNone;
 }
 
+static bool getJNIEnv(JavaVM* vm, JNIEnv** env) {
+	//Thanks to https://coderanch.com/t/274379/java/JNIEnv-valid-call-javaVM-GetEnv
+	int getEnvResult = (*vm)->GetEnv(vm, (void**)env, JNI_VERSION_1_8);
+	if (getEnvResult == JNI_OK) {
+		return false;
+	} else if (getEnvResult == JNI_EDETATCHED) {
+		int attachResult = (*vm)->AttachCurrentThread(vm, (void**)env, NULL);
+		if (attachResult == 0)
+			return true;
+		info("Could not get JNI environment for OMX callback (error %d/%d)\n", getEnvResult, attachResult);
+		*env = NULL;
+		return false;
+	} else {
+		info("Could not get JNI environment for OMX callback (error %d)\n", getEnvResult);
+		*env = NULL;
+		return false;
+	}
+}
 
-static OMX_ERRORTYPE empty_buffer_done_handler(OMX_HANDLETYPE hComponent, OMX_PTR pAppData, OMX_BUFFERHEADERTYPE* pBuffer) {
-	OMXComponentAppData* appData = (OMXComponentAppData*) pAppData;
-	(void)appData;
+static jclass OMXComponent_class = NULL;
+static jmethodID OMXComponent_onBufferDone = NULL;
+
+static jmethodID getJavaCallbackMethod(JNIEnv* env, jobject object, jclass* classRefOut) {
+	jclass classRef = (*env)->NewLocalRef(env, OMXComponent_class);
+	if (classRef == NULL) {
+		classRef = (*env)->GetObjectClass(env, object);
+		if (classRef == NULL || (*env)->ExceptionCheck(env)) {
+			info(env, JNI_EXCP, "Unable to lookup class OMXComponent\n");
+			return NULL;
+		}
+		OMXComponent_class = (*env)->NewWeakGlobalRef(env, classRef);
+		OMXComponent_onBufferDone = (*env)->GetMethodID(env, classRef, "onBufferDone", "(JZIJIII)V");
+		if (OMXComponent_onBufferDone == NULL) {
+			info("Unable to find OMXComponent.onBufferDone(JZIJIII)V\n");
+			return NULL;
+		}
+	}
+	*classRefOut = classRef;
+	return OMXComponent_onBufferDone;	
+}
+
+static OMX_ERRORTYPE handleBufferEvent(OMX_HANDLETYPE hComponent, OMXComponentAppData* appData, OMX_BUFFERHEADERTYPE* pBuffer, jboolean empty) {
+	LOG_FN_ENTER();
+	//The problem that we have is that we don't know if this callback is on the same thread
+	//as any spawned by Java. As such, we can't just pass a JNIEnv to let us call our callback;
+	//instead, we have to work at it.
+	JNIEnv* env;
+	JavaVM* vm = appData->vm;
+	bool attached = (*vm)->getJNIEnv(vm, &env);
+	if (env == NULL)
+		return OMX_ErrorUndefined;//Getting env failed
 	
-	dprint(LOG_V4L4J, "OMX empty buffer done: hComponent: %#08x; buffer: %#08x\n", (uintptr_t) hComponent, (uintptr_t) pBuffer);
+	//Get local reference to java OMXCompoenent
+	jobject componentRef = (*env)->NewLocalRef(env, env->self);
+	if (componentRef == NULL) {
+		info("Component ref was null\n");
+		if (attached)
+			(*vm)->DetachCurrentThread(vm);
+		return OMX_ErrorUndefined;
+	}
+	
+	//Look up the callback method (OMXComponent.onBufferDone)
+	jclass omxClassRef;
+	jmethodID callbackMethod = getJavaCallbackMethod(env, componentRef, &omxClassRef);
+	if (callbackMethod == NULL) {
+		info("Failed to get callback method\n");
+		(*env)->DeleteLocalRef(env, componentRef);
+		if (attached)
+			(*vm)->DetachCurrentThread(vm);
+		return OMX_ErrorUndefined;
+	}
+	
+	(*env)->CallVoidMethod(env, componentRef,
+			(jlong) (uintptr_t) pBuffer, empty,
+			(jint) pBuffer->nTickCount,
+			(jlong) pBuffer->nTimeStamp,
+			(jint) pBuffer->nOffset,
+			(jint) pBuffer->nFilledLen,
+			(jint) pBuffer->nAllocLen);
+	
+	//Free references , and return (I am not sure if it will just go away, because I don't understand the semantics of all the Invocation API methods.
+	if (omxClassRef != NULL)
+		(*env)->DeleteLocalRef(env, omxClassRef);
+	(*env)->DeleteLocalRef(env, componentRef);
+	if (attached)
+		(*vm)->DetachCurrentThread(vm);
 	return OMX_ErrorNone;
 }
 
-static OMX_ERRORTYPE fill_buffer_done_handler(OMX_HANDLETYPE hComponent, OMX_PTR pAppData, OMX_BUFFERHEADERTYPE* pBuffer) {
+static OMX_ERRORTYPE empty_buffer_done_handler(OMX_HANDLETYPE hComponent, OMX_PTR pAppData, OMX_BUFFERHEADERTYPE* pBuffer) {
+	dprint(LOG_V4L4J, "OMX empty buffer done: hComponent: %#08x; buffer: %#08x\n", (uintptr_t) hComponent, (uintptr_t) pBuffer);
+	
 	OMXComponentAppData* appData = (OMXComponentAppData*) pAppData;
-	(void)appData;
+	return handleBufferEvent(hComponent, appData, pBuffer, JNI_TRUE);
+}
+
+static OMX_ERRORTYPE fill_buffer_done_handler(OMX_HANDLETYPE hComponent, OMX_PTR pAppData, OMX_BUFFERHEADERTYPE* pBuffer) {
 	dprint(LOG_V4L4J, "OMX fill buffer done: hComponent: %#08x; buffer: %#08x\n", (uintptr_t) hComponent, (uintptr_t) pBuffer);
-	return OMX_ErrorNone;
+	
+	OMXComponentAppData* appData = (OMXComponentAppData*) pAppData;
+	return handleBufferEvent(hComponent, appData, pBuffer, JNI_FALSE);
 }
 
 static inline OMXComponentAppData* initAppData(JNIEnv *env, jobject self) {
@@ -206,6 +294,15 @@ static inline OMXComponentAppData* initAppData(JNIEnv *env, jobject self) {
 	XMALLOC(appData, OMXComponentAppData*, sizeof(OMXComponentAppData));
 	if (appData == NULL) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Failed to allocate OMX app data");
+		return NULL;
+	}
+	
+	//Get a pointer to the JVM, for callbacks
+	int getVmResult = (*env)->GetJavaVM(env, &appData->vm);
+	//TODO figure out how to release JVM pointers
+	if (getVmResult != 0) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Failed to get reference to JVM (error %d)", getVmResult);
+		XFREE(appData);
 		return NULL;
 	}
 	
