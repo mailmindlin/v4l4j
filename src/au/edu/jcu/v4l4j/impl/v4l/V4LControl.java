@@ -2,7 +2,9 @@ package au.edu.jcu.v4l4j.impl.v4l;
 
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.BiFunction;
@@ -100,19 +102,21 @@ public abstract class V4LControl<V> implements Control<V> {
 	}
 	
 	protected abstract class V4LControlAccessor<P, T, R> implements ControlAccessor<P, T, R> {
-		protected final V4LControlAccessor<?, ?, ?> parent;
+		protected final P parent;
+		protected final V4LControlAccessor<?, ?, ?> previous;
 		protected final Duration timeout;
 		protected final Consumer<V4LControlAccessorState> mutator;
 		
-		protected V4LControlAccessor(V4LControlAccessor<?, ?, ?> parent, Duration timeout, Consumer<V4LControlAccessorState> mutator) {
+		protected V4LControlAccessor(P parent, V4LControlAccessor<?, ?, ?> previous, Duration timeout, Consumer<V4LControlAccessorState> mutator) {
 			this.parent = parent;
+			this.previous = previous;
 			this.timeout = timeout;
 			this.mutator = mutator;
 		}
 		
 		@Override
 		public V4LControlAccessor<P, T, R> setTimeout(Duration timeout) {
-			return chained(this.mutator == null ? this.parent : this, timeout, null);
+			return chained(this.parent, this.mutator == null ? this.previous : this, timeout, null);
 		}
 		
 		@Override
@@ -178,7 +182,8 @@ public abstract class V4LControl<V> implements Control<V> {
 		
 		@Override
 		public P and() throws IllegalStateException {
-			throw new UnsupportedOperationException("Not implemented (yet?)");
+			//TODO finish
+			return parent;
 		}
 		
 		protected abstract void doWrite(V4LControlAccessorState state);
@@ -186,8 +191,8 @@ public abstract class V4LControl<V> implements Control<V> {
 		protected abstract void doRead(V4LControlAccessorState state);
 		
 		protected void doCall(V4LControlAccessorState state) {
-			if (this.parent != null)
-				this.parent.doCall(state);
+			if (this.previous != null)
+				this.previous.doCall(state);
 			if (this.mutator != null)
 				this.mutator.accept(state);
 		}
@@ -199,11 +204,12 @@ public abstract class V4LControl<V> implements Control<V> {
 			return state.getResult();
 		}
 		
+		@SuppressWarnings("unchecked")
 		protected <X, Z> V4LControlAccessor<X, T, Z> andThen(Consumer<V4LControlAccessorState> mutator) {
-			return chained(this.mutator == null ? this.parent : this, this.timeout, mutator);
+			return chained((X) this.parent, this.mutator == null ? this.previous : this, this.timeout, mutator);
 		}
 		
-		protected abstract <X, Z> V4LControlAccessor<X, T, Z> chained(V4LControlAccessor<?, ?, ?> parent, Duration timeout,
+		protected abstract <X, Z> V4LControlAccessor<X, T, Z> chained(X parent, V4LControlAccessor<?, ?, ?> previous, Duration timeout,
 				Consumer<V4LControlAccessorState> mutator);
 	}
 	
@@ -220,7 +226,7 @@ public abstract class V4LControl<V> implements Control<V> {
 		
 		@Override
 		public ControlAccessor<Void, String, Void> access() {
-			return new V4LStringControlAccessor<>(null, null, null);
+			return new V4LStringControlAccessor<>(null, null, null, null);
 		}
 
 		@Override
@@ -235,14 +241,14 @@ public abstract class V4LControl<V> implements Control<V> {
 		
 		public class V4LStringControlAccessor<P, R> extends V4LControlAccessor<P, String, R> {
 			
-			protected V4LStringControlAccessor(V4LControlAccessor<?, ?, ?> parent, Duration timeout, Consumer<V4LControlAccessorState> mutator) {
-				super(parent, timeout, mutator);
+			protected V4LStringControlAccessor(P parent, V4LControlAccessor<?, ?, ?> previous, Duration timeout, Consumer<V4LControlAccessorState> mutator) {
+				super(parent, previous, timeout, mutator);
 			}
 
 			@Override
-			protected <X, Z> V4LControl<String>.V4LControlAccessor<X, String, Z> chained(V4LControlAccessor<?, ?, ?> parent, Duration timeout,
+			protected <X, Z> V4LControl<String>.V4LControlAccessor<X, String, Z> chained(X parent, V4LControlAccessor<?, ?, ?> previous, Duration timeout,
 					Consumer<V4LControlAccessorState> mutator) {
-				return new V4LStringControlAccessor<>(parent, timeout, mutator);
+				return new V4LStringControlAccessor<>(parent, previous, timeout, mutator);
 			}
 			
 			@Override
@@ -275,7 +281,7 @@ public abstract class V4LControl<V> implements Control<V> {
 
 		@Override
 		public ControlAccessor<Void, Boolean, Void> access() {
-			return new V4LSwitchControlAccesssor<>(null, null, null);
+			return new V4LSwitchControlAccesssor<>(null, null, null, null);
 		}
 
 		@Override
@@ -285,7 +291,7 @@ public abstract class V4LControl<V> implements Control<V> {
 
 		@Override
 		public boolean isDiscrete() {
-			return false;
+			return true;
 		}
 
 		@Override
@@ -295,13 +301,13 @@ public abstract class V4LControl<V> implements Control<V> {
 		
 		protected class V4LSwitchControlAccesssor<P, R> extends V4LControlAccessor<P, Boolean, R> {
 
-			protected V4LSwitchControlAccesssor(V4LControlAccessor<?, ?, ?> parent, Duration timeout, Consumer<V4LControlAccessorState> mutator) {
-				super(parent, timeout, mutator);
+			protected V4LSwitchControlAccesssor(P parent, V4LControlAccessor<?, ?, ?> previous, Duration timeout, Consumer<V4LControlAccessorState> mutator) {
+				super(parent, previous, timeout, mutator);
 			}
 			
 			@Override
-			protected <X, Z> V4LControl<Boolean>.V4LControlAccessor<X, Boolean, Z> chained(V4LControlAccessor<?, ?, ?> parent, Duration timeout,  Consumer<V4LControlAccessorState> mutator) {
-				return new V4LSwitchControlAccesssor<>(parent, timeout, mutator);
+			protected <X, Z> V4LControl<Boolean>.V4LControlAccessor<X, Boolean, Z> chained(X parent, V4LControlAccessor<?, ?, ?> previous, Duration timeout,  Consumer<V4LControlAccessorState> mutator) {
+				return new V4LSwitchControlAccesssor<>(parent, previous, timeout, mutator);
 			}
 
 			@Override
@@ -339,7 +345,75 @@ public abstract class V4LControl<V> implements Control<V> {
 		}
 	}
 	
-	public static abstract class V4LSliderControl extends V4LControl<Number> implements ContinuousControl<Number> {
+	public static class V4LMenuControl extends V4LControl<String> implements DiscreteControl<String> {
+		protected final List<String> values;
+		protected V4LMenuControl(VideoDevice device, String name, int ctrlId, String[] values) {
+			super(device, name, ctrlId);
+			this.values = Collections.unmodifiableList(Arrays.asList(values));
+		}
+
+		@Override
+		public ControlType getType() {
+			return ControlType.MENU;
+		}
+
+		@Override
+		public boolean isDiscrete() {
+			return true;
+		}
+
+		@Override
+		public boolean isContinuous() {
+			return false;
+		}
+
+		@Override
+		public ControlAccessor<Void, String, Void> access() {
+			return new MenuControlAccessor<>(null, null, null, null);
+		}
+
+		@Override
+		public Future<Iterator<String>> options() {
+			return CompletableFuture.completedFuture(this.values.iterator());
+		}
+		
+		protected class MenuControlAccessor<P, R> extends V4LControlAccessor<P, String, R> {
+
+			protected MenuControlAccessor(P parent, V4LControl<String>.V4LControlAccessor<?, ?, ?> previous, Duration timeout,
+					Consumer<V4LControlAccessorState> mutator) {
+				super(parent, previous, timeout, mutator);
+			}
+
+			@Override
+			public Control<String> getControl() {
+				return V4LMenuControl.this;
+			}
+
+			@Override
+			protected void doWrite(V4LControlAccessorState state) {
+				String value = state.getValue();
+				int iValue = values.indexOf(value);
+				V4LMenuControl.this.setValueInt(iValue);
+			}
+
+			@Override
+			protected void doRead(V4LControlAccessorState state) {
+				int iValue = V4LMenuControl.this.getValueInt();
+				state.setValue(values.get(iValue));
+			}
+
+			@Override
+			protected <X, Z> V4LControl<String>.V4LControlAccessor<X, String, Z> chained(X parent,
+					V4LControlAccessor<?, ?, ?> previous, Duration timeout,
+					Consumer<V4LControlAccessorState> mutator) {
+				return new MenuControlAccessor<>(parent, previous, timeout, mutator);
+			}
+			
+		}
+		
+	}
+	
+	public static class V4LSliderControl extends V4LControl<Number> implements ContinuousControl<Number> {
 		protected final Number minValue;
 		protected final Number maxValue;
 		protected final Number step;
@@ -358,7 +432,17 @@ public abstract class V4LControl<V> implements Control<V> {
 
 		@Override
 		public ControlAccessor<Void, Number, Void> access() {
-			return new V4LSliderControlAccessor<>(null, null, null);
+			return new V4LSliderControlAccessor<>(null, null, null, null);
+		}
+
+		@Override
+		public boolean isDiscrete() {
+			return false;
+		}
+
+		@Override
+		public boolean isContinuous() {
+			return true;
 		}
 
 		@Override
@@ -389,8 +473,8 @@ public abstract class V4LControl<V> implements Control<V> {
 		
 		protected class V4LSliderControlAccessor<P, R> extends V4LControlAccessor<P, Number, R> {
 
-			protected V4LSliderControlAccessor(V4LControlAccessor<?, ?, ?> parent, Duration timeout, Consumer<V4LControlAccessorState> mutator) {
-				super(parent, timeout, mutator);
+			protected V4LSliderControlAccessor(P parent, V4LControlAccessor<?, ?, ?> previous, Duration timeout, Consumer<V4LControlAccessorState> mutator) {
+				super(parent, previous, timeout, mutator);
 			}
 
 			@Override
@@ -414,9 +498,9 @@ public abstract class V4LControl<V> implements Control<V> {
 			}
 
 			@Override
-			protected <X, Z> V4LControlAccessor<X, Number, Z> chained(V4LControl<Number>.V4LControlAccessor<?, ?, ?> parent, Duration timeout,
+			protected <X, Z> V4LControlAccessor<X, Number, Z> chained(X parent, V4LControlAccessor<?, ?, ?> previous, Duration timeout,
 					Consumer<V4LControlAccessorState> mutator) {
-				return new V4LSliderControlAccessor<>(parent, timeout, mutator);
+				return new V4LSliderControlAccessor<>(parent, previous, timeout, mutator);
 			}
 		}
 	}
