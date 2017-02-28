@@ -22,6 +22,8 @@ public class OMXComponentPort implements ComponentPort {
 	protected boolean enabled;
 	protected boolean populated;
 	protected final HashMap<String, AbstractOMXQueryControl<?>> controls = new HashMap<>();
+	protected Consumer<FrameBuffer> onBufferFilled;
+	protected Consumer<FrameBuffer> onBufferEmptied;
 	
 	protected OMXComponentPort(OMXComponent component, int id, String mime, StreamType type) {
 		this.component = component;
@@ -199,13 +201,16 @@ public class OMXComponentPort implements ComponentPort {
 	
 	@Override
 	public void onBufferEmpty(Consumer<FrameBuffer> handler) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		synchronized (this) {
+			this.onBufferEmptied = handler;
+		}
 	}
 	
 	@Override
 	public void onBufferFill(Consumer<FrameBuffer> handler) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		synchronized (this) {
+			this.onBufferFilled = handler;
+		}
 	}
+
 }
