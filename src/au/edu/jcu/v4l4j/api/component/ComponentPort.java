@@ -135,7 +135,7 @@ public interface ComponentPort {
 	/**
 	 * Registers a callback for the onBufferFilled event.
 	 */
-	void onBufferFilled(Consumer<FrameBuffer> handler);
+	void onBufferFill(Consumer<FrameBuffer> handler);
 	
 	Set<String> getControlNames();
 	
