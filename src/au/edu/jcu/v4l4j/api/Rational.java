@@ -5,13 +5,35 @@ package au.edu.jcu.v4l4j.api;
  */
 public class Rational extends Number implements Comparable<Number> {
 	
-	protected static long gcd(long a, long b) {
-		int sign = Math.sign(a) * Math.sign(b);
-		return -1;//TODO finish
+	protected static int sign(long value) {
+		if (value > 0)
+			return 1;
+		if (value < 0)
+			return -1;
+		return 0;
 	}
+	
+	protected static long gcd(long a, long b) {
+		int shift = Long.numberOfTrailingZeros(a | b);
+		a >>= Long.numberOfTrailingZeros(a);
+		
+		do {
+			b >>= Long.numberOfLeadingZeros(b);
+			if (a > b) {
+				long tmp = a;
+				a = b;
+				b = tmp;
+			}
+			
+			b -= a;
+		} while (b != 0);
+		
+		return a << shift;
+	}
+	
 	public static Rational reduced(int numerator, int denominator) {
 		//Slightly modified binary GCD algorithm
-		int sign = Math.sign(numerator) * Math.sign(denominator);
+		int sign = sign(numerator) * sign(denominator);
 		int num = Math.abs(numerator);
 		int den = Math.abs(denominator);
 		
@@ -19,21 +41,20 @@ public class Rational extends Number implements Comparable<Number> {
 			return new Rational(0, 1);
 		
 		//Remove all all divisors that are 2 from both
-		while (((num | den) & 1) == 0) {
-			num >>= 1;
-			den >>= 1;
-		}
+		int shift = Integer.numberOfTrailingZeros(num | den);
+		num >>= shift;
+		den >>= shift;
 		
 		//Find the GCD of the remaining numbers
 		int u = num;
 		int v = den;
 		
-		while ((u & 1) == 0)
-			u >>= 1;
+		//Remove powers of 2 from u
+		u >>= Integer.numberOfTrailingZeros(u);
 			
 		do {
-			while ((v & 1) == 0)
-				v >>= 1;
+			//Remove powers of 2 from v
+			v >>= Integer.numberOfLeadingZeros(v);
 			
 			if (u > v) {
 				int tmp = u;
@@ -53,61 +74,54 @@ public class Rational extends Number implements Comparable<Number> {
 	 */
 	protected static Rational reducedApprox(long numerator, long denominator) {
 		//Slightly modified binary GCD algorithm
-		int sign = Math.sign(numerator) * Math.sign(denominator);
+		int sign = sign(numerator) * sign(denominator);
 		long num = Math.abs(numerator);
 		long den = Math.abs(denominator);
 		
 		if (num == 0)
 			return new Rational(0, 1);
 		
-		//Remove all all divisors that are 2 from both
-		while (((num | den) & 1) == 0) {
-			num >>= 1;
-			den >>= 1;
+		{
+			final long gcd = Rational.gcd(num, den);
+			num /= gcd;
+			den /= gcd;
 		}
 		
-		//Find the GCD of the remaining numbers
-		long u = num;
-		long v = den;
-		
-		while ((u & 1) == 0)
-			u >>= 1;
-			
-		do {
-			while ((v & 1) == 0)
-				v >>= 1;
-			
-			if (u > v) {
-				int tmp = u;
-				u = v;
-				v = tmp;
-			}
-			
-			v -= u;
-		} while (v != 0);
-		
-		//Now we have the GCD of (num, den) (it's u), return a rational
-		num /= u;
-		den /= u;
 		if (num > Integer.MAX_VALUE) {
 			//We can't cast to integers without loss of precision
 			
-			if (((num + (den - 1))/den) > Integer.MAX_VALUE)//Approximate with Integer.MAX_VALUE/1
+			if (((num + (den - 1))/den) >= Integer.MAX_VALUE)//Approximate with Integer.MAX_VALUE/1
 				return new Rational(sign == 1 ? Integer.MAX_VALUE : Integer.MIN_VALUE, 1);
 			
+			long iPart = num / den;
+			double fPart = 1.0 * (num % den) / den;
+			//Maximum denominator that we can use for our approximation and still have the
+			//numerator within the range of int32
+			int maxApproxDenominator = (int) Math.abs(Integer.MAX_VALUE / iPart);
 			//See http://stackoverflow.com/a/4357555
 			//We have to find a fraction that's pretty close
-			Rational low = new Rational(0, 1);
-			Rational high = new Rational((num + (den - 1)) / den, 1);
-			if (num < 0) {
-				Rational tmp = low;
-				low = high;
-				high = tmp;
-			}
+			int loNum = 0, loDen = 1;
+			int hiNum = 1, hiDen = 1;
 			
-			float tolerance = 1.0e-1;
+			final double tolerance = 1.0e-4;
 			while (true) {
-				Rational middle = 
+				//TODO fixme; I think that this part needs some work.
+				long midNum = hiNum * loDen + loNum * hiDen;
+				long midDen = hiDen * loDen;
+				final long gcd = gcd(midNum, midDen);
+				midNum /= gcd;
+				midDen /= gcd;
+				
+				double d = 1.0 * midNum / midDen;
+				if (Math.abs(fPart - d) < tolerance)
+					return new Rational((int) (midNum + (num % den) * midDen / den), (int) midDen);
+				if (fPart > d) {
+					loNum = (int) midNum;
+					loDen = (int) midDen;
+				} else {
+					hiNum = (int) midNum;
+					hiDen = (int) midDen;
+				}
 			}
 		}
 		return new Rational((int) (num * sign), (int) den);
@@ -173,7 +187,7 @@ public class Rational extends Number implements Comparable<Number> {
 			return Rational.reduced(this.getNumerator() + other.getNumerator(), this.getDenominator());
 		long numerator = ((long)this.getNumerator()) * ((long)other.getDenominator()) + ((long)other.getNumerator()) * ((long)this.getDenominator());
 		long denominator = ((long)this.getDenominator()) * ((long)other.getDenominator());
-		return Rational.reduced(numerator, denominator);
+		return Rational.reducedApprox(numerator, denominator);
 	}
 	
 	public Rational subtract(Rational other) {
@@ -181,6 +195,9 @@ public class Rational extends Number implements Comparable<Number> {
 			//No scaling
 			return Rational.reduced(this.getNumerator() - other.getNumerator(), this.getDenominator());
 		}
+		long numerator = ((long)this.getNumerator()) * ((long)other.getDenominator()) - ((long)other.getNumerator()) * ((long)this.getDenominator());
+		long denominator = ((long)this.getDenominator()) * ((long)other.getDenominator());
+		return Rational.reducedApprox(numerator, denominator);
 	}
 	
 	public Rational reduced() {
@@ -193,8 +210,8 @@ public class Rational extends Number implements Comparable<Number> {
 			Rational r = (Rational) other;
 			//Scale the numerators to same 
 			//Convert to longs to prevent overflows
-			long myScaledNumerator = ((long) this.getNumerator()) * ((long) other.getDenominator());
-			long otherScaledNumerator = ((long) other.getNumerator()) * ((long) other.getDenominator());
+			long myScaledNumerator = ((long) this.getNumerator()) * ((long) r.getDenominator());
+			long otherScaledNumerator = ((long) r.getNumerator()) * ((long) this.getDenominator());
 			if (myScaledNumerator < otherScaledNumerator)
 				return -1;
 			if (myScaledNumerator > otherScaledNumerator)
