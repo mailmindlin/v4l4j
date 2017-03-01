@@ -75,6 +75,13 @@ public class OMXConstants {
 	public static final int VIDEO_ENCODING_AVC = 7;
 	public static final int VIDEO_ENCODING_MJPEG = 8;
 	
+	//Error codes
+	public static final int ERROR_NONE = 0;
+	public static final int ERROR_INSUFFICIENT_RESOURCES = 1;
+	public static final int ERROR_INVALID_COMPONENT_NAME = 2;
+	public static final int ERROR_COMPONENT_NOT_FOUND = 3;
+	public static final int ERROR_NO_MORE = 4;
+	
 	//Config/param indicies
 	public static final int INDEX_ComponentStartUnused				= 0x01000000;
 	public static final int INDEX_ParamPriorityMgmt					= 0x01000001;	/**< reference: OMX_PRIORITYMGMTTYPE */
