@@ -696,12 +696,15 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doUseBuffe
 	return framebuffer;
 }
 
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doEmptyThisBuffer(JNIEnv *env, jclass me, jlong pointer, jlong bufferPointer) {
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doEmptyThisBuffer(JNIEnv *env, jclass me, jlong pointer, jlong bufferPointer, jint position, jint size) {
 	LOG_FN_ENTER();
 	
 	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
 	
 	OMX_BUFFERHEADERTYPE* buffer = (OMX_BUFFERHEADERTYPE*) (uintptr_t) bufferPointer;
+	
+	buffer->nOffset = position;
+	buffer->nFilledLen = size;
 	
 	OMX_ERRORTYPE r = OMX_EmptyThisBuffer(appData->component, buffer);
 	if (r != OMX_ErrorNone) {
@@ -724,7 +727,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doFillThisBuf
 	}
 }
 
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doAccessConfig(JNIEnv* env, jclass me, jlong pointer, jboolean isConfig, jboolean read, jint configIdx, jobject data) {
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doAccessConfig(JNIEnv* env, jclass me, jlong pointer, jboolean isConfig, jboolean read, jboolean throwOnError, jint configIdx, jobject data) {
 	LOG_FN_ENTER();
 	
 	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
@@ -739,7 +742,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doAccessConfi
 	//Check that we have a valid reference to buf
 	if (!buf) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Error getting pointer to buffer");
-		return;
+		return -1;
 	}
 	
 	dprint(LOG_V4L4J, "OMX: %s %s %#010x\n", read ? "Reading" : "Writing", isConfig ? "config" : "parameter", configIdx);
@@ -778,15 +781,15 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doAccessConfi
 	releaseArray(env, arrayRef, buf);
 	
 	//Handle errors, if any
-	if (res != OMX_ErrorNone) {
+	if (res != OMX_ErrorNone && throwOnError) {
 		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error %s %s %#08x: %#08x %s",
 			read ? "reading" : "writing",
 			isConfig ? "config" : "parameter",
 			configIdx,
 			res,
 			getOMXErrorDescription(res));
-		return;
 	}
+	return res;
 }
 
 

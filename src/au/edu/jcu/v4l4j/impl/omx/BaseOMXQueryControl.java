@@ -31,7 +31,7 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 		return new OMXQueryControlBuilder(struct);
 	}
 	
-	protected BaseOMXQueryControl(OMXComponent component, String rootName, int queryId, StructPrototype struct) {
+	public BaseOMXQueryControl(OMXComponent component, String rootName, int queryId, StructPrototype struct) {
 		super(component, null, rootName);
 		this.queryId = queryId;
 		this.struct = struct;
@@ -92,7 +92,7 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 	}
 	
 	protected void doWrite(ByteBuffer buffer) {
-		this.component.accessConfig(this.isConfig, false, this.queryId, buffer);
+		this.component.setConfig(this.isConfig, this.queryId, buffer);
 	}
 	
 	public static class OMXQueryControlBuilder {
@@ -171,8 +171,8 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 				OMXComponent component = BaseOMXQueryControl.this.component;
 				int queryId = BaseOMXQueryControl.this.queryId;
 				ByteBuffer buffer = state.basePointer.buffer();
-				component.accessConfig(false, false, queryId, buffer);// set
-				component.accessConfig(false, true, queryId, buffer);// get
+				component.setConfig(false, queryId, buffer);
+				component.getConfig(false, queryId, buffer);
 			});
 		}
 		

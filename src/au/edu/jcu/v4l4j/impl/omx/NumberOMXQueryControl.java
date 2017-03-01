@@ -8,7 +8,7 @@ import au.edu.jcu.v4l4j.api.control.ControlType;
 
 public class NumberOMXQueryControl extends AbstractOMXQueryControl<Number> {
 
-	protected NumberOMXQueryControl(AbstractOMXQueryControl<?> parent, String name) {
+	public NumberOMXQueryControl(AbstractOMXQueryControl<?> parent, String name) {
 		super(parent.component, parent, name);
 	}
 

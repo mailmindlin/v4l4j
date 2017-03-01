@@ -90,7 +90,7 @@ public class OMXComponent implements Component {
 	 * @param data
 	 *            Data to get/set
 	 */
-	private static native void doAccessConfig(long pointer, boolean isConfig, boolean read, int configIndex, ByteBuffer data);
+	private static native int doAccessConfig(long pointer, boolean isConfig, boolean read, boolean throwOnError, int configIndex, ByteBuffer data);
 	
 	private final String name;
 	private final long pointer;
@@ -153,8 +153,16 @@ public class OMXComponent implements Component {
 		return OMXComponent.getPortInfo(this.pointer, portIndex, info);
 	}
 	
-	public void accessConfig(boolean isConfig, boolean read, int configIdx, ByteBuffer data) {
-		OMXComponent.doAccessConfig(this.pointer, isConfig, read, configIdx, data);
+	public void getConfig(boolean isConfig, int configIdx, ByteBuffer data) {
+		OMXComponent.doAccessConfig(this.pointer, isConfig, true, true, configIdx, data);
+	}
+	
+	public void setConfig(boolean isConfig, int configIdx, ByteBuffer data) {
+		OMXComponent.doAccessConfig(this.pointer, isConfig, false, true, configIdx, data);
+	}
+	
+	public int accessConfig(boolean isConfig, boolean read, boolean throwOnError, int queryIdx, ByteBuffer data) {
+		return OMXComponent.doAccessConfig(this.pointer, isConfig, read, throwOnError, queryIdx, data);
 	}
 	
 	protected void setPortData(int portIndex, int[] info) {
