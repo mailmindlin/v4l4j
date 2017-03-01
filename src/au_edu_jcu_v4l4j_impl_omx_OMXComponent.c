@@ -217,9 +217,9 @@ static jmethodID getJavaCallbackMethod(JNIEnv* env, jobject object, jclass* clas
 			return NULL;
 		}
 		OMXComponent_class = (*env)->NewWeakGlobalRef(env, classRef);
-		OMXComponent_onBufferDone = (*env)->GetMethodID(env, classRef, "onBufferDone", "(JZIJIII)V");
+		OMXComponent_onBufferDone = (*env)->GetMethodID(env, classRef, "onBufferDone", "(Lau/edu/jcu/v4l4j/impl/omx/OMXFrameBuffer;ZIJIII)V");
 		if (OMXComponent_onBufferDone == NULL) {
-			info("Unable to find OMXComponent.onBufferDone(JZIJIII)V\n");
+			info("Unable to find OMXComponent.onBufferDone(Lau/edu/jcu/v4l4j/impl/omx/OMXFrameBuffer;ZIJIII)V\n");
 			return NULL;
 		}
 	}
@@ -264,7 +264,7 @@ static OMX_ERRORTYPE handleBufferEvent(OMX_HANDLETYPE hComponent, OMXComponentAp
 	};
 	
 	(*env)->CallVoidMethod(env, componentRef, callbackMethod,
-			(jlong) (uintptr_t) pBuffer,
+			(jobject) pBuffer->pAppPrivate,
 			empty,
 			(jint) pBuffer->nTickCount,
 			(jlong) ((union tickConv)pBuffer->nTimeStamp).val,
@@ -614,7 +614,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_enablePort(JN
 	}
 }
 
-JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doAllocateBuffer(JNIEnv *env, jclass me, jlong pointer, jint portIndex, jint size) {
+JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doUseBuffer(JNIEnv* env, jclass me, jlong pointer, jint portIndex, jboolean allocate, jint size, jobject bBuffer) {
 	LOG_FN_ENTER();
 	
 	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
@@ -626,73 +626,58 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doAllocate
 		return NULL;
 	}
 	
-	
 	jmethodID framebufferCtor = (*env)->GetMethodID(env, framebufferClass, "<init>", "(JLjava/nio/ByteBuffer;)V");
 	if (framebufferCtor == NULL) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Error looking up constructor OMXFrameBuffer(long, ByteBuffer)");
 		return NULL;
 	}
 	
+	//We want to use the framebuffer jobject in the appPrivate field of the BufferHeader,
+	//but the constructor requires the framebuffer pointer, so we allocate it now, and invoke
+	//the constructor as a method after getting the BufferHeader.
+	jobject framebuffer = (*env)->AllocObject(env, framebufferClass);
+	if (framebuffer == NULL) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Error allocating framebuffer");
+		return NULL;
+	}
+	
+	//Make a global reference to our allocated framebuffer to store in the native object
+	jobject framebufferRef = (*env)->NewGlobalRef(env, framebuffer);
+	if (framebufferRef == NULL) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Error getting global ref to framebuffer");
+		return NULL;
+	}
+	
 	OMX_BUFFERHEADERTYPE* buffer;
-	//Actually allocate the buffer
-	OMX_ERRORTYPE r = OMX_AllocateBuffer(appData->component, &buffer, portIndex, NULL, size);
+	OMX_ERRORTYPE r;
+	if (allocate) {
+		r = OMX_AllocateBuffer(appData->component, &buffer, portIndex, framebufferRef, size);
+		//Wrap allocated buffer with ByteBuffer
+		bBuffer = (*env)->NewDirectByteBuffer(env, buffer->pBuffer, size);
+	} else {
+		//Actually allocate the buffer
+		unsigned char* bufferPointer = (*env)->GetDirectBufferAddress(env, bBuffer);
+		if (bufferPointer == NULL) {
+			THROW_EXCEPTION(env, JNI_EXCP, "Error getting pointer to direct buffer");
+			return NULL;
+		}
+		r = OMX_UseBuffer(appData->component, &buffer, portIndex, framebufferRef, size, bufferPointer);
+	}
+		
 	if (r != OMX_ErrorNone) {
 		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error allocating buffer on port %d: %#08x %s", portIndex, r, getOMXErrorDescription(r));
+		(*env)->DeleteGlobalRef(env, framebufferRef);
 		return NULL;
 	}
 	
 	if (buffer->nAllocLen != size) {
 		THROW_EXCEPTION(env, GENERIC_EXCP, "Buffer allocated does not match size (expected %u; actual %u)", size, buffer->nAllocLen);
+		(*env)->DeleteGlobalRef(env, framebufferRef);
 		return NULL;
 	}
 	
-	jobject bbuffer = (*env)->NewDirectByteBuffer(env, buffer->pBuffer, size);
-	//Wrap with FrameBuffer
-	jobject framebuffer = (*env)->NewObject(env, framebufferClass, framebufferCtor, (jlong) (uintptr_t) buffer, bbuffer);
-	return framebuffer;
-}
-
-JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doUseBuffer(JNIEnv* env, jclass me, jlong pointer, jint portIndex, jobject bBuffer) {
-	LOG_FN_ENTER();
-	
-	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
-	
-	//Look these up early, so we don't have much to clean up if they fail
-	jclass framebufferClass = (*env)->FindClass(env, "au/edu/jcu/v4l4j/impl/omx/OMXFrameBuffer");
-	if (framebufferClass == NULL) {
-		THROW_EXCEPTION(env, JNI_EXCP, "Error looking up class OMXFrameBuffer");
-		return NULL;
-	}
-	
-	unsigned char* bufferPointer = (*env)->GetDirectBufferAddress(env, bBuffer);
-	if (bufferPointer == NULL) {
-		THROW_EXCEPTION(env, JNI_EXCP, "Error getting pointer to direct buffer");
-		return NULL;
-	}
-	
-	jint size = (*env)->GetDirectBufferCapacity(env, bBuffer);
-	
-	jmethodID framebufferCtor = (*env)->GetMethodID(env, framebufferClass, "<init>", "(JLjava/nio/ByteBuffer;)V");
-	if (framebufferCtor == NULL) {
-		THROW_EXCEPTION(env, JNI_EXCP, "Error looking up constructor OMXFrameBuffer(long, ByteBuffer)");
-		return NULL;
-	}
-	
-	OMX_BUFFERHEADERTYPE* buffer;
-	//Actually allocate the buffer
-	OMX_ERRORTYPE r = OMX_UseBuffer(appData->component, &buffer, portIndex, NULL, size, bufferPointer);
-	if (r != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error allocating buffer on port %d: %#08x %s", portIndex, r, getOMXErrorDescription(r));
-		return NULL;
-	}
-	
-	if (buffer->nAllocLen != size) {
-		THROW_EXCEPTION(env, GENERIC_EXCP, "Buffer allocated does not match size (expected %u; actual %u)", size, buffer->nAllocLen);
-		return NULL;
-	}
-	
-	//Wrap with FrameBuffer
-	jobject framebuffer = (*env)->NewObject(env, framebufferClass, framebufferCtor, (jlong) (uintptr_t) buffer, bBuffer);
+	//Invoke constructor
+	(*env)->CallVoidMethod(env, framebuffer, framebufferCtor, (jlong) (uintptr_t) buffer, bBuffer);
 	return framebuffer;
 }
 
@@ -703,6 +688,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doEmptyThisBu
 	
 	OMX_BUFFERHEADERTYPE* buffer = (OMX_BUFFERHEADERTYPE*) (uintptr_t) bufferPointer;
 	
+	dprint(LOG_V4L4J, "Setting offset to %d; limit %d\n", position, size);
 	buffer->nOffset = position;
 	buffer->nFilledLen = size;
 	

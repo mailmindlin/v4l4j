@@ -64,9 +64,7 @@ public class OMXComponent implements Component {
 	
 	private static native void enablePort(long pointer, int portIndex, boolean enabled);
 	
-	private static native OMXFrameBuffer doAllocateBuffer(long pointer, int portIndex, int bufferSize);
-	
-	private static native OMXFrameBuffer doUseBuffer(long pointer, int portIndex, ByteBuffer buffer);
+	private static native OMXFrameBuffer doUseBuffer(long pointer, int portIndex, boolean allocate, int bufferSize, ByteBuffer buffer);
 	
 	private static native void doEmptyThisBuffer(long pointer, long bufferPtr);
 	
@@ -123,7 +121,7 @@ public class OMXComponent implements Component {
 	}
 	
 	protected OMXFrameBuffer allocateBufferOnPort(int portIndex, int bufferSize) {
-		OMXFrameBuffer result = OMXComponent.doAllocateBuffer(this.pointer, portIndex, bufferSize);
+		OMXFrameBuffer result = OMXComponent.doUseBuffer(this.pointer, portIndex, true, bufferSize, null);
 		this.buffers.add(result);
 		return result;
 	}
@@ -134,7 +132,7 @@ public class OMXComponent implements Component {
 			// functionality
 			// when NULL is passed, but not ATM
 			throw new IllegalArgumentException("Only direct buffers can be used");
-		OMXFrameBuffer result = OMXComponent.doUseBuffer(this.pointer, portIndex, buffer);
+		OMXFrameBuffer result = OMXComponent.doUseBuffer(this.pointer, portIndex, false, buffer.capacity(), buffer);
 		this.buffers.add(result);
 		return result;
 	}
@@ -368,21 +366,23 @@ public class OMXComponent implements Component {
 	/**
 	 * Called by JNI code from OMX event handlers.
 	 */
-	private void onBufferDone(long bufferId, boolean emptied, int ticks, long timestamp, int offset, int filled, int flags) {
-		OMXFrameBuffer buffer = this.queuedBuffers.get(bufferId);
+	private void onBufferDone(OMXFrameBuffer buffer, boolean emptied, int ticks, long timestamp, int offset, int filled, int flags) {
+		String handlerName = emptied ? "OMX_BUFFER_EMPTY_HANDLER" : "OMX_BUFFER_FILL_HANDLER";
 		if (buffer == null) {
-			System.err.println("Could not find buffer in buffer " + (emptied ? "empty" : "fill") + " handler: 0x" + Long.toHexString(bufferId));
+			System.err.println("Could not find buffer in " + handlerName + ": 0x" + Long.toHexString(bufferId));
 			//TODO handle
 			return;
 		}
-		buffers.remove(bufferId);
 		//Update fields in buffer
 		buffer.prepare(ticks, timestamp, offset, filled, flags);
 		
 		Consumer<FrameBuffer> handler;
-		if (this.ports == null)
-			this.doInitPorts();
-		OMXComponentPort port = this.getPort(emptied ? buffer.getInputPort() : buffer.getOutputPort());
+		int portId = emptied ? buffer.getInputPort() : buffer.getOutputPort();
+		OMXComponentPort port = this.getPort(portId);
+		if (port == null) {
+			System.err.println("OMX Could not find port " + portId + " in " + handlerName);
+			return;
+		}
 		synchronized (this) {
 			if (emptied)
 				handler = port.onBufferEmptied;
@@ -391,14 +391,14 @@ public class OMXComponent implements Component {
 		}
 		if (handler == null) {
 			//We can't throw an exception from here
-			System.err.println("No handler for event BUFFER " + (emptied ? "EMPTY" : "FILL") + " on " + this);
+			System.err.println("No handler for event " + handlerName + " on " + this);
 			return;
 		}
 		
 		try {
 			handler.accept(buffer);
 		} catch (Exception e) {
-			printExceptionFromHandler(emptied ? "OMX_BUFFER_EMPTY_HANDLER" : "OMX_BUFFER_FILL_HANDLER", e, port.getIndex());
+			printExceptionFromHandler(handlerName, e, port.getIndex());
 		}
 	}
 }
