@@ -1,15 +1,16 @@
 package au.edu.jcu.v4l4j.impl.omx;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import au.edu.jcu.v4l4j.api.FrameBuffer;
+import au.edu.jcu.v4l4j.api.StreamType;
 import au.edu.jcu.v4l4j.api.component.Component;
 import au.edu.jcu.v4l4j.api.component.ComponentPort;
 import au.edu.jcu.v4l4j.api.component.ComponentProvider;
@@ -104,7 +105,7 @@ public class OMXComponent implements Component {
 	protected int otherPortMinIdx;
 	protected int numOtherPorts;
 	
-	protected List<OMXComponentPort> ports;
+	protected Set<OMXComponentPort> ports;
 	
 	protected Set<OMXFrameBuffer> buffers = new HashSet<>();
 	protected Map<Long, OMXFrameBuffer> queuedBuffers = new ConcurrentHashMap<>();
@@ -169,7 +170,8 @@ public class OMXComponent implements Component {
 			if (this.ports != null)
 				return;
 			
-			this.ports = new ArrayList<>();
+			Set<OMXComponentPort> ports = new HashSet<>();
+			this.ports = ports;
 			int[] idx = new int[8];
 			OMXComponent.getPortOffsets(this.pointer, idx);
 			
@@ -180,7 +182,7 @@ public class OMXComponent implements Component {
 				for (int i = 0; i < this.numAudioPorts; i++) {
 					int portIndex = this.audioPortMinIdx + i;
 					String mime = OMXComponent.getPortInfo(this.pointer, portIndex, portInfo);
-					this.ports.add(portIndex, new OMXAudioPort(this, portIndex, mime, portInfo));
+					ports.add(new OMXAudioPort(this, portIndex, mime, portInfo));
 				}
 			}
 			
@@ -191,7 +193,7 @@ public class OMXComponent implements Component {
 				for (int i = 0; i < this.numVideoPorts; i++) {
 					int portIndex = this.videoPortMinIdx + i;
 					String mime = OMXComponent.getPortInfo(this.pointer, portIndex, portInfo);
-					this.ports.add(new OMXVideoPort(this, portIndex, mime, portInfo));
+					ports.add(new OMXVideoPort(this, portIndex, mime, portInfo));
 				}
 			}
 			
@@ -202,7 +204,7 @@ public class OMXComponent implements Component {
 				for (int i = 0; i < this.numImagePorts; i++) {
 					int portIndex = this.imagePortMinIdx + i;
 					String mime = OMXComponent.getPortInfo(this.pointer, portIndex, portInfo);
-					this.ports.add(new OMXImagePort(this, portIndex, mime, portInfo));
+					ports.add(new OMXImagePort(this, portIndex, mime, portInfo));
 				}
 			}
 			
@@ -213,11 +215,9 @@ public class OMXComponent implements Component {
 				for (int i = 0; i < this.numOtherPorts; i++) {
 					int portIndex = this.otherPortMinIdx + i;
 					String mime = OMXComponent.getPortInfo(this.pointer, portIndex, portInfo);
-					this.ports.add(new OMXComponentPort(this, portIndex, mime, portInfo));
+					ports.add(new OMXComponentPort(this, portIndex, mime, portInfo));
 				}
 			}
-			
-			((ArrayList<OMXComponentPort>)this.ports).trimToSize();
 		}
 	}
 	
@@ -283,49 +283,56 @@ public class OMXComponent implements Component {
 	}
 	
 	@Override
-	public Set<ComponentPort> getPorts() {
-		HashSet<ComponentPort> result = new HashSet<>();
-		result.addAll(this.getAudioPorts());
-		result.addAll(this.getVideoPorts());
-		result.addAll(this.getImagePorts());
-		result.addAll(this.getOtherPorts());
-		return result;
+	public Set<OMXComponentPort> getPorts() {
+		if (this.ports == null)
+			this.doInitPorts();
+		return new HashSet<>(this.ports);
 	}
 	
 	@Override
 	@SuppressWarnings("unchecked")
-	public Set<AudioPort> getAudioPorts() {
+	public Set<? extends AudioPort> getAudioPorts() {
 		if (this.ports == null)
 			this.doInitPorts();
-		return new HashSet<>((List<AudioPort>)(List<?>)this.ports.subList(this.audioPortMinIdx, this.audioPortMinIdx + this.numAudioPorts));
+		return (Set<? extends AudioPort>) (Set<?>) this.ports.stream()
+				.filter(port->(port.getPortType() == StreamType.AUDIO))
+				.collect(Collectors.toSet());
 	}
 	
 	@Override
 	@SuppressWarnings("unchecked")
-	public Set<ImagePort> getImagePorts() {
+	public Set<? extends ImagePort> getImagePorts() {
 		if (this.ports == null)
 			this.doInitPorts();
-		return new HashSet<>((List<ImagePort>)(List<?>)this.ports.subList(this.imagePortMinIdx, this.imagePortMinIdx + this.numImagePorts));
+		return (Set<? extends ImagePort>) (Set<?>) this.ports.stream()
+				.filter(port->(port.getPortType() == StreamType.IMAGE))
+				.collect(Collectors.toSet());
 	}
 	
 	@Override
 	@SuppressWarnings("unchecked")
-	public Set<VideoPort> getVideoPorts() {
+	public Set<? extends VideoPort> getVideoPorts() {
 		if (this.ports == null)
 			this.doInitPorts();
-		return new HashSet<>((List<VideoPort>)(List<?>)this.ports.subList(this.videoPortMinIdx, this.videoPortMinIdx + this.numVideoPorts));
+		return (Set<? extends VideoPort>) (Set<?>) this.ports.stream()
+				.filter(port->(port.getPortType() == StreamType.VIDEO))
+				.collect(Collectors.toSet());
 	}
 	
 	@Override
 	@SuppressWarnings("unchecked")
-	public Set<ComponentPort> getOtherPorts() {
+	public Set<? extends ComponentPort> getOtherPorts() {
 		if (this.ports == null)
 			this.doInitPorts();
-		return new HashSet<>((List<ComponentPort>)(List<?>)this.ports.subList(this.otherPortMinIdx, this.otherPortMinIdx + this.numOtherPorts));
+		return (Set<? extends ComponentPort>) (Set<?>) this.ports.stream()
+				.filter(port->{
+					StreamType type = port.getPortType();
+					return type != StreamType.AUDIO && type != StreamType.VIDEO && type != StreamType.IMAGE;
+				}).collect(Collectors.toSet());
 	}
 	
 	@Override
-	public ComponentPort getPort(int index) {
+	public OMXComponentPort getPort(int index) {
 		return getPorts().stream()
 				.filter(port->(port.getIndex() == index))
 				.findAny().orElse(null);
@@ -367,7 +374,7 @@ public class OMXComponent implements Component {
 		Consumer<FrameBuffer> handler;
 		if (this.ports == null)
 			this.doInitPorts();
-		OMXComponentPort port = this.ports.get(emptied ? buffer.getInputPort() : buffer.getOutputPort());
+		OMXComponentPort port = this.getPort(emptied ? buffer.getInputPort() : buffer.getOutputPort());
 		synchronized (this) {
 			if (emptied)
 				handler = port.onBufferEmptied;
