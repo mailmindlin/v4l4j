@@ -191,7 +191,7 @@ static bool getJNIEnv(JavaVM* vm, JNIEnv** env) {
 	int getEnvResult = (*vm)->GetEnv(vm, (void**)env, JNI_VERSION_1_8);
 	if (getEnvResult == JNI_OK) {
 		return false;
-	} else if (getEnvResult == JNI_EDETATCHED) {
+	} else if (getEnvResult == JNI_EDETACHED) {
 		int attachResult = (*vm)->AttachCurrentThread(vm, (void**)env, NULL);
 		if (attachResult == 0)
 			return true;
@@ -213,7 +213,7 @@ static jmethodID getJavaCallbackMethod(JNIEnv* env, jobject object, jclass* clas
 	if (classRef == NULL) {
 		classRef = (*env)->GetObjectClass(env, object);
 		if (classRef == NULL || (*env)->ExceptionCheck(env)) {
-			info(env, JNI_EXCP, "Unable to lookup class OMXComponent\n");
+			info("Unable to lookup class OMXComponent\n");
 			return NULL;
 		}
 		OMXComponent_class = (*env)->NewWeakGlobalRef(env, classRef);
@@ -234,12 +234,12 @@ static OMX_ERRORTYPE handleBufferEvent(OMX_HANDLETYPE hComponent, OMXComponentAp
 	//instead, we have to work at it.
 	JNIEnv* env;
 	JavaVM* vm = appData->vm;
-	bool attached = (*vm)->getJNIEnv(vm, &env);
+	bool attached = getJNIEnv(vm, &env);
 	if (env == NULL)
 		return OMX_ErrorUndefined;//Getting env failed
 	
 	//Get local reference to java OMXCompoenent
-	jobject componentRef = (*env)->NewLocalRef(env, env->self);
+	jobject componentRef = (*env)->NewLocalRef(env, appData->self);
 	if (componentRef == NULL) {
 		info("Component ref was null\n");
 		if (attached)
@@ -258,10 +258,16 @@ static OMX_ERRORTYPE handleBufferEvent(OMX_HANDLETYPE hComponent, OMXComponentAp
 		return OMX_ErrorUndefined;
 	}
 	
-	(*env)->CallVoidMethod(env, componentRef,
-			(jlong) (uintptr_t) pBuffer, empty,
+	union tickConv {
+		OMX_TICKS ticks;
+		int64_t val;
+	};
+	
+	(*env)->CallVoidMethod(env, componentRef, callbackMethod,
+			(jlong) (uintptr_t) pBuffer,
+			empty,
 			(jint) pBuffer->nTickCount,
-			(jlong) pBuffer->nTimeStamp,
+			(jlong) ((union tickConv)pBuffer->nTimeStamp).val,
 			(jint) pBuffer->nOffset,
 			(jint) pBuffer->nFilledLen,
 			(jint) pBuffer->nAllocLen);
@@ -619,6 +625,7 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doAllocate
 		THROW_EXCEPTION(env, JNI_EXCP, "Error looking up class OMXFrameBuffer");
 		return NULL;
 	}
+	
 	
 	jmethodID framebufferCtor = (*env)->GetMethodID(env, framebufferClass, "<init>", "(JLjava/nio/ByteBuffer;)V");
 	if (framebufferCtor == NULL) {
