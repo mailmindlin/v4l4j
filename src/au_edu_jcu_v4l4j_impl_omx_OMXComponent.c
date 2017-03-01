@@ -639,7 +639,7 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doAllocate
 		return NULL;
 	}
 	
-	jobject bbuffer = (*env)->NewDirectByteBuffer(env, buffer, size);
+	jobject bbuffer = (*env)->NewDirectByteBuffer(env, buffer->pBuffer, size);
 	//Wrap with FrameBuffer
 	jobject framebuffer = (*env)->NewObject(env, framebufferClass, framebufferCtor, buffer, bbuffer);
 	return framebuffer;
