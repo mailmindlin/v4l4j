@@ -136,8 +136,9 @@ public class OMXComponentPort implements ComponentPort {
 	
 	@Override
 	public FrameBuffer useBuffer(ByteBuffer buffer) {
-		this.getComponent().useBufferOnPort(this.getIndex(), buffer);
-		return null;
+		OMXFrameBuffer result = this.getComponent().useBufferOnPort(this.getIndex(), buffer);
+		this.bufferCountActual++;
+		return result;
 	}
 	
 	@Override

@@ -33,11 +33,11 @@ public interface Component {
 	 * Enumerate all the ports on this component
 	 * @return
 	 */
-	Set<ComponentPort> getPorts();
-	Set<AudioPort> getAudioPorts();
-	Set<ImagePort> getImagePorts();
-	Set<VideoPort> getVideoPorts();
-	Set<ComponentPort> getOtherPorts();
+	Set<? extends ComponentPort> getPorts();
+	Set<? extends AudioPort> getAudioPorts();
+	Set<? extends ImagePort> getImagePorts();
+	Set<? extends VideoPort> getVideoPorts();
+	Set<? extends ComponentPort> getOtherPorts();
 	
 	/**
 	 * Get the port at the given index
