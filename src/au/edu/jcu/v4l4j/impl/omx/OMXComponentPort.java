@@ -74,6 +74,7 @@ public class OMXComponentPort implements ComponentPort {
 	}
 	
 	protected void initControls() {
+		
 	}
 	
 	@Override
