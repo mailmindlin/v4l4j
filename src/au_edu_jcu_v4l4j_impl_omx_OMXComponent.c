@@ -668,7 +668,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doFillThisBuf
 	
 	OMX_ERRORTYPE r = OMX_FillThisBuffer(appData->component, buffer);
 	if (r != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error emptying buffer: %#08x %s", r, getOMXErrorDescription(r));
+		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error filling buffer: %#08x %s", r, getOMXErrorDescription(r));
 		return;
 	}
 }
