@@ -648,7 +648,51 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doAllocate
 	
 	jobject bbuffer = (*env)->NewDirectByteBuffer(env, buffer->pBuffer, size);
 	//Wrap with FrameBuffer
-	jobject framebuffer = (*env)->NewObject(env, framebufferClass, framebufferCtor, buffer, bbuffer);
+	jobject framebuffer = (*env)->NewObject(env, framebufferClass, framebufferCtor, (jlong) (uintptr_t) buffer, bbuffer);
+	return framebuffer;
+}
+
+JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doUseBuffer(JNIEnv* env, jclass me, jlong pointer, jint portIndex, jobject bBuffer) {
+	LOG_FN_ENTER();
+	
+	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
+	
+	//Look these up early, so we don't have much to clean up if they fail
+	jclass framebufferClass = (*env)->FindClass(env, "au/edu/jcu/v4l4j/impl/omx/OMXFrameBuffer");
+	if (framebufferClass == NULL) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Error looking up class OMXFrameBuffer");
+		return NULL;
+	}
+	
+	unsigned char* bufferPointer = (*env)->GetDirectBufferAddress(env, bBuffer);
+	if (bufferPointer == NULL) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Error getting pointer to direct buffer");
+		return NULL;
+	}
+	
+	jint size = (*env)->GetDirectBufferCapacity(env, bBuffer);
+	
+	jmethodID framebufferCtor = (*env)->GetMethodID(env, framebufferClass, "<init>", "(JLjava/nio/ByteBuffer;)V");
+	if (framebufferCtor == NULL) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Error looking up constructor OMXFrameBuffer(long, ByteBuffer)");
+		return NULL;
+	}
+	
+	OMX_BUFFERHEADERTYPE* buffer;
+	//Actually allocate the buffer
+	OMX_ERRORTYPE r = OMX_UseBuffer(appData->component, &buffer, portIndex, NULL, size, bufferPointer);
+	if (r != OMX_ErrorNone) {
+		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error allocating buffer on port %d: %#08x %s", portIndex, r, getOMXErrorDescription(r));
+		return NULL;
+	}
+	
+	if (buffer->nAllocLen != size) {
+		THROW_EXCEPTION(env, GENERIC_EXCP, "Buffer allocated does not match size (expected %u; actual %u)", size, buffer->nAllocLen);
+		return NULL;
+	}
+	
+	//Wrap with FrameBuffer
+	jobject framebuffer = (*env)->NewObject(env, framebufferClass, framebufferCtor, (jlong) (uintptr_t) buffer, bBuffer);
 	return framebuffer;
 }
 
