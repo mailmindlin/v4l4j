@@ -1,5 +1,6 @@
 package au.edu.jcu.v4l4j.test;
 
+import java.nio.ByteBuffer;
 import java.nio.file.Paths;
 import java.util.Set;
 
@@ -37,7 +38,7 @@ public class OMXTest {
 		
 		testQueryPorts(encoder);
 		
-		Set<ComponentPort> ports = encoder.getPorts();
+		Set<? extends ComponentPort> ports = encoder.getPorts();
 		System.out.println("Ports: " + ports);
 		
 		for (ComponentPort port : ports) {
@@ -74,11 +75,33 @@ public class OMXTest {
 		System.out.println(outputPort.isEnabled());
 		
 
-		FrameBuffer inBuffer = inputPort.allocateBuffer(inputPort.bufferSize());
+		ByteBuffer buffer = ByteBuffer.allocateDirect(inputPort.bufferSize());
+		FrameBuffer inBuffer = inputPort.useBuffer(buffer);
+//		FrameBuffer inBuffer = inputPort.allocateBuffer(inputPort.bufferSize());
 		FrameBuffer outBuffer = outputPort.allocateBuffer(outputPort.bufferSize());
 		Thread.sleep(200);
 		
+		System.out.println("IBsz" + inBuffer.getCapacity());
+		System.out.println(inBuffer.asByteBuffer());
+		System.out.println("OBsz" + outBuffer.getCapacity());
+		System.out.println(outBuffer.asByteBuffer().position());
 		
+		outputPort.onBufferFill(frame->{
+			System.out.println("Buffer fill called in Java");
+		});
+		
+		inputPort.onBufferEmpty(frame->{
+			System.out.println("Buffer empty called in Java");
+		});
+		
+		encoder.setState(ComponentState.EXECUTING);
+		
+		Thread.sleep(200);
+		
+		outputPort.fill(outBuffer);
+		
+		
+		inputPort.empty(inBuffer);
 	}
 	
 	public static void testAccess(long pointer) {
