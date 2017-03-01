@@ -142,7 +142,7 @@ public class OMXTest {
 			.addInt32("startPortNumber")
 			.build();
 		try (NativeStruct query = new NativeStruct(portQueryProto)) {
-			component.accessConfig(false, true, OMXConstants.INDEX_ParamVideoInit, query.buffer());
+			component.getConfig(false, OMXConstants.INDEX_ParamVideoInit, query.buffer());
 			System.out.println("Struct size: " + query.get("size"));
 			NativeStruct componentVsn = query.getStruct("version");
 			System.out.println("Version major " + componentVsn.get("nVersionMajor"));
@@ -163,7 +163,7 @@ public class OMXTest {
 			query.clear();
 			query.put("nPortIndex", 200);
 			NativeStruct videoDef = query.getUnion("format").getStruct("video");
-			component.accessConfig(false, true, OMXConstants.INDEX_ParamPortDefinition, query.buffer());
+			component.getConfig(false, OMXConstants.INDEX_ParamPortDefinition, query.buffer());
 			for (String key : query.keySet())
 				System.out.println("\t=>" + key + ":" + query.get(key));
 			videoDef.put("nFrameWidth", FRAME_WIDTH);
@@ -175,12 +175,12 @@ public class OMXTest {
 			videoDef.put("eCompressionFormat", 0);
 			for (String key : query.keySet())
 				System.out.println("\t->" + key + ":" + query.get(key));
-			component.accessConfig(false, false, OMXConstants.INDEX_ParamPortDefinition, query.buffer());
+			component.setConfig(false, OMXConstants.INDEX_ParamPortDefinition, query.buffer());
 			
 			
 			System.out.println("Setting port 201");
 			query.put("nPortIndex", 201);
-			component.accessConfig(false, true, OMXConstants.INDEX_ParamPortDefinition, query.buffer());
+			component.getConfig(false, OMXConstants.INDEX_ParamPortDefinition, query.buffer());
 			for (String key : query.keySet())
 				System.out.println("\t@>" + key + ":" + query.get(key));
 			videoDef.put("nFrameWidth", FRAME_WIDTH);
@@ -189,7 +189,7 @@ public class OMXTest {
 			videoDef.put("eColorFormat", 0);
 			videoDef.put("eCompressionFormat", OMXConstants.VIDEO_ENCODING_AVC);
 			videoDef.put("nBitrate", BITRATE);
-			component.accessConfig(false, false, OMXConstants.INDEX_ParamPortDefinition, query.buffer());
+			component.setConfig(false, OMXConstants.INDEX_ParamPortDefinition, query.buffer());
 		}
 		
 		try (NativeStruct bitrateQuery = new NativeStruct(OMXConstants.PARAM_BITRATETYPE)) {
@@ -197,7 +197,7 @@ public class OMXTest {
 			bitrateQuery.put("nPortIndex", 201);
 			bitrateQuery.put("eControlRate", 1);
 			bitrateQuery.put("nTargetBitrate", BITRATE);
-			component.accessConfig(false, false, OMXConstants.INDEX_ParamVideoBitrate, bitrateQuery.buffer());
+			component.setConfig(false, OMXConstants.INDEX_ParamVideoBitrate, bitrateQuery.buffer());
 		}
 		try (NativeStruct formatQuery = new NativeStruct(OMXConstants.PARAM_PORTFORMATTYPE)) {
 			formatQuery.clear();
@@ -206,7 +206,7 @@ public class OMXTest {
 			formatQuery.put("nIndex", 0);
 			formatQuery.put("eColorFormat", 0);
 			formatQuery.put("xFramerate", 0);
-			component.accessConfig(false, false, OMXConstants.INDEX_ParamVideoPortFormat, formatQuery.buffer());
+			component.setConfig(false, OMXConstants.INDEX_ParamVideoPortFormat, formatQuery.buffer());
 		}
 	}
 	
