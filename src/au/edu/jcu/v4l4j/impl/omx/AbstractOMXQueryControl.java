@@ -16,11 +16,13 @@ public abstract class AbstractOMXQueryControl<T> implements Control<T> {
 	protected final OMXComponent component;
 	protected final AbstractOMXQueryControl<?> parent;
 	protected final String name;
+	protected final String structFieldName;
 	
-	protected AbstractOMXQueryControl(OMXComponent component, AbstractOMXQueryControl<?> parent, String name) {
+	protected AbstractOMXQueryControl(OMXComponent component, AbstractOMXQueryControl<?> parent, String name, String structFieldName) {
 		this.component = component;
 		this.parent = parent;
 		this.name = name;
+		this.structFieldName = structFieldName;
 	}
 	
 	@Override

@@ -214,9 +214,8 @@ public class OMXTest {
 	public static void testApi(ComponentPort port) {
 		BaseOMXQueryControl formatControl = new BaseOMXQueryControl((OMXComponent) port.getComponent(), "format", OMXConstants.INDEX_ParamVideoPortFormat, OMXConstants.PARAM_PORTFORMATTYPE);
 		Set<Control<?>> children = ((Set<Control<?>>)formatControl.getChildren());
-		children.add(new NumberOMXQueryControl(formatControl, "nPortIndex"));
-		children.add(new NumberOMXQueryControl(formatControl, "nIndex"));
-		children.add(new NumberOMXQueryControl(formatControl, "xFramerate"));
+		children.add(new NumberOMXQueryControl(formatControl, "index", "nIndex"));
+		children.add(new NumberOMXQueryControl(formatControl, "framerate", "xFramerate"));
 		children.add(new EnumChildOMXQueryControl<VideoCompressionType>(formatControl, "compression", VideoCompressionType.class, "eCompressionFormat"));
 		children.add(new EnumChildOMXQueryControl<ImagePalette>(formatControl, "color", ImagePalette.class, "eColorFormat"));
 		formatControl.access();

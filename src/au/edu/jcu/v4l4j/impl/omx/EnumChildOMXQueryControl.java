@@ -23,12 +23,10 @@ import au.edu.jcu.v4l4j.impl.jni.NativeWrapper;
 public class EnumChildOMXQueryControl<T extends Enum<T>> extends AbstractOMXQueryControl<T> implements DiscreteControl<T> {
 	protected final Class<T> enumClass;
 	protected transient T[] values;
-	protected final String structFieldName;
 
 	public EnumChildOMXQueryControl(AbstractOMXQueryControl<?> parent, String name, Class<T> enumClass, String structFieldName) {
-		super(parent.component, parent, name);
+		super(parent.component, parent, name, structFieldName);
 		this.enumClass = enumClass;
-		this.structFieldName = structFieldName;
 	}
 
 	@Override

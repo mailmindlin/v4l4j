@@ -32,7 +32,7 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 	}
 	
 	public BaseOMXQueryControl(OMXComponent component, String rootName, int queryId, StructPrototype struct) {
-		super(component, null, rootName);
+		super(component, null, rootName, null);
 		this.queryId = queryId;
 		this.struct = struct;
 	}
