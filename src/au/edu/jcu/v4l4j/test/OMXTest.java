@@ -211,13 +211,27 @@ public class OMXTest {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static void testApi(ComponentPort port) {
-		BaseOMXQueryControl formatControl = new BaseOMXQueryControl((OMXComponent) port.getComponent(), "format", OMXConstants.INDEX_ParamVideoPortFormat, OMXConstants.PARAM_PORTFORMATTYPE);
+	public static void testApi(ComponentPort port) throws IllegalStateException, Exception {
+		BaseOMXQueryControl formatControl = new BaseOMXQueryControl((OMXComponent) port.getComponent(), "format", OMXConstants.INDEX_ParamVideoPortFormat, port.getIndex(), OMXConstants.PARAM_PORTFORMATTYPE);
 		Set<Control<?>> children = ((Set<Control<?>>)formatControl.getChildren());
 		children.add(new NumberOMXQueryControl(formatControl, "index", "nIndex"));
 		children.add(new NumberOMXQueryControl(formatControl, "framerate", "xFramerate"));
 		children.add(new EnumChildOMXQueryControl<VideoCompressionType>(formatControl, "compression", VideoCompressionType.class, "eCompressionFormat"));
 		children.add(new EnumChildOMXQueryControl<ImagePalette>(formatControl, "color", ImagePalette.class, "eColorFormat"));
-		formatControl.access();
+		formatControl.access()
+			.<Integer>withChild("index")
+				.set(0)
+				.and()
+			.writeAndRead()
+			.withChild("framerate")
+				.get(System.out::println)
+				.and()
+			.withChild("compression")
+				.get(System.out::println)
+				.and()
+			.withChild("color")
+				.get(System.out::println)
+				.and()
+			.call();
 	}
 }
