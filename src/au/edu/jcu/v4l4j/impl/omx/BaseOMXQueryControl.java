@@ -25,15 +25,17 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 	protected transient Map<String, AbstractOMXQueryControl<?>> childMap;
 	protected final boolean isConfig = false;
 	protected final int queryId;
+	protected final int portIdx;
 	protected final StructPrototype struct;
 	
 	public static OMXQueryControlBuilder builder(StructPrototype struct) {
 		return new OMXQueryControlBuilder(struct);
 	}
 	
-	public BaseOMXQueryControl(OMXComponent component, String rootName, int queryId, StructPrototype struct) {
+	public BaseOMXQueryControl(OMXComponent component, String rootName, int queryId, int portIdx, StructPrototype struct) {
 		super(component, null, rootName, null);
 		this.queryId = queryId;
+		this.portIdx = portIdx;
 		this.struct = struct;
 	}
 
@@ -83,7 +85,7 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 	
 	@Override
 	public AbstractOMXQueryControlAccessor<Void, Map<String, Object>, Void> access() {
-		return new OMXQueryControlBaseAccessor<Void, Void>(false, this.name, null, null, null);
+		return new OMXQueryControlBaseAccessor<Void, Void>(null, this.name, null, null, null);
 	}
 	
 	@Override
@@ -91,8 +93,10 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 		throw new UnsupportedOperationException("Control is base");
 	}
 	
-	protected void doWrite(ByteBuffer buffer) {
-		this.component.setConfig(this.isConfig, this.queryId, buffer);
+	protected void doWrite(NativeStruct info) {
+		if (this.portIdx >= 0)
+			info.put("nPortIndex", this.portIdx);
+		this.component.setConfig(this.isConfig, this.queryId, info.buffer());
 	}
 	
 	public static class OMXQueryControlBuilder {
@@ -106,8 +110,8 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 			return this;
 		}
 		
-		public BaseOMXQueryControl build(OMXComponent component, String rootName, int queryId) {
-			BaseOMXQueryControl control = new BaseOMXQueryControl(component, rootName, queryId, struct);
+		public BaseOMXQueryControl build(OMXComponent component, String rootName, int queryId, int portIdx) {
+			BaseOMXQueryControl control = new BaseOMXQueryControl(component, rootName, queryId, portIdx, struct);
 			
 			return control;
 		}
@@ -121,21 +125,21 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 	 */
 	protected class OMXQueryControlBaseAccessor<P, R> extends AbstractOMXQueryControlAccessor<P, Map<String, Object>, R> {
 		
-		protected OMXQueryControlBaseAccessor(boolean isParentOwner, String name,
+		protected OMXQueryControlBaseAccessor(P owner, String name,
 				AbstractOMXQueryControlAccessor<?, ?, ?> parent, Duration timeout,
 				Consumer<OMXQueryControlAccessorState> mutator) {
-			super(isParentOwner, name, parent, timeout, mutator);
+			super(owner, name, parent, timeout, mutator);
 		}
 
 		@Override
 		@SuppressWarnings("unchecked")
-		public <Ct, C extends ControlAccessor<ControlAccessor<P, Map<String, Object>, R>, Ct, R>> C withChild(String name) {
-			return (C) childMap.get(name).access(this);
+		public <Ct> ControlAccessor<ControlAccessor<P, Map<String, Object>, R>, Ct, R> withChild(String name) {
+			return (ControlAccessor<ControlAccessor<P, Map<String, Object>, R>, Ct, R>) childMap.get(name).access(this);
 		}
 		
 		@Override
-		protected <X, Z> AbstractOMXQueryControlAccessor<X, Map<String, Object>, Z> chained(boolean isParentOwner, String name, AbstractOMXQueryControlAccessor<?, ?, ?> parent, Duration timeout, Consumer<OMXQueryControlAccessorState> mutator) {
-			return new OMXQueryControlBaseAccessor<>(isParentOwner, name, parent, timeout, mutator);
+		protected <X, Z> AbstractOMXQueryControlAccessor<X, Map<String, Object>, Z> chained(X owner, String name, AbstractOMXQueryControlAccessor<?, ?, ?> parent, Duration timeout, Consumer<OMXQueryControlAccessorState> mutator) {
+			return new OMXQueryControlBaseAccessor<>(owner, name, parent, timeout, mutator);
 		}
 		
 		@Override
@@ -150,7 +154,7 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 
 		@Override
 		public AbstractOMXQueryControlAccessor<P, Map<String, Object>, R> write() {
-			return thenApply(state -> BaseOMXQueryControl.this.doWrite(state.basePointer.buffer()));
+			return thenApply(state -> BaseOMXQueryControl.this.doWrite(state.basePointer));
 		}
 		
 		@Override

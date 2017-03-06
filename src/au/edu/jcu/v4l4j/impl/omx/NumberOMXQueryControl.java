@@ -28,15 +28,16 @@ public class NumberOMXQueryControl extends AbstractOMXQueryControl<Number> {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	protected <P, R> AbstractOMXQueryControlAccessor<P, Number, R> access(AbstractOMXQueryControlAccessor<P, ?, R> parentAccessor) {
-		return new NumberOMXQueryControlAccessor<>(false, this.name, parentAccessor, parentAccessor.timeout, null);
+		return new NumberOMXQueryControlAccessor<>((P) parentAccessor, this.name, null, parentAccessor.timeout, null);
 	}
 
 	public class NumberOMXQueryControlAccessor<P, R> extends AbstractOMXQueryControlAccessor<P, Number, R> {
 
-		protected NumberOMXQueryControlAccessor(boolean isParentOwner, String name, AbstractOMXQueryControlAccessor<?, ?, ?> parent,
+		protected NumberOMXQueryControlAccessor(P owner, String name, AbstractOMXQueryControlAccessor<?, ?, ?> parent,
 				Duration timeout, Consumer<OMXQueryControlAccessorState> mutator) {
-			super(isParentOwner, name, parent, timeout, mutator);
+			super(owner, name, parent, timeout, mutator);
 		}
 
 		@Override
@@ -45,9 +46,9 @@ public class NumberOMXQueryControl extends AbstractOMXQueryControl<Number> {
 		}
 
 		@Override
-		protected <X, Z> AbstractOMXQueryControlAccessor<X, Number, Z> chained(boolean isParentOwner, String name,
+		protected <X, Z> AbstractOMXQueryControlAccessor<X, Number, Z> chained(X owner, String name,
 				AbstractOMXQueryControlAccessor<?, ?, ?> parent, Duration timeout, Consumer<OMXQueryControlAccessorState> mutator) {
-			return new NumberOMXQueryControlAccessor<>(isParentOwner, name, parent, timeout, mutator);
+			return new NumberOMXQueryControlAccessor<>(owner, name, parent, timeout, mutator);
 		}
 
 	}

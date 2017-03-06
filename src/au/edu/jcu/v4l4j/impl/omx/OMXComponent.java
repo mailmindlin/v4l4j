@@ -369,8 +369,7 @@ public class OMXComponent implements Component {
 	private void onBufferDone(OMXFrameBuffer buffer, boolean emptied, int ticks, long timestamp, int offset, int filled, int flags) {
 		String handlerName = emptied ? "OMX_BUFFER_EMPTY_HANDLER" : "OMX_BUFFER_FILL_HANDLER";
 		if (buffer == null) {
-			System.err.println("Could not find buffer in " + handlerName + ": 0x" + Long.toHexString(bufferId));
-			//TODO handle
+			System.err.println("OMX null buffer in " + handlerName);
 			return;
 		}
 		//Update fields in buffer

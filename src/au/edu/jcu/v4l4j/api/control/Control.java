@@ -161,7 +161,7 @@ public interface Control<T> extends AutoCloseable {
 			return write().read();
 		}
 		
-		default <Ct, C extends ControlAccessor<ControlAccessor<P, T, R>, Ct, R>> C withChild(String name) {
+		default <Ct> ControlAccessor<ControlAccessor<P, T, R>, Ct, R> withChild(String name) {
 			throw new UnsupportedOperationException("Control has no children");
 		}
 		

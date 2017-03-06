@@ -61,14 +61,15 @@ public class EnumChildOMXQueryControl<T extends Enum<T>> extends AbstractOMXQuer
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	protected <P, R> AbstractOMXQueryControlAccessor<P, T, R> access(AbstractOMXQueryControlAccessor<P, ?, R> parentAccessor) {
-		return new ChildOMXQueryControlAccessor<>(false, this.name, parentAccessor, parentAccessor.timeout, null);
+		return new ChildOMXQueryControlAccessor<>((P) parentAccessor, this.name, null, parentAccessor.timeout, null);
 	}
 
 	public class ChildOMXQueryControlAccessor<P, R> extends AbstractOMXQueryControlAccessor<P, T, R> {
-		protected ChildOMXQueryControlAccessor(boolean isParentOwner, String name, AbstractOMXQueryControlAccessor<?, ?, ?> parent,
+		protected ChildOMXQueryControlAccessor(P owner, String name, AbstractOMXQueryControlAccessor<?, ?, ?> parent,
 				Duration timeout, Consumer<OMXQueryControlAccessorState> mutator) {
-			super(isParentOwner, name, parent, timeout, mutator);
+			super(owner, name, parent, timeout, mutator);
 		}
 
 		@Override
@@ -90,9 +91,9 @@ public class EnumChildOMXQueryControl<T extends Enum<T>> extends AbstractOMXQuer
 		}
 
 		@Override
-		protected <X, Z> AbstractOMXQueryControlAccessor<X, T, Z> chained(boolean isParentOwner, String name,
+		protected <X, Z> AbstractOMXQueryControlAccessor<X, T, Z> chained(X owner, String name,
 				AbstractOMXQueryControlAccessor<?, ?, ?> parent, Duration timeout, Consumer<OMXQueryControlAccessorState> mutator) {
-			return new ChildOMXQueryControlAccessor<>(isParentOwner, name, parent, timeout, mutator);
+			return new ChildOMXQueryControlAccessor<>(owner, name, parent, timeout, mutator);
 		}
 	}
 

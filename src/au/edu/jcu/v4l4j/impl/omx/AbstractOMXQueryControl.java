@@ -44,25 +44,25 @@ public abstract class AbstractOMXQueryControl<T> implements Control<T> {
 	protected abstract <P, R> AbstractOMXQueryControlAccessor<P, T, R> access(AbstractOMXQueryControlAccessor<P, ?, R> parentAccessor);
 	
 	public static abstract class AbstractOMXQueryControlAccessor<P, T, R> implements ControlAccessor<P, T, R> {
-		protected final boolean isParentOwner;
 		protected final String name;
+		protected final P owner;
 		protected final AbstractOMXQueryControlAccessor<?, ?, ?> parent;
 		protected final Duration timeout;
 		protected final Consumer<OMXQueryControlAccessorState> mutator;
 		
-		protected AbstractOMXQueryControlAccessor(String name, AbstractOMXQueryControlAccessor<?, ?, ?> parent, Duration timeout) {
-			this(name, parent, timeout, null);
+		protected AbstractOMXQueryControlAccessor(String name, AbstractOMXQueryControlAccessor<?, ?, ?> owner, Duration timeout) {
+			this(name, owner, timeout, null);
 		}
 		
 		protected AbstractOMXQueryControlAccessor(String name, AbstractOMXQueryControlAccessor<?, ?, ?> parent,
 				Duration timeout, Consumer<OMXQueryControlAccessorState> mutator) {
-			this(false, name, parent, timeout, mutator);
+			this(null, name, parent, timeout, mutator);
 		}
 		
-		protected AbstractOMXQueryControlAccessor(boolean isParentOwner, String name,
+		protected AbstractOMXQueryControlAccessor(P owner, String name,
 				AbstractOMXQueryControlAccessor<?, ?, ?> parent, Duration timeout,
 				Consumer<OMXQueryControlAccessorState> mutator) {
-			this.isParentOwner = isParentOwner;
+			this.owner = owner;
 			this.name = name;
 			this.parent = parent;
 			this.timeout = timeout;
@@ -119,6 +119,7 @@ public abstract class AbstractOMXQueryControl<T> implements Control<T> {
 		@Override
 		@SuppressWarnings("unchecked")
 		public <E> AbstractOMXQueryControlAccessor<P, T, R> update(String name, BiFunction<String, E, E> mappingFunction) {
+			//TODO check correctness for nested children
 			return thenApply(state -> state.basePointer.compute(name, (BiFunction<String, Object, Object>) mappingFunction));
 		}
 		
@@ -134,7 +135,11 @@ public abstract class AbstractOMXQueryControl<T> implements Control<T> {
 		
 		@Override
 		public AbstractOMXQueryControlAccessor<P, T, R> write() {
-			return thenApply(state -> state.localPointer.set(state.getValue()));
+			return thenApply(state -> {
+				state.localPointer.set(state.getValue());
+				if (this.owner != null)
+					((AbstractOMXQueryControlAccessor<?,?,?>)this.owner).write();
+			});
 		}
 		
 		@Override
@@ -175,19 +180,13 @@ public abstract class AbstractOMXQueryControl<T> implements Control<T> {
 		@Override
 		@SuppressWarnings("unchecked")
 		public P and() {
-			// Traverse backwards, finding owner
-			AbstractOMXQueryControlAccessor<?, ?, ?> root = this;
-			while (!root.isParentOwner) {
-				if (root.parent == null)
-					throw new IllegalStateException("No owner exists for this accessor");
-				root = root.parent;
-			}
-			AbstractOMXQueryControlAccessor<?, ?, ?> owner = root.parent;
+			if (this.owner == null)
+				throw new UnsupportedOperationException();
 			// Add the call chain of the child methods up to the root
-			// to the owner, and return
-			return (P) owner.thenApply(parentState -> {
+			// to the parent, and return
+			return (P) ((AbstractOMXQueryControlAccessor<?,?,?>)this.owner).thenApply(parentState -> {
 				OMXQueryControlAccessorState childState = enterFromParent(parentState);
-				doCall(childState);
+				this.doCall(childState);
 				exitToParent(parentState, childState);
 			});
 		}
@@ -207,16 +206,16 @@ public abstract class AbstractOMXQueryControl<T> implements Control<T> {
 		/**
 		 * Push mutator action onto stack
 		 */
-		protected <X, Z> AbstractOMXQueryControlAccessor<X, T, Z> thenApply(Consumer<OMXQueryControlAccessorState> mutator) {
+		protected <S> AbstractOMXQueryControlAccessor<P, T, S> thenApply(Consumer<OMXQueryControlAccessorState> mutator) {
 			return chained(timeout, mutator);
 		}
 		
-		protected <X, Z> AbstractOMXQueryControlAccessor<X, T, Z> chained(Duration timeout, Consumer<OMXQueryControlAccessorState> mutator) {
+		protected <S> AbstractOMXQueryControlAccessor<P, T, S> chained(Duration timeout, Consumer<OMXQueryControlAccessorState> mutator) {
 			AbstractOMXQueryControlAccessor<?, ?, ?> parent = doGetChildParent();
-			return chained(this.isParentOwner && parent != this, this.name, parent, timeout, mutator);
+			return chained(this.owner, this.name, parent, timeout, mutator);
 		}
 		
-		protected abstract <X, Z> AbstractOMXQueryControlAccessor<X, T, Z> chained(boolean isParentOwner, String name,
+		protected abstract <X, Z> AbstractOMXQueryControlAccessor<X, T, Z> chained(X owner, String name,
 				AbstractOMXQueryControlAccessor<?, ?, ?> parent, Duration timeout, Consumer<OMXQueryControlAccessorState> mutator);
 		
 		/**
@@ -225,7 +224,7 @@ public abstract class AbstractOMXQueryControl<T> implements Control<T> {
 		 * @throws Exception
 		 */
 		protected void doCall(OMXQueryControlAccessorState state) {
-			if (this.parent != null && !this.isParentOwner)
+			if (this.parent != null)
 				this.parent.doCall(state);
 			if (this.mutator != null)
 				this.mutator.accept(state);
@@ -235,7 +234,7 @@ public abstract class AbstractOMXQueryControl<T> implements Control<T> {
 		@SuppressWarnings("unchecked")
 		public R call() throws Exception {
 			try (OMXQueryControlAccessorState state = new OMXQueryControlAccessorState()) {
-				doCall(state);
+				this.doCall(state);
 				return (R) state.result;
 			}
 		}
@@ -269,6 +268,8 @@ public abstract class AbstractOMXQueryControl<T> implements Control<T> {
 		
 		@SuppressWarnings("unchecked")
 		public <T> T getValue() {
+			if (this.value == null && this.localPointer != null)
+				this.value = this.localPointer.get();
 			return (T) this.value;
 		}
 		
