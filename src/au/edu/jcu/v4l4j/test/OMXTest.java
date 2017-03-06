@@ -88,20 +88,34 @@ public class OMXTest {
 		
 		outputPort.onBufferFill(frame->{
 			System.out.println("Buffer fill called in Java");
+			System.out.println("" + frame.asByteBuffer().remaining() + " bytes in buffer");
+			System.out.println("Seq " + frame.getSequenceNumber());
+			System.out.println("Time " + frame.getTimestamp());
+			outputPort.fill(frame);
 		});
 		
 		inputPort.onBufferEmpty(frame->{
 			System.out.println("Buffer empty called in Java");
+			System.out.println("" + frame.asByteBuffer().remaining() + " bytes in buffer");
+			System.out.println("Seq " + frame.getSequenceNumber());
+			System.out.println("Time " + frame.getTimestamp());
 		});
 		
 		encoder.setState(ComponentState.EXECUTING);
 		
 		Thread.sleep(200);
 		
-		outputPort.fill(outBuffer);
+		//outputPort.fill(outBuffer);
 		
+		System.out.println("Putting random stuff in buffer");
+		ByteBuffer ib = inBuffer.asByteBuffer();
+		for (int i = 0; i < inBuffer.getCapacity();i+=4)
+			ib.putInt(0xFF00FF00);
+		ib.flip();
 		
 		inputPort.empty(inBuffer);
+		
+		outputPort.fill(outBuffer);
 	}
 	
 	public static void testAccess(long pointer) {
