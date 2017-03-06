@@ -6,14 +6,18 @@ import au.edu.jcu.v4l4j.api.FrameBuffer;
 
 public class OMXFrameBuffer implements FrameBuffer {
 	protected final long pointer;
-	private final ByteBuffer buffer;
+	protected final ByteBuffer buffer;
+	protected int inPortIdx;
+	protected int outPortIdx;
 	private int ticks;
 	private long timestamp;
 	private int flags;
 	
-	protected OMXFrameBuffer(long pointer, ByteBuffer buffer) {
+	protected OMXFrameBuffer(long pointer, ByteBuffer buffer, int inPortIdx, int outPortIdx) {
 		this.pointer = pointer;
 		this.buffer = buffer;
+		this.inPortIdx = inPortIdx;
+		this.outPortIdx = outPortIdx;
 	}
 	
 	protected void prepare(int ticks, long timestamp, int offset, int filled, int flags) {
@@ -26,7 +30,7 @@ public class OMXFrameBuffer implements FrameBuffer {
 	
 	@Override
 	public ByteBuffer asByteBuffer() {
-		return this.buffer.duplicate();
+		return this.buffer;
 	}
 	
 	@Override
@@ -56,14 +60,12 @@ public class OMXFrameBuffer implements FrameBuffer {
 	
 	@Override
 	public int getInputPort() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.inPortIdx;
 	}
 	
 	@Override
 	public int getOutputPort() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.outPortIdx;
 	}
 	
 	@Override

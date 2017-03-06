@@ -626,7 +626,7 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doUseBuffe
 		return NULL;
 	}
 	
-	jmethodID framebufferCtor = (*env)->GetMethodID(env, framebufferClass, "<init>", "(JLjava/nio/ByteBuffer;)V");
+	jmethodID framebufferCtor = (*env)->GetMethodID(env, framebufferClass, "<init>", "(JLjava/nio/ByteBuffer;II)V");
 	if (framebufferCtor == NULL) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Error looking up constructor OMXFrameBuffer(long, ByteBuffer)");
 		return NULL;
@@ -677,7 +677,7 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doUseBuffe
 	}
 	
 	//Invoke constructor
-	(*env)->CallVoidMethod(env, framebuffer, framebufferCtor, (jlong) (uintptr_t) buffer, bBuffer);
+	(*env)->CallVoidMethod(env, framebuffer, framebufferCtor, (jlong) (uintptr_t) buffer, bBuffer, buffer->nInputPortIndex, buffer->nOutputPortIndex);
 	return framebuffer;
 }
 
