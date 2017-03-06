@@ -66,7 +66,7 @@ public class OMXComponent implements Component {
 	
 	private static native OMXFrameBuffer doUseBuffer(long pointer, int portIndex, boolean allocate, int bufferSize, ByteBuffer buffer);
 	
-	private static native void doEmptyThisBuffer(long pointer, long bufferPtr);
+	private static native void doEmptyThisBuffer(long pointer, long bufferPtr, int position, int size);
 	
 	private static native void doFillThisBuffer(long pointer, long bufferPtr);
 	
@@ -139,7 +139,7 @@ public class OMXComponent implements Component {
 	
 	protected void emptyThisBuffer(OMXFrameBuffer buffer) {
 		this.queuedBuffers.put(buffer.pointer, buffer);
-		OMXComponent.doEmptyThisBuffer(this.pointer, buffer.pointer);
+		OMXComponent.doEmptyThisBuffer(this.pointer, buffer.pointer, buffer.buffer.position(), buffer.buffer.limit());
 	}
 	
 	protected void fillThisBuffer(OMXFrameBuffer buffer) {
