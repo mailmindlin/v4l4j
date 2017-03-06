@@ -74,7 +74,9 @@ public class OMXComponentPort implements ComponentPort {
 	}
 	
 	protected void initControls() {
-		
+		BaseOMXQueryControl portFormatControl = new BaseOMXQueryControl(this.component, "format", OMXConstants.INDEX_ParamVideoPortFormat, this.getIndex(), OMXConstants.PARAM_PORTFORMATTYPE);
+		BaseOMXQueryControl supplierTypeControl = new BaseOMXQueryControl(this.component, "_supplierTypeBase", OMXConstants.INDEX_ParamCompBufferSupplier, this.getIndex(), null);
+		supplierTypeControl.children.add(new NumberOMXQueryControl(supplierTypeControl, "supplierType", "eBufferSupplier"));
 	}
 	
 	@Override

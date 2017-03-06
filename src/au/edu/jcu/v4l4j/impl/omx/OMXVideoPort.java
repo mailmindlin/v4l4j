@@ -19,9 +19,8 @@ public class OMXVideoPort extends OMXComponentPort implements VideoPort {
 	
 	@Override
 	public void initControls() {
-		super.initControls();
-		BaseOMXQueryControl portFormatControl = new BaseOMXQueryControl(this.component, "format", OMXConstants.INDEX_ParamImagePortFormat, OMXConstants.PARAM_PORTFORMATTYPE);
-		BaseOMXQueryControl bitrateControl = new BaseOMXQueryControl(this.component, "bitrate", OMXConstants.INDEX_ParamVideoBitrate, OMXConstants.PARAM_BITRATETYPE);
+		BaseOMXQueryControl portFormatControl = new BaseOMXQueryControl(this.component, "format", OMXConstants.INDEX_ParamVideoPortFormat, this.getIndex(), OMXConstants.PARAM_PORTFORMATTYPE);
+		BaseOMXQueryControl bitrateControl = new BaseOMXQueryControl(this.component, "bitrate", OMXConstants.INDEX_ParamVideoBitrate, this.getIndex(), OMXConstants.PARAM_BITRATETYPE);
 		
 	}
 	
