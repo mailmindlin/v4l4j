@@ -8,8 +8,8 @@ import au.edu.jcu.v4l4j.api.control.ControlType;
 
 public class NumberOMXQueryControl extends AbstractOMXQueryControl<Number> {
 
-	public NumberOMXQueryControl(AbstractOMXQueryControl<?> parent, String name, String structFieldName) {
-		super(parent.component, parent, name, structFieldName);
+	public NumberOMXQueryControl(AbstractOMXQueryControl<?> parent, int port, String name, String structFieldName, OMXOptionEnumeratorPrototype<Number> enumerator) {
+		super(parent.component, port, parent, name, structFieldName, enumerator);
 	}
 
 	@Override

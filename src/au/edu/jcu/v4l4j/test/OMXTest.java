@@ -228,10 +228,10 @@ public class OMXTest {
 	public static void testApi(ComponentPort port) throws IllegalStateException, Exception {
 		BaseOMXQueryControl formatControl = new BaseOMXQueryControl((OMXComponent) port.getComponent(), "format", OMXConstants.INDEX_ParamVideoPortFormat, port.getIndex(), OMXConstants.PARAM_PORTFORMATTYPE);
 		Set<Control<?>> children = ((Set<Control<?>>)formatControl.getChildren());
-		children.add(new NumberOMXQueryControl(formatControl, "index", "nIndex"));
-		children.add(new NumberOMXQueryControl(formatControl, "framerate", "xFramerate"));
-		children.add(new EnumChildOMXQueryControl<VideoCompressionType>(formatControl, "compression", VideoCompressionType.class, "eCompressionFormat"));
-		children.add(new EnumChildOMXQueryControl<ImagePalette>(formatControl, "color", ImagePalette.class, "eColorFormat"));
+		children.add(new NumberOMXQueryControl(formatControl, port.getIndex(), "index", "nIndex", null));
+		children.add(new NumberOMXQueryControl(formatControl, port.getIndex(), "framerate", "xFramerate", null));
+		children.add(new EnumChildOMXQueryControl<VideoCompressionType>(formatControl, port.getIndex(), "compression", VideoCompressionType.class, "eCompressionFormat"));
+		children.add(new EnumChildOMXQueryControl<ImagePalette>(formatControl, port.getIndex(), "color", ImagePalette.class, "eColorFormat"));
 		formatControl.access()
 			.<Integer>withChild("index")
 				.set(0)

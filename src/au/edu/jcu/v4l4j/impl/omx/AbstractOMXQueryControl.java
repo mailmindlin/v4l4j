@@ -1,6 +1,9 @@
 package au.edu.jcu.v4l4j.impl.omx;
 
 import java.time.Duration;
+import java.util.Iterator;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -8,21 +11,26 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import au.edu.jcu.v4l4j.api.control.Control;
+import au.edu.jcu.v4l4j.api.control.DiscreteControl;
 import au.edu.jcu.v4l4j.impl.jni.NativePointer;
 import au.edu.jcu.v4l4j.impl.jni.NativeStruct;
 import au.edu.jcu.v4l4j.impl.jni.NativeWrapper;
 
-public abstract class AbstractOMXQueryControl<T> implements Control<T> {
+public abstract class AbstractOMXQueryControl<T> implements DiscreteControl<T> {
 	protected final OMXComponent component;
+	protected final int port;
 	protected final AbstractOMXQueryControl<?> parent;
 	protected final String name;
 	protected final String structFieldName;
+	protected final OMXOptionEnumeratorPrototype<T> enumerator;
 	
-	protected AbstractOMXQueryControl(OMXComponent component, AbstractOMXQueryControl<?> parent, String name, String structFieldName) {
+	protected AbstractOMXQueryControl(OMXComponent component, int port, AbstractOMXQueryControl<?> parent, String name, String structFieldName, OMXOptionEnumeratorPrototype<T> enumerator) {
 		this.component = component;
+		this.port = port;
 		this.parent = parent;
 		this.name = name;
 		this.structFieldName = structFieldName;
+		this.enumerator = enumerator;
 	}
 	
 	@Override
@@ -30,6 +38,16 @@ public abstract class AbstractOMXQueryControl<T> implements Control<T> {
 		return this.name;
 	}
 	
+	@Override
+	public boolean isDiscrete() {
+		return enumerator != null;
+	}
+	
+	@Override
+	public Future<Iterator<T>> options() {
+		return CompletableFuture.completedFuture(enumerator.iterate(this.component, 1));
+	}
+
 	@Override
 	public void close() {
 		// TODO Auto-generated method stub

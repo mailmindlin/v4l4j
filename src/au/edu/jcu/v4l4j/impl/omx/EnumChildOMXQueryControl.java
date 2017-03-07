@@ -24,8 +24,8 @@ public class EnumChildOMXQueryControl<T extends Enum<T>> extends AbstractOMXQuer
 	protected final Class<T> enumClass;
 	protected transient T[] values;
 
-	public EnumChildOMXQueryControl(AbstractOMXQueryControl<?> parent, String name, Class<T> enumClass, String structFieldName) {
-		super(parent.component, parent, name, structFieldName);
+	public EnumChildOMXQueryControl(AbstractOMXQueryControl<?> parent, int port, String name, Class<T> enumClass, String structFieldName) {
+		super(parent.component, port, parent, name, structFieldName, null);
 		this.enumClass = enumClass;
 	}
 
