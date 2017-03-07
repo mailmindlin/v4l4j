@@ -681,16 +681,24 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doUseBuffe
 	return framebuffer;
 }
 
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doEmptyThisBuffer(JNIEnv *env, jclass me, jlong pointer, jlong bufferPointer, jint position, jint size) {
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doEmptyThisBuffer(JNIEnv *env, jclass me, jlong pointer, jlong bufferPointer, jint position, jint size, jint sequence, jlong timestamp) {
 	LOG_FN_ENTER();
 	
 	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
 	
 	OMX_BUFFERHEADERTYPE* buffer = (OMX_BUFFERHEADERTYPE*) (uintptr_t) bufferPointer;
 	
-	dprint(LOG_V4L4J, "Setting offset to %d; limit %d\n", position, size);
+	dprint(LOG_V4L4J, "Setting offset to %d; limit %d; sequence %d; timestamp %lu;\n", position, size, sequence, timestamp);
 	buffer->nOffset = position;
-	buffer->nFilledLen = size;
+	buffer->nFilledLen = size; 
+	buffer->nTickCount = sequence;
+	//Because OMX_TICKS could either be a union or an int64, we get it to compile
+	//by casting our int64 to this union.
+	union tickConv {
+		OMX_TICKS ticks;
+		int64_t val;
+	};
+	buffer->nTimeStamp = ((union tickConv)timestamp).ticks;
 	
 	OMX_ERRORTYPE r = OMX_EmptyThisBuffer(appData->component, buffer);
 	if (r != OMX_ErrorNone) {
