@@ -1,5 +1,6 @@
 package au.edu.jcu.v4l4j.impl.omx;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -95,7 +96,7 @@ public class OMXControlPrototype {
 		int queryIdx;
 		String name;
 		StructPrototype struct;
-		List<FieldInfo> fields;
+		List<FieldInfo> fields = new ArrayList<>();
 		
 		public OMXControlPrototypeBuilder setQuery(int index) {
 			this.queryIdx = index;
