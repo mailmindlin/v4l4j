@@ -3,6 +3,7 @@ package au.edu.jcu.v4l4j.test;
 import java.nio.ByteBuffer;
 import java.nio.file.Paths;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import au.edu.jcu.v4l4j.api.FrameBuffer;
 import au.edu.jcu.v4l4j.api.ImagePalette;
@@ -94,13 +95,6 @@ public class OMXTest {
 			outputPort.fill(frame);
 		});
 		
-		inputPort.onBufferEmpty(frame->{
-			System.out.println("Buffer empty called in Java");
-			System.out.println("" + frame.asByteBuffer().remaining() + " bytes in buffer");
-			System.out.println("Seq " + frame.getSequenceNumber());
-			System.out.println("Time " + frame.getTimestamp());
-		});
-		
 		encoder.setState(ComponentState.EXECUTING);
 		
 		Thread.sleep(200);
@@ -112,10 +106,28 @@ public class OMXTest {
 		for (int i = 0; i < inBuffer.getCapacity();i+=4)
 			ib.putInt(0xFF00FF00);
 		ib.flip();
+		ByteBuffer image = ByteBuffer.allocate(ib.capacity());
+		image.put(ib.duplicate());
 		
+		AtomicInteger i = new AtomicInteger(0);
+		
+		inputPort.onBufferEmpty(frame->{
+			System.out.println("Buffer empty called in Java");
+			int seq = i.incrementAndGet();
+			if (seq > 25)
+				return;
+			System.out.println("Writing frame " + seq);
+			frame.asByteBuffer().put(image.duplicate()).flip();
+			frame.setSequenceNumber(seq);
+			inputPort.empty(frame);
+		});
+		
+
 		inputPort.empty(inBuffer);
 		
 		outputPort.fill(outBuffer);
+		
+		Thread.sleep(5000);
 	}
 	
 	public static void testAccess(long pointer) {
