@@ -6,6 +6,7 @@ import java.util.List;
 import au.edu.jcu.v4l4j.api.AudioEncodingType;
 import au.edu.jcu.v4l4j.api.ImagePalette;
 import au.edu.jcu.v4l4j.api.Rational;
+import au.edu.jcu.v4l4j.api.VideoCompressionType;
 import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
 import au.edu.jcu.v4l4j.impl.jni.UnionPrototype;
 
@@ -638,6 +639,22 @@ public class OMXConstants {
 			.addInt32("eCompressionFormat")
 			.addInt32("eColorFormat")
 			.addInt32("xFramerate")
+			.build();
+	
+	public static final OMXControlPrototype CTRL_BITRATE = OMXControlPrototype.builder()
+			.setName("bitrate")
+			.setQuery(OMXConstants.INDEX_ConfigVideoBitrate)
+			.setStruct(PARAM_BITRATETYPE)
+			.withNumberField("eControlRate", "controlRate")
+			.withNumberField("nTargetBitrate", "target")
+			.build();
+	public static final OMXControlPrototype CTRL_VIDEO_FORMAT = OMXControlPrototype.builder()
+			.setName("format")
+			.setQuery(OMXConstants.INDEX_ParamVideoPortFormat)
+			.setStruct(OMXConstants.PARAM_PORTFORMATTYPE)
+			.withEnumField("eCompressionFormat", "compression", ImagePalette.class)
+			.withEnumField("eColorFormat", "colorFormat", VideoCompressionType.class)
+			.withNumberField("xFramerate", "framerate")
 			.build();
 	
 	public static AudioEncodingType mapAudioEncodingType(int idx) {

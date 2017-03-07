@@ -18,21 +18,25 @@ public class OMXOptionEnumeratorPrototype<T> {
 		this.resultMapper = resultMapper;	
 	}
 	
-	public Iterator<T> iterate(OMXComponent component) {
-		return new OMXOptionEnumerator(component);
+	public Iterator<T> iterate(OMXComponent component, int port) {
+		return new OMXOptionEnumerator(component, port);
 	}
 	
 	protected class OMXOptionEnumerator implements Iterator<T> {
 		protected final OMXComponent component;
+		protected final int port;
 		T next = null;
 		int idx = 0;
 		
-		public OMXOptionEnumerator(OMXComponent component) {
+		public OMXOptionEnumerator(OMXComponent component, int port) {
 			this.component = component;
+			this.port = port;
 		}
 		
 		protected void doGetNext() {
 			try (NativeStruct query = queryGenerator.apply(this.idx++)) {
+				if (port >= 0)
+					query.put("nPortIndex", port);
 				component.getConfig(true, queryIdx, query.buffer());
 				this.next = resultMapper.apply(query);
 			} catch (Exception e) {

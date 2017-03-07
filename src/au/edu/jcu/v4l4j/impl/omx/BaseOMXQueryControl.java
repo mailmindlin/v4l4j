@@ -25,7 +25,6 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 	protected transient Map<String, AbstractOMXQueryControl<?>> childMap;
 	protected final boolean isConfig = false;
 	protected final int queryId;
-	protected final int portIdx;
 	protected final StructPrototype struct;
 	
 	public static OMXQueryControlBuilder builder(StructPrototype struct) {
@@ -33,9 +32,8 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 	}
 	
 	public BaseOMXQueryControl(OMXComponent component, String rootName, int queryId, int portIdx, StructPrototype struct) {
-		super(component, null, rootName, null);
+		super(component, portIdx, null, rootName, null, null);
 		this.queryId = queryId;
-		this.portIdx = portIdx;
 		this.struct = struct;
 	}
 
@@ -52,6 +50,11 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 	@Override
 	public Set<? extends Control<?>> getChildren() {
 		return this.children;
+	}
+	
+	protected <T extends AbstractOMXQueryControl<?>> T registerChild(T child) {
+		this.children.add(child);
+		return child;
 	}
 	
 	@Override
@@ -93,12 +96,17 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 		throw new UnsupportedOperationException("Control is base");
 	}
 	
-	protected void doWrite(NativeStruct info) {
-		if (this.portIdx >= 0)
-			info.put("nPortIndex", this.portIdx);
-		this.component.setConfig(this.isConfig, this.queryId, info.buffer());
+	@Override
+	public ControlType getType() {
+		return ControlType.COMPOSITE;
 	}
 	
+	protected void doWrite(NativeStruct info) {
+		if (this.port >= 0)
+			info.put("nPortIndex", this.port);
+		this.component.setConfig(this.isConfig, this.queryId, info.buffer());
+	}
+
 	public static class OMXQueryControlBuilder {
 		protected final StructPrototype struct;
 		
