@@ -72,5 +72,17 @@ public class OMXFrameBuffer implements FrameBuffer {
 	public int hashCode() {
 		return (int) ((this.pointer >> 32) & this.pointer) & 0xFFFFFFFF;
 	}
+
+	@Override
+	public void setSequenceNumber(long sequence) throws UnsupportedOperationException {
+		if (sequence < Integer.MIN_VALUE || sequence > Integer.MAX_VALUE)
+			throw new IllegalArgumentException();
+		this.ticks = (int) sequence;
+	}
+
+	@Override
+	public void setTimestamp(long timestamp) throws UnsupportedOperationException {
+		this.timestamp = timestamp;
+	}
 	
 }

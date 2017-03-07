@@ -66,7 +66,7 @@ public class OMXComponent implements Component {
 	
 	private static native OMXFrameBuffer doUseBuffer(long pointer, int portIndex, boolean allocate, int bufferSize, ByteBuffer buffer);
 	
-	private static native void doEmptyThisBuffer(long pointer, long bufferPtr, int position, int size);
+	private static native void doEmptyThisBuffer(long pointer, long bufferPtr, int position, int size, long sequence, long timestamp);
 	
 	private static native void doFillThisBuffer(long pointer, long bufferPtr);
 	
@@ -139,7 +139,7 @@ public class OMXComponent implements Component {
 	
 	protected void emptyThisBuffer(OMXFrameBuffer buffer) {
 		this.queuedBuffers.put(buffer.pointer, buffer);
-		OMXComponent.doEmptyThisBuffer(this.pointer, buffer.pointer, buffer.buffer.position(), buffer.buffer.limit());
+		OMXComponent.doEmptyThisBuffer(this.pointer, buffer.pointer, buffer.buffer.position(), buffer.buffer.limit(), buffer.getSequenceNumber(), buffer.getTimestamp());
 	}
 	
 	protected void fillThisBuffer(OMXFrameBuffer buffer) {
@@ -390,7 +390,7 @@ public class OMXComponent implements Component {
 		}
 		if (handler == null) {
 			//We can't throw an exception from here
-			System.err.println("No handler for event " + handlerName + " on " + this);
+			System.err.println("No handler for event " + handlerName + " on port " + portId + " of " + this);
 			return;
 		}
 		

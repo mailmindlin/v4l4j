@@ -17,10 +17,22 @@ public interface FrameBuffer {
 	long getSequenceNumber();
 	
 	/**
+	 * Set the sequence number
+	 * 
+	 * @param sequence
+	 * @throws UnsupportedOperationException
+	 *             if this implementation/instance of FrameBuffer does not
+	 *             support setting the sequence number.
+	 */
+	void setSequenceNumber(long sequence) throws UnsupportedOperationException;
+	
+	/**
 	 * Get the timestamp attached to this buffer.
 	 * @see #getSequenceNumber
 	 */
 	long getTimestamp();
+	
+	void setTimestamp(long timestamp) throws UnsupportedOperationException;
 	
 	default int getCapacity() {
 		return asByteBuffer().capacity();
