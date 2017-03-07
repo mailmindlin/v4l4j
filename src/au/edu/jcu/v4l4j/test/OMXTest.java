@@ -3,6 +3,7 @@ package au.edu.jcu.v4l4j.test;
 import java.nio.ByteBuffer;
 import java.nio.file.Paths;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import au.edu.jcu.v4l4j.api.FrameBuffer;
@@ -87,14 +88,6 @@ public class OMXTest {
 		System.out.println("OBsz" + outBuffer.getCapacity());
 		System.out.println(outBuffer.asByteBuffer().position());
 		
-		outputPort.onBufferFill(frame->{
-			System.out.println("Buffer fill called in Java");
-			System.out.println("" + frame.asByteBuffer().remaining() + " bytes in buffer");
-			System.out.println("Seq " + frame.getSequenceNumber());
-			System.out.println("Time " + frame.getTimestamp());
-			outputPort.fill(frame);
-		});
-		
 		encoder.setState(ComponentState.EXECUTING);
 		
 		Thread.sleep(200);
@@ -102,32 +95,64 @@ public class OMXTest {
 		//outputPort.fill(outBuffer);
 		
 		System.out.println("Putting random stuff in buffer");
-		ByteBuffer ib = inBuffer.asByteBuffer();
+		ByteBuffer image = ByteBuffer.allocate(inBuffer.getCapacity());
 		for (int i = 0; i < inBuffer.getCapacity();i+=4)
-			ib.putInt(0xFF00FF00);
-		ib.flip();
-		ByteBuffer image = ByteBuffer.allocate(ib.capacity());
-		image.put(ib.duplicate());
+			image.putInt(0xFF00FF00);
+		image.flip();
 		
-		AtomicInteger i = new AtomicInteger(0);
+		inBuffer.asByteBuffer().put(image.duplicate()).flip();
+		
+		
+		AtomicInteger gSeq = new AtomicInteger(0);
+		AtomicBoolean doQueueInput = new AtomicBoolean(false);
+		AtomicBoolean doQueueOutput = new AtomicBoolean(false);
+		Object lock = new Object();
+
+		outputPort.onBufferFill(frame->{
+			System.out.println("Buffer fill called in Java");
+			System.out.println("" + frame.asByteBuffer().remaining() + " bytes in buffer");
+			System.out.println("Seq " + frame.getSequenceNumber());
+			System.out.println("Time " + frame.getTimestamp());
+			doQueueOutput.set(true);
+			synchronized (lock) {
+				lock.notifyAll();
+			}
+		});
 		
 		inputPort.onBufferEmpty(frame->{
 			System.out.println("Buffer empty called in Java");
-			int seq = i.incrementAndGet();
+			int seq = gSeq.incrementAndGet();
 			if (seq > 25)
 				return;
 			System.out.println("Writing frame " + seq);
-			frame.asByteBuffer().put(image.duplicate()).flip();
+			ByteBuffer buf = frame.asByteBuffer();
+			buf.clear();
+			buf.put(image.duplicate());
+			buf.flip();
 			frame.setSequenceNumber(seq);
-			inputPort.empty(frame);
+			frame.setTimestamp(System.nanoTime());
+			doQueueInput.set(true);
+			synchronized (lock) {
+				lock.notifyAll();
+			}
 		});
 		
-
 		inputPort.empty(inBuffer);
 		
 		outputPort.fill(outBuffer);
 		
-		Thread.sleep(5000);
+		while (!Thread.interrupted()) {
+			if (doQueueInput.compareAndSet(true, false))
+				inputPort.empty(inBuffer);
+			if (doQueueOutput.compareAndSet(true, false))
+				outputPort.fill(outBuffer);
+			if (gSeq.get() > 25)
+				break;
+			synchronized (lock) {
+				lock.wait(50);
+			}
+		}
+		System.out.println("Done");
 	}
 	
 	public static void testAccess(long pointer) {
