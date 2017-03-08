@@ -10,7 +10,6 @@ import au.edu.jcu.v4l4j.api.VideoCompressionType;
 import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
 import au.edu.jcu.v4l4j.impl.jni.UnionPrototype;
 
-@SuppressWarnings("javadoc")
 public class OMXConstants {
 	public static final List<String> BITRATE_CONTROLS = Arrays.asList("disable", "variable", "constant", "variableSkipFrames", "constantSkipFrames");
 	
@@ -75,6 +74,13 @@ public class OMXConstants {
 	public static final int VIDEO_ENCODING_RV = 6;
 	public static final int VIDEO_ENCODING_AVC = 7;
 	public static final int VIDEO_ENCODING_MJPEG = 8;
+	public static final int VIDEO_ENCODING_VP6 = 0x7F000001;
+	public static final int VIDEO_ENCODING_VP7 = 0x7F000002;
+	public static final int VIDEO_ENCODING_VP8 = 0x7F000003;
+	public static final int VIDEO_ENCODING_YUV = 0x7F000004;
+	public static final int VIDEO_ENCODING_SORENSON = 0x7F000005;
+	public static final int VIDEO_ENCODING_THEORA = 0x7F000006;
+	public static final int VIDEO_ENCODING_MVC = 0x7F000007;
 	
 	//Error codes
 	public static final int ERROR_NONE = 0;
@@ -631,12 +637,12 @@ public class OMXConstants {
 			.addInt32("nTargetBitrate")
 			.build();
 	
-	public static final StructPrototype PARAM_PORTFORMATTYPE = StructPrototype.builder()
+	public static final StructPrototype PARAM_VIDEO_PORTFORMATTYPE = StructPrototype.builder()
 			.addInt32("nSize")
 			.addStruct(VERSION_TYPE, "nVersion")
 			.addInt32("nPortIndex")
 			.addInt32("nIndex")
-			.addInt32("eCompressionFormat")
+			.addEnum(OMXConstants::mapVideoEncodingType, OMXConstants::unmapVideoEncodingType, "eCompressionFormat")
 			.addInt32("eColorFormat")
 			.addInt32("xFramerate")
 			.build();
@@ -648,13 +654,17 @@ public class OMXConstants {
 			.withNumberField("eControlRate", "controlRate")
 			.withNumberField("nTargetBitrate", "target")
 			.build();
+	
 	public static final OMXControlPrototype CTRL_VIDEO_FORMAT = OMXControlPrototype.builder()
 			.setName("format")
 			.setQuery(OMXConstants.INDEX_ParamVideoPortFormat)
-			.setStruct(OMXConstants.PARAM_PORTFORMATTYPE)
+			.setStruct(OMXConstants.PARAM_VIDEO_PORTFORMATTYPE)
+			.withNumberField("nIndex", "index")
 			.withEnumField("eCompressionFormat", "compression", ImagePalette.class)
-			.withEnumField("eColorFormat", "colorFormat", VideoCompressionType.class)
+			.withEnumField("eColorFormat", "color", VideoCompressionType.class)
 			.withNumberField("xFramerate", "framerate")
+			.withEnumerator()
+				.and()
 			.build();
 	
 	public static AudioEncodingType mapAudioEncodingType(int idx) {
@@ -815,6 +825,20 @@ public class OMXConstants {
 				return ImagePalette.AVC;
 			case VIDEO_ENCODING_MJPEG:
 				return ImagePalette.MJPEG;
+			case VIDEO_ENCODING_VP6:
+				return ImagePalette.VP6;
+			case VIDEO_ENCODING_VP7:
+				return ImagePalette.VP7;
+			case VIDEO_ENCODING_VP8:
+				return ImagePalette.VP8;
+			case VIDEO_ENCODING_YUV:
+				return ImagePalette.YUV420;
+			case VIDEO_ENCODING_SORENSON:
+				return ImagePalette.SORENSON;
+			case VIDEO_ENCODING_THEORA:
+				return ImagePalette.THEORA;
+			case VIDEO_ENCODING_MVC:
+				return ImagePalette.MVC;
 			case VIDEO_ENCODING_AUTO_DETECT:
 			default:
 				throw new IllegalArgumentException("Cannot map video encoding " + idx);
@@ -839,6 +863,20 @@ public class OMXConstants {
 				return VIDEO_ENCODING_AVC;
 			case MJPEG:
 				return VIDEO_ENCODING_MJPEG;
+			case VP6:
+				return VIDEO_ENCODING_VP6;
+			case VP7:
+				return VIDEO_ENCODING_VP7;
+			case VP8:
+				return VIDEO_ENCODING_VP8;
+			case YUV420:
+				return VIDEO_ENCODING_YUV;
+			case SORENSON:
+				return VIDEO_ENCODING_SORENSON;
+			case THEORA:
+				return VIDEO_ENCODING_THEORA;
+			case MVC:
+				return VIDEO_ENCODING_MVC;
 			default:
 				throw new IllegalArgumentException("Cannot unmap video encoding " + palette);
 		}
