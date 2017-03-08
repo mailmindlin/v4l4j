@@ -32,7 +32,7 @@ public abstract class NativeWrapper<K, T> extends NativePointer<T> {
 	
 	@SuppressWarnings("unchecked")
 	protected <U, V extends NativePointer<U>> V doWrapPointer(StructFieldType type, long childAddress, ByteBuffer childBuffer, boolean freeOnClose) {
-		System.out.println("Wrapping pointer of type " + type);
+//		System.out.println("Wrapping pointer of type " + type);
 		if (type instanceof StructPrototype)
 			return (V) new NativeStruct((StructPrototype) type, childAddress, childBuffer, freeOnClose);
 		else if (type instanceof UnionPrototype)
