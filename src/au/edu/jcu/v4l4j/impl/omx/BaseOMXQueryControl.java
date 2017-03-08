@@ -1,6 +1,6 @@
 package au.edu.jcu.v4l4j.impl.omx;
 
-import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.Map;
@@ -22,7 +22,7 @@ import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
  */
 public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Object>> implements CompositeControl {
 	protected final Set<AbstractOMXQueryControl<?>> children = new HashSet<>();
-	protected transient Map<String, AbstractOMXQueryControl<?>> childMap;
+	protected transient Map<String, AbstractOMXQueryControl<?>> childMap = new HashMap<>();
 	protected final boolean isConfig = false;
 	protected final int queryId;
 	protected final StructPrototype struct;
@@ -31,11 +31,6 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 		super(component, portIdx, null, rootName, null, enumerator);
 		this.queryId = queryId;
 		this.struct = struct;
-	}
-
-	@Override
-	public boolean isDiscrete() {
-		return false;
 	}
 
 	@Override
