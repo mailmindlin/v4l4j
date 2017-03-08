@@ -1,7 +1,6 @@
 package au.edu.jcu.v4l4j.impl.omx;
 
 import java.time.Duration;
-import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.BiFunction;
@@ -10,6 +9,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import au.edu.jcu.v4l4j.api.CloseableIterator;
 import au.edu.jcu.v4l4j.api.control.Control;
 import au.edu.jcu.v4l4j.api.control.DiscreteControl;
 import au.edu.jcu.v4l4j.impl.jni.NativePointer;
@@ -44,8 +44,8 @@ public abstract class AbstractOMXQueryControl<T> implements DiscreteControl<T> {
 	}
 	
 	@Override
-	public Future<Iterator<T>> options() {
-		return CompletableFuture.completedFuture(enumerator.iterate(this.component, 1));
+	public Future<CloseableIterator<T>> options() {
+		return CompletableFuture.completedFuture(enumerator.iterate(this.component, this.port));
 	}
 
 	@Override

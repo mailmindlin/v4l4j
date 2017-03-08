@@ -4,11 +4,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
+import au.edu.jcu.v4l4j.api.CloseableIterator;
 import au.edu.jcu.v4l4j.api.control.Control;
 import au.edu.jcu.v4l4j.api.control.ControlType;
 import au.edu.jcu.v4l4j.api.control.DiscreteControl;
@@ -46,14 +46,14 @@ public class EnumChildOMXQueryControl<T extends Enum<T>> extends AbstractOMXQuer
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Future<Iterator<T>> options() {
-		CompletableFuture<Iterator<T>> result = new CompletableFuture<>();
+	public Future<CloseableIterator<T>> options() {
+		CompletableFuture<CloseableIterator<T>> result = new CompletableFuture<>();
 		try {
 			if (values == null) {
 				Method valuesMethod = this.enumClass.getMethod("values", new Class<?>[0]);
 				this.values = (T[]) valuesMethod.invoke(null, new Object[0]);
 			}
-			result.complete(Arrays.asList(this.values).iterator());
+			result.complete(CloseableIterator.wrap(Arrays.asList(this.values).iterator()));
 		} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			result.completeExceptionally(e);
 		}
