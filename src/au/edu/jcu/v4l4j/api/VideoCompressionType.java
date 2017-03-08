@@ -10,5 +10,11 @@ public enum VideoCompressionType {
 	RV,
 	AVC,
 	MJPEG,
+	VP6,
+	VP7,
+	VP8,
+	SORENSON,
+	THEORA,
+	MVC
 	;
 }
