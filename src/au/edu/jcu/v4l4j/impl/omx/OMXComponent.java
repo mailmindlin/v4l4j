@@ -62,6 +62,15 @@ public class OMXComponent implements Component {
 	
 	private static native void setPortInfo(long pointer, int portIndex, int[] values);
 	
+	/**
+	 * Enable or disable a port
+	 * @param pointer
+	 *     The pointer to this OMXComponent's native memory
+	 * @param portIndex
+	 *     The index of the port to enable/disable
+	 * @param enabled
+	 *     State in which the caller wants the port in
+	 */
 	private static native void enablePort(long pointer, int portIndex, boolean enabled);
 	
 	private static native OMXFrameBuffer doUseBuffer(long pointer, int portIndex, boolean allocate, int bufferSize, ByteBuffer buffer);
@@ -90,8 +99,17 @@ public class OMXComponent implements Component {
 	 */
 	private static native int doAccessConfig(long pointer, boolean isConfig, boolean read, boolean throwOnError, int configIndex, ByteBuffer data);
 	
+	/**
+	 * The name of this component
+	 */
 	private final String name;
+	/**
+	 * A pointer to the native memory of this component.
+	 */
 	private final long pointer;
+	/**
+	 * The provider that created this component
+	 */
 	private final OMXComponentProvider provider;
 	
 	protected int audioPortMinIdx;
@@ -114,6 +132,9 @@ public class OMXComponent implements Component {
 		this.pointer = getComponentHandle(name);
 	}
 	
+	/**
+	 * Get a handle to this' component and allocate all native memory
+	 */
 	private final native long getComponentHandle(String name);
 	
 	protected void setPortEnabled(int portIndex, boolean enabled) {
