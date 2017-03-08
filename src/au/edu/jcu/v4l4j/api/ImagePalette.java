@@ -294,6 +294,15 @@ public enum ImagePalette {
 	MPEG4,
 	WMV,
 	RV,
+	VP6,
+	VP7,
+	VP8,
+	SORENSON,
+	THEORA,
+	/**
+	 * H.264/MVC
+	 */
+	MVC,
 
 	// Vendor-specific formats
 	CPIA1,
