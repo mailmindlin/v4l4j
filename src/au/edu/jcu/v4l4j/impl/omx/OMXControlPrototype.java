@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
+import au.edu.jcu.v4l4j.api.ObjIntFunction;
 import au.edu.jcu.v4l4j.impl.jni.NativeStruct;
 import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
 
@@ -17,21 +18,23 @@ public class OMXControlPrototype {
 		return new OMXControlPrototypeBuilder();
 	}
 	
-	protected int queryIdx;
-	protected String name;
-	protected StructPrototype struct;
-	protected List<FieldInfo> children;
+	protected final int queryIdx;
+	protected final String name;
+	protected final StructPrototype struct;
+	protected final List<FieldInfo> children;
+	protected final EnumeratorDefinition enumerator;
 	
-	public OMXControlPrototype(int queryIdx, String name, StructPrototype struct, List<FieldInfo> children) {
+	public OMXControlPrototype(int queryIdx, String name, StructPrototype struct, List<FieldInfo> children, EnumeratorDefinition enumerator) {
 		this.queryIdx = queryIdx;
 		this.name = name;
 		this.struct = struct;
 		this.children = children;
+		this.enumerator = enumerator;
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public BaseOMXQueryControl build(OMXComponent component, int port) {
-		BaseOMXQueryControl base = new BaseOMXQueryControl(component, name, queryIdx, port, struct);
+		BaseOMXQueryControl base = new BaseOMXQueryControl(component, name, queryIdx, port, struct, buildEnumerator(Type.MAP, enumerator));
 		for (FieldInfo childDef : children) {
 			
 			OMXOptionEnumeratorPrototype enumerator = buildEnumerator(childDef.type, childDef.enumerator);
@@ -64,8 +67,9 @@ public class OMXControlPrototype {
 	protected <T> OMXOptionEnumeratorPrototype<T> buildEnumerator(Type type, EnumeratorDefinition enumDef) {
 		if (enumDef == null)
 			return null;
-		IntFunction<NativeStruct> queryGenerator = i -> {
-			NativeStruct n = new NativeStruct(enumDef.struct);
+		ObjIntFunction<NativeStruct, NativeStruct> queryGenerator = (i, n) -> {
+			if (n == null)
+				n = new NativeStruct(enumDef.struct);
 			if (enumDef.indexSfField != null)
 				n.put(enumDef.indexSfField, i);
 			return n;
@@ -97,6 +101,7 @@ public class OMXControlPrototype {
 		String name;
 		StructPrototype struct;
 		List<FieldInfo> fields = new ArrayList<>();
+		EnumeratorDefinition enumerator;
 		
 		public OMXControlPrototypeBuilder setQuery(int index) {
 			this.queryIdx = index;
@@ -133,12 +138,16 @@ public class OMXControlPrototype {
 		}
 		
 		public OMXControlPrototype build() {
-			return new OMXControlPrototype(this.queryIdx, this.name, this.struct, this.fields);
+			return new OMXControlPrototype(this.queryIdx, this.name, this.struct, this.fields, this.enumerator);
 		}
 		
 		public OMXEnumeratorPrototypeBuilder withEnumerator() {
-			//TODO finish
-			return null;
+			this.enumerator = new EnumeratorDefinition();
+			//We can (kinda) assume that this enumerator will iterate over the same
+			//struct/query
+			this.enumerator.queryIdx = this.queryIdx;
+			this.enumerator.struct = this.struct;
+			return new OMXEnumeratorPrototypeBuilder(this.enumerator);
 		}
 		
 		public OMXEnumeratorPrototypeBuilder enumerateField() {
@@ -184,6 +193,20 @@ public class OMXControlPrototype {
 			}
 			
 			public OMXControlPrototypeBuilder and() {
+				if (enumDef.param == null) {
+					if (OMXControlPrototypeBuilder.this.enumerator == enumDef) {
+						//We can infer fields from the general control prototype
+						Map<String, String> protoFields = new HashMap<>();
+						for (FieldInfo field : OMXControlPrototypeBuilder.this.fields) {
+							if (field.sfName == enumDef.indexSfField)
+								continue;
+							protoFields.put(field.sfName, field.name);
+						}
+						enumDef.param = protoFields;
+					} else {
+						throw new IllegalStateException("Can't iterate over [none] values");
+					}
+				}
 				return OMXControlPrototypeBuilder.this;
 			}
 		}
@@ -206,7 +229,7 @@ public class OMXControlPrototype {
 	static class EnumeratorDefinition {
 		int queryIdx;
 		StructPrototype struct;
-		String indexSfField;
+		String indexSfField = "nIndex";
 		/**
 		 * Actually a union of String and Map<String, String> (Java doesn't do unions).
 		 * Specifies the field(s) of interest for mapping the result.
