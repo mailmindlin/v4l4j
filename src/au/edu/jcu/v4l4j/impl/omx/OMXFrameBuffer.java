@@ -4,15 +4,38 @@ import java.nio.ByteBuffer;
 
 import au.edu.jcu.v4l4j.api.FrameBuffer;
 
+/**
+ * Java object to wrap a OMX_FRAMEBUFFERTYPE.
+ * @author mailmindlin
+ */
 public class OMXFrameBuffer implements FrameBuffer {
+	/**
+	 * Pointer to native memory
+	 */
 	protected final long pointer;
+	/**
+	 * ByteBuffer wrapping the frame buffer's data.
+	 * Note that this is independent of the memory referenced by {@link #pointer}.
+	 */
 	protected final ByteBuffer buffer;
+	/**
+	 * Input port index
+	 */
 	protected int inPortIdx;
 	protected int outPortIdx;
 	private int ticks;
 	private long timestamp;
 	private int flags;
 	
+	/**
+	 * Contruct an OMXFrameBuffer.
+	 * This method is designed to be called from JNI code.
+	 */
+	/*
+	 * Non-javadoc:
+	 * Because this constructor is called by native code, any changes to the signature (and possibly behavior)
+	 * should be reflected therein.
+	 */
 	protected OMXFrameBuffer(long pointer, ByteBuffer buffer, int inPortIdx, int outPortIdx) {
 		this.pointer = pointer;
 		this.buffer = buffer;
@@ -20,6 +43,10 @@ public class OMXFrameBuffer implements FrameBuffer {
 		this.outPortIdx = outPortIdx;
 	}
 	
+	/**
+	 * Called before being sent to a handler, updating internal fields that may have been changed by
+	 * the component.
+	 */
 	protected void prepare(int ticks, long timestamp, int offset, int filled, int flags) {
 		this.ticks = ticks;
 		this.timestamp = timestamp;
