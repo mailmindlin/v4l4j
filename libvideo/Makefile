@@ -166,8 +166,8 @@ endif
 
 all: $(LIB).$(LIB_RELEASE)
 
-$(LIB).$(LIB_RELEASE): $(LIBCOLLECTIONS) version.h $(OBJ)
-	$(CC) $(OBJ) -Wl,-soname,$(LIB).$(LIB_RELEASE) $(LIBCOLLECTIONS) \
+$(LIB).$(LIB_RELEASE): version.h $(OBJ)
+	$(CC) $(OBJ) -Wl,-soname,$(LIB).$(LIB_RELEASE) \
 		-o $(LIB).$(LIB_RELEASE) $(LDFLAGS) \
 		$(LIBPIXFC)
 
