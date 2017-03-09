@@ -118,7 +118,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 * Start capturing frames
 	 * @param o Object pointer
 	 */
-	private native void start(long o) throws V4L4JException;
+	private static native void start(long o) throws V4L4JException;
 
 	/**
 	 * This method sets a new value for the JPEG quality
@@ -131,14 +131,14 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 *             if the JPEG quality is disabled because of the type of this
 	 *             frame grabber (not {@link #JPEG_GRABBER}).
 	 */
-	protected native void setQuality(long o, int i);
+	protected static native void setQuality(long o, int i);
 
 	/**
 	 * Get the size of a frame buffer
 	 * @param o The object pointer
 	 * @return Size of frame buffers (in bytes)
 	 */
-	private native int getBufferSize(long o);
+	private static native int getBufferSize(long o);
 
 	/**
 	 * 
@@ -146,7 +146,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 * @param index Buffer index
 	 * @return
 	 */
-	private native int enqueueBuffer(long o, int index);
+	private static native int enqueueBuffer(long o, int index);
 
 	private native int fillBuffer(long o, ByteBuffer output) throws V4L4JException;
 
@@ -154,9 +154,9 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 * Stop capturing frames. Should not throw any exceptions, even in case of failure
 	 * @param o Object pointer
 	 */
-	private native void stop(long o);
+	private static native void stop(long o);
 
-	private native void doRelease(long o);
+	private static native void doRelease(long o);
 
 	/**
 	 * Set the frame interval to capture at.
@@ -164,7 +164,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 * @param n Numerator of interval
 	 * @param d Denominator of interval
 	 */
-	private native void doSetFrameIntv(long o, int n, int d) throws InvalidValueException;
+	private static native void doSetFrameIntv(long o, int n, int d) throws InvalidValueException;
 
 	/**
 	 * Get the frame interval of the FrameGrabber numerator or denominator
@@ -172,13 +172,13 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 * @param what Selector for numerator and denominator
 	 * @return numerator of frame interval if {@code what==1}, else denominator
 	 */
-	private native int doGetFrameIntv(long o, int what);
+	private static native int doGetFrameIntv(long o, int what);
 
-	private native void doSetVideoInputNStandard(long o, int input, int std);
+	private static native void doSetVideoInputNStandard(long o, int input, int std);
 
-	private native int doGetVideoInput(long o);
+	private static native int doGetVideoInput(long o);
 
-	private native int doGetVideoStandard(long o);
+	private static native int doGetVideoStandard(long o);
 
 	/**
 	 * This constructor builds a FrameGrabber object used to capture frames from

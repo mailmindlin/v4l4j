@@ -39,10 +39,10 @@ static struct v4l4j_device* getPointer(JNIEnv* env, jobject self) {
 	return (struct v4l4j_device*) (uintptr_t) ptr;
 }
 
-JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_Tuner_getFreq(JNIEnv* env, jobject self, jint index){
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_Tuner_getFreq(JNIEnv* env, jclass me, jlong object, jint index){
+	LOG_FN_ENTER();
 
-	struct v4l4j_device *d = getPointer(env, self);
+	struct v4l4j_device *d = (struct v4l4j_device*) (uintptr_t) object;
 	unsigned int f;
 	if((*d->vdev->tuner_action->get_tuner_freq)(d->vdev,index, &f)!=0){
 		dprint(LOG_V4L4J, "[V4L4J] failed getting tuner frequency\n");

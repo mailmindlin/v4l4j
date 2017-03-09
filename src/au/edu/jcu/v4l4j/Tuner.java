@@ -48,7 +48,7 @@ public class Tuner {
 	private TunerInfo info;
 	private int index;
 
-	private native long getFreq(int i);
+	private static native long getFreq(long object, int i);
 
 	private native void setFreq(int i, long f);
 
@@ -75,7 +75,7 @@ public class Tuner {
 	 */
 	public synchronized double getFrequency() {
 		checkRelease();
-		return getFreq(index) * 0.0625;
+		return getFreq(this.object, index) * 0.0625;
 	}
 
 	/**
@@ -157,7 +157,6 @@ public class Tuner {
 
 	private void checkRelease() {
 		if (released)
-			throw new StateException("The frame grabber associated with this "
-					+ "tuner has been already released and the tuner must not be " + "used anymore");
+			throw new StateException("The frame grabber associated with this tuner has been already released and the tuner must not be used anymore");
 	}
 }

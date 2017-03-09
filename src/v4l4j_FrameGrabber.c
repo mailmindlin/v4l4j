@@ -371,7 +371,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doInit(JNIEnv *e, j
 /*
  * returns an appropriate size for a byte array holding converted frames
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_getBufferSize(JNIEnv *e, jobject t, jlong object) {
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_getBufferSize(JNIEnv *e, jclass me, jlong object) {
 	LOG_FN_ENTER();
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
@@ -381,7 +381,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_getBufferSize(JNIEn
 /*
  * tell LIBVIDEO to start the capture
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_start(JNIEnv *e, jobject t, jlong object){
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_start(JNIEnv *e, jclass me, jlong object){
 	LOG_FN_ENTER();
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
@@ -395,7 +395,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_start(JNIEnv *e, jo
 /*
  * tell the JPEG compressor the new compression factor
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_setQuality(JNIEnv *env, jobject this, jlong object, jint quality) {
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_setQuality(JNIEnv *env, jclass me, jlong object, jint quality) {
 	LOG_FN_ENTER();
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 	if(dev->output_fmt != OUTPUT_JPG)
@@ -407,7 +407,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_setQuality(JNIEnv *
 /*
  * sets the frame interval
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doSetFrameIntv(JNIEnv *e, jobject t, jlong object, jint num, jint denom) {
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doSetFrameIntv(JNIEnv *e, jclass me, jlong object, jint num, jint denom) {
 	LOG_FN_ENTER();
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
@@ -430,7 +430,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doSetFrameIntv(JNIE
  * (expects some lock to be obtained so calling this method to obtain the other
  * frac part of the frame intv does NOT interleave with doSetFrameIntv())
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetFrameIntv(JNIEnv *e, jobject t, jlong object, jint what) {
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetFrameIntv(JNIEnv *e, jclass me, jlong object, jint what) {
 	LOG_FN_ENTER();
 
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
@@ -450,7 +450,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetFrameIntv(JNIE
 /*
  * sets the video input and standard
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doSetVideoInputNStandard(JNIEnv *e, jobject t, jlong object, jint input_num, jint standard) {
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doSetVideoInputNStandard(JNIEnv *e, jclass me, jlong object, jint input_num, jint standard) {
 	LOG_FN_ENTER();
 	
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
@@ -472,7 +472,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doSetVideoInputNSta
 /*
  * gets the video input
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoInput(JNIEnv *e, jobject t, jlong object) {
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoInput(JNIEnv *e, jclass me, jlong object) {
 	LOG_FN_ENTER();
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
@@ -485,7 +485,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoInput(JNI
 /*
  * gets the video standard
  */
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoStandard(JNIEnv *e, jobject t, jlong object) {
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoStandard(JNIEnv *e, jclass me, jlong object) {
 	LOG_FN_ENTER();
 	
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
@@ -500,7 +500,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doGetVideoStandard(
 /*
  * enqueue a buffer
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_enqueueBuffer(JNIEnv *e, jobject t, jlong object, jint buffer_index) {
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_enqueueBuffer(JNIEnv *e, jclass me, jlong object, jint buffer_index) {
 	LOG_FN_ENTER();
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;
 
@@ -583,7 +583,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 /*
  * tell LIBVIDEO to stop the capture
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_stop(JNIEnv *e, jobject t, jlong object) {
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_stop(JNIEnv *e, jclass me, jlong object) {
 	LOG_FN_ENTER();
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) object;
 
@@ -600,7 +600,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_stop(JNIEnv *e, job
  * free JPEG compressor
  * free LIBVIDEO (free_capture, free_capture_device)
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doRelease(JNIEnv *e, jobject t, jlong object) {
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_doRelease(JNIEnv *e, jclass me, jlong object) {
 	LOG_FN_ENTER();
 
 	struct v4l4j_device *dev = (struct v4l4j_device *) (uintptr_t) object;

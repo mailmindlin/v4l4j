@@ -113,7 +113,7 @@ public class DeviceInfo {
 	 * @param o
 	 *            a pointer to a v4l4j_Device struct
 	 */
-	private native void doRelease(long o);
+	private static native void doRelease(long o);
 
 	/**
 	 * this method returns a frame interval object representing the supported
@@ -130,7 +130,8 @@ public class DeviceInfo {
 	 *            the capture height
 	 * @return a frame interval object
 	 */
-	private native FrameInterval doListIntervals(long o, int imf, int w, int h);
+	private static native FrameInterval doListIntervals(long o, int imf, int w, int h);
+	
 
 	static {
 		V4L4JUtils.loadLibrary();

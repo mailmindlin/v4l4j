@@ -75,7 +75,7 @@ static void create_inputs_object(JNIEnv *env, jobject t, jclass this_class, stru
 	}
 
 	jobject input_list_object = (*env)->GetObjectField(env, t, inputs_field);
-	if(input_list_object == NULL){
+	if(input_list_object == NULL) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Error retrieving up the inputs attribute");
 		return;
 	}
@@ -175,7 +175,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *env, job
 	
 	// Get handles on needed Java objects
 	jclass this_class = (*env)->GetObjectClass(env,t);
-	if(this_class == NULL){
+	if(this_class == NULL) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Error looking up class DeviceInfo");
 		return;
 	}
@@ -209,10 +209,9 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_getInfo(JNIEnv *env, job
 
 }
 
-JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_doListIntervals(JNIEnv *env, jobject t, jlong o, jint imf, jint w, jint h) {
+JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_doListIntervals(JNIEnv *env, jclass me, jlong o, jint imf, jint w, jint h) {
+	LOG_FN_ENTER();
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
-
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
 
 	jclass frame_intv_class = (*env)->FindClass(env, "au/edu/jcu/v4l4j/FrameInterval");
 	if(frame_intv_class == NULL){
@@ -220,7 +219,7 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_doListIntervals(JNIEn
 		return NULL;
 	}
 
-	jmethodID ctor = (*env)->GetMethodID(env, frame_intv_class, "<init>",	"(IJ)V");
+	jmethodID ctor = (*env)->GetMethodID(env, frame_intv_class, "<init>", "(IJ)V");
 	if(ctor == NULL){
 		THROW_EXCEPTION(env, JNI_EXCP, "Error looking up the constructor of class FrameInterval");
 		return NULL;
@@ -230,7 +229,7 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_doListIntervals(JNIEn
 	int type = d->vdev->info->list_frame_intv(d->vdev->info, imf, w, h, &p);
 
 	jobject frame_intv;
-	switch(type){
+	switch(type) {
 		case FRAME_INTV_UNSUPPORTED:
 			dprint(LOG_V4L4J, "[V4L4L] Creating the frame interval (unsupported)\n");
 			//create the frame interval object
@@ -263,7 +262,7 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_doListIntervals(JNIEn
 /*
  * Get info about a v4l device given its device file
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_doRelease(JNIEnv *env, jobject t, jlong v4l4j_device) {
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_DeviceInfo_doRelease(JNIEnv *env, jclass me, jlong v4l4j_device) {
 	LOG_FN_ENTER();
 	struct v4l4j_device *device = (struct v4l4j_device *) (uintptr_t) v4l4j_device;
 	release_device_info(device->vdev);
