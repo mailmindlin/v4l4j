@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import au.edu.jcu.v4l4j.FrameInterval.DiscreteInterval;
 import au.edu.jcu.v4l4j.exceptions.CaptureChannelException;
@@ -459,36 +460,43 @@ abstract class AbstractGrabber implements FrameGrabber {
 	 * @return an available video frame.
 	 * @throws StateException if interrupted while waiting.
 	 */
-	private BaseVideoFrame getAvailableVideoFrame() throws StateException{
+	private BaseVideoFrame getAvailableVideoFrame() throws StateException {
 		try {
 			// Get the video frame. Possibly block until one is available.
-			return availableVideoFrames.take();
+			if (!V4L4JConstants.LOG_LONG_BLOCKING_OPS) {
+				long startTime = System.nanoTime();
+				while (true) {
+					BaseVideoFrame result = availableVideoFrames.poll(1, TimeUnit.SECONDS);
+					if (result != null)
+						return result;
+					//We took too long
+					double time = (System.nanoTime() - startTime) / 1e9;
+					System.err.printf("BLOCK: waiting for frame (%.3fs so far)\n", time);
+				}
+			} else {
+				return availableVideoFrames.take();
+			}
 		} catch (InterruptedException e) {
 			throw new StateException("Interrupted while waiting for a video frame", e);
 		}
 	}
 
 	final VideoFrame getNextVideoFrame() throws V4L4JException {
-		int frameSize;
-		BaseVideoFrame nextFrame;
-
 		state.get();
 
 		try {
 			// get next available video frame object
-			nextFrame = getAvailableVideoFrame();
+			BaseVideoFrame nextFrame = getAvailableVideoFrame();
 
 			// get the latest frame and store it in the video frame
-			frameSize = fillBuffer(object, nextFrame.getRawBuffer());
+			int frameSize = fillBuffer(object, nextFrame.getRawBuffer());
 
 			// mark the video frame as available for use
-			nextFrame.prepareForDelivery(frameSize, lastCapturedFrameBufferIndex, lastCapturedFrameSequence,
-					lastCapturedFrameTimeuSec);
+			nextFrame.prepareForDelivery(frameSize, lastCapturedFrameBufferIndex, lastCapturedFrameSequence, lastCapturedFrameTimeuSec);
+			return nextFrame;
 		} finally {
 			state.put();
 		}
-
-		return nextFrame;
 	}
 
 	synchronized static void Log(String s) {
@@ -512,6 +520,8 @@ abstract class AbstractGrabber implements FrameGrabber {
 				//This should *never* happen, because the queue should never be full
 				throw new StateException("Error while recycling video frame", e);
 			}
+		} else {
+			throw new IllegalStateException("Could not recycle frame: invalid state " + state.state + "(" + state.temp + ")");
 		}
 	}
 

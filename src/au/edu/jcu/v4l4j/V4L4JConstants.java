@@ -25,7 +25,11 @@
 package au.edu.jcu.v4l4j;
 
 public class V4L4JConstants {
-	
+	/**
+	 * If true, error messages will be printed for certain operations that are blocking longer than
+	 * they should.
+	 */
+	public static final boolean LOG_LONG_BLOCKING_OPS = true;
 	/**
 	 * Input from a tuner
 	 */

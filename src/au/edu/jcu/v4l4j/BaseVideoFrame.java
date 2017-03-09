@@ -243,7 +243,9 @@ public class BaseVideoFrame implements VideoFrame {
 		if (!recycled) {
 			frameGrabber.recycleVideoBuffer(this);
 			recycled = true;
-			notifyAll();
+			this.notifyAll();
+		} else {
+			throw new IllegalStateException("Cannot recycle recycled frame");
 		}
 	}
 }
