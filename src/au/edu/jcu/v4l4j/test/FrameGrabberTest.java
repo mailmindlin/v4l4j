@@ -27,6 +27,9 @@ package au.edu.jcu.v4l4j.test;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -193,6 +196,31 @@ public class FrameGrabberTest implements CaptureCallback {
 		} catch (V4L4JException e) {
 			fail("Error: Shouldn't be in exception handler here...");
 		}
+	}
+	
+	@Test
+	public void testDoubleFrameRecycle() throws V4L4JException, InterruptedException, ExecutionException {
+		CompletableFuture<String> result = new CompletableFuture<>();
+		
+		fg.setCaptureCallback(frame->{
+			frame.recycle();
+			try {
+				frame.recycle();
+				result.complete("Error: second recycle() returned without throwing an exception");
+			} catch (StateException e) {
+				//Expected
+				result.complete(null);
+			}
+		}, err -> {
+			result.obtrudeException(err);
+		});
+		
+		fg.startCapture();
+		String failureMsg = result.get();
+		fg.stopCapture();
+		
+		if (failureMsg != null)
+			fail(failureMsg);
 	}
 
 	public void nextFrame(VideoFrame frame) {
