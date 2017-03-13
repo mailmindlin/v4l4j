@@ -43,7 +43,7 @@ public class FrameGrabberTest implements CaptureCallback {
 	private FrameGrabber fg;
 	int w, h, std, ch, repeats;
 	String dev;
-	VideoFrame lastFrame;
+	volatile VideoFrame lastFrame;
 
 	@Before
 	public void setUp() throws Exception {
