@@ -77,9 +77,10 @@
 		<echo message=" test-gui :         Display video stream in a window"/>
 		<echo message=" test-server :      Runs a TCP server to and MJPEG video stream to a web browser"/>
 		<echo message=" test-dual :        Display video streams from two webcams in a windows"/>
-		<echo message=" test-getsnapshot :        Get snapshots from a camera"/>
+		<echo message=" test-getsnapshot:  Get snapshots from a camera"/>
 		<echo message=" test-encoder:      Test experimental encoder features"/>
 		<echo message=" deviceInfo:        Display information about a video source"/>
+		<echo message=" asciiCam:          Display video stream in the terminal as ASCII art"/>
 
 		<echo message=""/>
 		<echo message=""/>
