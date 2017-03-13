@@ -53,21 +53,15 @@ public class GetFrameRate implements CaptureCallback {
 	private boolean seenFirstFrame;
 
 	public static void main(String[] args) throws Exception {
-		dev = (System.getProperty("test.device") != null) ? System.getProperty("test.device") : "/dev/video0";
-		width = (System.getProperty("test.width") != null) ? Integer.parseInt(System.getProperty("test.width")) : 640;
-		height = (System.getProperty("test.height") != null) ? Integer.parseInt(System.getProperty("test.height"))
-				: 480;
-		std = (System.getProperty("test.standard") != null) ? Integer.parseInt(System.getProperty("test.standard"))
-				: V4L4JConstants.STANDARD_WEBCAM;
-		channel = (System.getProperty("test.channel") != null) ? Integer.parseInt(System.getProperty("test.channel"))
-				: 0;
-		inFmt = (System.getProperty("test.inFormat") != null) ? Integer.parseInt(System.getProperty("test.inFormat"))
-				: -1;
+		dev = System.getProperty("test.device", "/dev/video0");
+		width = Integer.getInteger("test.width", 640);
+		height = Integer.getInteger("test.height", 480);
+		std = Integer.getInteger("test.standard", V4L4JConstants.STANDARD_WEBCAM);
+		channel = Integer.getInteger("test.channel", 0);
+		inFmt = Integer.getInteger("test.inFormat", -1);
 		// outformat: RAW: 0 , JPEG:1, RGB:2 , bgr=3, yuv=4, yvu=5
-		outFmt = (System.getProperty("test.outFormat") != null) ? Integer.parseInt(System.getProperty("test.outFormat"))
-				: 0;
-		intv = (System.getProperty("test.fps") != null) ? Integer.parseInt(System.getProperty("test.fps")) : -1;
-
+		outFmt = Integer.getInteger("test.outFormat", 0);
+		intv = Integer.getInteger("test.fps", -1);
 		System.out.println("This program will open " + dev + ", capture frames for " + captureLength
 				+ " seconds and print the FPS");
 

@@ -12,11 +12,11 @@ public class AsciiCam {
 	static final String palette = " .'`^\",:;Il!i><~+_-?][}{1)(|/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao#MW&8%B@$";
 	
 	public static void main(String...fred) throws V4L4JException {
-		VideoDevice dev = new VideoDevice((System.getProperty("test.device") != null) ? System.getProperty("test.device") : "/dev/video0");
-		int width = (System.getProperty("test.width") != null) ? Integer.parseInt(System.getProperty("test.width")) : 160;
-		int height = (System.getProperty("test.height") != null) ? Integer.parseInt(System.getProperty("test.height")) : 120;
-		int channel = (System.getProperty("test.channel") != null) ? Integer.parseInt(System.getProperty("test.channel")) : 0;
-		int std = (System.getProperty("test.standard") != null) ? Integer.parseInt(System.getProperty("test.standard")) : V4L4JConstants.STANDARD_WEBCAM;
+		VideoDevice dev = new VideoDevice(System.getProperty("test.device", "/dev/video0"));
+		int width = Integer.getInteger("test.width", 160);
+		int height = Integer.getInteger("test.height", 120);
+		int channel = Integer.getInteger("test.channel", 0);
+		int std = Integer.getInteger("test.standard", V4L4JConstants.STANDARD_WEBCAM);
 		
 		//Try to get terminal size
 		//thanks to stackoverflow.com/a/1286677/2759984

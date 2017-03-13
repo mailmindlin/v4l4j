@@ -47,12 +47,12 @@ public class FrameGrabberTest implements CaptureCallback {
 
 	@Before
 	public void setUp() throws Exception {
-		dev = (System.getProperty("test.device") != null) ? System.getProperty("test.device") : "/dev/video0";
+		dev = System.getProperty("test.device", "/dev/video0");
 		vd = new VideoDevice(dev);
-		w = (System.getProperty("test.width") != null) ? Integer.parseInt(System.getProperty("test.width")) : 320;
-		h = (System.getProperty("test.height") != null) ? Integer.parseInt(System.getProperty("test.height")) : 240;
-		std = (System.getProperty("test.standard") != null) ? Integer.parseInt(System.getProperty("test.standard")) : 0;
-		ch = (System.getProperty("test.channel") != null) ? Integer.parseInt(System.getProperty("test.channel")) : 0;
+		w = Integer.getInteger("test.width", 320);
+		h = Integer.getInteger("test.height", 240);
+		std = Integer.getInteger("test.standard", 0);
+		ch = Integer.getInteger("test.channel", 0);
 
 		repeats = 10;
 

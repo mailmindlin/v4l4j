@@ -49,7 +49,7 @@ public class DumpInfo {
 	private DeviceInfo deviceInfo;
 
 	public static void main(String args[]) throws V4L4JException {
-		String device = (System.getProperty("test.device") != null) ? System.getProperty("test.device") : "/dev/video0";
+		String device = System.getProperty("test.device", "/dev/video0");
 		new DumpInfo(device);
 	}
 

@@ -50,14 +50,11 @@ public class SimpleViewer extends WindowAdapter implements CaptureCallback {
 	private JFrame frame;
 
 	public static void main(String args[]) {
-		device = (System.getProperty("test.device") != null) ? System.getProperty("test.device") : "/dev/video0";
-		width = (System.getProperty("test.width") != null) ? Integer.parseInt(System.getProperty("test.width")) : 640;
-		height = (System.getProperty("test.height") != null) ? Integer.parseInt(System.getProperty("test.height"))
-				: 480;
-		std = (System.getProperty("test.standard") != null) ? Integer.parseInt(System.getProperty("test.standard"))
-				: V4L4JConstants.STANDARD_WEBCAM;
-		channel = (System.getProperty("test.channel") != null) ? Integer.parseInt(System.getProperty("test.channel"))
-				: 0;
+		device = System.getProperty("test.device", "/dev/video0");
+		width = Integer.getInteger("test.width", 640);
+		height = Integer.getInteger("test.height", 480);
+		std = Integer.getInteger("test.standard", V4L4JConstants.STANDARD_WEBCAM);
+		channel = Integer.getInteger("test.channel", 0);
 
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
