@@ -69,11 +69,15 @@ public class FrameGrabberTest implements CaptureCallback {
 	public void testDoNothing() {
 	}
 
-	@Test(expected = V4L4JException.class)
+	@Test
 	public void testStartCaptureWithoutSetCallback() throws V4L4JException {
-		fg.startCapture();
-		fail("Error: we shouldnt be here");
-		fg.stopCapture();
+		try {
+			fg.startCapture();
+			fail("Error: we shouldn't be here");
+			fg.stopCapture();
+		} catch (V4L4JException e) {
+			//Expected
+		}
 	}
 
 	@Test
@@ -86,7 +90,7 @@ public class FrameGrabberTest implements CaptureCallback {
 		assertTrue(fg.getWidth() > 0);
 	}
 
-	@Test(expected = StateException.class)
+	@Test
 	public void testDoubleStartCapture() throws V4L4JException {
 		fg.setCaptureCallback(this);
 		try {
@@ -95,11 +99,16 @@ public class FrameGrabberTest implements CaptureCallback {
 			e.printStackTrace();
 			fail("Error: Should be able to start the capture here");
 		}
-		fg.startCapture();
-		fail("Error we shouldnt be here");
+		
+		try {
+			fg.startCapture();
+			fail("Error we shouldn't be here");
+		} catch (StateException e) {
+			//Expected
+		}
 	}
-
-	@Test(expected = StateException.class)
+	
+	@Test
 	public void testDoubleStopCapture() throws StateException {
 		fg.setCaptureCallback(this);
 		try {
@@ -107,13 +116,19 @@ public class FrameGrabberTest implements CaptureCallback {
 		} catch (V4L4JException e) {
 			fail("Error: Should be able to start the capture here");
 		}
+		
+		//Stop capture the first time
 		fg.stopCapture();
 
-		fg.stopCapture();
-		fail("Error we shouldnt be here");
+		try {
+			fg.stopCapture();
+			fail("Error we shouldn't be here");
+		} catch (StateException e) {
+			//Expected
+		}
 	}
 
-	@Test(expected = StateException.class)
+	@Test
 	public void testAccessVideoFrameAfterStopCapture() throws Exception {
 		fg.setCaptureCallback(this);
 		try {
@@ -123,7 +138,16 @@ public class FrameGrabberTest implements CaptureCallback {
 		} catch (V4L4JException e) {
 			fail("Error: Should be able to start the capture here");
 		}
-		lastFrame.getBytes(); // this should throw a StateException
+		
+		if (lastFrame == null)
+			fail("Error: no frame was captured");
+		
+		try {
+			lastFrame.getBytes(); // this should throw a StateException
+			fail("We were able to access recycled frame data");
+		} catch (StateException e) {
+			//Exptected
+		}
 	}
 
 	@Test
@@ -137,7 +161,7 @@ public class FrameGrabberTest implements CaptureCallback {
 			fg.startCapture();
 			fg.stopCapture();
 		} catch (V4L4JException e) {
-			fail("Error: Shouldnt be in exception handler here...");
+			fail("Error: Shouldn't be in exception handler here...");
 		}
 	}
 
@@ -156,7 +180,7 @@ public class FrameGrabberTest implements CaptureCallback {
 			}
 
 		} catch (V4L4JException e) {
-			fail("Error: Shouldnt be in exception handler here...");
+			fail("Error: Shouldn't be in exception handler here...");
 		}
 
 	}
@@ -167,7 +191,7 @@ public class FrameGrabberTest implements CaptureCallback {
 			fg.setCaptureCallback(this);
 			fg.startCapture();
 		} catch (V4L4JException e) {
-			fail("Error: Shouldnt be in exception handler here...");
+			fail("Error: Shouldn't be in exception handler here...");
 		}
 	}
 
@@ -177,6 +201,6 @@ public class FrameGrabberTest implements CaptureCallback {
 	}
 
 	public void exceptionReceived(V4L4JException e) {
-		fail("Error we shouldnt be here");
+		fail("Error we shouldn't be here");
 	}
 }
