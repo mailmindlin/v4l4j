@@ -552,7 +552,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 		pushSource.stopCapture();
 
 		// unblock thread in 2): tell libvideo to stop capture
-		this.stop(object);
+		AbstractGrabber.stop(this.object);
 
 		// wait for thread blocked in 2) to return
 		state.waitTillNoMoreUsers();
@@ -562,8 +562,13 @@ abstract class AbstractGrabber implements FrameGrabber {
 		// and further calls to it will throw a StateException.
 
 		// Make sure all video frames are recycled
-		for (VideoFrame frame : videoFrames)
-			frame.recycle();
+		for (VideoFrame frame : videoFrames) {
+			try {
+				frame.recycle();
+			} catch (StateException e) {
+				//The frame was already recycled
+			}
+		}
 
 		// remove all frames from available queue
 		availableVideoFrames.clear();
