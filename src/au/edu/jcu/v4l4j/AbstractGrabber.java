@@ -521,7 +521,7 @@ abstract class AbstractGrabber implements FrameGrabber {
 				throw new StateException("Error while recycling video frame", e);
 			}
 		} else {
-			throw new IllegalStateException("Could not recycle frame: invalid state " + state.state + "(" + state.temp + ")");
+			throw new StateException("Could not recycle frame: invalid state " + state.state + "(" + state.temp + ")");
 		}
 	}
 

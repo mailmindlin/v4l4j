@@ -245,7 +245,7 @@ public class BaseVideoFrame implements VideoFrame {
 			recycled = true;
 			this.notifyAll();
 		} else {
-			throw new IllegalStateException("Cannot recycle recycled frame");
+			throw new StateException("Cannot recycle recycled frame");
 		}
 	}
 }
