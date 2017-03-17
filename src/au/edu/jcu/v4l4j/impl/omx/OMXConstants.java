@@ -1,12 +1,13 @@
 package au.edu.jcu.v4l4j.impl.omx;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import au.edu.jcu.v4l4j.api.AudioEncodingType;
 import au.edu.jcu.v4l4j.api.ImagePalette;
 import au.edu.jcu.v4l4j.api.Rational;
-import au.edu.jcu.v4l4j.api.VideoCompressionType;
 import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
 import au.edu.jcu.v4l4j.impl.jni.UnionPrototype;
 
@@ -722,6 +723,41 @@ public class OMXConstants {
 			.withEnumerator()
 				.and()
 			.build();
+	
+	private static ConcurrentHashMap<String, IndexInfo> indexMap;
+	private static class IndexInfo {
+		final int index;
+		final boolean isConfig;
+		public IndexInfo(int index, boolean isConfig) {
+			this.index = index;
+			this.isConfig = isConfig;
+		}
+	}
+	
+	private static void buildIndexMap() {
+		if (indexMap != null)
+			return;
+		synchronized (OMXConstants.class) {
+			//Check again, b/c it might have been built since the last check
+			if (indexMap != null)
+				return;
+			indexMap = new ConcurrentHashMap<>();
+			for (Field field : OMXConstants.class.getDeclaredFields()) {
+				if (field.isSynthetic())
+					continue;
+				String fieldName = field.getName();
+				if (fieldName == null || !fieldName.startsWith("INDEX_"))
+					continue;
+				String idxName = fieldName.substring("INDEX_".length());
+				try {
+					IndexInfo info = new IndexInfo(field.getInt(null), idxName.startsWith("Config"));
+					indexMap.put(idxName, info);
+				} catch (IllegalArgumentException | IllegalAccessException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
 	
 	public static AudioEncodingType mapAudioEncodingType(int idx) {
 		switch (idx) {

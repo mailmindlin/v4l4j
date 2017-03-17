@@ -1,5 +1,6 @@
 package au.edu.jcu.v4l4j.impl.omx;
 
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -7,9 +8,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import au.edu.jcu.v4l4j.api.ObjIntFunction;
 import au.edu.jcu.v4l4j.impl.jni.NativeStruct;
+import au.edu.jcu.v4l4j.impl.jni.StructFieldType;
 import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
+import au.edu.jcu.v4l4j.impl.jni.StructPrototype.StructPrototypeBuilder;
+import au.edu.jcu.v4l4j.impl.omx.OMXControlPrototype.OMXControlPrototypeBuilder.OMXEnumeratorPrototypeBuilder;
 
 public class OMXControlPrototype {
 
@@ -234,5 +242,127 @@ public class OMXControlPrototype {
 		 * Specifies the field(s) of interest for mapping the result.
 		 */
 		Object param;
+	}
+	
+	public static class OMXControlPrototypeRegistry {
+		HashMap<String, StructFieldType> typeRegistry = new HashMap<>();
+		HashMap<String, OMXControlPrototype> controlRegistry = new HashMap<>();
+		
+		private StructFieldType lookupType(String name) {
+			return null;//TODO fin
+		}
+		
+		private boolean addField(StructPrototypeBuilder builder, String fieldTypeName, String fieldName) {
+			return false;
+		}
+		
+		protected void readTypedef(JSONObject typedef, boolean continueOnError) {
+			StructPrototypeBuilder typeBuilder = StructPrototype.builder();
+			
+			String typeName = typedef.getString("name");
+			String kind = typedef.getString("kind");//TODO support unions
+			
+			JSONArray fields = typedef.getJSONArray("fields");
+			final int numFields = fields.length();
+			for (int j = 0; j < numFields; j++) {
+				JSONObject field = fields.getJSONObject(j);
+				String fieldName = field.optString("name", "unknown$" + j);//TODO validate names
+				String fieldKindName = field.getString("type");
+				if (!addField(typeBuilder, fieldKindName, fieldName)) {
+					//We failed to add the field
+					if (continueOnError) {
+						//Try as int field
+						if (addField(typeBuilder, "int32", fieldName)) {
+							System.err.print("Warning: Downgraded field '" + typeName + "::" + fieldName + "' from unknown type '" + fieldKindName + "' to type 'int32'");
+							continue;
+						}
+					}
+					//TODO: replace with better exception type
+					throw new RuntimeException("Unknown type '" + fieldKindName + "' for field '" + fieldName + "' in typedef '" + typeName + "'");
+				}
+			}
+			
+			typeRegistry.put(typeName, typeBuilder.build());
+		}
+		
+		protected void readTypes(JSONArray typedefs, boolean continueOnError) {
+			if (typedefs == null)
+				return;
+			final int numTypedefs = typedefs.length();
+			for (int i = 0; i < numTypedefs; i++)
+				readTypedef(typedefs.getJSONObject(i), continueOnError);
+		}
+		
+		protected void readQuery(JSONObject querydef) {
+			OMXControlPrototypeBuilder queryBuilder = OMXControlPrototype.builder();
+			
+			String queryName = querydef.getString("name");
+			queryBuilder.setName(queryName);
+			
+			String queryIdx = querydef.getString("query");
+			//TODO set on builder
+			
+			String queryTypeName = querydef.getString("type");
+			StructFieldType queryType = lookupType(queryTypeName);
+			//TODO better exception types
+			if (queryType == null)
+				throw new RuntimeException("Unknown type '" + queryTypeName + "' in query '" + queryName + "'");
+			
+			//TODO support primitive base types (boolean control shouldn't need to have a subcontrol for its value).
+			if (!(queryType instanceof StructPrototype))
+				throw new RuntimeException("Illegal type '" + queryTypeName + "' in query '" + queryName + "'");
+			queryBuilder.setStruct((StructPrototype) queryType);
+			
+			//Parse query fields
+			JSONArray queryFieldDefs = querydef.optJSONArray("fields");
+			if (queryFieldDefs != null) {
+				final int numQueryFieldDefs = queryFieldDefs.length();
+				for (int j = 0; j < numQueryFieldDefs; j++) {
+					JSONObject queryFieldDef = queryFieldDefs.getJSONObject(j);
+					
+					String fieldName = queryFieldDef.getString("name");
+					String fieldKind = queryFieldDef.getString("kind");
+					String sfName = queryFieldDef.getString("sfName");
+					
+					switch (fieldKind.toLowerCase()) {
+						case "number":
+							queryBuilder.withNumberField(sfName, fieldName);
+							break;
+						case "enum":
+							try {
+								queryBuilder.withEnumField(sfName, fieldName, (Class<? extends Enum>) Class.forName(queryFieldDef.getString("enumClass")));
+							} catch (ClassNotFoundException | JSONException e) {
+								throw new RuntimeException(e);
+							}
+							break;
+						default:
+							throw new RuntimeException("Unknwon field type");
+					}
+					
+					JSONObject enumeratorDef = queryFieldDef.optJSONObject("enumerator");
+					if (enumeratorDef != null) {
+						OMXEnumeratorPrototypeBuilder enumeratorBuilder = queryBuilder.enumerateField();
+						//TODO finish
+						enumeratorBuilder.and();
+					}
+				}
+			}
+		}
+		
+		protected void readQueries(JSONArray querydefs, boolean continueOnError) {
+			if (querydefs == null)
+				return;
+			final int numQueries = querydefs.length();
+			for (int i = 0; i < numQueries; i++)
+				readQuery(querydefs.getJSONObject(i));//TODO store
+		}
+		
+		void read(Reader reader, boolean continueOnError) {
+			JSONObject base = new JSONObject(reader);
+			//First read in types
+			readTypes(base.optJSONArray("types"), continueOnError);
+			
+			readQueries(base.optJSONArray("queries"), continueOnError);
+		}
 	}
 }
