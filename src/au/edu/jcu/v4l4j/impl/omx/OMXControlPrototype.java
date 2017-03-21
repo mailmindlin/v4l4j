@@ -39,6 +39,14 @@ public class OMXControlPrototype {
 		this.enumerator = enumerator;
 	}
 	
+	/**
+	 * Build this prototype into a control for the given component and (optional) port.
+	 * @param component
+	 *     Component to be bound to
+	 * @param port
+	 *     Port that the control is bound to. {@code -1} if not used.
+	 * @return bound control
+	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public BaseOMXQueryControl build(OMXComponent component, int port) {
 		BaseOMXQueryControl base = new BaseOMXQueryControl(component, name, queryIdx, port, struct, buildEnumerator(Type.MAP, enumerator));
@@ -219,6 +227,9 @@ public class OMXControlPrototype {
 		}
 	}
 	
+	/**
+	 * Control type
+	 */
 	static enum Type {
 		NUMBER,
 		ENUM,
@@ -249,6 +260,8 @@ public class OMXControlPrototype {
 		HashMap<String, OMXControlPrototype> controlRegistry = new HashMap<>();
 		
 		private StructFieldType lookupType(String name) {
+			if (name == null || name.isEmpty())
+				return null;
 			return null;//TODO fin
 		}
 		
