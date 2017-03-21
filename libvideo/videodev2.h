@@ -658,13 +658,38 @@ struct v4l2_plane {
  * I/O methods.
  */
 struct v4l2_buffer {
+	/**
+	 * Id number of the buffer
+	 */
 	__u32			index;
+	/**
+	 * enum v4l2_buf_type; buffer type (type == *_MPLANE for multiplanar buffers);
+	 */
 	__u32			type;
+	/**
+	 * number of bytes occupied by data in the buffer (payload);
+	 * unused (set to 0) for multiplanar buffers
+	 */
 	__u32			bytesused;
+	/**
+	 * buffer informational flags
+	 */
 	__u32			flags;
+	/**
+	 * enum v4l2_field; field order of the image in the buffer
+	 */
 	__u32			field;
+	/**
+	 * Frame timestamp
+	 */
 	struct timeval	timestamp;
+	/**
+	 * Frame timecode
+	 */
 	struct v4l2_timecode	timecode;
+	/**
+	 * Sequence count of this frame
+	 */
 	__u32			sequence;
 
 	/* memory location */

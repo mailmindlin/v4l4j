@@ -63,6 +63,9 @@ import au.edu.jcu.v4l4j.exceptions.UnsupportedMethod;
  *
  */
 public class ResolutionInfo {
+	static {
+		V4L4JUtils.loadLibrary();
+	}
 	/**
 	 * The Type enumeration defines how the supported resolutions are expressed.
 	 * If DISCRETE, then supported resolutions are reported as a list of
