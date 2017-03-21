@@ -1,0 +1,166 @@
+{
+	types: [
+		{
+			name: "omx.portDomainType",
+			kind: "enum",
+			values: [
+				"audio",
+				"video",
+				"image",
+				"other"
+			]
+		},
+		{
+			name: "omx.param.portDefinitionType",
+			kind: "param",
+			port: true,
+			fields: {
+				"dir": "omx.dirType",
+				"bufferCountActual": "u32",
+				"bufferCountMin": "u32",
+				"bufferSize": "u32",
+				"enabled": "bool",
+				"populated": "bool",
+				"domain": "omx.portDomainType",
+				"format": {
+					kind: "union",
+					fields: {
+						"audio": "omx.audio.portDefinitionType",
+						"video": "omx.video.portDefinitionType",
+						"image": "omx.image.portDefinitionType",
+						"other": "omx.other.portDefinitionType"
+					}
+				},
+				"buffersContinuous": "bool",
+				"bufferAlignment": "u32"
+			}
+		},
+		{
+			name: "omx.param.u32",
+			kind: "param",
+			port: true,
+			value: "u32"
+		},
+		{
+			name: "omx.suspensionPolicy",
+			kind: "enum",
+			values: ["disabled", "enabled"]
+		},
+		{
+			name: "omx.param.suspensionType",
+			kind: "param",
+			port: false,
+			value: "omx.suspensionPolicy"
+		},
+		{
+			name: "omx.config.boolean",
+			kind: "config",
+			port: false,
+			value: "bool"
+		},
+		{
+			name: "omx.param.contentURI",
+			kind: "param",
+			port: false,
+			value: {
+				kind: "vararray",
+				type: "u8"
+			}
+		},
+		{
+			name: "omx.param.contentPipe",
+			kind: "param",
+			port: false,
+			value: "omx.handle"
+		},
+		{
+			name: "omx.metadataCharset",
+			kind: "enum",
+			values: [
+				"unknown",
+				"ascii",
+				"binary",
+				"codePage1252",
+				"utf8",
+				"javaConformantUTF8",
+				"utf7",
+				"imapUTF7",
+				"utf16le",
+				"utf16be",
+				"gb12345",
+				"hzgb1232",
+				"gbk",
+				"big5",
+				"iso88591",
+				"iso88592",
+				"iso88593",
+				"iso88594",
+				"iso88595",
+				"iso88596",
+				"iso88597",
+				"iso88598",
+				"iso88599",
+				"iso885910",
+				"iso885913",
+				"iso885914",
+				"iso885915",
+				"shiftjis",
+				"iso2022jp",
+				"iso2022jp1",
+				"isoeucjp",
+				"sms7bit"
+			]
+		},
+		{
+			name: "omx.metadataScope",
+			kind: "enum",
+			values: [
+				"allLevels",
+				"topLevel",
+				"portLevel",
+				"nodeLevel"
+			]
+		},
+		{
+			name: "omx.metadataSearchMode",
+			kind: "enum",
+			values: [
+				"valueSizeByIndex",
+				"itemByIndex",
+				"nextItemByKey"
+			]
+		},
+		{
+			name: "omx.config.metadataItemCount",
+			kind: "config",
+			port: false,
+			fields: {
+				"scopeMode": "omx.metadataScope",
+				"scopeSpecifier": "u32",
+				"itemCount": "u32"
+			}
+		},
+		{
+			name: "omx.config.metadataItemType",
+			kind: "config",
+			port: false,
+			fields: {
+				"scopeMode": "omx.metadataScope",
+				"scopeSpecifier": "u32",
+				"itemIndex": "u32",
+				"searchMode": "omx.metadataSearchMode",
+				"keyCharset": "omx.metadataCharset",
+				"keySizeUsed": "u8",
+				"key": "u8[128]",
+				"valueCharset": "omx.metadataCharset",
+				"languageCountry": "omx.string",
+				"valueMaxSize": "u32",
+				"valueSizeUsed": "u32",
+				"value": {
+					kind: "vararray",
+					type: "u8"
+				}
+			}
+		}
+	]
+}

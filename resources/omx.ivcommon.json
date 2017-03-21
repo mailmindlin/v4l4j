@@ -1,0 +1,44 @@
+{
+	types: [
+		{
+			name: "omx.config.iv.colorConversion",
+			kind: "config",
+			port: true,
+			fields: {
+				"colorMatrix": "q16[3][3]",
+				"colorOffset": "q16[4]"
+			}
+		},
+		{
+			name: "omx.config.iv.scaleFactor",
+			kind: "config",
+			port: true,
+			fields: {
+				"width": "q16",
+				"height": "q16"
+			}
+		}
+	],
+	controls: [
+		{
+			name: "color.conversion",
+			kind: "config",
+			structType: "omx.config.iv.colorConversion"
+		},
+		{
+			name: "scale",
+			kind: "config",
+			structType: "omx.config.iv.scaleFactor",
+			children: {
+				"width": {
+					kind: "number",
+					sfField: "width"
+				},
+				"height": {
+					kind: "number",
+					sfField: "height"
+				}
+			}
+		}
+	]
+}

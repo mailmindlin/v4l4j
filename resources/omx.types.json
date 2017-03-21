@@ -1,0 +1,60 @@
+{
+	types: [
+		{
+			name: "omx.ptr",
+			kind: "alias",
+			alias: "ptr(void)"
+		},
+		{
+			name: "omx.string",
+			kind: "alias",
+			alias: "ptr(char)"
+		},
+		{
+			name: "omx.dirType",
+			kind: "enum",
+			values: ["input", "output"]
+		},
+		{
+			name: "omx.endianType",
+			kind: "enum",
+			values: ["big", "little"]
+		},
+		{
+			name: "omx.numericalDataType",
+			kind: "enum",
+			values: ["signed", "unsigned"]
+		},
+		{
+			name: "omx.bu32",
+			kind: "struct",
+			fields: {
+				"value": "u32",
+				"min": "u32",
+				"max": "u32"
+			}
+		},
+		{
+			name: "omx.bs32",
+			kind: "struct",
+			fields: {
+				"value": "s32",
+				"min": "s32",
+				"max": "s32"
+			}
+		},
+		{
+			name: "omx.handle",
+			kind: "alias",
+			alias: "ptr(void)"
+		},
+		{
+			name: "omx.markType",
+			kind: "struct",
+			fields: {
+				"targetComponent": "omx.handle",
+				"data": "omx.ptr"
+			}
+		}
+	]
+}
