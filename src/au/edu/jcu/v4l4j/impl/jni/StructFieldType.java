@@ -1,8 +1,9 @@
 package au.edu.jcu.v4l4j.impl.jni;
 
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 
-public interface StructFieldType {
+public interface StructFieldType extends Serializable {
 
 	int getAlignment();
 	

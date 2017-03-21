@@ -7,6 +7,8 @@ import java.util.function.IntFunction;
 import java.util.function.ToIntFunction;
 
 public class EnumStructFieldType<T extends Enum<T>> implements StructFieldType {
+	private static final long serialVersionUID = 8797715570154592010L;
+	
 	protected final IntFunction<T> mapper;
 	protected final ToIntFunction<T> unmapper;
 	
@@ -50,29 +52,35 @@ public class EnumStructFieldType<T extends Enum<T>> implements StructFieldType {
 	public boolean expands() {
 		return false;
 	}
-	
+
 	@Override
+	@SuppressWarnings("unchecked")
 	public void write(ByteBuffer buffer, Object params) {
+		//Map params to int
 		int iVal;
 		try {
 			iVal = unmapper.applyAsInt((T) params);
 		} catch (ClassCastException e) {
 			//We can also deal with it if the param is a number
-			if (params instanceof Number)
+			if (params != null && params instanceof Number)
 				iVal = ((Number)params).intValue();
 			else
 				throw e;
 		}
 		
+		//Write as int32 (TODO: check if this is system-dependent)
 		PrimitiveStructFieldType.INT32.write(buffer, iVal);
 	}
 	
 	@Override
 	public Object read(ByteBuffer buffer, StructReadingContext context) {
 		Integer iValue = (Integer) PrimitiveStructFieldType.INT32.read(buffer, context);
+		
+		//Map to enum constant
 		try {
 			return mapper.apply(iValue);
 		} catch (RuntimeException e) {
+			//Mapping failed, return raw value
 			return iValue;
 		}
 	}
