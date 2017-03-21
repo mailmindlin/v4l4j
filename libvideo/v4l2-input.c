@@ -42,10 +42,6 @@
 #define V4L2_MAX_WIDTH 			4096
 #define V4L2_MAX_HEIGHT 		4096
 
-#ifndef USEC_PER_SEC
-#define USEC_PER_SEC			1000000
-#endif
-
 bool check_v4l2(int fd, struct v4l2_capability* caps) {
 	return ioctl(fd, VIDIOC_QUERYCAP, caps) >= 0;
 }
@@ -618,7 +614,7 @@ unsigned int convert_buffer_v4l2(struct video_device *vdev, int index, unsigned 
 	return dest_buffer_len;
 }
 
-void *dequeue_buffer_v4l2(struct video_device *vdev, unsigned int *len, unsigned int *index, unsigned long long *capture_time, unsigned long long *sequence) {
+void *dequeue_buffer_v4l2(struct video_device *vdev, unsigned int *len, unsigned int *index, struct timeval *capture_time, unsigned long long *sequence) {
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2, "CAP: Dequeuing buffer on device %s.\n", vdev->file);
 	
 	struct v4l2_buffer b;
@@ -633,9 +629,8 @@ void *dequeue_buffer_v4l2(struct video_device *vdev, unsigned int *len, unsigned
 	// return buffer metadata
 	*len = b.bytesused; // it is an error if len or index are NULL
 	*index = b.index;
-	unsigned long long cap_time = (unsigned long long) (b.timestamp.tv_usec + b.timestamp.tv_sec * USEC_PER_SEC);
 	if (capture_time)
-		*capture_time = cap_time;
+		*capture_time = b.timestamp;
 	if (sequence)
 		*sequence = b.sequence;
 

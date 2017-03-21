@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <jpeglib.h>
 #include <stdint.h>
+#include <sys/time.h>		//for struct timeval
 
 #include "common.h"
 #include "debug.h"
@@ -516,7 +517,8 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 
 	//get frame from libvideo
 	unsigned int buffer_index;
-	unsigned long long captureTime, sequence;
+	struct timeval captureTime;
+	unsigned long long sequence;
 	void* frame = (*d->vdev->capture->actions->dequeue_buffer)(d->vdev, &d->capture_len, &buffer_index, &captureTime, &sequence);
 	if(frame == NULL) {
 		THROW_EXCEPTION(env, GENERIC_EXCP, "Error dequeuing buffer for capture");
@@ -574,7 +576,8 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 	
 	// update class members
 	(*env)->SetLongField(env, this, last_captured_frame_sequence_fID, sequence);
-	(*env)->SetLongField(env, this, last_captured_frame_time_usec_fID, captureTime);
+	//Convert timeval to int64_t (hopefully) handling overflows
+	(*env)->SetLongField(env, this, last_captured_frame_time_usec_fID, (jlong) (captureTime.seconds) + (jlong) (captureTime.microseconds * UINT64_C(1000000)));
 	(*env)->SetIntField(env, this, last_captured_frame_buffer_index_fID, buffer_index);
 
 	return output_len;

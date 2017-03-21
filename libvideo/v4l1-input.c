@@ -24,6 +24,7 @@
 
 #include <sys/ioctl.h>		//for ioctl
 #include <sys/mman.h>		//for mmap
+#include <sys/time.h>		//for gettimeofday, struct timeval
 #include <stdbool.h>
 #include "videodev2.h"
 #include "videodev.h"
@@ -367,13 +368,18 @@ int start_capture_v4l1(struct video_device *vdev) {
 
 //dequeue the next buffer with available frame
 // start the capture of next buffer VIDIOCMCAPTURE(x)
-void *dequeue_buffer_v4l1(struct video_device *vdev, unsigned int *len, unsigned int *index, unsigned long long *capture_time, unsigned long long *sequence) {
+void *dequeue_buffer_v4l1(struct video_device *vdev, unsigned int *len, unsigned int *index, struct timeval *capture_time, unsigned long long *sequence) {
 	UNUSED(index);
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2, "CAP: dequeuing buffer on device %s.\n", vdev->file);
 	struct capture_device *c = vdev->capture;
 	int curr_frame = (int) c->mmap->tmp;
 	int next_frame = curr_frame ^ 1;
 	*len = c->imagesize;
+	
+	//Capture time is when we send the capture command
+	//We do this because v4l1 doesn't provide a capture timestamp
+	if (capture_time != NULL)
+		gettimeofday(capture_time, NULL);
 
 	struct video_mmap mm;
 	CLEAR(mm);
@@ -395,9 +401,8 @@ void *dequeue_buffer_v4l1(struct video_device *vdev, unsigned int *len, unsigned
 		*len = 0;
 		return NULL;
 	}
+	
 	c->mmap->tmp = (void *)next_frame;
-	if (capture_time)
-		*capture_time = 0;
 	if (sequence)
 		*sequence = 0;
 	return c->mmap->buffers[curr_frame].start;

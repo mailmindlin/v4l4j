@@ -69,7 +69,7 @@ int start_capture_v4l2(struct video_device *);
 void *dequeue_n_convert_buffer_v4l2(struct video_device *, int *, unsigned int *, unsigned long long*, unsigned long long*);
 
 //dequeue the next buffer with available frame
-void *dequeue_buffer_v4l2(struct video_device *, unsigned int *len, unsigned int *index, unsigned long long*, unsigned long long*);
+void *dequeue_buffer_v4l2(struct video_device *, unsigned int *len, unsigned int *index, struct timeval* timestamp, unsigned long long* sequence) __attribute__ ((nonnull (1, 2, 3)));
 
 //dequeue the next buffer with available frame
 unsigned int convert_buffer_v4l2(struct video_device *, int , unsigned int , void *);

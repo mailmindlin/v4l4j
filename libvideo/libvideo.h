@@ -26,6 +26,7 @@
 #define H_COMMON
 
 #include <asm/types.h>		//for videodev2
+#include <sys/time.h>		//for struct timeval
 #include <stdbool.h>
 #include <stddef.h>
 #include "videodev2.h"
@@ -674,11 +675,11 @@ struct capture_actions {
 	 * @param index
 	 * 		receives the index of the buffer which contains the returned frame
 	 * @param capture_time
-	 * 		receives the capture time in microseconds (for v4l2 devices only)
+	 * 		receives the capture time (see gettimeofday)
 	 * @param sequence
 	 * 		argument receives the capture frame sequence number (for v4l2 devices only)
 	 */
-	void* (*dequeue_buffer)(struct video_device *device, unsigned int *length, unsigned int *index, unsigned long long *capture_time, unsigned long long *sequence) __attribute__ ((nonnull (1,2,3,4,5)));
+	void* (*dequeue_buffer)(struct video_device *device, unsigned int *length, unsigned int *index, struct timeval *capture_time, unsigned long long *sequence) __attribute__ ((nonnull (1,2,3)));
 	/**
 	 * Convert the previously dequed dequeued buffer at the given index. Call me
 	 * only if the conversion is needed (if the requested format is not native)
