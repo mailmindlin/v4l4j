@@ -1,7 +1,6 @@
 package au.edu.jcu.v4l4j.impl.omx;
 
 import java.time.Duration;
-import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.BiFunction;
@@ -10,6 +9,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import au.edu.jcu.v4l4j.api.CloseableIterator;
 import au.edu.jcu.v4l4j.api.control.Control;
 import au.edu.jcu.v4l4j.api.control.DiscreteControl;
 import au.edu.jcu.v4l4j.impl.jni.NativePointer;
@@ -44,8 +44,8 @@ public abstract class AbstractOMXQueryControl<T> implements DiscreteControl<T> {
 	}
 	
 	@Override
-	public Future<Iterator<T>> options() {
-		return CompletableFuture.completedFuture(enumerator.iterate(this.component, 1));
+	public Future<CloseableIterator<T>> options() {
+		return CompletableFuture.completedFuture(enumerator.iterate(this.component, this.port));
 	}
 
 	@Override
@@ -138,7 +138,7 @@ public abstract class AbstractOMXQueryControl<T> implements DiscreteControl<T> {
 		@SuppressWarnings("unchecked")
 		public <E> AbstractOMXQueryControlAccessor<P, T, R> update(String name, BiFunction<String, E, E> mappingFunction) {
 			//TODO check correctness for nested children
-			return thenApply(state -> state.basePointer.compute(name, (BiFunction<String, Object, Object>) mappingFunction));
+			return thenApply(state -> state.<NativeStruct>localPointer().compute(name, (BiFunction<String, Object, Object>) mappingFunction));
 		}
 		
 		@Override
@@ -186,7 +186,8 @@ public abstract class AbstractOMXQueryControl<T> implements DiscreteControl<T> {
 
 		protected OMXQueryControlAccessorState enterFromParent(OMXQueryControlAccessorState parentState) {
 			OMXQueryControlAccessorState result = new OMXQueryControlAccessorState();
-			result.basePointer = parentState.basePointer;
+			//Override me for different behavior
+			result.localPointer = parentState.<NativeWrapper<String, ?>>localPointer().getChild(((AbstractOMXQueryControl<?>)this.getControl()).structFieldName);
 			result.result = parentState.result;
 			return result;
 		}
@@ -260,9 +261,7 @@ public abstract class AbstractOMXQueryControl<T> implements DiscreteControl<T> {
 	}
 	
 	protected static class OMXQueryControlAccessorState implements AutoCloseable {
-		NativeStruct basePointer;
 		Object result = null;
-		Object value = null;
 		NativePointer<?> localPointer = null;
 		
 		@SuppressWarnings("unchecked")
@@ -280,15 +279,12 @@ public abstract class AbstractOMXQueryControl<T> implements DiscreteControl<T> {
 		}
 		
 		public <T> T setValue(T value) {
-			this.value = value;
+			this.<NativePointer<T>>localPointer().set(value);
 			return value;
 		}
 		
-		@SuppressWarnings("unchecked")
 		public <T> T getValue() {
-			if (this.value == null && this.localPointer != null)
-				this.value = this.localPointer.get();
-			return (T) this.value;
+			return (T) this.<NativePointer<T>>localPointer().get();
 		}
 		
 		public <T> T setResult(T value) {
@@ -303,7 +299,8 @@ public abstract class AbstractOMXQueryControl<T> implements DiscreteControl<T> {
 		
 		@Override
 		public void close() throws Exception {
-			basePointer.close();
+			if (localPointer != null)
+				localPointer.close();
 		}
 	}
 }

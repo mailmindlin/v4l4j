@@ -3,7 +3,6 @@ package au.edu.jcu.v4l4j.impl.v4l;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -13,6 +12,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import au.edu.jcu.v4l4j.api.CloseableIterator;
 import au.edu.jcu.v4l4j.api.control.ContinuousControl;
 import au.edu.jcu.v4l4j.api.control.Control;
 import au.edu.jcu.v4l4j.api.control.ControlType;
@@ -285,8 +285,8 @@ public abstract class V4LControl<V> implements Control<V> {
 		}
 
 		@Override
-		public Future<Iterator<Boolean>> options() {
-			return CompletableFuture.completedFuture(Arrays.asList(true, false).iterator());
+		public Future<CloseableIterator<Boolean>> options() {
+			return CompletableFuture.completedFuture(CloseableIterator.wrap(Arrays.asList(true, false).iterator()));
 		}
 
 		@Override
@@ -373,8 +373,8 @@ public abstract class V4LControl<V> implements Control<V> {
 		}
 
 		@Override
-		public Future<Iterator<String>> options() {
-			return CompletableFuture.completedFuture(this.values.iterator());
+		public Future<CloseableIterator<String>> options() {
+			return CompletableFuture.completedFuture(CloseableIterator.wrap(this.values.iterator()));
 		}
 		
 		protected class MenuControlAccessor<P, R> extends V4LControlAccessor<P, String, R> {

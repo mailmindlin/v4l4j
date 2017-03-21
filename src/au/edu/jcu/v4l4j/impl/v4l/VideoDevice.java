@@ -194,6 +194,8 @@ public class VideoDevice implements Component {
 							return attemptStart();
 						case LOADED:
 							return attemptDeinit();
+						default:
+							break;
 					}
 					break;
 				case EXECUTING:
@@ -204,6 +206,8 @@ public class VideoDevice implements Component {
 							return attemptFGDeinit();
 						case PAUSED:
 							return attemptPause();
+						default:
+							break;
 					}
 					break;
 				case PAUSED:
@@ -212,7 +216,11 @@ public class VideoDevice implements Component {
 							return attemptFGDeinit();
 						case EXECUTING:
 							return attemptStart();
+						default:
+							break;
 					}
+					break;
+				default:
 					break;
 			}
 			throw new IllegalArgumentException("Invalid state transition " + oldState + " => " + newState);

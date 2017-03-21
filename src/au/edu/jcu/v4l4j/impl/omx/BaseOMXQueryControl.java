@@ -1,6 +1,6 @@
 package au.edu.jcu.v4l4j.impl.omx;
 
-import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.Map;
@@ -22,24 +22,15 @@ import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
  */
 public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Object>> implements CompositeControl {
 	protected final Set<AbstractOMXQueryControl<?>> children = new HashSet<>();
-	protected transient Map<String, AbstractOMXQueryControl<?>> childMap;
+	protected transient Map<String, AbstractOMXQueryControl<?>> childMap = new HashMap<>();
 	protected final boolean isConfig = false;
 	protected final int queryId;
 	protected final StructPrototype struct;
 	
-	public static OMXQueryControlBuilder builder(StructPrototype struct) {
-		return new OMXQueryControlBuilder(struct);
-	}
-	
-	public BaseOMXQueryControl(OMXComponent component, String rootName, int queryId, int portIdx, StructPrototype struct) {
-		super(component, portIdx, null, rootName, null, null);
+	public BaseOMXQueryControl(OMXComponent component, String rootName, int queryId, int portIdx, StructPrototype struct, OMXOptionEnumeratorPrototype<Map<String, Object>> enumerator) {
+		super(component, portIdx, null, rootName, null, enumerator);
 		this.queryId = queryId;
 		this.struct = struct;
-	}
-
-	@Override
-	public boolean isDiscrete() {
-		return false;
 	}
 
 	@Override
@@ -54,6 +45,7 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 	
 	protected <T extends AbstractOMXQueryControl<?>> T registerChild(T child) {
 		this.children.add(child);
+		this.childMap.put(child.name, child);
 		return child;
 	}
 	
@@ -101,27 +93,21 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 		return ControlType.COMPOSITE;
 	}
 	
-	protected void doWrite(NativeStruct info) {
+	protected void doWrite(NativeStruct query) {
 		if (this.port >= 0)
-			info.put("nPortIndex", this.port);
-		this.component.setConfig(this.isConfig, this.queryId, info.buffer());
+			query.put("nPortIndex", this.port);
+		this.component.setConfig(this.isConfig, this.queryId, query.buffer());
 	}
-
-	public static class OMXQueryControlBuilder {
-		protected final StructPrototype struct;
-		
-		public OMXQueryControlBuilder(StructPrototype struct) {
-			this.struct = struct;
-		}
-		
-		public OMXQueryControlBuilder add(String ctrlName) {
-			return this;
-		}
-		
-		public BaseOMXQueryControl build(OMXComponent component, String rootName, int queryId, int portIdx) {
-			BaseOMXQueryControl control = new BaseOMXQueryControl(component, rootName, queryId, portIdx, struct);
-			
-			return control;
+	
+	protected void doRead(NativeStruct query) {
+		if (this.port >= 0)
+			query.put("nPortIndex", this.port);
+		try {
+			this.component.getConfig(this.isConfig, this.queryId, query.buffer());
+		} catch (Exception e) {
+			for (String key : query.keySet())
+				System.out.println(key + "|" + query.get(key));
+			throw e;
 		}
 	}
 	
@@ -162,14 +148,19 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 
 		@Override
 		public AbstractOMXQueryControlAccessor<P, Map<String, Object>, R> write() {
-			return thenApply(state -> BaseOMXQueryControl.this.doWrite(state.basePointer));
+			return thenApply(state -> BaseOMXQueryControl.this.doWrite(state.localPointer()));
 		}
 		
+		@Override
+		public AbstractOMXQueryControlAccessor<P, Map<String, Object>, R> read() {
+			return thenApply(state -> BaseOMXQueryControl.this.doRead(state.localPointer()));
+		}
+
 		@Override
 		@SuppressWarnings("unchecked")
 		public <E extends Object> AbstractOMXQueryControlAccessor<P, Map<String, Object>, R> update(String name,
 				BiFunction<String, E, E> mappingFunction) {
-			return thenApply(state -> state.basePointer.compute(name, (BiFunction<String, Object, Object>) mappingFunction));
+			return thenApply(state -> state.<NativeStruct>localPointer().compute(name, (BiFunction<String, Object, Object>) mappingFunction));
 		}
 
 		@Override
@@ -180,13 +171,19 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 		@Override
 		public AbstractOMXQueryControlAccessor<P, Map<String, Object>, R> writeAndRead() {
 			return thenApply(state -> {
-				OMXComponent component = BaseOMXQueryControl.this.component;
-				int queryId = BaseOMXQueryControl.this.queryId;
-				ByteBuffer buffer = state.basePointer.buffer();
-				component.setConfig(false, queryId, buffer);
-				component.getConfig(false, queryId, buffer);
+				BaseOMXQueryControl.this.doWrite(state.localPointer());
+				BaseOMXQueryControl.this.doRead(state.localPointer());
 			});
 		}
+
+		@Override
+		protected void doCall(OMXQueryControlAccessorState state) {
+			if (state.localPointer == null)
+				state.localPointer = new NativeStruct(struct);
+			super.doCall(state);
+		}
+		
+		
 		
 	}
 }

@@ -1,23 +1,27 @@
 package au.edu.jcu.v4l4j.test;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import au.edu.jcu.v4l4j.ImageFormat;
 import au.edu.jcu.v4l4j.api.FrameBuffer;
-import au.edu.jcu.v4l4j.api.ImagePalette;
-import au.edu.jcu.v4l4j.api.VideoCompressionType;
 import au.edu.jcu.v4l4j.api.component.ComponentPort;
 import au.edu.jcu.v4l4j.api.component.ComponentState;
 import au.edu.jcu.v4l4j.api.component.port.VideoPort;
-import au.edu.jcu.v4l4j.api.control.Control;
 import au.edu.jcu.v4l4j.impl.jni.NativeStruct;
 import au.edu.jcu.v4l4j.impl.jni.PrimitiveStructFieldType;
 import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
 import au.edu.jcu.v4l4j.impl.omx.BaseOMXQueryControl;
-import au.edu.jcu.v4l4j.impl.omx.EnumChildOMXQueryControl;
-import au.edu.jcu.v4l4j.impl.omx.NumberOMXQueryControl;
 import au.edu.jcu.v4l4j.impl.omx.OMXComponent;
 import au.edu.jcu.v4l4j.impl.omx.OMXComponentProvider;
 import au.edu.jcu.v4l4j.impl.omx.OMXConstants;
@@ -59,7 +63,9 @@ public class OMXTest {
 		inputPort.setEnabled(false);
 		outputPort.setEnabled(false);
 		
-		testQueryPortdef(encoder);
+
+		OMXTest.testApi(outputPort);
+		//testQueryPortdef(encoder);
 		
 		System.out.println("Transitioned to state " + encoder.setState(ComponentState.IDLE));
 		
@@ -87,14 +93,6 @@ public class OMXTest {
 		System.out.println("OBsz" + outBuffer.getCapacity());
 		System.out.println(outBuffer.asByteBuffer().position());
 		
-		outputPort.onBufferFill(frame->{
-			System.out.println("Buffer fill called in Java");
-			System.out.println("" + frame.asByteBuffer().remaining() + " bytes in buffer");
-			System.out.println("Seq " + frame.getSequenceNumber());
-			System.out.println("Time " + frame.getTimestamp());
-			outputPort.fill(frame);
-		});
-		
 		encoder.setState(ComponentState.EXECUTING);
 		
 		Thread.sleep(200);
@@ -102,32 +100,77 @@ public class OMXTest {
 		//outputPort.fill(outBuffer);
 		
 		System.out.println("Putting random stuff in buffer");
-		ByteBuffer ib = inBuffer.asByteBuffer();
+		ByteBuffer image = ByteBuffer.allocate(inBuffer.getCapacity());
 		for (int i = 0; i < inBuffer.getCapacity();i+=4)
-			ib.putInt(0xFF00FF00);
-		ib.flip();
-		ByteBuffer image = ByteBuffer.allocate(ib.capacity());
-		image.put(ib.duplicate());
+			image.putInt(0xFF00FF00);
+		image.flip();
 		
-		AtomicInteger i = new AtomicInteger(0);
+		inBuffer.asByteBuffer().put(image.duplicate()).flip();
+		
+		
+		AtomicInteger gSeq = new AtomicInteger(0);
+		AtomicBoolean doQueueInput = new AtomicBoolean(false);
+		AtomicBoolean doQueueOutput = new AtomicBoolean(false);
+		Object lock = new Object();
+		
+		
+		File outFile = new File("out.h264").getAbsoluteFile();
+		System.out.println("Writing out to " + outFile);
+		final FileChannel outChannel = new FileOutputStream(outFile, false).getChannel();
+
+		outputPort.onBufferFill(frame->{
+			System.out.println("Buffer fill called in Java");
+			System.out.println("" + frame.asByteBuffer().remaining() + " bytes in buffer");
+			System.out.println("Seq " + frame.getSequenceNumber());
+			System.out.println("Time " + frame.getTimestamp());
+			synchronized (outChannel) {
+				try {
+					outChannel.write(frame.asByteBuffer());
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			doQueueOutput.set(true);
+			synchronized (lock) {
+				lock.notifyAll();
+			}
+		});
 		
 		inputPort.onBufferEmpty(frame->{
 			System.out.println("Buffer empty called in Java");
-			int seq = i.incrementAndGet();
+			int seq = gSeq.incrementAndGet();
 			if (seq > 25)
 				return;
 			System.out.println("Writing frame " + seq);
-			frame.asByteBuffer().put(image.duplicate()).flip();
+			ByteBuffer buf = frame.asByteBuffer();
+			buf.clear();
+			buf.put(image.duplicate());
+			buf.flip();
 			frame.setSequenceNumber(seq);
-			inputPort.empty(frame);
+			frame.setTimestamp(System.nanoTime());
+			doQueueInput.set(true);
+			synchronized (lock) {
+				lock.notifyAll();
+			}
 		});
 		
-
 		inputPort.empty(inBuffer);
 		
 		outputPort.fill(outBuffer);
 		
-		Thread.sleep(5000);
+		while (!Thread.interrupted()) {
+			if (doQueueInput.compareAndSet(true, false))
+				inputPort.empty(inBuffer);
+			if (doQueueOutput.compareAndSet(true, false))
+				outputPort.fill(outBuffer);
+			if (gSeq.get() > 25)
+				break;
+			synchronized (lock) {
+				lock.wait(50);
+			}
+		}
+		outChannel.close();
+		System.out.println("Done");
 	}
 	
 	public static void testAccess(long pointer) {
@@ -213,7 +256,7 @@ public class OMXTest {
 			videoDef.put("nFrameHeight", FRAME_HEIGHT);
 			videoDef.put("xFramerate", FRAMERATE << 16);
 			videoDef.put("eColorFormat", 0);
-			videoDef.put("eCompressionFormat", OMXConstants.VIDEO_ENCODING_AVC);
+			videoDef.put("eCompressionFormat", OMXConstants.VIDEO_ENCODING_MJPEG);
 			videoDef.put("nBitrate", BITRATE);
 			component.setConfig(false, OMXConstants.INDEX_ParamPortDefinition, query.buffer());
 		}
@@ -225,10 +268,10 @@ public class OMXTest {
 			bitrateQuery.put("nTargetBitrate", BITRATE);
 			component.setConfig(false, OMXConstants.INDEX_ParamVideoBitrate, bitrateQuery.buffer());
 		}
-		try (NativeStruct formatQuery = new NativeStruct(OMXConstants.PARAM_PORTFORMATTYPE)) {
+		try (NativeStruct formatQuery = new NativeStruct(OMXConstants.PARAM_VIDEO_PORTFORMATTYPE)) {
 			formatQuery.clear();
 			formatQuery.put("nPortIndex", 201);
-			formatQuery.put("eCompressionFormat", OMXConstants.VIDEO_ENCODING_AVC);
+			formatQuery.put("eCompressionFormat", OMXConstants.VIDEO_ENCODING_MJPEG);
 			formatQuery.put("nIndex", 0);
 			formatQuery.put("eColorFormat", 0);
 			formatQuery.put("xFramerate", 0);
@@ -236,27 +279,31 @@ public class OMXTest {
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
 	public static void testApi(ComponentPort port) throws IllegalStateException, Exception {
-		BaseOMXQueryControl formatControl = new BaseOMXQueryControl((OMXComponent) port.getComponent(), "format", OMXConstants.INDEX_ParamVideoPortFormat, port.getIndex(), OMXConstants.PARAM_PORTFORMATTYPE);
-		Set<Control<?>> children = ((Set<Control<?>>)formatControl.getChildren());
-		children.add(new NumberOMXQueryControl(formatControl, port.getIndex(), "index", "nIndex", null));
-		children.add(new NumberOMXQueryControl(formatControl, port.getIndex(), "framerate", "xFramerate", null));
-		children.add(new EnumChildOMXQueryControl<VideoCompressionType>(formatControl, port.getIndex(), "compression", VideoCompressionType.class, "eCompressionFormat"));
-		children.add(new EnumChildOMXQueryControl<ImagePalette>(formatControl, port.getIndex(), "color", ImagePalette.class, "eColorFormat"));
+		/*BaseOMXQueryControl formatControl = new BaseOMXQueryControl((OMXComponent) port.getComponent(), "format", OMXConstants.INDEX_ParamVideoPortFormat, port.getIndex(), OMXConstants.PARAM_VIDEO_PORTFORMATTYPE, null);
+		formatControl.registerChild(new NumberOMXQueryControl(formatControl, port.getIndex(), "index", "nIndex", null));
+		formatControl.registerChild(new NumberOMXQueryControl(formatControl, port.getIndex(), "framerate", "xFramerate", null));
+		formatControl.registerChild(new EnumChildOMXQueryControl<VideoCompressionType>(formatControl, port.getIndex(), "compression", VideoCompressionType.class, "eCompressionFormat"));
+		formatControl.registerChild(new EnumChildOMXQueryControl<ImagePalette>(formatControl, port.getIndex(), "color", ImagePalette.class, "eColorFormat"));*/
+		BaseOMXQueryControl formatControl = OMXConstants.CTRL_VIDEO_FORMAT.build((OMXComponent) port.getComponent(), port.getIndex());
+		Iterator<Map<String, Object>> i = formatControl.options().get();
+		List<Object> formats = new ArrayList<>();
+		while (i.hasNext())
+			formats.add(i.next().get("compression"));
+		System.out.println(formats);
 		formatControl.access()
 			.<Integer>withChild("index")
 				.set(0)
 				.and()
-			.writeAndRead()
+			.read()
 			.withChild("framerate")
-				.get(System.out::println)
+				.get(v->System.out.println("Framerate: " + v))
 				.and()
 			.withChild("compression")
-				.get(System.out::println)
+			.get(v->System.out.println("Compression: " + v))
 				.and()
 			.withChild("color")
-				.get(System.out::println)
+			.get(v->System.out.println("Color: " + v))
 				.and()
 			.call();
 	}

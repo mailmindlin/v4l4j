@@ -1,0 +1,102 @@
+{
+	types: [
+		{
+			name: "omx.other.format",
+			kind: "enum",
+			values: ["time","power","stats","binary"]
+		},
+		{
+			name: "omx.time.seekMode",
+			kind: "enum",
+			values: ["fast", "accurate"]
+		},
+		{
+			name: "omx.time.config.seekMode",
+			kind: "config",
+			port: false,
+			value: "omx.time.seekMode"
+		},
+		{
+			name: "omx.time.config.timeStamp",
+			kind: "config",
+			port: true,
+			value: "omx.ticks"
+		},
+		{
+			name: "omx.time.update",
+			kind: "enum",
+			values: ["requestFufillment", "scaleChanged", "clockStateChanged"]
+		},
+		{
+			name: "omx.time.refClock",
+			kind: "enum",
+			values: ["none", "audio", "video"]
+		},
+		{
+			name: "omx.time.clockState",
+			kind: "enum",
+			values: ["running", "waitingForStartTime", "stopped"]
+		},
+		{
+			name: "omx.time.config.mediaTimerRequest",
+			kind: "config",
+			port: true,
+			fields: {
+				"clientPrivate": "omx.ptr",
+				"mediaTimestamp": "omx.ticks",
+				"offset": "omx.ticks"
+			}
+		},
+		{
+			name: "omx.time.config.scale",
+			kind: "config",
+			port: false,
+			value: "q16"
+		},
+		{
+			name: "omx.time.config.clockState",
+			kind: "config",
+			port: false,
+			fields: {
+				"state": "omx.time.clockState",
+				"startTime": "omx.ticks",
+				"offset": "omx.ticks",
+				"waitMask": "u32"
+			}
+		},
+		{
+			name: "omx.time.config.activeRefClock",
+			kind: "config",
+			port: false,
+			value: "omx.time.refClock"
+		},
+		{
+			name: "omx.other.config.power",
+			kind: "config",
+			port: false,
+			value: "bool"
+		},
+		{
+			name: "omx.other.config.stats",
+			kind: "config",
+			port: false,
+			value: "no idea"
+		},
+		{
+			name: "omx.other.portDefinition",
+			kind: "struct",
+			fields: {
+				"format": "omx.other.formatType"
+			}
+		},
+		{
+			name: "omx.other.param.portFormatType",
+			kind: "param",
+			port: true,
+			fields: {
+				"index": "u32",
+				"format": "omx.other.formatType"
+			}
+		}
+	]
+}

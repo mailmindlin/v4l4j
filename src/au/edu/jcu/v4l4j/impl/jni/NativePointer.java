@@ -72,4 +72,12 @@ public class NativePointer<T> implements AutoCloseable {
 		}
 		this.managedRefs.clear();
 	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		super.finalize();
+		if (this.managedRefs != null && !this.managedRefs.isEmpty())
+			for (int i = 0; i < 50; i++)
+				System.err.printf("Error: did not close pointer 0x%08x\n", this.address);
+	}
 }

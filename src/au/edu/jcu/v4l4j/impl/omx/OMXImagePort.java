@@ -20,8 +20,8 @@ public class OMXImagePort extends OMXComponentPort implements ImagePort {
 	@Override
 	protected void initControls() {
 		super.initControls();
-		BaseOMXQueryControl portFormatControl = new BaseOMXQueryControl(this.component, "format", OMXConstants.INDEX_ParamImagePortFormat, this.getIndex(), OMXConstants.PARAM_PORTFORMATTYPE);
-		BaseOMXQueryControl flashControl = new BaseOMXQueryControl(this.component, "flash", OMXConstants.INDEX_ConfigFlashControl, this.getIndex(), null);
+		BaseOMXQueryControl portFormatControl = new BaseOMXQueryControl(this.component, "format", OMXConstants.INDEX_ParamImagePortFormat, this.getIndex(), OMXConstants.PARAM_VIDEO_PORTFORMATTYPE, null);
+		BaseOMXQueryControl flashControl = new BaseOMXQueryControl(this.component, "flash", OMXConstants.INDEX_ConfigFlashControl, this.getIndex(), null, null);
 		
 	}
 	

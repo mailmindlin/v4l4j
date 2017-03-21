@@ -1,11 +1,12 @@
 package au.edu.jcu.v4l4j.api.control;
 
-import java.util.Iterator;
 import java.util.concurrent.Future;
+
+import au.edu.jcu.v4l4j.api.CloseableIterator;
 
 public interface DiscreteControl<T> extends Control<T> {
 	
-	Future<Iterator<T>> options();
+	Future<CloseableIterator<T>> options();
 	
 	@Override
 	default boolean isDiscrete() {

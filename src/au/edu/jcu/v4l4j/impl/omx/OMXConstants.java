@@ -1,16 +1,16 @@
 package au.edu.jcu.v4l4j.impl.omx;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import au.edu.jcu.v4l4j.api.AudioEncodingType;
 import au.edu.jcu.v4l4j.api.ImagePalette;
 import au.edu.jcu.v4l4j.api.Rational;
-import au.edu.jcu.v4l4j.api.VideoCompressionType;
 import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
 import au.edu.jcu.v4l4j.impl.jni.UnionPrototype;
 
-@SuppressWarnings("javadoc")
 public class OMXConstants {
 	public static final List<String> BITRATE_CONTROLS = Arrays.asList("disable", "variable", "constant", "variableSkipFrames", "constantSkipFrames");
 	
@@ -45,9 +45,9 @@ public class OMXConstants {
 	public static final int AUDIO_ENCODING_MIDI = 27;
 	
 	//Extensions
-	public static final int AUDIO_ENCODING_FLAC     = 0x7F000001;
-	public static final int AUDIO_ENCODING_DPP      = 0x7F000002;
-	public static final int AUDIO_ENCODING_DTS      = 0x7F000003;
+	public static final int AUDIO_ENCODING_FLAC	 = 0x7F000001;
+	public static final int AUDIO_ENCODING_DPP	  = 0x7F000002;
+	public static final int AUDIO_ENCODING_DTS	  = 0x7F000003;
 	public static final int AUDIO_ENCODING_WMAPRO   = 0x7F000004;
 	public static final int AUDIO_ENCODING_ATRAC3   = 0x7F000005;
 	public static final int AUDIO_ENCODING_ATRACX   = 0x7F000006;
@@ -75,6 +75,70 @@ public class OMXConstants {
 	public static final int VIDEO_ENCODING_RV = 6;
 	public static final int VIDEO_ENCODING_AVC = 7;
 	public static final int VIDEO_ENCODING_MJPEG = 8;
+	public static final int VIDEO_ENCODING_VP6 = 0x7F000001;
+	public static final int VIDEO_ENCODING_VP7 = 0x7F000002;
+	public static final int VIDEO_ENCODING_VP8 = 0x7F000003;
+	public static final int VIDEO_ENCODING_YUV = 0x7F000004;
+	public static final int VIDEO_ENCODING_SORENSON = 0x7F000005;
+	public static final int VIDEO_ENCODING_THEORA = 0x7F000006;
+	public static final int VIDEO_ENCODING_MVC = 0x7F000007;
+	
+	public static final int COLOR_FORMAT_UNUSED			= 0;
+	public static final int COLOR_FORMAT_MONOCHROME		= 1;
+	public static final int COLOR_FORMAT_8BITRGB332		= 2;
+	public static final int COLOR_FORMAT_12BITRGB444	= 3;
+	public static final int COLOR_FORMAT_16BITARGB4444	= 4;
+	public static final int COLOR_FORMAT_16BITARGB1555	= 5;
+	public static final int COLOR_FORMAT_16BITRGB565	= 6;
+	public static final int COLOR_FORMAT_16BITBGR565	= 7;
+	public static final int COLOR_FORMAT_18BITRGB666	= 8;
+	public static final int COLOR_FORMAT_18BITARGB1665	= 9;
+	public static final int COLOR_FORMAT_19BITARGB1666	= 10;
+	public static final int COLOR_FORMAT_24BITRGB888	= 11;
+	public static final int COLOR_FORMAT_24BITBGR888	= 12;
+	public static final int COLOR_FORMAT_24BITARGB1887	= 13;
+	public static final int COLOR_FORMAT_25BITARGB1888	= 14;
+	public static final int COLOR_FORMAT_32BITBGRA8888	= 15;
+	public static final int COLOR_FORMAT_32BITARGB8888	= 16;
+	public static final int COLOR_FORMAT_YUV411PLANAR	= 17;
+	public static final int COLOR_FORMAT_YUV411PACKEDPLANAR = 18;
+	public static final int COLOR_FORMAT_YUV420PLANAR	= 19;
+	public static final int COLOR_FORMAT_YUV420PACKEDPLANAR = 20;
+	public static final int COLOR_FORMAT_YUV420SEMIPLANAR = 21;
+	public static final int COLOR_FORMAT_YUV422PLANAR	= 22;
+	public static final int COLOR_FORMAT_YUV422PACKEDPLANAR = 23;
+	public static final int COLOR_FORMAT_YUV422SEMIPLANAR = 24;
+	public static final int COLOR_FORMAT_YCBYCR			= 25;
+	public static final int COLOR_FORMAT_YCRYCB			= 26;
+	public static final int COLOR_FORMAT_CBYCRY			= 27;
+	public static final int COLOR_FORMAT_CRYCBY			= 28;
+	public static final int COLOR_FORMAT_YUV444INTERLEAVED = 29;
+	public static final int COLOR_FORMAT_RAWBAYER8BIT	= 30;
+	public static final int COLOR_FORMAT_RAWBAYER10BIT	= 31;
+	public static final int COLOR_FORMAT_RAWBAYER8BITCOMPRESSED = 32;
+	public static final int COLOR_FORMAT_L2				= 33;
+	public static final int COLOR_FORMAT_L4				= 34;
+	public static final int COLOR_FORMAT_L8				= 35;
+	public static final int COLOR_FORMAT_L16			= 36;
+	public static final int COLOR_FORMAT_L24			= 37;
+	public static final int COLOR_FORMAT_L32			= 38;
+	public static final int COLOR_FORMAT_YUV420PACKEDSEMIPLANAR = 39;
+	public static final int COLOR_FORMAT_YUV422PACKEDSEMIPLANAR = 40;
+	public static final int COLOR_FORMAT_18BITBGR666	= 41;
+	public static final int COLOR_FORMAT_24BITARGB6666	= 42;
+	public static final int COLOR_FORMAT_24BITABGR6666	= 43;
+	//public static final int COLOR_FORMAT_KHRONOSEXTENSIONS = 0x6F000000; /**< RESERVED REGION FOR INTRODUCING KHRONOS STANDARD EXTENSIONS */ 
+	//public static final int COLOR_FORMAT_VENDORSTARTUNUSED = 0x7F000000; /**< RESERVED REGION FOR INTRODUCING VENDOR EXTENSIONS */
+	public static final int COLOR_FORMAT_32BITABGR8888	= 0x7F000001;
+	public static final int COLOR_FORMAT_8BITPALETTE	= 0x7F000002;
+	public static final int COLOR_FORMAT_YUVUV128		= 0x7F000003;
+	public static final int COLOR_FORMAT_RAWBAYER12BIT	= 0x7F000004;
+	public static final int COLOR_FORMAT_BRCMEGL		= 0x7F000005;
+	public static final int COLOR_FORMAT_BRCMOPAQUE		= 0x7F000006;
+	public static final int COLOR_FORMAT_YVU420PACKEDPLANAR	= 0x7F000007;
+	public static final int COLOR_FORMAT_YVU420PACKEDSEMIPLANAR	= 0x7F000008;
+	public static final int COLOR_FORMAT_RAWBAYER16BIT	= 0x7F000009;
+	//public static final int COLOR_FORMAT_MAX = 0X7FFFFFFF;
 	
 	//Error codes
 	public static final int ERROR_NONE = 0;
@@ -114,7 +178,7 @@ public class OMXConstants {
 	public static final int INDEX_ParamCompBufferSupplier			= 0x02000002;	/**< reference: OMX_PARAM_BUFFERSUPPLIERTYPE */
 	public static final int INDEX_ReservedStartUnused 				= 0x03000000;
 
-    /* Audio parameters and configurations */
+	/* Audio parameters and configurations */
 	public static final int INDEX_AudioStartUnused					= 0x04000000;
 	public static final int INDEX_ParamAudioPortFormat				= 0x04000001;	/**< reference: OMX_AUDIO_PARAM_PORTFORMATTYPE */
 	public static final int INDEX_ParamAudioPcm						= 0x04000002;	/**< reference: OMX_AUDIO_PARAM_PCMMODETYPE */
@@ -165,7 +229,7 @@ public class OMXConstants {
 	public static final int INDEX_ConfigAudioReverberation			= 0x0400002E;	/**< reference: OMX_AUDIO_CONFIG_REVERBERATIONTYPE */
 	public static final int INDEX_ConfigAudioChannelVolume			= 0x0400002F;	/**< reference: OMX_AUDIO_CONFIG_CHANNELVOLUMETYPE */
 
-    /* Image specific parameters and configurations */
+	/* Image specific parameters and configurations */
 	public static final int INDEX_ImageStartUnused					= 0x05000000;
 	public static final int INDEX_ParamImagePortFormat				= 0x05000001;	/**< reference: OMX_IMAGE_PARAM_PORTFORMATTYPE */
 	public static final int INDEX_ParamFlashControl					= 0x05000002;	/**< reference: OMX_IMAGE_PARAM_FLASHCONTROLTYPE */
@@ -175,7 +239,7 @@ public class OMXConstants {
 	public static final int INDEX_ParamHuffmanTable					= 0x05000006;	/**< reference: OMX_IMAGE_PARAM_HUFFMANTTABLETYPE */
 	public static final int INDEX_ConfigFlashControl				= 0x05000007;	/**< reference: OMX_IMAGE_PARAM_FLASHCONTROLTYPE */
 
-    /* Video specific parameters and configurations */
+	/* Video specific parameters and configurations */
 	public static final int INDEX_VideoStartUnused					= 0x06000000;
 	public static final int INDEX_ParamVideoPortFormat				= 0x06000001;	/**< reference: OMX_VIDEO_PARAM_PORTFORMATTYPE */
 	public static final int INDEX_ParamVideoQuantization			= 0x06000002;	/**< reference: OMX_VIDEO_PARAM_QUANTIZATIONTYPE */
@@ -204,7 +268,7 @@ public class OMXConstants {
 	public static final int INDEX_ConfigVideoAVCIntraPeriod			= 0x06000019;	/**< reference: OMX_VIDEO_CONFIG_AVCINTRAPERIOD */
 	public static final int INDEX_ConfigVideoNalSize				= 0x0600001A;	/**< reference: OMX_VIDEO_CONFIG_NALSIZE */
 
-    /* Image & Video common Configurations */
+	/* Image & Video common Configurations */
 	public static final int INDEX_CommonStartUnused					= 0x07000000;
 	public static final int INDEX_ParamCommonDeblocking				= 0x07000001;	/**< reference: OMX_PARAM_DEBLOCKINGTYPE */
 	public static final int INDEX_ParamCommonSensorMode				= 0x07000002;	/**< reference: OMX_PARAM_SENSORMODETYPE */
@@ -241,14 +305,14 @@ public class OMXConstants {
 	public static final int INDEX_ConfigCommonFocusStatus			= 0x07000021;	/**< reference: OMX_PARAM_FOCUSSTATUSTYPE */
 	public static final int INDEX_ConfigCommonTransitionEffect		= 0x07000022;	/**< reference: OMX_CONFIG_TRANSITIONEFFECTTYPE */
 
-    /* Reserved Configuration range */
+	/* Reserved Configuration range */
 	public static final int INDEX_OtherStartUnused					= 0x08000000;
 	public static final int INDEX_ParamOtherPortFormat				= 0x08000001;	/**< reference: OMX_OTHER_PARAM_PORTFORMATTYPE */
 	public static final int INDEX_ConfigOtherPower					= 0x08000002;	/**< reference: OMX_OTHER_CONFIG_POWERTYPE */
 	public static final int INDEX_ConfigOtherStats					= 0x08000003;	/**< reference: OMX_OTHER_CONFIG_STATSTYPE */
 
 
-    /* Reserved Time range */
+	/* Reserved Time range */
 	public static final int INDEX_TimeStartUnused					= 0x09000000;
 	public static final int INDEX_ConfigTimeScale					= 0x09000001;	/**< reference: OMX_TIME_CONFIG_SCALETYPE */
 	public static final int INDEX_ConfigTimeClockState				= 0x09000002;	/**< reference: OMX_TIME_CONFIG_CLOCKSTATETYPE */
@@ -264,26 +328,26 @@ public class OMXConstants {
 
 
 	public static final int INDEX_KhronosExtensions					= 0x6F000000;	/**< Reserved region for introducing Khronos Standard Extensions */
-    /* Vendor specific area */
+	/* Vendor specific area */
 	public static final int INDEX_VendorStartUnused					= 0x7F000000;
-    /* Vendor specific structures should be in the range of 0x7F000000
-       to 0x7FFFFFFE.  This range is not broken out by vendor, so
-       private indexes are not guaranteed unique and therefore should
-       only be sent to the appropriate component. */
+	/* Vendor specific structures should be in the range of 0x7F000000
+	   to 0x7FFFFFFE.  This range is not broken out by vendor, so
+	   private indexes are not guaranteed unique and therefore should
+	   only be sent to the appropriate component. */
 
-    /* used for ilcs-top communication */
+	/* used for ilcs-top communication */
 	public static final int INDEX_ParamMarkComparison				= 0x7F000001;	/**< reference: OMX_PARAM_MARKCOMPARISONTYPE */
 	public static final int INDEX_ParamPortSummary					= 0x7F000002;	/**< reference: OMX_PARAM_PORTSUMMARYTYPE */
 	public static final int INDEX_ParamTunnelStatus					= 0x7F000003;	/**< reference : OMX_PARAM_TUNNELSTATUSTYPE */
 	public static final int INDEX_ParamBrcmRecursionUnsafe			= 0x7F000004;	/**< reference: OMX_PARAM_BRCMRECURSIONUNSAFETYPE */
 
-    /* used for top-ril communication */
+	/* used for top-ril communication */
 	public static final int INDEX_ParamBufferAddress				= 0x7F000005;	/**< reference : OMX_PARAM_BUFFERADDRESSTYPE */
 	public static final int INDEX_ParamTunnelSetup					= 0x7F000006;	/**< reference : OMX_PARAM_TUNNELSETUPTYPE */
 	public static final int INDEX_ParamBrcmPortEGL					= 0x7F000007;	/**< reference : OMX_PARAM_BRCMPORTEGLTYPE */
 	public static final int INDEX_ParamIdleResourceCount			= 0x7F000008;	/**< reference : OMX_PARAM_U32TYPE */
 
-    /* used for ril-ril communication */
+	/* used for ril-ril communication */
 	public static final int INDEX_ParamImagePoolDisplayFunction		= 0x7F000009;	/**<reference : OMX_PARAM_IMAGEDISPLAYFUNCTIONTYPE */
 	public static final int INDEX_ParamBrcmDataUnit					= 0x7F00000A;	/**<reference: OMX_PARAM_DATAUNITTYPE */
 	public static final int INDEX_ParamCodecConfig					= 0x7F00000B;	/**<reference: OMX_PARAM_CODECCONFIGTYPE */
@@ -291,10 +355,10 @@ public class OMXConstants {
 	public static final int INDEX_ParamCameraStripeFunction			= 0x7F00000D;	/**<reference : OMX_PARAM_CAMERASTRIPEFUNCTIONTYPE */
 	public static final int INDEX_ParamCameraCaptureEventFunction	= 0x7F00000E;	/**<reference : OMX_PARAM_CAMERACAPTUREEVENTFUNCTIONTYPE */
 
-    /* used for client-ril communication */
+	/* used for client-ril communication */
 	public static final int INDEX_ParamTestInterface				= 0x7F00000F;	/**< reference : OMX_PARAM_TESTINTERFACETYPE */
 
-    // 0x7f000010
+	// 0x7f000010
 	public static final int INDEX_ConfigDisplayRegion				= 0x7F000010;	/**< reference : OMX_CONFIG_DISPLAYREGIONTYPE */
 	public static final int INDEX_ParamSource						= 0x7F000011;	/**< reference : OMX_PARAM_SOURCETYPE */
 	public static final int INDEX_ParamSourceSeed					= 0x7F000012;	/**< reference : OMX_PARAM_SOURCESEEDTYPE */
@@ -312,7 +376,7 @@ public class OMXConstants {
 	public static final int INDEX_ConfigCameraISPOutputPoolHeight	= 0x7F00001E;	/**<reference : OMX_PARAM_U32TYPE */
 	public static final int INDEX_ParamImagePoolSize				= 0x7F00001F;	/**<reference: OMX_PARAM_IMAGEPOOLSIZETYPE */
 
-    // 0x7f000020
+	// 0x7f000020
 	public static final int INDEX_ParamImagePoolExternal				= 0x7F000020;	/**<reference: OMX_PARAM_IMAGEPOOLEXTERNALTYPE */
 	public static final int INDEX_ParamRUTILFifoInfo					= 0x7F000021;	/**<reference: OMX_PARAM_RUTILFIFOINFOTYPE*/
 	public static final int INDEX_ParamILFifoConfig						= 0x7F000022;	/**<reference: OMX_PARAM_ILFIFOCONFIG */
@@ -330,7 +394,7 @@ public class OMXConstants {
 	public static final int INDEX_ConfigCommonFaceDetectionRegion		= 0x7F00002E;	/**<reference : OMX_CONFIG_FACEDETECTIONREGIONTYPE */
 	public static final int INDEX_ConfigCommonInterlace					= 0x7F00002F;	/**<reference: OMX_CONFIG_INTERLACETYPE */
 
-    // 0x7f000030
+	// 0x7f000030
 	public static final int INDEX_ParamISPTunerName						= 0x7F000030;	/**<reference: OMX_PARAM_CAMERAISPTUNERTYPE */
 	public static final int INDEX_ParamCameraDeviceNumber				= 0x7F000031;	/**<reference: OMX_PARAM_U32TYPE */
 	public static final int INDEX_ParamCameraDevicesPresent				= 0x7F000032;	/**<reference: OMX_PARAM_U32TYPE */
@@ -348,7 +412,7 @@ public class OMXConstants {
 	public static final int INDEX_ConfigBrcmEGLImageMemHandle			= 0x7F00003E;	/**<reference: OMX_CONFIG_BRCMEGLIMAGEMEMHANDLETYPE */
 	public static final int INDEX_ConfigPrivacyIndicator				= 0x7F00003F;	/**<reference: OMX_CONFIG_PRIVACYINDICATORTYPE */
 
-    // 0x7f000040
+	// 0x7f000040
 	public static final int INDEX_ParamCameraFlashType					= 0x7F000040;	/**<reference: OMX_PARAM_CAMERAFLASHTYPE */
 	public static final int INDEX_ConfigCameraEnableStatsPass			= 0x7F000041;	/**<reference: OMX_CONFIG_BOOLEANTYPE */
 	public static final int INDEX_ConfigCameraFlashConfig				= 0x7F000042;	/**<reference: OMX_CONFIG_CAMERAFLASHCONFIGTYPE */
@@ -366,7 +430,7 @@ public class OMXConstants {
 	public static final int INDEX_ParamBrcmPixelValueRange				= 0x7F00004E;	/**< reference: OMX_PARAM_BRCMPIXELVALUERANGETYPE */
 	public static final int INDEX_ParamCameraDisableAlgorithm			= 0x7F00004F;	/**< reference: OMX_PARAM_CAMERADISABLEALGORITHMTYPE */
 
-    // 0x7f000050
+	// 0x7f000050
 	public static final int INDEX_ConfigBrcmVideoIntraPeriodTime		= 0x7F000050;	/**< reference: OMX_PARAM_U32TYPE */
 	public static final int INDEX_ConfigBrcmVideoIntraPeriod			= 0x7F000051;	/**< reference: OMX_PARAM_U32TYPE */
 	public static final int INDEX_ConfigBrcmAudioEffectControl			= 0x7F000052;	/**< reference: OMX_CONFIG_BRCMAUDIOEFFECTCONTROLTYPE */
@@ -384,7 +448,7 @@ public class OMXConstants {
 	public static final int INDEX_ParamBrcmImmutableInput				= 0x7F00005E;	/**< reference: OMX_CONFIG_BOOLEANTYPE */
 	public static final int INDEX_ParamDynamicParameterFile				= 0x7F00005F;	/**< reference: OMX_PARAM_CONTENTURITYPE */
 
-    // 0x7f000060
+	// 0x7f000060
 	public static final int INDEX_ParamUseDynamicParameterFile			= 0x7F000060;	/**< reference: OMX_CONFIG_BOOLEANTYPE */
 	public static final int INDEX_ConfigCameraInfo						= 0x7F000061;	/**< reference: OMX_CONFIG_CAMERAINFOTYPE */
 	public static final int INDEX_ConfigCameraFeatures					= 0x7F000062;	/**< reference: OMX_CONFIG_CAMERAFEATURESTYPE */
@@ -402,7 +466,7 @@ public class OMXConstants {
 	public static final int INDEX_ConfigBrcmSyncOutput					= 0x7F00006E;	/**< reference: OMX_CONFIG_BRCMSYNCOUTPUTTYPE */
 	public static final int INDEX_ParamBrcmFlushCallback				= 0x7F00006F;	/**< reference: OMX_PARAM_BRCMFLUSHCALLBACK */
 
-    // 0x7f000070
+	// 0x7f000070
 	public static final int INDEX_ConfigBrcmVideoRequestIFrame			= 0x7F000070;	/**< reference: OMX_CONFIG_BOOLEANTYPE */
 	public static final int INDEX_ParamBrcmNALSSeparate					= 0x7F000071;	/**< reference: OMX_CONFIG_BOOLEANTYPE */
 	public static final int INDEX_ConfigConfirmView						= 0x7F000072;	/**< reference: OMX_CONFIG_BOOLEANTYPE */
@@ -420,7 +484,7 @@ public class OMXConstants {
 	public static final int INDEX_ParamBrcmCameraInputAspectRatio		= 0x7F00007E;	/**< reference: OMX_PARAM_BRCMASPECTRATIOTYPE */
 	public static final int INDEX_ParamDynamicParameterFileFailFatal	= 0x7F00007F;	/**< reference: OMX_CONFIG_BOOLEANTYPE */
 
-    // 0x7f000080
+	// 0x7f000080
 	public static final int INDEX_ParamBrcmVideoDecodeErrorConcealment	= 0x7F000080;	/**< reference: OMX_PARAM_BRCMVIDEODECODEERRORCONCEALMENTTYPE */
 	public static final int INDEX_ParamBrcmInterpolateMissingTimestamps	= 0x7F000081;	/**< reference: OMX_CONFIG_BOOLEANTYPE */
 	public static final int INDEX_ParamBrcmSetCodecPerformanceMonitoring= 0x7F000082;	/**< reference: OMX_PARAM_U32TYPE */
@@ -438,7 +502,7 @@ public class OMXConstants {
 	public static final int INDEX_ConfigAsynchronousFailureURI			= 0x7F00008E;	/**< reference: OMX_PARAM_CONTENTURITYPE */
 	public static final int INDEX_ConfigCommonFaceBeautification		= 0x7F00008F;	/**< reference: OMX_CONFIG_BOOLEANTYPE */
 
-    // 0x7f000090
+	// 0x7f000090
 	public static final int INDEX_ConfigCommonSceneDetectionControl		= 0x7F000090;	/**< reference: OMX_CONFIG_BOOLEANTYPE */
 	public static final int INDEX_ConfigCommonSceneDetected				= 0x7F000091;	/**< reference: OMX_CONFIG_SCENEDETECTTYPE */
 	public static final int INDEX_ParamDisableVllPool					= 0x7F000092;	/**< reference: OMX_CONFIG_BOOLEANTYPE */
@@ -457,7 +521,7 @@ public class OMXConstants {
 	public static final int INDEX_ConfigBrcmCameraRnDPostprocess		= 0x7F00009E;	/**< reference: OMX_CONFIG_BOOLEANTYPE */
 	public static final int INDEX_ConfigBrcmAudioTrackChangeCount		= 0x7F00009F;	/**< reference: OMX_PARAM_U32TYPE */
 
-    // 0x7f0000a0
+	// 0x7f0000a0
 	public static final int INDEX_ParamCommonUseStcTimestamps		= 0x7F0000A0;	/**< reference: OMX_PARAM_TIMESTAMPMODETYPE */
 	public static final int INDEX_ConfigBufferStall					= 0x7F0000A1;	/**< reference: OMX_CONFIG_BUFFERSTALLTYPE */
 	public static final int INDEX_ConfigRefreshCodec				= 0x7F0000A2;	/**< reference: OMX_CONFIG_BOOLEANTYPE */
@@ -475,7 +539,7 @@ public class OMXConstants {
 	public static final int INDEX_ParamBrcmEEDELossRate				= 0x7F0000AE;	/**< reference: OMX_VIDEO_EEDE_LOSSRATE */
 	public static final int INDEX_ParamAudioDts						= 0x7F0000AF;	/**< reference: OMX_AUDIO_PARAM_DTSTYPE */
 
-    // 0x7f0000b0
+	// 0x7f0000b0
 	public static final int INDEX_ParamNumOutputChannels			= 0x7F0000B0;	/**< reference: OMX_PARAM_U32TYPE */
 	public static final int INDEX_ConfigBrcmHighDynamicRange		= 0x7F0000B1;	/**< reference: OMX_CONFIG_BOOLEANTYPE */
 	public static final int INDEX_ConfigBrcmPoolMemAllocSize		= 0x7F0000B2;	/**< reference: OMX_PARAM_U32TYPE */
@@ -493,7 +557,7 @@ public class OMXConstants {
 	public static final int INDEX_ParamBrcmVideoEncodeQpP			= 0x7F0000BE;	/**< reference: OMX_PARAM_U32TYPE */
 	public static final int INDEX_ParamBrcmVideoRCSliceDQuant		= 0x7F0000BF;	/**< reference: OMX_PARAM_U32TYPE */
 
-    // 0x7f0000c0
+	// 0x7f0000c0
 	public static final int INDEX_ParamBrcmVideoFrameLimitBits		= 0x7F0000C0;	/**< reference: OMX_PARAM_U32TYPE */
 	public static final int INDEX_ParamBrcmVideoPeakRate			= 0x7F0000C1;	/**< reference: OMX_PARAM_U32TYPE */
 	public static final int INDEX_ConfigBrcmVideoH264DisableCABAC	= 0x7F0000C2;	/**< reference: OMX_CONFIG_BOOLEANTYPE */
@@ -511,7 +575,7 @@ public class OMXConstants {
 	public static final int INDEX_ParamBrcmAttachLog				= 0x7F0000CE;	/**< reference: OMX_CONFIG_BOOLEANTYPE */
 	public static final int INDEX_ParamCameraZeroShutterLag			= 0x7F0000CF;	/**< reference: OMX_CONFIG_ZEROSHUTTERLAGTYPE */
 
-    // 0x7f0000d0
+	// 0x7f0000d0
 	public static final int INDEX_ParamBrcmFpsRange						= 0x7F0000D0;	/**< reference: OMX_PARAM_BRCMFRAMERATERANGETYPE */
 	public static final int INDEX_ParamCaptureExposureCompensation		= 0x7F0000D1;	/**< reference: OMX_PARAM_S32TYPE */
 	public static final int INDEX_ParamBrcmVideoPrecodeForQP			= 0x7F0000D2;	/**< reference: OMX_CONFIG_BOOLEANTYPE */
@@ -529,7 +593,7 @@ public class OMXConstants {
 	public static final int INDEX_ParamBrcmVideoCroppingDisable			= 0x7F0000DE;	/**< reference: OMX_CONFIG_PORTBOOLEANTYPE*/
 	public static final int INDEX_ParamBrcmVideoAVCInlineHeaderEnable	= 0x7F0000DF;	/**< reference: OMX_CONFIG_PORTBOOLEANTYPE*/
 
-    // 0x7f0000f0
+	// 0x7f0000f0
 	public static final int INDEX_ConfigBrcmAudioDownmixCoefficients	= 0x7f0000F0;	/**< reference: OMX_CONFIG_BRCMAUDIODOWNMIXCOEFFICIENTS */
 	public static final int INDEX_ConfigBrcmAudioDownmixCoefficients8x8	= 0x7F0000F1;	/**< reference: OMX_CONFIG_BRCMAUDIODOWNMIXCOEFFICIENTS8x8 */
 	public static final int INDEX_ConfigBrcmAudioMaxSample				= 0x7F0000F2;	/**< reference: OMX_CONFIG_BRCMAUDIOMAXSAMPLE */
@@ -570,9 +634,8 @@ public class OMXConstants {
 			.addInt32("nBitrate")
 			.addInt32("xFramerate")
 			.addBoolean("bFlagErrorConcealment")
-			.addInt32("eCompressionFormat")
-//			.addEnum(OMXConstants::mapVideoEncodingType, OMXConstants::unmapVideoEncodingType, "eCompressionFormat")
-			.addInt32("eColorFormat")
+			.addEnum(OMXConstants::mapVideoEncodingType, OMXConstants::unmapVideoEncodingType, "eCompressionFormat")
+			.addEnum(OMXConstants::mapColorFormatType, OMXConstants::unmapColorFormatType, "eColorFormat")
 			.addPointer("pNativeWindow")
 			.build();
 	
@@ -631,13 +694,13 @@ public class OMXConstants {
 			.addInt32("nTargetBitrate")
 			.build();
 	
-	public static final StructPrototype PARAM_PORTFORMATTYPE = StructPrototype.builder()
+	public static final StructPrototype PARAM_VIDEO_PORTFORMATTYPE = StructPrototype.builder()
 			.addInt32("nSize")
 			.addStruct(VERSION_TYPE, "nVersion")
 			.addInt32("nPortIndex")
 			.addInt32("nIndex")
-			.addInt32("eCompressionFormat")
-			.addInt32("eColorFormat")
+			.addEnum(OMXConstants::mapVideoEncodingType, OMXConstants::unmapVideoEncodingType, "eCompressionFormat")
+			.addEnum(OMXConstants::mapColorFormatType, OMXConstants::unmapColorFormatType, "eColorFormat")
 			.addInt32("xFramerate")
 			.build();
 	
@@ -648,14 +711,53 @@ public class OMXConstants {
 			.withNumberField("eControlRate", "controlRate")
 			.withNumberField("nTargetBitrate", "target")
 			.build();
+	
 	public static final OMXControlPrototype CTRL_VIDEO_FORMAT = OMXControlPrototype.builder()
 			.setName("format")
 			.setQuery(OMXConstants.INDEX_ParamVideoPortFormat)
-			.setStruct(OMXConstants.PARAM_PORTFORMATTYPE)
+			.setStruct(OMXConstants.PARAM_VIDEO_PORTFORMATTYPE)
+			.withNumberField("nIndex", "index")
 			.withEnumField("eCompressionFormat", "compression", ImagePalette.class)
-			.withEnumField("eColorFormat", "colorFormat", VideoCompressionType.class)
+			.withEnumField("eColorFormat", "color", ImagePalette.class)
 			.withNumberField("xFramerate", "framerate")
+			.withEnumerator()
+				.and()
 			.build();
+	
+	private static ConcurrentHashMap<String, IndexInfo> indexMap;
+	private static class IndexInfo {
+		final int index;
+		final boolean isConfig;
+		public IndexInfo(int index, boolean isConfig) {
+			this.index = index;
+			this.isConfig = isConfig;
+		}
+	}
+	
+	private static void buildIndexMap() {
+		if (indexMap != null)
+			return;
+		synchronized (OMXConstants.class) {
+			//Check again, b/c it might have been built since the last check
+			if (indexMap != null)
+				return;
+			indexMap = new ConcurrentHashMap<>();
+			for (Field field : OMXConstants.class.getDeclaredFields()) {
+				if (field.isSynthetic())
+					continue;
+				String fieldName = field.getName();
+				if (fieldName == null || !fieldName.startsWith("INDEX_"))
+					continue;
+				String idxName = fieldName.substring("INDEX_".length());
+				try {
+					IndexInfo info = new IndexInfo(field.getInt(null), idxName.startsWith("Config"));
+					indexMap.put(idxName, info);
+				} catch (IllegalArgumentException | IllegalAccessException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
 	
 	public static AudioEncodingType mapAudioEncodingType(int idx) {
 		switch (idx) {
@@ -815,6 +917,20 @@ public class OMXConstants {
 				return ImagePalette.AVC;
 			case VIDEO_ENCODING_MJPEG:
 				return ImagePalette.MJPEG;
+			case VIDEO_ENCODING_VP6:
+				return ImagePalette.VP6;
+			case VIDEO_ENCODING_VP7:
+				return ImagePalette.VP7;
+			case VIDEO_ENCODING_VP8:
+				return ImagePalette.VP8;
+			case VIDEO_ENCODING_YUV:
+				return ImagePalette.YUV420;
+			case VIDEO_ENCODING_SORENSON:
+				return ImagePalette.SORENSON;
+			case VIDEO_ENCODING_THEORA:
+				return ImagePalette.THEORA;
+			case VIDEO_ENCODING_MVC:
+				return ImagePalette.MVC;
 			case VIDEO_ENCODING_AUTO_DETECT:
 			default:
 				throw new IllegalArgumentException("Cannot map video encoding " + idx);
@@ -839,18 +955,179 @@ public class OMXConstants {
 				return VIDEO_ENCODING_AVC;
 			case MJPEG:
 				return VIDEO_ENCODING_MJPEG;
+			case VP6:
+				return VIDEO_ENCODING_VP6;
+			case VP7:
+				return VIDEO_ENCODING_VP7;
+			case VP8:
+				return VIDEO_ENCODING_VP8;
+			case YUV420:
+				return VIDEO_ENCODING_YUV;
+			case SORENSON:
+				return VIDEO_ENCODING_SORENSON;
+			case THEORA:
+				return VIDEO_ENCODING_THEORA;
+			case MVC:
+				return VIDEO_ENCODING_MVC;
 			default:
 				throw new IllegalArgumentException("Cannot unmap video encoding " + palette);
 		}
 	}
 	
+	public static ImagePalette mapColorFormatType(int idx) {
+		switch (idx) {
+			case COLOR_FORMAT_UNUSED:
+				return null;
+			case COLOR_FORMAT_MONOCHROME:
+				break;
+			case COLOR_FORMAT_8BITRGB332:
+				return ImagePalette.RGB332;
+			case COLOR_FORMAT_12BITRGB444:
+				break;
+			case COLOR_FORMAT_16BITARGB4444:
+				return ImagePalette.RGB444;//TODO not perfect mapping
+			case COLOR_FORMAT_16BITARGB1555:
+				break;
+			case COLOR_FORMAT_16BITRGB565:
+				return ImagePalette.RGB565;
+			case COLOR_FORMAT_16BITBGR565:
+				return ImagePalette.BGR565;
+			case COLOR_FORMAT_18BITRGB666:
+				return ImagePalette.RGB666;
+			case COLOR_FORMAT_18BITARGB1665:
+				break;
+			case COLOR_FORMAT_19BITARGB1666:
+				break;
+			case COLOR_FORMAT_24BITRGB888:
+				return ImagePalette.RGB24;
+			case COLOR_FORMAT_24BITBGR888:
+				return ImagePalette.BGR24;
+			case COLOR_FORMAT_24BITARGB1887:
+				break;
+			case COLOR_FORMAT_25BITARGB1888:
+				break;
+			case COLOR_FORMAT_32BITBGRA8888:
+				break;
+			case COLOR_FORMAT_32BITARGB8888:
+				break;
+			case COLOR_FORMAT_YUV411PLANAR:
+			case COLOR_FORMAT_YUV411PACKEDPLANAR:
+				return ImagePalette.YUV411P;
+			case COLOR_FORMAT_YUV420PLANAR:
+			case COLOR_FORMAT_YUV420PACKEDPLANAR:
+				return ImagePalette.YUV420;
+			case COLOR_FORMAT_YUV420SEMIPLANAR:
+				return ImagePalette.NV12;
+			case COLOR_FORMAT_YUV422PLANAR:
+			case COLOR_FORMAT_YUV422PACKEDPLANAR:
+				return ImagePalette.YUV422P;
+			case COLOR_FORMAT_YUV422SEMIPLANAR:
+				return ImagePalette.NV16;
+			case COLOR_FORMAT_YCBYCR:
+				return ImagePalette.YUYV;
+			case COLOR_FORMAT_YCRYCB:
+				return ImagePalette.YVYU;
+			case COLOR_FORMAT_CBYCRY:
+				return ImagePalette.UYVY;
+			case COLOR_FORMAT_CRYCBY:
+				return ImagePalette.VYUY;
+			case COLOR_FORMAT_YUV444INTERLEAVED:
+				return ImagePalette.YUV444;
+			//TODO figure out which bayer types these are
+			case COLOR_FORMAT_RAWBAYER8BIT:
+			case COLOR_FORMAT_RAWBAYER10BIT:
+			case COLOR_FORMAT_RAWBAYER8BITCOMPRESSED:
+				break;
+			case COLOR_FORMAT_L2:
+				break;
+			case COLOR_FORMAT_L4:
+				return ImagePalette.Y4;
+			case COLOR_FORMAT_L8:
+				return ImagePalette.Y8;
+			case COLOR_FORMAT_L16:
+				return ImagePalette.Y16;
+			case COLOR_FORMAT_L24:
+				return ImagePalette.Y24;
+			case COLOR_FORMAT_L32:
+				return ImagePalette.Y32;
+			case COLOR_FORMAT_YUV420PACKEDSEMIPLANAR:
+				return ImagePalette.NV12;
+			case COLOR_FORMAT_YUV422PACKEDSEMIPLANAR:
+				return ImagePalette.NV16;
+			case COLOR_FORMAT_18BITBGR666:
+			case COLOR_FORMAT_24BITARGB6666:
+			case COLOR_FORMAT_24BITABGR6666:
+			default:
+				break;
+		}
+		throw new IllegalArgumentException("Cannot map " + idx);
+	}
+	
+	public static int unmapColorFormatType(ImagePalette palette) {
+		if (palette == null)
+			return COLOR_FORMAT_UNUSED;
+		switch (palette) {
+			case RGB332:
+				return COLOR_FORMAT_8BITRGB332;
+			case RGB444:
+				return COLOR_FORMAT_16BITARGB4444;
+			case RGB565:
+				return COLOR_FORMAT_16BITRGB565;
+			case BGR565:
+				return COLOR_FORMAT_16BITBGR565;
+			case RGB666:
+				return COLOR_FORMAT_18BITRGB666;
+			case RGB24:
+				return COLOR_FORMAT_24BITRGB888;
+			case BGR24:
+				return COLOR_FORMAT_24BITBGR888;
+			case YUV411P:
+				return COLOR_FORMAT_YUV411PACKEDPLANAR;
+			case YUV420:
+				return COLOR_FORMAT_YUV420PACKEDPLANAR;
+			case YUV422P:
+				return COLOR_FORMAT_YUV422PACKEDPLANAR;
+			case YUYV:
+				return COLOR_FORMAT_YCBYCR;
+			case YVYU:
+				return COLOR_FORMAT_YCRYCB;
+			case UYVY:
+				return COLOR_FORMAT_CBYCRY;
+			case VYUY:
+				return COLOR_FORMAT_CRYCBY;
+			case YUV444:
+				return COLOR_FORMAT_YUV444INTERLEAVED:
+			case Y4:
+				return COLOR_FORMAT_L4;
+			case GRAY:
+				return COLOR_FORMAT_L8;
+			case Y16:
+				return COLOR_FORMAT_L16;
+			case Y32:
+				return COLOR_FORMAT_L32;
+			case NV12:
+				return COLOR_FORMAT_YUV420PACKEDSEMIPLANAR;
+			case NV16:
+				return COLOR_FORMAT_YUV422PACKEDSEMIPLANAR;
+			default:
+				break;
+		}
+		throw new IllegalArgumentException("Cannot unmap " + palette);
+	}
+	
 	public static Rational decodeQ16(int q16) {
+		float fValue = ((float) q16)/32768.0f;
 		//TODO finish
 		return null;
 	}
 	
 	public static int encodeQ16(Rational r) {
-		//TODO finish
-		return -1;
+		float fValue = r.floatValue() * 32768.0f;
+		int iValue = (int) (fValue + .5f);
+		if (iValue > 32767)
+			iValue = 32767;
+		if (iValue < -32768)
+			iValue = -32768;
+		return iValue;
 	}
 }
