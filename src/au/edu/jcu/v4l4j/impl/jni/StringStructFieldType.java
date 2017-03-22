@@ -8,6 +8,7 @@ import java.nio.charset.CoderResult;
 import java.nio.charset.StandardCharsets;
 
 public class StringStructFieldType extends ArrayStructFieldType {
+	private static final long serialVersionUID = 2703178802386680298L;
 	
 	/**
 	 * String of size 128. Shows up often.

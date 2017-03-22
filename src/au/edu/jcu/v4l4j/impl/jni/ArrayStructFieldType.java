@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ArrayStructFieldType implements StructFieldType {
+	private static final long serialVersionUID = 2215780449028701935L;
+	
 	protected final StructFieldType baseType;
 	protected final int length;
 	

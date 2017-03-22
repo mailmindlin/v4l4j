@@ -3,6 +3,8 @@ package au.edu.jcu.v4l4j.impl.jni;
 import java.nio.ByteBuffer;
 
 public class PointerStructFieldType implements StructFieldType {
+	private static final long serialVersionUID = -6196112410849049148L;
+	
 	protected final StructFieldType farType;
 	
 	public PointerStructFieldType(StructFieldType farType) {

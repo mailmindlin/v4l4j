@@ -1,5 +1,9 @@
 package au.edu.jcu.v4l4j.impl.jni;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,7 +14,7 @@ import java.util.Map;
 import java.util.function.IntFunction;
 import java.util.function.ToIntFunction;
 
-public class StructPrototype implements StructFieldType {
+public class StructPrototype implements StructFieldType, Externalizable {
 	protected final StructField[] fields;
 	protected final Map<String, StructField> fieldMap;
 
@@ -256,5 +260,17 @@ public class StructPrototype implements StructFieldType {
 				.append(",expands=").append(expands())
 				.append(",fields=").append(this.fieldMap)
 				.append("})").toString();
+	}
+
+	@Override
+	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+		int numFields = in.readInt();
+		//TODO finish
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput arg0) throws IOException {
+		// TODO Auto-generated method stub
+		
 	}
 }
