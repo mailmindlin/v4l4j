@@ -7,13 +7,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import au.edu.jcu.v4l4j.api.ObjIntFunction;
+import au.edu.jcu.v4l4j.impl.jni.ArrayStructFieldType;
 import au.edu.jcu.v4l4j.impl.jni.NativeStruct;
+import au.edu.jcu.v4l4j.impl.jni.PointerStructFieldType;
+import au.edu.jcu.v4l4j.impl.jni.PrimitiveStructFieldType;
 import au.edu.jcu.v4l4j.impl.jni.StructFieldType;
 import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
 import au.edu.jcu.v4l4j.impl.jni.StructPrototype.StructPrototypeBuilder;
@@ -259,43 +263,134 @@ public class OMXControlPrototype {
 		HashMap<String, StructFieldType> typeRegistry = new HashMap<>();
 		HashMap<String, OMXControlPrototype> controlRegistry = new HashMap<>();
 		
-		private StructFieldType lookupType(String name) {
-			if (name == null || name.isEmpty())
+		private StructFieldType lookupType(String type) {
+			if (type == null || type.isEmpty())
 				return null;
-			return null;//TODO fin
+			
+			return typeRegistry.computeIfAbsent(type, name -> {
+				//Compute type
+				
+				//Check if it's an alias for one of the primitives
+				//TODO: fix 'int' referring to native int type (not int32)
+				switch (name) {
+					case "bool":
+					case "boolean":
+						return PrimitiveStructFieldType.BOOL;
+					case "u8":
+					case "i8":
+					case "int8":
+					case "uint8":
+						return PrimitiveStructFieldType.INT8;
+					case "u16":
+					case "i16":
+					case "int16":
+					case "uint16":
+						return PrimitiveStructFieldType.INT16;
+					case "u32":
+					case "i32":
+					case "int32":
+					case "uint32":
+						return PrimitiveStructFieldType.INT32;
+					case "u64":
+					case "i64":
+					case "int64":
+					case "uint64":
+						return PrimitiveStructFieldType.INT64;
+					case "f32":
+					case "float32":
+						return PrimitiveStructFieldType.FLOAT32;
+					case "f64":
+					case "float64":
+						return PrimitiveStructFieldType.FLOAT64;
+					case "void*":
+						return PrimitiveStructFieldType.RAW_POINTER;
+					default:
+						break;
+				}
+				if (name.endsWith("]")) {
+					//Is array type
+					int openBracketIdx = name.lastIndexOf('[');
+					if (openBracketIdx < 0)
+						return null;
+					//TODO check indicies
+					//TODO support vararrays
+					int arraySize = Integer.parseInt(name.substring(openBracketIdx + 1, name.length() - 2));
+					StructFieldType baseType = lookupType(name.substring(0, openBracketIdx));
+					if (baseType == null)
+						return null;
+					return new ArrayStructFieldType(baseType, arraySize);
+				} else if (name.endsWith("*")) {
+					//Pointer
+					StructFieldType baseType = lookupType(name.substring(0, name.length() - 2));
+					if (baseType == null)
+						return null;
+					return new PointerStructFieldType(baseType);
+				}
+				return null;
+			});
 		}
 		
 		private boolean addField(StructPrototypeBuilder builder, String fieldTypeName, String fieldName) {
 			return false;
 		}
 		
-		protected void readTypedef(JSONObject typedef, boolean continueOnError) {
-			StructPrototypeBuilder typeBuilder = StructPrototype.builder();
-			
+		protected void readTypedef(JSONObject typedef, boolean continueOnError) {			
 			String typeName = typedef.getString("name");
 			String kind = typedef.getString("kind");//TODO support unions
 			
-			JSONArray fields = typedef.getJSONArray("fields");
-			final int numFields = fields.length();
-			for (int j = 0; j < numFields; j++) {
-				JSONObject field = fields.getJSONObject(j);
-				String fieldName = field.optString("name", "unknown$" + j);//TODO validate names
-				String fieldKindName = field.getString("type");
-				if (!addField(typeBuilder, fieldKindName, fieldName)) {
-					//We failed to add the field
-					if (continueOnError) {
-						//Try as int field
-						if (addField(typeBuilder, "int32", fieldName)) {
-							System.err.print("Warning: Downgraded field '" + typeName + "::" + fieldName + "' from unknown type '" + fieldKindName + "' to type 'int32'");
-							continue;
+			switch (kind) {
+				case "alias": {
+					String targetName = typedef.getString("alias");
+					StructFieldType target = lookupType(targetName);
+					if (target == null) {
+						if (continueOnError) {
+							target = lookupType("i32");
+							System.err.print("Warning: Downgraded alias '" + typeName + "' from unknown type '" + targetName + "' to type 'int32'");
+						} else {
+							throw new RuntimeException("Unknown type '" + targetName + "' for alias '" + typeName + "'");
 						}
 					}
-					//TODO: replace with better exception type
-					throw new RuntimeException("Unknown type '" + fieldKindName + "' for field '" + fieldName + "' in typedef '" + typeName + "'");
+					typeRegistry.put(typeName, target);
+					break;
 				}
+				case "enum": {
+					//TODO finish
+					typedef.getJSONArray("fields").toList().stream()
+						.map(Object::toString)
+						.collect(Collectors.toList());
+					break;
+				}
+				case "struct": {
+					StructPrototypeBuilder typeBuilder = StructPrototype.builder();
+					JSONArray fields = typedef.getJSONArray("fields");
+					final int numFields = fields.length();
+					for (int j = 0; j < numFields; j++) {
+						JSONObject field = fields.getJSONObject(j);
+						String fieldName = field.optString("name", "unknown$" + j);//TODO validate names
+						String fieldKindName = field.getString("type");
+						if (!addField(typeBuilder, fieldKindName, fieldName)) {
+							//We failed to add the field
+							if (continueOnError) {
+								//Try as int field
+								if (addField(typeBuilder, "int32", fieldName)) {
+									System.err.print("Warning: Downgraded field '" + typeName + "::" + fieldName + "' from unknown type '" + fieldKindName + "' to type 'int32'");
+									continue;
+								}
+							}
+							//TODO: replace with better exception type
+							throw new RuntimeException("Unknown type '" + fieldKindName + "' for field '" + fieldName + "' in typedef '" + typeName + "'");
+						}
+					}
+					
+					typeRegistry.put(typeName, typeBuilder.build());
+					break;
+				}
+				case "union": {
+					
+					break;
+				}
+				default:
 			}
-			
-			typeRegistry.put(typeName, typeBuilder.build());
 		}
 		
 		protected void readTypes(JSONArray typedefs, boolean continueOnError) {
