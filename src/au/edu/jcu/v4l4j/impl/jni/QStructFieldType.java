@@ -6,8 +6,16 @@ import java.nio.ByteBuffer;
 public class QStructFieldType implements StructFieldType {
 	private static final long serialVersionUID = -4262354267638314597L;
 	
+	/**
+	 * Constant for the q16 ({@code q16.16}) datatype
+	 */
 	public static final QStructFieldType Q16 = new QStructFieldType(16);
 	
+	/**
+	 * Get a QStructFieldType for the type {@code q(n-1).n}.
+	 * @param n
+	 * @return
+	 */
 	public static QStructFieldType of(int n) {
 		if (n == 16)
 			return Q16;
