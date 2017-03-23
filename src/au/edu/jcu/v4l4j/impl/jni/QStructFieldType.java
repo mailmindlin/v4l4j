@@ -55,6 +55,34 @@ public class QStructFieldType implements StructFieldType {
 		return Math.scalb(fValue, this.n);
 	}
 	
+	@Override
+	public int hashCode() {
+		/*
+		 * Use QStructFieldType.serialVersionUID as a nice constant that will differentiate the hashcode of
+		 * QStructFieldType's from other StructFieldType hashcodes, with minimal performance cost (as opposed
+		 * to just returning this.n.
+		 */
+		return (int) (QStructFieldType.serialVersionUID * this.n);
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		
+		if (!(o instanceof QStructFieldType))
+			return false;
+		
+		return ((QStructFieldType)o).n == this.n;
+	}
+	
+	/**
+	 * Method called in deserialization.
+	 * This method may replace the current object with a cached QStructFieldType.
+	 * @return resolved type
+	 * @throws ObjectStreamException actually won't
+	 * @see Serializable
+	 */
 	private Object readResolve() throws ObjectStreamException {
 		if (this.n == 16)
 			return QStructFieldType.Q16;
