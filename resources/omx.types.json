@@ -3,12 +3,12 @@
 		{
 			name: "omx.ptr",
 			kind: "alias",
-			alias: "ptr(void)"
+			alias: "void*"
 		},
 		{
 			name: "omx.string",
 			kind: "alias",
-			alias: "ptr(char)"
+			alias: "char*"
 		},
 		{
 			name: "omx.dirType",
@@ -46,7 +46,7 @@
 		{
 			name: "omx.handle",
 			kind: "alias",
-			alias: "ptr(void)"
+			alias: "void*"
 		},
 		{
 			name: "omx.markType",
