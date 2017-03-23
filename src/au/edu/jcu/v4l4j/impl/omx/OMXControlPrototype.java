@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -18,9 +17,12 @@ import au.edu.jcu.v4l4j.impl.jni.ArrayStructFieldType;
 import au.edu.jcu.v4l4j.impl.jni.NativeStruct;
 import au.edu.jcu.v4l4j.impl.jni.PointerStructFieldType;
 import au.edu.jcu.v4l4j.impl.jni.PrimitiveStructFieldType;
+import au.edu.jcu.v4l4j.impl.jni.QStructFieldType;
 import au.edu.jcu.v4l4j.impl.jni.StructFieldType;
 import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
 import au.edu.jcu.v4l4j.impl.jni.StructPrototype.StructPrototypeBuilder;
+import au.edu.jcu.v4l4j.impl.jni.UnionPrototype;
+import au.edu.jcu.v4l4j.impl.jni.UnionPrototype.UnionPrototypeBuilder;
 import au.edu.jcu.v4l4j.impl.omx.OMXControlPrototype.OMXControlPrototypeBuilder.OMXEnumeratorPrototypeBuilder;
 
 public class OMXControlPrototype {
@@ -276,6 +278,22 @@ public class OMXControlPrototype {
 					case "bool":
 					case "boolean":
 						return PrimitiveStructFieldType.BOOL;
+					case "char":
+						return PrimitiveStructFieldType.CHAR;
+					case "short":
+						return PrimitiveStructFieldType.SHORT;
+					case "int":
+						return PrimitiveStructFieldType.INT;
+					case "long":
+						return PrimitiveStructFieldType.LONG;
+					case "long long":
+						return PrimitiveStructFieldType.LONG_LONG;
+					case "float":
+						return PrimitiveStructFieldType.FLOAT;
+					case "double":
+						return PrimitiveStructFieldType.DOUBLE;
+					case "long double":
+						return PrimitiveStructFieldType.LONG_DOUBLE;
 					case "u8":
 					case "i8":
 					case "int8":
@@ -304,6 +322,9 @@ public class OMXControlPrototype {
 						return PrimitiveStructFieldType.FLOAT64;
 					case "void*":
 						return PrimitiveStructFieldType.RAW_POINTER;
+					case "q16":
+					case "q16.16":
+						return QStructFieldType.Q16;
 					default:
 						break;
 				}
@@ -330,13 +351,86 @@ public class OMXControlPrototype {
 			});
 		}
 		
-		private boolean addField(StructPrototypeBuilder builder, String fieldTypeName, String fieldName) {
-			return false;
+		protected StructPrototypeBuilder readStructTypedef(JSONObject typedef, boolean continueOnError) {
+			StructPrototypeBuilder typeBuilder = StructPrototype.builder();
+			JSONArray fields = typedef.getJSONArray("fields");
+			final int numFields = fields.length();
+			for (int j = 0; j < numFields; j++) {
+				JSONObject field = fields.getJSONObject(j);
+				String fieldName = field.optString("name", "unknown$" + j);//TODO validate names
+				
+				String fieldKindName = field.getString("type");
+				StructFieldType fieldType = lookupType(fieldKindName);
+				if (fieldType == null) {
+					//We failed to add the field
+					if (continueOnError) {
+						//Try as int field
+						fieldType = PrimitiveStructFieldType.INT;
+						System.err.print("Warning: Downgraded field '" + typedef.getString("name") + "::" + fieldName + "' from unknown type '" + fieldKindName + "' to type 'int32'");
+						continue;
+					}
+					//TODO: replace with better exception type
+					throw new RuntimeException("Unknown type '" + fieldKindName + "' for field '" + fieldName + "' in typedef '" + typedef.getString("name") + "'");
+				}
+				
+				typeBuilder.add(fieldType, fieldName);
+			}
+			
+			return typeBuilder;
+		}
+		
+		protected UnionPrototype readUnionTypedef(JSONObject typedef, boolean continueOnError) {
+			UnionPrototypeBuilder typeBuilder = UnionPrototype.builder();
+			JSONObject fieldMap = typedef.optJSONObject("fields");
+			JSONArray fields;
+			if (fieldMap != null) {
+				for (Entry<String, Object> e : fieldMap.toMap().entrySet()) {
+					String fieldName = e.getKey();
+					
+					String fieldKindName = e.getValue().toString();
+					StructFieldType fieldType = lookupType(fieldKindName);
+					if (fieldType == null) {
+						//We failed to add the field
+						if (continueOnError) {
+							//Try as int field
+							fieldType = PrimitiveStructFieldType.INT;
+							System.err.print("Warning: Downgraded field '" + typedef.getString("name") + "::" + fieldName + "' from unknown type '" + fieldKindName + "' to type 'int32'");
+							continue;
+						}
+						//TODO: replace with better exception type
+						throw new RuntimeException("Unknown type '" + fieldKindName + "' for field '" + fieldName + "' in typedef '" + typedef.getString("name") + "'");
+					}
+					typeBuilder.add(fieldType, fieldName);
+				}
+			} else if ((fields = typedef.optJSONArray("fields")) != null) {
+				final int numFields = fields.length();
+				for (int j = 0; j < numFields; j++) {
+					JSONObject field = fields.getJSONObject(j);
+					String fieldName = field.optString("name", "unknown$" + j);//TODO validate names
+					
+					String fieldKindName = field.getString("type");
+					StructFieldType fieldType = lookupType(fieldKindName);
+					if (fieldType == null) {
+						//We failed to add the field
+						if (continueOnError) {
+							//Try as int field
+							fieldType = PrimitiveStructFieldType.INT;
+							System.err.print("Warning: Downgraded field '" + typedef.getString("name") + "::" + fieldName + "' from unknown type '" + fieldKindName + "' to type 'int32'");
+							continue;
+						}
+						//TODO: replace with better exception type
+						throw new RuntimeException("Unknown type '" + fieldKindName + "' for field '" + fieldName + "' in typedef '" + typedef.getString("name") + "'");
+					}
+					
+					typeBuilder.add(fieldType, fieldName);
+				}
+			}
+			return typeBuilder.build();
 		}
 		
 		protected void readTypedef(JSONObject typedef, boolean continueOnError) {			
 			String typeName = typedef.getString("name");
-			String kind = typedef.getString("kind");//TODO support unions
+			String kind = typedef.getString("kind");
 			
 			switch (kind) {
 				case "alias": {
@@ -354,41 +448,26 @@ public class OMXControlPrototype {
 					break;
 				}
 				case "enum": {
-					//TODO finish
-					typedef.getJSONArray("fields").toList().stream()
-						.map(Object::toString)
-						.collect(Collectors.toList());
+					JSONArray values = typedef.getJSONArray("values");
+					List<String> names = new ArrayList<>(values.length());
+					for (int i = 0; i < values.length(); i++)
+						names.add(i, values.getString(i));
+					//TODO generate mapping
 					break;
 				}
-				case "struct": {
-					StructPrototypeBuilder typeBuilder = StructPrototype.builder();
-					JSONArray fields = typedef.getJSONArray("fields");
-					final int numFields = fields.length();
-					for (int j = 0; j < numFields; j++) {
-						JSONObject field = fields.getJSONObject(j);
-						String fieldName = field.optString("name", "unknown$" + j);//TODO validate names
-						String fieldKindName = field.getString("type");
-						if (!addField(typeBuilder, fieldKindName, fieldName)) {
-							//We failed to add the field
-							if (continueOnError) {
-								//Try as int field
-								if (addField(typeBuilder, "int32", fieldName)) {
-									System.err.print("Warning: Downgraded field '" + typeName + "::" + fieldName + "' from unknown type '" + fieldKindName + "' to type 'int32'");
-									continue;
-								}
-							}
-							//TODO: replace with better exception type
-							throw new RuntimeException("Unknown type '" + fieldKindName + "' for field '" + fieldName + "' in typedef '" + typeName + "'");
-						}
-					}
-					
-					typeRegistry.put(typeName, typeBuilder.build());
+				case "query":
+					typeRegistry.put(typeName, readStructTypedef(typedef, continueOnError)
+							.add(1, PrimitiveStructFieldType.INT32, "size")
+							.add(0, OMXConstants.VERSION_TYPE, "version")
+							//Add port
+							.build());
 					break;
-				}
-				case "union": {
-					
+				case "struct":
+					typeRegistry.put(typeName, readStructTypedef(typedef, continueOnError).build());
 					break;
-				}
+				case "union":
+					typeRegistry.put(typeName, readUnionTypedef(typedef, continueOnError));
+					break;
 				default:
 			}
 		}

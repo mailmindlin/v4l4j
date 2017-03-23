@@ -233,6 +233,11 @@ public class StructPrototype implements StructFieldType, Externalizable {
 			return this;
 		}
 		
+		public StructPrototypeBuilder add(int index, StructFieldType type, String name) {
+			this.fields.add(index, new StructField(type, name, -1));
+			return this;
+		} 
+		
 		public StructPrototype build() {
 			return new StructPrototype(this.fields);
 		}

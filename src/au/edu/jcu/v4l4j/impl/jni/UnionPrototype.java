@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class UnionPrototype implements StructFieldType {
+	private static final long serialVersionUID = -8610611270611404524L;
+	
 	protected Set<StructField> options;
 	protected transient Map<String, StructField> optionLookup;
 	protected transient int alignment = -1;
