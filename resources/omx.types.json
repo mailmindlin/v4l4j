@@ -28,20 +28,20 @@
 		{
 			name: "omx.bu32",
 			kind: "struct",
-			fields: {
-				"value": "u32",
-				"min": "u32",
-				"max": "u32"
-			}
+			fields: [
+				["value", "u32"],
+				["min", "u32"],
+				["max", "u32"]
+			]
 		},
 		{
 			name: "omx.bs32",
 			kind: "struct",
-			fields: {
-				"value": "s32",
-				"min": "s32",
-				"max": "s32"
-			}
+			fields: [
+				["value", "i32"],
+				["min", "i32"],
+				["max", "i32"]
+			]
 		},
 		{
 			name: "omx.handle",
@@ -51,10 +51,10 @@
 		{
 			name: "omx.markType",
 			kind: "struct",
-			fields: {
-				"targetComponent": "omx.handle",
-				"data": "omx.ptr"
-			}
+			fields: [
+				["targetComponent", "omx.handle"],
+				["data", "omx.ptr"]
+			]
 		}
 	]
 }
