@@ -338,14 +338,14 @@ public class OMXControlDefinition {
 						return null;
 					//TODO check indicies
 					//TODO support vararrays
-					int arraySize = Integer.parseInt(name.substring(openBracketIdx + 1, name.length() - 2));
+					int arraySize = Integer.parseInt(name.substring(openBracketIdx + 1, name.length() - 1));
 					StructFieldType baseType = lookupType(name.substring(0, openBracketIdx));
 					if (baseType == null)
 						return null;
 					return new ArrayStructFieldType(baseType, arraySize);
 				} else if (name.endsWith("*")) {
 					//Pointer
-					StructFieldType baseType = lookupType(name.substring(0, name.length() - 2));
+					StructFieldType baseType = lookupType(name.substring(0, name.length() - 1));
 					if (baseType == null)
 						return null;
 					return new PointerStructFieldType(baseType);
@@ -359,10 +359,22 @@ public class OMXControlDefinition {
 			JSONArray fields = typedef.getJSONArray("fields");
 			final int numFields = fields.length();
 			for (int j = 0; j < numFields; j++) {
-				JSONObject field = fields.getJSONObject(j);
-				String fieldName = field.optString("name", "unknown$" + j);//TODO validate names
+				String fieldName, fieldKindName;
 				
-				String fieldKindName = field.getString("type");
+				//Field definition is either an object or an array (for shorthand)
+				JSONObject fieldDefObj = fields.optJSONObject(j);
+				if (fieldDefObj != null) {
+					fieldName = fieldDefObj.optString("name", "unknown$" + j);
+					fieldKindName = fieldDefObj.getString("type");
+				} else {
+					//Shorthand array used
+					JSONArray fieldDefArr = fields.getJSONArray(j);
+					fieldName = fieldDefArr.getString(0);
+					fieldKindName = fieldDefArr.getString(1);
+				}
+				
+				//TODO validate names
+				
 				StructFieldType fieldType = lookupType(fieldKindName);
 				if (fieldType == null) {
 					//We failed to add the field
@@ -547,12 +559,29 @@ public class OMXControlDefinition {
 				readQuery(querydefs.getJSONObject(i));//TODO store
 		}
 		
-		void read(Reader reader, boolean continueOnError) {
+		public void read(String json, boolean continueOnError) {
+			JSONObject base = new JSONObject(json);
+			//First read in types
+			readTypes(base.optJSONArray("types"), continueOnError);
+			
+			readQueries(base.optJSONArray("queries"), continueOnError);
+		}
+		
+		public void read(Reader reader, boolean continueOnError) {
 			JSONObject base = new JSONObject(reader);
 			//First read in types
 			readTypes(base.optJSONArray("types"), continueOnError);
 			
 			readQueries(base.optJSONArray("queries"), continueOnError);
+		}
+		
+		@Override
+		public String toString() {
+			return new StringBuilder()
+					.append(super.toString())
+					.append(this.typeRegistry)
+					.append(this.controlRegistry)
+					.toString();
 		}
 	}
 }
