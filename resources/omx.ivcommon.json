@@ -28,6 +28,15 @@
 		{
 			name: "scale",
 			kind: "config",
+			filter: {
+				op: "or",
+				apply: [
+					{
+						op: "contained",
+						path: "/control/type"
+					}
+				]
+			},
 			structType: "omx.config.iv.scaleFactor",
 			children: {
 				"width": {
@@ -39,6 +48,9 @@
 					sfField: "height"
 				}
 			}
+		},
+		{
+			name: "scale"
 		}
 	]
 }
