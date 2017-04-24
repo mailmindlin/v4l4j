@@ -704,7 +704,7 @@ public class OMXConstants {
 			.addInt32("xFramerate")
 			.build();
 	
-	public static final OMXControlPrototype CTRL_BITRATE = OMXControlPrototype.builder()
+	public static final OMXControlDefinition CTRL_BITRATE = OMXControlDefinition.builder()
 			.setName("bitrate")
 			.setQuery(OMXConstants.INDEX_ConfigVideoBitrate)
 			.setStruct(PARAM_BITRATETYPE)
@@ -712,7 +712,7 @@ public class OMXConstants {
 			.withNumberField("nTargetBitrate", "target")
 			.build();
 	
-	public static final OMXControlPrototype CTRL_VIDEO_FORMAT = OMXControlPrototype.builder()
+	public static final OMXControlDefinition CTRL_VIDEO_FORMAT = OMXControlDefinition.builder()
 			.setName("format")
 			.setQuery(OMXConstants.INDEX_ParamVideoPortFormat)
 			.setStruct(OMXConstants.PARAM_VIDEO_PORTFORMATTYPE)
@@ -991,9 +991,11 @@ public class OMXConstants {
 			case COLOR_FORMAT_16BITRGB565:
 				return ImagePalette.RGB565;
 			case COLOR_FORMAT_16BITBGR565:
-				return ImagePalette.BGR565;
+//				return ImagePalette.BGR565;
 			case COLOR_FORMAT_18BITRGB666:
-				return ImagePalette.RGB666;
+//				return ImagePalette.RGB666;
+				//TODO finish
+				throw new UnsupportedOperationException("Not done yet");
 			case COLOR_FORMAT_18BITARGB1665:
 				break;
 			case COLOR_FORMAT_19BITARGB1666:
@@ -1043,7 +1045,9 @@ public class OMXConstants {
 			case COLOR_FORMAT_L4:
 				return ImagePalette.Y4;
 			case COLOR_FORMAT_L8:
-				return ImagePalette.Y8;
+//				return ImagePalette.Y8;
+				//TODO finish
+				throw new UnsupportedOperationException("Not done yet");
 			case COLOR_FORMAT_L16:
 				return ImagePalette.Y16;
 			case COLOR_FORMAT_L24:
@@ -1073,10 +1077,11 @@ public class OMXConstants {
 				return COLOR_FORMAT_16BITARGB4444;
 			case RGB565:
 				return COLOR_FORMAT_16BITRGB565;
-			case BGR565:
-				return COLOR_FORMAT_16BITBGR565;
-			case RGB666:
-				return COLOR_FORMAT_18BITRGB666;
+//			case BGR565:
+//				return COLOR_FORMAT_16BITBGR565;
+//			case RGB666:
+//				return COLOR_FORMAT_18BITRGB666;
+				//TODO finish
 			case RGB24:
 				return COLOR_FORMAT_24BITRGB888;
 			case BGR24:
@@ -1096,7 +1101,7 @@ public class OMXConstants {
 			case VYUY:
 				return COLOR_FORMAT_CRYCBY;
 			case YUV444:
-				return COLOR_FORMAT_YUV444INTERLEAVED:
+				return COLOR_FORMAT_YUV444INTERLEAVED;
 			case Y4:
 				return COLOR_FORMAT_L4;
 			case GRAY:
