@@ -40,13 +40,29 @@ typedef struct {
 } OMXStructureHeader;
 
 typedef struct {
+	/**
+	 * Pointer to 
+	 */
 	OMX_HANDLETYPE component;
+	/**
+	 * 
+	 */
 	OMX_CALLBACKTYPE callbacks;
+	/**
+	 * Pointer to JVM, for use in obtaining a JNI environment pointer from native callbacks
+	 */
 	JavaVM *vm;
+	/**
+	 * (Global) reference to java object
+	 */
 	jobject self;
 } OMXComponentAppData;
 
-//OMX error descriptions
+/**
+ * Map OMX_ERRORTYPE to a pretty description.
+ * @param err OMX error to map
+ * @return error description. This pointer should not be modified nor released.
+ */
 static char* getOMXErrorDescription(OMX_ERRORTYPE err) {
 	switch(err) {
 		case OMX_ErrorNone:
@@ -205,6 +221,7 @@ static bool getJNIEnv(JavaVM* vm, JNIEnv** env) {
 	}
 }
 
+//References to JNI stuff
 static jclass OMXComponent_class = NULL;
 static jmethodID OMXComponent_onBufferDone = NULL;
 

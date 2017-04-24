@@ -22,10 +22,27 @@ import au.edu.jcu.v4l4j.api.component.port.VideoPort;
 
 public class OMXComponent implements Component {
 	
+	/**
+	 * Get the offsets/lengths of the AUDIO, VIDEO, IMAGE, and OTHER blocks of ports on this component.
+	 * @param pointer
+	 *     Pointer to native memory for this component
+	 * @param result
+	 *     Array of size 8 that the result will be placed in.
+	 */
 	private static native void getPortOffsets(long pointer, int[] result);
 	
+	/**
+	 * Get the state of the component.
+	 * @param pointer
+	 *     Pointer to native memory for this component
+	 */
 	private static native int getComponentState(long pointer);
 	
+	/**
+	 * Attempt to set the state of this component
+	 * @param pointer
+	 *     Pointer to native memory for this component
+	 */
 	private static native void setComponentState(long pointer, int state);
 	
 	/**
@@ -281,6 +298,7 @@ public class OMXComponent implements Component {
 	
 	@Override
 	public ComponentState setState(ComponentState state) throws Exception {
+		//Map ComponentState enum to native enum index
 		int stateI = 0;
 		switch (state) {
 			case INVALID:

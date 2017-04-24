@@ -23,12 +23,15 @@ import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
 import au.edu.jcu.v4l4j.impl.jni.StructPrototype.StructPrototypeBuilder;
 import au.edu.jcu.v4l4j.impl.jni.UnionPrototype;
 import au.edu.jcu.v4l4j.impl.jni.UnionPrototype.UnionPrototypeBuilder;
-import au.edu.jcu.v4l4j.impl.omx.OMXControlPrototype.OMXControlPrototypeBuilder.OMXEnumeratorPrototypeBuilder;
+import au.edu.jcu.v4l4j.impl.omx.OMXControlDefinition.OMXControlDefinitionBuilder.OMXEnumeratorPrototypeBuilder;
 
-public class OMXControlPrototype {
+/**
+ * The definition of an OMX control
+ */
+public class OMXControlDefinition {
 
-	public static OMXControlPrototypeBuilder builder() {
-		return new OMXControlPrototypeBuilder();
+	public static OMXControlDefinitionBuilder builder() {
+		return new OMXControlDefinitionBuilder();
 	}
 	
 	protected final int queryIdx;
@@ -37,7 +40,7 @@ public class OMXControlPrototype {
 	protected final List<FieldInfo> children;
 	protected final EnumeratorDefinition enumerator;
 	
-	public OMXControlPrototype(int queryIdx, String name, StructPrototype struct, List<FieldInfo> children, EnumeratorDefinition enumerator) {
+	public OMXControlDefinition(int queryIdx, String name, StructPrototype struct, List<FieldInfo> children, EnumeratorDefinition enumerator) {
 		this.queryIdx = queryIdx;
 		this.name = name;
 		this.struct = struct;
@@ -117,29 +120,29 @@ public class OMXControlPrototype {
 		return new OMXOptionEnumeratorPrototype<T>(enumDef.queryIdx, queryGenerator, resultMapper);
 	}
 	
-	public static class OMXControlPrototypeBuilder {
+	public static class OMXControlDefinitionBuilder {
 		int queryIdx;
 		String name;
 		StructPrototype struct;
 		List<FieldInfo> fields = new ArrayList<>();
 		EnumeratorDefinition enumerator;
 		
-		public OMXControlPrototypeBuilder setQuery(int index) {
+		public OMXControlDefinitionBuilder setQuery(int index) {
 			this.queryIdx = index;
 			return this;
 		}
 		
-		public OMXControlPrototypeBuilder setName(String name) {
+		public OMXControlDefinitionBuilder setName(String name) {
 			this.name = name;
 			return this;
 		}
 		
-		public OMXControlPrototypeBuilder setStruct(StructPrototype struct) {
+		public OMXControlDefinitionBuilder setStruct(StructPrototype struct) {
 			this.struct = struct;
 			return this;
 		}
 		
-		public OMXControlPrototypeBuilder withNumberField(String sfName, String name) {
+		public OMXControlDefinitionBuilder withNumberField(String sfName, String name) {
 			FieldInfo field = new FieldInfo();
 			field.type = Type.NUMBER;
 			field.name = name;
@@ -148,7 +151,7 @@ public class OMXControlPrototype {
 			return this;
 		}
 		
-		public <T extends Enum<T>> OMXControlPrototypeBuilder withEnumField(String sfName, String name, Class<T> enumClass) {
+		public <T extends Enum<T>> OMXControlDefinitionBuilder withEnumField(String sfName, String name, Class<T> enumClass) {
 			FieldInfo field = new FieldInfo();
 			field.type = Type.ENUM;
 			field.param = enumClass;
@@ -158,8 +161,8 @@ public class OMXControlPrototype {
 			return this;
 		}
 		
-		public OMXControlPrototype build() {
-			return new OMXControlPrototype(this.queryIdx, this.name, this.struct, this.fields, this.enumerator);
+		public OMXControlDefinition build() {
+			return new OMXControlDefinition(this.queryIdx, this.name, this.struct, this.fields, this.enumerator);
 		}
 		
 		public OMXEnumeratorPrototypeBuilder withEnumerator() {
@@ -213,12 +216,12 @@ public class OMXControlPrototype {
 				return this;
 			}
 			
-			public OMXControlPrototypeBuilder and() {
+			public OMXControlDefinitionBuilder and() {
 				if (enumDef.param == null) {
-					if (OMXControlPrototypeBuilder.this.enumerator == enumDef) {
+					if (OMXControlDefinitionBuilder.this.enumerator == enumDef) {
 						//We can infer fields from the general control prototype
 						Map<String, String> protoFields = new HashMap<>();
-						for (FieldInfo field : OMXControlPrototypeBuilder.this.fields) {
+						for (FieldInfo field : OMXControlDefinitionBuilder.this.fields) {
 							if (field.sfName == enumDef.indexSfField)
 								continue;
 							protoFields.put(field.sfName, field.name);
@@ -228,7 +231,7 @@ public class OMXControlPrototype {
 						throw new IllegalStateException("Can't iterate over [none] values");
 					}
 				}
-				return OMXControlPrototypeBuilder.this;
+				return OMXControlDefinitionBuilder.this;
 			}
 		}
 	}
@@ -261,9 +264,9 @@ public class OMXControlPrototype {
 		Object param;
 	}
 	
-	public static class OMXControlPrototypeRegistry {
+	public static class OMXControlDefinitionRegistry {
 		HashMap<String, StructFieldType> typeRegistry = new HashMap<>();
-		HashMap<String, OMXControlPrototype> controlRegistry = new HashMap<>();
+		HashMap<String, OMXControlDefinition> controlRegistry = new HashMap<>();
 		
 		private StructFieldType lookupType(String type) {
 			if (type == null || type.isEmpty())
@@ -481,7 +484,7 @@ public class OMXControlPrototype {
 		}
 		
 		protected void readQuery(JSONObject querydef) {
-			OMXControlPrototypeBuilder queryBuilder = OMXControlPrototype.builder();
+			OMXControlDefinitionBuilder queryBuilder = OMXControlDefinition.builder();
 			
 			String queryName = querydef.getString("name");
 			queryBuilder.setName(queryName);
