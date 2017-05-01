@@ -221,12 +221,12 @@ public class StructPrototype implements StructFieldType, Externalizable {
 		}
 		
 		public <E extends Enum<E>> StructPrototypeBuilder addEnum(Class<E> enumClass, String name) {
-			add(new EnumStructFieldType<>(enumClass), name);
+			add(new AbstractMappingStructFieldType<>(enumClass), name);
 			return this;
 		}
 		
 		public <E extends Enum<E>> StructPrototypeBuilder addEnum(IntFunction<E> mapper, ToIntFunction<E> unmapper, String name) {
-			add(new EnumStructFieldType<>(mapper, unmapper), name);
+			add(new AbstractMappingStructFieldType<>(mapper, unmapper), name);
 			return this;
 		}
 
