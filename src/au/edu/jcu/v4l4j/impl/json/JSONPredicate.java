@@ -1,4 +1,12 @@
-package au.edu.jcu.v4l4j.impl.json.JSONPredicate;
+package au.edu.jcu.v4l4j.impl.json;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * Implementation of the <a href="https://tools.ietf.org/id/draft-snell-json-test-01.html">JSON predicate (Snell) spec</a>,
@@ -71,6 +79,10 @@ public interface JSONPredicate {
 		String segment = path[offset];
 		if (!object.has(segment))
 			return Optional.empty();
+		
+		if (offset >= path.length - 1)
+			return Optional.of(object.get(segment));
+		
 		{
 			JSONObject nvo = object.optJSONObject(segment);
 			if (nvo != null) {
@@ -88,15 +100,13 @@ public interface JSONPredicate {
 			}
 		}
 		//TODO finish
-		if (offset == path.length - 1) {
-			
-		}
 		return Optional.empty();
 	}
 	
-	public static Optional<Object> travers(JSONArray array, int offset, String...path) {
+	public static Optional<Object> traverse(JSONArray array, int offset, String...path) {
 		if (array == null)
 			return Optional.empty();
+		
 		int idx;
 		try {
 			idx = Integer.parseInt(path[offset]);
@@ -105,6 +115,9 @@ public interface JSONPredicate {
 		}
 		if (idx < 0 || idx >= array.length())
 			return Optional.empty();
+		
+		if (offset >= path.length - 1)
+			return Optional.of(array.get(idx));
 		
 		{
 			JSONObject nvo = array.optJSONObject(idx);
@@ -126,6 +139,47 @@ public interface JSONPredicate {
 		return Optional.empty();
 	}
 	
+	public static Optional<Object> traverse(Map<String, Object> map, int offset, String...path) {
+		if (map == null)
+			return Optional.empty();
+		//TODO finish
+		return Optional.empty();
+	}
+	
+	public static Optional<Object> traverse(List<Object> list, int offset, String...path) {
+		if (list == null)
+			return Optional.empty();
+		
+		int idx;
+		try {
+			idx = Integer.parseInt(path[offset]);
+		} catch (NumberFormatException e) {
+			return Optional.empty();
+		}
+		if (idx < 0 || idx >= list.size())
+			return Optional.empty();
+		
+		Object v = list.get(idx);
+		if (offset >= path.length - 1) {
+			return Optional.of(v);
+		} else if (v instanceof JSONObject) {
+			return traverse((JSONObject)v, offset + 1, path);
+		} else if (v instanceof JSONArray) {
+			return traverse((JSONArray)v, offset + 1, path);
+		} else if (v instanceof Map) {
+			@SuppressWarnings("unchecked")
+			Map<String, Object> m = (Map<String, Object>) v;
+			return traverse(m, offset + 1, path);
+		} else if (v instanceof List) {
+			@SuppressWarnings("unchecked")
+			List<Object> l = (List<Object>) v;
+			return traverse(l, offset + 1, path);
+		}
+		
+		//TODO finish
+		return Optional.empty();
+	}
+	
 	boolean test(JSONObject object);
 	boolean test(JSONArray array);
 	boolean test(Map<String, Object> object);
@@ -140,25 +194,25 @@ public interface JSONPredicate {
 		
 		@Override
 		public boolean test(JSONObject object) {
-			return doTest(traverse(object, 0, path));
+			return test(traverse(object, 0, path));
 		}
 		
 		@Override
 		public boolean test(JSONArray array) {
-			return doTest(traverse(array, 0, path));
+			return test(traverse(array, 0, path));
 		}
 		
 		@Override
 		public boolean test(Map<String, Object> object) {
-			return doTest(traverse(object, 0, path));
+			return test(traverse(object, 0, path));
 		}
 		
 		@Override
 		public boolean test(List<Object> array) {
-			return doTest(traverse(array, 0, path));
+			return test(traverse(array, 0, path));
 		}
 		
-		protected abstract boolean doTest(Optional<Object> value);
+		protected abstract boolean test(Optional<Object> value);
 	}
 	
 	public static class JSONContainsPredicate extends AbstractJSONValuePredicate {
@@ -185,7 +239,7 @@ public interface JSONPredicate {
 		}
 	}
 	
-	public static class JSONDefinedPredicate implements AbstractJSONValuePredicate {
+	public static class JSONDefinedPredicate extends AbstractJSONValuePredicate {
 		public JSONDefinedPredicate(String path) {
 			super(path.split("/"));
 		}
@@ -196,7 +250,7 @@ public interface JSONPredicate {
 		}
 	}
 	
-	public static class JSONEndsPredicate implements AbstractJSONValuePredicate {
+	public static class JSONEndsPredicate extends AbstractJSONValuePredicate {
 		protected final String value;
 		protected final boolean ignoreCase;
 		
@@ -220,7 +274,7 @@ public interface JSONPredicate {
 		}
 	}
 	
-	public static class JSONLessPredicate implements AbstractJSONValuePredicate {
+	public static class JSONLessPredicate extends AbstractJSONValuePredicate {
 		protected final Number value;
 		
 		public JSONLessPredicate(String path, Number value) {
@@ -239,11 +293,11 @@ public interface JSONPredicate {
 			//TODO parse string=>number
 			if (n == null)
 				return false;
-			return n.doubleValue() < value.doubleValue();
+			return n.doubleValue() < this.value.doubleValue();
 		}
 	}
 	
-	public static class JSONMorePredicate implements AbstractJSONValuePredicate {
+	public static class JSONMorePredicate extends AbstractJSONValuePredicate {
 		protected final Number value;
 		
 		public JSONMorePredicate(String path, Number value) {
@@ -262,11 +316,11 @@ public interface JSONPredicate {
 			//TODO parse string=>number
 			if (n == null)
 				return false;
-			return n.doubleValue() > value.doubleValue();
+			return n.doubleValue() > this.value.doubleValue();
 		}
 	}
 	
-	public static class JSONStartsPredicate implements AbstractJSONValuePredicate {
+	public static class JSONStartsPredicate extends AbstractJSONValuePredicate {
 		protected final String value;
 		protected final boolean ignoreCase;
 		
@@ -290,38 +344,40 @@ public interface JSONPredicate {
 		}
 	}
 	
-	public static class JSONTypePredicate implements AbstractJSONValuePredicate {
+	public static class JSONTypePredicate extends AbstractJSONValuePredicate {
 		protected final String value;
 		
-		public JSONStartsPredicate(String path, String value) {
+		public JSONTypePredicate(String path, String value) {
 			super(path.split("/"));
 			this.value = value;
 		}
 		
 		@Override
 		public boolean test(Optional<Object> maybe) {
-			String type;
-			if (!maybe.isPresent())
+			String type = null;
+			if (!maybe.isPresent()) {
 				type = "undefined";
-			Object value = maybe.get();
-			if (value == null)
-				type = "null";
-			else if (value instanceof String)
-				type = "string";
-			else if (value instanceof Number)
-				type = "number";
-			else if (value instanceof Boolean)
-				type = "boolean";
-			else if (value instanceof JSONObject || value instanceof Map)
-				type = "object";
-			else if (value instanceof JSONArray || value instanceof List)
-				value = "array";
-			//TODO support 'date', 'date-time', 'time', 'lang', 'lang-range', 'iri', 'absolute-iri'
-			return type.equals(this.value);
+			} else {
+				Object value = maybe.get();
+				if (value == null)
+					type = "null";
+				else if (value instanceof String)
+					type = "string";
+				else if (value instanceof Number)
+					type = "number";
+				else if (value instanceof Boolean)
+					type = "boolean";
+				else if (value instanceof JSONObject || value instanceof Map)
+					type = "object";
+				else if (value instanceof JSONArray || value instanceof List)
+					value = "array";
+				//TODO support 'date', 'date-time', 'time', 'lang', 'lang-range', 'iri', 'absolute-iri'
+			}
+			return this.value.equals(type);
 		}
 	}
 	
-	public static class JSONUndefinedPredicate implements AbstractJSONValuePredicate {
+	public static class JSONUndefinedPredicate extends AbstractJSONValuePredicate {
 		public JSONUndefinedPredicate(String path) {
 			super(path.split("/"));
 		}
@@ -335,7 +391,7 @@ public interface JSONPredicate {
 	/**
 	 * JSON test op, special case for strings
 	 */
-	public static class JSONStringTestPredicate implements AbstractJSONValuePredicate {
+	public static class JSONStringTestPredicate extends AbstractJSONValuePredicate {
 		protected final String value;
 		protected final boolean ignoreCase;
 		
@@ -351,8 +407,8 @@ public interface JSONPredicate {
 				return false;
 			String str = "" + value.get();
 			if (ignoreCase)
-				return str.equalsIgnoreCase(value);
-			return str.equals(value);
+				return str.equalsIgnoreCase(this.value);
+			return str.equals(this.value);
 		}
 	}
 	
@@ -439,7 +495,7 @@ public interface JSONPredicate {
 	public static class JSONOrPredicate implements JSONPredicate {
 		protected final List<JSONPredicate> children;
 		
-		public JSONAndPredicate(List<JSONPredicate> children) {
+		public JSONOrPredicate(List<JSONPredicate> children) {
 			this.children = children;
 		}
 		
