@@ -1,15 +1,12 @@
 package au.edu.jcu.v4l4j.impl.jni;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.util.function.IntFunction;
 import java.util.function.ToIntFunction;
 
-public abstract class AbstractMappingStructFieldType<T> implements StructFieldType {
+public abstract class AbstractMappingStructFieldType<T> implements StructFieldType<T> {
 	private static final long serialVersionUID = 8797715570154592010L;
 
 	protected abstract T map(int iValue);
@@ -49,8 +46,9 @@ public abstract class AbstractMappingStructFieldType<T> implements StructFieldTy
 		PrimitiveStructFieldType.INT32.write(buffer, iVal);
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public Object read(ByteBuffer buffer, StructReadingContext context) {
+	public T read(ByteBuffer buffer, StructReadingContext context) {
 		Integer iValue = (Integer) PrimitiveStructFieldType.INT32.read(buffer, context);
 		
 		//Map to enum constant
@@ -58,7 +56,8 @@ public abstract class AbstractMappingStructFieldType<T> implements StructFieldTy
 			return map(iValue);
 		} catch (RuntimeException e) {
 			//Mapping failed, return raw value
-			return iValue;
+			//TODO fix casting stuff
+			return (T) (Integer) iValue;
 		}
 	}
 	

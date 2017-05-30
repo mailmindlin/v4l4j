@@ -6,7 +6,7 @@ import java.util.List;
 
 public class NativePointer<T> implements AutoCloseable {
 	protected final long address;
-	protected final StructFieldType type;
+	protected final StructFieldType<T> type;
 	protected ByteBuffer buffer;
 	
 	/**
@@ -14,7 +14,7 @@ public class NativePointer<T> implements AutoCloseable {
 	 */
 	protected final List<AutoCloseable> managedRefs = new ArrayList<>();
 	
-	protected NativePointer(StructFieldType type, long address, ByteBuffer buffer, boolean freeOnClose) {
+	protected NativePointer(StructFieldType<T> type, long address, ByteBuffer buffer, boolean freeOnClose) {
 		this.type = type;
 		this.address = address;
 		this.buffer = buffer;
@@ -22,12 +22,12 @@ public class NativePointer<T> implements AutoCloseable {
 			managedRefs.add(this);
 	}
 	
-	@SuppressWarnings("unchecked")
 	public T get() {
 		return (T) this.type().read(this.buffer(), null);
 	}
 	
 	public void set(T value) {
+		//TODO use writeUnchecked?
 		this.type().write(this.buffer(), value);
 	}
 	
@@ -36,17 +36,21 @@ public class NativePointer<T> implements AutoCloseable {
 	}
 	
 	public <U> NativePointer<U> dereference() {
-		StructFieldType type = this.type();
+		StructFieldType<T> type = this.type();
 		if (!(type instanceof PointerStructFieldType))
 			throw new UnsupportedOperationException("Cannot dereference non-pointer");
+		
 		long farAddr = ((Number)type.read(buffer, null)).longValue();
 		if (farAddr == 0)
 			return null;
-		StructFieldType farType = ((PointerStructFieldType)type).getFarType();
+		
+		@SuppressWarnings("unchecked")
+		StructFieldType<U> farType = (StructFieldType<U>) ((PointerStructFieldType)type).getFarType();
+		
 		return new NativePointer<U>(farType, farAddr, MemoryUtils.wrap(farAddr, farType.getSize()), false);
 	}
 	
-	public StructFieldType type() {
+	public StructFieldType<T> type() {
 		return type;
 	}
 	

@@ -6,37 +6,37 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-public class NativeArray extends NativeWrapper<Integer, List<Object>> implements List<Object>, AutoCloseable {
+public class NativeArray<E> extends NativeWrapper<Integer, List<E>> implements List<E>, AutoCloseable {
 	
-	public NativeArray(ArrayStructFieldType arrayType, ByteBuffer buffer) {
+	public NativeArray(ArrayStructFieldType<E> arrayType, ByteBuffer buffer) {
 		this(arrayType, MemoryUtils.unwrap(buffer), buffer, false);
 	}
 	
-	protected NativeArray(ArrayStructFieldType arrayType, long address, long length, boolean releaseOnClose) {
+	protected NativeArray(ArrayStructFieldType<E> arrayType, long address, long length, boolean releaseOnClose) {
 		this(arrayType, address, MemoryUtils.wrap(address, length), releaseOnClose);
 	}
 	
-	protected NativeArray(ArrayStructFieldType arrayType, long address, ByteBuffer buffer, boolean releaseOnClose) {
+	protected NativeArray(ArrayStructFieldType<E> arrayType, long address, ByteBuffer buffer, boolean releaseOnClose) {
 		super(arrayType, address, buffer, releaseOnClose);
 	}
 	
 	@Override
-	public Object get(int index) {
+	public E get(int index) {
 		return this.type().readElement(buffer, index);
 	}
 	
 	@Override
-	public Object set(int index, Object value) {
-		Object oldValue = get(index);
-		this.type().writeElement(buffer, index, value);
+	public E set(int index, Object value) {
+		E oldValue = get(index);
+		this.type().writeElementUnchecked(buffer, index, value);
 		return oldValue;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public <U, V extends NativePointer<U>> V getChild(Integer key) {
-		return (V) this.localWrappers.computeIfAbsent(key, k->{
-			StructFieldType base = type().getBaseType();
+		return (V) this.localWrappers.computeIfAbsent(key, k -> {
+			StructFieldType<E> base = type().getBaseType();
 			return doWrapLocalChild(base, base.getSize() * key, base.getSize());
 		});
 	}
@@ -47,11 +47,11 @@ public class NativeArray extends NativeWrapper<Integer, List<Object>> implements
 			throw new IndexOutOfBoundsException("Illegal index " + key);
 		
 
-		StructFieldType type = type().getBaseType();
+		StructFieldType<E> type = type().getBaseType();
 		
 		//Register this name for updates
 		this.wrappedNames.add(key);
-		final StructFieldType farType = ((PointerStructFieldType) type).getFarType();
+		final StructFieldType<?> farType = ((PointerStructFieldType) type).getFarType();
 
 		//Read pointer
 		final long farPointer = ((Number)this.get(key)).longValue();
@@ -80,10 +80,10 @@ public class NativeArray extends NativeWrapper<Integer, List<Object>> implements
 		if (_key > this.size() || _key < 0)
 			throw new IndexOutOfBoundsException("Illegal index " + _key);
 		
-		StructFieldType type = this.type().getBaseType();
+		StructFieldType<E> type = this.type().getBaseType();
 		
 		if (type instanceof PointerStructFieldType) {
-			final StructFieldType farType = ((PointerStructFieldType) type).getFarType();
+			final StructFieldType<?> farType = ((PointerStructFieldType) type).getFarType();
 			
 			this.remoteWrappers.compute(_key, (key, oldVal) -> {
 				if (oldVal != null) {
@@ -111,8 +111,8 @@ public class NativeArray extends NativeWrapper<Integer, List<Object>> implements
 	}
 	
 	@Override
-	public ArrayStructFieldType type() {
-		return (ArrayStructFieldType) this.type;
+	public ArrayStructFieldType<E> type() {
+		return (ArrayStructFieldType<E>) this.type;
 	}
 	
 	@Override
@@ -144,7 +144,7 @@ public class NativeArray extends NativeWrapper<Integer, List<Object>> implements
 	}
 	
 	@Override
-	public Iterator<Object> iterator() {
+	public Iterator<E> iterator() {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -156,13 +156,13 @@ public class NativeArray extends NativeWrapper<Integer, List<Object>> implements
 	}
 	
 	@Override
-	public ListIterator<Object> listIterator() {
+	public ListIterator<E> listIterator() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 	
 	@Override
-	public ListIterator<Object> listIterator(int arg0) {
+	public ListIterator<E> listIterator(int arg0) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -184,7 +184,7 @@ public class NativeArray extends NativeWrapper<Integer, List<Object>> implements
 	}
 	
 	@Override
-	public List<Object> subList(int arg0, int arg1) {
+	public List<E> subList(int arg0, int arg1) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -206,12 +206,12 @@ public class NativeArray extends NativeWrapper<Integer, List<Object>> implements
 	}
 	
 	@Override
-	public boolean addAll(Collection<? extends Object> arg0) {
+	public boolean addAll(Collection<? extends E> arg0) {
 		throw new UnsupportedOperationException();
 	}
 	
 	@Override
-	public boolean addAll(int arg0, Collection<? extends Object> arg1) {
+	public boolean addAll(int arg0, Collection<? extends E> arg1) {
 		throw new UnsupportedOperationException();
 	}
 	
@@ -221,7 +221,7 @@ public class NativeArray extends NativeWrapper<Integer, List<Object>> implements
 	}
 	
 	@Override
-	public Object remove(int arg0) {
+	public E remove(int arg0) {
 		throw new UnsupportedOperationException();
 	}
 }

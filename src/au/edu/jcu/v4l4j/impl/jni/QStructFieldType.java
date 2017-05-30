@@ -3,7 +3,7 @@ package au.edu.jcu.v4l4j.impl.jni;
 import java.io.ObjectStreamException;
 import java.nio.ByteBuffer;
 
-public class QStructFieldType implements StructFieldType {
+public class QStructFieldType implements StructFieldType<Number> {
 	private static final long serialVersionUID = -4262354267638314597L;
 	
 	/**
@@ -44,13 +44,13 @@ public class QStructFieldType implements StructFieldType {
 	}
 	
 	@Override
-	public void write(ByteBuffer buffer, Object params) {
-		int iValue = (int) Math.scalb(((Number)params).floatValue(), - this.n);
+	public void write(ByteBuffer buffer, Number params) {
+		int iValue = (int) Math.scalb(params.floatValue(), -this.n);
 		PrimitiveStructFieldType.INT32.write(buffer, iValue);
 	}
 	
 	@Override
-	public Object read(ByteBuffer buffer, StructReadingContext context) {
+	public Number read(ByteBuffer buffer, StructReadingContext context) {
 		float fValue = ((Number) PrimitiveStructFieldType.INT32.read(buffer, context)).floatValue();
 		return Math.scalb(fValue, this.n);
 	}

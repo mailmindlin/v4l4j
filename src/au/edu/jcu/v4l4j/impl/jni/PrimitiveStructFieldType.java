@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
-public enum PrimitiveStructFieldType implements StructFieldType {
+public enum PrimitiveStructFieldType implements StructFieldType<Object> {
 	/**
 	 * bool type
 	 */

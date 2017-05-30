@@ -7,22 +7,23 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.Serializable;
 
-public class StructField implements Serializable {
+public class StructField<T> implements Serializable {
 	private static final long serialVersionUID = 1L;
 
-	protected static StructField read(ObjectInputStream in) throws ClassNotFoundException, IOException {
+	protected static <T> StructField<T> read(ObjectInputStream in) throws ClassNotFoundException, IOException {
 		String name = in.readUTF();
-		StructFieldType type = (StructFieldType) in.readObject();
+		@SuppressWarnings("unchecked")
+		StructFieldType<T> type = (StructFieldType<T>) in.readObject();
 		int offset = in.readInt();
 		
-		return new StructField(type, name, offset);
+		return new StructField<T>(type, name, offset);
 	}
 	
 	protected final String name;
-	protected final StructFieldType type;
+	protected final StructFieldType<T> type;
 	protected final int offset;
 
-	public StructField(StructFieldType type, String name, int offset) {
+	public StructField(StructFieldType<T> type, String name, int offset) {
 		this.type = type;
 		this.name = name;
 		this.offset = offset;
@@ -32,7 +33,7 @@ public class StructField implements Serializable {
 		return name;
 	}
 
-	public StructFieldType getType() {
+	public StructFieldType<T> getType() {
 		return type;
 	}
 
@@ -48,8 +49,8 @@ public class StructField implements Serializable {
 		return this.offset;
 	}
 	
-	public StructField withOffset(int offset) {
-		return new StructField(this.type, this.name, offset);
+	public StructField<T> withOffset(int offset) {
+		return new StructField<>(this.type, this.name, offset);
 	}
 
 	@Override
@@ -90,7 +91,7 @@ public class StructField implements Serializable {
 	 */
 	private static class StructFieldProxy implements Externalizable {
 		String name;
-		StructFieldType type;
+		StructFieldType<?> type;
 		int offset;
 		
 		/**
@@ -101,20 +102,20 @@ public class StructField implements Serializable {
 			
 		}
 		
-		StructFieldProxy(StructField origin) {
+		StructFieldProxy(StructField<?> origin) {
 			this.name = origin.name;
 			this.type = origin.type;
 			this.offset = origin.offset;
 		}
 		
 		private Object readResolve() {
-			return new StructField(type, name, offset);
+			return new StructField<>(type, name, offset);
 		}
 
 		@Override
 		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 			this.name = in.readUTF();
-			this.type = (StructFieldType) in.readObject();
+			this.type = (StructFieldType<?>) in.readObject();
 			this.offset = in.readInt();
 		}
 
