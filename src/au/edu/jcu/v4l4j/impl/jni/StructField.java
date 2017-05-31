@@ -58,28 +58,6 @@ public class StructField<T> implements Serializable {
 		return "StructField{name=" + getName() + ";type=" + getType() +";alignment=" + getAlignment() + ";size=" + getSize() + "}";
 	}
 
-	@Deprecated
-	public static class PointerStructField extends StructField {
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 1L;
-		protected final boolean dereference;
-		protected final StructFieldType remote;
-
-		public PointerStructField(boolean dereference, StructFieldType remote, String name, int offset) {
-			super(PrimitiveStructFieldType.RAW_POINTER, name, offset);
-			this.dereference = dereference;
-			this.remote = remote;
-		}
-		
-		@Override
-		public PointerStructField withOffset(int offset) {
-			return new PointerStructField(this.dereference, this.remote, this.name, offset);
-		}
-
-	}
-
 	private Object writeReplace() {
 		return new StructFieldProxy(this);
 	}
