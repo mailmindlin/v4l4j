@@ -17,6 +17,11 @@ import au.edu.jcu.v4l4j.api.component.Component;
 import au.edu.jcu.v4l4j.api.component.ComponentProvider;
 import au.edu.jcu.v4l4j.api.component.ComponentRole;
 
+/**
+ * A provider & discovery service for OMX components.
+ * @author mailmindlin
+ *
+ */
 public class OMXComponentProvider implements ComponentProvider {
 	
 	static {
@@ -48,6 +53,15 @@ public class OMXComponentProvider implements ComponentProvider {
 	
 	private static volatile int refCount = 0;
 	
+	/**
+	 * Get an instance of an OMXComponentProvider.
+	 * <p>
+	 * If no other instances are alive ({@link #close()} hasn't been called on
+	 * them), OMXIL may be initialized.
+	 * </p>
+	 * 
+	 * @return OMXComponentProvider instance
+	 */
 	public static OMXComponentProvider getInstance() {
 		synchronized (OMXComponentProvider.class) {
 			if (refCount == 0)

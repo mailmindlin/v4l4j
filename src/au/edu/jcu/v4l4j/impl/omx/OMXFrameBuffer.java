@@ -95,6 +95,14 @@ public class OMXFrameBuffer implements FrameBuffer {
 		return this.outPortIdx;
 	}
 	
+	/**
+	 * Get the flags set on this buffer
+	 * @return flags
+	 */
+	public int getFlags() {
+		return this.flags;
+	}
+	
 	@Override
 	public int hashCode() {
 		return (int) ((this.pointer >> 32) & this.pointer) & 0xFFFFFFFF;

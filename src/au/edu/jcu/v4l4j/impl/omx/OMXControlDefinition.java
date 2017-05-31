@@ -265,10 +265,10 @@ public class OMXControlDefinition {
 	}
 	
 	public static class OMXControlDefinitionRegistry {
-		HashMap<String, StructFieldType> typeRegistry = new HashMap<>();
+		HashMap<String, StructFieldType<?>> typeRegistry = new HashMap<>();
 		HashMap<String, OMXControlDefinition> controlRegistry = new HashMap<>();
 		
-		private StructFieldType lookupType(String type) {
+		private StructFieldType<?> lookupType(String type) {
 			if (type == null || type.isEmpty())
 				return null;
 			
@@ -276,46 +276,75 @@ public class OMXControlDefinition {
 				//Compute type
 				
 				//Check if it's an alias for one of the primitives
-				//TODO: fix 'int' referring to native int type (not int32)
-				//TODO add unsigned types
 				switch (name) {
 					case "bool":
 					case "boolean":
 						return PrimitiveStructFieldType.BOOL;
 					case "char":
 						return PrimitiveStructFieldType.CHAR;
+					case "signed char":
+						return PrimitiveStructFieldType.SCHAR;
+					case "unsigned char":
+						return PrimitiveStructFieldType.UCHAR;
 					case "short":
+					case "short int":
+					case "signed short":
+					case "signed short int":
 						return PrimitiveStructFieldType.SHORT;
+					case "unsigned short":
+					case "unsigned short int":
+						return PrimitiveStructFieldType.USHORT;
 					case "int":
+					case "signed":
+					case "signed int":
 						return PrimitiveStructFieldType.INT;
+					case "unsigned":
+					case "unsigned int":
+						return PrimitiveStructFieldType.UINT;
 					case "long":
+					case "long int":
+					case "signed long":
+					case "signed long int":
 						return PrimitiveStructFieldType.LONG;
+					case "unsigned long":
+					case "unsigned long int":
+						return PrimitiveStructFieldType.ULONG;
 					case "long long":
+					case "long long int":
+					case "signed long long":
+					case "signed long long int":
 						return PrimitiveStructFieldType.LLONG;
+					case "unsigned long long":
+					case "unsigned long long int":
+						return PrimitiveStructFieldType.ULLONG;
 					case "float":
 						return PrimitiveStructFieldType.FLOAT;
 					case "double":
 						return PrimitiveStructFieldType.DOUBLE;
 					case "long double":
 						return PrimitiveStructFieldType.LONG_DOUBLE;
-					case "u8":
 					case "i8":
 					case "int8":
-					case "uint8":
 						return PrimitiveStructFieldType.INT8;
-					case "u16":
+					case "u8":
+					case "uint8":
+						return PrimitiveStructFieldType.UINT8;
 					case "i16":
 					case "int16":
-					case "uint16":
 						return PrimitiveStructFieldType.INT16;
-					case "u32":
+					case "u16":
+					case "uint16":
+						return PrimitiveStructFieldType.UINT16;
 					case "i32":
 					case "int32":
-					case "uint32":
 						return PrimitiveStructFieldType.INT32;
-					case "u64":
+					case "u32":
+					case "uint32":
+						return PrimitiveStructFieldType.UINT32;
 					case "i64":
 					case "int64":
+						return PrimitiveStructFieldType.UINT64;
+					case "u64":
 					case "uint64":
 						return PrimitiveStructFieldType.INT64;
 					case "f32":
@@ -340,16 +369,16 @@ public class OMXControlDefinition {
 					//TODO check indicies
 					//TODO support vararrays
 					int arraySize = Integer.parseInt(name.substring(openBracketIdx + 1, name.length() - 1));
-					StructFieldType baseType = lookupType(name.substring(0, openBracketIdx));
+					StructFieldType<?> baseType = lookupType(name.substring(0, openBracketIdx));
 					if (baseType == null)
 						return null;
-					return new ArrayStructFieldType(baseType, arraySize);
+					return new ArrayStructFieldType<>(baseType, arraySize);
 				} else if (name.endsWith("*")) {
 					//Pointer
-					StructFieldType baseType = lookupType(name.substring(0, name.length() - 1));
+					StructFieldType<?> baseType = lookupType(name.substring(0, name.length() - 1));
 					if (baseType == null)
 						return null;
-					return new PointerStructFieldType(baseType);
+					return new PointerStructFieldType<>(baseType);
 				}
 				return null;
 			});
@@ -376,7 +405,7 @@ public class OMXControlDefinition {
 				
 				//TODO validate names
 				
-				StructFieldType fieldType = lookupType(fieldKindName);
+				StructFieldType<?> fieldType = lookupType(fieldKindName);
 				if (fieldType == null) {
 					//We failed to add the field
 					if (continueOnError) {
@@ -404,7 +433,7 @@ public class OMXControlDefinition {
 					String fieldName = e.getKey();
 					
 					String fieldKindName = e.getValue().toString();
-					StructFieldType fieldType = lookupType(fieldKindName);
+					StructFieldType<?> fieldType = lookupType(fieldKindName);
 					if (fieldType == null) {
 						//We failed to add the field
 						if (continueOnError) {
