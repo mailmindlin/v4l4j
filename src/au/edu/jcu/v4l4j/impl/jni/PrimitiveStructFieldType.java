@@ -1,10 +1,10 @@
 package au.edu.jcu.v4l4j.impl.jni;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
-import au.edu.jcu.v4l4j.api.Rational;
 
 /**
  * Primitive types:
@@ -35,7 +35,7 @@ import au.edu.jcu.v4l4j.api.Rational;
  *
  * @param <T>
  */
-public abstract class PrimitiveStructFieldType<T> implements StructFieldType<T> {
+public class PrimitiveStructFieldType<T> implements StructFieldType<T> {
 	private static final long serialVersionUID = -1407421225506639940L;
 	
 	//Indices for lookup by native methods. Change at your own risk.
@@ -47,27 +47,31 @@ public abstract class PrimitiveStructFieldType<T> implements StructFieldType<T> 
 			UNSIGNED_CHAR_IDX = 3,
 			
 			SHORT_IDX = 4,
-			UNSIGNED_SHORT_IDX = 6,
+			UNSIGNED_SHORT_IDX = 5,
 			
-			INT_IDX = 7,
-			UNSIGNED_INT_IDX = 9,
+			INT_IDX = 6,
+			UNSIGNED_INT_IDX = 7,
 			
-			LONG_IDX = 4,
-			UNSIGNED_LONG_IDX = -1,
+			LONG_IDX = 8,
+			UNSIGNED_LONG_IDX = 9,
 			
-			LONG_LONG_IDX = 5,
-			UNSIGNED_LONG_LONG_IDX = -1,
+			LONG_LONG_IDX = 10,
+			UNSIGNED_LONG_LONG_IDX = 11,
 			
-			FLOAT_IDX = 6,
-			DOUBLE_IDX = 7,
-			LONG_DOUBLE_IDX = 8,
-			RAW_POINTER_IDX = 9,
-			INT8_IDX = 10,
-			INT16_IDX = 11,
-			INT32_IDX = 12,
-			INT64_IDX = 13,
-			FLOAT32_IDX = 14,
-			FLOAT64_IDX = 15;
+			FLOAT_IDX = 12,
+			DOUBLE_IDX = 13,
+			LONG_DOUBLE_IDX = 14,
+			RAW_POINTER_IDX = 15,
+			INT8_IDX = 16,
+			UINT8_IDX = 17,
+			INT16_IDX = 18,
+			UINT16_IDX = 19,
+			INT32_IDX = 20,
+			UINT32_IDX = 21,
+			INT64_IDX = 22,
+			UINT64_IDX = 23,
+			FLOAT32_IDX = 24,
+			FLOAT64_IDX = 25;
 	
 	/**
 	 * Default values for sizes/alignments of primitives. Used when we can't invoke the native code.
@@ -106,17 +110,31 @@ public abstract class PrimitiveStructFieldType<T> implements StructFieldType<T> 
 		UINT32(4, 4, false),
 		INT64(8, 8, true),
 		UINT64(8, 8, false),
+		
+		FLOAT32(),
+		FLOAT64(),
 		;
 		
+		private final boolean fp;
 		private final int size;
 		private final int alignment;
+		/**
+		 * Minimum storable value.
+		 * If FP, then # of Mantissa digits
+		 */
 		private final long minValue;
+		/**
+		 * Maximum storable value.
+		 * If FP, then 
+		 */
 		private final long maxValue;
 		PrimitiveInfo() {
 			//TODO fix
-			throw new UnsupportedOperationException("please finish me.");
+			//throw new UnsupportedOperationException("please finish me.");
+			this(-1, -1, -1, -1);
 		}
 		PrimitiveInfo(int size, int alignment, long min, long max) {
+			this.fp = false;
 			this.size = size;
 			this.alignment = alignment;
 			this.minValue = min;
@@ -124,6 +142,7 @@ public abstract class PrimitiveStructFieldType<T> implements StructFieldType<T> 
 		}
 		
 		PrimitiveInfo(int size, int alignment, boolean signed) {
+			this.fp = false;
 			this.size = size;
 			this.alignment = alignment;
 			if (signed) {
@@ -135,6 +154,7 @@ public abstract class PrimitiveStructFieldType<T> implements StructFieldType<T> 
 				this.maxValue = 1L << (size * 8);
 			}
 		}
+		
 		public int getDefaultSize() {
 			return this.size;
 		}
@@ -143,28 +163,36 @@ public abstract class PrimitiveStructFieldType<T> implements StructFieldType<T> 
 			return this.alignment;
 		}
 	}
-	protected static final int
-			BOOL_DEFAULT_SIZE = 1,
-			CHAR_DEFAULT_SIZE = Character.BYTES,
-			SHORT_DEFAULT_SIZE = Short.BYTES,
-			INT_DEFAULT_SIZE = Integer.BYTES,
-			LONG_DEFAULT_SIZE = Long.BYTES,
-			LONG_LONG_DEFAULT_SIZE = Long.BYTES
-			;
 	
-	static byte[] getNumberBytes(Number n) {
-		if (n instanceof Byte)
-			return new byte[]{(Byte)n};
-		if (n instanceof Short) {
-			short s = n.shortValue();
-			return new byte[]{(byte) ((s & 0xFF00) >>> 8), (byte) (s & 0x00FF)};
-		}
-		if (n instanceof Integer) {
-			int i = n.intValue();
-			return new byte[]{(byte) ((i >>> 24) & 0xFF), (byte) ((i >>> 16) & 0xFF), (byte) ((i >>> 8) & 0xFF), (byte) (i& 0xFF)};
-		}
-		//TODO finish;
-		return null;
+	public static PrimitiveStructFieldType<?>[] values() {
+		return new PrimitiveStructFieldType[] {
+				BOOL,
+				CHAR,
+				SCHAR,
+				UCHAR,
+				SHORT,
+				USHORT,
+				INT,
+				UINT,
+				LONG,
+				ULONG,
+				LLONG,
+				ULLONG,
+				FLOAT,
+				DOUBLE,
+				LONG_DOUBLE,
+				RAW_POINTER,
+				INT8,
+				UINT8,
+				INT16,
+				UINT16,
+				INT32,
+				UINT32,
+				INT64,
+				UINT64,
+				FLOAT32,
+				FLOAT64
+		};
 	}
 	
 	public static final PrimitiveStructFieldType<Boolean> BOOL = new PrimitiveStructFieldType<Boolean>(BOOL_IDX) {
@@ -194,197 +222,117 @@ public abstract class PrimitiveStructFieldType<T> implements StructFieldType<T> 
 		}
 	};
 	
-	
 	/**
 	 * C character type.
-	 * Range 
+	 * 1 byte.
 	 */
-	public static final PrimitiveStructFieldType<Number> CHAR = new PrimitiveStructFieldType<Number>(CHAR_IDX) {
-		private static final long serialVersionUID = 1236880998037556331L;
-		
-		@Override
-		public void writeUnchecked(ByteBuffer buffer, Object value) {
-			char cValue;
-			if (value == null)
-				cValue = '\0';
-			else if (value instanceof Character)
-				cValue = (Character) value;
-			else if (value instanceof Number) {
-				cValue = (char) ((Number) value).intValue();
-			} else {
-				throw new IllegalArgumentException("Cannot map to char: " + value);
-			}
-			this.write(buffer, cValue);
-		}
-		
-		@Override
-		public Number read(ByteBuffer buffer, StructReadingContext context) {
-			return readFWInt(buffer).shortValue();
-		}
-		
-	};
+	public static final PrimitiveStructFieldType<Number> CHAR = new PrimitiveStructFieldType<Number>(CHAR_IDX);
 	
-	public static final PrimitiveStructFieldType<Byte> BYTE = new PrimitiveStructFieldType<Byte>(-1) {
-		private static final long serialVersionUID = -6996477397334889469L;
-
-		@Override
-		public void write(ByteBuffer buffer, Byte params) {
-			// TODO Auto-generated method stub
-			
-		}
-
-		@Override
-		public Byte read(ByteBuffer buffer, StructReadingContext context) {
-			return null;
-		}
-		
-	};
+	public static final PrimitiveStructFieldType<Number> SCHAR = new PrimitiveStructFieldType<Number>(SIGNED_CHAR_IDX);
 	
-	public static final PrimitiveStructFieldType<Float> FLOAT = new PrimitiveStructFieldType<Float>(FLOAT_IDX) {
-		private static final long serialVersionUID = 997689072475219270L;
-
-		@Override
-		public void write(ByteBuffer buffer, Float value) {
-			writeFWFloat(buffer, value);
-		}
-		
-		@Override
-		public Float read(ByteBuffer buffer, StructReadingContext context) {
-			return readFWFloat(buffer).floatValue();
-		}
-	};
+	public static final PrimitiveStructFieldType<Number> UCHAR = new PrimitiveStructFieldType<Number>(UNSIGNED_CHAR_IDX);
 	
-	public static final PrimitiveStructFieldType<Double> DOUBLE = new PrimitiveStructFieldType<Double>(DOUBLE_IDX) {
-		private static final long serialVersionUID = 997689072475219270L;
-		
-		@Override
-		public void write(ByteBuffer buffer, Double value) {
-			writeFWFloat(buffer, value);
-		}
-		
-		@Override
-		public Double read(ByteBuffer buffer, StructReadingContext context) {
-			return readFWFloat(buffer).doubleValue();
-		}
-	};
+	public static final PrimitiveStructFieldType<Number> SHORT = new PrimitiveStructFieldType<Number>(SHORT_IDX);
+	public static final PrimitiveStructFieldType<Number> USHORT = new PrimitiveStructFieldType<Number>(UNSIGNED_SHORT_IDX);
 	
-	public static final PrimitiveStructFieldType<Double> LONG_DOUBLE = new PrimitiveStructFieldType<Double>(LONG_DOUBLE_IDX) {
-		private static final long serialVersionUID = 997689072475219270L;
-		
-		@Override
-		public void write(ByteBuffer buffer, Double value) {
-			writeFWFloat(buffer, value);
-		}
-		
-		@Override
-		public Double read(ByteBuffer buffer, StructReadingContext context) {
-			return readFWFloat(buffer).doubleValue();
-		}
-	};
+	public static final PrimitiveStructFieldType<Number> INT = new PrimitiveStructFieldType<Number>(INT_IDX);
+	public static final PrimitiveStructFieldType<Number> UINT = new PrimitiveStructFieldType<Number>(UNSIGNED_INT_IDX);
 	
-	public static final PrimitiveStructFieldType<Double> RAW_POINTER = new PrimitiveStructFieldType<Double>(RAW_POINTER_IDX) {
-		private static final long serialVersionUID = 997689072475219270L;
-		
-		@Override
-		public void write(ByteBuffer buffer, Double value) {
-			//TODO finish
-			writeFWFloat(buffer, value);
-		}
-		
-		@Override
-		public Double read(ByteBuffer buffer, StructReadingContext context) {
-			return readFWFloat(buffer).doubleValue();
-		}
-	};
+	public static final PrimitiveStructFieldType<Number> LONG = new PrimitiveStructFieldType<Number>(LONG_IDX);
+	public static final PrimitiveStructFieldType<Number> ULONG = new PrimitiveStructFieldType<Number>(UNSIGNED_LONG_IDX);
 	
-	public static final PrimitiveStructFieldType<Double> INT8 = new PrimitiveStructFieldType<Double>(INT8_IDX) {
-		private static final long serialVersionUID = 1585078969687614320L;
-	};
+	public static final PrimitiveStructFieldType<Number> LLONG = new PrimitiveStructFieldType<Number>(LONG_LONG_IDX);
+	public static final PrimitiveStructFieldType<Number> ULLONG = new PrimitiveStructFieldType<Number>(UNSIGNED_LONG_LONG_IDX);
 	
+	public static final PrimitiveStructFieldType<Float> FLOAT = new PrimitiveStructFieldType<Float>(FLOAT_IDX, true);
+	public static final PrimitiveStructFieldType<Number> DOUBLE = new PrimitiveStructFieldType<Number>(DOUBLE_IDX, true);
+	public static final PrimitiveStructFieldType<Number> LONG_DOUBLE = new PrimitiveStructFieldType<Number>(LONG_DOUBLE_IDX, true);
 	
+	public static final PrimitiveStructFieldType<Number> RAW_POINTER = new PrimitiveStructFieldType<Number>(RAW_POINTER_IDX);
+	
+	public static final PrimitiveStructFieldType<Number> INT8 = new PrimitiveStructFieldType<Number>(INT8_IDX);
+	public static final PrimitiveStructFieldType<Number> UINT8 = new PrimitiveStructFieldType<Number>(UINT8_IDX);
+	
+	public static final PrimitiveStructFieldType<Number> INT16 = new PrimitiveStructFieldType<Number>(INT16_IDX);
+	public static final PrimitiveStructFieldType<Number> UINT16 = new PrimitiveStructFieldType<Number>(UINT16_IDX);
+	
+	public static final PrimitiveStructFieldType<Number> INT32 = new PrimitiveStructFieldType<Number>(INT32_IDX);
+	public static final PrimitiveStructFieldType<Number> UINT32 = new PrimitiveStructFieldType<Number>(UINT32_IDX);
+	
+	public static final PrimitiveStructFieldType<Number> INT64 = new PrimitiveStructFieldType<Number>(INT64_IDX);
+	public static final PrimitiveStructFieldType<Number> UINT64 = new PrimitiveStructFieldType<Number>(UINT64_IDX);
+	
+	public static final PrimitiveStructFieldType<Number> FLOAT32 = new PrimitiveStructFieldType<Number>(FLOAT32_IDX, true);
+	public static final PrimitiveStructFieldType<Number> FLOAT64 = new PrimitiveStructFieldType<Number>(FLOAT64_IDX, true);
+	
+	protected final int idx;
+	protected final boolean isFP;
 	protected final int alignment;
 	protected final int size;
 	
 	protected PrimitiveStructFieldType(int idx) {
-		this.alignment = MemoryUtils.getAlignment(idx);
-		this.size = MemoryUtils.getSize(idx);
+		this(idx, false);
 	}
 	
-	protected PrimitiveStructFieldType(int idx, int defaultSize, int defaultAlignment) {
+	protected PrimitiveStructFieldType(int idx, boolean isFP) {
+		this.idx = idx;
+		this.isFP = isFP;
 		if (!MemoryUtils.isBound()) {
-			this.alignment = defaultAlignment;
-			this.size = defaultSize;
+			PrimitiveInfo defaultInfo = PrimitiveInfo.values()[idx];
+			this.alignment = defaultInfo.getDefaultAlignment();
+			this.size = defaultInfo.getDefaultSize();
 		} else {
 			this.alignment = MemoryUtils.getAlignment(idx);
 			this.size = MemoryUtils.getSize(idx);
 		}
 	}
 	
-	protected byte[] mapIntInt(Number n, int maxSizeBytes, boolean signed) {
-		if (maxSizeBytes < 1)
-			throw new IllegalArgumentException();
+	/**
+	 * Map a number to BigIngeger
+	 * @param n
+	 * @return
+	 */
+	protected static BigInteger mapToBigInteger(Number n, boolean force) {
+		if (n instanceof BigInteger)
+			return (BigInteger) n;
 		
-		long v = n.longValue();
-		if (signed) {
-			if (v <= -(1L << (maxSizeBytes * 8 - 1)) || v >= (1L << (maxSizeBytes * 8 - 1)))
-				throw new IllegalArgumentException("Value " + v + " outside range (1 - 2**" + (maxSizeBytes - 1) + ", 2**" +  + (maxSizeBytes - 1) + " - 1)");
-		} else {
-			if (v < 0 || v >= (1L << (maxSizeBytes * 8)))
-				throw new IllegalArgumentException("Value " + v + " outside range (0, 2**" +  + maxSizeBytes + " - 1)");
-		}
+		if (force
+				|| (n instanceof Byte)
+				|| (n instanceof Short)
+				|| (n instanceof Integer)
+				|| (n instanceof AtomicInteger)
+				|| (n instanceof Long)
+				|| (n instanceof AtomicLong))
+			return BigInteger.valueOf(n.longValue());
 		
-		/*
-		if (n instanceof Short) {
-			short s = n.shortValue();
-			if (maxSizeBytes == 1) {
-				if (signed) {
-					if (s < 0 || s >= (1 << 8))
-						throw new IllegalArgumentException("Value " + s + " outside range (0, 2**8)");
-				} else {
-					if (s <= -(1 << 7) || s >= (1 << 7))
-						throw new IllegalArgumentException("Value " + s + " outside range (1 - 2**7, 2**7 - 1)");
-				}
-				return mapInt((byte) (s & 0xFF), maxSizeBytes, signed);
-			}
-			return new byte[] {(byte) ((s & 0xFF00) >>> 8), (byte) (s & 0xFF)};
-		} else if ((n instanceof Integer) || (n instanceof AtomicInteger)) {
-			int i = n.intValue();
-			switch (maxSizeBytes) {
-				case 1: {
-					if (signed) {
-						if (s < 0 || s >= (1 << 8))
-							throw new IllegalArgumentException("Value " + s + " outside range (0, 2**8)");
-					} else {
-						if (s <= -(1 << 7) || s >= (1 << 7))
-							throw new IllegalArgumentException("Value " + s + " outside range (1 - 2**7, 2**7 - 1)");
-					}
-					return mapInt((byte) (s & 0xFF), maxSizeBytes, signed);
-				}
-			}
-		} else if ((n instanceof Long) || (n instanceof AtomicLong)) {
-			
-		} else if (n instanceof Float) {
-			
-		} else if (n instanceof Double) {
-			
-		} else if (n instanceof Rational) {
-			
-		} else {
-			
-		}
-		*/
+		return null;
+	}
+	
+	protected static BigDecimal mapToBigDecimal(Number n, boolean force) {
+		if (n instanceof BigDecimal)
+			return (BigDecimal) n;
+		
+		if (force || n instanceof Float || n instanceof Double)
+			return new BigDecimal(n.doubleValue());
+		
 		return null;
 	}
 	
 	@Override
 	public void write(ByteBuffer buffer, T value) {
-		writeFWInt(buffer, (Number) value);
+		if (this.isFP)
+			writeFWFloat(buffer, (Number) value);
+		else
+			writeFWInt(buffer, (Number) value);
 	}
 	
 	@Override
 	@SuppressWarnings("unchecked")
 	public T read(ByteBuffer buffer, StructReadingContext context) {
-		return (T) readFWInt(buffer);
+		if (this.isFP)
+			return (T) readFWFloat(buffer);
+		else
+			return (T) readFWInt(buffer);
 	}
 	
 	Number readFWInt(ByteBuffer buffer) {
@@ -398,7 +346,10 @@ public abstract class PrimitiveStructFieldType<T> implements StructFieldType<T> 
 			case 8:
 				return buffer.getLong();
 			default:
-				throw new IllegalArgumentException();
+				//TODO fix for unsigned stuff
+				byte[] bytes = new byte[this.getSize()];
+				buffer.get(bytes, 0, bytes.length);
+				return new BigInteger(bytes);
 		}
 	}
 	
@@ -409,12 +360,14 @@ public abstract class PrimitiveStructFieldType<T> implements StructFieldType<T> 
 			case 8:
 				return buffer.getDouble();
 			default:
+				//TODO fix for 80-bit long doubles
 				throw new UnsupportedOperationException("Cannot read " + getSize() + "-byte-long float");
 		}
 	}
 	
 	void writeFWInt(ByteBuffer buffer, Number value) {
-		switch (getSize()) {
+		final int size = this.getSize();
+		switch (size) {
 			case 1:
 				buffer.put(value.byteValue());
 				break;
@@ -427,7 +380,15 @@ public abstract class PrimitiveStructFieldType<T> implements StructFieldType<T> 
 			case 8:
 				buffer.putLong(value.longValue());
 			default:
-				throw new IllegalArgumentException();
+				if (value instanceof BigInteger) {
+					byte[] bytes = ((BigInteger) value).toByteArray();
+					//TODO fix byte[] size
+					if (bytes.length != size)
+						throw new IllegalArgumentException("Bad length: " + bytes.length + "; expected: " + size);
+					buffer.put(bytes);
+					break;
+				}
+				throw new IllegalArgumentException("Can't deal with this.");
 		}
 	}
 	
@@ -438,7 +399,7 @@ public abstract class PrimitiveStructFieldType<T> implements StructFieldType<T> 
 			case 8:
 				buffer.putDouble(value.doubleValue());
 			default:
-				throw new UnsupportedOperationException("Cannot write " + getSize() + "-byte-long float");
+				throw new UnsupportedOperationException("Cannot write " + getSize() + "-byte-long fp value");
 		}
 	}
 	
@@ -455,6 +416,10 @@ public abstract class PrimitiveStructFieldType<T> implements StructFieldType<T> 
 	@Override
 	public boolean expands() {
 		return false;
+	}
+	
+	public String name() {
+		return PrimitiveInfo.values()[this.idx].name();
 	}
 	
 	
