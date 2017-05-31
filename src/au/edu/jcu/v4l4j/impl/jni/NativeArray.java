@@ -51,7 +51,7 @@ public class NativeArray<E> extends NativeWrapper<Integer, List<E>> implements L
 		
 		//Register this name for updates
 		this.wrappedNames.add(key);
-		final StructFieldType<?> farType = ((PointerStructFieldType) type).getFarType();
+		final StructFieldType<?> farType = ((PointerStructFieldType<?>) type).getFarType();
 
 		//Read pointer
 		final long farPointer = ((Number)this.get(key)).longValue();
@@ -83,7 +83,7 @@ public class NativeArray<E> extends NativeWrapper<Integer, List<E>> implements L
 		StructFieldType<E> type = this.type().getBaseType();
 		
 		if (type instanceof PointerStructFieldType) {
-			final StructFieldType<?> farType = ((PointerStructFieldType) type).getFarType();
+			final StructFieldType<?> farType = ((PointerStructFieldType<?>) type).getFarType();
 			
 			this.remoteWrappers.compute(_key, (key, oldVal) -> {
 				if (oldVal != null) {

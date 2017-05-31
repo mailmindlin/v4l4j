@@ -277,6 +277,7 @@ public class OMXControlDefinition {
 				
 				//Check if it's an alias for one of the primitives
 				//TODO: fix 'int' referring to native int type (not int32)
+				//TODO add unsigned types
 				switch (name) {
 					case "bool":
 					case "boolean":
@@ -290,7 +291,7 @@ public class OMXControlDefinition {
 					case "long":
 						return PrimitiveStructFieldType.LONG;
 					case "long long":
-						return PrimitiveStructFieldType.LONG_LONG;
+						return PrimitiveStructFieldType.LLONG;
 					case "float":
 						return PrimitiveStructFieldType.FLOAT;
 					case "double":

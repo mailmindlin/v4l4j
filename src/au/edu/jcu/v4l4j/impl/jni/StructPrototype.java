@@ -202,7 +202,7 @@ public class StructPrototype implements StructFieldType<Map<String, Object>>, Se
 		}
 		
 		public StructPrototypeBuilder addPointer(StructFieldType<?> farType, String name) {
-			add(new PointerStructFieldType(farType), name);
+			add(new PointerStructFieldType<>(farType), name);
 			return this;
 		}
 

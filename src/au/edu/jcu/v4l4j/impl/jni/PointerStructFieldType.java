@@ -3,12 +3,12 @@ package au.edu.jcu.v4l4j.impl.jni;
 import java.nio.ByteBuffer;
 
 //TODO fix generics
-public class PointerStructFieldType implements StructFieldType<Object> {
+public class PointerStructFieldType<T> implements StructFieldType<Object> {
 	private static final long serialVersionUID = -6196112410849049148L;
 	
-	protected final StructFieldType<?> farType;
+	protected final StructFieldType<T> farType;
 	
-	public PointerStructFieldType(StructFieldType<?> farType) {
+	public PointerStructFieldType(StructFieldType<T> farType) {
 		this.farType = farType;
 	}
 	
@@ -27,13 +27,13 @@ public class PointerStructFieldType implements StructFieldType<Object> {
 		return false;
 	}
 	
-	public StructFieldType<?> getFarType() {
+	public StructFieldType<T> getFarType() {
 		return this.farType;
 	}
 	
 	@Override
 	public void write(ByteBuffer buffer, Object params) {
-		PrimitiveStructFieldType.RAW_POINTER.write(buffer, params);
+		PrimitiveStructFieldType.RAW_POINTER.writeUnchecked(buffer, params);
 	}
 	
 	@Override

@@ -45,7 +45,7 @@ public class NativePointer<T> implements AutoCloseable {
 			return null;
 		
 		@SuppressWarnings("unchecked")
-		StructFieldType<U> farType = (StructFieldType<U>) ((PointerStructFieldType)type).getFarType();
+		StructFieldType<U> farType = ((PointerStructFieldType<U>)type).getFarType();
 		
 		return new NativePointer<U>(farType, farAddr, MemoryUtils.wrap(farAddr, farType.getSize()), false);
 	}

@@ -33,7 +33,7 @@ import au.edu.jcu.v4l4j.impl.omx.OMXVideoPort;
 
 public class OMXTest {
 	public static void main(String...fred) throws Exception {
-		for (PrimitiveStructFieldType type : PrimitiveStructFieldType.values())
+		for (PrimitiveStructFieldType<?> type : PrimitiveStructFieldType.values())
 			System.out.println(type.name() + ";" + type.getAlignment() + ";" + type.getSize());
 		
 		testLoadDefs();

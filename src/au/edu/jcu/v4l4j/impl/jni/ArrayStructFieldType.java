@@ -37,7 +37,7 @@ public class ArrayStructFieldType<T> implements StructFieldType<List<T>> {
 	
 	/**
 	 * Get the maximum number of elements that this array can hold.
-	 * @return
+	 * @return length
 	 */
 	public int getLength() {
 		return this.length;

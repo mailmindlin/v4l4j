@@ -138,7 +138,7 @@ public class UnionPrototype implements StructFieldType<Map<String, Object>> {
 		}
 		
 		public UnionPrototypeBuilder addPointer(StructFieldType<?> farType, String name) {
-			add(new PointerStructFieldType(farType), name);
+			add(new PointerStructFieldType<>(farType), name);
 			return this;
 		}
 

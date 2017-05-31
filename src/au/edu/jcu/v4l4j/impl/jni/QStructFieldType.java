@@ -14,7 +14,7 @@ public class QStructFieldType implements StructFieldType<Number> {
 	/**
 	 * Get a QStructFieldType for the type {@code q(n-1).n}.
 	 * @param n
-	 * @return
+	 * @return struct field of type
 	 */
 	public static QStructFieldType of(int n) {
 		if (n == 16)

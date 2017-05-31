@@ -74,7 +74,7 @@ public class NativeUnion extends NativeWrapper<String, Map<String, Object>> impl
 		
 		//Register this name for updates
 		this.wrappedNames.add(name);
-		final StructFieldType<?> farType = ((PointerStructFieldType) type).getFarType();
+		final StructFieldType<?> farType = ((PointerStructFieldType<?>) type).getFarType();
 
 		//Read pointer
 		final long farPointer = ((Number)this.get(name)).longValue();
@@ -107,7 +107,7 @@ public class NativeUnion extends NativeWrapper<String, Map<String, Object>> impl
 		StructFieldType<?> type = field.getType();
 		
 		if (type instanceof PointerStructFieldType) {
-			final StructFieldType<?> farType = ((PointerStructFieldType) type).getFarType();
+			final StructFieldType<?> farType = ((PointerStructFieldType<?>) type).getFarType();
 			
 			this.remoteWrappers.compute(name, (key, oldVal) -> {
 				if (oldVal != null) {
