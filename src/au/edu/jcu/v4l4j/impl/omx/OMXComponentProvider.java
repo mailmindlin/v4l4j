@@ -50,9 +50,10 @@ public class OMXComponentProvider implements ComponentProvider {
 	
 	public static OMXComponentProvider getInstance() {
 		synchronized (OMXComponentProvider.class) {
-			if (refCount++ == 0)
+			if (refCount == 0)
 				if (!init())
 					return null;
+			refCount++;
 			return new OMXComponentProvider();
 		}
 	}
