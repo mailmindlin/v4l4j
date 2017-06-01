@@ -86,16 +86,16 @@
 			name: "omx.other.portDefinition",
 			kind: "struct",
 			fields: [
-				["format", "omx.other.formatType"]
+				["format", "omx.other.format"]
 			]
 		},
 		{
-			name: "omx.other.param.portFormatType",
+			name: "omx.other.param.portFormat",
 			kind: "param",
 			port: true,
 			fields: [
 				["index", "u32"],
-				["format", "omx.other.formatType"]
+				["format", "omx.other.format"]
 			]
 		}
 	]
