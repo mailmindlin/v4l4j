@@ -24,7 +24,8 @@
 
 #include <sys/ioctl.h>		//for ioctl
 #include <string.h>
-#include <stdlib.h>	//required for videodev2.h
+#include <stdlib.h>		//required for videodev2.h
+#include <stdint.h>		//for uint32_t
 #include <float.h>
 #include <math.h>
 #include "videodev2.h"
