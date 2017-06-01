@@ -483,10 +483,10 @@ struct control {
 struct video_device;
 
 struct v4l_driver_probe {
-	int (*probe)    (struct video_device *device, void **);
-	int (*list_ctrl)(struct video_device *device, struct control *, void *);
-	int (*get_ctrl) (struct video_device *device, struct v4l2_queryctrl *, void *, int *);
-	int (*set_ctrl) (struct video_device *device,  struct v4l2_queryctrl *, int *, void *);
+	int (*probe)    (struct video_device *device, void **data) __attribute__ ((nonnull (1, 2)));
+	int (*list_ctrl)(struct video_device *device, struct control *ctrl, void *data) __attribute__ ((nonnull (1, 2)));
+	int (*get_ctrl) (struct video_device *device, struct v4l2_queryctrl *q, void *data, int *value) __attribute__ ((nonnull (1, 2, 4)));
+	int (*set_ctrl) (struct video_device *device, struct v4l2_queryctrl *q, int *value, void *data) __attribute__ ((nonnull (1, 2, 3)));
 	void *priv;
 };
 /*
@@ -525,8 +525,8 @@ struct control_list {
  */
 struct tuner_actions {
 	//returns 0 if OK, LIBVIDEO_ERR_IOCTL otherwise
-	int (*set_tuner_freq)(struct video_device *device, int idx, unsigned int freq) __attribute__ ((nonnull (1)));
-	int (*get_tuner_freq)(struct video_device *device, int idx, unsigned int *freq)__attribute__ ((nonnull (1)));
+	int (*set_tuner_freq)(struct video_device *device, int idx, unsigned long freq) __attribute__ ((nonnull (1)));
+	int (*get_tuner_freq)(struct video_device *device, int idx, unsigned long *freq)__attribute__ ((nonnull (1)));
 	int (*get_rssi_afc)(struct video_device *device, int idx, int *rssi, int *afc) __attribute__ ((nonnull (1, 3, 4)));
 };
 

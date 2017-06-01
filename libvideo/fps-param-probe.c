@@ -45,8 +45,7 @@
  * Credit to Laurent Pinchart &&  Michel Xhaard for the float_to_fraction
  * & float_to_fraction_recursive code taken from luvcview
  */
-static int float_to_fraction_recursive(double f, double p, int *num, int *den)
-{
+static int float_to_fraction_recursive(double f, double p, int *num, int *den) {
         int whole = (int)f;
         f = fabs(f - whole);
 
@@ -55,48 +54,46 @@ static int float_to_fraction_recursive(double f, double p, int *num, int *den)
                 int a = float_to_fraction_recursive(1 / f, p + p / f, &n, &d);
                 *num = d;
                 *den = d * a + n;
-        }
-        else {
+        } else {
                 *num = 0;
                 *den = 1;
         }
         return whole;
 }
 
-static void float_to_fraction(float f, int *num, int *den)
-{
+static void float_to_fraction(float f, int *num, int *den) {
         int whole = float_to_fraction_recursive(f, FLT_EPSILON, num, den);
-        *num += whole * *den;
+        *num += whole * (*den);
 }
 
 
-int fps_param_probe(struct video_device *vdev, void **data){
+int fps_param_probe(struct video_device *vdev, void **data) {
 	struct v4l2_streamparm *param;
-
+	
 	XMALLOC(param, struct v4l2_streamparm *, sizeof(struct v4l2_streamparm ));
-
+	
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "FPS-PARAM: probing FPS adjust caps ...\n");
-
-	if(vdev->v4l_version!=V4L2_VERSION)
+	
+	if(vdev->v4l_version != V4L2_VERSION)
 		goto end;
-
+	
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "FPS-PARAM: .. \n");
-
+	
 	CLEAR(*param);
 	param->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	if (0 != ioctl(vdev->fd, VIDIOC_G_PARM, param))
+	if (ioctl(vdev->fd, VIDIOC_G_PARM, param) != 0)
 		goto end;
-
+	
 	if(!(param->parm.capture.capability & V4L2_CAP_TIMEPERFRAME))
 		goto end;
 
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "FPS-PARAM: .. .. \n");
 
-	if (0 != ioctl(vdev->fd, VIDIOC_S_PARM, param))
+	if (ioctl(vdev->fd, VIDIOC_S_PARM, param) != 0)
 		goto end;
-
+	
 	*data = (void *) param;
-
+	
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "FPS-PARAM: FPS adjustable  (%d control)!\n", NB_PRIV_IOCTL);
 	return NB_PRIV_IOCTL;
 
@@ -106,61 +103,72 @@ end:
 	return -1;
 }
 
-int fps_param_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, int *val){
+int fps_param_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, int *val) {
 	struct v4l2_streamparm *param = (struct v4l2_streamparm *) d;
-	int ret = LIBVIDEO_ERR_IOCTL;
-
+	
 	CLEAR(*param);
 	param->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	if (0 == ioctl(vdev->fd, VIDIOC_G_PARM, param)) {
-		*val = (int) param->parm.capture.timeperframe.numerator / param->parm.capture.timeperframe.denominator;
-		ret = 0;
-	} else
+	if (ioctl(vdev->fd, VIDIOC_G_PARM, param) != 0) {
+		//ioctl failed
 		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "FPS-PARAM: Error getting current FPS\n");
-
-	return ret;
+		return LIBVIDEO_ERR_IOCTL;
+	}
+	
+	//Convert numerator/denominator into FPS.
+	const uint32_t numerator = param->parm.capture.timeperframe.numerator,
+		denominator = param->parm.capture.timeperframe.denominator;
+	//Catch undefined behavior
+	if (denominator == 0)
+		return LIBVIDEO_ERR_OUT_OF_RANGE;
+	
+	//TODO better rounding (this just rounds down)
+	*val = (int) (numerator / denominator);
+	return LIBVIDEO_ERR_SUCCESS;
 }
 
-int fps_param_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val, void *d){
+int fps_param_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val, void *d) {
 	struct v4l2_streamparm *param = (struct v4l2_streamparm *) d;
-	int n = 0, dd = 0;
-
+	
 	CLEAR(*param);
 	param->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-
+	
+	int n = 0, dd = 0;
 	float_to_fraction((float) *val, &n, &dd);
 
+	//TODO check that these are assigned right
 	param->parm.capture.timeperframe.numerator = dd;
 	param->parm.capture.timeperframe.denominator = n;
-
-
-	if (-1 == ioctl(vdev->fd, VIDIOC_S_PARM, param)) {
+	
+	
+	if (ioctl(vdev->fd, VIDIOC_S_PARM, param) == -1) {
+		//ioctl failed
 		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "FPS-PARAM: Error setting new FPS %d\n", *val);
 		return LIBVIDEO_ERR_STREAMING;
 	}
-
-	return 0;
+	
+	return LIBVIDEO_ERR_SUCCESS;
 }
 
-int fps_param_list_ctrl(struct video_device *vdev, struct control *c, void *d){
+int fps_param_list_ctrl(struct video_device *vdev, struct control *c, void *d) {
 	struct v4l2_streamparm *param = (struct v4l2_streamparm *) d;
+	
 	if(param != NULL) {
 		CLEAR(*param);
 		param->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		if (0 != ioctl(vdev->fd, VIDIOC_G_PARM, param))
+		if (ioctl(vdev->fd, VIDIOC_G_PARM, param) != 0)
 			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "FPS-PARAM: Error getting current FPS\n");
 
 		//Set FPS
 		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "FPS-PARAM: Found FPS adjust ioctl\n");
-		c[0].v4l2_ctrl->id=0;
+		c[0].v4l2_ctrl->id = 0;
 		c[0].v4l2_ctrl->type = V4L2_CTRL_TYPE_INTEGER;
 		strcpy((char *) c[0].v4l2_ctrl->name,"Frame rate");
 		c[0].v4l2_ctrl->minimum = 0;
 		c[0].v4l2_ctrl->maximum = 255;
 		c[0].v4l2_ctrl->step = 1;
 		c[0].v4l2_ctrl->default_value = param->parm.capture.timeperframe.denominator;
-		c[0].v4l2_ctrl->reserved[0]=V4L2_PRIV_IOCTL;
-		c[0].v4l2_ctrl->reserved[1]=FPS_PARAM_PROBE_INDEX;
+		c[0].v4l2_ctrl->reserved[0] = V4L2_PRIV_IOCTL;
+		c[0].v4l2_ctrl->reserved[1] = FPS_PARAM_PROBE_INDEX;
 	}
 	return NB_PRIV_IOCTL;
 }

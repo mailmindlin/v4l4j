@@ -34,7 +34,7 @@
  * @param frequency Value to set
  * @return 0 on success, else LIBVIDEO_ERR_IOCTL
  */
-LIBVIDEO_LOCAL int set_tuner_freq_v4l1(struct video_device *device, int idx, unsigned int frequency) __attribute__((nonnull (1)));
+LIBVIDEO_LOCAL int set_tuner_freq_v4l1(struct video_device *device, int idx, unsigned long frequency) __attribute__((nonnull (1)));
 
 /**
  * Get the v4l1 device's tuner's frequency
@@ -43,7 +43,7 @@ LIBVIDEO_LOCAL int set_tuner_freq_v4l1(struct video_device *device, int idx, uns
  * @param frequency Output to which the frequency is written
  * @return 0 on success, else LIBVIDEO_ERR_IOCTL
  */
-LIBVIDEO_LOCAL int get_tuner_freq_v4l1(struct video_device *device, int idx, unsigned int *frequency) __attribute__((nonnull (1, 3)));
+LIBVIDEO_LOCAL int get_tuner_freq_v4l1(struct video_device *device, int idx, unsigned long *frequency) __attribute__((nonnull (1, 3)));
 
 /**
  * Get RSSI info for device

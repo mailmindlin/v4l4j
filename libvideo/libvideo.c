@@ -418,6 +418,7 @@ static struct v4l_driver_probe known_driver_probes[] = {
 		.set_ctrl	= qc_set_ctrl,
 		.priv = NULL,
 	},
+	//TODO add fps probe?
 	{NULL, NULL, NULL, NULL, NULL}
 };
 

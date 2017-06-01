@@ -78,7 +78,9 @@ end:
 	return -1;
 }
 
-int pwc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *qc, void *d, int *val) {
+int pwc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *qc, void *data, int *val) {
+	UNUSED(data);
+	
 	struct pwc_mpt_angles angles;
 	switch(qc->id) {
 		case 0:

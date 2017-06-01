@@ -27,24 +27,24 @@
 #include "log.h"
 #include "utils.h"
 
-static void fix_quirky_values(struct video_device *vdev, int idx, unsigned int *f){
+static void fix_quirky_values(struct video_device *vdev, int idx, unsigned long *f){
 	struct video_tuner t;
 	CLEAR(t);
 	t.tuner = idx;
-	if(-1 == ioctl(vdev->fd, VIDIOCGTUNER, &t))
+	if(ioctl(vdev->fd, VIDIOCGTUNER, &t) == -1)
 		return;
-	if(*f<t.rangelow){
+	if(*f < t.rangelow) {
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "TUN: QUIRKS: Tuner frequency %u for tuner %d on device %s BELOW min %lu\n", *f, idx, vdev->file, t.rangelow);
 		*f = t.rangelow;
 		return;
-	} else if(*f>t.rangehigh) {
+	} else if(*f > t.rangehigh) {
 		dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "TUN: QUIRKS: Tuner frequency %u for tuner %d on device %s ABOVE max %lu\n", *f, idx, vdev->file, t.rangehigh);
 		*f = t.rangehigh;
 		return;
 	}
 }
 
-int set_tuner_freq_v4l1(struct video_device *vdev, int idx, unsigned int f) {
+int set_tuner_freq_v4l1(struct video_device *vdev, int idx, unsigned long f) {
 	UNUSED(idx);
 	if(-1 == ioctl(vdev->fd, VIDIOCSFREQ, &f)){
 		dprint(LIBVIDEO_SOURCE_TUNER, LIBVIDEO_LOG_ERR, "TUN: Failed to set tuner frequency on device %s\n", vdev->file);
@@ -53,7 +53,7 @@ int set_tuner_freq_v4l1(struct video_device *vdev, int idx, unsigned int f) {
 	return 0;
 }
 
-int get_tuner_freq_v4l1(struct video_device *vdev, int idx, unsigned int *f) {
+int get_tuner_freq_v4l1(struct video_device *vdev, int idx, unsigned long *f) {
 	if(-1 == ioctl(vdev->fd, VIDIOCGFREQ, f)){
 		dprint(LIBVIDEO_SOURCE_TUNER, LIBVIDEO_LOG_ERR, "TUN: Failed to get tuner frequency on device %s\n", vdev->file);
 		return LIBVIDEO_ERR_IOCTL;

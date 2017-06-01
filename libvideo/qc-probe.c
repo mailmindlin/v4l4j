@@ -24,7 +24,8 @@
 
 #include <sys/ioctl.h>		//for ioctl
 #include <string.h>
-#include <stdlib.h>	//required for videodev2.h
+#include <stdlib.h>			//required for videodev2.h
+#include <stdbool.h>		//For bool type
 #include "videodev2.h"
 
 #include "videodev_additions.h"
@@ -39,7 +40,7 @@
 #define NB_PRIV_IOCTL 5
 
 struct qc_probe_private {
-	int ok;
+	bool ok;
 };
 
 //QC ioctl requests
@@ -67,10 +68,10 @@ static const char* const qc_ctrl_names[] = {
 #define NUM_QC_CTRLS 5
 
 
-int qc_driver_probe(struct video_device *vdev, void **data){
+int qc_driver_probe(struct video_device *vdev, void **data) {
 	struct qc_probe_private *priv;
 	struct qc_userlut default_ulut, our_ulut, check_ulut;
-
+	
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "QC: probing Quickam\n");
 	/*
 	 * Probing qc ....
@@ -88,41 +89,41 @@ int qc_driver_probe(struct video_device *vdev, void **data){
 	if(ioctl(vdev->fd, VIDIOCQCGUSERLUT, &default_ulut) != 0)
 		goto end;
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "..\n");
-
+	
 	//create a fake ulut
 	for (unsigned int i = 0; i < QC_LUT_SIZE; i++)
 		our_ulut.lut[i] = (unsigned char) (i % 3);
-
+	
 	//send it to QC driver
 	our_ulut.flags |= QC_USERLUT_VALUES;
 	our_ulut.flags |= QC_USERLUT_DEFAULT;
 	if(ioctl(vdev->fd, VIDIOCQCSUSERLUT, &our_ulut) != 0)
 		goto end;
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, ".. ..\n");
-
+	
 	//read it back and check it
 	check_ulut.flags |= QC_USERLUT_VALUES;
 	check_ulut.flags |= QC_USERLUT_DEFAULT;
 	if(ioctl(vdev->fd, VIDIOCQCGUSERLUT, &check_ulut) != 0)
 		goto end;
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, ".. .. ..\n");
-
+	
 	for (unsigned int i = 0; i < QC_LUT_SIZE; i++)
 		if(check_ulut.lut[i] != our_ulut.lut[i])
 			goto end;
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, ".. .. .. ..\n");
-
+	
 	//put default back
 	default_ulut.flags |= QC_USERLUT_VALUES;
 	default_ulut.flags |= QC_USERLUT_DEFAULT;
 	if(ioctl(vdev->fd, VIDIOCQCSUSERLUT, &default_ulut) != 0)
 		goto end;
-
+	
 	//do we need more checks ?
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "QC: found QC driver (%d controls)\n", NB_PRIV_IOCTL);
 	XMALLOC(priv, struct qc_probe_private *, sizeof(struct qc_probe_private ));
 	*data = (void *)priv;
-	priv->ok = 1;
+	priv->ok = true;
 	return NB_PRIV_IOCTL;
 
 end:
@@ -132,22 +133,27 @@ end:
 
 int qc_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, int *val) {
 	UNUSED(d);
+	
 	if (q->id >= NUM_QC_CTRLS) {
 		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "QC: Cant identify control %d\n", q->id);
 		return LIBVIDEO_ERR_IOCTL;
 	}
+	
 	if (ioctl(vdev->fd, qc_getctrl_requests[q->id], val) != 0)
 		return LIBVIDEO_ERR_IOCTL;
 	return LIBVIDEO_ERR_SUCCESS;
 }
 
-int qc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val, void *d) {
+int qc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val, void *data) {
+	UNUSED(data);
+	
 	if (q->id >= NUM_QC_CTRLS) {
 		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "QC: Cant identify control %d\n", q->id);
 		return LIBVIDEO_ERR_IOCTL;
 	}
+	
 	int prev = 0;
-	ioctl(vdev->fd, qc_getctrl_requests[q->id], &prev);
+	ioctl(vdev->fd, qc_getctrl_requests[q->id], &prev);//TODO check return?
 	if (ioctl(vdev->fd, qc_setctrl_requests[q->id], val) != 0) {
 		*val = prev;
 		return LIBVIDEO_ERR_IOCTL;
@@ -157,7 +163,8 @@ int qc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val, v
 
 int qc_list_ctrl(struct video_device *vdev, struct control *c, void *d) {
  	struct qc_probe_private *priv = (struct qc_probe_private *) d;
-	if(priv->ok == 1) {
+	
+	if(priv->ok) {
 		for (unsigned int i = 0; i < NUM_QC_CTRLS; i++) {
 			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "QC: Found quickcam private ioctl %s\n", qc_ctrl_names[i]);
 			c[i].v4l2_ctrl->id = i;
