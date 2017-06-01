@@ -13,6 +13,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import au.edu.jcu.v4l4j.api.ObjIntFunction;
+import au.edu.jcu.v4l4j.impl.jni.AbstractMappingStructFieldType.MappingStructFieldType;
 import au.edu.jcu.v4l4j.impl.jni.ArrayStructFieldType;
 import au.edu.jcu.v4l4j.impl.jni.NativeStruct;
 import au.edu.jcu.v4l4j.impl.jni.PointerStructFieldType;
@@ -265,10 +266,25 @@ public class OMXControlDefinition {
 	}
 	
 	public static class OMXControlDefinitionRegistry {
-		HashMap<String, StructFieldType> typeRegistry = new HashMap<>();
+		
+		HashMap<String, StructFieldType<?>> typeRegistry = new HashMap<>();
 		HashMap<String, OMXControlDefinition> controlRegistry = new HashMap<>();
 		
-		private StructFieldType lookupType(String type) {
+		/**
+		 * Look up a {@link StructFieldType} from a string identifier.
+		 * <p>
+		 * Valid identifiers consist of:
+		 * <ul>
+		 * <li>A primitive name (e.g., {@code bool}, {@code unsigned long long int})</li>
+		 * <li>A previously defined type</li>
+		 * <li>A pointer to a type (a pointer to some type {@code T} is written as {@code T*})</li>
+		 * <li>An array of a type (an array of some type {@code T} of size {@code n} is written as {@code T[n]}</li>
+		 * </ul>
+		 * </p>
+		 * @param type Type name to resolve
+		 * @return StructFieldType for the given name, else {@code null} if the name cannot be resolved.
+		 */
+		private StructFieldType<?> lookupType(String type) {
 			if (type == null || type.isEmpty())
 				return null;
 			
@@ -340,21 +356,33 @@ public class OMXControlDefinition {
 					//TODO check indicies
 					//TODO support vararrays
 					int arraySize = Integer.parseInt(name.substring(openBracketIdx + 1, name.length() - 1));
-					StructFieldType baseType = lookupType(name.substring(0, openBracketIdx));
+					StructFieldType<?> baseType = lookupType(name.substring(0, openBracketIdx));
 					if (baseType == null)
 						return null;
-					return new ArrayStructFieldType(baseType, arraySize);
+					return new ArrayStructFieldType<>(baseType, arraySize);
 				} else if (name.endsWith("*")) {
 					//Pointer
-					StructFieldType baseType = lookupType(name.substring(0, name.length() - 1));
+					StructFieldType<?> baseType = lookupType(name.substring(0, name.length() - 1));
 					if (baseType == null)
 						return null;
-					return new PointerStructFieldType(baseType);
+					return new PointerStructFieldType<>(baseType);
 				}
 				return null;
 			});
 		}
 		
+		/**
+		 * Reads struct/query type definition in form of:
+		 * <pre>
+		 * interface StructTypeDefinition extends TypeDefinition {
+		 *     kind: 'struct';
+		 *     fields: ({name: string, type: string} | [string, string]) [];
+		 * }
+		 * </pre>
+		 * @param typedef
+		 * @param continueOnError
+		 * @return
+		 */
 		protected StructPrototypeBuilder readStructTypedef(JSONObject typedef, boolean continueOnError) {
 			StructPrototypeBuilder typeBuilder = StructPrototype.builder();
 			JSONArray fields = typedef.getJSONArray("fields");
@@ -376,7 +404,7 @@ public class OMXControlDefinition {
 				
 				//TODO validate names
 				
-				StructFieldType fieldType = lookupType(fieldKindName);
+				StructFieldType<?> fieldType = lookupType(fieldKindName);
 				if (fieldType == null) {
 					//We failed to add the field
 					if (continueOnError) {
@@ -404,7 +432,7 @@ public class OMXControlDefinition {
 					String fieldName = e.getKey();
 					
 					String fieldKindName = e.getValue().toString();
-					StructFieldType fieldType = lookupType(fieldKindName);
+					StructFieldType<?> fieldType = lookupType(fieldKindName);
 					if (fieldType == null) {
 						//We failed to add the field
 						if (continueOnError) {
@@ -425,7 +453,7 @@ public class OMXControlDefinition {
 					String fieldName = field.optString("name", "unknown$" + j);//TODO validate names
 					
 					String fieldKindName = field.getString("type");
-					StructFieldType fieldType = lookupType(fieldKindName);
+					StructFieldType<?> fieldType = lookupType(fieldKindName);
 					if (fieldType == null) {
 						//We failed to add the field
 						if (continueOnError) {
@@ -444,6 +472,27 @@ public class OMXControlDefinition {
 			return typeBuilder.build();
 		}
 		
+		/**
+		 * Read type definition in form of:
+		 * <pre>
+		 * interface TypeDefinition {
+		 *     name: string;
+		 *     kind: 'alias' | 'enum' | 'query' | 'struct' | 'union';
+		 * }
+		 * interface AliasDefinition extends TypeDefinition {
+		 *     kind: 'alias';
+		 *     alias: string;
+		 * }
+		 * interface EnumTypeDefinition extends TypeDefinition {
+		 *     kind: 'enum';
+		 *     values: string[];
+		 * }
+		 * </pre>
+		 * See {@link #readStructTypedef(JSONObject, boolean)} for struct & query type definitions.
+		 * See {@link #readUnionTypedef(JSONObject, boolean)} for union type definitions.
+		 * @param typedef
+		 * @param continueOnError
+		 */
 		protected void readTypedef(JSONObject typedef, boolean continueOnError) {			
 			String typeName = typedef.getString("name");
 			String kind = typedef.getString("kind");
@@ -451,7 +500,7 @@ public class OMXControlDefinition {
 			switch (kind) {
 				case "alias": {
 					String targetName = typedef.getString("alias");
-					StructFieldType target = lookupType(targetName);
+					StructFieldType<?> target = lookupType(targetName);
 					if (target == null) {
 						if (continueOnError) {
 							target = lookupType("i32");
@@ -465,10 +514,12 @@ public class OMXControlDefinition {
 				}
 				case "enum": {
 					JSONArray values = typedef.getJSONArray("values");
-					List<String> names = new ArrayList<>(values.length());
+					final List<String> names = new ArrayList<>(values.length());
 					for (int i = 0; i < values.length(); i++)
 						names.add(i, values.getString(i));
-					//TODO generate mapping
+					//TODO generate (better) mapping
+					MappingStructFieldType<?> field = new MappingStructFieldType<>(names::get, names::indexOf);
+					typeRegistry.put(typeName, field);
 					break;
 				}
 				case "query":
@@ -496,6 +547,46 @@ public class OMXControlDefinition {
 				readTypedef(typedefs.getJSONObject(i), continueOnError);
 		}
 		
+		/**
+		 * Read query in form of:
+		 * <pre>
+		 * interface QueryDefinition {
+		 *     name: string;
+		 *     query: number;
+		 *     type: string;
+		 *     fields?: FieldMappingDefinition[];
+		 * }
+		 * </pre>
+		 * Where:
+		 * <dl>
+		 * <dt>name</dt>
+		 *     <dd>The name of the query</dd>
+		 * <dt>query</dt>
+		 *     <dd>The query index</dd>
+		 * <dt>type</dt>
+		 *     <dd>The name of the type of the query's data structure</dd>
+		 * <dt>fields</dt>
+		 *     <dd>Info on how to map fields from the query's data structure to visible controls</dd>
+		 * </dl>
+		 * 
+		 * <p>
+		 * FieldMappingDefinition is further defined as:
+		 * <pre>
+		 * interface FieldMappingDefinition {
+		 *     name: string;
+		 *     kind: 'number' | 'enum';
+		 *     sfName: string;
+		 * }
+		 * </pre>
+		 * <dl>
+		 * <dt>name</dt>
+		 *     <dd>The exported name of the field</dd>
+		 * <dt>kind<dt>
+		 * <dt>sfName</dt>
+		 * </dl>
+		 * </p>
+		 * @param querydef
+		 */
 		protected void readQuery(JSONObject querydef) {
 			OMXControlDefinitionBuilder queryBuilder = OMXControlDefinition.builder();
 			
@@ -506,7 +597,7 @@ public class OMXControlDefinition {
 			//TODO set on builder
 			
 			String queryTypeName = querydef.getString("type");
-			StructFieldType queryType = lookupType(queryTypeName);
+			StructFieldType<?> queryType = lookupType(queryTypeName);
 			//TODO better exception types
 			if (queryType == null)
 				throw new RuntimeException("Unknown type '" + queryTypeName + "' in query '" + queryName + "'");
@@ -533,7 +624,9 @@ public class OMXControlDefinition {
 							break;
 						case "enum":
 							try {
-								queryBuilder.withEnumField(sfName, fieldName, (Class<? extends Enum>) Class.forName(queryFieldDef.getString("enumClass")));
+								@SuppressWarnings("unchecked")
+								Class<? extends Enum> enumClass = (Class<? extends Enum>) Class.forName(queryFieldDef.getString("enumClass"));
+								queryBuilder.withEnumField(sfName, fieldName, enumClass);
 							} catch (ClassNotFoundException | JSONException e) {
 								throw new RuntimeException(e);
 							}
@@ -550,6 +643,8 @@ public class OMXControlDefinition {
 					}
 				}
 			}
+			
+			this.controlRegistry.put(queryName, queryBuilder.build());
 		}
 		
 		protected void readQueries(JSONArray querydefs, boolean continueOnError) {
@@ -560,29 +655,32 @@ public class OMXControlDefinition {
 				readQuery(querydefs.getJSONObject(i));//TODO store
 		}
 		
-		public void read(String json, boolean continueOnError) {
-			JSONObject base = new JSONObject(json);
+		public void read(JSONObject base, boolean continueOnError) {
 			//First read in types
 			readTypes(base.optJSONArray("types"), continueOnError);
 			
 			readQueries(base.optJSONArray("queries"), continueOnError);
 		}
 		
+		public void read(String json, boolean continueOnError) {
+			read(new JSONObject(json), continueOnError);
+		}
+		
 		public void read(Reader reader, boolean continueOnError) {
-			JSONObject base = new JSONObject(reader);
-			//First read in types
-			readTypes(base.optJSONArray("types"), continueOnError);
-			
-			readQueries(base.optJSONArray("queries"), continueOnError);
+			read(new JSONObject(reader), continueOnError);
 		}
 		
 		@Override
 		public String toString() {
-			return new StringBuilder()
+			JSONObject json = new JSONObject();
+			json.put("types", new JSONObject(this.typeRegistry));
+			json.put("controls", new JSONObject(this.controlRegistry));
+			return json.toString(4);
+			/*return new StringBuilder()
 					.append(super.toString())
 					.append(this.typeRegistry)
 					.append(this.controlRegistry)
-					.toString();
+					.toString();*/
 		}
 	}
 }
