@@ -52,5 +52,12 @@
 		{
 			name: "scale"
 		}
+	],
+	queries: [
+		{
+			name: "colorFormatConversion",
+			query: "ConfigCommonColorFormatConversion",
+			type: "omx.config.iv.colorConversion",
+		}
 	]
 }

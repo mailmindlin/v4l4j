@@ -45,9 +45,9 @@ public abstract class AbstractMappingStructFieldType<T> implements StructFieldTy
 		//Write as int32 (TODO: check if this is system-dependent)
 		PrimitiveStructFieldType.INT32.write(buffer, iVal);
 	}
-	
-	@SuppressWarnings("unchecked")
+
 	@Override
+	@SuppressWarnings("unchecked")
 	public T read(ByteBuffer buffer, StructReadingContext context) {
 		Integer iValue = (Integer) PrimitiveStructFieldType.INT32.read(buffer, context);
 		
