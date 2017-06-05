@@ -20,7 +20,7 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
-
+#ifdef USE_LIBV4LCONVERT_FLAT
 #include <jni.h>
 #include <stdint.h>
 
@@ -343,3 +343,4 @@ JNIEXPORT jintArray JNICALL Java_au_edu_jcu_v4l4j_encoder_AbstractVideoFrameEnco
 	
 	return result;
 }
+#endif // USE_LIBV4LCONVERT_FLAT
