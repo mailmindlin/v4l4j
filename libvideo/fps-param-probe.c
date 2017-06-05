@@ -105,6 +105,7 @@ end:
 }
 
 int fps_param_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d, int *val) {
+	UNUSED(q);
 	struct v4l2_streamparm *param = (struct v4l2_streamparm *) d;
 	
 	CLEAR(*param);
@@ -128,6 +129,7 @@ int fps_param_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void
 }
 
 int fps_param_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val, void *d) {
+	UNUSED(q);
 	struct v4l2_streamparm *param = (struct v4l2_streamparm *) d;
 	
 	CLEAR(*param);
@@ -137,8 +139,8 @@ int fps_param_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int 
 	float_to_fraction((float) *val, &n, &dd);
 
 	//TODO check that these are assigned right
-	param->parm.capture.timeperframe.numerator = dd;
-	param->parm.capture.timeperframe.denominator = n;
+	param->parm.capture.timeperframe.numerator = (uint32_t) dd;
+	param->parm.capture.timeperframe.denominator = (uint32_t) n;
 	
 	
 	if (ioctl(vdev->fd, VIDIOC_S_PARM, param) == -1) {
@@ -167,7 +169,12 @@ int fps_param_list_ctrl(struct video_device *vdev, struct control *c, void *d) {
 		c[0].v4l2_ctrl->minimum = 0;
 		c[0].v4l2_ctrl->maximum = 255;
 		c[0].v4l2_ctrl->step = 1;
-		c[0].v4l2_ctrl->default_value = param->parm.capture.timeperframe.denominator;
+		
+		//Saturate to bounds of 'int32_t'
+		const uint32_t INT32_MAX = (((uint32_t) 1) << 31),
+			default_value = param->parm.capture.timeperframe.denominator;
+		c[0].v4l2_ctrl->default_value = (int32_t) ((default_value > INT32_MAX) ? INT32_MAX : default_value);
+		
 		c[0].v4l2_ctrl->reserved[0] = V4L2_PRIV_IOCTL;
 		c[0].v4l2_ctrl->reserved[1] = FPS_PARAM_PROBE_INDEX;
 	}
