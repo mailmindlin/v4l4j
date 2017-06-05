@@ -551,6 +551,7 @@ public class OMXControlDefinition {
 					break;
 				}
 				case "query":
+				case "config":
 					typeRegistry.put(typeName, readStructTypedef(typedef, continueOnError)
 							.add(1, PrimitiveStructFieldType.INT32, "size")
 							.add(0, OMXConstants.VERSION_TYPE, "version")
@@ -564,6 +565,7 @@ public class OMXControlDefinition {
 					typeRegistry.put(typeName, readUnionTypedef(typedef, continueOnError));
 					break;
 				default:
+					throw new IllegalArgumentException("Unknown typedef kind: " + kind);
 			}
 		}
 		

@@ -197,7 +197,7 @@ public class OMXTest {
 					sb.append(buf, 0, len);
 				}
 				registry.read(sb.toString(), true);
-			} catch (IOException e) {
+			} catch (RuntimeException | IOException e) {
 				e.printStackTrace();
 			}
 		}
