@@ -5,6 +5,7 @@
 * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 * or FITNESS FOR A PARTICULAR PURPOSE.
 */
+#ifdef USE_LIBV4LCONVERT_FLAT
 
 #include <jni.h>
 #include <stdint.h>
@@ -383,3 +384,4 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_encoder_V4lconvertBuffer_release(JN
 	(*env)->SetObjectField(env, self, imedFID, NULL);
 }
 #endif
+#endif //USE_LIBV4LCONVERT_FLAT
