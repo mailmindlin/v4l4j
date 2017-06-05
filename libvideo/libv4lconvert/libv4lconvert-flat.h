@@ -1,4 +1,6 @@
+#ifdef USE_LIBV4LCONVERT_FLAT
 
+#include <stdbool.h> //For, um, bool type
 #include "../types.h"
 #include "libvideo.h"
 #include "libv4lconvert-priv.h"
@@ -252,8 +254,8 @@ LIBV4L_PUBLIC struct v4lconvert_conversion_request {
 
 LIBV4L_PUBLIC u32 v4lconvert_estimateBufferSize(u32 fmt, u32 width, u32 height);
 
-LIBV4L_PUBLIC int v4lconvert_encoder_initWithConverter(struct v4lconvert_encoder* encoder, v4lconvert_converter* converter, u32 width, u32 height);
-LIBV4L_PUBLIC int v4lconvert_encoder_initForIMF(struct v4lconvert_encoder* encoder, u32 src_fmt, u32 dst_fmt, u32 width, u32 height);
+LIBV4L_PUBLIC bool v4lconvert_encoder_initWithConverter(struct v4lconvert_converter* encoder, v4lconvert_converter_prototype* prototype, u32 width, u32 height) __attribute__ ((nonnull (1, 2)));
+LIBV4L_PUBLIC bool v4lconvert_encoder_initForIMF(struct v4lconvert_converter* encoder, u32 src_fmt, u32 dst_fmt, u32 width, u32 height) __attribute__ ((nonnull (1)));
 
 LIBV4L_PUBLIC bool v4lconvert_encoder_series_create(struct v4lconvert_encoder_series* self, struct v4lconvert_conversion_request* request, char** errmsg) __attribute__((nonnull (1, 2)));
 LIBV4L_PUBLIC int v4lconvert_encoder_series_init(struct v4lconvert_encoder_series* self, u32 width, u32 height, u32 numConverters, u32* converterIds);
@@ -266,13 +268,14 @@ LIBV4L_PUBLIC int v4lconvert_encoder_series_doRelease(struct v4lconvert_encoder_
  * @param num_buffers number of buffers to create (length of buffers array)
  * @param buffers Array of buffers to create
  * @param allocate boolean, whether to allocate the buffers themselves or not
- * @return 1 on success, 0 on failure
+ * @return success
  */
-LIBV4L_PUBLIC int v4lconvert_encoder_series_createBuffers(struct v4lconvert_encoder_series* series, u32 num_buffers, struct v4lconvert_buffer** buffers, int allocate);
-LIBV4L_PUBLIC int v4lconvert_buffer_release(struct v4lconvert_buffer* buffer);
+LIBV4L_PUBLIC bool v4lconvert_encoder_series_createBuffers(struct v4lconvert_encoder_series* series, u32 num_buffers, struct v4lconvert_buffer** buffers, int allocate);
+LIBV4L_PUBLIC bool v4lconvert_buffer_release(struct v4lconvert_buffer* buffer);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
+#endif //USE_LIBV4LCONVERT_FLAT

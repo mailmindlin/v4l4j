@@ -1,3 +1,4 @@
+#ifdef USE_LIBV4LCONVERT_FLAT
 
 #include <stdlib.h>
 #include "libv4lconvert-flat.h"
@@ -5,6 +6,7 @@
 #include "../libvideo-palettes.h"
 #include "../types.h"
 #include "../log.h"
+
 
 #ifndef __LIBVIDEO_LIBV4LCONVERT_LIBV4LCONVERT_FLAT_CPP
 #define __LIBVIDEO_LIBV4LCONVERT_LIBV4LCONVERT_FLAT_CPP
@@ -72,8 +74,8 @@ extern "C" {
 	GENERATE_CONVERTER_SD_SF_2F(id + 2, (applyFn), (costFn), (src_fmt_0), (dst_fmt_1), 0, 1),\
 	GENERATE_CONVERTER_SD_SF_2F(id + 3, (applyFn), (costFn), (src_fmt_1), (dst_fmt_1), 1, 1)
 
-static v4lconvert_converter_t* v4lconvert_init_imf_sdwh(v4lconvert_converter_prototype_t* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options, char** errmsg);
-static v4lconvert_converter_t* v4lconvert_init_imf_sd_sf(v4lconvert_converter_prototype_t* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options, char** errmsg);
+static v4lconvert_converter* v4lconvert_init_imf_sdwh(v4lconvert_converter_prototype* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options, char** errmsg);
+static v4lconvert_converter* v4lconvert_init_imf_sd_sf(v4lconvert_converter_prototype* self, struct v4l2_format* src_fmt, struct v4l2_format* dst_fmt, size_t options_len, void* options, char** errmsg);
 
 static v4lconvert_converter_prototype const v4lconvert_converter_prototypes[][] = {
 	[v4lconvert_conversion_type_identity] = {
@@ -361,9 +363,9 @@ u32 v4lconvert_estimateBufferSize(u32 fmt, u32 width, u32 height) {
 	}
 }
 
-int v4lconvert_encoder_initWithConverter(struct v4lconvert_encoder* encoder, v4lconvert_converter_t* converter, u32 width, u32 height) {
+bool v4lconvert_encoder_initWithConverter(struct v4lconvert_converter* encoder, v4lconvert_converter_prototype* converter, u32 width, u32 height) {
 	if (!encoder || !converter)
-		return EXIT_FAILURE;
+		return false;
 	encoder->converter = converter;
 	encoder->src_fmt = converter->src_fmt;
 	encoder->dst_fmt = converter->dst_fmt;
@@ -386,7 +388,7 @@ int v4lconvert_encoder_initWithConverter(struct v4lconvert_encoder* encoder, v4l
 			encoder->apply = v4lconvert_encoder_applyIMF_sd_sf;
 			encoder->release = v4lconvert_encoder_releaseIMF;
 			if (!(encoder->imf_v4l2_src_fmt = malloc(sizeof(struct v4l2_format))))
-				return EXIT_FAILURE;
+				return false;
 			//TODO finish
 			switch (encoder->imf_v4l2_src_fmt->type) {
 				case V4L2_BUF_TYPE_VIDEO_CAPTURE:
@@ -402,7 +404,7 @@ int v4lconvert_encoder_initWithConverter(struct v4lconvert_encoder* encoder, v4l
 				case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
 					//Not sure how to handle these
 				default:
-					return EXIT_FAILURE;
+					return false;
 			}
 			break;
 		case v4lconvert_conversion_signature_special:
@@ -417,11 +419,11 @@ int v4lconvert_encoder_initWithConverter(struct v4lconvert_encoder* encoder, v4l
 				
 				//Create jpeg encoder
 				if (!(encoder->jpeg_encode_params.cinfo = malloc(sizeof(struct jpeg_compress_struct))))
-					return EXIT_FAILURE;
+					return false;
 				
 				if (!(encoder->jpeg_encode_params.cerr = malloc(sizeof(struct jpeg_error_mgr)))) {
 					free(encoder->jpeg_encode_params.cinfo);
-					return EXIT_FAILURE;
+					return false;
 				}
 				
 				struct jpeg_compress_struct* cinfo = encoder->jpeg_encode_params.cinfo;
@@ -464,28 +466,28 @@ int v4lconvert_encoder_initWithConverter(struct v4lconvert_encoder* encoder, v4l
 						cinfo->comp_info[1].v_samp_factor = 1;
 						cinfo->comp_info[2].h_samp_factor = 1;
 						cinfo->comp_info[2].v_samp_factor = 1;
-						return EXIT_FAILURE;
+						return false;
 						break;
 					default:
 						//TODO support more formats (esp. YUV420)
-						return EXIT_FAILURE;
+						return false;
 				}
 			} else {
-				return EXIT_FAILURE;
+				return false;
 			}
 			break;
 		default:
-			return EXIT_FAILURE;
+			return false;
 	}
 	encoder->src_len = v4lconvert_estimateBufferSize(converter->src_fmt, width, height);
 	encoder->dst_len = v4lconvert_estimateBufferSize(converter->dst_fmt, width, height);
-	return EXIT_SUCCESS;
+	return true;
 }
 
-int v4lconvert_encoder_initForIMF(struct v4lconvert_encoder* encoder, u32 src_fmt, u32 dst_fmt, u32 width, u32 height) {
+bool v4lconvert_encoder_initForIMF(struct v4lconvert_encoder* encoder, u32 src_fmt, u32 dst_fmt, u32 width, u32 height) {
 	v4lconvert_converter_t* converter = v4lconvert_converter_getConverterByConversion(src_fmt, dst_fmt);
 	if (!converter)
-		return EXIT_FAILURE;
+		return false;
 	return v4lconvert_encoder_initWithConverter(encoder, converter, width, height);
 }
 
@@ -821,7 +823,7 @@ static u32 v4lconvert_encoder_series_doConvert(struct v4lconvert_encoder_series*
 	return buffer->buf1_len = encoder->apply(encoder, bufA, buffer->buf1, src_len);
 }
 
-int v4lconvert_encoder_series_createBuffers(struct v4lconvert_encoder_series* series, u32 num_buffers, struct v4lconvert_buffer** buffers, int allocate) {
+bool v4lconvert_encoder_series_createBuffers(struct v4lconvert_encoder_series* series, u32 num_buffers, struct v4lconvert_buffer** buffers, int allocate) {
 	u32 bufA_len = 0;
 	u32 bufB_len = 0;
 	for (unsigned int i = 0; i < (series->num_encoders / 2) * 2; i += 2) {
@@ -846,7 +848,7 @@ int v4lconvert_encoder_series_createBuffers(struct v4lconvert_encoder_series* se
 			if (allocate)
 				buffers[i] = buffer = malloc(sizeof(struct v4lconvert_buffer));
 			else
-				return EXIT_FAILURE;
+				return false;
 		}
 		
 		buffer->buf0_len = 0;
@@ -877,14 +879,14 @@ int v4lconvert_encoder_series_createBuffers(struct v4lconvert_encoder_series* se
 					buffer->buf1 = NULL;
 					buffer->buf2 = NULL;
 				}
-				return EXIT_FAILURE;
+				return false;
 			}
 		}
 	}
-	return EXIT_SUCCESS;
+	return true;
 }
 
-int v4lconvert_buffer_release(struct v4lconvert_buffer* buffer) {
+bool v4lconvert_buffer_release(struct v4lconvert_buffer* buffer) {
 	free(buffer->buf0);
 	buffer->buf0 = NULL;
 	buffer->buf0_len = 0;
@@ -899,7 +901,7 @@ int v4lconvert_buffer_release(struct v4lconvert_buffer* buffer) {
 	buffer->buf2 = NULL;
 	buffer->buf2_cap = 0;
 	
-	return EXIT_SUCCESS;
+	return true;
 }
 
 static inline int computeEncoderPath(unsigned int* map, unsigned int* distances, u32 from, u32 to, unsigned int maxIterations) {
@@ -1005,3 +1007,5 @@ v4lconvert_converter_t* v4lconvert_converter_getConverterByConversion(u32 from, 
 #endif
 
 #endif
+
+#endif //USE_LIBV4LCONVERT_FLAT
