@@ -103,7 +103,7 @@ void free_capture_device2(struct video_device *);
 unsigned int count_v4l2_controls(struct video_device *);
 //Populate the control_list with reported V4L2 controls
 //and returns how many controls were created
-int create_v4l2_controls(struct video_device *, struct control *, int);
+unsigned int create_v4l2_controls(struct video_device *, struct control *, int);
 //returns the value of a control
 int get_control_value_v4l2(struct video_device *vdev, struct v4l2_queryctrl *qctrl, void *val, unsigned int size);
 //sets the value of a control

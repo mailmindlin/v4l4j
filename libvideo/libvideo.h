@@ -525,9 +525,9 @@ struct control_list {
  */
 struct tuner_actions {
 	//returns 0 if OK, LIBVIDEO_ERR_IOCTL otherwise
-	int (*set_tuner_freq)(struct video_device *device, int idx, unsigned long freq) __attribute__ ((nonnull (1)));
-	int (*get_tuner_freq)(struct video_device *device, int idx, unsigned long *freq)__attribute__ ((nonnull (1)));
-	int (*get_rssi_afc)(struct video_device *device, int idx, int *rssi, int *afc) __attribute__ ((nonnull (1, 3, 4)));
+	int (*set_tuner_freq)(struct video_device *device, unsigned int idx, unsigned long freq) __attribute__ ((nonnull (1)));
+	int (*get_tuner_freq)(struct video_device *device, unsigned int idx, unsigned long *freq)__attribute__ ((nonnull (1, 3)));
+	int (*get_rssi_afc)(struct video_device *device, unsigned int idx, int *rssi, int *afc) __attribute__ ((nonnull (1, 3, 4)));
 };
 
 /*

@@ -971,7 +971,7 @@ static void fix_quirky_struct(struct v4l2_queryctrl *v) {
 
 //Populate the control_list with reported V4L2 controls
 //and return how many controls were created
-int create_v4l2_controls(struct video_device *vdev, struct control *controls, int max) {
+unsigned int create_v4l2_controls(struct video_device *vdev, struct control *controls, int max) {
 	struct v4l2_queryctrl qctrl;
 	node *list = NULL;
 	int count = 0;
@@ -1033,7 +1033,8 @@ int create_v4l2_controls(struct video_device *vdev, struct control *controls, in
 	//checking extended controls
 	CLEAR(qctrl);
 	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
-
+	
+	//TODO check 'max' parameter?
 	unsigned int current = 0;
 	while (v4lconvert_vidioc_queryctrl(vdev->control->priv, &qctrl) == 0) {
 		if(!has_id(list,qctrl.id ) && !(qctrl.flags & V4L2_CTRL_FLAG_DISABLED) && qctrl.type != V4L2_CTRL_TYPE_CTRL_CLASS) {

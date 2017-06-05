@@ -509,9 +509,9 @@ struct control_list *get_control_list(struct video_device *vdev) {
 		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: Creating v4l controls (found %d)...\n", v4l_count);
 
 		//fill in controls
-		if(vdev->v4l_version==V4L2_VERSION)
+		if(vdev->v4l_version == V4L2_VERSION)
 			v4l_count = create_v4l2_controls(vdev, l->controls, l->count);
-		else if(vdev->v4l_version==V4L1_VERSION)
+		else if(vdev->v4l_version == V4L1_VERSION)
 			v4l_count = create_v4l1_controls(vdev, l->controls, l->count);
 
 		dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: (got %d)\n", v4l_count);

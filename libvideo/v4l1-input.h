@@ -123,7 +123,7 @@ unsigned int count_v4l1_controls(struct video_device *device);
  * Populate the control_list with fake V4L2 controls matching V4L1 video
  * controls and returns how many fake controls were created
  */
-int create_v4l1_controls(struct video_device *device, struct control *ctrl, int);
+unsigned int create_v4l1_controls(struct video_device *device, struct control *ctrl, int max);
 /**
  * returns the value of a control
  */
