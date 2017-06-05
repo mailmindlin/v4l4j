@@ -577,7 +577,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_AbstractGrabber_fillBuffer(JNIEnv *
 	// update class members
 	(*env)->SetLongField(env, this, last_captured_frame_sequence_fID, sequence);
 	//Convert timeval to int64_t (hopefully) handling overflows
-	(*env)->SetLongField(env, this, last_captured_frame_time_usec_fID, (jlong) (captureTime.seconds) + (jlong) (captureTime.microseconds * UINT64_C(1000000)));
+	(*env)->SetLongField(env, this, last_captured_frame_time_usec_fID, (jlong) (captureTime.tv_usec) + (jlong) (captureTime.tv_sec * UINT64_C(1000000)));
 	(*env)->SetIntField(env, this, last_captured_frame_buffer_index_fID, buffer_index);
 
 	return output_len;

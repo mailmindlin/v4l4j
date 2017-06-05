@@ -72,7 +72,7 @@ static void term_destination( j_compress_ptr cinfo ){}
 static size_t jpeg_encode_jpeg(struct v4l4j_device *d, unsigned char *src, unsigned char *dst) {
 	LOG_FN_ENTER();
 	memcpy(dst, src, d->capture_len);
-	dprint(LOG_JPEG, "[JPEG] Finished compression (%u bytes)\n", d->capture_len);
+	dprint(LOG_JPEG, "[JPEG] Finished compression (%uz bytes)\n", d->capture_len);
 	return d->capture_len;
 }
 
