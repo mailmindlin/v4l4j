@@ -171,7 +171,7 @@ int fps_param_list_ctrl(struct video_device *vdev, struct control *c, void *d) {
 		c[0].v4l2_ctrl->step = 1;
 		
 		//Saturate to bounds of 'int32_t'
-		const uint32_t INT32_MAX = (((uint32_t) 1) << 31),
+		const uint32_t INT32_MAX = ((uint32_t)1ULL << 31) - 1,
 			default_value = param->parm.capture.timeperframe.denominator;
 		c[0].v4l2_ctrl->default_value = (int32_t) ((default_value > INT32_MAX) ? INT32_MAX : default_value);
 		
