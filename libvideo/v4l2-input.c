@@ -635,7 +635,7 @@ void *dequeue_buffer_v4l2(struct video_device *vdev, unsigned int *len, unsigned
 		*sequence = b.sequence;
 	
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG2, "CAP: dequeued buffer #%d length: %d - seq: %lu - time %llu.%06llu\n",
-			*index,	*len, (unsigned long) b.sequence, (unsigned long long) capture_time->seconds, (unsigned long long) capture_time->microseconds);
+			*index,	*len, (unsigned long) b.sequence, (unsigned long long) capture_time->tv_sec, (unsigned long long) capture_time->tv_usec);
 	
 	return vdev->capture->mmap->buffers[b.index].start;
 }
