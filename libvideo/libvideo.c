@@ -64,11 +64,12 @@ int get_libvideo_version(char *dst, size_t len) {
  *
  */
 struct video_device *open_device(char *file) {
+	//Print the version of libvideo to stdout the first time this method is invoked
 	static bool show_ver = false;
 	if(!show_ver) {
 		char version[40];
-		get_libvideo_version(version, sizeof(version));
-		info("Using libvideo version %.*s\n", sizeof(version), version);
+		int version_length = get_libvideo_version(version, sizeof(version));
+		info("Using libvideo version %.*s\n", version_length, version);
 		fflush(stdout);
 		show_ver = true;
 	}
@@ -149,7 +150,7 @@ int close_device(struct video_device *vdev) {
 static void setup_capture_actions(struct video_device *vdev) {
 	struct capture_device *c = vdev->capture;
 	XMALLOC(c->actions, struct capture_actions *, sizeof(struct capture_actions));
-
+	
 	if(vdev->v4l_version == V4L1_VERSION) {
 		c->actions->set_cap_param = set_cap_param_v4l1;
 		c->actions->init_capture = init_capture_v4l1;
@@ -213,12 +214,12 @@ struct capture_device *init_capture_device(struct video_device *vdev, unsigned i
 //init_capture_device was successful
 void free_capture_device(struct video_device *vdev) {
 	dprint(LIBVIDEO_SOURCE_CAP, LIBVIDEO_LOG_DEBUG, "CAP: Freeing capture device on %s.\n", vdev->file);
-
+	
 	if(vdev->v4l_version == V4L2_VERSION) {
 		v4lconvert_destroy(vdev->capture->convert->priv);
 		XFREE(vdev->capture->convert);
 	}
-
+	
 	XFREE(vdev->capture->actions);	
 	XFREE(vdev->capture->mmap);
 	XFREE(vdev->capture);
