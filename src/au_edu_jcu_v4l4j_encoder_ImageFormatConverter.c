@@ -5,6 +5,8 @@
 * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 * or FITNESS FOR A PARTICULAR PURPOSE.
 */
+#ifdef USE_LIBV4LCONVERT_FLAT
+
 #include <jni.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -202,3 +204,5 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_encoder_JPEGEncoder_getQuality(JNIE
 }
 #endif
 #endif
+
+#endif //USE_LIBV4LCONVERT_FLAT
