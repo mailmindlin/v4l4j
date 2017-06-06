@@ -176,6 +176,12 @@ enum {
 	MPEG4,
 	WMV,
 	RV,
+	VP6,
+	VP7,
+	VP8,
+	SORENSON,
+	THEORA,
+	MVC,
 
 	// Vendor-specific formats
 	CPIA1,
