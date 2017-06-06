@@ -680,7 +680,8 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doUseBuffe
 	if (allocate) {
 		r = OMX_AllocateBuffer(appData->component, &buffer, portIndex, framebufferRef, size);
 		//Wrap allocated buffer with ByteBuffer
-		bBuffer = (*env)->NewDirectByteBuffer(env, buffer->pBuffer, size);
+		if (r == OMX_ErrorNone)
+			bBuffer = (*env)->NewDirectByteBuffer(env, buffer->pBuffer, size);
 	} else {
 		//Actually allocate the buffer
 		unsigned char* bufferPointer = (*env)->GetDirectBufferAddress(env, bBuffer);
