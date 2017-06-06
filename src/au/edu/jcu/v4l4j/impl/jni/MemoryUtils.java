@@ -8,11 +8,17 @@ import au.edu.jcu.v4l4j.V4L4JUtils;
 public final class MemoryUtils {
 
 	static {
-		V4L4JUtils.loadLibrary();
+		boolean bound = false;
+		try {
+			V4L4JUtils.loadLibrary();
+			bound = true;
+		} finally {
+			IS_BOUND = bound;
+		}
 	}
 	
 	//TODO set on JNI bind
-	protected static boolean IS_BOUND = false;
+	protected static final boolean IS_BOUND;
 	
 	public static boolean isBound() {
 		return IS_BOUND;
