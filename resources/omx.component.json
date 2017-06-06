@@ -12,17 +12,17 @@
 		},
 		{
 			name: "omx.param.portDefinitionType",
-			kind: "param",
+			kind: "query",
 			port: true,
-			fields: {
-				"dir": "omx.dirType",
-				"bufferCountActual": "u32",
-				"bufferCountMin": "u32",
-				"bufferSize": "u32",
-				"enabled": "bool",
-				"populated": "bool",
-				"domain": "omx.portDomainType",
-				"format": {
+			fields: [
+				["dir", "omx.dirType"],
+				["bufferCountActual", "u32"],
+				["bufferCountMin", "u32"],
+				["bufferSize", "u32"],
+				["enabled", "bool"],
+				["populated", "bool"],
+				["domain", "omx.portDomainType"],
+				["format", {
 					kind: "union",
 					fields: {
 						"audio": "omx.audio.portDefinitionType",
@@ -30,14 +30,14 @@
 						"image": "omx.image.portDefinitionType",
 						"other": "omx.other.portDefinitionType"
 					}
-				},
-				"buffersContinuous": "bool",
-				"bufferAlignment": "u32"
-			}
+				}],
+				["buffersContinuous", "bool"],
+				["bufferAlignment", "u32"]
+			]
 		},
 		{
 			name: "omx.param.u32",
-			kind: "param",
+			kind: "query",
 			port: true,
 			value: "u32"
 		},
@@ -48,7 +48,7 @@
 		},
 		{
 			name: "omx.param.suspensionType",
-			kind: "param",
+			kind: "query",
 			port: false,
 			value: "omx.suspensionPolicy"
 		},
@@ -60,7 +60,7 @@
 		},
 		{
 			name: "omx.param.contentURI",
-			kind: "param",
+			kind: "query",
 			port: false,
 			value: {
 				kind: "vararray",
@@ -69,7 +69,7 @@
 		},
 		{
 			name: "omx.param.contentPipe",
-			kind: "param",
+			kind: "query",
 			port: false,
 			value: "omx.handle"
 		},
@@ -132,35 +132,35 @@
 		},
 		{
 			name: "omx.config.metadataItemCount",
-			kind: "config",
+			kind: "query",
 			port: false,
-			fields: {
-				"scopeMode": "omx.metadataScope",
-				"scopeSpecifier": "u32",
-				"itemCount": "u32"
-			}
+			fields: [
+				["scopeMode", "omx.metadataScope"],
+				["scopeSpecifier", "u32"],
+				["itemCount", "u32"]
+			]
 		},
 		{
 			name: "omx.config.metadataItemType",
-			kind: "config",
+			kind: "query",
 			port: false,
-			fields: {
-				"scopeMode": "omx.metadataScope",
-				"scopeSpecifier": "u32",
-				"itemIndex": "u32",
-				"searchMode": "omx.metadataSearchMode",
-				"keyCharset": "omx.metadataCharset",
-				"keySizeUsed": "u8",
-				"key": "u8[128]",
-				"valueCharset": "omx.metadataCharset",
-				"languageCountry": "omx.string",
-				"valueMaxSize": "u32",
-				"valueSizeUsed": "u32",
-				"value": {
+			fields: [
+				["scopeMode", "omx.metadataScope"],
+				["scopeSpecifier", "u32"],
+				["itemIndex", "u32"],
+				["searchMode", "omx.metadataSearchMode"],
+				["keyCharset", "omx.metadataCharset"],
+				["keySizeUsed", "u8"],
+				["key", "u8[128]"],
+				["valueCharset", "omx.metadataCharset"],
+				["languageCountry", "omx.string"],
+				["valueMaxSize", "u32"],
+				["valueSizeUsed", "u32"],
+				["value", {
 					kind: "vararray",
 					type: "u8"
-				}
-			}
+				}]
+			]
 		}
 	]
 }

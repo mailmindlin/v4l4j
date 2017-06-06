@@ -12,15 +12,15 @@
 		},
 		{
 			name: "omx.time.config.seekMode",
-			kind: "config",
+			kind: "query",
 			port: false,
-			value: "omx.time.seekMode"
+			fields: [["value", "omx.time.seekMode"]]
 		},
 		{
 			name: "omx.time.config.timeStamp",
-			kind: "config",
+			kind: "query",
 			port: true,
-			value: "omx.ticks"
+			fields: [["value", "omx.ticks"]]
 		},
 		{
 			name: "omx.time.update",
@@ -39,7 +39,7 @@
 		},
 		{
 			name: "omx.time.config.mediaTimerRequest",
-			kind: "config",
+			kind: "query",
 			port: true,
 			fields: [
 				["clientPrivate", "omx.ptr"],
@@ -49,13 +49,13 @@
 		},
 		{
 			name: "omx.time.config.scale",
-			kind: "config",
+			kind: "query",
 			port: false,
-			value: "q16"
+			fields: [["value", "q16"]]
 		},
 		{
 			name: "omx.time.config.clockState",
-			kind: "config",
+			kind: "query",
 			port: false,
 			fields: [
 				["state", "omx.time.clockState"],
@@ -66,19 +66,19 @@
 		},
 		{
 			name: "omx.time.config.activeRefClock",
-			kind: "config",
+			kind: "query",
 			port: false,
-			value: "omx.time.refClock"
+			fields: [["value", "omx.time.refClock"]]
 		},
 		{
 			name: "omx.other.config.power",
-			kind: "config",
+			kind: "query",
 			port: false,
 			value: "bool"
 		},
 		{
 			name: "omx.other.config.stats",
-			kind: "config",
+			kind: "query",
 			port: false,
 			value: "no idea"
 		},
@@ -91,7 +91,7 @@
 		},
 		{
 			name: "omx.other.param.portFormat",
-			kind: "param",
+			kind: "query",
 			port: true,
 			fields: [
 				["index", "u32"],
