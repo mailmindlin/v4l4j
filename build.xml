@@ -352,6 +352,15 @@
 		</java>
 	</target>
 	
+	<target name="test-omx">
+		<java classname="au.edu.jcu.v4l4j.examples.DualViewer" fork="true" failonerror="true">
+			<classpath>
+				<pathelement location="${platform.standard.jar.location}/${project.jar.file}"/>
+			</classpath>
+			<jvmarg value="-Djava.library.path=${platform.standard.jni.location}"/>
+		</java>
+	</target>
+	
 	<target name="deviceInfo">
 		<java classname="au.edu.jcu.v4l4j.examples.DumpInfo" fork="true" failonerror="true">
 			<classpath>
