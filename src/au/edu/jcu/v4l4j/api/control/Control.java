@@ -84,12 +84,12 @@ public interface Control<T> extends AutoCloseable {
 		 * @return self
 		 */
 		default ControlAccessor<P, T, R> set(T value) {
-			return set(()->value);
+			return set(() -> value);
 		}
 		
 		/**
 		 * Set the value. Note that this  does NOT update the control
-		 * until set() is called.
+		 * until {@link #write()} is called.
 		 * @param supplier 
 		 * @return self
 		 */
@@ -161,6 +161,11 @@ public interface Control<T> extends AutoCloseable {
 			return write().read();
 		}
 		
+		/**
+		 * Gets a ControlAccessor for a child value of this control.
+		 * @param name
+		 * @return child accessor
+		 */
 		default <Ct> ControlAccessor<ControlAccessor<P, T, R>, Ct, R> withChild(String name) {
 			throw new UnsupportedOperationException("Control has no children");
 		}
