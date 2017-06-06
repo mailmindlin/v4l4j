@@ -56,7 +56,7 @@ static int find_v4l2_palette(unsigned int v4l2_fmt){
 //image width and height and modifies the pointer at p to point to either
 //NULL, an array of struct frame_intv_discrete or struct frame_intv_continuous.
 //It returns FRAME_INTV_UNSUPPORTED, DISCRETE or CONTINUOUS respectively.
-static int lookup_frame_intv(struct v4lconvert_data *conv, unsigned int fmt, unsigned int width, unsigned int height, void **p){
+static int lookup_frame_intv(struct v4lconvert_data *conv, unsigned int fmt, unsigned int width, unsigned int height, void **p) {
 	int intv_type = FRAME_INTV_UNSUPPORTED;
 	struct frame_intv_discrete *d = NULL;
 	size_t discrete_capacity = 0;

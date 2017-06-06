@@ -1,8 +1,9 @@
 package au.edu.jcu.v4l4j.impl.jni;
 
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 
-public interface StructFieldType {
+public interface StructFieldType<T> extends Serializable {
 
 	int getAlignment();
 	
@@ -10,7 +11,12 @@ public interface StructFieldType {
 	
 	boolean expands();
 	
-	void write(ByteBuffer buffer, Object params);
+	@SuppressWarnings("unchecked")
+	default void writeUnchecked(ByteBuffer buffer, Object params) {
+		this.write(buffer, (T) params);
+	}
 	
-	Object read(ByteBuffer buffer, StructReadingContext context);
+	void write(ByteBuffer buffer, T params);
+	
+	T read(ByteBuffer buffer, StructReadingContext context);
 }

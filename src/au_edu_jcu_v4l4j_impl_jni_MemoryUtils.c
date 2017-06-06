@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <stdlib.h>//aligned_alloc, free
 #include <string.h>//memset
+#include <stdalign.h>//alignof
 
 #include "common.h"
 #include "debug.h"
@@ -21,101 +22,64 @@
 extern "C" {
 #endif
 
-
-struct BoolAlignmentStruct {
-	uint8_t padding;
-	bool test;
-};
-
-struct CharAlignmentStruct {
-	uint8_t padding;
-	uint8_t test;
-};
-
-struct ShortAlignmentStruct {
-	uint8_t padding;
-	uint16_t test;
-};
-
-struct IntAlignmentStruct {
-	uint8_t padding;
-	uint32_t test;
-};
-
-struct LongAlignmentStruct {
-	uint8_t padding;
-	uint64_t test;
-};
-
-struct FloatAlignmentStruct {
-	uint8_t padding;
-	float test;
-};
-struct DoubleAlignmentStruct {
-	uint8_t padding;
-	double test;
-};
-struct PointerAlignmentStruct {
-	uint8_t padding;
-	void* test;
-};
-
-JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_impl_jni_MemoryUtils_getAlignment(JNIEnv *env, jclass me, jint type) {
-	LOG_FN_ENTER();
-	
-	switch (type) {
-		case 0://Bool
-			return offsetof(struct BoolAlignmentStruct, test);
-		case 1://char
-			return offsetof(struct CharAlignmentStruct, test);
-		case 2://short
-			return offsetof(struct ShortAlignmentStruct, test);
-		case 3://int
-			return offsetof(struct IntAlignmentStruct, test);
-		case 4://long
-			return offsetof(struct LongAlignmentStruct, test);
-		case 5://float
-			return offsetof(struct FloatAlignmentStruct, test);
-		case 6://double
-			return offsetof(struct DoubleAlignmentStruct, test);
-		case 7://pointer
-			return offsetof(struct PointerAlignmentStruct, test);
-		default:
-			return -1;
-	}	
-}
-
+#define INFO(type) {alignof(type), sizeof(type)}
 
 struct EmptyStruct {};
 union EmptyUnion {};
 
+/*
+ * Info about c datatypes.
+ * Must reflect PrimitiveStructFieldType.
+ */
+static int const PRIMITIVE_INFO[][2] = {
+	INFO(bool),
+	INFO(char),
+	INFO(signed char),
+	INFO(unsigned char),
+	INFO(short),
+	INFO(unsigned short),
+	INFO(int),
+	INFO(unsigned int),
+	INFO(long),
+	INFO(unsigned long),
+	INFO(long long),
+	INFO(unsigned long long),
+	INFO(float),
+	INFO(double),
+	INFO(long double),
+	INFO(void*),
+	INFO(int8_t),
+	INFO(uint8_t),
+	INFO(int16_t),
+	INFO(uint16_t),
+	INFO(int32_t),
+	INFO(uint32_t),
+	INFO(int64_t),
+	INFO(uint64_t),
+	INFO(float),
+	INFO(double),
+	INFO(struct EmptyStruct),
+	INFO(union EmptyUnion)
+};
+
+#undef INFO
+
+JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_impl_jni_MemoryUtils_getAlignment(JNIEnv *env, jclass me, jint type) {
+	LOG_FN_ENTER();
+	
+	if (type > (sizeof(PRIMITIVE_INFO) / sizeof(PRIMITIVE_INFO[0])))
+		return -1;
+	
+	return PRIMITIVE_INFO[type][0];
+}
+
 JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_impl_jni_MemoryUtils_getSize(JNIEnv *env, jclass me, jint type) {
 	LOG_FN_ENTER();
 	
-	switch (type) {
-		case 0://Bool
-			return sizeof(bool);
-		case 1://byte
-			return sizeof(uint8_t);
-		case 2://short
-			return sizeof(uint16_t);
-		case 3://int
-			return sizeof(uint32_t);
-		case 4://long
-			return sizeof(uint64_t);
-		case 5://float
-			return sizeof(float);
-		case 6://double
-			return sizeof(double);
-		case 7:
-			return sizeof(void*);
-		case 8:
-			return sizeof(struct EmptyStruct);
-		case 9:
-			return sizeof(union EmptyUnion);
-		default:
-			return -1;
-	}
+	if (type > (sizeof(PRIMITIVE_INFO) / sizeof(PRIMITIVE_INFO[0])))
+		return -1;
+	
+	return PRIMITIVE_INFO[type][1];
 }
 
 

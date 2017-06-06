@@ -7,9 +7,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class UnionPrototype implements StructFieldType {
-	protected Set<StructField> options;
-	protected transient Map<String, StructField> optionLookup;
+public class UnionPrototype implements StructFieldType<Map<String, Object>> {
+	private static final long serialVersionUID = -8610611270611404524L;
+	
+	protected Set<StructField<?>> options;
+	protected transient Map<String, StructField<?>> optionLookup;
 	protected transient int alignment = -1;
 	protected transient int size = -1;
 	
@@ -17,7 +19,7 @@ public class UnionPrototype implements StructFieldType {
 		return new UnionPrototypeBuilder();
 	}
 	
-	public UnionPrototype(Set<StructField> options) {
+	public UnionPrototype(Set<StructField<?>> options) {
 		this.options = new HashSet<>(options);
 	}
 	
@@ -25,7 +27,7 @@ public class UnionPrototype implements StructFieldType {
 	public int getAlignment() {
 		if (this.alignment < 0) {
 			int alignment = 0;
-			for (StructField option : options)
+			for (StructField<?> option : options)
 				alignment = Math.max(alignment, option.getAlignment());
 			this.alignment = alignment;
 		}
@@ -36,14 +38,14 @@ public class UnionPrototype implements StructFieldType {
 	public int getSize() {
 		if (this.size < 0) {
 			int size = 0;
-			for (StructField option : options)
+			for (StructField<?> option : options)
 				size = Math.max(size, option.getSize());
 			this.size = size;
 		}
 		return this.size;
 	}
 	
-	public Set<StructField> getOptions() {
+	public Set<StructField<?>> getOptions() {
 		return Collections.unmodifiableSet(this.options);
 	}
 
@@ -52,19 +54,21 @@ public class UnionPrototype implements StructFieldType {
 		return false;
 	}
 	
-	public StructField getOption(String name) {
-		Map<String, StructField> lookup = this.optionLookup;
+	@SuppressWarnings("unchecked")
+	public <T> StructField<T> getOption(String name) {
+		Map<String, StructField<?>> lookup = this.optionLookup;
 		if (lookup == null) {
 			this.optionLookup = lookup = new HashMap<>();
-			for (StructField option : this.options)
+			for (StructField<?> option : this.options)
 				lookup.put(option.getName(), option);
 		}
-		return lookup.get(name);
+		
+		return (StructField<T>) lookup.get(name);
 	}
 	
 	public void writeField(ByteBuffer buffer, String fieldName, Object value) {
-		StructField field = getOption(fieldName);
-		field.getType().write(buffer, value);
+		StructField<?> field = getOption(fieldName);
+		field.getType().writeUnchecked(buffer, value);
 	}
 	
 	public Object readField(ByteBuffer buffer, String fieldName) {
@@ -72,22 +76,20 @@ public class UnionPrototype implements StructFieldType {
 	}
 
 	@Override
-	public void write(ByteBuffer buffer, Object params) {
-		@SuppressWarnings("unchecked")
-		Map<String, Object> value = (Map<String, Object>) params;
-		for (StructField option : options) {
-			if (value.containsKey(option.getName())) {
-				option.getType().write(buffer, value.get(option.getName()));
+	public void write(ByteBuffer buffer, Map<String, Object> params) {
+		for (StructField<?> option : options) {
+			if (params.containsKey(option.getName())) {
+				option.getType().writeUnchecked(buffer, params.get(option.getName()));
 				return;
 			}
 		}
 	}
 
 	@Override
-	public Object read(ByteBuffer buffer, StructReadingContext parentContext) {
+	public Map<String, Object> read(ByteBuffer buffer, StructReadingContext parentContext) {
 		Map<String, Object> result = new HashMap<>();
 		StructReadingContext context = new StructReadingContext(parentContext, this, result);
-		for (StructField option : this.getOptions()) {
+		for (StructField<?> option : this.getOptions()) {
 			try {
 				result.put(option.getName(), option.getType().read(buffer, context));
 			} catch (Exception e) {
@@ -98,7 +100,7 @@ public class UnionPrototype implements StructFieldType {
 	}
 	
 	public static class UnionPrototypeBuilder {
-		protected final Set<StructField> fields = new HashSet<>();
+		protected final Set<StructField<?>> fields = new HashSet<>();
 
 		public UnionPrototypeBuilder addBoolean(String name) {
 			add(PrimitiveStructFieldType.BOOL, name);
@@ -135,8 +137,8 @@ public class UnionPrototype implements StructFieldType {
 			return this;
 		}
 		
-		public UnionPrototypeBuilder addPointer(StructFieldType farType, String name) {
-			add(new PointerStructFieldType(farType), name);
+		public UnionPrototypeBuilder addPointer(StructFieldType<?> farType, String name) {
+			add(new PointerStructFieldType<>(farType), name);
 			return this;
 		}
 
@@ -150,8 +152,8 @@ public class UnionPrototype implements StructFieldType {
 			return this;
 		}
 
-		public UnionPrototypeBuilder add(StructFieldType type, String name) {
-			this.fields.add(new StructField(type, name, 0));
+		public UnionPrototypeBuilder add(StructFieldType<?> type, String name) {
+			this.fields.add(new StructField<>(type, name, 0));
 			return this;
 		}
 

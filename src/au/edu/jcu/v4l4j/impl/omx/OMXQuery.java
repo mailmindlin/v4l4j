@@ -8,6 +8,8 @@ import au.edu.jcu.v4l4j.impl.jni.PrimitiveStructFieldType;
 import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
 
 public class OMXQuery extends StructPrototype {
+	private static final long serialVersionUID = -2864795120312544591L;
+
 	public static final StructPrototype VERSION_TYPE = StructPrototype.builder()
 			.addInt8("nVersionMajor")
 			.addInt8("nVersionMinor")
@@ -19,10 +21,10 @@ public class OMXQuery extends StructPrototype {
 			.addBoolean("bEnabled")
 			.build();
 	
-	protected static StructField[] injectHeader(StructField...fields) {
-		StructField[] result = new StructField[fields.length + 2];
-		result[0] = new StructField(PrimitiveStructFieldType.INT32, "nSize", -1);
-		result[1] = new StructField(VERSION_TYPE, "nVersion", -1);
+	protected static StructField<?>[] injectHeader(StructField<?>...fields) {
+		StructField<?>[] result = new StructField[fields.length + 2];
+		result[0] = new StructField<>(PrimitiveStructFieldType.INT32, "nSize", -1);
+		result[1] = new StructField<>(VERSION_TYPE, "nVersion", -1);
 		System.arraycopy(fields, 0, result, 2, fields.length);
 		return result;
 	}
@@ -38,12 +40,12 @@ public class OMXQuery extends StructPrototype {
 	
 	protected Map<String, Object> bindings;
 	
-	public OMXQuery(StructField...fields) {
+	public OMXQuery(StructField<?>...fields) {
 		super(fields);
 		this.bindings = new HashMap<>();
 	}
 	
-	protected OMXQuery(StructField[] fields, Map<String, StructField> fieldMap, Map<String, Object> bindings) {
+	protected OMXQuery(StructField<?>[] fields, Map<String, StructField<?>> fieldMap, Map<String, Object> bindings) {
 		super(fields, fieldMap);
 		this.bindings = bindings;
 	}

@@ -2,10 +2,11 @@ package au.edu.jcu.v4l4j.impl.jni;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-public class NativeUnion<T> extends NativeWrapper<String, T> implements Map<String, Object> {
+public class NativeUnion extends NativeWrapper<String, Map<String, Object>> implements Map<String, Object> {
 	
 	public NativeUnion(UnionPrototype union, ByteBuffer buffer) {
 		this(union, MemoryUtils.unwrap(buffer), buffer, false);
@@ -37,15 +38,15 @@ public class NativeUnion<T> extends NativeWrapper<String, T> implements Map<Stri
 
 	@Override
 	public boolean containsKey(Object key) {
-		// TODO Auto-generated method stub
-		return false;
+		//TODO is this right?
+		return this.wrappedNames.contains(key);
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public <U, V extends NativePointer<U>> V getChild(String name) {
 		return (V) this.localWrappers.computeIfAbsent(name, key->{
-			StructField option = type().getOption(key);
+			StructField<?> option = type().getOption(key);
 			if (option == null)
 				return null;
 			return doWrapLocalChild(option.getType(), option.getOffset(), option.getSize());
@@ -66,14 +67,14 @@ public class NativeUnion<T> extends NativeWrapper<String, T> implements Map<Stri
 	
 	@Override
 	public void wrapChildRemote(String name) {
-		StructField field = this.type().getOption(name);
-		StructFieldType type = field.getType();
+		StructField<?> field = this.type().getOption(name);
+		StructFieldType<?> type = field.getType();
 		if (!(type instanceof PointerStructFieldType))
 			throw new IllegalArgumentException("Field '" + name + "' is not a pointer");
 		
 		//Register this name for updates
 		this.wrappedNames.add(name);
-		final StructFieldType farType = ((PointerStructFieldType) type).getFarType();
+		final StructFieldType<?> farType = ((PointerStructFieldType<?>) type).getFarType();
 
 		//Read pointer
 		final long farPointer = ((Number)this.get(name)).longValue();
@@ -99,14 +100,14 @@ public class NativeUnion<T> extends NativeWrapper<String, T> implements Map<Stri
 
 	@Override
 	public void allocChildRemote(String name) {
-		final StructField field = this.type().getOption(name);
+		final StructField<?> field = this.type().getOption(name);
 		if (field == null)
 			throw new IllegalArgumentException("No such field called '" + name + "'");
 		
-		StructFieldType type = field.getType();
+		StructFieldType<?> type = field.getType();
 		
 		if (type instanceof PointerStructFieldType) {
-			final StructFieldType farType = ((PointerStructFieldType) type).getFarType();
+			final StructFieldType<?> farType = ((PointerStructFieldType<?>) type).getFarType();
 			
 			this.remoteWrappers.compute(name, (key, oldVal) -> {
 				if (oldVal != null) {
@@ -136,8 +137,8 @@ public class NativeUnion<T> extends NativeWrapper<String, T> implements Map<Stri
 
 	@Override
 	public Set<String> keySet() {
-		// TODO Auto-generated method stub
-		return null;
+		//TODO is this right?
+		return Collections.unmodifiableSet(this.wrappedNames);
 	}
 
 	@Override

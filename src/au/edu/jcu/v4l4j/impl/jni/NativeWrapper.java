@@ -3,9 +3,17 @@ package au.edu.jcu.v4l4j.impl.jni;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * 
+ * @author mailmindlin
+ *
+ * @param <K> Key type
+ * @param <T>
+ */
 public abstract class NativeWrapper<K, T> extends NativePointer<T> {
 	protected final Map<K, NativePointer<?>> localWrappers = new HashMap<>();
 	protected final Map<K, NativePointer<?>> remoteWrappers = new HashMap<>();
@@ -26,30 +34,29 @@ public abstract class NativeWrapper<K, T> extends NativePointer<T> {
 		return base + separator + addon;
 	}
 	
-	protected NativeWrapper(StructFieldType type, long address, ByteBuffer buffer, boolean freeOnClose) {
+	protected NativeWrapper(StructFieldType<T> type, long address, ByteBuffer buffer, boolean freeOnClose) {
 		super(type, address, buffer, freeOnClose);
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected <U, V extends NativePointer<U>> V doWrapPointer(StructFieldType type, long childAddress, ByteBuffer childBuffer, boolean freeOnClose) {
-//		System.out.println("Wrapping pointer of type " + type);
+	protected <U, V extends NativePointer<U>> V doWrapPointer(StructFieldType<?> type, long childAddress, ByteBuffer childBuffer, boolean freeOnClose) {
 		if (type instanceof StructPrototype)
 			return (V) new NativeStruct((StructPrototype) type, childAddress, childBuffer, freeOnClose);
 		else if (type instanceof UnionPrototype)
-			return (V) new NativeUnion<U>((UnionPrototype) type, childAddress, childBuffer, freeOnClose);
+			return (V) new NativeUnion((UnionPrototype) type, childAddress, childBuffer, freeOnClose);
 		else if (type instanceof ArrayStructFieldType)
-			return (V) new NativeArray((ArrayStructFieldType) type, childAddress, childBuffer, freeOnClose);
+			return (V) new NativeArray<U>((ArrayStructFieldType<U>) type, childAddress, childBuffer, freeOnClose);
 		else
-			return (V) new NativePointer<U>(type, childAddress, childBuffer, false);
+			return (V) new NativePointer<U>((StructFieldType<U>)type, childAddress, childBuffer, false);
 	}
 	
-	protected <U, V extends NativePointer<U>> V doWrapLocalChild(StructFieldType type, int offset, int size) {
+	protected <U, V extends NativePointer<U>> V doWrapLocalChild(StructFieldType<?> type, int offset, int size) {
 		long childAddress = this.address() + offset;
 		ByteBuffer childBuffer = MemoryUtils.sliceBuffer(this.buffer(), offset, size);
 		return doWrapPointer(type, childAddress, childBuffer, false);
 	}
 	
-	protected <U, V extends NativePointer<U>> V doAllocChild(StructFieldType type, int alignment, int size) {
+	protected <U, V extends NativePointer<U>> V doAllocChild(StructFieldType<?> type, int alignment, int size) {
 		long childAddress = 0;
 		V result;
 		try {
@@ -80,8 +87,8 @@ public abstract class NativeWrapper<K, T> extends NativePointer<T> {
 		return (V) this.remoteWrappers.get(key);
 	}
 	
-	public <U> NativeUnion<U> getUnion(K key) {
-		NativeUnion<U> result = getChildRemote(key);
+	public NativeUnion getUnion(K key) {
+		NativeUnion result = getChildRemote(key);
 		if (result != null)
 			return result;
 		return getChild(key);
@@ -94,11 +101,13 @@ public abstract class NativeWrapper<K, T> extends NativePointer<T> {
 		return getChild(key);
 	}
 	
-	public NativeArray getArray(K key) {
-		NativeArray result = getChildRemote(key);
+	public <U> NativeArray<U> getArray(K key) {
+		NativeArray<U> result = this.<List<U>, NativeArray<U>>getChildRemote(key);
 		if (result != null)
 			return result;
-		return getChild(key);
+		
+		//Fallback on getChild()
+		return this.<List<U>, NativeArray<U>>getChild(key);
 	}
 	
 	public abstract void wrapChildRemote(K key);

@@ -42,7 +42,7 @@ public class NativeStruct extends NativeWrapper<String, Map<String, Object>> imp
 	@SuppressWarnings("unchecked")
 	public <U, V extends NativePointer<U>> V getChild(String name) {
 		return (V) this.localWrappers.computeIfAbsent(name, key->{
-			StructField field = type().getField(key);
+			StructField<?> field = this.type().getField(key);
 			if (field == null)
 				return null;
 			return doWrapLocalChild(field.getType(), field.getOffset(), field.getSize());
@@ -55,14 +55,14 @@ public class NativeStruct extends NativeWrapper<String, Map<String, Object>> imp
 	 */
 	@Override
 	public void allocChildRemote(String name) {
-		final StructField field = this.type().getField(name);
+		final StructField<?> field = this.type().getField(name);
 		if (field == null)
 			throw new IllegalArgumentException("No such field called '" + name + "'");
 		
-		StructFieldType type = field.getType();
+		StructFieldType<?> type = field.getType();
 		
 		if (type instanceof PointerStructFieldType) {
-			final StructFieldType farType = ((PointerStructFieldType) type).getFarType();
+			final StructFieldType<?> farType = ((PointerStructFieldType<?>) type).getFarType();
 			
 			this.remoteWrappers.compute(name, (key, oldVal) -> {
 				if (oldVal != null) {
@@ -90,14 +90,14 @@ public class NativeStruct extends NativeWrapper<String, Map<String, Object>> imp
 	 */
 	@Override
 	public void wrapChildRemote(String name) {
-		StructField field = this.type().getField(name);
-		StructFieldType type = field.getType();
+		StructField<?> field = this.type().getField(name);
+		StructFieldType<?> type = field.getType();
 		if (!(type instanceof PointerStructFieldType))
 			throw new IllegalArgumentException("Field '" + name + "' is not a pointer");
 		
 		//Register this name for updates
 		this.wrappedNames.add(name);
-		final StructFieldType farType = ((PointerStructFieldType) type).getFarType();
+		final StructFieldType<?> farType = ((PointerStructFieldType<?>) type).getFarType();
 
 		//Read pointer
 		final long farPointer = ((Number)this.get(name)).longValue();

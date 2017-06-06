@@ -93,7 +93,7 @@ static inline jobject lookupMember(JNIEnv* env, jobject self, jclass self_class,
  * members of the ImageFormat class with appropriate image formats
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_ImageFormatList_listFormats(JNIEnv *e, jobject t, jlong o){
-	dprint(LOG_CALLS, "[CALL] Entering %s\n",__PRETTY_FUNCTION__);
+	LOG_FN_ENTER();
 	struct v4l4j_device *d = (struct v4l4j_device *) (uintptr_t) o;
 	struct device_info *di = d->vdev->info;
 	

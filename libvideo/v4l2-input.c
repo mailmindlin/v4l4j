@@ -43,7 +43,7 @@
 #define V4L2_MAX_HEIGHT 		4096
 
 #ifndef USEC_PER_SEC
-#define USEC_PER_SEC			1000000
+#define USEC_PER_SEC			1000000ULL
 #endif
 
 bool check_v4l2(int fd, struct v4l2_capability* caps) {

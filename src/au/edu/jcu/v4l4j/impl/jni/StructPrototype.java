@@ -1,5 +1,6 @@
 package au.edu.jcu.v4l4j.impl.jni;
 
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,19 +11,24 @@ import java.util.Map;
 import java.util.function.IntFunction;
 import java.util.function.ToIntFunction;
 
-public class StructPrototype implements StructFieldType {
-	protected final StructField[] fields;
-	protected final Map<String, StructField> fieldMap;
+import au.edu.jcu.v4l4j.impl.jni.AbstractMappingStructFieldType.EnumStructFieldType;
+import au.edu.jcu.v4l4j.impl.jni.AbstractMappingStructFieldType.MappingStructFieldType;
+
+public class StructPrototype implements StructFieldType<Map<String, Object>>, Serializable {
+	private static final long serialVersionUID = 5796145617056031186L;
+	
+	protected final StructField<?>[] fields;
+	protected final Map<String, StructField<?>> fieldMap;
 
 	public static StructPrototypeBuilder builder() {
 		return new StructPrototypeBuilder();
 	}
 
-	protected static final StructField[] calculateOffsets(StructField... fields) {
+	protected static final StructField<?>[] calculateOffsets(StructField<?>... fields) {
 		int lastOffset = 0;
-		StructField[] offsetFields = new StructField[fields.length];
+		StructField<?>[] offsetFields = new StructField[fields.length];
 		for (int i = 0; i < fields.length; i++) {
-			StructField oldField = fields[i];
+			StructField<?> oldField = fields[i];
 			lastOffset = (int) MemoryUtils.align(oldField.getAlignment(), lastOffset);
 			offsetFields[i] = oldField.withOffset(lastOffset);
 			lastOffset += oldField.getSize();
@@ -34,29 +40,30 @@ public class StructPrototype implements StructFieldType {
 		return (prefix.isEmpty() ? prefix : (prefix + ".")) + ext;
 	}
 
-	public StructPrototype(Collection<StructField> fields) {
+	public StructPrototype(Collection<StructField<?>> fields) {
 		this(fields.toArray(new StructField[fields.size()]));
 	}
 
-	protected StructPrototype(StructField[] fields, Map<String, StructField> fieldMap) {
+	protected StructPrototype(StructField<?>[] fields, Map<String, StructField<?>> fieldMap) {
 		this.fields = calculateOffsets(fields);
 		this.fieldMap = fieldMap;
 	}
 
-	public StructPrototype(StructField... fields) {
+	public StructPrototype(StructField<?>... fields) {
 		this.fields = calculateOffsets(fields);
 
 		this.fieldMap = new HashMap<>();
-		for (StructField field : this.fields)
+		for (StructField<?> field : this.fields)
 			this.fieldMap.put(field.getName(), field);
 	}
 
-	public List<StructField> fields() {
+	public List<StructField<?>> fields() {
 		return new ArrayList<>(Arrays.asList(fields));
 	}
 	
-	public StructField getField(String name) {
-		return this.fieldMap.get(name);
+	@SuppressWarnings("unchecked")
+	public <T> StructField<T> getField(String name) {
+		return (StructField<T>) this.fieldMap.get(name);
 	}
 
 	/*protected Object readField(ByteBuffer buffer, StructField field, int offset, StructReadingContext context) {
@@ -82,7 +89,7 @@ public class StructPrototype implements StructFieldType {
 		Map<String, Object> value = new HashMap<>();
 		StructReadingContext context = new StructReadingContext(parentContext, this, value);
 		for (int i = 0; i < this.fields.length; i++) {
-			StructField field = this.fields[i];
+			StructField<?> field = this.fields[i];
 
 			ByteBuffer dup = MemoryUtils.sliceBuffer(buffer, field.getOffset(), field.getType().expands() ? field.getSize() : -1);
 			
@@ -92,20 +99,18 @@ public class StructPrototype implements StructFieldType {
 	}
 
 	@Override
-	public void write(ByteBuffer buffer, Object value) {
-		@SuppressWarnings("unchecked")
-		Map<String, Object> params = (Map<String, Object>)value;
+	public void write(ByteBuffer buffer, Map<String, Object> value) {
 		for (int i = 0; i < this.fields.length; i++) {
-			StructField field = this.fields[i];
-
+			StructField<?> field = this.fields[i];
+			
 			ByteBuffer dup = MemoryUtils.sliceBuffer(buffer, field.getOffset(), field.getType().expands() ? field.getSize() : -1);
 			
-			field.getType().write(dup, params.get(field.getName()));
+			field.getType().writeUnchecked(dup, value.get(field.getName()));
 		}
 	}
 	
 	public Object readField(ByteBuffer buffer, String fieldName) {
-		StructField field = this.fieldMap.get(fieldName);
+		StructField<?> field = this.fieldMap.get(fieldName);
 		if (field == null)
 			throw new IllegalArgumentException("Unknown field '" + fieldName + "'");
 		
@@ -115,13 +120,13 @@ public class StructPrototype implements StructFieldType {
 	}
 	
 	public void writeField(ByteBuffer buffer, String fieldName, Object value) {
-		StructField field = this.fieldMap.get(fieldName);
+		StructField<?> field = this.fieldMap.get(fieldName);
 		if (field == null)
 			throw new IllegalArgumentException("Unknown field '" + fieldName + "'");
 		
 		ByteBuffer dup = MemoryUtils.sliceBuffer(buffer, field.getOffset(), field.getType().expands() ? field.getSize() : -1);
 		
-		field.getType().write(dup, value);
+		field.getType().writeUnchecked(dup, value);
 	}
 
 	public StructBuilder make() {
@@ -133,7 +138,7 @@ public class StructPrototype implements StructFieldType {
 		if (this.fields == null || this.fields.length == 0)
 			//We have no fields, and therefore no size
 			return 0;
-		StructField lastField = this.fields[this.fields.length - 1];
+		StructField<?> lastField = this.fields[this.fields.length - 1];
 		//We can calculate our size by last field offset + last field size
 		return lastField.getOffset() + lastField.getSize();
 	}
@@ -149,6 +154,8 @@ public class StructPrototype implements StructFieldType {
 
 	@Override
 	public boolean expands() {
+		if (this.fields.length == 0)
+			return false;
 		return this.fields[this.fields.length - 1].getType().expands();
 	}
 	
@@ -157,7 +164,7 @@ public class StructPrototype implements StructFieldType {
 	}
 
 	public static class StructPrototypeBuilder {
-		protected final List<StructField> fields = new ArrayList<>();
+		protected final List<StructField<?>> fields = new ArrayList<>();
 
 		public StructPrototypeBuilder addBoolean(String name) {
 			add(PrimitiveStructFieldType.BOOL, name);
@@ -194,8 +201,8 @@ public class StructPrototype implements StructFieldType {
 			return this;
 		}
 		
-		public StructPrototypeBuilder addPointer(StructFieldType farType, String name) {
-			add(new PointerStructFieldType(farType), name);
+		public StructPrototypeBuilder addPointer(StructFieldType<?> farType, String name) {
+			add(new PointerStructFieldType<>(farType), name);
 			return this;
 		}
 
@@ -220,14 +227,19 @@ public class StructPrototype implements StructFieldType {
 		}
 		
 		public <E extends Enum<E>> StructPrototypeBuilder addEnum(IntFunction<E> mapper, ToIntFunction<E> unmapper, String name) {
-			add(new EnumStructFieldType<>(mapper, unmapper), name);
+			add(new MappingStructFieldType<>(mapper, unmapper), name);
 			return this;
 		}
 
-		public StructPrototypeBuilder add(StructFieldType type, String name) {
-			this.fields.add(new StructField(type, name, -1));
+		public StructPrototypeBuilder add(StructFieldType<?> type, String name) {
+			this.fields.add(new StructField<>(type, name, -1));
 			return this;
 		}
+		
+		public StructPrototypeBuilder add(int index, StructFieldType<?> type, String name) {
+			this.fields.add(index, new StructField<>(type, name, -1));
+			return this;
+		} 
 		
 		public StructPrototype build() {
 			return new StructPrototype(this.fields);
@@ -256,5 +268,28 @@ public class StructPrototype implements StructFieldType {
 				.append(",expands=").append(expands())
 				.append(",fields=").append(this.fieldMap)
 				.append("})").toString();
+	}
+	
+	private Object writeReplace() {
+		return new StructPrototypeProxy(this.fields);
+	}
+	
+	/**
+	 * Serialization proxy for {@link StructPrototype}
+	 * @author mailmindlin
+	 */
+	private static class StructPrototypeProxy implements Serializable {
+		private static final long serialVersionUID = -5039631527890367857L;
+		private StructField<?>[] fields;
+		@SuppressWarnings("unused")
+		public StructPrototypeProxy() {
+			this(new StructField[0]);
+		}
+		public StructPrototypeProxy(StructField<?>[] fields) {
+			this.fields = fields;
+		}
+		private Object readResolve() {
+			return new StructPrototype(this.fields);
+		}
 	}
 }

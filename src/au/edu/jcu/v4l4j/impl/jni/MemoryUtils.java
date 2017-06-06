@@ -11,6 +11,13 @@ public final class MemoryUtils {
 		V4L4JUtils.loadLibrary();
 	}
 	
+	//TODO set on JNI bind
+	protected static boolean IS_BOUND = false;
+	
+	public static boolean isBound() {
+		return IS_BOUND;
+	}
+	
 	static native int getAlignment(int type);
 	static native int getSize(int type);
 	private static native ByteBuffer doWrap(long pointer, long length);

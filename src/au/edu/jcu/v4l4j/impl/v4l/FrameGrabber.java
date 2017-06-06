@@ -2,11 +2,16 @@ package au.edu.jcu.v4l4j.impl.v4l;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import au.edu.jcu.v4l4j.api.Rational;
 import au.edu.jcu.v4l4j.exceptions.JNIException;
 
 public class FrameGrabber implements Runnable {
+	private static final int STATE_STOPPED = 0;
+	private static final int STATE_RUNNING = 1;
+	private static final int STATE_REQUEST_STOP = 2;
+	private static final int STATE_DEAD = 3;
 	/**
 	 * Initializes framegrabber
 	 * @param pointer
@@ -49,6 +54,8 @@ public class FrameGrabber implements Runnable {
 	protected long object;
 	protected ThreadFactory threadFactory;
 	protected Thread thread;
+	private final AtomicInteger state = new AtomicInteger(FrameGrabber.STATE_STOPPED);
+
 	
 	protected FrameGrabber(VideoDevice device) {
 		this.device = device;
@@ -60,11 +67,15 @@ public class FrameGrabber implements Runnable {
 	}
 	
 	public void start() {
-		
+		if (!state.compareAndSet(FrameGrabber.STATE_STOPPED, FrameGrabber.STATE_RUNNING))
+			throw new IllegalStateException();
+		this.thread = new Thread(this);
+		this.thread.setName(this.thread.getName() + " - v4l4j FrameGrabber");
+		this.thread.start();
 	}
 	
 	public void stop() {
-	
+		
 	}
 	
 	public void release() {
@@ -73,7 +84,7 @@ public class FrameGrabber implements Runnable {
 
 	@Override
 	public void run() {
-		while (!Thread.interrupted()) {
+		while (state.get() == FrameGrabber.STATE_RUNNING) {
 			
 		}
 	}

@@ -1,7 +1,10 @@
 package au.edu.jcu.v4l4j.test;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Paths;
@@ -13,7 +16,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import au.edu.jcu.v4l4j.ImageFormat;
 import au.edu.jcu.v4l4j.api.FrameBuffer;
 import au.edu.jcu.v4l4j.api.component.ComponentPort;
 import au.edu.jcu.v4l4j.api.component.ComponentState;
@@ -25,13 +27,17 @@ import au.edu.jcu.v4l4j.impl.omx.BaseOMXQueryControl;
 import au.edu.jcu.v4l4j.impl.omx.OMXComponent;
 import au.edu.jcu.v4l4j.impl.omx.OMXComponentProvider;
 import au.edu.jcu.v4l4j.impl.omx.OMXConstants;
+import au.edu.jcu.v4l4j.impl.omx.OMXControlDefinition.OMXControlDefinitionRegistry;
 import au.edu.jcu.v4l4j.impl.omx.OMXQuery;
 import au.edu.jcu.v4l4j.impl.omx.OMXVideoPort;
 
 public class OMXTest {
 	public static void main(String...fred) throws Exception {
-		for (PrimitiveStructFieldType type : PrimitiveStructFieldType.values())
+		for (PrimitiveStructFieldType<?> type : PrimitiveStructFieldType.values())
 			System.out.println(type.name() + ";" + type.getAlignment() + ";" + type.getSize());
+		
+		testLoadDefs();
+		
 		OMXComponentProvider provider = OMXComponentProvider.getInstance();
 		for (String name : provider.availableNames(Paths.get("/"), null))
 			System.out.println(name);
@@ -171,6 +177,31 @@ public class OMXTest {
 		}
 		outChannel.close();
 		System.out.println("Done");
+	}
+	
+	public static void testLoadDefs() {
+		String[] paths = {
+				"omx.component.json",
+				"omx.types.json",
+				"omx.other.json",
+				"omx.ivcommon.json"
+		};
+		OMXControlDefinitionRegistry registry = new OMXControlDefinitionRegistry();
+		
+		for (String path : paths) {
+			try (BufferedReader br = new BufferedReader(new InputStreamReader(ClassLoader.getSystemClassLoader().getResourceAsStream(path)))) {
+				StringBuilder sb = new StringBuilder();
+				char[] buf = new char[4096];
+				while (br.ready()) {
+					int len = br.read(buf);
+					sb.append(buf, 0, len);
+				}
+				registry.read(sb.toString(), true);
+			} catch (RuntimeException | IOException e) {
+				e.printStackTrace();
+			}
+		}
+		System.out.println(registry);
 	}
 	
 	public static void testAccess(long pointer) {
