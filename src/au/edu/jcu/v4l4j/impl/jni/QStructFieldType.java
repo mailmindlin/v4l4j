@@ -45,14 +45,14 @@ public class QStructFieldType implements StructFieldType<Number> {
 	
 	@Override
 	public void write(ByteBuffer buffer, Number params) {
-		int iValue = (int) Math.scalb(params.floatValue(), -this.n);
+		int iValue = (int) Math.scalb(params.floatValue(), this.n);
 		PrimitiveStructFieldType.INT32.write(buffer, iValue);
 	}
 	
 	@Override
 	public Number read(ByteBuffer buffer, StructReadingContext context) {
 		float fValue = ((Number) PrimitiveStructFieldType.INT32.read(buffer, context)).floatValue();
-		return Math.scalb(fValue, this.n);
+		return Math.scalb(fValue, -this.n);
 	}
 	
 	@Override
