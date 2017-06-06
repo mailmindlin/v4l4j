@@ -7,6 +7,7 @@ import au.edu.jcu.v4l4j.api.control.Control;
 import au.edu.jcu.v4l4j.api.control.ControlType;
 
 /**
+ * TODO should this be deprecated in favor of {@link ChildEndpointOMXQueryControl}?
  * @author mailmindlin
  */
 public class NumberOMXQueryControl extends AbstractOMXQueryControl<Number> {
