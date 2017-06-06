@@ -422,6 +422,11 @@ public class PrimitiveStructFieldType<T> implements StructFieldType<T> {
 		return PrimitiveInfo.values()[this.idx].name();
 	}
 	
+	@Override
+	public String toString() {
+		return name();
+	}
+	
 	
 	/*BOOL ((buffer, value) -> {
 			boolean bValue;
