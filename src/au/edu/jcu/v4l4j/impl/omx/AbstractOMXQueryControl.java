@@ -105,7 +105,7 @@ public abstract class AbstractOMXQueryControl<T> implements DiscreteControl<T> {
 		}
 		
 		@Override
-		public <E> AbstractOMXQueryControlAccessor<P, T, E> get(BiFunction<T, R, E> merger) {
+		public <E> AbstractOMXQueryControlAccessor<P, T, E> get(BiFunction<T, ? super R, E> merger) {
 			return thenApply(state -> state.setResult(merger.apply(state.getValue(), state.getResult())));
 		}
 		
@@ -148,13 +148,18 @@ public abstract class AbstractOMXQueryControl<T> implements DiscreteControl<T> {
 		
 		@Override
 		public AbstractOMXQueryControlAccessor<P, T, R> read() {
-			return this.thenApply(state -> state.setValue(state.localPointer().get()));
+			//TODO we need to call up the ownership chain
+			return this.thenApply(state -> {
+				state.setValue(state.localPointer().get());
+			});
 		}
 		
 		@Override
 		public AbstractOMXQueryControlAccessor<P, T, R> write() {
+			//TODO we can do a TCO-like optimization by only invoking thenApply() on the base accessor
 			return thenApply(state -> {
-				state.localPointer.set(state.getValue());
+				//TODO is this actually needed?
+				//state.localPointer.set(state.getValue());
 				if (this.owner != null)
 					((AbstractOMXQueryControlAccessor<?,?,?>)this.owner).write();
 			});
@@ -173,6 +178,7 @@ public abstract class AbstractOMXQueryControl<T> implements DiscreteControl<T> {
 		@Override
 		public AbstractOMXQueryControlAccessor<P, T, R> writeAndRead() {
 			return thenApply(state -> {
+				//TODO do we need to call up the ownership chain? (I think so)
 				state.localPointer.set(state.getValue());
 				state.setValue(state.localPointer.get());
 			});
@@ -252,8 +258,13 @@ public abstract class AbstractOMXQueryControl<T> implements DiscreteControl<T> {
 		@Override
 		@SuppressWarnings("unchecked")
 		public R call() throws Exception {
+			//Pop up stack
+			AbstractOMXQueryControlAccessor<?, ?, R> current = this;
+			while (current.owner != null)
+				current = (AbstractOMXQueryControlAccessor<?, ?, R>) current.and();
+			
 			try (OMXQueryControlAccessorState state = new OMXQueryControlAccessorState()) {
-				this.doCall(state);
+				current.doCall(state);
 				return (R) state.result;
 			}
 		}
