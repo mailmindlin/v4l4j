@@ -1061,9 +1061,11 @@ public class OMXConstants {
 			case COLOR_FORMAT_18BITBGR666:
 			case COLOR_FORMAT_24BITARGB6666:
 			case COLOR_FORMAT_24BITABGR6666:
-			default:
 				break;
+			default:
+				throw new IllegalArgumentException("Unknown OMX color format: " + idx);
 		}
+		//We know the OMX constant, we just can't convert it to a member of ImagePalette
 		throw new IllegalArgumentException("Cannot map " + idx);
 	}
 	
