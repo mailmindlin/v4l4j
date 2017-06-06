@@ -170,6 +170,22 @@ public interface Control<T> extends AutoCloseable {
 			throw new UnsupportedOperationException("Control has no children");
 		}
 		
+		default <Ct> ControlAccessor<ControlAccessor<P, T, R>, Ct, R> withChild(String...names) {
+			throw new UnsupportedOperationException("Control has no children");
+		}
+		
+		default <Ct> ControlAccessor<P, T, R> setChild(Ct value, String name) {
+			return withChild(name)
+				.set(value)
+				.and();
+		}
+		
+		default <Ct> ControlAccessor<P, T, R> setChild(Ct value, String...names) {
+			return withChild(names)
+				.set(value)
+				.and();
+		}
+		
 		<C extends ControlAccessor<ControlAccessor<P, T, R>, T, R>> C thenIf(Predicate<ControlAccessor<P, T, R>> condition);
 		
 		/**
