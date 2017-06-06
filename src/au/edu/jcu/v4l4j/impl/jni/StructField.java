@@ -55,7 +55,7 @@ public class StructField<T> implements Serializable {
 
 	@Override
 	public String toString() {
-		return "StructField{name=" + getName() + ";type=" + getType() +";alignment=" + getAlignment() + ";size=" + getSize() + "}";
+		return "StructField{name=" + getName() + ",type=" + getType() +",alignment=" + getAlignment() + ",offset=" + getOffset() + ",size=" + getSize() + "}";
 	}
 
 	private Object writeReplace() {
@@ -64,7 +64,7 @@ public class StructField<T> implements Serializable {
 	
 	/**
 	 * Proxy class for StructField to let us serialize it without making it mutable
-	 * @see {@link www.ibm.com/developerworks/library/j-5things1/}
+	 * @see <a href="https://www.ibm.com/developerworks/library/j-5things1/">www.ibm.com/developerworks/library/j-5things1</a>
 	 * @author mailmindlin
 	 */
 	private static class StructFieldProxy implements Externalizable {

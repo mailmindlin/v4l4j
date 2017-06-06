@@ -39,24 +39,24 @@ public class StructPrototype implements StructFieldType<Map<String, Object>>, Se
 	protected static String rewrite(String prefix, String ext) {
 		return (prefix.isEmpty() ? prefix : (prefix + ".")) + ext;
 	}
-
+	
 	public StructPrototype(Collection<StructField<?>> fields) {
 		this(fields.toArray(new StructField[fields.size()]));
 	}
-
+	
 	protected StructPrototype(StructField<?>[] fields, Map<String, StructField<?>> fieldMap) {
 		this.fields = calculateOffsets(fields);
 		this.fieldMap = fieldMap;
 	}
-
+	
 	public StructPrototype(StructField<?>... fields) {
 		this.fields = calculateOffsets(fields);
-
+		
 		this.fieldMap = new HashMap<>();
 		for (StructField<?> field : this.fields)
 			this.fieldMap.put(field.getName(), field);
 	}
-
+	
 	public List<StructField<?>> fields() {
 		return new ArrayList<>(Arrays.asList(fields));
 	}
@@ -267,7 +267,7 @@ public class StructPrototype implements StructFieldType<Map<String, Object>>, Se
 				.append(",alignment=").append(getAlignment())
 				.append(",expands=").append(expands())
 				.append(",fields=").append(this.fieldMap)
-				.append("})").toString();
+				.append("}").toString();
 	}
 	
 	private Object writeReplace() {

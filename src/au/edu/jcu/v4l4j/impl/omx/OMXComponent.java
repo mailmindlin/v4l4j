@@ -278,7 +278,7 @@ public class OMXComponent implements Component {
 	@Override
 	public ComponentState getState() {
 		int state = getComponentState(this.pointer);
-		System.out.println("State: " + Integer.toHexString(state));
+		System.out.println("State: 0x" + Integer.toHexString(state));
 		switch (state) {
 			case 0:
 				return ComponentState.INVALID;

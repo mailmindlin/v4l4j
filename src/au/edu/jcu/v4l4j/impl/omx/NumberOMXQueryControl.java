@@ -6,27 +6,30 @@ import java.util.function.Consumer;
 import au.edu.jcu.v4l4j.api.control.Control;
 import au.edu.jcu.v4l4j.api.control.ControlType;
 
+/**
+ * @author mailmindlin
+ */
 public class NumberOMXQueryControl extends AbstractOMXQueryControl<Number> {
-
+	
 	public NumberOMXQueryControl(AbstractOMXQueryControl<?> parent, int port, String name, String structFieldName, OMXOptionEnumeratorPrototype<Number> enumerator) {
 		super(parent.component, port, parent, name, structFieldName, enumerator);
 	}
-
+	
 	@Override
 	public boolean isDiscrete() {
 		return false;
 	}
-
+	
 	@Override
 	public boolean isContinuous() {
 		return false;
 	}
-
+	
 	@Override
 	public ControlType getType() {
 		return ControlType.SLIDER;
 	}
-
+	
 	@Override
 	@SuppressWarnings("unchecked")
 	protected <P, R> AbstractOMXQueryControlAccessor<P, Number, R> access(AbstractOMXQueryControlAccessor<P, ?, R> parentAccessor) {
@@ -52,5 +55,4 @@ public class NumberOMXQueryControl extends AbstractOMXQueryControl<Number> {
 		}
 
 	}
-
 }

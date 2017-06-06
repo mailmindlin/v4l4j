@@ -111,6 +111,21 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 		}
 	}
 	
+	@Override
+	public String toString() {
+		return new StringBuffer()
+				.append(getClass().getName()).append("{")
+				.append("name=").append(this.getName())
+				.append(", query=").append(this.queryId)
+				.append(", type=").append(getType())
+				.append(", port=").append(this.port)
+				.append(", struct=").append(this.struct)
+				.append(", children=").append(this.childMap)
+				//TODO add more
+				.append("}")
+				.toString();
+	}
+	
 	/**
 	 * @author mailmindlin
 	 *

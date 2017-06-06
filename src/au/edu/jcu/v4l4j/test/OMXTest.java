@@ -62,7 +62,7 @@ public class OMXTest {
 			System.out.println("\t=>Dir: \t" + (port.isInput() ? "INPUT" : "OUTPUT"));
 			System.out.println("\t=>Enbl:\t" + (port.isEnabled() ? "ENABLED" : "DISABLED"));
 		}
-
+		
 		VideoPort inputPort = (VideoPort) encoder.getPort(200);
 		VideoPort outputPort = (VideoPort) encoder.getPort(201);
 		
@@ -78,14 +78,15 @@ public class OMXTest {
 		((OMXVideoPort)inputPort).pull();
 		((OMXVideoPort)outputPort).pull();
 		
+		System.out.println("Enabling ports...");
 		inputPort.setEnabled(true);
 		Thread.sleep(200);
 		((OMXVideoPort)inputPort).pull();
-		System.out.println(inputPort.isEnabled());
+		System.out.println("Input enabled: " + inputPort.isEnabled());
 		outputPort.setEnabled(true);
 		Thread.sleep(200);
 		((OMXVideoPort)outputPort).pull();
-		System.out.println(outputPort.isEnabled());
+		System.out.println("Output enabled: " + outputPort.isEnabled());
 		
 
 		ByteBuffer buffer = ByteBuffer.allocateDirect(inputPort.bufferSize());
