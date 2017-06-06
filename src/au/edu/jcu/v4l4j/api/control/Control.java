@@ -71,7 +71,7 @@ public interface Control<T> extends AutoCloseable {
 		 * @param merger 
 		 * @return self
 		 */
-		<E> ControlAccessor<P, T, E> get(BiFunction<T, R, E> merger);
+		<E> ControlAccessor<P, T, E> get(BiFunction<T, ? super R, E> merger);
 		
 		default <E> ControlAccessor<P, T, R> get(String name, Consumer<E> handler) {
 			throw new UnsupportedOperationException();
