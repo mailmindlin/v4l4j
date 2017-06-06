@@ -354,12 +354,22 @@ static inline void deinitAppData(JNIEnv* env, OMXComponentAppData* appData) {
 
 static void printBytes(char* bytes, int len) {
 	char* hexChars = "0123456789ABCDEF";
+	char line[25];
+	size_t rowOffset = 0;
 	while (len--) {
 		char c = *bytes++;
-		char a = hexChars[c >> 4];
-		char b = hexChars[c & 0x0F];
-		dprint(LOG_V4L4J, "%c%c\n", a, b);
+		line[rowOffset++] = hexChars[c >> 4];
+		line[rowOffset++] = hexChars[c & 0x0F];
+		line[rowOffset++] = ' ';
+		if (rowOffset == 12) {
+			line[rowOffset++] = ' ';
+		} else if (rowOffset >= 24) {
+			dprint(LOG_V4L4J, "%.*s\n", rowOffset - 1, line);
+			rowOffset = 0;
+		}
 	}
+	if (rowOffset > 0)
+		dprint(LOG_V4L4J, "%.*s\n", rowOffset - 1, line);
 }
 
 /*
