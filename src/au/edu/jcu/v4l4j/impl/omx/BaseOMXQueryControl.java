@@ -75,7 +75,7 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 	
 	@Override
 	public ControlAccessor<Void, Map<String, Object>, Map<String, Object>> get() {
-		return access().get();
+		return access().read().get();
 	}
 	
 	@Override
@@ -197,8 +197,6 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 				state.localPointer = new NativeStruct(struct);
 			super.doCall(state);
 		}
-		
-		
 		
 	}
 }
