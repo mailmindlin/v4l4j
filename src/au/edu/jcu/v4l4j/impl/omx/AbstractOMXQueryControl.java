@@ -149,20 +149,32 @@ public abstract class AbstractOMXQueryControl<T> implements DiscreteControl<T> {
 		@Override
 		public AbstractOMXQueryControlAccessor<P, T, R> read() {
 			//TODO we need to call up the ownership chain
-			return this.thenApply(state -> {
+			/*return this.thenApply(state -> {
 				state.setValue(state.localPointer().get());
-			});
+			});*/
+			/* 
+			 * XXX This method is horribly broken. Please don't use it, because it doesn't do what
+			 * it says it does.
+			 * I have to rewrite it to call write() all the way up the ownership chain.
+			 */
+			throw new UnsupportedOperationException("Things are broken now, but I promise to fix them later");
 		}
 		
 		@Override
 		public AbstractOMXQueryControlAccessor<P, T, R> write() {
 			//TODO we can do a TCO-like optimization by only invoking thenApply() on the base accessor
-			return thenApply(state -> {
+			/*return thenApply(state -> {
 				//TODO is this actually needed?
 				//state.localPointer.set(state.getValue());
 				if (this.owner != null)
 					((AbstractOMXQueryControlAccessor<?,?,?>)this.owner).write();
-			});
+			});*/
+			/* 
+			 * XXX This method is horribly broken. Please don't use it, because it doesn't do what
+			 * it says it does.
+			 * I have to rewrite it to call write() all the way up the ownership chain.
+			 */
+			throw new UnsupportedOperationException("Things are broken now, but I promise to fix them later");
 		}
 		
 		@Override
@@ -177,17 +189,23 @@ public abstract class AbstractOMXQueryControl<T> implements DiscreteControl<T> {
 		
 		@Override
 		public AbstractOMXQueryControlAccessor<P, T, R> writeAndRead() {
-			return thenApply(state -> {
+			/*return thenApply(state -> {
 				//TODO do we need to call up the ownership chain? (I think so)
 				state.localPointer.set(state.getValue());
 				state.setValue(state.localPointer.get());
-			});
+			});*/
+			/* 
+			 * XXX This method is horribly broken. Please don't use it, because it doesn't do what
+			 * it says it does.
+			 * I have to rewrite it to call write() all the way up the ownership chain.
+			 */
+			throw new UnsupportedOperationException("Things are broken now, but I promise to fix them later");
 		}
 
 		@Override
 		public <C extends ControlAccessor<ControlAccessor<P, T, R>, T, R>> C thenIf(Predicate<ControlAccessor<P, T, R>> condition) {
 			//TODO This is going to be hard to implement. Imma do it eventually, but just not right now
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Coming soon!");
 		}
 
 		protected OMXQueryControlAccessorState enterFromParent(OMXQueryControlAccessorState parentState) {
