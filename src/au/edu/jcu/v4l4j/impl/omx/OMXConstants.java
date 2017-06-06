@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import au.edu.jcu.v4l4j.api.AudioEncodingType;
 import au.edu.jcu.v4l4j.api.ImagePalette;
 import au.edu.jcu.v4l4j.api.Rational;
+import au.edu.jcu.v4l4j.impl.jni.QStructFieldType;
 import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
 import au.edu.jcu.v4l4j.impl.jni.UnionPrototype;
 
@@ -632,7 +633,7 @@ public class OMXConstants {
 			.addInt32("nStride")
 			.addInt32("nSliceHeight")
 			.addInt32("nBitrate")
-			.addInt32("xFramerate")
+			.add(QStructFieldType.Q16, "xFramerate")
 			.addBoolean("bFlagErrorConcealment")
 			.addEnum(OMXConstants::mapVideoEncodingType, OMXConstants::unmapVideoEncodingType, "eCompressionFormat")
 			.addEnum(OMXConstants::mapColorFormatType, OMXConstants::unmapColorFormatType, "eColorFormat")
@@ -704,7 +705,59 @@ public class OMXConstants {
 			.addInt32("xFramerate")
 			.build();
 	
-	public static final OMXControlDefinition CTRL_BITRATE = OMXControlDefinition.builder()
+	public static final OMXControlDefinition CTRL_PARAM_PORTDEFINITION = OMXControlDefinition.builder()
+			.setName("video.portdefinition")
+			.setFilter((component, port) -> true)
+			.setQuery(OMXConstants.INDEX_ParamPortDefinition)
+			.setStruct(OMXConstants.PARAM_PORTDEFINITIONTYPE)
+			.withNumberField("eDir", "direction")
+			.withNumberField("nBufferCountActual", "bufferCountActual")
+			.withNumberField("nBufferCountMin", "bufferCountMin")
+			.withNumberField("nBufferSize", "bufferSize")
+			.withField("bEnabled", "enabled")
+			.withField("bPopulated", "populated")
+			.withNumberField("eDomain", "domain")
+			.withCompositeField("format", "format")
+				.withCompositeField("audio", "audio")
+					.withEnumField("eEncoding", "encoding", AudioEncodingType.class)
+					.withField("bFlagErrorConcealment", "errorConcealment")
+					.and()
+				.withCompositeField("video", "video")
+					.withNumberField("nFrameWidth", "frameWidth")
+					.withNumberField("nFrameHeight", "frameHeight")
+					.withNumberField("nStride", "stride")
+					.withNumberField("nSliceHeight", "sliceHeight")
+					.withNumberField("nBitrate", "bitrate")
+					.withNumberField("xFramerate", "framerate")
+					.withField("bFlagErrorConcealment", "errorConcealment")
+					.withEnumField("eCompressionFormat", "compressionFormat", ImagePalette.class)
+					.withEnumField("eColorFormat", "colorFormat", ImagePalette.class)
+					.and()
+				.withCompositeField("image", "image")
+					.withNumberField("nFrameWidth", "frameWidth")
+					.withNumberField("nFrameHeight", "frameHeight")
+					.withNumberField("nStride", "stride")
+					.withNumberField("nSliceHeight", "sliceHeight")
+					.withField("bFlagErrorConcealment", "errorConcealment")
+					.withEnumField("eCompressionFormat", "compressionFormat", ImagePalette.class)
+					.withNumberField("eColorFormat", "colorFormat")
+					.and()
+				.withCompositeField("other", "other")
+					.withNumberField("eFormat", "format")
+					.and()
+				.and()
+			.withField("bBuffersContiguous", "buffersContiguous")
+			.withNumberField("nBufferAlignment", "bufferAlignment")
+			.build();
+	
+	public static final OMXControlDefinition CTRL_PARAM_BITRATE = OMXControlDefinition.builder()
+			.setName("video.bitrate")
+			.setStruct(OMXConstants.PARAM_BITRATETYPE)
+			.withNumberField("eControlRate", "controlRate")
+			.withNumberField("nTargetBitrate", "target")
+			.build();
+	
+	public static final OMXControlDefinition CTRL_CONFIG_BITRATE = OMXControlDefinition.builder()
 			.setName("bitrate")
 			.setQuery(OMXConstants.INDEX_ConfigVideoBitrate)
 			.setStruct(PARAM_BITRATETYPE)

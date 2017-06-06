@@ -34,9 +34,10 @@ import au.edu.jcu.v4l4j.impl.omx.OMXVideoPort;
 public class OMXTest {
 	public static void main(String...fred) throws Exception {
 		for (PrimitiveStructFieldType<?> type : PrimitiveStructFieldType.values())
-			System.out.println(type.name() + ";" + type.getAlignment() + ";" + type.getSize());
+			System.out.println(type.name() + "[align=" + type.getAlignment() + "; size=" + type.getSize() + "]");
 		
-		testLoadDefs();
+		OMXControlDefinitionRegistry registry = testLoadDefs();
+		registry.registerDefinition(OMXConstants.CTRL_VIDEO_FORMAT);
 		
 		OMXComponentProvider provider = OMXComponentProvider.getInstance();
 		for (String name : provider.availableNames(Paths.get("/"), null))
@@ -47,7 +48,15 @@ public class OMXTest {
 		
 		testAccess(encoder.getPointer());
 		
-		testQueryPorts(encoder);
+		{
+			BaseOMXQueryControl epq = registry.makeControl(encoder, -1, "examplePortQuery");
+			System.out.println(epq);
+			Map<String, Object> m = epq.get().call();
+			System.out.println(m);
+		}
+		
+		//Test that we can query where ports are
+		OMXTest.testQueryPorts(encoder);
 		
 		Set<? extends ComponentPort> ports = encoder.getPorts();
 		System.out.println("Ports: " + ports);
@@ -69,9 +78,11 @@ public class OMXTest {
 		inputPort.setEnabled(false);
 		outputPort.setEnabled(false);
 		
-
-		OMXTest.testApi(outputPort);
-		//testQueryPortdef(encoder);
+		//List available codecs
+		OMXTest.testApi(outputPort, registry);
+		
+		//Magic
+		OMXTest.testQueryPortdef(encoder);
 		
 		System.out.println("Transitioned to state " + encoder.setState(ComponentState.IDLE));
 		
@@ -88,7 +99,8 @@ public class OMXTest {
 		((OMXVideoPort)outputPort).pull();
 		System.out.println("Output enabled: " + outputPort.isEnabled());
 		
-
+		
+		System.out.println("Allocating buffers...");
 		ByteBuffer buffer = ByteBuffer.allocateDirect(inputPort.bufferSize());
 		FrameBuffer inBuffer = inputPort.useBuffer(buffer);
 //		FrameBuffer inBuffer = inputPort.allocateBuffer(inputPort.bufferSize());
@@ -124,8 +136,8 @@ public class OMXTest {
 		File outFile = new File("out.h264").getAbsoluteFile();
 		System.out.println("Writing out to " + outFile);
 		final FileChannel outChannel = new FileOutputStream(outFile, false).getChannel();
-
-		outputPort.onBufferFill(frame->{
+		
+		outputPort.onBufferFill(frame -> {
 			System.out.println("Buffer fill called in Java");
 			System.out.println("" + frame.asByteBuffer().remaining() + " bytes in buffer");
 			System.out.println("Seq " + frame.getSequenceNumber());
@@ -180,16 +192,18 @@ public class OMXTest {
 		System.out.println("Done");
 	}
 	
-	public static void testLoadDefs() {
+	public static OMXControlDefinitionRegistry testLoadDefs() {
 		String[] paths = {
-				"omx.component.json",
 				"omx.types.json",
+				"omx.component.json",
 				"omx.other.json",
-				"omx.ivcommon.json"
+				//"omx.ivcommon.json"
+				"omx.example.json"
 		};
 		OMXControlDefinitionRegistry registry = new OMXControlDefinitionRegistry();
 		
 		for (String path : paths) {
+			System.out.println(path);
 			try (BufferedReader br = new BufferedReader(new InputStreamReader(ClassLoader.getSystemClassLoader().getResourceAsStream(path)))) {
 				StringBuilder sb = new StringBuilder();
 				char[] buf = new char[4096];
@@ -201,8 +215,18 @@ public class OMXTest {
 			} catch (RuntimeException | IOException e) {
 				e.printStackTrace();
 			}
+			try {
+				System.out.flush();
+				System.err.flush();
+				Thread.sleep(100);
+				System.out.flush();
+				System.err.flush();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
-		System.out.println(registry);
+//		System.out.println(registry);
+		return registry;
 	}
 	
 	public static void testAccess(long pointer) {
@@ -260,7 +284,26 @@ public class OMXTest {
 		final int FRAME_HEIGHT = 1080/4;
 		final int FRAMERATE = 25;
 		final int BITRATE = 10000000;
-		try (NativeStruct query = new NativeStruct(OMXConstants.PARAM_PORTDEFINITIONTYPE)) {
+
+		BaseOMXQueryControl ctrl = OMXConstants.CTRL_PARAM_PORTDEFINITION.build(component, 200);
+		
+		ctrl.access()
+			.read()
+			.withChild("format")
+				.withChild("video")
+					.get(System.out::println)
+					.setChild(FRAME_WIDTH, "frameWidth")
+					.setChild(FRAME_HEIGHT, "frameHeight")
+					.setChild(FRAMERATE, "framerate")
+					.setChild(20, "colorFormat")
+					.setChild(0, "compressionFormat")
+					.get(System.out::println)
+					.and()
+				.and()
+			.write()
+			.call();
+		
+		/*try (NativeStruct query = new NativeStruct(OMXConstants.PARAM_PORTDEFINITIONTYPE)) {
 			query.clear();
 			query.put("nPortIndex", 200);
 			NativeStruct videoDef = query.getUnion("format").getStruct("video");
@@ -291,7 +334,7 @@ public class OMXTest {
 			videoDef.put("eCompressionFormat", OMXConstants.VIDEO_ENCODING_MJPEG);
 			videoDef.put("nBitrate", BITRATE);
 			component.setConfig(false, OMXConstants.INDEX_ParamPortDefinition, query.buffer());
-		}
+		}*/
 		
 		try (NativeStruct bitrateQuery = new NativeStruct(OMXConstants.PARAM_BITRATETYPE)) {
 			bitrateQuery.clear();
@@ -300,6 +343,7 @@ public class OMXTest {
 			bitrateQuery.put("nTargetBitrate", BITRATE);
 			component.setConfig(false, OMXConstants.INDEX_ParamVideoBitrate, bitrateQuery.buffer());
 		}
+		
 		try (NativeStruct formatQuery = new NativeStruct(OMXConstants.PARAM_VIDEO_PORTFORMATTYPE)) {
 			formatQuery.clear();
 			formatQuery.put("nPortIndex", 201);
@@ -311,13 +355,10 @@ public class OMXTest {
 		}
 	}
 	
-	public static void testApi(ComponentPort port) throws IllegalStateException, Exception {
-		/*BaseOMXQueryControl formatControl = new BaseOMXQueryControl((OMXComponent) port.getComponent(), "format", OMXConstants.INDEX_ParamVideoPortFormat, port.getIndex(), OMXConstants.PARAM_VIDEO_PORTFORMATTYPE, null);
-		formatControl.registerChild(new NumberOMXQueryControl(formatControl, port.getIndex(), "index", "nIndex", null));
-		formatControl.registerChild(new NumberOMXQueryControl(formatControl, port.getIndex(), "framerate", "xFramerate", null));
-		formatControl.registerChild(new EnumChildOMXQueryControl<VideoCompressionType>(formatControl, port.getIndex(), "compression", VideoCompressionType.class, "eCompressionFormat"));
-		formatControl.registerChild(new EnumChildOMXQueryControl<ImagePalette>(formatControl, port.getIndex(), "color", ImagePalette.class, "eColorFormat"));*/
-		BaseOMXQueryControl formatControl = OMXConstants.CTRL_VIDEO_FORMAT.build((OMXComponent) port.getComponent(), port.getIndex());
+	public static void testApi(ComponentPort port, OMXControlDefinitionRegistry registry) throws IllegalStateException, Exception {
+		System.out.println("==========Querying available codecs===========");
+		BaseOMXQueryControl formatControl = registry.makeControl((OMXComponent) port.getComponent(), port.getIndex(), "format");
+		//System.out.println(((JSONObject)OMXConstants.CTRL_VIDEO_FORMAT.toJSON()).toString(2));
 		Iterator<Map<String, Object>> i = formatControl.options().get();
 		List<Object> formats = new ArrayList<>();
 		while (i.hasNext())
@@ -332,10 +373,10 @@ public class OMXTest {
 				.get(v->System.out.println("Framerate: " + v))
 				.and()
 			.withChild("compression")
-			.get(v->System.out.println("Compression: " + v))
+				.get(v->System.out.println("Compression: " + v))
 				.and()
 			.withChild("color")
-			.get(v->System.out.println("Color: " + v))
+				.get(v->System.out.println("Color: " + v))
 				.and()
 			.call();
 	}
