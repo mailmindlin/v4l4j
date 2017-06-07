@@ -12,6 +12,7 @@ import java.util.function.Supplier;
 import au.edu.jcu.v4l4j.api.control.CompositeControl;
 import au.edu.jcu.v4l4j.api.control.Control;
 import au.edu.jcu.v4l4j.api.control.ControlType;
+import au.edu.jcu.v4l4j.api.control.Control.ControlAccessor;
 import au.edu.jcu.v4l4j.impl.jni.NativeStruct;
 import au.edu.jcu.v4l4j.impl.jni.StructPrototype;
 
@@ -143,7 +144,11 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 		@Override
 		@SuppressWarnings("unchecked")
 		public <Ct> ControlAccessor<ControlAccessor<P, Map<String, Object>, R>, Ct, R> withChild(String name) {
-			return (ControlAccessor<ControlAccessor<P, Map<String, Object>, R>, Ct, R>) childMap.get(name).access(this);
+			AbstractOMXQueryControl<Ct> child = (AbstractOMXQueryControl<Ct>) childMap.get(name);
+			if (child == null)
+				throw new IllegalArgumentException("No child exists with for the name: " + name);
+			
+			return (ControlAccessor<ControlAccessor<P, Map<String, Object>, R>, Ct, R>) child.access(this);
 		}
 		
 		@Override
