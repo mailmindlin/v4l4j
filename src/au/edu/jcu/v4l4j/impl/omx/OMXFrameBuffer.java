@@ -44,8 +44,29 @@ public class OMXFrameBuffer implements FrameBuffer {
 	}
 	
 	/**
-	 * Called before being sent to a handler, updating internal fields that may have been changed by
-	 * the component.
+	 * Called before being sent to a handler, updating internal fields that may
+	 * have been changed by the component. Note that each of these fields maps directly
+	 * to one of the fields defined on OMX_FRAMEBUFFERTYPE, and, as such, have the same
+	 * semantics and all.
+	 * 
+	 * <p>
+	 * The reason that this method exists is to reduce the overhead associated with accessing
+	 * native memory; instead of retrieving all the fields every time they are accessed (or some
+	 * similar scheme), JNI code (which has these values anyways) can just pass them as parameters
+	 * with little overhead.
+	 * </p>
+	 * 
+	 * @param ticks
+	 * @param timestamp
+	 * @param offset
+	 * @param filled
+	 * @param flags
+	 *            The flags present on the buffer
+	 *            <p>
+	 *            <strong>NOTE:</strong> Because this method is called from JNI
+	 *            code, any changes to its signature should be reflected (haha!)
+	 *            therein.
+	 *            </p>
 	 */
 	protected void prepare(int ticks, long timestamp, int offset, int filled, int flags) {
 		this.ticks = ticks;

@@ -12,6 +12,11 @@ import au.edu.jcu.v4l4j.api.control.Control;
 import au.edu.jcu.v4l4j.api.control.ControlType;
 import au.edu.jcu.v4l4j.impl.jni.NativeWrapper;
 
+/**
+ * A control for OMX components that is both a child of some other composite control and has
+ * children of its own.
+ * @author mailmindlin
+ */
 public class CompositeOMXQueryControl extends AbstractOMXQueryControl<Map<String, Object>> implements CompositeControl{
 	protected final Set<AbstractOMXQueryControl<?>> children = new HashSet<>();
 	protected transient Map<String, AbstractOMXQueryControl<?>> childMap = new HashMap<>();

@@ -130,8 +130,8 @@ public class BaseOMXQueryControl extends AbstractOMXQueryControl<Map<String, Obj
 	/**
 	 * @author mailmindlin
 	 *
-	 * @param <P>
-	 * @param <R>
+	 * @param <P> Parent type.
+	 * @param <R> Return type.
 	 */
 	protected class OMXQueryControlBaseAccessor<P, R> extends AbstractOMXQueryControlAccessor<P, Map<String, Object>, R> {
 		
