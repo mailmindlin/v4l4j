@@ -2,6 +2,7 @@ package au.edu.jcu.v4l4j.impl.omx;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 

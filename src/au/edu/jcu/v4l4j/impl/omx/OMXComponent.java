@@ -92,9 +92,13 @@ public class OMXComponent implements Component {
 	
 	private static native OMXFrameBuffer doUseBuffer(long pointer, int portIndex, boolean allocate, int bufferSize, ByteBuffer buffer);
 	
+	private static native void doReleaseBuffer(long pointer, int portIndex, long bufferPointer);
+	
 	private static native void doEmptyThisBuffer(long pointer, long bufferPtr, int position, int size, int sequence, long timestamp);
 	
 	private static native void doFillThisBuffer(long pointer, long bufferPtr);
+	
+	private static native void doFlushPort(long pointer, int portIdx);
 	
 	private static native int getPortFormats(long pointer, int portIndex, List<OMXVideoFormatOption> options);
 	
@@ -115,6 +119,8 @@ public class OMXComponent implements Component {
 	 *            Data to get/set
 	 */
 	private static native int doAccessConfig(long pointer, boolean isConfig, boolean read, boolean throwOnError, int configIndex, ByteBuffer data);
+	
+	private static native void freeComponentHandle(long pointer);
 	
 	/**
 	 * The name of this component
@@ -183,6 +189,14 @@ public class OMXComponent implements Component {
 	protected void fillThisBuffer(OMXFrameBuffer buffer) {
 		this.queuedBuffers.put(buffer.pointer, buffer);
 		OMXComponent.doFillThisBuffer(this.pointer, buffer.pointer);
+	}
+	
+	protected void releaseThisBuffer(int portIndex, OMXFrameBuffer buffer) {
+		OMXComponent.doReleaseBuffer(this.pointer, portIndex, buffer.pointer);
+	}
+	
+	protected void flushThisPort(int portIdx) {
+		OMXComponent.doFlushPort(this.pointer, portIdx);
 	}
 	
 	protected String getPortData(int portIndex, int[] info) {
@@ -277,8 +291,7 @@ public class OMXComponent implements Component {
 	
 	@Override
 	public ComponentState getState() {
-		int state = getComponentState(this.pointer);
-		System.out.println("State: 0x" + Integer.toHexString(state));
+		int state = OMXComponent.getComponentState(this.pointer);
 		switch (state) {
 			case 0:
 				return ComponentState.INVALID;
@@ -322,7 +335,7 @@ public class OMXComponent implements Component {
 				break;
 			
 		}
-		setComponentState(this.pointer, stateI);
+		OMXComponent.setComponentState(this.pointer, stateI);
 		//TODO block for callback
 		return getState();
 	}
@@ -438,5 +451,9 @@ public class OMXComponent implements Component {
 		} catch (Exception e) {
 			printExceptionFromHandler(handlerName, e, port.getIndex());
 		}
+	}
+	
+	public void close() {
+		OMXComponent.freeComponentHandle(this.pointer);
 	}
 }
