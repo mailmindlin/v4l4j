@@ -74,9 +74,9 @@ public class OMXComponentPort implements ComponentPort {
 	}
 	
 	protected void initControls() {
-		BaseOMXQueryControl portFormatControl = new BaseOMXQueryControl(this.component, "format", OMXConstants.INDEX_ParamVideoPortFormat, this.getIndex(), OMXConstants.PARAM_VIDEO_PORTFORMATTYPE, null);
-		BaseOMXQueryControl supplierTypeControl = new BaseOMXQueryControl(this.component, "_supplierTypeBase", OMXConstants.INDEX_ParamCompBufferSupplier, this.getIndex(), null, null);
-		supplierTypeControl.children.add(new NumberOMXQueryControl(supplierTypeControl, this.id, "supplierType", "eBufferSupplier", null));
+		//BaseOMXQueryControl portFormatControl = new BaseOMXQueryControl(this.component, "format", OMXConstants.INDEX_ParamVideoPortFormat, this.getIndex(), OMXConstants.PARAM_VIDEO_PORTFORMATTYPE, null);
+		//BaseOMXQueryControl supplierTypeControl = new BaseOMXQueryControl(this.component, "_supplierTypeBase", OMXConstants.INDEX_ParamCompBufferSupplier, this.getIndex(), null, null);
+		//supplierTypeControl.children.add(new NumberOMXQueryControl(supplierTypeControl, this.id, "supplierType", "eBufferSupplier", null));
 	}
 	
 	@Override
@@ -145,13 +145,26 @@ public class OMXComponentPort implements ComponentPort {
 	}
 	
 	@Override
+	public void releaseBuffer(FrameBuffer buffer) {
+		Objects.requireNonNull(buffer, "Cannot release null");
+		this.getComponent().releaseThisBuffer(this.getIndex(), (OMXFrameBuffer) buffer);
+	}
+	
+	@Override
 	public void empty(FrameBuffer buffer) {
+		Objects.requireNonNull(buffer, "Buffer may not be null");
 		this.getComponent().emptyThisBuffer((OMXFrameBuffer) buffer);
 	}
 	
 	@Override
 	public void fill(FrameBuffer buffer) {
+		Objects.requireNonNull(buffer, "Buffer may not be null");
 		this.getComponent().fillThisBuffer((OMXFrameBuffer) buffer);
+	}
+	
+	@Override
+	public void flush() {
+		this.getComponent().flushThisPort(this.getIndex());
 	}
 	
 	public void push() {

@@ -130,7 +130,7 @@ public abstract class V4LControl<V> implements Control<V> {
 		}
 		
 		@Override
-		public <E> ControlAccessor<P, T, E> get(BiFunction<T, R, E> merger) {
+		public <E> ControlAccessor<P, T, E> get(BiFunction<T, ? super R, E> merger) {
 			return andThen(state->state.setResult(merger.apply(state.getValue(), state.getResult())));
 		}
 

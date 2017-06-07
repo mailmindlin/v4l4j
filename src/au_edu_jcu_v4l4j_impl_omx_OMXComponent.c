@@ -709,6 +709,21 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doUseBuffe
 	return framebuffer;
 }
 
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doReleaseBuffer(JNIEnv* env, jclass me, jlong pointer, jint portIndex, jlong bufferPointer) {
+	LOG_FN_ENTER();
+	
+	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
+	
+	OMX_BUFFERHEADERTYPE* buffer = (OMX_BUFFERHEADERTYPE*) (uintptr_t) bufferPointer;
+	
+	OMX_ERRORTYPE r = OMX_FreeBuffer(appData->component, portIndex, buffer);
+	
+	if (r != OMX_ErrorNone) {
+		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error allocating buffer on port %d: %#08x %s", portIndex, r, getOMXErrorDescription(r));
+		return;
+	}
+}
+
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doEmptyThisBuffer(JNIEnv *env, jclass me, jlong pointer, jlong bufferPointer, jint position, jint size, jint sequence, jlong timestamp) {
 	LOG_FN_ENTER();
 	
@@ -716,7 +731,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doEmptyThisBu
 	
 	OMX_BUFFERHEADERTYPE* buffer = (OMX_BUFFERHEADERTYPE*) (uintptr_t) bufferPointer;
 	
-	dprint(LOG_V4L4J, "Setting offset to %d; limit %d; sequence %d; timestamp %lu;\n", position, size, sequence, timestamp);
+	dprint(LOG_V4L4J, "Setting offset to %d; limit %d; sequence %d; timestamp %llu;\n", position, size, sequence, (unsigned long long) timestamp);
 	buffer->nOffset = position;
 	buffer->nFilledLen = size; 
 	buffer->nTickCount = sequence;
@@ -745,6 +760,18 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doFillThisBuf
 	OMX_ERRORTYPE r = OMX_FillThisBuffer(appData->component, buffer);
 	if (r != OMX_ErrorNone) {
 		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error filling buffer: %#08x %s", r, getOMXErrorDescription(r));
+		return;
+	}
+}
+
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doFlushPort(JNIEnv *env, jclass me, jlong pointer, jint portIndex) {
+	LOG_FN_ENTER();
+	
+	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
+	
+	OMX_ERRORTYPE r = OMX_SendCommand(appData->component, OMX_CommandFlush, portIndex, NULL);
+	if (r != OMX_ErrorNone) {
+		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error flushing port %u: %#08x %s", (unsigned int) portIndex, r, getOMXErrorDescription(r));
 		return;
 	}
 }
@@ -814,6 +841,20 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doAccessConfi
 	return res;
 }
 
+JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_freeComponentHandle(JNIEnv* env, jclass me, jlong pointer) {
+	LOG_FN_ENTER();
+	
+	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
+	
+	OMX_ERRORTYPE res = OMX_FreeHandle(appData->component);
+	
+	deinitAppData(env, appData);
+	
+	if (res != OMX_ErrorNone) {
+		THROW_EXCEPTION(env, JNI_EXCP, "OMX Failed to free component handle: %#08x %s", res, getOMXErrorDescription(res));
+		return;
+	}
+}
 
 #ifdef __cplusplus
 }

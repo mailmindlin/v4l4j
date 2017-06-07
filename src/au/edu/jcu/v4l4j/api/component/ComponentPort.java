@@ -18,11 +18,13 @@ public interface ComponentPort {
 	
 	/**
 	 * Get the stream type of data that passes through this port.
+	 * @return stream type
 	 */
 	StreamType getPortType();
 	
 	/**
 	 * Get the component that this is a port for
+	 * @return owning component
 	 */
 	Component getComponent();
 	
@@ -55,7 +57,7 @@ public interface ComponentPort {
 	/**
 	 * Whether this port is populated.
 	 * A port is populated when at least {@link #actualBuffers()} buffers of at least {@link #bufferSize()} are allocated.  
-	 * @return
+	 * @return whether this port is populated or not
 	 */
 	boolean isPopulated();
 	
@@ -106,22 +108,40 @@ public interface ComponentPort {
 	 * Request that this port allocate a buffer of the given length.
 	 * @param length
 	 *     Length of buffer to allocate
+	 * @return allocated buffer
+	 * @throws IllegalArgumentException 
+	 * @throws IllegalStateException 
 	 */
 	FrameBuffer allocateBuffer(int length) throws IllegalArgumentException, IllegalStateException;
 	
 	/**
+	 * Request that this port release the given buffer
+	 * @param buffer buffer to release
+	 */
+	void releaseBuffer(FrameBuffer buffer);
+	
+	/**
 	 * Queue a FrameBuffer to be emptied by this port.
 	 * Buffers that are passed to this method are returned via the
-	 * {@link #onBufferEmpty(Consumer<FrameBuffer>)} callback.
+	 * {@link #onBufferEmpty(Consumer)} callback.
+	 * @param buffer buffer to empty
 	 */
 	void empty(FrameBuffer buffer);
 	
 	/**
 	 * Queue a FrameBuffer to be filled by this port.
 	 * Buffers that are passed to this method are returned via the 
-	 * {@link #onBufferFilled(Consumer<FrameBuffer>)} callback.
+	 * {@link #onBufferFill(Consumer)} callback.
+	 * 
+	 * @param buffer buffer to fill
 	 */
 	void fill(FrameBuffer buffer);
+	
+	/**
+	 * Flush this port
+	 * TODO better explanation of what that means
+	 */
+	void flush();
 	
 	/**
 	 * Register a callback for the onBufferEmpty event.

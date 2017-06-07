@@ -10,7 +10,6 @@ import au.edu.jcu.v4l4j.api.StreamType;
 import au.edu.jcu.v4l4j.api.VideoCompressionType;
 import au.edu.jcu.v4l4j.api.component.port.VideoPort;
 import au.edu.jcu.v4l4j.api.control.Control;
-import au.edu.jcu.v4l4j.api.control.ControlType;
 
 public class VideoDeviceCapturePort implements VideoPort {
 	protected final int id;
@@ -148,7 +147,7 @@ public class VideoDeviceCapturePort implements VideoPort {
 	}
 
 	@Override
-	public Control<?> getControlByName(String name) {
+	public <U, V extends Control<U>> V getControlByName(String name) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -167,6 +166,18 @@ public class VideoDeviceCapturePort implements VideoPort {
 
 	@Override
 	public void onBufferFill(Consumer<FrameBuffer> handler) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void releaseBuffer(FrameBuffer buffer) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void flush() {
 		// TODO Auto-generated method stub
 		
 	}
