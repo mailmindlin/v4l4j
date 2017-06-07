@@ -695,6 +695,13 @@ public class OMXConstants {
 			.addInt32("nTargetBitrate")
 			.build();
 	
+	public static final StructPrototype CONFIG_SCALEFACTORTYPE = StructPrototype.builder()
+			.addInt32("nSize")
+			.addStruct(VERSION_TYPE, "nVersion")
+			.add(QStructFieldType.Q16, "width")
+			.add(QStructFieldType.Q16, "height")
+			.build();
+	
 	public static final StructPrototype PARAM_VIDEO_PORTFORMATTYPE = StructPrototype.builder()
 			.addInt32("nSize")
 			.addStruct(VERSION_TYPE, "nVersion")
@@ -706,7 +713,7 @@ public class OMXConstants {
 			.build();
 	
 	public static final OMXControlDefinition CTRL_PARAM_PORTDEFINITION = OMXControlDefinition.builder()
-			.setName("video.portdefinition")
+			.setName("omx.param.portdefinition")
 			.setFilter((component, port) -> true)
 			.setQuery(OMXConstants.INDEX_ParamPortDefinition)
 			.setStruct(OMXConstants.PARAM_PORTDEFINITIONTYPE)
@@ -750,24 +757,24 @@ public class OMXConstants {
 			.withNumberField("nBufferAlignment", "bufferAlignment")
 			.build();
 	
-	public static final OMXControlDefinition CTRL_PARAM_BITRATE = OMXControlDefinition.builder()
-			.setName("video.bitrate")
+	public static final OMXControlDefinition CTRL_VIDEO_PARAM_BITRATE = OMXControlDefinition.builder()
+			.setName("omx.video.param.bitrate")
 			.setQuery(OMXConstants.INDEX_ParamVideoBitrate)
 			.setStruct(OMXConstants.PARAM_BITRATETYPE)
 			.withNumberField("eControlRate", "controlRate")
 			.withNumberField("nTargetBitrate", "targetBitrate")
 			.build();
 	
-	public static final OMXControlDefinition CTRL_CONFIG_BITRATE = OMXControlDefinition.builder()
-			.setName("bitrate")
+	public static final OMXControlDefinition CTRL_VIDEO_CONFIG_BITRATE = OMXControlDefinition.builder()
+			.setName("omx.video.config.bitrate")
 			.setQuery(OMXConstants.INDEX_ConfigVideoBitrate)
 			.setStruct(OMXConstants.PARAM_BITRATETYPE)
 			.withNumberField("eControlRate", "controlRate")
 			.withNumberField("nTargetBitrate", "target")
 			.build();
 	
-	public static final OMXControlDefinition CTRL_VIDEO_FORMAT = OMXControlDefinition.builder()
-			.setName("format")
+	public static final OMXControlDefinition CTRL_VIDEO_PARAM_FORMAT = OMXControlDefinition.builder()
+			.setName("omx.video.format")
 			.setQuery(OMXConstants.INDEX_ParamVideoPortFormat)
 			.setStruct(OMXConstants.PARAM_VIDEO_PORTFORMATTYPE)
 			.withNumberField("nIndex", "index")
@@ -776,6 +783,14 @@ public class OMXConstants {
 			.withNumberField("xFramerate", "framerate")
 			.withEnumerator()
 				.and()
+			.build();
+	
+	public static final OMXControlDefinition CTRL_VIDEO_CONFIG_SCALEFACTOR = OMXControlDefinition.builder()
+			.setName("omx.video.config.scalefactor")
+			.setQuery(OMXConstants.INDEX_ConfigCommonScale)
+			.setStruct(OMXConstants.CONFIG_SCALEFACTORTYPE)
+			.withField("width", "width")
+			.withField("height", "height")
 			.build();
 	
 	private static ConcurrentHashMap<String, IndexInfo> indexMap;
