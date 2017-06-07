@@ -752,15 +752,16 @@ public class OMXConstants {
 	
 	public static final OMXControlDefinition CTRL_PARAM_BITRATE = OMXControlDefinition.builder()
 			.setName("video.bitrate")
+			.setQuery(OMXConstants.INDEX_ParamVideoBitrate)
 			.setStruct(OMXConstants.PARAM_BITRATETYPE)
 			.withNumberField("eControlRate", "controlRate")
-			.withNumberField("nTargetBitrate", "target")
+			.withNumberField("nTargetBitrate", "targetBitrate")
 			.build();
 	
 	public static final OMXControlDefinition CTRL_CONFIG_BITRATE = OMXControlDefinition.builder()
 			.setName("bitrate")
 			.setQuery(OMXConstants.INDEX_ConfigVideoBitrate)
-			.setStruct(PARAM_BITRATETYPE)
+			.setStruct(OMXConstants.PARAM_BITRATETYPE)
 			.withNumberField("eControlRate", "controlRate")
 			.withNumberField("nTargetBitrate", "target")
 			.build();
