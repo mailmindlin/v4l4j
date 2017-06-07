@@ -65,8 +65,10 @@ public class OMXComponentProvider implements ComponentProvider {
 	public static OMXComponentProvider getInstance() {
 		synchronized (OMXComponentProvider.class) {
 			if (refCount == 0)
-				if (!init())
+				if (!init()) {
+					System.err.println("Error in initialization");
 					return null;
+				}
 			refCount++;
 			return new OMXComponentProvider();
 		}

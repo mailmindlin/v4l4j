@@ -28,9 +28,10 @@ extern "C" {
  * Method:    enumComponents
  * Signature: (Ljava/lang/List;I)I
  */
-JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider_init(JNIEnv *env, jclass me) {
+JNIEXPORT jboolean JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider_init(JNIEnv *env, jclass me) {
 	LOG_FN_ENTER();
 	v4lconvert_omx_init();
+	return JNI_TRUE;
 }
 
 /*
