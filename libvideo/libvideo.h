@@ -78,7 +78,7 @@ struct mmap {
 	/**
 	 * Used by v4l1 only, to store the overall mmap size
 	 */
-	int v4l1_mmap_size;
+	size_t v4l1_mmap_size;
 };
 
 
