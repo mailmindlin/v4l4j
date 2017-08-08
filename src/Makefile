@@ -111,7 +111,7 @@ endif
 GCC_VERSION := $(shell gcc --version | grep -Po '\d.\d.\d' | head -1)
 GCC_VER_MAJOR := $(shell echo $(GCC_VERSION) | cut -f1 -d.)
 GCC_VER_MINOR := $(shell echo $(GCC_VERSION) | cut -f2 -d.)
-GCC_GT_4_8 := $(shell [ $(RH_VER_MAJOR) -gt 4 -o \( $(RH_VER_MAJOR) -eq 4 -a $(RH_VER_MINOR) -gt 8 \) ] && echo true)
+GCC_GT_4_8 := $(shell [ $(GCC_VER_MAJOR) -gt 4 -o \( $(GCC_VER_MAJOR) -eq 4 -a $(GCC_VER_MINOR) -gt 8 \) ] && echo true)
 ifeq "$(GCC_GT_4_8)" "1"
 	CFLAGS += -fdiagnostics-color=auto
 endif
