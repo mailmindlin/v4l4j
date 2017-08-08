@@ -106,6 +106,16 @@ else
 OPTIMISATION := -Os
 endif
 
+# Check if GCC version > 4.8 (-fdiagnostics-color was added in GCC 4.9)
+# Because it makes debugging easier...
+GCC_VERSION := $(shell gcc --version | grep -Po '\d.\d.\d' | head -1)
+GCC_VER_MAJOR := $(shell echo $(GCC_VERSION) | cut -f1 -d.)
+GCC_VER_MINOR := $(shell echo $(GCC_VERSION) | cut -f2 -d.)
+GCC_GT_4_8 := $(shell [ $(RH_VER_MAJOR) -gt 4 -o \( $(RH_VER_MAJOR) -eq 4 -a $(RH_VER_MINOR) -gt 8 \) ] && echo true)
+ifeq "$(GCC_GT_4_8)" "1"
+	CFLAGS += -fdiagnostics-color=auto
+endif
+
 LIBVIDEO_NAME := video
 LIBVIDEO_PATH := ../libvideo
 
@@ -122,7 +132,7 @@ OBJ := jpeg.o jniutils.o \
 
 INCLUDES := -I$(JDK_HOME)/include -I$(JDK_HOME)/include/linux/ \
   -I$(LIBVIDEO_PATH) -I$(LIBVIDEO_PATH)/pixfc-sse -I. -I/usr/local/include
-CFLAGS += $(HARDWARE_FLAGS) $(INCLUDES) $(DBG) $(OPTIMISATION) -fPIC -fno-stack-protector -std=gnu11 -pthread -ftree-vectorize -fPIC -fpredictive-commoning -fdiagnostics-color=auto -flto
+CFLAGS += $(HARDWARE_FLAGS) $(INCLUDES) $(DBG) $(OPTIMISATION) -fPIC -fno-stack-protector -std=gnu11 -pthread -ftree-vectorize -fPIC -fpredictive-commoning -flto
 
 LDFLAGS += $(HARDWARE_FLAGS) -shared -ljpeg -L$(LIBVIDEO_PATH) -l$(LIBVIDEO_NAME) -L/usr/local/lib -z noexecstack -flto=3
 
