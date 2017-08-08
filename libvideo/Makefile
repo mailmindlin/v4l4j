@@ -173,7 +173,7 @@ else
 endif
 
 
-all: $(LIB).$(LIB_RELEASE)
+all: $(LIB)
 
 $(LIB).$(LIB_RELEASE): version.h $(OBJ)
 	$(CC) $(OBJ) -Wl,-soname,$(LIB).$(LIB_RELEASE) \
