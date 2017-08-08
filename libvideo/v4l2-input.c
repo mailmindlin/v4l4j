@@ -971,10 +971,10 @@ static void fix_quirky_struct(struct v4l2_queryctrl *v) {
 
 //Populate the control_list with reported V4L2 controls
 //and return how many controls were created
-unsigned int create_v4l2_controls(struct video_device *vdev, struct control *controls, int max) {
+unsigned int create_v4l2_controls(struct video_device *vdev, struct control *controls, unsigned int max) {
 	struct v4l2_queryctrl qctrl;
 	node *list = NULL;
-	int count = 0;
+	unsigned int count = 0;
 
 	dprint(LIBVIDEO_SOURCE_CTRL, LIBVIDEO_LOG_DEBUG, "CTRL: Creating std controls\n");
 
