@@ -98,7 +98,10 @@ ifeq ($(shell arch),$(ARCH))
 	ifeq ($(findstring march, $(HARDWARE_FLAGS)),)
 		HARDWARE_FLAGS += -march=native
 		ifeq ($(findstring mcpu, $(HARDWARE_FLAGS)),)
-			HARDWARE_FLAGS += -mcpu=native
+			# -mcpu is correct for ARM, but not for x86 anymore
+			ifeq ($(findstring x86, $(ARCH)),)
+				HARDWARE_FLAGS += -mcpu=native
+			endif
 			ifeq ($(findstring mtune, $(HARDWARE_FLAGS)),)
 				HARDWARE_FLAGS += -mtune=native
 			endif
@@ -169,6 +172,8 @@ ifneq ($(findstring, gcc, $(CC_VERSION)),)
 	endif
 endif
 
+# Set debug/release flags
+# Set debug/release flags
 ifneq ($(DEBUG),)
 	CFLAGS += -DDEBUG -ggdb -DLIBVIDEO_LOG_LEVEL=$(LIBVIDEO_LOG_LEVEL) -DLIBVIDEO_LOG_SOURCE=$(LIBVIDEO_LOG_SOURCE)
 else
