@@ -752,7 +752,7 @@ static inline int has_id(node *list, unsigned int id) {
 unsigned int count_v4l2_controls(struct video_device *vdev) {
 	struct v4l2_queryctrl qctrl;
 	node *list=NULL;
-	int count = 0;
+	unsigned int count = 0;
 
 	CLEAR(qctrl);
 
