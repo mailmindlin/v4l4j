@@ -158,12 +158,15 @@ LDFLAGS += $(HARDWARE_FLAGS) -lm -lrt -shared -ljpeg -lc -flto=3
 
 # Check if GCC version > 4.8 (-fdiagnostics-color was added in GCC 4.9)
 # Because it makes debugging easier...
-GCC_VERSION := $(shell gcc --version | grep -Po '\d.\d.\d' | head -1)
-GCC_VER_MAJOR := $(shell echo $(GCC_VERSION) | cut -f1 -d.)
-GCC_VER_MINOR := $(shell echo $(GCC_VERSION) | cut -f2 -d.)
-GCC_GT_4_8 := $(shell [ $(GCC_VER_MAJOR) -gt 4 -o \( $(GCC_VER_MAJOR) -eq 4 -a $(GCC_VER_MINOR) -gt 8 \) ] && echo true)
-ifeq "$(GCC_GT_4_8)" "1"
-	CFLAGS += -fdiagnostics-color=auto
+CC_VERSION := $(shell $(CC) --version)
+ifneq ($(findstring, gcc, $(CC_VERSION)),)
+	GCC_VERSION := $(shell $(CC_VERSION) | grep -Po '\d.\d.\d' | head -1)
+	GCC_VER_MAJOR := $(shell echo $(GCC_VERSION) | cut -f1 -d.)
+	GCC_VER_MINOR := $(shell echo $(GCC_VERSION) | cut -f2 -d.)
+	GCC_GT_4_8 := $(shell [ $(GCC_VER_MAJOR) -gt 4 -o \( $(GCC_VER_MAJOR) -eq 4 -a $(GCC_VER_MINOR) -gt 8 \) ] && echo true)
+	ifeq ($(GCC_GT_4_8),true)
+		CFLAGS += -fdiagnostics-color=auto
+	endif
 endif
 
 ifneq ($(DEBUG),)
