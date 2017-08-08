@@ -20,7 +20,8 @@
 	</path>
 	
 	<path id="test.classpath">
-		<pathelement location="${project.classes}" />
+		<pathelement location="${project.classes}"/>
+		<pathelement location="${project.rsrc}"/>
 		<fileset dir="${project.lib}">
 			<include name="*.jar"/>
 		</fileset>
