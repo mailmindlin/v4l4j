@@ -24,7 +24,7 @@
 
 /* libjpeg8 and later come with their own (API compatible) memory source
    and dest */
-#if JPEG_LIB_VERSION < 80
+#if !(JPEG_LIB_VERSION >= 80 || defined(MEM_SRCDST_SUPPORTED))
 
 /* Expanded data source object for memory input */
 
