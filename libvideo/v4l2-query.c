@@ -276,14 +276,15 @@ static bool add_raw_format(struct v4lconvert_data *conv, unsigned int width, uns
 
 /*
  * This function searches the raw_palettes int array of current size 'size
- * for the format fmt. if it is found it returns 1, 0 otherwise
+ * for the format fmt.
+ * Returns true if it is found, false otherwise.
  */
-static int has_raw_format(int *raw_palettes, int fmt, unsigned int size) {
-	while(--size >= 0)
-		if(raw_palettes[size] == fmt)
-			return 1;
+static bool has_raw_format(int *raw_palettes, int fmt, unsigned int size) {
+	for (unsigned int i = 0; i < size; i++)
+		if(raw_palettes[i] == fmt)
+			return true;
 	
-	return 0;
+	return false;
 }
 
 /*
