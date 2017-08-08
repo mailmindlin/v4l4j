@@ -162,6 +162,7 @@ int qc_set_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, int *val, v
 }
 
 int qc_list_ctrl(struct video_device *vdev, struct control *c, void *d) {
+	UNUSED(vdev);
  	struct qc_probe_private *priv = (struct qc_probe_private *) d;
 	
 	if(priv->ok) {

@@ -278,7 +278,7 @@ static bool add_raw_format(struct v4lconvert_data *conv, unsigned int width, uns
  * This function searches the raw_palettes int array of current size 'size
  * for the format fmt. if it is found it returns 1, 0 otherwise
  */
-static int has_raw_format(int *raw_palettes, int fmt, int size) {
+static int has_raw_format(int *raw_palettes, int fmt, unsigned int size) {
 	while(--size >= 0)
 		if(raw_palettes[size] == fmt)
 			return 1;
@@ -466,7 +466,7 @@ static bool query_tuner(struct video_input_info *vi, int fd, unsigned int index)
 
 	XMALLOC(vi->tuner, struct tuner_info *, sizeof(struct tuner_info));
 	strncpy(vi->tuner->name, (char *) t.name, NAME_FIELD_LENGTH);
-	vi->tuner->index = index;
+	vi->tuner->index = (int) index;
 	vi->tuner->unit = t.capability & VIDEO_TUNER_LOW ? KHZ_UNIT : MHZ_UNIT;
 	vi->tuner->rssi = t.signal;
 	vi->tuner->type =  t.type == V4L2_TUNER_RADIO ? RADIO_TYPE : TV_TYPE;

@@ -30,7 +30,7 @@
 static void fix_quirky_values(struct video_device *vdev, unsigned int idx, unsigned long *f){
 	struct video_tuner t;
 	CLEAR(t);
-	t.tuner = idx;
+	t.tuner = (int) idx;
 	if(ioctl(vdev->fd, VIDIOCGTUNER, &t) == -1)
 		return;
 	if(*f < t.rangelow) {
