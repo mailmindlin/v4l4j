@@ -13,18 +13,18 @@ The PWC driver supports webcams with pan/tilt capabilities. Control of the pan
 and tilt however, requires first checking with the driver if the attached device
 supports these (done through driver-specific ioctls, which means you have to 
 detect which driver the device is using first). If supported, pan/tilt control
-is then done via driver-specific ioctls. libvideo will probe the driver.If it
+is then done via driver-specific ioctls. libvideo will probe the driver. If it
 is PWC, it will probe the device and if the device supports Pan/Tilt features,
 libvideo will create V4L controls to provide access to Pan & tilt.
 
-DOCUMENTATION:
-libvideo and associated documentation (Howtos, API, ...) can be obtained from
-http://v4l4j.googlecode.com
+## Documentation
+The latest version of libvideo and associated documentation (Howtos, API, ...) can
+always be found at [github.com/mailmindlin/v4l4j](https://github.com/mailmindlin/v4l4j).
 
-TESTED DEVICES:
-see TestedHardware file
+## Tested Devices
+See TestedHardware file
 
-FEATURES:
+## Features
 livideo allows:
 - frame capture from V4L devices in their native image formats. For V4L2
   devices, extra formats (RGB24, BGR24, YUV420 and YVU420) are also available.
@@ -34,32 +34,35 @@ livideo allows:
 - access to V4L controls
 - access to driver-private ioctls through "fake" V4L2 controls created by 
   libvideo
+- hardware acceleration for some video conversions, depending on platform
 
-REQUIREMENTS:
+## Requirements
 - a V4L compatible video source (capture card, webcam)
 
-COMPILING:
-- run "make" in the directory.
+## Compiling
+- run `make` in the directory.
 
-USAGE:
+## Usage
 libvideo is a library and is meant to be linked to an application. However, 
 three test programs are shipped:
-- 'test-capture', which runs a capture from a given video device at a given
+- `test-capture`, which runs a capture from a given video device at a given
   resolution. It then prints the frame rate.
-- 'dump-capture' captures frames and writes them to files.
-- 'list-caps' which lists information about a given video device.
+- `dump-capture` captures frames and writes them to files.
+- `list-caps` which lists information about a given video device.
 
-To compile the test programs, run "make test".
+To compile the test programs, run `make test`.
 The "example" directory contains light_cap, a lighweight application which 
 captures frames and sends them out as a multipart JPEG stream suitable for
 viewing in any standard-compliant web browser. See example/README for more
 details.
 
-DEBUGGING:
-Run 'DEBUG=1 make clean test' to recompile libvideo with debug statements.
+## Debugging
+Run `DEBUG=1 make clean test` to recompile libvideo with debug statements.
 Extra output will be produced to allows troubleshooting.
 
-ISSUES:
+## Feedback
 Feedback is is greatly appreciated to expand the list of platforms and video
-device v4l4j had been successfully tested with. Feedback, issues and queries can
-be emailed to v4l4j@googlegroups.com
+devices v4l4j has been successfully tested with. Feedback, issues and queries 
+can be submitted as an issue at [https://github.com/mailmindlin/v4l4j/issues](https://github.com/mailmindlin/v4l4j/issues).
+
+This library was exported from [v4l4j.googlecode.com](code.google.com/archive/p/v4l4j).
