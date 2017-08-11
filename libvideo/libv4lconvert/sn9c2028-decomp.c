@@ -70,32 +70,32 @@
 		EAT_BITS(1);\
 	} else if ((bits & 0x380) == 0x280) {\
 		EAT_BITS(3);\
-		val += 3;\
+		val += (short) 3;\
 		if (val > 255)\
 			val = 255;\
 	} else if ((bits & 0x380) == 0x300) {\
 		EAT_BITS(3);\
-		val -= 3;\
+		val -= (short) 3;\
 		if (val < 0)\
 			val = 0;\
 	} else if ((bits & 0x3c0) == 0x200) {\
 		EAT_BITS(4);\
-		val += 8;\
+		val += (short) 8;\
 		if (val > 255)\
 			val = 255;\
 	} else if ((bits & 0x3c0) == 0x240) {\
 		EAT_BITS(4);\
-		val -= 8;\
+		val -= (short) 8;\
 		if (val < 0)\
 			val = 0;\
 	} else if ((bits & 0x3c0) == 0x3c0) {\
 		EAT_BITS(4);\
-		val -= 20;\
+		val -= (short) 20;\
 		if (val < 0)\
 			val = 0;\
 	} else if ((bits & 0x3e0) == 0x380) {\
 		EAT_BITS(5);\
-		val += 20;\
+		val += (short) 20;\
 		if (val > 255)\
 			val = 255;\
 	} else {\
