@@ -75,6 +75,7 @@
 #define LIBVIDEO_LOG_SOURCE 		LIBVIDEO_SOURCE_ALL
 #endif
 
+//Print with origin information
 #define dprint(source, level, format, ...) \
 	do {\
 		if(((source) & LIBVIDEO_LOG_SOURCE) && ((level) & LIBVIDEO_LOG_LEVEL)){\

@@ -55,7 +55,7 @@
  * 		written if it ran out of space
  */
 int get_libvideo_version(char *dst, size_t len) {
-	return snprintf(dst, len,"%d.%d.%d+%s", LIBVIDEO_VERSION_MAJOR, LIBVIDEO_VERSION_MINOR, LIBVIDEO_VERSION_PATCH, LIBVIDEO_VERSION_METAD);
+	return snprintf(dst, len, "%d.%d.%d+%s", LIBVIDEO_VERSION_MAJOR, LIBVIDEO_VERSION_MINOR, LIBVIDEO_VERSION_PATCH, LIBVIDEO_VERSION_METAD);
 }
 
 /*

@@ -78,60 +78,60 @@ int gspca_driver_probe(struct video_device *vdev, void **data){
 	p.chg_para = CHGLIGHTFREQ;
 	p.light_freq = 60;
 	dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "GSPCA: probing GSPCA\n");
-	if(ioctl(vdev->fd, SPCASVIDIOPARAM, &p)==0) {
+	if(ioctl(vdev->fd, SPCASVIDIOPARAM, &p) == 0) {
 		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "..\n");
 		CLEAR(p);
-		if(ioctl(vdev->fd, SPCAGVIDIOPARAM, &p)!=0)
+		if(ioctl(vdev->fd, SPCAGVIDIOPARAM, &p) != 0)
 			goto end;
 
-		if(p.light_freq!=60) {
+		if(p.light_freq != 60) {
 			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "GSPCA: light_freq: %d\n", p.light_freq);
 			goto end;
 		}
-
+		
 		CLEAR(p);
 		p.chg_para = CHGLIGHTFREQ;
 		p.light_freq = 50;
-		if(ioctl(vdev->fd, SPCASVIDIOPARAM, &p)==0) {
+		if(ioctl(vdev->fd, SPCASVIDIOPARAM, &p) == 0) {
 			dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, ".. ..\n");
 			CLEAR(p);
-			if(ioctl(vdev->fd, SPCAGVIDIOPARAM, &p)!=0)
+			if(ioctl(vdev->fd, SPCAGVIDIOPARAM, &p) != 0)
 				goto end;
 
-			if(p.light_freq!=50){
+			if(p.light_freq != 50){
 				dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "GSPCA: light_freq: %d\n", p.light_freq);
 				goto end;
 			}
-
+			
 			CLEAR(p);
 			p.chg_para = CHGLIGHTFREQ;
 			p.light_freq = 0;
-			if(ioctl(vdev->fd, SPCASVIDIOPARAM, &p)==0) {
+			if(ioctl(vdev->fd, SPCASVIDIOPARAM, &p) == 0) {
 				dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, ".. .. ..\n");
-					CLEAR(p);
-					if(ioctl(vdev->fd, SPCAGVIDIOPARAM, &p)!=0)
-						goto end;
+				CLEAR(p);
+				if(ioctl(vdev->fd, SPCAGVIDIOPARAM, &p)!=0)
+					goto end;
 
-					if(p.light_freq!=0) {
-						dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "GSPCA: light_freq: %d\n", p.light_freq);
-						goto end;
-					}
+				if(p.light_freq!=0) {
+					dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "GSPCA: light_freq: %d\n", p.light_freq);
+					goto end;
+				}
+				CLEAR(p);
+				p.chg_para = CHGLIGHTFREQ;
+				p.light_freq = 90;
+				//weird: this ioctl should fail. but instead it succeed...
+				if(ioctl(vdev->fd, SPCASVIDIOPARAM, &p) == 0) {
 					CLEAR(p);
-					p.chg_para = CHGLIGHTFREQ;
-					p.light_freq = 90;
-					//weird: this ioctl should fail. but instead it succeed...
-					if(ioctl(vdev->fd, SPCASVIDIOPARAM, &p)==0) {
-						CLEAR(p);
-						if(ioctl(vdev->fd, SPCAGVIDIOPARAM, &p)!=0)
-							goto end;
-						if(p.light_freq==0) {
-							dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "GSPCA: found GSPCA driver (%d controls)\n", NB_PRIV_IOCTL);
-							XMALLOC(priv, struct gspca_probe_private *, sizeof(struct gspca_probe_private ));
-							*data = (void *)priv;
-							priv->ok = 1;
-							return NB_PRIV_IOCTL;
-						}
+					if(ioctl(vdev->fd, SPCAGVIDIOPARAM, &p) != 0)
+						goto end;
+					if(p.light_freq == 0) {
+						dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_DEBUG, "GSPCA: found GSPCA driver (%d controls)\n", NB_PRIV_IOCTL);
+						XMALLOC(priv, struct gspca_probe_private *, sizeof(struct gspca_probe_private ));
+						*data = (void *)priv;
+						priv->ok = 1;
+						return NB_PRIV_IOCTL;
 					}
+				}
 			}
 		}
 	}
@@ -145,10 +145,11 @@ int gspca_get_ctrl(struct video_device *vdev, struct v4l2_queryctrl *q, void *d,
 	UNUSED(d);
 	int ret = 0;
 	struct video_param p;
-	if(ioctl(vdev->fd, SPCAGVIDIOPARAM, &p)<0) {
+	if(ioctl(vdev->fd, SPCAGVIDIOPARAM, &p) < 0) {
 		dprint(LIBVIDEO_SOURCE_DRV_PROBE, LIBVIDEO_LOG_ERR, "GSPCA: Cant get value of control %s\n",q->name);
 		return ret;
 	}
+	
 	switch (q->id) {
 		case 0:
 			*val = p.autobright;
