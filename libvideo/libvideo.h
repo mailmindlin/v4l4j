@@ -333,9 +333,21 @@ struct frame_intv_discrete {
 	unsigned int denominator;
 };
 
+/**
+ * Represents a continuous range of allowed frame intervals.
+ */
 struct frame_intv_continuous {
+	/**
+	 * Minimum frame interval (slowest)
+	 */
 	struct frame_intv_discrete min;
+	/**
+	 * Maximum frame interval (fastest)
+	 */
 	struct frame_intv_discrete max;
+	/**
+	 * Frame interval step
+	 */
 	struct frame_intv_discrete step;
 };
 
@@ -417,27 +429,37 @@ struct palette_info {
 	//this palette's index
 	int index;
 
-	//if raw_palettes is not NULL, then this palette is a converted palette and
-	//raw_palettes contains an array of indexes of raw palettes. It is used
-	//for V4L2 only. The last element in the array is -1
-	//if raw_palettes is NULL, this palette is raw, and size_type and
-	//(continuous or discrete) are valid (check value of size_type).
-	//If raw_palettes is not NULL, then
-	//size_type=FRAME_SIZE_UNSUPPORTED, continuous and discrete and not valid.
+	/**
+	 * If raw_palettes is not NULL, then this palette is a converted palette and
+	 * raw_palettes contains an array of indexes of raw palettes. It is used
+	 * for V4L2 only. The last element in the array is -1.
+	 * 
+	 * If raw_palettes is NULL, this palette is raw, and size_type and
+	 * (continuous or discrete) are valid (check value of size_type).
+	 * 
+	 * If raw_palettes is not NULL, then size_type=FRAME_SIZE_UNSUPPORTED,
+	 * continuous and discrete and not valid.
+	 */
 	int *raw_palettes;
 
-	//the type of frame sizes (V4L2 only)
+	/**
+	 * The type of frame sizes (V4L2 only)
+	 */
 	enum frame_size_types size_type;
 
-	//if size_type==FRAME_SIZE_CONTINUOUS, then only the continuous member
-	//of this union is valid, and points to a single
-	//struct frame_size_continuous
-	//if size_type==FRAME_SIZE_DISCRETE, then only the discrete member
-	//of this union is valid, and points to an array of
-	//struct frame_size_discrete. The last element in the array has its members
-	//(width and height) set to 0.
-	//if size_type==FRAME_SIZE_UNSUPPORTED, then none of the two members are
-	//valid
+	/**
+	 * If size_type==FRAME_SIZE_CONTINUOUS, then only the continuous member of
+	 * this union is valid, and points to a single
+	 * `struct frame_size_continuous`.
+	 * 
+	 * If size_type==FRAME_SIZE_DISCRETE, then only the discrete member
+	 * of this union is valid, and points to an array of
+	 * `struct frame_size_discrete`. The last element in the array has its
+	 * members (width and height) set to 0.
+	 * 
+	 * If size_type==FRAME_SIZE_UNSUPPORTED, then none of the two members are
+	 * valid.
+	 */
 	union {
 		struct frame_size_continuous *continuous;
 		struct frame_size_discrete *discrete;
@@ -524,9 +546,20 @@ struct control_list {
  *
  */
 struct tuner_actions {
-	//returns 0 if OK, LIBVIDEO_ERR_IOCTL otherwise
+	/**
+	 * Set the tuner frequency.
+	 * @return 0 if ok, LIBVIDEO_ERR_IOCTL otherwise
+	 */
 	int (*set_tuner_freq)(struct video_device *device, unsigned int idx, unsigned long freq) __attribute__ ((nonnull (1)));
+	/**
+	 * Get the tuner frequency
+	 * @return 0 if ok, LIBVIDEO_ERR_IOCTL otherwise
+	 */
 	int (*get_tuner_freq)(struct video_device *device, unsigned int idx, unsigned long *freq)__attribute__ ((nonnull (1, 3)));
+	/**
+	 * Get the tuner RSSI and AFC
+	 * @return 0 if ok, LIBVIDEO_ERR_IOCTL otherwise
+	 */
 	int (*get_rssi_afc)(struct video_device *device, unsigned int idx, int *rssi, int *afc) __attribute__ ((nonnull (1, 3, 4)));
 };
 
@@ -563,6 +596,14 @@ struct video_device {
  * Put the version in string & return it. Allocation and freeing must be done by
  * caller.
  * Passing a char[10] should be enough.
+ * @param dst
+ *     Output for version string
+ * @param len
+ *     Length of dst.
+ * @return Number of characters written to dst on success. If there was not
+ *     space in dst to write the entire version string, returns the number of
+ *     characters that would have been written.
+ *     Returns negative number on failure.
  */
 int get_libvideo_version(char *dst, size_t len);
 
@@ -604,6 +645,7 @@ struct capture_actions {
 	/**
 	 * Set the capture parameters
 	 * TODO update doc
+	 * 
 	 * int * point to an array of image formats (palettes) to try
 	 * (see bottom of libvideo.h for a list of supported palettes)
 	 * the last argument (int) tells how many formats there are in
@@ -678,6 +720,7 @@ struct capture_actions {
 	 * 		receives the capture time (see gettimeofday)
 	 * @param sequence
 	 * 		argument receives the capture frame sequence number (for v4l2 devices only)
+	 * @return Pointer to buffer dequeued
 	 */
 	void* (*dequeue_buffer)(struct video_device *device, unsigned int *length, unsigned int *index, struct timeval *capture_time, unsigned long long *sequence) __attribute__ ((nonnull (1,2,3)));
 	/**
@@ -714,11 +757,11 @@ struct capture_actions {
  */
 	/**
 	 * Lists all supported image formats
-	 * prints capabilities
-	 * print max width max height for v4l1
-	 * and current settings for v4l2
+	 *  - Prints capabilities
+	 *  - Print max width max height for v4l1 and current settings for v4l2
+	 * @param fd video_device file descriptor
 	 */
-	void (*list_cap)(int);
+	void (*list_cap)(int fd);
 };
 
 /**
@@ -736,30 +779,30 @@ void free_capture_device(struct video_device *device) __attribute__ ((nonnull (1
  *
  */
 //returns NULL if unable to get device info
-struct device_info * get_device_info(struct video_device *) __attribute__ ((nonnull (1)));
-void print_device_info(struct video_device *) __attribute__ ((nonnull (1)));
-void release_device_info(struct video_device *) __attribute__ ((nonnull (1)));
+struct device_info * get_device_info(struct video_device *device) __attribute__ ((nonnull (1)));
+void print_device_info(struct video_device *device) __attribute__ ((nonnull (1)));
+void release_device_info(struct video_device *device) __attribute__ ((nonnull (1)));
 
 /*
  *
  * CONTROL INTERFACE
  *
  */
-struct control_list *get_control_list(struct video_device *);
+struct control_list *get_control_list(struct video_device *device);
 //returns 0, LIBVIDEO_ERR_WRONG_VERSION, LIBVIDEO_ERR_IOCTL
-int get_control_value(struct video_device *vdev, struct v4l2_queryctrl *ctrl, void *val, unsigned int size);
+int get_control_value(struct video_device *device, struct v4l2_queryctrl *ctrl, void *val, unsigned int size);
 //returns 0, LIBVIDEO_ERR_WRONG_VERSION, LIBVIDEO_ERR_IOCTL or LIBVIDEO_ERR_STREAMING
-int set_control_value(struct video_device *, struct v4l2_queryctrl *,  void *, int);
+int set_control_value(struct video_device *device, struct v4l2_queryctrl *ctrl, void *, int);
 
-void release_control_list(struct video_device *);
+void release_control_list(struct video_device *device);
 
 /*
  *
  * TUNER INTERFACE
  *
  */
-struct tuner_actions *get_tuner_actions(struct video_device *);
-void release_tuner_actions(struct video_device *);
+struct tuner_actions *get_tuner_actions(struct video_device *device);
+void release_tuner_actions(struct video_device *device);
 
 
 #endif
