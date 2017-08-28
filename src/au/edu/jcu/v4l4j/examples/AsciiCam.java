@@ -88,7 +88,7 @@ public class AsciiCam {
 						int value = bytes.get(index) & 0xFF;
 						sb.append(chars[value]);
 					}
-					System.out.print(sb.toString());
+					System.out.println(sb.toString());
 				}
 				frame.recycle();
 			} catch (Exception e) {
