@@ -13,6 +13,7 @@ public interface ComponentPort {
 	
 	/**
 	 * Get the index of this port.
+	 * @return this port's index
 	 */
 	int getIndex();
 	
@@ -63,19 +64,19 @@ public interface ComponentPort {
 	
 	/**
 	 * Minimum number of buffers required by this port
-	 * @return
+	 * @return minimum number of buffers
 	 */
 	int minimumBuffers();
 	
 	/**
 	 * Number of buffers required by this port before it is populated
-	 * @return
+	 * @return number of buffers required
 	 */
 	int actualBuffers();
 	
 	/**
 	 * Minimum size of buffers used for this port
-	 * @return
+	 * @return minimum size of buffer
 	 */
 	int bufferSize();
 	
@@ -138,23 +139,34 @@ public interface ComponentPort {
 	void fill(FrameBuffer buffer);
 	
 	/**
-	 * Flush this port
-	 * TODO better explanation of what that means
+	 * Flush this port.
+	 * <p>
+	 * This command will force the component to return all buffers NOT CURRENTLY
+	 * BEING PROCESSED to the application, in the order in which the buffers
+	 * were received.
+	 * </p>
 	 */
 	void flush();
 	
 	/**
-	 * Register a callback for the onBufferEmpty event.
-	 * Only one handler may be registered at any time, so calling this method
-	 * will deregister the previous handler, if any.
+	 * Register a callback for the onBufferEmpty event. Only one handler may be
+	 * registered at any time, so calling this method will deregister the
+	 * previous handler, if any.
+	 * 
 	 * @param handler
-	 *     Handler for buffers that have been emptied. If null, the previous
-	 *     handler will be deregistered, but no new handler will be registered.
+	 *            Handler for buffers that have been emptied. If null, the
+	 *            previous handler will be deregistered, but no new handler will
+	 *            be registered.
 	 */
 	void onBufferEmpty(Consumer<FrameBuffer> handler);
 	
 	/**
 	 * Registers a callback for the onBufferFilled event.
+	 * 
+	 * @param handler
+	 *            Handler for buffers that have been filled. If null, the
+	 *            previous handler will be deregistered, but no new handler will
+	 *            be registered.
 	 */
 	void onBufferFill(Consumer<FrameBuffer> handler);
 	
