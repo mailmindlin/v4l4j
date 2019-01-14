@@ -5,16 +5,17 @@ import java.util.Iterator;
 import java.util.ServiceLoader;
 
 public class Components {
-	private static Iterator<ComponentProvider> getProviders() {
+	/**
+	 * @return Registered {@link ComponentProvider}'s
+	 */
+	private static Iterable<ComponentProvider> providers() {
 		ClassLoader cl = ClassLoader.getSystemClassLoader();
 		ServiceLoader<ComponentProvider> sl = ServiceLoader.load(ComponentProvider.class, cl);
-		return sl.iterator();
+		return sl;
 	}
 	
 	public static Component getForName(String name) {
-		Iterator<ComponentProvider> providers = getProviders();
-		while (providers.hasNext()) {
-			ComponentProvider provider = providers.next();
+		for (ComponentProvider provider : providers()) {
 			try {
 				Component c = provider.get(name);
 				if (c != null)
@@ -27,9 +28,7 @@ public class Components {
 	}
 	
 	public static Component getForPath(Path path, String name) {
-		Iterator<ComponentProvider> providers = getProviders();
-		while (providers.hasNext()) {
-			ComponentProvider provider = providers.next();
+		for (ComponentProvider provider : providers()) {
 			try {
 				Component c = provider.get(path, name);
 				if (c != null)
