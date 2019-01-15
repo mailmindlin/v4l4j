@@ -3,15 +3,19 @@
 
 #include <IL/OMX_Core.h>
 
-struct OMXMethods {
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct OMXMethods {
 	/**
 	 * Pointer to OMX_Init()
 	 */
-	OMX_ERRORTYPE (*init) ();
+	OMX_ERRORTYPE (*init) (void);
 	/**
 	 * Pointer to OMX_Deinit()
 	 */
-	OMX_ERRORTYPE (*deinit) ();
+	OMX_ERRORTYPE (*deinit) (void);
 	/**
 	 * Pointer to OMX_ComponentNameEnum()
 	 */
@@ -39,19 +43,23 @@ struct OMXMethods {
 	/**
 	 * Pointer to OMX_GetRolesOfComponent()
 	 */
-	OMX_API OMX_ERRORTYPE (*getRolesOfComponent) (OMX_IN OMX_STRING compName, OMX_INOUT OMX_U32 *pNumRoles, OMX_OUT OMX_U8 **roles);
-};
+	OMX_ERRORTYPE (*getRolesOfComponent) (OMX_IN OMX_STRING compName, OMX_INOUT OMX_U32 *pNumRoles, OMX_OUT OMX_U8 **roles);
+} OMXMethods;
 
 /**
  * Load libomxil and get pointers to its methods.
  * By the time this method has returned, OMX_Init() and any other similar methods should have been called.
  * @return struct of method pointers on success, NULL on failure.
  */
-struct OMXMethods* v4lconvert_omx_init();
+OMXMethods* v4lconvert_omx_init();
 
 /**
  * Release method pointers, and unload libomxil if possible.
  */
-void v4lconvert_omx_deinit(struct OMXMethods* methods);
+void v4lconvert_omx_deinit(OMXMethods* methods);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //__V4L4J_OMX_H

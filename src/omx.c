@@ -1,8 +1,14 @@
 #include <stdbool.h>
-#include <dlfcn.h>//For dlerror, etc.
+
 #include <IL/OMX_Core.h>
 #include <IL/OMX_Component.h>
 #include <IL/OMX_Video.h>
+
+#include "xenolib.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // Dunno where this is originally stolen from... got it from https://github.com/tjormola/rpi-openmax-demos/blob/master/rpi-encode-yuv.c
 #define OMX_INIT_STRUCTURE(a) \
@@ -14,21 +20,49 @@
     (a).nVersion.s.nRevision = OMX_VERSION_REVISION; \
     (a).nVersion.s.nStep = OMX_VERSION_STEP
 
-static void* bcm_host;
-static void (*_bcm_host_init) ();
-static void (*_bcm_host_deinit) ();
-static bool hasBcmHost = false;
-static bool bcmActive = false;
 
-static void* omxIL;
-static bool hasOMXIL = false;
-static bool omxILActive = false;
-static OMX_ERRORTYPE (*_OMX_Init) ();
-static OMX_ERRORTYPE (*_OMX_Deinit) ();
-static OMX_ERRORTYPE (*_OMX_ComponentNameEnum) (OMX_OUT OMX_STRING cComponentName, OMX_IN OMX_U32 nNameLength, OMX_IN OMX_U32 nIndex);
-static OMX_ERRORTYPE (*_OMX_GetHandle) (OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN  OMX_STRING cComponentName, OMX_IN OMX_PTR pAppData, OMX_IN OMX_CALLBACKTYPE* pCallBacks);
-static OMX_ERRORTYPE (*_OMX_FreeHandle) (OMX_IN OMX_HANDLETYPE hComponent);
+typedef enum libstat_t {
+	STATUS_UNLOADED = 0,
+	STATUS_BOUND,
+	STATUS_LOADED,
+	STATUS_ACTIVE,
+	STATUS_NOT_FOUND,
+	STATUS_ERROR,
+} libstat_t;
 
+
+// libbcm_host wrapper stuff
+typedef struct BCMMethods {
+	void (*host_init) (void);
+	void (*host_deinit) (void);
+} BCMMethods;
+
+
+static const char *getOMXErrorDescription(OMX_ERRORTYPE err);
+static void bcm_load();
+static void bcm_bind();
+static void bcm_init();
+static void bcm_deinit();
+static void bcm_unload();
+
+static void omxil_load();
+static void omxil_bind();
+static void omxil_init();
+static void omxil_deinit();
+static void omxil_unload();
+
+
+static libptr_t libbcm_host;
+static libstat_t libbcm_status = STATUS_UNLOADED;
+static BCMMethods libbcm_methods;
+
+static libptr_t libomxil;
+static libstat_t libomxil_status = STATUS_UNLOADED;
+static OMXMethods libomxil_methods;
+
+
+
+// Path prefixes to search for libomxil in
 static const char *path_prefix[] = {
 	"",
 	"/opt/vc/lib/",
@@ -37,6 +71,7 @@ static const char *path_prefix[] = {
 	NULL,
 };
 
+// Library extensions
 static const char *lib_ext[] = {
 	"so",
 	"so.1",
@@ -46,8 +81,9 @@ static const char *lib_ext[] = {
 	NULL,
 };
 
+
 //OMX error descriptions
-static char* getOMXErrorDescription(OMX_ERRORTYPE err) {
+const char *getOMXErrorDescription(OMX_ERRORTYPE err) {
 	switch(err) {
 		case OMX_ErrorNone:
 			return "no error";
@@ -84,107 +120,175 @@ static char* getOMXErrorDescription(OMX_ERRORTYPE err) {
 	}
 }
 
-//From lunixbochs' glshim/src/gl/loader.c
-static void *open_lib(const char *name) {
-	void *lib = NULL;
 
-	const size_t PATH_MAX = 127;
+#define ASSERT_STATUS(var, val) \
+	do { \
+		if ((var) != (val)) \
+			return; \
+	} while (0)
+
+
+void bcm_load() {
+	ASSERT_STATUS(libbcm_status, STATUS_UNLOADED);
 	
-	char path_name[PATH_MAX + 1];
-	int flags = RTLD_LOCAL | RTLD_NOW;
-	for (int p = 0; path_prefix[p]; p++) {
-		for (int e = 0; lib_ext[e]; e++) {
-			snprintf(path_name, PATH_MAX, "%s%s.%s", path_prefix[p], name, lib_ext[e]);
-			if ((lib = dlopen(path_name, flags))) {
-				printf("libGL:loaded: %s\n", path_name);
-				return lib;
-			}
-		}
-	}
-	return lib;
+	if (libbcm_host = xenolib_open("libbcm_host"))
+		libbcm_status = STATUS_LOADED;
+	else
+		libbcm_status = STATUS_NOT_FOUND;
 }
 
-static bool omx_tryInitialize() {
-	OMX_ERRORTYPE r = _OMX_Init();
-	if (r != OMX_ErrorNone) {
-		printf("OMX: Error initializing OMX: %#08x %s\n", r, getOMXErrorDescription(r));
-		return false;
-	}
-	return true;
-}
-/**
- * Call once.
- */
-void v4lconvert_omx_init() {
-	static bool initialized = false;
-	#define LOOKUP_FN(lib, sym) \
-		if (!((_##sym) = dlsym(lib, (#sym)))) {\
-			printf("Error looking up symbol: " #sym "\n");\
-			break;\
-		}
-	if (!initialized) {
-		bcm_host = open_lib("libbcm_host");
-		hasBcmHost = false;
-		if (bcm_host != NULL) {
-			do {
-				LOOKUP_FN(bcm_host, bcm_host_init);
-				LOOKUP_FN(bcm_host, bcm_host_deinit);
-				hasBcmHost = true;
-			} while (0);
-			
-			if (!hasBcmHost)
-				dlclose(bcm_host);
-		}
-		
-		omxIL = open_lib("libopenmaxil");
-		hasOMXIL = false;
-		if (omxIL != NULL) {
-			do {
-				LOOKUP_FN(omxIL, OMX_Init);
-				LOOKUP_FN(omxIL, OMX_Deinit);
-				LOOKUP_FN(omxIL, OMX_ComponentNameEnum);
-				LOOKUP_FN(omxIL, OMX_GetHandle);
-				LOOKUP_FN(omxIL, OMX_FreeHandle);
-				hasOMXIL = true;
-			} while (0);
-			if (!hasOMXIL)
-				dlclose(omxIL);
-		}
-		initialized = true;
-	}
-	if (hasBcmHost && !bcmActive) {
-		_bcm_host_init();
-		bcmActive = true;
-	}
+void omxil_load() {
+	ASSERT_STATUS(libomxil_status, STATUS_UNLOADED);
 	
-	if (hasOMXIL && !omxILActive)
-		omxILActive = omx_tryInitialize();
+	if (libomxil = xenolib_open("libopenmaxil"))
+		libomxil_status = STATUS_LOADED;
+	else
+		libomxil_status = STATUS_NOT_FOUND;
 }
 
-void v4lconvert_omx_deinit() {
-	if (hasBcmHost && bcmActive) {
-		_bcm_host_deinit();
-		bcmActive = false;
+
+#define LOOKUP_FN(lib, dst, sym) \
+	if (!((dst) = xenolib_sym(lib, sym))) { \
+		printf("Error looking up symbol: " sym "\n"); \
+		goto fail; \
 	}
-	if (hasBcmHost) {
-		_bcm_host_init = NULL;
-		_bcm_host_deinit = NULL;
-		if (dlclose(bcm_host) != 0)
-			fprintf(stderr, "Error closing bcm_host: %s\n", dlerror());
-		bcm_host = NULL;
-		hasBcmHost = false;
-	}
+
+void bcm_bind() {
+	ASSERT_STATUS(libbcm_status, STATUS_LOADED);
 	
-	if (hasOMXIL && omxILActive) {
-		_OMX_Deinit();
-		omxILActive = false;
-	}
+	LOOKUP_FN(libbcm_host, libbcm_methods.init,   "bcm_host_init");
+	LOOKUP_FN(libbcm_host, libbcm_methods.deinit, "bcm_host_deinit");
+
+	libbcm_status = STATUS_BOUND;
+	return;
+
+fail:
+	bcm_unload();
+	return;
+}
+
+void omxil_bind() {
+	ASSERT_STATUS(libomxil_status, STATUS_LOADED);
 	
-	if (hasOMXIL) {
-		//TODO maybe null out the symbol pointers
-		if (dlclose(omxIL) != 0)
-			fprintf(stderr, "Error closing openMAX: %s\n", dlerror());
-		omxIL = NULL;
-		hasOMXIL = false;
+	LOOKUP_FN(libomxil, libomxil_methods.init,                "OMX_Init");
+	LOOKUP_FN(libomxil, libomxil_methods.deinit,              "OMX_Deinit");
+	LOOKUP_FN(libomxil, libomxil_methods.componentNameEnum,   "OMX_ComponentNameEnum");
+	LOOKUP_FN(libomxil, libomxil_methods.getHandle,           "OMX_GetHandle");
+	LOOKUP_FN(libomxil, libomxil_methods.freeHandle,          "OMX_FreeHandle");
+	LOOKUP_FN(libomxil, libomxil_methods.setupTunnel,         "OMX_SetupTunnel");
+	LOOKUP_FN(libomxil, libomxil_methods.getContentPipe,      "OMX_GetContentPipe");
+	LOOKUP_FN(libomxil, libomxil_methods.getComponentsOfRole, "OMX_GetComponentsOfRole");
+	LOOKUP_FN(libomxil, libomxil_methods.getRolesOfComponent, "OMX_GetRolesOfComponent");
+
+	libomxil_status = STATUS_BOUND;
+	return;
+
+fail:
+	omxil_unload();
+	return;
+}
+
+#undef LOOKUP_FN
+
+
+void bcm_init() {
+	ASSERT_STATUS(libbcm_status, STATUS_BOUND);
+	
+	libbcm_methods.init();
+	libbcm_status = STATUS_ACTIVE;
+}
+
+void omxil_init() {
+	ASSERT_STATUS(libomxil_status, STATUS_BOUND);
+
+	OMX_ERRORTYPE r = libbcm_methods.init();
+	if (r == OMX_ErrorNone) {
+		libomxil_status = STATUS_ACTIVE;
+	} else {
+		fprintf(stderr, "OMX: Error initializing OpenMAX IL: %#08x %s\n", r, getOMXErrorDescription(r));
+		libomxil_status = STATUS_ERROR;
 	}
 }
+
+
+void bcm_deinit() {
+	ASSERT_STATUS(libbcm_status, STATUS_ACTIVE);
+
+	libbcm_methods.deinit();
+	libbcm_status = STATUS_BOUND;
+}
+
+void omxil_deinit() {
+	ASSERT_STATUS(libomxil_status, STATUS_ACTIVE);
+
+	OMX_ERRORTYPE r = libomxil_methods.deinit();
+	if (r == OMX_ErrorNone) {
+		libomxil_status = STATUS_LOADED;
+	} else {
+		fprintf(stderr, "OMX: Error deinitializing OpenMAX IL: %#08x %s\n", r, getOMXErrorDescription(r));
+		libomxil_status = STATUS_ERROR;
+	}
+}
+
+
+void bcm_unload() {
+	//TODO: which statuses should be valid?
+	if (libbcm_status == STATUS_NOT_FOUND || libbcm_status == STATUS_UNLOADED)
+		return;
+	
+	libbcm_methods = { 0 };
+
+	const char *errmsg;
+	if (!xenolib_close(libbcm_host, &errmsg))
+		fprintf(stderr, "Error closing bcm_host: %s\n", errmsg);
+	
+	libbcm_host = NULL;
+	libbcm_status = STATUS_UNLOADED;
+}
+
+void omxil_unload() {
+	//TODO: which statuses should be valid?
+	if (libomxil_status == STATUS_NOT_FOUND || libomxil_status == STATUS_UNLOADED)
+		return;
+	
+	libomxil_methods = { 0 };
+
+	const char *errmsg;
+	if (!xenolib_close(libomxil, &errmsg))
+		fprintf(stderr, "Error closing omxil: %s\n", errmsg);
+	
+	libomxil = NULL;
+	libomxil_status = STATUS_UNLOADED;
+}
+
+
+
+struct OMXMethods *v4lconvert_omx_init() {
+	bcm_load();
+	bcm_bind();
+	
+	omxil_load();
+	omxil_bind();
+
+	bcm_init();
+	omxil_init();
+
+	if (libomxil_status == STATUS_ACTIVE)
+		return &libomxil_methods;
+	
+	v4lconvert_omx_deinit();
+	return NULL;
+}
+
+void v4lconvert_omx_deinit(OMXMethods *methods) {
+	bcm_deinit();
+	bcm_unload();
+
+	omxil_deinit();
+	omxil_unload();
+}
+
+
+#ifdef __cplusplus
+}
+#endif
