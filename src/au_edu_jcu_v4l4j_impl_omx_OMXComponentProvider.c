@@ -127,7 +127,8 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider_ge
 		jstring componentNameStr = (*env)->NewStringUTF(env, compNames[i]);
 		(*env)->CallBooleanMethod(env, result, setAddMethod, componentNameStr);
 		(*env)->DeleteLocalRef(env, componentNameStr);
-		//TODO: should we be polling exceptionCheck?
+		if ((*env)->ExceptionCheck(env))
+			goto cleanup2;
 	}
 
 cleanup2:
