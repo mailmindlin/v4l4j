@@ -9,69 +9,30 @@ import java.util.function.Consumer;
 import au.edu.jcu.v4l4j.api.FrameBuffer;
 import au.edu.jcu.v4l4j.api.StreamType;
 import au.edu.jcu.v4l4j.api.component.ComponentPort;
+import au.edu.jcu.v4l4j.api.component.port.PortDefinition;
 import au.edu.jcu.v4l4j.api.control.Control;
 
 public class OMXComponentPort implements ComponentPort {
 	protected final int id;
-	protected final OMXComponent component;
-	protected final String mime;
 	protected final StreamType type;
-	protected boolean input;
-	protected int bufferCountActual;
-	protected int bufferCountMin;
-	protected int bufferSize;
-	protected boolean enabled;
-	protected boolean populated;
+	protected final OMXComponent component;
+	protected OMXPortDefinition portDefinition;
 	protected final HashMap<String, AbstractOMXQueryControl<?>> controls = new HashMap<>();
 	protected Consumer<FrameBuffer> onBufferFilled;
 	protected Consumer<FrameBuffer> onBufferEmptied;
 	
 	protected OMXComponentPort(OMXComponent component, int id, String mime, StreamType type) {
+		Objects.requireNonNull(component, "Component may not be null");
 		this.component = component;
 		this.id = id;
-		this.mime = mime;
 		this.type = type;
 	}
 	
 	protected OMXComponentPort(OMXComponent component, int id, String mime, int[] info) {
 		this.component = component;
 		this.id = id;
-		this.mime = mime;
-		
-		switch (info[7]) {
-			case 0:
-				this.type = StreamType.AUDIO;
-				break;
-			case 1:
-				this.type = StreamType.VIDEO;
-				break;
-			case 2:
-				this.type = StreamType.IMAGE;
-				break;
-			case 3:
-				// Other type; let's try to guess from the otherDomain field
-				if (info[0] < 10)
-					throw new IllegalArgumentException("'Other' type ports need at least 10 fields");
-				switch (info[10]) {
-					case 0:
-						this.type = StreamType.CLOCK;
-						break;
-					case 3:
-						this.type = StreamType.BINARY;
-						break;
-					case 1:// Power management
-					case 2:// Stats
-					default:
-						this.type = StreamType.UNKNOWN;
-						break;
-				}
-				break;
-			default:
-				// Is some proprietary thing
-				this.type = StreamType.UNKNOWN;
-		}
-		
-		this.pullInfo(info);
+		this.portDefinition = OMXPortDefinition.from(mime, info);
+		this.type = this.portDefinition.type;
 	}
 	
 	protected void initControls() {
@@ -91,57 +52,29 @@ public class OMXComponentPort implements ComponentPort {
 	}
 	
 	@Override
-	public boolean isInput() {
-		return this.input;
-	}
-	
-	@Override
-	public boolean isOutput() {
-		return !isInput();
-	}
-	
-	@Override
 	public boolean isEnabled() {
-		return this.enabled;
+		return this.getDefinition().isEnabled();
 	}
 	
 	@Override
 	public boolean setEnabled(boolean aflag) {
 		this.getComponent().setPortEnabled(this.getIndex(), aflag);
-		return this.enabled = aflag;
-	}
-	
-	@Override
-	public boolean isPopulated() {
-		return this.populated;
+		if (this.portDefinition != null)
+			this.portDefinition.enabled = aflag;
+		return aflag;
 	}
 	
 	@Override
 	public OMXFrameBuffer allocateBuffer(int length) {
 		OMXFrameBuffer result = this.getComponent().allocateBufferOnPort(this.getIndex(), length);
-		this.bufferCountActual++;
+		//TODO: track on portDefinition?
 		return result;
-	}
-	
-	@Override
-	public int minimumBuffers() {
-		return this.bufferCountMin;
-	}
-	
-	@Override
-	public int actualBuffers() {
-		return this.bufferCountActual;
-	}
-	
-	@Override
-	public int bufferSize() {
-		return this.bufferSize;
 	}
 	
 	@Override
 	public FrameBuffer useBuffer(ByteBuffer buffer) {
 		OMXFrameBuffer result = this.getComponent().useBufferOnPort(this.getIndex(), buffer);
-		this.bufferCountActual++;
+		//TODO: track on portDefinition?
 		return result;
 	}
 	
@@ -168,42 +101,9 @@ public class OMXComponentPort implements ComponentPort {
 		this.getComponent().flushThisPort(this.getIndex());
 	}
 	
-	public void push() {
-		int[] info = new int[20];
-		this.pushInfo(info);
-		this.getComponent().setPortData(this.getIndex(), info);
-	}
-	
-	public void pull() {
-		int[] info = new int[20];
-		this.getComponent().getPortData(this.getIndex(), info);
-		this.pullInfo(info);
-	}
-	
-	protected void pullInfo(int[] info) {
-		if (info[0] < 9)
-			throw new IllegalArgumentException("Not enough info (expected >=9; actual " + info[0] + ")");
-		this.input = info[1] != 0;
-		this.bufferCountActual = info[2];
-		this.bufferCountMin = info[3];
-		this.bufferSize = info[4];
-		this.enabled = info[5] != 0;
-		this.populated = info[6] != 0;
-		// We don't use the other stuff ATM
-	}
-	
-	protected void pushInfo(int[] out) {
-		
-	}
-	
 	@Override
 	public StreamType getPortType() {
 		return this.type;
-	}
-	
-	@Override
-	public String getMIMEType() {
-		return this.mime;
 	}
 	
 	@Override
@@ -229,5 +129,19 @@ public class OMXComponentPort implements ComponentPort {
 		synchronized (this) {
 			this.onBufferFilled = handler;
 		}
+	}
+
+	@Override
+	public PortDefinition getDefinition(boolean flush) {
+		if (flush || this.portDefinition == null) {
+			//TODO: do we need this lock?
+			synchronized (this.getComponent()) {
+				int[] info = new int[16];
+				String mime = this.getComponent().getPortData(this.getIndex(), info);
+				return this.portDefinition = OMXPortDefinition.from(mime, info);
+			}
+		}
+		
+		return this.portDefinition;
 	}
 }

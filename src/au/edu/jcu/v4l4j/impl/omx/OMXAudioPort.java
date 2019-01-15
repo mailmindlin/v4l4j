@@ -1,10 +1,9 @@
 package au.edu.jcu.v4l4j.impl.omx;
 
-import au.edu.jcu.v4l4j.api.AudioEncodingType;
 import au.edu.jcu.v4l4j.api.component.port.AudioPort;
+import au.edu.jcu.v4l4j.api.component.port.AudioPortDefinition;
 
 public class OMXAudioPort extends OMXComponentPort implements AudioPort {
-	protected AudioEncodingType encoding;
 	
 	protected OMXAudioPort(OMXComponent component, int id, String mime, int[] info) {
 		super(component, id, mime, info);
@@ -12,18 +11,8 @@ public class OMXAudioPort extends OMXComponentPort implements AudioPort {
 	}
 	
 	@Override
-	protected void pullInfo(int[] info) {
-		super.pullInfo(info);
-		
-		if (info[0] < 12)
-			throw new IllegalArgumentException("Not enough info (expected 12; actual " + info[0] + ")");
-		
-		this.encoding = OMXConstants.mapAudioEncodingType(info[11]);
-	}
-
-	@Override
-	public AudioEncodingType getEncoding() {
-		return this.encoding;
+	public AudioPortDefinition getDefinition(boolean flush) {
+		return (AudioPortDefinition) super.getDefinition(flush);
 	}
 
 }

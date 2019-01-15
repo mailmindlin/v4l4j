@@ -1,8 +1,11 @@
 package au.edu.jcu.v4l4j.api.component.port;
 
-import au.edu.jcu.v4l4j.api.ImageCodingType;
-
 public interface ImagePort extends IVPort {
+	@Override
+	default ImagePortDefinition getDefinition() {
+		return getDefinition(false);
+	}
 	
-	ImageCodingType getCodingType();
+	@Override
+	ImagePortDefinition getDefinition(boolean flush);
 }

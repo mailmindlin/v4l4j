@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 
 import au.edu.jcu.v4l4j.api.FrameBuffer;
 import au.edu.jcu.v4l4j.api.StreamType;
+import au.edu.jcu.v4l4j.api.component.port.PortDefinition;
 import au.edu.jcu.v4l4j.api.control.Control;
 
 public interface ComponentPort {
@@ -29,23 +30,19 @@ public interface ComponentPort {
 	 */
 	Component getComponent();
 	
-	/**
-	 * Get if this port is an input port.
-	 * @see #isOutput()
-	 */
-	boolean isInput();
+	default PortDefinition getDefinition() {
+		return getDefinition(false);
+	}
 	
-	/**
-	 * Get if this port is an output port.
-	 * @see #isInput()
-	 */
-	boolean isOutput();
+	PortDefinition getDefinition(boolean flush);
 	
 	/**
 	 * Whether this port is enabled
 	 * @return enabled
 	 */
-	boolean isEnabled();
+	default boolean isEnabled() {
+		return getDefinition(false).isEnabled();
+	}
 	
 	/**
 	 * Enable/disable this port.
@@ -54,38 +51,6 @@ public interface ComponentPort {
 	 * @return enabled
 	 */
 	boolean setEnabled(boolean aflag);
-	
-	/**
-	 * Whether this port is populated.
-	 * A port is populated when at least {@link #actualBuffers()} buffers of at least {@link #bufferSize()} are allocated.  
-	 * @return whether this port is populated or not
-	 */
-	boolean isPopulated();
-	
-	/**
-	 * Minimum number of buffers required by this port
-	 * @return minimum number of buffers
-	 */
-	int minimumBuffers();
-	
-	/**
-	 * Number of buffers required by this port before it is populated
-	 * @return number of buffers required
-	 */
-	int actualBuffers();
-	
-	/**
-	 * Minimum size of buffers used for this port
-	 * @return minimum size of buffer
-	 */
-	int bufferSize();
-	
-	/**
-	 * Get the MIME type string for this port.
-	 * May be null.
-	 * @return MIME type string
-	 */
-	String getMIMEType();
 	
 	/**
 	 * Register a pre-allocated ByteBuffer with this component.

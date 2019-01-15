@@ -1,8 +1,11 @@
 package au.edu.jcu.v4l4j.api.component.port;
 
-import au.edu.jcu.v4l4j.api.VideoCompressionType;
-
 public interface VideoPort extends IVPort {
+	@Override
+	default VideoPortDefinition getDefinition() {
+		return getDefinition(false);
+	}
 	
-	VideoCompressionType getCompression();
+	@Override
+	VideoPortDefinition getDefinition(boolean flush);
 }
