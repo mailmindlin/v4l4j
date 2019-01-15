@@ -17,7 +17,7 @@
 #include "common.h"
 #include "debug.h"
 #include "jniutils.h"
-#include "omx.h"
+#include "omx_common.h"
 
 #ifndef _Included_au_edu_jcu_v4l4j_impl_omx_OMXComponent
 #define _Included_au_edu_jcu_v4l4j_impl_omx_OMXComponent
