@@ -4,6 +4,12 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * POJO that wraps the idea of a pointer.
+ * @author mailmindlin
+ *
+ * @param <T> Pointed-to type
+ */
 public class NativePointer<T> implements AutoCloseable {
 	protected final long address;
 	protected final StructFieldType<T> type;
@@ -22,19 +28,34 @@ public class NativePointer<T> implements AutoCloseable {
 			managedRefs.add(this);
 	}
 	
+	/**
+	 * Read value from pointer (equivalent to <code>*p</code> in C).
+	 * @return value
+	 */
 	public T get() {
 		return (T) this.type().read(this.buffer(), null);
 	}
 	
+	/**
+	 * Write value to pointer (equivalent to <code>*p = value</code> in C).
+	 * @param value to set
+	 */
 	public void set(T value) {
 		//TODO use writeUnchecked?
 		this.type().write(this.buffer(), value);
 	}
 	
+	/**
+	 * Sets all bytes in memory to 0x00. Think memset.
+	 */
 	public void clear() {
 		MemoryUtils.memset(this.address(), this.buffer().remaining(), 0x00);
 	}
 	
+	/**
+	 * Get pointer pointed to by this. Kinda like {@link #get()}, but wraps it in a pointer for you.
+	 * @return far pointer
+	 */
 	public <U> NativePointer<U> dereference() {
 		StructFieldType<T> type = this.type();
 		if (!(type instanceof PointerStructFieldType))
@@ -50,14 +71,26 @@ public class NativePointer<T> implements AutoCloseable {
 		return new NativePointer<U>(farType, farAddr, MemoryUtils.wrap(farAddr, farType.getSize()), false);
 	}
 	
+	/**
+	 * Get wrapped type
+	 * @return type
+	 */
 	public StructFieldType<T> type() {
 		return type;
 	}
 	
+	/**
+	 * Get native address wrapped by this
+	 * @return address
+	 */
 	public long address() {
 		return this.address;
 	}
 	
+	/**
+	 * Get buffer view of memory represented by this pointer.
+	 * @return buffer view
+	 */
 	public ByteBuffer buffer() {
 		return this.buffer;
 	}
@@ -71,6 +104,7 @@ public class NativePointer<T> implements AutoCloseable {
 				else
 					ref.close();
 			} catch (Exception e) {
+				//TODO: shouldn't we do something with this exception?
 				e.printStackTrace();
 			}
 		}
@@ -79,6 +113,7 @@ public class NativePointer<T> implements AutoCloseable {
 
 	@Override
 	protected void finalize() throws Throwable {
+		//Yell at the user for not closing their pointers
 		super.finalize();
 		if (this.managedRefs != null && !this.managedRefs.isEmpty())
 			for (int i = 0; i < 50; i++)

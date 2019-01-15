@@ -35,6 +35,14 @@ public interface Control<T> extends AutoCloseable {
 	
 	ControlAccessor<Void, T, Void> access();
 	
+	/**
+	 * Accessor for controls. Because I'm *trying* to preserve some semblance of memory safety here.
+	 * @author mailmindlin
+	 *
+	 * @param <P> Type of parent.
+	 * @param <T> Control value type
+	 * @param <R> Return type
+	 */
 	public static interface ControlAccessor<P, T, R> extends Callable<R> {
 		
 		/**
@@ -61,7 +69,7 @@ public interface Control<T> extends AutoCloseable {
 		
 		/**
 		 * Read the current in-memory value into the handler.
-		 * @param handler 
+		 * @param handler Handler for result value
 		 * @return self
 		 */
 		ControlAccessor<P, T, R> get(Consumer<T> handler);

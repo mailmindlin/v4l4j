@@ -396,6 +396,10 @@ public class OMXControlDefinition {
 			return definition.build(component, port);
 		}
 		
+		/**
+		 * Register definition under its own name
+		 * @param definition
+		 */
 		public void registerDefinition(OMXControlDefinition definition) {
 			this.controlRegistry.put(definition.name, definition);
 		}

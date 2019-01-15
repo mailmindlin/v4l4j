@@ -59,6 +59,11 @@ public abstract class AbstractOMXQueryControl<T> implements DiscreteControl<T> {
 		return access(parent.access());
 	}
 	
+	/**
+	 * Called when the parent control needs to get the accessor for 
+	 * @param parentAccessor
+	 * @return
+	 */
 	protected abstract <P, R> AbstractOMXQueryControlAccessor<P, T, R> access(AbstractOMXQueryControlAccessor<P, ?, R> parentAccessor);
 	
 	public static abstract class AbstractOMXQueryControlAccessor<P, T, R> implements ControlAccessor<P, T, R> {
@@ -66,6 +71,9 @@ public abstract class AbstractOMXQueryControl<T> implements DiscreteControl<T> {
 		protected final P owner;
 		protected final AbstractOMXQueryControlAccessor<?, ?, ?> parent;
 		protected final Duration timeout;
+		/**
+		 * Mutates state (in some way)
+		 */
 		protected final Consumer<OMXQueryControlAccessorState> mutator;
 		
 		protected AbstractOMXQueryControlAccessor(String name, AbstractOMXQueryControlAccessor<?, ?, ?> owner, Duration timeout) {
@@ -208,6 +216,11 @@ public abstract class AbstractOMXQueryControl<T> implements DiscreteControl<T> {
 			throw new UnsupportedOperationException("Coming soon!");
 		}
 
+		/**
+		 * Derives a state from this Accessor's parent that can be 
+		 * @param parentState
+		 * @return
+		 */
 		protected OMXQueryControlAccessorState enterFromParent(OMXQueryControlAccessorState parentState) {
 			OMXQueryControlAccessorState result = new OMXQueryControlAccessorState();
 			//Override me for different behavior

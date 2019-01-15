@@ -1043,6 +1043,10 @@ public class OMXConstants {
 		}
 	}
 	
+	/**
+	 * @param idx OMX_COLOR_FORMATTYPE to map
+	 * @return Associated ImagePalette
+	 */
 	public static ImagePalette mapColorFormatType(int idx) {
 		switch (idx) {
 			case COLOR_FORMAT_UNUSED:
