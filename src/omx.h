@@ -55,6 +55,8 @@ typedef struct OMXMethods {
  */
 OMXMethods* v4lconvert_omx_init();
 
+OMXMethods* v4lconvert_get_omx();
+
 /**
  * Release method pointers, and unload libomxil if possible.
  */

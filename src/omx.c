@@ -314,6 +314,12 @@ struct OMXMethods *v4lconvert_omx_init() {
 	return NULL;
 }
 
+OMXMethods *v4lconvert_get_omx() {
+	if (libomxil_status == STATUS_ACTIVE)
+		return &libomxil_methods;
+	return NULL;
+}
+
 void v4lconvert_omx_deinit(OMXMethods *methods) {
 	bcm_deinit();
 	bcm_unload();
