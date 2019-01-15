@@ -12,7 +12,7 @@
 #include "common.h"
 #include "debug.h"
 #include "jniutils.h"
-#include "omx.h"
+#include "omx_common.h"
 
 #include <IL/OMX_Core.h>
 
@@ -71,8 +71,8 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider_enumC
 	
 	//We *should* exit the loop with OMX_ErrorNoMore if we were successful
 	if (res != OMX_ErrorNoMore) {
-		dprint(LOG_V4L4J, "OMX: ERR %#08x\n", res);
-		//TODO throw exception
+		THROW_OMX_EXCP(env, res, "Error enumerating component");
+		return index;
 	}
 	
 	dprint(LOG_V4L4J, "OMX: Discovered %u components\n", index);
@@ -97,11 +97,7 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider_ge
 	OMX_U32 numComps = 0;
 	OMX_ERRORTYPE res = (*omx_methods->getComponentsOfRole)(roleName, &numComps, NULL);
 	if (res != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, OMX_EXCP, "%08xOMX Error querying number of components in role %s: %#08x %s",
-			res,
-			roleName,
-			res,
-			getOMXErrorDescription(res));
+		THROW_OMX_EXCP(env, res, "OMX Error querying number of components in role %s", roleName);
 		goto cleanup1;
 	}
 	
@@ -120,12 +116,9 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider_ge
 	OMX_U32 numCompsActual = numComps;
 	res = (*omx_methods->getComponentsOfRole)(roleName, &numCompsActual, compNames);
 	if (res != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, OMX_EXCP, "%08xOMX Error querying names of %u components in role %s: %#08x %s",
-			res,
+		THROW_OMX_EXCP(env, res, "OMX Error querying names of %u components in role %s",
 			numComps,
-			roleName,
-			res,
-			getOMXErrorDescription(res));
+			roleName);
 		goto cleanup2;
 	}
 

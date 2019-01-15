@@ -307,7 +307,7 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getComponent
 	printBytes((char*) appData, sizeof(OMXComponentAppData));
 	
 	if (res != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, JNI_EXCP, "OMX Failure: %#08x %s", res, getOMXErrorDescription(res));
+		THROW_OMX_EXCP(env, res, "OMX Failure getting component '%s' handle", componentName);
 		deinitAppData(env, appData);
 		return -1;
 	}
@@ -354,7 +354,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getComponentS
 	OMX_STATETYPE state;
 	OMX_ERRORTYPE r = OMX_GetState(appData->component, &state);
 	if (r != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error when querying state: %08x %s", r, getOMXErrorDescription(r));
+		THROW_OMX_EXCP(env, r, "OMX Error when querying state");
 		return -1;
 	}
 	return (jint) state;
@@ -367,7 +367,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_setComponentS
 	
 	OMX_ERRORTYPE r = OMX_SendCommand(appData->component, OMX_CommandStateSet, (OMX_STATETYPE) state, NULL);
 	if (r != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error when setting state: %#08x %s", r, getOMXErrorDescription(r));
+		THROW_OMX_EXCP(env, r, "OMX Error when setting state");
 		return;
 	}
 }
@@ -389,8 +389,7 @@ JNIEXPORT jstring JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getPortInf
 	dprint(LOG_V4L4J, "Querying definition of port %d\n", portIndex);
 	OMX_ERRORTYPE res = OMX_GetParameter(appData->component, OMX_IndexParamPortDefinition, &portdef);
 	if (res != OMX_ErrorNone) {
-		//TODO replace with custom OMX exception
-		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX: Error when getting definition for port %d: %#08x %s", portIndex, res, getOMXErrorDescription(res));
+		THROW_OMX_EXCP(env, res, "OMX: Error when getting definition for port %d", portIndex);
 		return NULL;
 	}
 	
@@ -539,7 +538,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_enablePort(JN
 	
 	OMX_ERRORTYPE r = OMX_SendCommand(appData->component, enabled ? OMX_CommandPortEnable : OMX_CommandPortDisable, index, NULL);
 	if (r != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error when %s port %d: %08x %s", enabled ? "enabling" : "disabling", index, r, getOMXErrorDescription(r));
+		THROW_OMX_EXCP(env, r, "OMX Error when %s port %d", enabled ? "enabling" : "disabling", index);
 		return;
 	}
 }
@@ -622,7 +621,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doReleaseBuff
 	OMX_ERRORTYPE r = OMX_FreeBuffer(appData->component, portIndex, buffer);
 	
 	if (r != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error allocating buffer on port %d: %#08x %s", portIndex, r, getOMXErrorDescription(r));
+		THROW_OMX_EXCP(env, r, "OMX Error allocating buffer on port %d", portIndex);
 		return;
 	}
 }
@@ -648,7 +647,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doEmptyThisBu
 	
 	OMX_ERRORTYPE r = OMX_EmptyThisBuffer(appData->component, buffer);
 	if (r != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error emptying buffer: %#08x %s", r, getOMXErrorDescription(r));
+		THROW_OMX_EXCP(env, r, "OMX Error emptying buffer");
 		return;
 	}
 }
@@ -662,7 +661,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doFillThisBuf
 	
 	OMX_ERRORTYPE r = OMX_FillThisBuffer(appData->component, buffer);
 	if (r != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error filling buffer: %#08x %s", r, getOMXErrorDescription(r));
+		THROW_OMX_EXCP(env, r, "OMX Error filling buffer");
 		return;
 	}
 }
@@ -674,7 +673,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doFlushPort(J
 	
 	OMX_ERRORTYPE r = OMX_SendCommand(appData->component, OMX_CommandFlush, portIndex, NULL);
 	if (r != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error flushing port %u: %#08x %s", (unsigned int) portIndex, r, getOMXErrorDescription(r));
+		THROW_OMX_EXCP(env, r, "OMX Error flushing port %u", (unsigned int) portIndex);
 		return;
 	}
 }
@@ -734,13 +733,10 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doAccessConfi
 	
 	//Handle errors, if any
 	if (res != OMX_ErrorNone && throwOnError) {
-		THROW_EXCEPTION(env, OMX_EXCP, "%08xOMX Error %s %s %#08x: %#08x %s",
-			res,
+		THROW_OMX_EXCP(env, res, "OMX Error %s %s %#08x",
 			read ? "reading" : "writing",
 			isConfig ? "config" : "parameter",
-			configIdx,
-			res,
-			getOMXErrorDescription(res));
+			configIdx);
 	}
 	return res;
 }
@@ -755,7 +751,7 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_freeComponent
 	deinitAppData(env, appData);
 	
 	if (res != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, JNI_EXCP, "OMX Failed to free component handle: %#08x %s", res, getOMXErrorDescription(res));
+		THROW_OMX_EXCP(env, res, "OMX: Failed to free component handle");
 		return;
 	}
 }
