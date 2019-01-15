@@ -12,6 +12,7 @@
 #include "common.h"
 #include "debug.h"
 #include "jniutils.h"
+#include "omx.h"
 
 #include <IL/OMX_Core.h>
 
@@ -21,7 +22,7 @@
 extern "C" {
 #endif
 
-#include "omx.c"
+static OMXMethods *omx_methods;
 
 /*
  * Class:     au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider
@@ -30,8 +31,8 @@ extern "C" {
  */
 JNIEXPORT jboolean JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider_init(JNIEnv *env, jclass me) {
 	LOG_FN_ENTER();
-	v4lconvert_omx_init();
-	return JNI_TRUE;
+	omx_methods = v4lconvert_omx_init();
+	return omx_methods ? JNI_TRUE : JNI_FALSE;
 }
 
 /*
@@ -41,7 +42,7 @@ JNIEXPORT jboolean JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider_i
  */
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider_deinit(JNIEnv *env, jclass me) {
 	LOG_FN_ENTER();
-	v4lconvert_omx_deinit();
+	v4lconvert_omx_deinit(omx_methods);
 }
 
 
@@ -57,10 +58,10 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider_enumC
 	if (listAddMethod == NULL)
 		return -1;//Exception already thrown
 	
-	unsigned int index = startIndex < 0 ? 0 : (unsigned) startIndex;
+	unsigned index = startIndex < 0 ? 0 : (unsigned) startIndex;
 	OMX_ERRORTYPE res;
-	char componentName[128];//TODO should we allocate this on the heap?
-	for (; (res = OMX_ComponentNameEnum(componentName, sizeof(componentName), index)) == OMX_ErrorNone; index++) {
+	char componentName[OMX_NAME_LEN];//TODO should we allocate this on the heap?
+	for (; (res = (*omx_methods->componentNameEnum)(componentName, sizeof(componentName), index)) == OMX_ErrorNone; index++) {
 		dprint(LOG_V4L4J, "OMX: Found component #%-3u| %s\n", index, componentName);
 		//Wrap the name in a java string and add it to the list
 		jstring componentNameStr = (*env)->NewStringUTF(env, componentName);
@@ -80,14 +81,70 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider_enumC
 }
 
 
-JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider_getComponentsByRole(JNIEnv *env, jclass me, jobject result, jstring role, jint maxLen) {
+JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponentProvider_getComponentsByRole(JNIEnv *env, jclass me, jobject result, jstring role) {
 	LOG_FN_ENTER();
 	
 	jmethodID setAddMethod = lookupAddMethod(env, result);
 	if (setAddMethod == NULL)
 		return NULL;//Exception already thrown
 	
-	//TODO finish (not yet implemented)
+	const char *roleName = (*env)->GetStringUTFChars(env, role, NULL);
+
+	if ((roleName == NULL) || (*env)->ExceptionCheck(env))
+		goto cleanup1;
+
+	// Query to figure out how many components have the role
+	OMX_U32 numComps = 0;
+	OMX_ERRORTYPE res = (*omx_methods->getComponentsOfRole)(roleName, &numComps, NULL);
+	if (res != OMX_ErrorNone) {
+		THROW_EXCEPTION(env, OMX_EXCP, "%08xOMX Error querying number of components in role %s: %#08x %s",
+			res,
+			roleName,
+			res,
+			getOMXErrorDescription(res));
+		goto cleanup1;
+	}
+	
+	dprint(LOG_V4L4J, "OMX: Discovered %u components for role %s\n", numComps, roleName);
+	if (numComps == 0)
+		return result;
+
+	// Allocate compNames array (numComps x 128)
+	//TODO: out-of-memory check?
+	OMX_U8 **compNames = NULL;
+	XCALLOC(compNames, OMX_U8**, sizeof(OMX_U8*), numComps);
+	for (unsigned i = 0; i < numComps; i++)
+		XCALLOC(compNames[i], OMX_U8*, sizeof(OMX_U8), OMX_NAME_LEN);
+	
+	// Populate compNames
+	OMX_U32 numCompsActual = numComps;
+	res = (*omx_methods->getComponentsOfRole)(roleName, &numCompsActual, compNames);
+	if (res != OMX_ErrorNone) {
+		THROW_EXCEPTION(env, OMX_EXCP, "%08xOMX Error querying names of %u components in role %s: %#08x %s",
+			res,
+			numComps,
+			roleName,
+			res,
+			getOMXErrorDescription(res));
+		goto cleanup2;
+	}
+
+	// Add all names to set
+	for (unsigned i = 0; i < numCompsActual; i++) {
+		jstring componentNameStr = (*env)->NewStringUTF(env, compNames[i]);
+		(*env)->CallBooleanMethod(env, result, setAddMethod, componentNameStr);
+		(*env)->DeleteLocalRef(env, componentNameStr);
+		//TODO: should we be polling exceptionCheck?
+	}
+
+cleanup2:
+	// Release compNames
+	for (unsigned i = 0; i < numComps; i++)
+		XFREE(compNames[i]);
+	XFREE(compNames);
+cleanup1:
+	// Release roleName
+	(*env)->ReleaseStringUTFChars(env, role, roleName);
 	return result;
 }
 

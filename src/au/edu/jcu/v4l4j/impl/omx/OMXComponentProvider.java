@@ -42,11 +42,9 @@ public class OMXComponentProvider implements ComponentProvider {
 	 * Return a set of component names that satisfy the given role (wrapper for <code>OMX_OMX_GetComponentsOfRole</code>).
 	 * @param role
 	 *     Role to query
-	 * @param maxCount
-	 *     Maximum number of roles to request (for memory safety; set to -1 for infinity)
 	 * @return Set of component names for the given role
 	 */
-	private static native Set<String> getComponentsByRole(Set<String> result, String role, int maxCount);
+	private static native Set<String> getComponentsByRole(Set<String> result, String role);
 	
 	private static native boolean init();
 	private static native void deinit();
