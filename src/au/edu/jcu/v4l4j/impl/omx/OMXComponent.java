@@ -47,28 +47,30 @@ public class OMXComponent implements Component {
 	
 	/**
 	 * Get the definition for a port. The result array should have a length of
-	 * at least 20. Results are stored as follows:
+	 * at least 16. Results are stored as follows:
 	 * <table border="1" style="border-collapse:collapse">
 	 * <tr><th>#</th><th>Video</th><th>Image</th><th>Audio</th><th>Other</th></tr>
 	 * <tr><th>0</th><td colspan="4">Length of used cells</td></tr>
-	 * <tr><th>1</th><td colspan="4">Port direction (1=input,0=output)</td></tr>
+	 * <tr><th>1</th><td colspan="4">
+	 * 	Port direction (1=input,0=output)<br/>
+	 * 	Enabled (2=true,0=false)<br/>
+	 * 	Populated (4=true,0=false)<br/>
+	 *  Contiguous buffers (8=true,0=false)<br/>
+	 * </td></tr>
 	 * <tr><th>2</th><td colspan="4">Buffer count</td></tr>
 	 * <tr><th>3</th><td colspan="4">Minimum buffer count</td></tr>
 	 * <tr><th>4</th><td colspan="4">Buffer size</td></tr>
-	 * <tr><th>5</th><td colspan="4">Enabled (1=true,0=false)</td></tr>
-	 * <tr><th>6</th><td colspan="4">Populated (1=true,0=false)</td></tr>
-	 * <tr><th>7</th><td colspan="4">Domain (port type)</td></tr>
-	 * <tr><th>8</th><td colspan="4">Contiguous buffers (1=true,0=false)</td></tr>
-	 * <tr><th>9</th><td colspan="4">Buffer alignment</td></tr>
-	 * <tr><th>10</th><td colspan="3">Error flag concealment (1=true,0=false)</td><td>Format</td></tr>
-	 * <tr><th>11</th><td colspan="2">Frame width</td><td>Encoding</td></tr>
-	 * <tr><th>12</th><td colspan="2">Frame height</td></tr>
-	 * <tr><th>13</th><td colspan="2">Stride</td></tr>
-	 * <tr><th>14</th><td colspan="2">Slice height</td></tr>
-	 * <tr><th>15</th><td colspan="2">Color format</td></tr>
-	 * <tr><th>16</th><td>Compression</td><td>Compression</td></tr>
-	 * <tr><th>17</th><td>Bitrate</td></tr>
-	 * <tr><th>18</th><td>Framerate</td></tr>
+	 * <tr><th>5</th><td colspan="4">Domain (port type)</td></tr>
+	 * <tr><th>6</th><td colspan="4">Buffer alignment</td></tr>
+	 * <tr><th>7</th><td colspan="3">Error flag concealment (1=true,0=false)</td><td>Format</td></tr>
+	 * <tr><th>8</th><td colspan="2">Frame width</td><td>Encoding</td></tr>
+	 * <tr><th>9</th><td colspan="2">Frame height</td></tr>
+	 * <tr><th>10</th><td colspan="2">Stride</td></tr>
+	 * <tr><th>11</th><td colspan="2">Slice height</td></tr>
+	 * <tr><th>12</th><td colspan="2">Color format</td></tr>
+	 * <tr><th>13</th><td>Compression</td><td>Compression</td></tr>
+	 * <tr><th>14</th><td>Bitrate</td></tr>
+	 * <tr><th>15</th><td>Framerate</td></tr>
 	 * </table>
 	 * @param pointer
 	 * @param portIndex

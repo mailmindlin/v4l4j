@@ -422,14 +422,14 @@ JNIEXPORT jstring JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getPortInf
 	int i = 0;//Entry #0 is going to be set at the end
 	
 	//Entries 1-9 are common for all port types
-	result[++i] = portdef.eDir == OMX_DirInput ? 1 : 0;
+	result[++i] = (portdef.eDir == OMX_DirInput ? 1 : 0)
+				| (portdef.bEnabled != OMX_FALSE ? 2 : 0)
+				| (portdef.bPopulated != OMX_FALSE ? 4 : 0)
+				| (portdef.bBuffersContiguous != OMX_FALSE ? 8 : 0);
 	result[++i] = (int) portdef.nBufferCountActual;
 	result[++i] = (int) portdef.nBufferCountMin;
 	result[++i] = (int) portdef.nBufferSize;
-	result[++i] = portdef.bEnabled != OMX_FALSE ? 1 : 0;
-	result[++i] = portdef.bPopulated != OMX_FALSE ? 1 : 0;
 	result[++i] = (int) portdef.eDomain;
-	result[++i] = portdef.bBuffersContiguous != OMX_FALSE ? 1 : 0;
 	result[++i] = (int) portdef.nBufferAlignment;
 	//i == 9
 	
@@ -439,7 +439,7 @@ JNIEXPORT jstring JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getPortInf
 			//mimeType = portdef.format.audio.cMIMEType;
 			result[++i] = portdef.format.audio.bFlagErrorConcealment != OMX_FALSE ? 1 : 0;
 			result[++i] = (int) portdef.format.audio.eEncoding;
-			//i == 11
+			//i == 8
 			break;
 		case OMX_PortDomainVideo:
 			//mimeType = portdef.format.video.cMIMEType;
@@ -454,7 +454,7 @@ JNIEXPORT jstring JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getPortInf
 			result[++i] = (int) portdef.format.video.eCompressionFormat;
 			result[++i] = (int) portdef.format.video.nBitrate;
 			result[++i] = (int) portdef.format.video.xFramerate;
-			//i == 18
+			//i == 15
 			break;
 		case OMX_PortDomainImage:
 			//mimeType = portdef.format.image.cMIMEType;
@@ -466,17 +466,15 @@ JNIEXPORT jstring JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getPortInf
 			result[++i] = (int) portdef.format.image.eColorFormat;
 			//Image port only values
 			result[++i] = (int) portdef.format.image.eCompressionFormat;
-			//i == 16
+			//i == 13
 			break;
 		case OMX_PortDomainOther:
 			result[++i] = (int) portdef.format.other.eFormat;
-			//i == 10
+			//i == 7
 			break;
 		default:
 			break;
 	}
-	
-	//dprint(LOG_V4L4J, "Port MIME: '%s'\n", mimeType);
 	
 	//Store the length in the first cell
 	const int resultLen = i + 1;
@@ -492,7 +490,7 @@ JNIEXPORT jstring JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getPortInf
 	}
 	
 	//Put our values into the array
-	(*env)->SetIntArrayRegion(env, resultArr, 0, i + 1, result);
+	(*env)->SetIntArrayRegion(env, resultArr, 0, resultLen, result);
 	
 	//Return the MIME type (if available)
 	jstring mimeTypeStr = NULL;
@@ -548,7 +546,6 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_enablePort(JN
 	LOG_FN_ENTER();
 	
 	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
-	
 	
 	OMX_ERRORTYPE r = OMX_SendCommand(appData->component, enabled ? OMX_CommandPortEnable : OMX_CommandPortDisable, index, NULL);
 	if (r != OMX_ErrorNone) {
