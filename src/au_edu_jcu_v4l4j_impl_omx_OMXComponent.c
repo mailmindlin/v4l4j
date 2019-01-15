@@ -149,6 +149,9 @@ static jmethodID getJavaCallbackMethod(JNIEnv* env, jobject object, jclass* clas
 
 static OMX_ERRORTYPE handleBufferEvent(OMX_HANDLETYPE hComponent, OMXComponentAppData* appData, OMX_BUFFERHEADERTYPE* pBuffer, jboolean empty) {
 	LOG_FN_ENTER();
+
+	OMX_ERRORTYPE result = OMX_ErrorNone;
+
 	//The problem that we have is that we don't know if this callback is on the same thread
 	//as any spawned by Java. As such, we can't just pass a JNIEnv to let us call our callback;
 	//instead, we have to work at it.
@@ -162,9 +165,8 @@ static OMX_ERRORTYPE handleBufferEvent(OMX_HANDLETYPE hComponent, OMXComponentAp
 	jobject componentRef = (*env)->NewLocalRef(env, appData->self);
 	if (componentRef == NULL) {
 		info("Component ref was null\n");
-		if (attached)
-			(*vm)->DetachCurrentThread(vm);
-		return OMX_ErrorUndefined;
+		result = OMX_ErrorUndefined;
+		goto cleanup1;
 	}
 	
 	//Look up the callback method (OMXComponent.onBufferDone)
@@ -172,10 +174,8 @@ static OMX_ERRORTYPE handleBufferEvent(OMX_HANDLETYPE hComponent, OMXComponentAp
 	jmethodID callbackMethod = getJavaCallbackMethod(env, componentRef, &omxClassRef);
 	if (callbackMethod == NULL) {
 		info("Failed to get callback method\n");
-		(*env)->DeleteLocalRef(env, componentRef);
-		if (attached)
-			(*vm)->DetachCurrentThread(vm);
-		return OMX_ErrorUndefined;
+		result = OMX_ErrorUndefined;
+		goto cleanup2;
 	}
 	
 	union tickConv {
@@ -192,13 +192,16 @@ static OMX_ERRORTYPE handleBufferEvent(OMX_HANDLETYPE hComponent, OMXComponentAp
 			(jint) pBuffer->nFilledLen,
 			(jint) pBuffer->nAllocLen);
 	
-	//Free references , and return (I am not sure if it will just go away, because I don't understand the semantics of all the Invocation API methods.
+	//Free references , and return (I am not sure if it will just go away, because I don't understand the semantics of all the Invocation API methods).
 	if (omxClassRef != NULL)
 		(*env)->DeleteLocalRef(env, omxClassRef);
+cleanup2:
 	(*env)->DeleteLocalRef(env, componentRef);
+cleanup1:
+	// Release attached thread
 	if (attached)
 		(*vm)->DetachCurrentThread(vm);
-	return OMX_ErrorNone;
+	return result;
 }
 
 static OMX_ERRORTYPE empty_buffer_done_handler(OMX_HANDLETYPE hComponent, OMX_PTR pAppData, OMX_BUFFERHEADERTYPE* pBuffer) {
@@ -228,8 +231,7 @@ static inline OMXComponentAppData* initAppData(JNIEnv *env, jobject self) {
 	//TODO figure out how to release JVM pointers
 	if (getVmResult != 0) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Failed to get reference to JVM (error %d)", getVmResult);
-		XFREE(appData);
-		return NULL;
+		goto fail;
 	}
 	
 	//Get a global ref to the self object, so it's guaranteed to remain valid after we
@@ -237,8 +239,7 @@ static inline OMXComponentAppData* initAppData(JNIEnv *env, jobject self) {
 	jobject globalSelf = (*env)->NewGlobalRef(env, self);
 	if (globalSelf == NULL) {
 		THROW_EXCEPTION(env, JNI_EXCP, "Failed to get global pointer to self");
-		XFREE(appData);
-		return NULL;
+		goto fail;
 	}
 	
 	appData->self = globalSelf;
@@ -248,6 +249,10 @@ static inline OMXComponentAppData* initAppData(JNIEnv *env, jobject self) {
 	appData->callbacks.FillBufferDone = &fill_buffer_done_handler;
 	
 	return appData;
+
+fail:
+	XFREE(appData);
+	return NULL;
 }
 
 static inline void deinitAppData(JNIEnv* env, OMXComponentAppData* appData) {
@@ -294,14 +299,12 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getComponent
 	//Set up appData (context used for all the callbacks)
 	OMXComponentAppData* appData = initAppData(env, self);
 	if (appData == NULL) {
-		(*env)->ReleaseStringUTFChars(env, componentNameStr, componentName);
 		THROW_EXCEPTION(env, JNI_EXCP, "Error allocating appdata");
-		return -1;
+		goto cleanup;
 	}
 	
 	OMX_ERRORTYPE res = OMX_GetHandle(&(appData->component), (char*) componentName, appData, &appData->callbacks);
 	
-	(*env)->ReleaseStringUTFChars(env, componentNameStr, componentName);
 	
 	dprint(LOG_V4L4J, "Struct length: %d; value %#08x\n", ((OMX_COMPONENTTYPE*)appData->component)->nSize, (uintptr_t)appData->component);
 	printBytes((char*) appData, sizeof(OMXComponentAppData));
@@ -309,8 +312,11 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getComponent
 	if (res != OMX_ErrorNone) {
 		THROW_OMX_EXCP(env, res, "OMX Failure getting component '%s' handle", componentName);
 		deinitAppData(env, appData);
-		return -1;
+		goto cleanup;
 	}
+
+cleanup:
+	(*env)->ReleaseStringUTFChars(env, componentNameStr, componentName);
 	
 	return (jlong) (uintptr_t) appData;
 }
@@ -357,6 +363,7 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getComponentS
 		THROW_OMX_EXCP(env, r, "OMX Error when querying state");
 		return -1;
 	}
+
 	return (jint) state;
 }
 
@@ -589,26 +596,28 @@ JNIEXPORT jobject JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doUseBuffe
 		unsigned char* bufferPointer = (*env)->GetDirectBufferAddress(env, bBuffer);
 		if (bufferPointer == NULL) {
 			THROW_EXCEPTION(env, JNI_EXCP, "Error getting pointer to direct buffer");
-			return NULL;
+			goto fail;
 		}
 		r = OMX_UseBuffer(appData->component, &buffer, portIndex, framebufferRef, size, bufferPointer);
 	}
 		
 	if (r != OMX_ErrorNone) {
-		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error allocating buffer on port %d: %#08x %s", portIndex, r, getOMXErrorDescription(r));
-		(*env)->DeleteGlobalRef(env, framebufferRef);
-		return NULL;
+		THROW_OMX_EXCP(env, r, "OMX Error %s buffer on port %d", allocate ? "allocating" : "attatching", portIndex);
+		goto fail;
 	}
 	
 	if (buffer->nAllocLen != size) {
 		THROW_EXCEPTION(env, GENERIC_EXCP, "Buffer allocated does not match size (expected %u; actual %u)", size, buffer->nAllocLen);
-		(*env)->DeleteGlobalRef(env, framebufferRef);
-		return NULL;
+		goto fail;
 	}
 	
 	//Invoke constructor
 	(*env)->CallVoidMethod(env, framebuffer, framebufferCtor, (jlong) (uintptr_t) buffer, bBuffer, buffer->nInputPortIndex, buffer->nOutputPortIndex);
 	return framebuffer;
+
+fail:
+	(*env)->DeleteGlobalRef(env, framebufferRef);
+	return NULL;
 }
 
 JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doReleaseBuffer(JNIEnv* env, jclass me, jlong pointer, jint portIndex, jlong bufferPointer) {
