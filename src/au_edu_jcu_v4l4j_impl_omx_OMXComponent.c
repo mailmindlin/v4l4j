@@ -287,6 +287,13 @@ static void printBytes(char* bytes, int len) {
  */
 JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getComponentHandle(JNIEnv *env, jobject self, jstring componentNameStr) {
 	LOG_FN_ENTER();
+
+	//Get OMX method handles
+	OMXMethods *omx_methods = v4lconvert_get_omx();
+	if (omx_methods == NULL) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Error getting OMX methods");
+		return -1;
+	}
 	
 	//Get string into native memory
 	const char* componentName = (*env)->GetStringUTFChars(env, componentNameStr, NULL);
@@ -303,7 +310,7 @@ JNIEXPORT jlong JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_getComponent
 		goto cleanup;
 	}
 	
-	OMX_ERRORTYPE res = OMX_GetHandle(&(appData->component), (char*) componentName, appData, &appData->callbacks);
+	OMX_ERRORTYPE res = (*omx_methods->getHandle)(&(appData->component), (char*) componentName, appData, &appData->callbacks);
 	
 	
 	dprint(LOG_V4L4J, "Struct length: %d; value %#08x\n", ((OMX_COMPONENTTYPE*)appData->component)->nSize, (uintptr_t)appData->component);
@@ -754,8 +761,15 @@ JNIEXPORT void JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_freeComponent
 	LOG_FN_ENTER();
 	
 	OMXComponentAppData* appData = (OMXComponentAppData*) (uintptr_t) pointer;
+
+	//Get OMX method handles
+	OMXMethods *omx_methods = v4lconvert_get_omx();
+	if (omx_methods == NULL) {
+		THROW_EXCEPTION(env, JNI_EXCP, "Error getting OMX methods");
+		return;
+	}
 	
-	OMX_ERRORTYPE res = OMX_FreeHandle(appData->component);
+	OMX_ERRORTYPE res = (*omx_methods->freeHandle)(appData->component);
 	
 	deinitAppData(env, appData);
 	
