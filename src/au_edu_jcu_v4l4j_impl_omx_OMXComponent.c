@@ -831,7 +831,8 @@ JNIEXPORT jint JNICALL Java_au_edu_jcu_v4l4j_impl_omx_OMXComponent_doAccessConfi
 	
 	//Handle errors, if any
 	if (res != OMX_ErrorNone && throwOnError) {
-		THROW_EXCEPTION(env, GENERIC_EXCP, "OMX Error %s %s %#08x: %#08x %s",
+		THROW_EXCEPTION(env, OMX_EXCP, "%08xOMX Error %s %s %#08x: %#08x %s",
+			res,
 			read ? "reading" : "writing",
 			isConfig ? "config" : "parameter",
 			configIdx,
