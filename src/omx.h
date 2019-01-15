@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+#define OMX_NAME_LEN 128
+
 typedef struct OMXMethods {
 	/**
 	 * Pointer to OMX_Init()

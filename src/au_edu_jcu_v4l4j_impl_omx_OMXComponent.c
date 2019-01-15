@@ -9,14 +9,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "common.h"
-#include "debug.h"
-#include "jniutils.h"
-
 #include <IL/OMX_Core.h>
 #include <IL/OMX_Component.h>
 #include <IL/OMX_Video.h>
 #include <IL/OMX_Broadcom.h>
+
+#include "common.h"
+#include "debug.h"
+#include "jniutils.h"
+#include "omx.h"
 
 #ifndef _Included_au_edu_jcu_v4l4j_impl_omx_OMXComponent
 #define _Included_au_edu_jcu_v4l4j_impl_omx_OMXComponent
@@ -58,111 +59,13 @@ typedef struct {
 	jobject self;
 } OMXComponentAppData;
 
-/**
- * Map OMX_ERRORTYPE to a pretty description.
- * @param err OMX error to map
- * @return error description. This pointer should not be modified nor released.
- */
-static char* getOMXErrorDescription(OMX_ERRORTYPE err) {
-	switch(err) {
-		case OMX_ErrorNone:
-			return "no error";
-		case OMX_ErrorInsufficientResources:
-			return "insufficient resources";
-		case OMX_ErrorUndefined:
-			return "unknown";
-		case OMX_ErrorInvalidComponentName:
-			return "invalid component name";
-		case OMX_ErrorComponentNotFound:
-			return "component not found";
-		case OMX_ErrorInvalidComponent:
-			return "invalid component";
-		case OMX_ErrorBadParameter:
-			return "bad parameter";
-		case OMX_ErrorNotImplemented:
-			return "not implemented";
-		case OMX_ErrorUnderflow:
-			return "underflow";
-		case OMX_ErrorOverflow:
-			return "overflow";
-		case OMX_ErrorHardware:
-			return "hardware error";
-		case OMX_ErrorInvalidState:
-			return "invalid state";
-		case OMX_ErrorStreamCorrupt:
-			return "stream corrupt";
-		case OMX_ErrorPortsNotCompatible:
-			return "ports not compatible";
-		case OMX_ErrorResourcesLost:
-			return "resources lost";
-		case OMX_ErrorNoMore:
-			return "no more";
-		case OMX_ErrorVersionMismatch:
-			return "version mismatch";
-		case OMX_ErrorNotReady:
-			return "not ready";
-		case OMX_ErrorTimeout:
-			return "timeout";
-		case OMX_ErrorSameState:
-			return "same state";
-		case OMX_ErrorResourcesPreempted:
-			return "resources preempted";
-		case OMX_ErrorPortUnresponsiveDuringAllocation:
-			return "port unresponsive during allocation";
-		case OMX_ErrorPortUnresponsiveDuringDeallocation:
-			return "port unresponsive during deallocation";
-		case OMX_ErrorPortUnresponsiveDuringStop:
-			return "port unresponsive during stop";
-		case OMX_ErrorIncorrectStateTransition:
-			return "unallowed state transition";
-		case OMX_ErrorIncorrectStateOperation:
-			return "invalid state while trying to perform command";
-		case OMX_ErrorUnsupportedSetting:
-			return "unsupported setting";
-		case OMX_ErrorUnsupportedIndex:
-			return "unsupported index";
-		case OMX_ErrorBadPortIndex:
-			return "bad port index";
-		case OMX_ErrorPortUnpopulated:
-			return "port unpopulated";
-		case OMX_ErrorComponentSuspended:
-			return "component suspended";
-		case OMX_ErrorDynamicResourcesUnavailable:
-			return "dynamic resources unavailable";
-		case OMX_ErrorMbErrorsInFrame:
-			return "macroblock errors in frame";
-		case OMX_ErrorFormatNotDetected:
-			return "format not detectd";
-		case OMX_ErrorContentPipeOpenFailed:
-			return "content pipe open failed";
-		case OMX_ErrorContentPipeCreationFailed:
-			return "content pipe creation failed";
-		case OMX_ErrorSeperateTablesUsed:
-			return "seperate tabled used";
-		case OMX_ErrorTunnelingUnsupported:
-			return "tunneling unsupported";
-		case OMX_ErrorDiskFull:
-			return "disk full";
-		case OMX_ErrorMaxFileSize:
-			return "max file size";
-		case OMX_ErrorDrmUnauthorised:
-			return "DRM unauthorized";
-		case OMX_ErrorDrmExpired:
-			return "DRM expired";
-		case OMX_ErrorDrmGeneral:
-			return "DRM general";
-		default:
-			return "(unknown)";
-	}
-}
-
 //Event handlers for OMX
 static OMX_ERRORTYPE event_handler(OMX_HANDLETYPE hComponent, OMX_PTR pAppData, OMX_EVENTTYPE event, OMX_U32 data1, OMX_U32 data2, OMX_PTR eventData) {
 	OMXComponentAppData* appData = (OMXComponentAppData*) pAppData;
 	(void)appData;
 	
 	#ifdef DEBUG
-		char* eventName;
+		const char* eventName;
 		switch (event) {
 			case OMX_EventCmdComplete:
 				eventName = "CmdComplete";

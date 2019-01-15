@@ -38,7 +38,6 @@ typedef struct BCMMethods {
 } BCMMethods;
 
 
-static const char *getOMXErrorDescription(OMX_ERRORTYPE err);
 static void bcm_load();
 static void bcm_bind();
 static void bcm_init();
@@ -59,27 +58,6 @@ static BCMMethods libbcm_methods;
 static libptr_t libomxil;
 static libstat_t libomxil_status = STATUS_UNLOADED;
 static OMXMethods libomxil_methods;
-
-
-
-// Path prefixes to search for libomxil in
-static const char *path_prefix[] = {
-	"",
-	"/opt/vc/lib/",
-	"/usr/local/lib/",
-	"/usr/lib/",
-	NULL,
-};
-
-// Library extensions
-static const char *lib_ext[] = {
-	"so",
-	"so.1",
-	"so.2",
-	"dylib",
-	"dll",
-	NULL,
-};
 
 
 //OMX error descriptions
@@ -109,12 +87,68 @@ const char *getOMXErrorDescription(OMX_ERRORTYPE err) {
 			return "hardware error";
 		case OMX_ErrorInvalidState:
 			return "invalid state";
-		case OMX_ErrorIncorrectStateOperation:
-			return "invalid state while trying to perform command";
+		case OMX_ErrorStreamCorrupt:
+			return "stream corrupt";
+		case OMX_ErrorPortsNotCompatible:
+			return "ports not compatible";
+		case OMX_ErrorResourcesLost:
+			return "resources lost";
+		case OMX_ErrorNoMore:
+			return "no more";
+		case OMX_ErrorVersionMismatch:
+			return "version mismatch";
+		case OMX_ErrorNotReady:
+			return "not ready";
+		case OMX_ErrorTimeout:
+			return "timeout";
+		case OMX_ErrorSameState:
+			return "same state";
+		case OMX_ErrorResourcesPreempted:
+			return "resources preempted";
+		case OMX_ErrorPortUnresponsiveDuringAllocation:
+			return "port unresponsive during allocation";
+		case OMX_ErrorPortUnresponsiveDuringDeallocation:
+			return "port unresponsive during deallocation";
+		case OMX_ErrorPortUnresponsiveDuringStop:
+			return "port unresponsive during stop";
 		case OMX_ErrorIncorrectStateTransition:
 			return "unallowed state transition";
+		case OMX_ErrorIncorrectStateOperation:
+			return "invalid state while trying to perform command";
+		case OMX_ErrorUnsupportedSetting:
+			return "unsupported setting";
+		case OMX_ErrorUnsupportedIndex:
+			return "unsupported index";
 		case OMX_ErrorBadPortIndex:
 			return "bad port index, i.e. incorrect port";
+		case OMX_ErrorPortUnpopulated:
+			return "port unpopulated";
+		case OMX_ErrorComponentSuspended:
+			return "component suspended";
+		case OMX_ErrorDynamicResourcesUnavailable:
+			return "dynamic resources unavailable";
+		case OMX_ErrorMbErrorsInFrame:
+			return "macroblock errors in frame";
+		case OMX_ErrorFormatNotDetected:
+			return "format not detectd";
+		case OMX_ErrorContentPipeOpenFailed:
+			return "content pipe open failed";
+		case OMX_ErrorContentPipeCreationFailed:
+			return "content pipe creation failed";
+		case OMX_ErrorSeperateTablesUsed:
+			return "seperate tabled used";
+		case OMX_ErrorTunnelingUnsupported:
+			return "tunneling unsupported";
+		case OMX_ErrorDiskFull:
+			return "disk full";
+		case OMX_ErrorMaxFileSize:
+			return "max file size";
+		case OMX_ErrorDrmUnauthorised:
+			return "DRM unauthorized";
+		case OMX_ErrorDrmExpired:
+			return "DRM expired";
+		case OMX_ErrorDrmGeneral:
+			return "DRM general";
 		default:
 			return "(unknown)";
 	}
