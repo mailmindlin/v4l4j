@@ -33,6 +33,7 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -51,6 +52,7 @@ import au.edu.jcu.v4l4j.ImageFormat;
 import au.edu.jcu.v4l4j.InputInfo;
 import au.edu.jcu.v4l4j.V4L4JConstants;
 import au.edu.jcu.v4l4j.VideoDevice;
+import au.edu.jcu.v4l4j.ImageFormatList;
 import au.edu.jcu.v4l4j.exceptions.NoTunerException;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
@@ -88,9 +90,9 @@ public class DeviceChooser extends WindowAdapter implements ActionListener {
 				System.out.println("No video devices detected");
 				return;
 			}
-			deviceFiles = new JComboBox<Object>(deviceList);
+			deviceFiles = new JComboBox<>(deviceList);
 		} else
-			deviceFiles = new JComboBox<Object>(new Object[] { dev });
+			deviceFiles = new JComboBox<>(new Object[] { dev });
 
 		initGUI();
 		actionPerformed(null);
@@ -185,6 +187,14 @@ public class DeviceChooser extends WindowAdapter implements ActionListener {
 		private static String RGB_BUTTON_STR = "Run RGB viewer";
 		private static String JPEG_BUTTON_STR = "Run JPEG viewer";
 		private static String CTRL_ONLY_STR = "Run control-only viewer";
+
+		private static String formatsToLabel(List<ImageFormat> formats) {
+			return formats
+					.stream()
+					.map(ImageFormat::getName)
+					.collect(Collectors.joining(" - "));
+		}
+
 		private JPanel mainPane, dataPane, buttonPane;
 		private JLabel name, nativeFmt, JPEGEncFmts, RGBEncFmts, BGREncFmts, YUVEncFmts, YVUEncFmts, input, inputType,
 				tunerType, standard;
@@ -214,57 +224,38 @@ public class DeviceChooser extends WindowAdapter implements ActionListener {
 			buttonPane = new JPanel();
 
 			name = new JLabel("Name :");
-			nativeFmt = new JLabel("native image formats :");
-			JPEGEncFmts = new JLabel("JPEG encodable formats :");
-			RGBEncFmts = new JLabel("RGB24 encodable formats :");
-			BGREncFmts = new JLabel("BGR24 encodable formats :");
-			YUVEncFmts = new JLabel("YUV420 encodable formats :");
-			YVUEncFmts = new JLabel("YVU420 encodable formats :");
-			input = new JLabel("Inputs :");
-			inputType = new JLabel("Input type :");
-			tunerType = new JLabel("Tuner type :");
-			standard = new JLabel("Standards :");
-
 			nameValue = new JLabel(di.getName());
-			for (ImageFormat f : di.getFormatList().getNativeFormats())
-				tmp += tmp.equals("") ? f.getName() : " - " + f.getName();
-			nativeFmtValues = new JLabel(tmp);
 
-			tmp = "";
-			for (ImageFormat f : di.getFormatList().getJPEGEncodableFormats())
-				tmp += tmp.equals("") ? f.getName() : " - " + f.getName();
-			JPEGEncFmtsValues = new JLabel(tmp);
 
-			tmp = "";
-			for (ImageFormat f : di.getFormatList().getRGBEncodableFormats())
-				tmp += tmp.equals("") ? f.getName() : " - " + f.getName();
-			RGBEncFmtsValues = new JLabel(tmp);
+			ImageFormatList formatList = di.getFormatList();
 
-			tmp = "";
-			for (ImageFormat f : di.getFormatList().getBGREncodableFormats())
-				tmp += tmp.equals("") ? f.getName() : " - " + f.getName();
-			BGREncFmtsValues = new JLabel(tmp);
+			nativeFmt = new JLabel("native image formats :");
+			nativeFmtValues = new JLabel(formatsToLabel(formatList.getNativeFormats()));
+			JPEGEncFmts = new JLabel("JPEG encodable formats :");
+			JPEGEncFmtsValues = new JLabel(formatsToLabel(formatList.getJPEGEncodableFormats()));
+			RGBEncFmts = new JLabel("RGB24 encodable formats :");
+			RGBEncFmtsValues = new JLabel(formatsToLabel(formatList.getRGBEncodableFormats()));
+			BGREncFmts = new JLabel("BGR24 encodable formats :");
+			BGREncFmtsValues = new JLabel(formatsToLabel(formatList.getBGREncodableFormats()));
+			YUVEncFmts = new JLabel("YUV420 encodable formats :");
+			YUVEncFmtsValues = new JLabel(formatsToLabel(formatList.getYUVEncodableFormats()));
+			YVUEncFmts = new JLabel("YVU420 encodable formats :");
+			YVUEncFmtsValues = new JLabel(formatsToLabel(formatList.getYVUEncodableFormats()));
 
-			tmp = "";
-			for (ImageFormat f : di.getFormatList().getYUVEncodableFormats())
-				tmp += tmp.equals("") ? f.getName() : " - " + f.getName();
-			YUVEncFmtsValues = new JLabel(tmp);
-
-			tmp = "";
-			for (ImageFormat f : di.getFormatList().getYVUEncodableFormats())
-				tmp += tmp.equals("") ? f.getName() : " - " + f.getName();
-			YVUEncFmtsValues = new JLabel(tmp);
-
+			input = new JLabel("Inputs :");
 			List<InputInfo> inputInfos = di.getInputs();
-			ArrayList<String> names = new ArrayList<>(inputInfos.size());
+			List<String> names = new ArrayList<>(inputInfos.size());
 			for (InputInfo i : inputInfos)
 				names.add(i.getName());
-			inputs = new JComboBox<String>((String[])names.toArray());
+			inputs = new JComboBox<>(names.toArray(new String[0]));
 
+			inputType = new JLabel("Input type :");
 			inputTypeValue = new JLabel();
+			tunerType = new JLabel("Tuner type :");
 			tunerTypeValue = new JLabel();
 
-			standards = new JComboBox<String>();
+			standard = new JLabel("Standards :");
+			standards = new JComboBox<>();
 
 			rgbView = new JButton(RGB_BUTTON_STR);
 			rgbView.addActionListener(this);
@@ -401,15 +392,21 @@ public class DeviceChooser extends WindowAdapter implements ActionListener {
 					}
 
 					standards.removeAllItems();
-					for (Integer std : i.getSupportedStandards()) {
-						if (std.intValue() == V4L4JConstants.STANDARD_NTSC)
-							standards.addItem("NTSC");
-						else if (std.intValue() == V4L4JConstants.STANDARD_PAL)
-							standards.addItem("PAL");
-						else if (std.intValue() == V4L4JConstants.STANDARD_SECAM)
-							standards.addItem("SECAM");
-						else if (std.intValue() == V4L4JConstants.STANDARD_WEBCAM)
-							standards.addItem("WEBCAM");
+					for (int std : i.getSupportedStandards()) {
+						switch (std) {
+							case V4L4JConstants.STANDARD_NTSC:
+								standards.addItem("NTSC");
+								break;
+							case V4L4JConstants.STANDARD_PAL:
+								standards.addItem("PAL");
+								break;
+							case V4L4JConstants.STANDARD_SECAM:
+								standards.addItem("SECAM");
+								break;
+							case V4L4JConstants.STANDARD_WEBCAM:
+								standards.addItem("WEBCAM");
+								break;
+						}
 					}
 				}
 			}
@@ -484,20 +481,27 @@ public class DeviceChooser extends WindowAdapter implements ActionListener {
 				else {
 
 					int std = 0, channel = 0;
-					if (((String) standards.getSelectedItem()).equals("PAL"))
-						std = V4L4JConstants.STANDARD_PAL;
-					else if (((String) standards.getSelectedItem()).equals("NTSC"))
-						std = V4L4JConstants.STANDARD_NTSC;
-					else if (((String) standards.getSelectedItem()).equals("SECAM"))
-						std = V4L4JConstants.STANDARD_SECAM;
-					else if (((String) standards.getSelectedItem()).equals("WEBCAM"))
-						std = V4L4JConstants.STANDARD_WEBCAM;
+					switch ((String) standards.getSelectedItem()) {
+						case "PAL":
+							std = V4L4JConstants.STANDARD_PAL;
+							break;
+						case "NTSC":
+							std = V4L4JConstants.STANDARD_NTSC;
+							break;
+						case "SECAM":
+							std = V4L4JConstants.STANDARD_SECAM;
+							break;
+						case "WEBCAM":
+							std = V4L4JConstants.STANDARD_WEBCAM;
+							break;
+					}
+
 
 					for (InputInfo i : di.getInputs())
 						if (i.getName().equals((String) inputs.getSelectedItem()))
 							channel = i.getIndex();
 
-					if (b.getText().indexOf(RGB_BUTTON_STR) != -1) {
+					if (b.getText().contains(RGB_BUTTON_STR)) {
 						try {
 							new RGBViewer(vd, chooser.width, chooser.height, std, channel);
 						} catch (V4L4JException e1) {
