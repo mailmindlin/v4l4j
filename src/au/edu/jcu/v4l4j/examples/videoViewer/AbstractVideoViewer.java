@@ -582,8 +582,7 @@ public abstract class AbstractVideoViewer extends WindowAdapter implements Captu
 		}
 
 		private int compareFrac(int n1, int d1, int n2, int d2) {
-			long a = n1 * d2, b = n2 * d1;
-			return (a < b) ? -1 : (a == b) ? 0 : 1;
+			return Long.compare(n1 * d2, n2 * d1);
 		}
 
 		public JPanel getPanel() {
